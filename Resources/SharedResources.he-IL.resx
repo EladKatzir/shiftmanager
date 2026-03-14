@@ -761,6 +761,12 @@
   <data name="CompanyName" xml:space="preserve">
     <value>שם החברה</value>
   </data>
+  <data name="CompanyMoleculeHint" xml:space="preserve">
+    <value>המולקולה שהחברה שייכת אליה</value>
+  </data>
+  <data name="CompanySlugHint" xml:space="preserve">
+    <value>(אותיות קטנות באנגלית, מספרים ומקפים)</value>
+  </data>
   <data name="Slug" xml:space="preserve">
     <value>מזהה</value>
   </data>
@@ -2732,6 +2738,9 @@
     <value>שנה סיסמה</value>
     <comment>Phase 18 - Password change button</comment>
   </data>
+  <data name="ChangePassword_Description" xml:space="preserve">
+    <value>אם אתה כבר יודע את הסיסמה הנוכחית שלך ורוצה לשנות אותה, השתמש בטופס זה.</value>
+  </data>
   <data name="PasswordChangedSuccessfully" xml:space="preserve">
     <value>הסיסמה שונתה בהצלחה! כעת תוכל להתחבר עם הסיסמה החדשה.</value>
     <comment>Phase 18 - Password change success message</comment>
@@ -4073,6 +4082,39 @@
   <data name="SystemActivityLog" xml:space="preserve">
     <value>יומן פעילות מערכת</value>
   </data>
+  <data name="SystemAlert_BackupOld" xml:space="preserve">
+    <value>אזהרה: הגיבוי האחרון לפני {0} ימים.</value>
+  </data>
+  <data name="SystemAlert_DefaultHmacSecret" xml:space="preserve">
+    <value>אבטחה: סוד HMAC למפתח API משתמש בערך ברירת מחדל. הגדר Security:ApiKeyHmacSecret.</value>
+  </data>
+  <data name="SystemAlert_DiskCritical" xml:space="preserve">
+    <value>קריטי: מקום בדיסק נמוך באופן קריטי ({0}% פנוי). מסד הנתונים עלול להיכשל.</value>
+  </data>
+  <data name="SystemAlert_DiskLow" xml:space="preserve">
+    <value>אזהרה: מקום בדיסק נמוך ({0}% פנוי).</value>
+  </data>
+  <data name="SystemAlert_NoBackupDir" xml:space="preserve">
+    <value>אזהרה: תיקיית הגיבויים לא קיימת.</value>
+  </data>
+  <data name="SystemAlert_NoBackups" xml:space="preserve">
+    <value>אזהרה: לא נמצאו גיבויים למסד הנתונים.</value>
+  </data>
+  <data name="SystemAlert_NoDataProtectionKeys" xml:space="preserve">
+    <value>אזהרה: מפתחות DataProtection חסרים. הפעלות יבוטלו בעת הפעלה מחדש.</value>
+  </data>
+  <data name="SystemAlert_NoHebrewFont" xml:space="preserve">
+    <value>אזהרה: גופן Arial לא נמצא. ייצוא PDF עלול להציג טקסט בעברית בצורה שגויה. התקן חבילת שפה עברית.</value>
+  </data>
+  <data name="SystemAlert_NoNotificationRun" xml:space="preserve">
+    <value>אזהרה: לא הורצה משימת התראות מזה {0} שעות.</value>
+  </data>
+  <data name="SystemAlert_NotificationFailures" xml:space="preserve">
+    <value>אזהרה: הרצת ההתראות האחרונה כללה {0} כשלונות משלוח ({1} UTC).</value>
+  </data>
+  <data name="SystemAlert_WalSize" xml:space="preserve">
+    <value>אזהרה: קובץ WAL של SQLite הוא {0}MB. שקול להריץ PRAGMA wal_checkpoint(TRUNCATE) במהלך תחזוקה.</value>
+  </data>
   <data name="TaskManagement" xml:space="preserve">
     <value>ניהול משימות</value>
   </data>
@@ -4855,6 +4897,18 @@
   </data>
 
   <!-- Admin Hub -->
+  <data name="Admin_BulkImportFile" xml:space="preserve">
+    <value>קובץ CSV לייבוא מרוכז</value>
+  </data>
+  <data name="Admin_EditJobType" xml:space="preserve">
+    <value>עריכת סוג עבודה</value>
+  </data>
+  <data name="Admin_EditRole" xml:space="preserve">
+    <value>עריכת תפקיד</value>
+  </data>
+  <data name="Admin_ResetPassword" xml:space="preserve">
+    <value>סיסמה חדשה למשתמש</value>
+  </data>
   <data name="AdminHub_Title" xml:space="preserve">
     <value>מרכז ניהול</value>
   </data>
@@ -6762,7 +6816,7 @@
     <value>ברוך שובך</value>
   </data>
   <data name="Auth_SignInToContinue" xml:space="preserve">
-    <value>היכנס כדי להמשיך ל-Shift Manager</value>
+    <value>היכנס כדי להמשיך למנהל משמרות</value>
   </data>
   <data name="Auth_OrContinueWith" xml:space="preserve">
     <value>או המשך עם אימייל</value>
@@ -12925,6 +12979,27 @@
   <data name="Error_CannotEditBuiltInType" xml:space="preserve">
     <value>לא ניתן לערוך סוגי כוננות מובנים</value>
   </data>
+  <data name="Error_BackToHome" xml:space="preserve">
+    <value>חזרה לדף הבית</value>
+  </data>
+  <data name="Error_Forbidden" xml:space="preserve">
+    <value>הגישה נדחתה</value>
+  </data>
+  <data name="Error_ForbiddenDesc" xml:space="preserve">
+    <value>אין לך הרשאה לגשת לדף זה.</value>
+  </data>
+  <data name="Error_GenericDesc" xml:space="preserve">
+    <value>אירעה שגיאה בלתי צפויה. אנא נסה שוב.</value>
+  </data>
+  <data name="Error_GenericTitle" xml:space="preserve">
+    <value>משהו השתבש</value>
+  </data>
+  <data name="Error_PageNotFound" xml:space="preserve">
+    <value>הדף לא נמצא</value>
+  </data>
+  <data name="Error_PageNotFoundDesc" xml:space="preserve">
+    <value>הדף שאתה מחפש לא קיים או הועבר.</value>
+  </data>
   <data name="Success_DutyTypeCreated" xml:space="preserve">
     <value>סוג כוננות '{0}' נוצר בהצלחה</value>
   </data>
@@ -12936,5 +13011,11 @@
   </data>
   <data name="Success_DutyTypeDeactivated" xml:space="preserve">
     <value>סוג כוננות '{0}' הושבת</value>
+  </data>
+  <data name="Error_CompanyIneligibleForShift" xml:space="preserve">
+    <value>החברה של המשתמש אינה זכאית לסוג משמרת זה</value>
+  </data>
+  <data name="Error_OfficerRankRequired" xml:space="preserve">
+    <value>סוג משמרת זה דורש דרגת קצין</value>
   </data>
 </root>

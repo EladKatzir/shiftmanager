@@ -765,6 +765,12 @@
   <data name="CompanyName" xml:space="preserve">
     <value>Company Name</value>
   </data>
+  <data name="CompanyMoleculeHint" xml:space="preserve">
+    <value>Which molecule this company belongs to</value>
+  </data>
+  <data name="CompanySlugHint" xml:space="preserve">
+    <value>(lowercase, letters, numbers, hyphens)</value>
+  </data>
   <data name="Slug" xml:space="preserve">
     <value>Slug</value>
   </data>
@@ -2147,7 +2153,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Day Shift</value>
   </data>
   <data name="OnDutyCalendar" xml:space="preserve">
-    <value>Day Shift Calendar</value>
+    <value>On-Call Calendar</value>
   </data>
   <data name="OnDutyHakam" xml:space="preserve">
     <value>Day Shift - Hakam</value>
@@ -2906,6 +2912,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ChangePasswordButton" xml:space="preserve">
     <value>Change Password</value>
     <comment>Phase 18 - Password change button</comment>
+  </data>
+  <data name="ChangePassword_Description" xml:space="preserve">
+    <value>If you already know your current password and want to change it, use this form.</value>
   </data>
   <data name="PasswordChangedSuccessfully" xml:space="preserve">
     <value>Password changed successfully! You can now log in with your new password.</value>
@@ -4248,6 +4257,39 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="SystemActivityLog" xml:space="preserve">
     <value>System activity log</value>
   </data>
+  <data name="SystemAlert_BackupOld" xml:space="preserve">
+    <value>WARNING: Last backup is {0} days old.</value>
+  </data>
+  <data name="SystemAlert_DefaultHmacSecret" xml:space="preserve">
+    <value>SECURITY: API key HMAC secret is using default value. Configure Security:ApiKeyHmacSecret.</value>
+  </data>
+  <data name="SystemAlert_DiskCritical" xml:space="preserve">
+    <value>CRITICAL: Disk space is critically low ({0}% free). Database may fail.</value>
+  </data>
+  <data name="SystemAlert_DiskLow" xml:space="preserve">
+    <value>WARNING: Disk space is low ({0}% free).</value>
+  </data>
+  <data name="SystemAlert_NoBackupDir" xml:space="preserve">
+    <value>WARNING: Backup directory does not exist.</value>
+  </data>
+  <data name="SystemAlert_NoBackups" xml:space="preserve">
+    <value>WARNING: No database backups found.</value>
+  </data>
+  <data name="SystemAlert_NoDataProtectionKeys" xml:space="preserve">
+    <value>WARNING: DataProtection keys are missing. Sessions will be invalidated on restart.</value>
+  </data>
+  <data name="SystemAlert_NoHebrewFont" xml:space="preserve">
+    <value>WARNING: Arial font not found. PDF exports may render Hebrew text incorrectly. Install Hebrew language pack.</value>
+  </data>
+  <data name="SystemAlert_NoNotificationRun" xml:space="preserve">
+    <value>WARNING: No notification job run in {0} hours.</value>
+  </data>
+  <data name="SystemAlert_NotificationFailures" xml:space="preserve">
+    <value>WARNING: Last notification run had {0} delivery failures ({1} UTC).</value>
+  </data>
+  <data name="SystemAlert_WalSize" xml:space="preserve">
+    <value>WARNING: SQLite WAL file is {0}MB. Consider running PRAGMA wal_checkpoint(TRUNCATE) during maintenance.</value>
+  </data>
   <data name="TaskManagement" xml:space="preserve">
     <value>Task management</value>
   </data>
@@ -5030,6 +5072,18 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
 
   <!-- Admin Hub -->
+  <data name="Admin_BulkImportFile" xml:space="preserve">
+    <value>CSV file for bulk import</value>
+  </data>
+  <data name="Admin_EditJobType" xml:space="preserve">
+    <value>Edit job type</value>
+  </data>
+  <data name="Admin_EditRole" xml:space="preserve">
+    <value>Edit role</value>
+  </data>
+  <data name="Admin_ResetPassword" xml:space="preserve">
+    <value>New password for user</value>
+  </data>
   <data name="AdminHub_Title" xml:space="preserve">
     <value>Admin Hub</value>
   </data>
@@ -12959,6 +13013,27 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_CannotEditBuiltInType" xml:space="preserve">
     <value>Built-in duty types cannot be edited</value>
   </data>
+  <data name="Error_BackToHome" xml:space="preserve">
+    <value>Back to Home</value>
+  </data>
+  <data name="Error_Forbidden" xml:space="preserve">
+    <value>Access Denied</value>
+  </data>
+  <data name="Error_ForbiddenDesc" xml:space="preserve">
+    <value>You don't have permission to access this page.</value>
+  </data>
+  <data name="Error_GenericDesc" xml:space="preserve">
+    <value>An unexpected error occurred. Please try again.</value>
+  </data>
+  <data name="Error_GenericTitle" xml:space="preserve">
+    <value>Something Went Wrong</value>
+  </data>
+  <data name="Error_PageNotFound" xml:space="preserve">
+    <value>Page Not Found</value>
+  </data>
+  <data name="Error_PageNotFoundDesc" xml:space="preserve">
+    <value>The page you're looking for doesn't exist or has been moved.</value>
+  </data>
   <data name="Success_DutyTypeCreated" xml:space="preserve">
     <value>Duty type '{0}' created successfully</value>
   </data>
@@ -12970,5 +13045,11 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Success_DutyTypeDeactivated" xml:space="preserve">
     <value>Duty type '{0}' deactivated</value>
+  </data>
+  <data name="Error_CompanyIneligibleForShift" xml:space="preserve">
+    <value>User's company is not eligible for this shift type</value>
+  </data>
+  <data name="Error_OfficerRankRequired" xml:space="preserve">
+    <value>This shift type requires officer rank</value>
   </data>
 </root>

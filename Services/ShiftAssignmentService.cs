@@ -17,7 +17,6 @@ public class ShiftAssignmentService : IShiftAssignmentService
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<ShiftAssignmentService> _logger;
     private readonly IHierarchySettingsService _hierarchySettingsService;
-    private readonly ITechShiftService _techShiftService;
     private readonly IAuditLogService _auditLogService;
     private readonly string _hmacSecret;
     private readonly IAppConfigCacheService _configCache;
@@ -29,7 +28,6 @@ public class ShiftAssignmentService : IShiftAssignmentService
         IStringLocalizer<SharedResources> localizer,
         ILogger<ShiftAssignmentService> logger,
         IHierarchySettingsService hierarchySettingsService,
-        ITechShiftService techShiftService,
         IAuditLogService auditLogService,
         IConfiguration configuration,
         IAppConfigCacheService configCache)
@@ -38,7 +36,6 @@ public class ShiftAssignmentService : IShiftAssignmentService
         _localizer = localizer;
         _logger = logger;
         _hierarchySettingsService = hierarchySettingsService;
-        _techShiftService = techShiftService;
         _auditLogService = auditLogService;
         _hmacSecret = configuration["ApiKeyHmacSecret"]
             ?? Middleware.ApiAuthenticationMiddleware.HmacSecret;
@@ -269,18 +266,25 @@ public class ShiftAssignmentService : IShiftAssignmentService
             }
         }
 
-        // Check tech shift eligibility (warning — overrideable)
-        if (!string.IsNullOrEmpty(shiftInstance.ShiftType.TechShiftType))
+        // Company eligibility check (data-driven — replaces grant-based TechShiftService)
+        var eligibleCompanyIds = shiftInstance.ShiftType.GetEligibleCompanyIdList();
+        if (eligibleCompanyIds != null && !eligibleCompanyIds.Contains(user.CompanyId))
         {
-            var isEligible = await _techShiftService.IsUserEligibleForTechShiftAsync(userId, shiftInstance.ShiftType.TechShiftType);
-            if (!isEligible)
-            {
-                warnings.Add(new ValidationIssue(
-                    "TECH_SHIFT_INELIGIBLE",
-                    _localizer["Error_TechShiftIneligible"],
-                    ValidationSeverity.Warning,
-                    ValidationCategory.TechShift));
-            }
+            errors.Add(new ValidationIssue(
+                "COMPANY_INELIGIBLE",
+                _localizer["Error_CompanyIneligibleForShift"],
+                ValidationSeverity.Error,
+                ValidationCategory.TechShift));
+        }
+
+        // Officer rank check
+        if (shiftInstance.ShiftType.RequiresOfficerRank && !user.Rank.IsOfficer())
+        {
+            errors.Add(new ValidationIssue(
+                "OFFICER_RANK_REQUIRED",
+                _localizer["Error_OfficerRankRequired"],
+                ValidationSeverity.Error,
+                ValidationCategory.TechShift));
         }
 
         // Load hierarchy settings for weekly cap and rest hours
@@ -900,14 +904,17 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 }
             }
 
-            // Tech shift eligibility (warning — overrideable)
-            if (!string.IsNullOrEmpty(shiftInstance.ShiftType.TechShiftType))
+            // Company eligibility check (data-driven — replaces grant-based TechShiftService)
+            var batchEligibleCompanyIds = shiftInstance.ShiftType.GetEligibleCompanyIdList();
+            if (batchEligibleCompanyIds != null && !batchEligibleCompanyIds.Contains(user.CompanyId))
             {
-                var isEligible = await _techShiftService.IsUserEligibleForTechShiftAsync(userId, shiftInstance.ShiftType.TechShiftType);
-                if (!isEligible)
-                {
-                    warnings.Add(new ValidationIssue("TECH_SHIFT_INELIGIBLE", _localizer["Error_TechShiftIneligible"], ValidationSeverity.Warning, ValidationCategory.TechShift));
-                }
+                errors.Add(new ValidationIssue("COMPANY_INELIGIBLE", _localizer["Error_CompanyIneligibleForShift"], ValidationSeverity.Error, ValidationCategory.TechShift));
+            }
+
+            // Officer rank check
+            if (shiftInstance.ShiftType.RequiresOfficerRank && !user.Rank.IsOfficer())
+            {
+                errors.Add(new ValidationIssue("OFFICER_RANK_REQUIRED", _localizer["Error_OfficerRankRequired"], ValidationSeverity.Error, ValidationCategory.TechShift));
             }
 
             // Weekly cap (using pre-loaded data)

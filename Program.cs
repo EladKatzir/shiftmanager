@@ -323,9 +323,6 @@ builder.Services.AddScoped<IScheduleExportService, ScheduleExportService>();
 // Vacation Approval Chain Service
 builder.Services.AddScoped<IVacationApprovalService, VacationApprovalService>();
 
-// Tech Shift Services - Department-scoped tech shift eligibility and filtering
-builder.Services.AddScoped<ITechShiftService, TechShiftService>();
-
 // Background email queue: emails are enqueued by MailService and sent by the processor
 builder.Services.AddSingleton<EmailBackgroundQueue>();
 builder.Services.AddHostedService<EmailBackgroundProcessor>();
@@ -1352,7 +1349,7 @@ startupStopwatch.Stop();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    app.UseStatusCodePages("text/plain", "HTTP {0}");
+    app.UseStatusCodePagesWithReExecute("/StatusCode/{0}");
 
     // B-026: Enable Swagger UI in development
     app.UseSwagger();
@@ -1365,6 +1362,7 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error");
+    app.UseStatusCodePagesWithReExecute("/StatusCode/{0}");
     app.UseHsts();
 }
 
