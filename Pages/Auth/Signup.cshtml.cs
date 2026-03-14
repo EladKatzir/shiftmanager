@@ -213,37 +213,6 @@ public class SignupModel : LocalizedPageModel
 
             CompanyId = hqCompany.Id;
         }
-        // Tech molecule: require department selection and auto-assign HQ company
-        else if (moleculeType == MoleculeType.Tech && (!DepartmentId.HasValue || DepartmentId.Value <= 0))
-        {
-            Error = _localizer["Error_Signup_SelectDepartment"];
-            return Page();
-        }
-        else if (moleculeType == MoleculeType.Tech && DepartmentId.HasValue && DepartmentId.Value > 0)
-        {
-            // Validate department exists and belongs to this molecule
-            var dept = await _db.Departments.FirstOrDefaultAsync(d => d.Id == DepartmentId.Value && d.MoleculeId == MoleculeId!.Value);
-            if (dept == null)
-            {
-                Error = _localizer["Error_Signup_InvalidDepartment"];
-                return Page();
-            }
-
-            var hqCompany = await _db.Companies
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(c => c.MoleculeId == MoleculeId!.Value && c.IsHeadquarters);
-
-            if (hqCompany == null)
-            {
-                Error = _localizer["Error_Signup_HQNotFound"];
-                return Page();
-            }
-
-            CompanyId = hqCompany.Id;
-            // Clear JobTypeId — tech users don't have job types
-            JobTypeId = 0;
-        }
-
         if (CompanyId <= 0)
         {
             Error = _localizer["Error_Signup_SelectValidCompany"];

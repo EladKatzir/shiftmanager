@@ -172,7 +172,7 @@
                     <h2 class="profile-card__title">@Localizer["EditProfile_ProfessionalInfo"]</h2>
                 </div>
                 <div class="profile-card__body">
-                    @if (Model.IsWorkforceMolecule && Model.AvailableJobTypes.Any())
+                    @if ((Model.IsWorkforceMolecule || Model.IsTechMolecule) && Model.AvailableJobTypes.Any())
                     {
                         <div class="form-group">
                             <label class="form-label">@Localizer["JobType"]</label>
@@ -184,21 +184,6 @@
                                 }
                             </select>
                             <span class="form-hint">@Localizer["JobTypeDescription"]</span>
-                        </div>
-                    }
-
-                    @if (Model.IsTechMolecule && Model.AvailableDepartments.Any())
-                    {
-                        <div class="form-group">
-                            <label class="form-label">@Localizer["Department"]</label>
-                            <select asp-for="DepartmentId" class="form-input">
-                                <option value="">-- @Localizer["NoDepartment"] --</option>
-                                @foreach (var dept in Model.AvailableDepartments)
-                                {
-                                    <option value="@dept.Id">@dept.Name</option>
-                                }
-                            </select>
-                            <span class="form-hint">@Localizer["DepartmentDescription"]</span>
                         </div>
                     }
 

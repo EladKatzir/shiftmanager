@@ -594,26 +594,14 @@ public class EditProfileModel : LocalizedPageModel
             IsWorkforceMolecule = moleculeType == Models.Support.MoleculeType.Workforce;
             IsTechMolecule = moleculeType == Models.Support.MoleculeType.Tech;
 
-            if (IsWorkforceMolecule)
+            if (IsWorkforceMolecule || IsTechMolecule)
             {
-                // Load job types for the user's molecule
+                // Load job types for the user's molecule (Tech molecules now use Companies + optional JobTypes like Workforce)
                 var areaDisplayName = company.Molecule.Area?.DisplayName ?? "";
                 var jobTypesForMolecule = await _jobTypeService.GetJobTypesForMoleculeAsync(company.MoleculeId!.Value);
                 AvailableJobTypes = jobTypesForMolecule
                     .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, areaDisplayName))
                     .ToList();
-            }
-            else if (IsTechMolecule)
-            {
-                // Load departments for the molecule
-                var moleculeId = company.MoleculeId!.Value;
-                AvailableDepartments = await _db.Departments
-                    .IgnoreQueryFilters()
-                    .Where(d => d.MoleculeId == moleculeId && d.IsActive)
-                    .Include(d => d.Molecule)
-                    .OrderBy(d => d.Name)
-                    .Select(d => new DepartmentOption(d.Id, d.DisplayName, d.Molecule.DisplayName))
-                    .ToListAsync();
             }
         }
 
