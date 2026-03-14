@@ -4,13 +4,13 @@ namespace ShiftManager.Data.SeedData;
 
 /// <summary>
 /// Seed data for tech shift types (Hanava, Delta, Yekev, Moviltech).
-/// These are department-scoped shift types used for technician scheduling.
+/// Eligibility is company-based (via EligibleCompanyIds) and rank-based (via RequiresOfficerRank).
 /// </summary>
 public static class TechShiftTypeSeed
 {
     /// <summary>
-    /// Gets the tech shift types to be seeded for a given company.
-    /// Each tech shift type maps to a department-scoped grant for eligibility filtering.
+    /// Gets the tech shift types to be seeded for a given molecule.
+    /// Eligibility rules (EligibleCompanyIds) are set post-save in ShiftyOrganizationSeed.
     /// </summary>
     public static List<ShiftType> GetTechShiftTypes(int companyId, int moleculeId)
     {

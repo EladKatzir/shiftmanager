@@ -236,6 +236,8 @@ public class TableModel : PageModel
 
             if (JobTypeId.HasValue)
                 instanceQuery = instanceQuery.Where(si => si.ShiftType.JobTypeId == JobTypeId.Value);
+            else
+                instanceQuery = instanceQuery.Where(si => si.ShiftType.JobTypeId == null);
 
             instances = await instanceQuery.ToListAsync();
 
