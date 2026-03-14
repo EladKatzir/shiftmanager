@@ -50,6 +50,16 @@ public static class QaTestUserSeed
             return;
         }
 
+        // Shikma-specific job types (molecule-scoped)
+        var shikmaProjectManager = jobTypes.FirstOrDefault(j => j.Name == "ProjectManager");
+        var shikmaHakam = jobTypes.FirstOrDefault(j => j.Name == "Hakam" && j.MoleculeId != null);
+
+        if (shikmaProjectManager == null || shikmaHakam == null)
+        {
+            logger.LogWarning("[QaTestUserSeed] Missing Shikma job types — expected ProjectManager, Hakam (molecule-scoped)");
+            return;
+        }
+
         // Molecules
         var molecules = await db.Molecules.Where(m => m.AreaId == area.Id).ToListAsync();
         var oren = molecules.FirstOrDefault(m => m.Name == "Oren");
@@ -74,10 +84,6 @@ public static class QaTestUserSeed
             companyMap.TryAdd(c.Name, c);
         }
 
-        // Departments (for tech molecule)
-        var departments = await db.Departments.Where(d => d.MoleculeId == shikma.Id).ToListAsync();
-        var deptMap = departments.ToDictionary(d => d.Name, d => d);
-
         // Role templates
         var roleTemplates = await db.RoleTemplates.ToListAsync();
         var templateMap = roleTemplates.ToDictionary(rt => rt.Key, rt => rt);
@@ -99,7 +105,7 @@ public static class QaTestUserSeed
         // ============================================================
         // 3. Create all test users
         // ============================================================
-        var users = BuildTestUserDefinitions(companyMap, templateMap, jobTypes, deptMap);
+        var users = BuildTestUserDefinitions(companyMap, templateMap, jobTypes, shikmaProjectManager, shikmaHakam);
         int created = 0, updated = 0, skipped = 0;
 
         foreach (var def in users)
@@ -132,7 +138,8 @@ public static class QaTestUserSeed
         Dictionary<string, Company> companies,
         Dictionary<string, RoleTemplate> templates,
         List<JobType> jobTypes,
-        Dictionary<string, Department> departments)
+        JobType shikmaProjectManager,
+        JobType shikmaHakam)
     {
         var alhut = jobTypes.FirstOrDefault(j => j.Name == "Alhut");
         var br = jobTypes.FirstOrDefault(j => j.Name == "BR");
@@ -160,8 +167,8 @@ public static class QaTestUserSeed
         AddUser(defs, "moladmin.ella@test", "MolAdmin Ella", UserRole.Manager, "Hitazmut", "Text", "MoleculeAdmin", companies, templates, alhut, br, text, hakam);
         AddUser(defs, "areaadmin@test", "Area Admin", UserRole.Manager, "Tzafona", null, "AreaAdmin", companies, templates, alhut, br, text, hakam);
 
-        // Department lead (tech molecule - no company, uses department)
-        AddDeptUser(defs, "deptlead.pie@test", "DeptLead Pie", UserRole.Manager, "DepartmentLead", "Pie", departments, templates);
+        // Tech/Shikma lead (company-scoped, no longer department-based)
+        AddShikmaUser(defs, "deptlead.pie@test", "DeptLead Pie", UserRole.Manager, "Pie", "BRDirector", companies, templates, shikmaProjectManager);
 
         // --- Employees (Tzafona - all 4 job types) ---
         AddUser(defs, "emp.tz.alhut@test", "Emp TZ Alhut", UserRole.Employee, "Tzafona", "Alhut", "Employee", companies, templates, alhut, br, text, hakam);
@@ -205,9 +212,9 @@ public static class QaTestUserSeed
         AddUser(defs, "emp.kabah.text@test", "Emp Kabah Text", UserRole.Employee, "Kabah", "Text", "Employee", companies, templates, alhut, br, text, hakam);
         AddUser(defs, "emp.matot.alhut@test", "Emp Matot Alhut", UserRole.Employee, "Matot", "Alhut", "Employee", companies, templates, alhut, br, text, hakam);
 
-        // --- Employees (Tech/Department) ---
-        AddDeptUser(defs, "emp.tech.pie@test", "Emp Tech Pie", UserRole.Employee, "Employee", "Pie", departments, templates);
-        AddDeptUser(defs, "emp.tech.tao@test", "Emp Tech Tao", UserRole.Employee, "Employee", "Tao", departments, templates);
+        // --- Employees (Tech/Shikma companies) ---
+        AddShikmaUser(defs, "emp.tech.pie@test", "Emp Tech Pie", UserRole.Employee, "Pie", "Employee", companies, templates, shikmaHakam);
+        AddShikmaUser(defs, "emp.tech.tao@test", "Emp Tech Tao", UserRole.Employee, "Tao", "Employee", companies, templates, shikmaHakam);
 
         // --- Trainees (Tzafona - all 4 job types) ---
         AddUser(defs, "trainee.alhut@test", "Trainee Alhut", UserRole.Trainee, "Tzafona", "Alhut", "Trainee", companies, templates, alhut, br, text, hakam);
@@ -263,31 +270,29 @@ public static class QaTestUserSeed
         });
     }
 
-    private static void AddDeptUser(
+    private static void AddShikmaUser(
         List<TestUserDef> defs, string email, string displayName, UserRole role,
-        string? templateKey, string deptName,
-        Dictionary<string, Department> departments,
-        Dictionary<string, RoleTemplate> templates)
+        string companyName, string? templateKey,
+        Dictionary<string, Company> companies,
+        Dictionary<string, RoleTemplate> templates,
+        JobType jobType)
     {
-        if (!departments.TryGetValue(deptName, out var dept))
+        if (!companies.TryGetValue(companyName, out var company))
             return;
 
         int? roleTemplateId = null;
         if (templateKey != null && templates.TryGetValue(templateKey, out var tmpl))
             roleTemplateId = tmpl.Id;
 
-        // Department users need a company — use HQ company for the molecule
-        // For now, use CompanyId = 0 as sentinel; we'll resolve it in EnsureUserAsync
         defs.Add(new TestUserDef
         {
             Email = email,
             DisplayName = displayName,
             Role = role,
-            CompanyId = 0, // Will be resolved to HQ company
-            JobTypeId = null,
+            CompanyId = company.Id,
+            JobTypeId = jobType.Id,
             RoleTemplateId = roleTemplateId,
-            DepartmentId = dept.Id,
-            MoleculeId = dept.MoleculeId
+            DepartmentId = null
         });
     }
 
@@ -342,35 +347,6 @@ public static class QaTestUserSeed
 
     private static async Task<string> EnsureUserAsync(AppDbContext db, TestUserDef def, ILogger logger)
     {
-        // Resolve department users — find HQ company for their molecule
-        if (def.CompanyId == 0 && def.MoleculeId.HasValue)
-        {
-            var hqCompany = await db.Companies
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(c => c.MoleculeId == def.MoleculeId.Value && c.IsHeadquarters);
-
-            if (hqCompany != null)
-            {
-                def.CompanyId = hqCompany.Id;
-            }
-            else
-            {
-                // Fallback: any company in the molecule
-                var anyCompany = await db.Companies
-                    .IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(c => c.MoleculeId == def.MoleculeId.Value);
-
-                if (anyCompany != null)
-                    def.CompanyId = anyCompany.Id;
-                else
-                {
-                    logger.LogWarning("[QaTestUserSeed] No company found for molecule {MolId}, skipping {Email}",
-                        def.MoleculeId, def.Email);
-                    return "skipped";
-                }
-            }
-        }
-
         var existing = await db.Users
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Email == def.Email);
@@ -453,6 +429,5 @@ public static class QaTestUserSeed
         public int? JobTypeId { get; set; }
         public int? DepartmentId { get; set; }
         public int? RoleTemplateId { get; set; }
-        public int? MoleculeId { get; set; }
     }
 }

@@ -111,7 +111,7 @@ public static class RoleTemplateSeed
                 IsSystem = true,
                 SortOrder = 25,
                 DerivedUserRole = UserRole.Manager,
-                IsVisibleInSignup = true,
+                IsVisibleInSignup = false,
                 CanBeAssignedByDefault = true
             },
             new RoleTemplate
