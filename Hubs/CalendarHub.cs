@@ -297,7 +297,7 @@ public class CalendarNotificationService : ICalendarNotificationService
 /// </summary>
 public static class CalendarGroups
 {
-    public static string Shifts(int moleculeId, int jobTypeId) => $"shifts-{moleculeId}-{jobTypeId}";
+    public static string Shifts(int moleculeId, int? jobTypeId) => $"shifts-{moleculeId}-{jobTypeId ?? 0}";
     public static string Chores(int moleculeId) => $"chores-{moleculeId}";
     public static string OnCall(int areaId) => $"oncall-{areaId}";
     public static string Overview(int companyId) => $"overview-{companyId}";

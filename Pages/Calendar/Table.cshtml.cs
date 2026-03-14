@@ -86,8 +86,10 @@ public class TableModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int? JobTypeId { get; set; }
 
-    /// <summary>True when Calendar/Table is operating in molecule-scoped mode (MoleculeId + JobTypeId both set).</summary>
-    public bool IsMoleculeMode => MoleculeId.HasValue && JobTypeId.HasValue;
+    public bool IsTechMolecule { get; set; }
+
+    /// <summary>True when Calendar/Table is operating in molecule-scoped mode (MoleculeId + JobTypeId both set, or Tech molecule).</summary>
+    public bool IsMoleculeMode => MoleculeId.HasValue && (JobTypeId.HasValue || IsTechMolecule);
 
     public List<Molecule> AvailableMolecules { get; set; } = new();
     public List<JobType> AvailableJobTypes { get; set; } = new();
@@ -198,6 +200,7 @@ public class TableModel : PageModel
             }
 
             SelectedMolecule = AvailableMolecules.FirstOrDefault(m => m.Id == MoleculeId);
+            IsTechMolecule = SelectedMolecule?.Type == MoleculeType.Tech;
 
             // Load job types for selected molecule's area
             if (SelectedMolecule != null)
@@ -221,18 +224,20 @@ public class TableModel : PageModel
         if (IsMoleculeMode)
         {
             var molId = MoleculeId!.Value;
-            var jtId = JobTypeId!.Value;
 
             // MOLECULE MODE: load shifts across all companies in the molecule for this job type
-            // SECURITY-AUDITED: SAFE — IgnoreQueryFilters re-scoped by validated MoleculeId + JobTypeId;
+            // SECURITY-AUDITED: SAFE — IgnoreQueryFilters re-scoped by validated MoleculeId + JobTypeId (or Tech molecule null);
             // molecule access validated via AvailableMolecules (grant-derived) above
-            instances = await _db.ShiftInstances
+            var instanceQuery = _db.ShiftInstances
                 .IgnoreQueryFilters()
                 .Include(si => si.ShiftType)
                 .Where(si => si.ShiftType.MoleculeId == molId
-                    && si.ShiftType.JobTypeId == jtId
-                    && si.WorkDate >= StartDate && si.WorkDate <= EndDate)
-                .ToListAsync();
+                    && si.WorkDate >= StartDate && si.WorkDate <= EndDate);
+
+            if (JobTypeId.HasValue)
+                instanceQuery = instanceQuery.Where(si => si.ShiftType.JobTypeId == JobTypeId.Value);
+
+            instances = await instanceQuery.ToListAsync();
 
             var shiftTypeIdsWithInstances = instances.Select(si => si.ShiftTypeId).Distinct().ToHashSet();
 
@@ -259,10 +264,14 @@ public class TableModel : PageModel
                 .ToListAsync())
                 .ToDictionary(c => c.Id, c => c.LocalizedName);
 
-            Employees = await _db.Users
+            var employeeQuery = _db.Users
                 .IgnoreQueryFilters()
-                .Where(u => u.IsActive && moleculeCompanyIds.Contains(u.CompanyId)
-                    && u.JobTypeId == jtId)
+                .Where(u => u.IsActive && moleculeCompanyIds.Contains(u.CompanyId));
+
+            if (JobTypeId.HasValue)
+                employeeQuery = employeeQuery.Where(u => u.JobTypeId == JobTypeId.Value);
+
+            Employees = await employeeQuery
                 .OrderBy(u => u.CompanyId)
                 .ThenBy(u => u.DisplayName)
                 .ToListAsync();
@@ -811,10 +820,10 @@ public class TableModel : PageModel
             {
                 // SECURITY-AUDITED: SAFE — entity lookup by unique ID
                 var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
-                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                if (shiftType?.MoleculeId != null)
                 {
                     var localizedShiftName = await LocalizeShiftTypeName(shiftType);
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
                             ShiftInstanceId: instance.Id,
@@ -878,10 +887,10 @@ public class TableModel : PageModel
             // Send real-time notification (fire-and-forget)
             try
             {
-                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                if (shiftType?.MoleculeId != null)
                 {
                     var localizedShiftName = await LocalizeShiftTypeName(shiftType);
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
                             ShiftInstanceId: instanceId,
@@ -935,10 +944,10 @@ public class TableModel : PageModel
             try
             {
                 var shiftType = assignment.ShiftInstance.ShiftType;
-                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                if (shiftType?.MoleculeId != null)
                 {
                     var localizedShiftName = await LocalizeShiftTypeName(shiftType);
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
                             ShiftInstanceId: assignment.ShiftInstance.Id,
@@ -1069,13 +1078,13 @@ public class TableModel : PageModel
             {
                 // SECURITY-AUDITED: SAFE — entity lookup by unique ID
                 var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == instance.ShiftTypeId);
-                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                if (shiftType?.MoleculeId != null)
                 {
                     // SECURITY-AUDITED: SAFE — scoped by validated instance.Id
                     var assignedCount = await _db.ShiftAssignments
                         .IgnoreQueryFilters()
                         .CountAsync(a => a.ShiftInstanceId == instance.Id && a.UserId != null);
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     await _calendarNotification.NotifyCapacityChangedAsync(groupName,
                         new CalendarCapacityChangedEvent(
                             ShiftTypeId: shiftType.Id,
@@ -1162,9 +1171,9 @@ public class TableModel : PageModel
             {
                 // SECURITY-AUDITED: SAFE — entity lookup by unique ID; IgnoreQueryFilters needed for cross-company notification
                 var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == deletedShiftTypeId);
-                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                if (shiftType?.MoleculeId != null)
                 {
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     await _calendarNotification.NotifyCapacityChangedAsync(groupName,
                         new CalendarCapacityChangedEvent(
                             ShiftTypeId: shiftType.Id,
@@ -1252,10 +1261,10 @@ public class TableModel : PageModel
             try
             {
                 var shiftType = assignment.ShiftInstance.ShiftType;
-                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                if (shiftType?.MoleculeId != null)
                 {
                     var localizedShiftName = await LocalizeShiftTypeName(shiftType);
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
                             ShiftInstanceId: assignment.ShiftInstance.Id,
@@ -1315,10 +1324,10 @@ public class TableModel : PageModel
             try
             {
                 var shiftType = assignment.ShiftInstance.ShiftType;
-                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                if (shiftType?.MoleculeId != null)
                 {
                     var localizedShiftName = await LocalizeShiftTypeName(shiftType);
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
                             ShiftInstanceId: assignment.ShiftInstance.Id,
@@ -1408,10 +1417,10 @@ public class TableModel : PageModel
             try
             {
                 var shiftType = assignment.ShiftInstance.ShiftType;
-                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                if (shiftType?.MoleculeId != null)
                 {
                     var localizedShiftName = await LocalizeShiftTypeName(shiftType);
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     await _calendarNotification.NotifyAssignmentChangedAsync(groupName,
                         new CalendarAssignmentChangedEvent(
                             ShiftInstanceId: assignment.ShiftInstance.Id,
@@ -1556,9 +1565,9 @@ public class TableModel : PageModel
             // Send real-time notification (fire-and-forget)
             try
             {
-                if (shiftType.MoleculeId != null && shiftType.JobTypeId != null)
+                if (shiftType.MoleculeId != null)
                 {
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     await _calendarNotification.NotifyCapacityChangedAsync(groupName,
                         new CalendarCapacityChangedEvent(
                             ShiftTypeId: shiftType.Id,
@@ -2278,10 +2287,10 @@ public class TableModel : PageModel
             try
             {
                 var shiftType = sourceInstance.ShiftType;
-                if (shiftType?.MoleculeId != null && shiftType?.JobTypeId != null)
+                if (shiftType?.MoleculeId != null)
                 {
                     var localizedShiftName = await LocalizeShiftTypeName(shiftType);
-                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+                    var groupName = CalendarGroups.Shifts(shiftType.MoleculeId.Value, shiftType.JobTypeId);
                     // Send one notification per filled target date
                     foreach (var targetDate in request.TargetDates)
                     {

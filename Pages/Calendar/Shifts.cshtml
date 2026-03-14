@@ -32,6 +32,8 @@
                 </select>
             </div>
 
+            @if (!Model.IsTechMolecule)
+            {
             <div class="cal-toolbar__selector">
                 <label for="jobTypeSelect">@Localizer["JobType"]</label>
                 <select id="jobTypeSelect" class="form-select" onchange="updateCalendarFilters()">
@@ -42,6 +44,7 @@
                     }
                 </select>
             </div>
+            }
 
             <div class="cal-toolbar__selector">
                 <label for="viewModeSelect">@Localizer["ViewMode"]</label>
@@ -231,7 +234,7 @@ else
                 calendarType: 'shifts',
                 scope: {
                     moleculeId: @Model.MoleculeId,
-                    jobTypeId: @(Model.JobTypeId?.ToString() ?? "null")
+                    jobTypeId: @(Model.JobTypeId?.ToString() ?? "0")
                 },
                 onRefresh: refreshCalendarData,
                 handlers: {
@@ -254,7 +257,7 @@ else
             const startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
             const endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
             const moleculeId = @Model.MoleculeId;
-            const jobTypeId = @(Model.JobTypeId?.ToString() ?? "null");
+            const jobTypeId = @(Model.JobTypeId?.ToString() ?? "0");
 
             try {
                 const response = await fetch(
@@ -320,7 +323,8 @@ else
         // Update calendar with new filter selections
         function updateCalendarFilters() {
             const moleculeId = document.getElementById('moleculeSelect').value;
-            const jobTypeId = document.getElementById('jobTypeSelect').value;
+            const jobTypeSelect = document.getElementById('jobTypeSelect');
+            const jobTypeId = jobTypeSelect ? jobTypeSelect.value : '0';
             const viewMode = document.getElementById('viewModeSelect').value;
 
             const params = new URLSearchParams(window.location.search);

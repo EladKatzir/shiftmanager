@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using ShiftManager.ViewComponents;
@@ -91,6 +92,8 @@ public class ShiftsModel : PageModel
     public List<ShiftType> ShiftTypes { get; set; } = new();
     public Dictionary<int, string> LocalizedShiftTypeNames { get; set; } = new();
 
+    public bool IsTechMolecule { get; set; }
+
     // Navigation
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
@@ -152,6 +155,7 @@ public class ShiftsModel : PageModel
         }
 
         SelectedMolecule = AvailableMolecules.FirstOrDefault(m => m.Id == MoleculeId);
+        IsTechMolecule = SelectedMolecule?.Type == MoleculeType.Tech;
 
         // Load available job types for selected molecule
         await LoadAvailableJobTypesAsync(SelectedMolecule?.Id);
