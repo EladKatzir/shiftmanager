@@ -94,6 +94,15 @@ public static class ShiftyOrganizationSeed
         db.Molecules.AddRange(oren, ella, harava, shaked, gefen, shikma, noc, shiklut, system);
         await db.SaveChangesAsync();
 
+        // Shikma-specific job types (organizational only — no shift eligibility impact)
+        var shikmaJobTypes = new List<JobType>
+        {
+            new() { AreaId = area.Id, MoleculeId = shikma.Id, Name = "ProjectManager", DisplayName = "מנהל פרוייקט", SortOrder = 10 },
+            new() { AreaId = area.Id, MoleculeId = shikma.Id, Name = "Hakam", DisplayName = "חק\"ם", SortOrder = 20 }
+        };
+        db.JobTypes.AddRange(shikmaJobTypes);
+        await db.SaveChangesAsync();
+
         // ============================================================
         // COMPANIES (for Workforce Molecules)
         // ============================================================
@@ -164,18 +173,15 @@ public static class ShiftyOrganizationSeed
         await db.SaveChangesAsync();
 
         // ============================================================
-        // DEPARTMENTS (for Tech Molecule - Shikma)
+        // COMPANIES (for Tech Molecule - Shikma)
         // ============================================================
-        var shikmaDepartments = new List<Department>
-        {
-            new() { MoleculeId = shikma.Id, Name = "Pie", DisplayName = "פאי" },
-            new() { MoleculeId = shikma.Id, Name = "Tao", DisplayName = "טאו" },
-            new() { MoleculeId = shikma.Id, Name = "Yekeb", DisplayName = "יקב" },
-            new() { MoleculeId = shikma.Id, Name = "Snir", DisplayName = "שניר" },
-            new() { MoleculeId = shikma.Id, Name = "Arbel", DisplayName = "ארבל" },
-            new() { MoleculeId = shikma.Id, Name = "Samapkam", DisplayName = "סמפקמה" }
-        };
-        db.Departments.AddRange(shikmaDepartments);
+        var shikYekev = new Company { MoleculeId = shikma.Id, Name = "Yekev", DisplayName = "יקב", NameHe = "יקב" };
+        var shikSnir = new Company { MoleculeId = shikma.Id, Name = "Snir", DisplayName = "שניר", NameHe = "שניר" };
+        var shikArbel = new Company { MoleculeId = shikma.Id, Name = "Arbel", DisplayName = "ארבל", NameHe = "ארבל" };
+        var shikPie = new Company { MoleculeId = shikma.Id, Name = "Pie", DisplayName = "פאי", NameHe = "פאי" };
+        var shikSamapkamia = new Company { MoleculeId = shikma.Id, Name = "Samapkamia", DisplayName = "סמפקמיה", NameHe = "סמפקמיה" };
+        var shikTao = new Company { MoleculeId = shikma.Id, Name = "Tao", DisplayName = "טאו", NameHe = "טאו" };
+        db.Companies.AddRange(shikYekev, shikSnir, shikArbel, shikPie, shikSamapkamia, shikTao);
         await db.SaveChangesAsync();
 
         // ============================================================
