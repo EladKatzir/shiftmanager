@@ -18,8 +18,6 @@ public class ShiftType : IBelongsToCompany
     public const string TECH_DELTA = "DELTA";
     public const string TECH_YEKEV = "YEKEV";
     public const string TECH_MOVILTECH = "MOVILTECH";
-    public const string TECH_SUPPORT = "SUPPORT";
-    public const string TECH_ONCALL = "ONCALL";
 
     public int Id { get; set; }
     public int CompanyId { get; set; }
@@ -30,6 +28,18 @@ public class ShiftType : IBelongsToCompany
     public int? JobTypeId { get; set; }        // For workforce shifts (Alhut, Text)
     public int? ShiftGroupingId { get; set; }  // For grouped shifts (Tzafon, Darom)
     public string? TechShiftType { get; set; } // For tech shifts (Hanava, Delta, Support)
+
+    /// <summary>
+    /// JSON array of CompanyIds whose users can be assigned this shift type.
+    /// Null = all companies in the molecule are eligible (default workforce behavior).
+    /// </summary>
+    public string? EligibleCompanyIds { get; set; }
+
+    /// <summary>
+    /// If true, only users with officer rank (>= SegenMishne) can be assigned.
+    /// Follows existing pattern from OnDutyTypeConfig.RequiresOfficerRank.
+    /// </summary>
+    public bool RequiresOfficerRank { get; set; } = false;
 
     /// <summary>
     /// Custom display name for this shift type (company-specific).
@@ -109,6 +119,23 @@ public class ShiftType : IBelongsToCompany
                 KEY_OFFLINE => 99, // Always last
                 _ => 50 // Custom shifts in the middle
             };
+        }
+    }
+
+    /// <summary>
+    /// Parses EligibleCompanyIds JSON into a list of ints.
+    /// Returns null if no restriction (all companies eligible).
+    /// </summary>
+    public List<int>? GetEligibleCompanyIdList()
+    {
+        if (string.IsNullOrEmpty(EligibleCompanyIds)) return null;
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<int>>(EligibleCompanyIds);
+        }
+        catch
+        {
+            return null;
         }
     }
 

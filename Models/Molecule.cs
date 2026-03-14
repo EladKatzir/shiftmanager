@@ -16,7 +16,7 @@ public class Molecule
     // Navigation
     public Area Area { get; set; } = null!;
     public List<Company> Companies { get; set; } = new();       // Workforce molecules
-    public List<Department> Departments { get; set; } = new();  // Tech molecules
+    public List<Department> Departments { get; set; } = new();  // Legacy: was used for Tech molecules before convergence
 
     public List<ShiftGrouping> ShiftGroupings { get; set; } = new();
 
