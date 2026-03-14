@@ -124,10 +124,10 @@ public class BlueprintsModel : PageModel
                 NewShiftKey = $"{baseKey}_{suffix++}";
             }
 
-            // Validate molecule scope: both or neither must be set
-            if (NewShiftMoleculeId.HasValue != NewShiftJobTypeId.HasValue)
+            // Validate molecule scope: JobTypeId requires MoleculeId, but MoleculeId alone is valid (Tech molecules don't use job types)
+            if (!NewShiftMoleculeId.HasValue && NewShiftJobTypeId.HasValue)
             {
-                return RedirectToPage(new { error = "Both Molecule and Job Type must be selected together, or leave both empty" });
+                return RedirectToPage(new { error = "Job Type cannot be set without a Molecule" });
             }
 
             // Generate NameKey for localization
