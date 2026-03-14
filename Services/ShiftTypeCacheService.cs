@@ -11,9 +11,9 @@ namespace ShiftManager.Services;
 public interface IShiftTypeCacheService
 {
     Task<List<ShiftType>> GetShiftTypesAsync(int companyId);
-    Task<List<ShiftType>> GetShiftTypesForMoleculeAsync(int moleculeId, int jobTypeId);
+    Task<List<ShiftType>> GetShiftTypesForMoleculeAsync(int moleculeId, int? jobTypeId);
     void InvalidateCache(int companyId);
-    void InvalidateMoleculeCache(int moleculeId, int jobTypeId);
+    void InvalidateMoleculeCache(int moleculeId, int? jobTypeId);
 }
 
 /// <summary>
@@ -37,6 +37,9 @@ public class ShiftTypeCacheService : IShiftTypeCacheService
         _cache = cache;
         _logger = logger;
     }
+
+    private static string MoleculeCacheKey(int moleculeId, int? jobTypeId)
+        => $"ShiftTypes_Molecule_{moleculeId}_{jobTypeId ?? 0}";
 
     /// <summary>
     /// Get shift types for a company, using cache when available
@@ -75,10 +78,11 @@ public class ShiftTypeCacheService : IShiftTypeCacheService
     /// <summary>
     /// Get shift types for a molecule+jobtype combination, using cache when available.
     /// Uses IgnoreQueryFilters to load across company boundaries within the molecule.
+    /// When jobTypeId is null, loads Tech shift types (JobTypeId == null) for the molecule.
     /// </summary>
-    public async Task<List<ShiftType>> GetShiftTypesForMoleculeAsync(int moleculeId, int jobTypeId)
+    public async Task<List<ShiftType>> GetShiftTypesForMoleculeAsync(int moleculeId, int? jobTypeId)
     {
-        string cacheKey = $"ShiftTypes_Molecule_{moleculeId}_{jobTypeId}";
+        string cacheKey = MoleculeCacheKey(moleculeId, jobTypeId);
 
         if (_cache.TryGetValue(cacheKey, out List<ShiftType>? shiftTypes) && shiftTypes != null)
         {
@@ -90,10 +94,17 @@ public class ShiftTypeCacheService : IShiftTypeCacheService
 
         // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed for cross-company ShiftType loading;
         // re-scoped by explicit moleculeId and jobTypeId parameters
-        shiftTypes = await _db.ShiftTypes
+        var query = _db.ShiftTypes
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(st => st.MoleculeId == moleculeId && st.JobTypeId == jobTypeId)
+            .Where(st => st.MoleculeId == moleculeId);
+
+        if (jobTypeId.HasValue)
+            query = query.Where(st => st.JobTypeId == jobTypeId.Value);
+        else
+            query = query.Where(st => st.JobTypeId == null); // Tech shifts
+
+        shiftTypes = await query
             .OrderBy(st => st.Start)
             .ToListAsync();
 
@@ -123,10 +134,11 @@ public class ShiftTypeCacheService : IShiftTypeCacheService
     /// <summary>
     /// Invalidate the molecule-scoped shift types cache.
     /// Call this when shift types are created, updated, or deleted for a molecule+jobtype combination.
+    /// When jobTypeId is null, invalidates the Tech shift types cache entry for the molecule.
     /// </summary>
-    public void InvalidateMoleculeCache(int moleculeId, int jobTypeId)
+    public void InvalidateMoleculeCache(int moleculeId, int? jobTypeId)
     {
-        string cacheKey = $"ShiftTypes_Molecule_{moleculeId}_{jobTypeId}";
+        string cacheKey = MoleculeCacheKey(moleculeId, jobTypeId);
         _cache.Remove(cacheKey);
         _logger.LogInformation("Invalidated ShiftTypes molecule cache for molecule {MoleculeId} jobType {JobTypeId}", moleculeId, jobTypeId);
     }

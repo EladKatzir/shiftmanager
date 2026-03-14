@@ -204,9 +204,10 @@ public class TableModel : PageModel
             {
                 await LoadAvailableJobTypesAsync(SelectedMolecule.Id);
 
-                // Validate selected job type
-                if (JobTypeId.HasValue && !AvailableJobTypes.Any(jt => jt.Id == JobTypeId))
-                    JobTypeId = null;
+                // Validate selected job type — also fall back when user has no JobTypeId
+                // (e.g. Tech molecule users who don't get a JobTypeId during signup)
+                if (!JobTypeId.HasValue || !AvailableJobTypes.Any(jt => jt.Id == JobTypeId))
+                    JobTypeId = AvailableJobTypes.FirstOrDefault()?.Id;
 
                 SelectedJobType = AvailableJobTypes.FirstOrDefault(jt => jt.Id == JobTypeId);
             }
@@ -236,7 +237,7 @@ public class TableModel : PageModel
             var shiftTypeIdsWithInstances = instances.Select(si => si.ShiftTypeId).Distinct().ToHashSet();
 
             // Load molecule-scoped shift types
-            var allShiftTypes = await _shiftTypeCache.GetShiftTypesForMoleculeAsync(molId, jtId);
+            var allShiftTypes = await _shiftTypeCache.GetShiftTypesForMoleculeAsync(molId, JobTypeId);
             ShiftTypes = allShiftTypes
                 // Show all molecule shift types (not just those with instances — leads need to see unfilled shifts too)
                 .OrderBy(st => st.IsOffline ? 1 : 0)
@@ -1486,8 +1487,8 @@ public class TableModel : PageModel
 
             // Invalidate caches
             _shiftTypeCache.InvalidateCache(shiftType.CompanyId);
-            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
-                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+            if (shiftType.MoleculeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
 
             return new JsonResult(new { success = true });
         }
@@ -1549,8 +1550,8 @@ public class TableModel : PageModel
 
             // Invalidate caches so the new shift type appears immediately
             _shiftTypeCache.InvalidateCache(companyId);
-            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
-                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+            if (shiftType.MoleculeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
 
             // Send real-time notification (fire-and-forget)
             try

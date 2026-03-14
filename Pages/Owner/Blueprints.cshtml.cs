@@ -153,8 +153,8 @@ public class BlueprintsModel : PageModel
 
             // Invalidate caches
             _shiftTypeCache.InvalidateCache(companyId);
-            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
-                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+            if (shiftType.MoleculeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
 
             // Create localization overrides for both cultures
             await _localizationService.UpsertOverrideAsync(
@@ -208,8 +208,8 @@ public class BlueprintsModel : PageModel
 
             // Invalidate caches (name changes affect display in calendar views)
             _shiftTypeCache.InvalidateCache(companyId);
-            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
-                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+            if (shiftType.MoleculeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
 
             _logger.LogInformation(
                 "Updated ShiftType {Key} names for Company {CompanyId}",
@@ -261,8 +261,8 @@ public class BlueprintsModel : PageModel
 
             // Invalidate caches (time changes affect calendar rendering)
             _shiftTypeCache.InvalidateCache(companyId);
-            if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
-                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId.Value);
+            if (shiftType.MoleculeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
 
             _logger.LogInformation(
                 "Updated ShiftType {Key} times for Company {CompanyId}",
@@ -394,8 +394,8 @@ public class BlueprintsModel : PageModel
 
             // Invalidate caches
             _shiftTypeCache.InvalidateCache(companyId);
-            if (deletedMoleculeId.HasValue && deletedJobTypeId.HasValue)
-                _shiftTypeCache.InvalidateMoleculeCache(deletedMoleculeId.Value, deletedJobTypeId.Value);
+            if (deletedMoleculeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(deletedMoleculeId.Value, deletedJobTypeId);
 
             _logger.LogInformation(
                 "DELETE SUCCESS: ShiftType removed from database - ShiftTypeId={ShiftTypeId}, Key={Key}",
@@ -527,8 +527,8 @@ public class BlueprintsModel : PageModel
 
             // Invalidate caches
             _shiftTypeCache.InvalidateCache(companyId);
-            if (oldMoleculeId.HasValue && oldJobTypeId.HasValue)
-                _shiftTypeCache.InvalidateMoleculeCache(oldMoleculeId.Value, oldJobTypeId.Value);
+            if (oldMoleculeId.HasValue)
+                _shiftTypeCache.InvalidateMoleculeCache(oldMoleculeId.Value, oldJobTypeId);
 
             _logger.LogInformation(
                 "Unpublished ShiftType {Key} from molecule scope",
