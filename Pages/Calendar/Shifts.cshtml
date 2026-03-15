@@ -234,7 +234,7 @@ else
                 calendarType: 'shifts',
                 scope: {
                     moleculeId: @Model.MoleculeId,
-                    jobTypeId: @(Model.JobTypeId?.ToString() ?? "0")
+                    jobTypeId: @(Model.JobTypeId?.ToString() ?? "null")
                 },
                 onRefresh: refreshCalendarData,
                 handlers: {
@@ -260,10 +260,9 @@ else
             const jobTypeId = @(Model.JobTypeId?.ToString() ?? "0");
 
             try {
-                const response = await fetch(
-                    `/Api/Calendar/GetShiftsData?moleculeId=${moleculeId}&jobTypeId=${jobTypeId}&startDate=${startDate}&endDate=${endDate}`,
-                    { credentials: 'same-origin' }
-                );
+                let url = `/Api/Calendar/GetShiftsData?moleculeId=${moleculeId}&startDate=${startDate}&endDate=${endDate}`;
+                if (jobTypeId) url += `&jobTypeId=${jobTypeId}`;
+                const response = await fetch(url, { credentials: 'same-origin' });
 
                 if (!response.ok) throw new Error('Failed to refresh');
 
@@ -324,12 +323,16 @@ else
         function updateCalendarFilters() {
             const moleculeId = document.getElementById('moleculeSelect').value;
             const jobTypeSelect = document.getElementById('jobTypeSelect');
-            const jobTypeId = jobTypeSelect ? jobTypeSelect.value : '0';
+            const jobTypeId = jobTypeSelect ? jobTypeSelect.value : '';
             const viewMode = document.getElementById('viewModeSelect').value;
 
             const params = new URLSearchParams(window.location.search);
             params.set('MoleculeId', moleculeId);
-            params.set('JobTypeId', jobTypeId);
+            if (jobTypeId) {
+                params.set('JobTypeId', jobTypeId);
+            } else {
+                params.delete('JobTypeId'); // Tech molecules — no JobType filter
+            }
             params.set('ViewMode', viewMode);
 
             window.location.href = window.location.pathname + '?' + params.toString();

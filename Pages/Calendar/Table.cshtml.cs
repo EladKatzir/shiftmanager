@@ -202,14 +202,17 @@ public class TableModel : PageModel
             SelectedMolecule = AvailableMolecules.FirstOrDefault(m => m.Id == MoleculeId);
             IsTechMolecule = SelectedMolecule?.Type == MoleculeType.Tech;
 
+            // Tech molecules don't use JobType for shift filtering — force null
+            if (IsTechMolecule)
+                JobTypeId = null;
+
             // Load job types for selected molecule's area
             if (SelectedMolecule != null)
             {
                 await LoadAvailableJobTypesAsync(SelectedMolecule.Id);
 
-                // Validate selected job type — also fall back when user has no JobTypeId
-                // (e.g. Tech molecule users who don't get a JobTypeId during signup)
-                if (!JobTypeId.HasValue || !AvailableJobTypes.Any(jt => jt.Id == JobTypeId))
+                // Validate selected job type (Workforce only — Tech already null)
+                if (!IsTechMolecule && (!JobTypeId.HasValue || !AvailableJobTypes.Any(jt => jt.Id == JobTypeId)))
                     JobTypeId = AvailableJobTypes.FirstOrDefault()?.Id;
 
                 SelectedJobType = AvailableJobTypes.FirstOrDefault(jt => jt.Id == JobTypeId);

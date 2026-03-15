@@ -157,12 +157,18 @@ public class ShiftsModel : PageModel
         SelectedMolecule = AvailableMolecules.FirstOrDefault(m => m.Id == MoleculeId);
         IsTechMolecule = SelectedMolecule?.Type == MoleculeType.Tech;
 
+        // Tech molecules don't use JobType for shift filtering — their shift types have JobTypeId = null.
+        // Force null to prevent the user's personal JobTypeId (e.g., Hakam) from filtering out Tech shifts.
+        if (IsTechMolecule)
+        {
+            JobTypeId = null;
+        }
+
         // Load available job types for selected molecule
         await LoadAvailableJobTypesAsync(SelectedMolecule?.Id);
 
-        // Validate selected job type — also fall back when user has no JobTypeId
-        // (e.g. Tech molecule users who don't get a JobTypeId during signup)
-        if (!JobTypeId.HasValue || !AvailableJobTypes.Any(jt => jt.Id == JobTypeId))
+        // Validate selected job type (Workforce only — Tech already set to null above)
+        if (!IsTechMolecule && (!JobTypeId.HasValue || !AvailableJobTypes.Any(jt => jt.Id == JobTypeId)))
         {
             JobTypeId = AvailableJobTypes.FirstOrDefault()?.Id;
         }
