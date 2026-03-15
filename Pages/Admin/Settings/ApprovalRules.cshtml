@@ -26,7 +26,7 @@
         .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
         .form-group { margin-bottom: 1rem; }
         .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
-        .form-input, .form-select { width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; }
+        .form-input, .form-select { width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text); background-color: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; }
         .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
         .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
@@ -105,7 +105,7 @@
 
             <div class="form-group">
                 <label class="form-label"><loc key="ApprovalRoute" /></label>
-                <input asp-for="Form.ApproverGrantKey" class="form-input" placeholder="ApproveVacations" />
+                <input asp-for="Form.ApproverGrantKey" class="form-input" placeholder="@Localizer["Placeholder_GrantKeyExample"]" />
                 <span class="form-hint"><loc key="ApprovalRouteHint" /></span>
             </div>
 
@@ -128,7 +128,7 @@
 
             <div class="form-group">
                 <label class="form-label"><loc key="SecondApproverGrant" /></label>
-                <input asp-for="Form.SecondApproverGrantKey" class="form-input" placeholder="ApproveExtendedLeave" />
+                <input asp-for="Form.SecondApproverGrantKey" class="form-input" placeholder="@Localizer["Placeholder_SecondGrantKeyExample"]" />
             </div>
 
             <div class="form-group" style="display: flex; align-items: end;">

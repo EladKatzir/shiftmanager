@@ -103,24 +103,15 @@ public class LoginModel : LocalizedPageModel
         }
         else
         {
-            // Fully configured - test connection
-            _logger.LogDebug("Testing Griffin connection to {BaseUrl}", griffinConfig.BaseUrl);
-
-            var result = await _griffinConfigService.TestConnectionAsync(
-                griffinConfig.BaseUrl, griffinConfig.TimeoutSeconds);
-
-            ShowGriffinButton = result.Success;
-            ShowGriffinUnavailableMessage = !result.Success;
-
-            if (result.Success)
-            {
-                _logger.LogDebug("Griffin ADFS is available and configured correctly");
-            }
-            else
-            {
-                _logger.LogWarning("Griffin ADFS connection test failed for {BaseUrl} (timeout: {Timeout}s)",
-                    griffinConfig.BaseUrl, griffinConfig.TimeoutSeconds);
-            }
+            // Fully configured — show the button based on configuration alone.
+            // Connectivity is validated when the user clicks "Login with ADFS"
+            // and can be diagnosed via /GriffinDiagnostic.
+            // Previously, a live HTTP connection test ran here on every page load,
+            // which silently hid the button on transient network/SSL/timeout failures.
+            ShowGriffinButton = true;
+            ShowGriffinUnavailableMessage = false;
+            _logger.LogDebug("Griffin ADFS is configured and enabled for BaseUrl={BaseUrl}, showing login option",
+                griffinConfig.BaseUrl);
         }
 
         // ✅ SUB-PHASE 18.14: Prevent browser caching to ensure link renders correctly

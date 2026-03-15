@@ -595,7 +595,7 @@ function filterGrants(query) {
 function addGrant() {
     var select = document.getElementById('grantTypeSelect');
     var grantTypeId = parseInt(select.value);
-    if (!grantTypeId) { showToast('Please select a grant type', 'error'); return; }
+    if (!grantTypeId) { showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["PleaseSelectGrantType"].Value)), 'error'); return; }
 
     var scopeMode = parseInt(document.getElementById('addScopeMode').value);
     var canOwn = document.getElementById('addCanOwn').checked;
@@ -625,13 +625,13 @@ function addGrant() {
     })
     .then(function(data) {
         if (data.success) {
-            showToast('Grant added', 'success');
+            showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Grant_Added"].Value)), 'success');
             window.location.reload();
         } else {
-            showToast(data.error || 'Failed to add grant', 'error');
+            showToast(data.error || @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Grant_FailedToAdd"].Value)), 'error');
         }
     })
-    .catch(function(err) { showToast('Error: ' + err.message, 'error'); });
+    .catch(function(err) { showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_Prefix"].Value)) + err.message, 'error'); });
 }
 
 function updateGrant(grantId) {
@@ -677,18 +677,18 @@ function updateGrant(grantId) {
                 row.classList.add('saved');
                 setTimeout(function() { row.classList.remove('saved'); }, 600);
             } else {
-                showToast(data.error || 'Failed to update', 'error');
+                showToast(data.error || @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_FailedToUpdate"].Value)), 'error');
             }
         })
         .catch(function(err) {
             row.classList.remove('saving');
-            showToast('Error: ' + err.message, 'error');
+            showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_Prefix"].Value)) + err.message, 'error');
         });
     }, 300);
 }
 
 function removeGrant(grantId) {
-    if (!confirm('Remove this grant from the template?')) return;
+    if (!confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Grant_RemoveConfirm"].Value)))) return;
 
     // Clear any pending debounce timer for this grant
     if (updateTimers[grantId]) {
@@ -711,13 +711,13 @@ function removeGrant(grantId) {
     })
     .then(function(data) {
         if (data.success) {
-            showToast('Grant removed', 'success');
+            showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Grant_Removed"].Value)), 'success');
             window.location.reload();
         } else {
-            showToast(data.error || 'Failed to remove', 'error');
+            showToast(data.error || @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Grant_FailedToRemove"].Value)), 'error');
         }
     })
-    .catch(function(err) { showToast('Error: ' + err.message, 'error'); });
+    .catch(function(err) { showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Error_Prefix"].Value)) + err.message, 'error'); });
 }
 
 var availableJobTypes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
@@ -733,7 +733,7 @@ function addLabelRow() {
     select.name = 'LabelJobTypeIds';
     var defaultOpt = document.createElement('option');
     defaultOpt.value = '0';
-    defaultOpt.textContent = '-- Select --';
+    defaultOpt.textContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Select_Default"].Value));
     select.appendChild(defaultOpt);
     availableJobTypes.forEach(function(jt) {
         var opt = document.createElement('option');
@@ -745,12 +745,12 @@ function addLabelRow() {
     var inputEN = document.createElement('input');
     inputEN.type = 'text';
     inputEN.name = 'LabelDisplayNamesEN';
-    inputEN.placeholder = 'English';
+    inputEN.placeholder = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Placeholder_EnglishName"].Value));
 
     var inputHE = document.createElement('input');
     inputHE.type = 'text';
     inputHE.name = 'LabelDisplayNamesHE';
-    inputHE.placeholder = 'Hebrew';
+    inputHE.placeholder = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Placeholder_HebrewName"].Value));
     inputHE.dir = 'rtl';
 
     var removeBtn = document.createElement('button');

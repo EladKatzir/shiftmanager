@@ -52,6 +52,7 @@ public class IndexModel : PageModel
     public bool HasManageAnnouncements { get; set; }
     public bool HasSystemConfiguration { get; set; }
     public bool HasManageOnDuty { get; set; }
+    public bool HasManageBlueprints { get; set; }
 
     // Feature flag states for conditional hub cards
     public bool DutyRotationEnabled { get; set; }
@@ -127,6 +128,8 @@ public class IndexModel : PageModel
             HasManageAnnouncements = await _grantService.HasGrantAsync(userId, "ManageAnnouncements");
             HasSystemConfiguration = await _grantService.HasGrantAsync(userId, "SystemConfiguration");
             HasManageOnDuty = await _grantService.HasGrantAsync(userId, "ManageOnDuty");
+            // Blueprints page uses [Authorize(Policy = "Grant:ManagerHomeAccess")] — same grant as this hub page
+            HasManageBlueprints = await _grantService.HasGrantAsync(userId, "ManagerHomeAccess");
         }
 
         // Feature flags for conditional card rendering (sync cache-only check, same as _Layout.cshtml)

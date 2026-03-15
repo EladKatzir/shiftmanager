@@ -18,6 +18,12 @@
         : ShiftManager.Helpers.RoleDisplayHelper.GetRoleDisplayName(Localizer, roleTemplateKey ?? role, jobTypeName);
     // All authorization now uses grant-based <require-grant> tag helpers
     var firstName = name.Split(' ').FirstOrDefault() ?? name;
+    var sidebarUserId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    var sidebarCompanyId = user?.FindFirst("CompanyId")?.Value;
+    // Convention-based avatar URL — file existence checked client-side via onerror fallback
+    var sidebarAvatarUrl = !string.IsNullOrWhiteSpace(sidebarUserId) && !string.IsNullOrWhiteSpace(sidebarCompanyId)
+        ? $"/avatars/{sidebarCompanyId}/{sidebarUserId}_thumb.jpg"
+        : null;
     var currentCulture = CultureInfo.CurrentUICulture.Name;
     var isHebrew = currentCulture.StartsWith("he");
     var direction = isHebrew ? "rtl" : "ltr";
@@ -696,7 +702,14 @@
                 {
                     <div class="sidebar-user-container">
                         <div class="sidebar-user" tabindex="0" role="button" aria-haspopup="menu" aria-expanded="false" id="sidebarUserMenuTrigger">
-                            <div class="sidebar-user__avatar">@firstName.Substring(0, 1).ToUpper()</div>
+                            <div class="sidebar-user__avatar">
+                                <span class="sidebar-user__avatar-initials">@firstName.Substring(0, 1).ToUpper()</span>
+                                @if (sidebarAvatarUrl != null)
+                                {
+                                    <img src="@sidebarAvatarUrl" alt="" class="sidebar-user__avatar-img"
+                                         onerror="this.remove();" />
+                                }
+                            </div>
                             <div class="sidebar-user__info">
                                 <div class="sidebar-user__name">@firstName</div>
                                 <div class="sidebar-user__role">@roleDisplay</div>
@@ -713,7 +726,8 @@
                                 <span><loc key="UserMenu_Settings" /></span>
                             </a>
                             <div class="sidebar-user-menu__divider"></div>
-                            <form method="post" action="/Auth/Logout" class="sidebar-user-menu__logout-form">
+                            <form method="post" asp-page="/Auth/Logout" class="sidebar-user-menu__logout-form">
+                                @Html.AntiForgeryToken()
                                 <button type="submit" class="sidebar-user-menu__item sidebar-user-menu__item--danger" role="menuitem">
                                     <span class="sidebar-user-menu__icon">🚪</span>
                                     <span><loc key="Logout" /></span>
@@ -841,7 +855,7 @@
                         <button class="bottom-dock__toggle"
                                 id="bottomDockToggle"
                                 type="button"
-                                aria-expanded="true"
+                                aria-expanded="false"
                                 aria-controls="bottomDockContent"
                                 title="@Localizer["BottomDock_Toggle"]"
                                 style="flex: 1;">
@@ -1040,9 +1054,9 @@
 
         if (!dock || !dockToggle) return;
 
-        // Restore collapsed state
+        // Restore collapsed state — default to collapsed for new users
         var savedState = localStorage.getItem(DOCK_COLLAPSED_KEY);
-        if (savedState === 'true') {
+        if (savedState !== 'false') {
             dock.classList.add('is-collapsed');
             dockToggle.setAttribute('aria-expanded', 'false');
         }
@@ -1072,21 +1086,33 @@
         var handle = document.getElementById('bottomDockDragHandle');
         if (!dock || !handle) return;
 
-        // Restore saved position
+        // Clamp a position to stay within the visible viewport
+        function clamp(x, y) {
+            return {
+                x: Math.max(0, Math.min(x, window.innerWidth - 100)),
+                y: Math.max(0, Math.min(y, window.innerHeight - 44))
+            };
+        }
+
+        // Restore saved position (with viewport bounds check)
         try {
             var saved = JSON.parse(localStorage.getItem(DOCK_POS_KEY));
             if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') {
+                var pos = clamp(saved.x, saved.y);
                 dock.style.right = 'auto';
                 dock.style.bottom = 'auto';
-                dock.style.left = Math.min(saved.x, window.innerWidth - 100) + 'px';
-                dock.style.top = Math.min(saved.y, window.innerHeight - 44) + 'px';
+                dock.style.left = pos.x + 'px';
+                dock.style.top = pos.y + 'px';
             }
-        } catch(e) {}
+        } catch(e) {
+            localStorage.removeItem(DOCK_POS_KEY);
+        }
 
         var startX, startY, startLeft, startTop, dragging = false;
 
         function onPointerDown(e) {
             e.preventDefault();
+            handle.setPointerCapture(e.pointerId);
             dragging = true;
             dock.classList.add('is-dragging');
             var rect = dock.getBoundingClientRect();
@@ -1094,27 +1120,24 @@
             startY = e.clientY;
             startLeft = rect.left;
             startTop = rect.top;
-            document.addEventListener('pointermove', onPointerMove);
-            document.addEventListener('pointerup', onPointerUp);
         }
 
         function onPointerMove(e) {
             if (!dragging) return;
             var dx = e.clientX - startX;
             var dy = e.clientY - startY;
-            var newLeft = Math.max(0, Math.min(startLeft + dx, window.innerWidth - 100));
-            var newTop = Math.max(0, Math.min(startTop + dy, window.innerHeight - 44));
+            var pos = clamp(startLeft + dx, startTop + dy);
             dock.style.right = 'auto';
             dock.style.bottom = 'auto';
-            dock.style.left = newLeft + 'px';
-            dock.style.top = newTop + 'px';
+            dock.style.left = pos.x + 'px';
+            dock.style.top = pos.y + 'px';
         }
 
-        function onPointerUp() {
+        function onPointerUp(e) {
+            if (!dragging) return;
             dragging = false;
             dock.classList.remove('is-dragging');
-            document.removeEventListener('pointermove', onPointerMove);
-            document.removeEventListener('pointerup', onPointerUp);
+            handle.releasePointerCapture(e.pointerId);
             try {
                 localStorage.setItem(DOCK_POS_KEY, JSON.stringify({
                     x: parseInt(dock.style.left),
@@ -1123,7 +1146,11 @@
             } catch(e) {}
         }
 
+        // Pointer capture routes all pointer events to the handle element,
+        // so we listen on handle (not document) for move/up
         handle.addEventListener('pointerdown', onPointerDown);
+        handle.addEventListener('pointermove', onPointerMove);
+        handle.addEventListener('pointerup', onPointerUp);
     })();
     </script>
 </body>

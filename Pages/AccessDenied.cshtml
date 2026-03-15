@@ -17,6 +17,14 @@
     <title>Access Denied - Shift Manager</title>
     <link rel="stylesheet" href="~/css/site.css" />
     <script>
+        // Restore user's theme preference (this page has Layout=null so _Layout theme script doesn't run)
+        (function() {
+            var saved = localStorage.getItem('theme');
+            if (saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+
         // Phase 8.5: Removed accessDenied=true parameter to prevent cascade redirects
         // Automatically redirect after 2 seconds
         // SECURITY FIX: Use Json.Serialize to properly escape for JS context (prevents XSS via crafted returnUrl paths)
@@ -30,7 +38,7 @@
         <div style="text-align: center; padding: 3rem; background: var(--surface); border-radius: 1rem; border: 1px solid var(--border); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); max-width: 400px;">
             <div style="color: var(--danger); font-size: 3rem; margin-bottom: 1rem;">🚫</div>
             <h2 style="color: var(--text); margin-bottom: 1rem;"><loc key="AccessDenied" /></h2>
-            <p style="color: var(--muted); margin-bottom: 2rem;"><loc key="RedirectingBack" /></p>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;"><loc key="RedirectingBack" /></p>
             <div class="loading-spinner" style="margin: 0 auto;"></div>
         </div>
     </div>

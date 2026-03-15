@@ -1,0 +1,41 @@
+@page "{code:int}"
+@model StatusCodeModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.Code == 404
+        ? Localizer["Error_PageNotFound"].Value
+        : Localizer["Error_GenericTitle"].Value;
+}
+
+<div class="card" style="max-width: 600px; margin: 2rem auto; text-align: center; padding: 2rem;">
+    <div style="font-size: 4rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1rem;">
+        @Model.Code
+    </div>
+    @if (Model.Code == 404)
+    {
+        <h2><loc key="Error_PageNotFound">Page Not Found</loc></h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+            <loc key="Error_PageNotFoundDesc">The page you're looking for doesn't exist or has been moved.</loc>
+        </p>
+    }
+    else if (Model.Code == 403)
+    {
+        <h2><loc key="Error_Forbidden">Access Denied</loc></h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+            <loc key="Error_ForbiddenDesc">You don't have permission to access this page.</loc>
+        </p>
+    }
+    else
+    {
+        <h2><loc key="Error_GenericTitle">Something Went Wrong</loc></h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+            <loc key="Error_GenericDesc">An unexpected error occurred. Please try again.</loc>
+        </p>
+    }
+    <a href="/" class="btn btn-primary">
+        <loc key="Error_BackToHome">Back to Home</loc>
+    </a>
+</div>

@@ -145,7 +145,7 @@
         <loc key="Section_SchedulingConfig">Scheduling Configuration</loc>
     </h2>
     <div class="admin-tools-grid">
-        @if (User.IsInRole("Owner"))
+        @if (Model.HasManageBlueprints)
         {
         <a href="/Owner/Blueprints" class="admin-tool-card">
             <div class="tool-icon">📘</div>

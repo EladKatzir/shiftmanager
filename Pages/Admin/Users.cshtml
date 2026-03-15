@@ -812,7 +812,7 @@
                         <form method="post" asp-page-handler="JobType" style="display:inline; margin: 0;">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@u.Id" />
-                            <select class="form-input cell-edit__select" name="jobTypeId" data-original-value="@(u.JobTypeId?.ToString() ?? "")">
+                            <select class="form-input cell-edit__select" name="jobTypeId" data-original-value="@(u.JobTypeId?.ToString() ?? "")" loc-aria-label="Admin_EditJobType">
                                 <option value="" selected="@(!u.JobTypeId.HasValue)">-</option>
                                 @foreach (var jt in Model.AvailableJobTypes)
                                 {
@@ -836,7 +836,7 @@
                         <form method="post" asp-page-handler="Role" style="display:inline; margin: 0;">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@u.Id" />
-                            <select class="form-input cell-edit__select" name="roleTemplateId" data-original-value="@(u.RoleTemplateId?.ToString() ?? "")">
+                            <select class="form-input cell-edit__select" name="roleTemplateId" data-original-value="@(u.RoleTemplateId?.ToString() ?? "")" loc-aria-label="Admin_EditRole">
                                 @if (!u.RoleTemplateId.HasValue)
                                 {
                                     <option value="" selected>-</option>
@@ -874,7 +874,7 @@
                     <input type="hidden" name="id" value="@u.Id" />
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <input class="form-input" type="password" name="newPassword" placeholder="@Localizer["NewPassword"]"
-                               minlength="6" style="min-width: 100px;" />
+                               minlength="6" style="min-width: 100px;" loc-aria-label="Admin_ResetPassword" />
                         <button class="btn btn-sm">@Localizer["Set"]</button>
                     </div>
                     </form>
@@ -1057,7 +1057,7 @@
     }
     <form method="post" asp-page-handler="BulkImport" enctype="multipart/form-data">
         <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-            <input type="file" name="BulkImportFile" accept=".csv" class="form-input" style="max-width: 300px;" required />
+            <input type="file" name="BulkImportFile" accept=".csv" class="form-input" style="max-width: 300px;" required loc-aria-label="Admin_BulkImportFile" />
             <button type="submit" class="btn btn-primary" onclick="return confirm('Import users from CSV? This cannot be undone.');">
                 <loc key="Import" />
             </button>

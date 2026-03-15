@@ -2211,7 +2211,7 @@ namespace ShiftManager.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("JobTypeId")
+                    b.Property<int?>("JobTypeId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("MoleculeId")
@@ -2430,6 +2430,9 @@ namespace ShiftManager.Migrations
                     b.Property<string>("CustomName")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("EligibleCompanyIds")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("End")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -2447,6 +2450,9 @@ namespace ShiftManager.Migrations
                     b.Property<string>("NameKey")
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("RequiresOfficerRank")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("RowColor")
                         .HasColumnType("TEXT");
@@ -3972,8 +3978,7 @@ namespace ShiftManager.Migrations
                     b.HasOne("ShiftManager.Models.JobType", "JobType")
                         .WithMany()
                         .HasForeignKey("JobTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ShiftManager.Models.Molecule", "Molecule")
                         .WithMany()

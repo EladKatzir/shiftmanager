@@ -1,0 +1,269 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]:
+    - text: "WARNING: Disk space is low (7.1% free)."
+    - button "×" [ref=e5] [cursor=pointer]
+  - generic [ref=e6]:
+    - complementary [ref=e7]:
+      - link "Shifty SHIFTY Shift Manager" [ref=e8] [cursor=pointer]:
+        - /url: /Home
+        - img "Shifty" [ref=e10]
+        - generic [ref=e11]:
+          - generic [ref=e12]: SHIFTY
+          - generic [ref=e13]: Shift Manager
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: 📍
+          - generic [ref=e17]: Currently Viewing
+        - button "Test Company Full" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]:
+            - generic [ref=e20]: 🏢
+            - generic [ref=e21]: Test Company Full
+          - generic [ref=e22]: ▼
+      - navigation [ref=e23]:
+        - generic [ref=e24]: 📅 My Shifty
+        - link "🏠 Home" [ref=e25] [cursor=pointer]:
+          - /url: /Home/Index
+          - generic [ref=e26]: 🏠
+          - generic [ref=e27]: Home
+        - link "📅 Schedule" [ref=e28] [cursor=pointer]:
+          - /url: /Calendar/Shifts
+          - generic [ref=e29]: 📅
+          - generic [ref=e30]: Schedule
+        - link "👁️ Company Overview" [ref=e31] [cursor=pointer]:
+          - /url: /Calendar/Overview
+          - generic [ref=e32]: 👁️
+          - generic [ref=e33]: Company Overview
+        - link "📝 Requests" [ref=e34] [cursor=pointer]:
+          - /url: /Requests/Index
+          - generic [ref=e35]: 📝
+          - generic [ref=e36]: Requests
+        - link "📊 Analytics" [ref=e37] [cursor=pointer]:
+          - /url: /Admin/Analytics
+          - generic [ref=e38]: 📊
+          - generic [ref=e39]: Analytics
+        - link "🔍 Audit Log" [ref=e40] [cursor=pointer]:
+          - /url: /Admin/AuditLog
+          - generic [ref=e41]: 🔍
+          - generic [ref=e42]: Audit Log
+        - link "👥 People" [ref=e43] [cursor=pointer]:
+          - /url: /Admin/Users
+          - generic [ref=e44]: 👥
+          - generic [ref=e45]: People
+        - link "🏛️ Companies" [ref=e46] [cursor=pointer]:
+          - /url: /Admin/Companies
+          - generic [ref=e47]: 🏛️
+          - generic [ref=e48]: Companies
+        - link "⚙️ Settings" [ref=e49] [cursor=pointer]:
+          - /url: /Admin/Config
+          - generic [ref=e50]: ⚙️
+          - generic [ref=e51]: Settings
+        - generic [ref=e52]: Owner Administration
+        - link "🛡️ Owner Administration" [ref=e53] [cursor=pointer]:
+          - /url: /Owner/Index
+          - generic [ref=e54]: 🛡️
+          - generic [ref=e55]: Owner Administration
+        - link "📡 Telemetry" [ref=e56] [cursor=pointer]:
+          - /url: /Owner/Telemetry
+          - generic [ref=e57]: 📡
+          - generic [ref=e58]: Telemetry
+        - generic [ref=e59]: Personal
+        - link "🤝 My Friends" [ref=e60] [cursor=pointer]:
+          - /url: /Friends
+          - generic [ref=e61]: 🤝
+          - generic [ref=e62]: My Friends
+        - link "❓ Help" [ref=e63] [cursor=pointer]:
+          - /url: /My/Help
+          - generic [ref=e64]: ❓
+          - generic [ref=e65]: Help
+      - generic [ref=e66]:
+        - button "T Test Owner ▼" [ref=e68] [cursor=pointer]:
+          - generic [ref=e70]: T
+          - generic [ref=e71]:
+            - generic [ref=e72]: Test
+            - generic [ref=e73]: Owner
+          - generic [ref=e74]: ▼
+        - generic "Press Ctrl+K (or Cmd+K on Mac) to open quick navigation" [ref=e75]:
+          - generic [ref=e76]: ⌨️
+          - generic [ref=e77]: Ctrl
+          - generic [ref=e78]: +
+          - generic [ref=e79]: K
+    - button "Toggle navigation" [ref=e80] [cursor=pointer]
+    - generic [ref=e85]:
+      - banner [ref=e86]:
+        - generic [ref=e87]:
+          - generic:
+            - heading "Shifts Calendar" [level=1]
+          - generic [ref=e88]:
+            - link "✓" [ref=e90] [cursor=pointer]:
+              - /url: /Requests
+              - generic [ref=e91]: ✓
+            - link "🔔" [ref=e92] [cursor=pointer]:
+              - /url: /My/NotificationCenter
+              - generic [ref=e93]: 🔔
+            - button "Language" [ref=e95] [cursor=pointer]:
+              - generic [ref=e96]: 🌐
+              - generic [ref=e97]: En
+            - button "Toggle dark mode" [ref=e98] [cursor=pointer]:
+              - generic [ref=e99]: 🌓
+            - button "🚪 Logout" [ref=e101] [cursor=pointer]:
+              - generic [ref=e102]: 🚪
+              - generic [ref=e103]: Logout
+      - main [ref=e104]:
+        - navigation [ref=e105]:
+          - list [ref=e106]:
+            - listitem [ref=e107]:
+              - link "Calendars" [ref=e108]:
+                - /url: /Calendar/Month
+            - listitem "Shifts Calendar" [ref=e109]: › Shifts Calendar
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - generic [ref=e113]:
+                - generic [ref=e114]: Molecule
+                - combobox "Molecule" [ref=e115] [cursor=pointer]:
+                  - option "QA Testing"
+                  - option "אורן" [selected]
+                  - option "אלה"
+                  - option "גפן"
+                  - option "מערכת"
+                  - option "נגדים"
+                  - option "ערבה"
+                  - option "שקד"
+                  - option "שקלוט"
+                  - option "שקמה"
+              - generic [ref=e116]:
+                - generic [ref=e117]: Job Type
+                - combobox "Job Type" [ref=e118] [cursor=pointer]:
+                  - option "אלחוט" [selected]
+                  - option "ב\"ר"
+                  - option "טקסט"
+                  - option "חק\"ם"
+              - generic [ref=e119]:
+                - generic [ref=e120]: View
+                - combobox "View" [ref=e121] [cursor=pointer]:
+                  - option "Week" [selected]
+                  - option "Two Weeks"
+                  - option "Month"
+              - generic [ref=e122]:
+                - link "←" [ref=e123] [cursor=pointer]:
+                  - /url: "?MoleculeId=1&JobTypeId=1&Start=2026-03-08&ViewMode=week&Mode=shift"
+                  - generic [ref=e124]: ←
+                - generic [ref=e125]:
+                  - textbox [ref=e126] [cursor=pointer]: 2026-03-15
+                  - generic [ref=e127] [cursor=pointer]: Mar 15, 2026 - Mar 21, 2026
+                - link "→" [ref=e128] [cursor=pointer]:
+                  - /url: "?MoleculeId=1&JobTypeId=1&Start=2026-03-22&ViewMode=week&Mode=shift"
+                  - generic [ref=e129]: →
+              - button "🖶 Print" [ref=e130] [cursor=pointer]:
+                - generic [ref=e131]: 🖶
+                - generic [ref=e132]: Print
+            - generic [ref=e133]:
+              - generic [ref=e134]:
+                - link "By Shift" [ref=e135] [cursor=pointer]:
+                  - /url: "?MoleculeId=1&JobTypeId=1&Start=2026-03-15&ViewMode=week&Mode=shift"
+                - link "By User" [ref=e136] [cursor=pointer]:
+                  - /url: "?MoleculeId=1&JobTypeId=1&Start=2026-03-15&ViewMode=week&Mode=user"
+              - link "Capacity Mode" [ref=e138] [cursor=pointer]:
+                - /url: "?MoleculeId=1&JobTypeId=1&Start=2026-03-15&ViewMode=week&Mode=shift&CapacityMode=True"
+              - generic [ref=e140]:
+                - button "🔍 Filter" [ref=e141] [cursor=pointer]:
+                  - generic [ref=e142]: 🔍
+                  - text: Filter
+                - link "Just Mine" [ref=e143] [cursor=pointer]:
+                  - /url: "?MoleculeId=1&JobTypeId=1&Start=2026-03-15&ViewMode=week&Mode=shift&JustMine=True"
+          - grid [ref=e145]:
+            - rowgroup [ref=e146]:
+              - row "Sunday 15/03 Monday 16/03 Tuesday 17/03 Wednesday 18/03 Thursday 19/03 Friday 20/03 Saturday 21/03" [ref=e147]:
+                - columnheader [ref=e148]
+                - columnheader "Sunday 15/03" [ref=e149]:
+                  - generic [ref=e150]: Sunday
+                  - generic [ref=e151]: 15/03
+                - columnheader "Monday 16/03" [ref=e152]:
+                  - generic [ref=e153]: Monday
+                  - generic [ref=e154]: 16/03
+                - columnheader "Tuesday 17/03" [ref=e155]:
+                  - generic [ref=e156]: Tuesday
+                  - generic [ref=e157]: 17/03
+                - columnheader "Wednesday 18/03" [ref=e158]:
+                  - generic [ref=e159]: Wednesday
+                  - generic [ref=e160]: 18/03
+                - columnheader "Thursday 19/03" [ref=e161]:
+                  - generic [ref=e162]: Thursday
+                  - generic [ref=e163]: 19/03
+                - columnheader "Friday 20/03" [ref=e164]:
+                  - generic [ref=e165]: Friday
+                  - generic [ref=e166]: 20/03
+                - columnheader "Saturday 21/03" [ref=e167]:
+                  - generic [ref=e168]: Saturday
+                  - generic [ref=e169]: 21/03
+            - rowgroup [ref=e170]:
+              - row "Morning (06:00-14:00) Add Assignment Add Assignment Add Assignment Add Assignment Add Assignment Add Assignment Add Assignment" [ref=e171]:
+                - gridcell "Morning (06:00-14:00)" [ref=e172]
+                - gridcell "Add Assignment" [ref=e173] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e174]: +
+                - gridcell "Add Assignment" [ref=e175] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e176]: +
+                - gridcell "Add Assignment" [ref=e177] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e178]: +
+                - gridcell "Add Assignment" [ref=e179] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e180]: +
+                - gridcell "Add Assignment" [ref=e181] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e182]: +
+                - gridcell "Add Assignment" [ref=e183] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e184]: +
+                - gridcell "Add Assignment" [ref=e185] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e186]: +
+              - row "Afternoon (14:00-22:00) Add Assignment Add Assignment Add Assignment Add Assignment Add Assignment Add Assignment Add Assignment" [ref=e187]:
+                - gridcell "Afternoon (14:00-22:00)" [ref=e188]
+                - gridcell "Add Assignment" [ref=e189] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e190]: +
+                - gridcell "Add Assignment" [ref=e191] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e192]: +
+                - gridcell "Add Assignment" [ref=e193] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e194]: +
+                - gridcell "Add Assignment" [ref=e195] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e196]: +
+                - gridcell "Add Assignment" [ref=e197] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e198]: +
+                - gridcell "Add Assignment" [ref=e199] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e200]: +
+                - gridcell "Add Assignment" [ref=e201] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e202]: +
+              - row "Night (22:00-06:00) Add Assignment Add Assignment Add Assignment Add Assignment Add Assignment Add Assignment Add Assignment" [ref=e203]:
+                - gridcell "Night (22:00-06:00)" [ref=e204]
+                - gridcell "Add Assignment" [ref=e205] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e206]: +
+                - gridcell "Add Assignment" [ref=e207] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e208]: +
+                - gridcell "Add Assignment" [ref=e209] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e210]: +
+                - gridcell "Add Assignment" [ref=e211] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e212]: +
+                - gridcell "Add Assignment" [ref=e213] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e214]: +
+                - gridcell "Add Assignment" [ref=e215] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e216]: +
+                - gridcell "Add Assignment" [ref=e217] [cursor=pointer]:
+                  - button "Add Assignment" [ref=e218]: +
+      - generic [ref=e219]:
+        - generic [ref=e220]:
+          - generic "Drag to move" [ref=e221]: ⋮⋮
+          - button "▼ Quick Info" [expanded] [ref=e222] [cursor=pointer]:
+            - generic [ref=e223]: ▼
+            - generic [ref=e224]: Quick Info
+        - generic [ref=e226]:
+          - button "Quick Info" [expanded] [ref=e227] [cursor=pointer]:
+            - generic [ref=e228]:
+              - img [ref=e230]
+              - generic [ref=e232]: Quick Info
+            - img [ref=e234]
+          - generic [ref=e237]:
+            - img "No one is on-call right now" [ref=e240]
+            - paragraph [ref=e244]: No one is on-call right now
+            - paragraph [ref=e245]: This is unusual. Contact your supervisor if needed.
+  - region "Notifications"
+  - button "Print calendar" [ref=e246] [cursor=pointer]:
+    - generic [ref=e247]: 🖨️
+    - generic [ref=e248]: Print

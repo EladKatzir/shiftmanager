@@ -479,7 +479,7 @@
                 <div class="form-group">
                     <label class="form-label">
                         @Localizer["Slug"] <span class="form-label-required">*</span>
-                        <span class="form-label-hint">(lowercase, letters, numbers, hyphens)</span>
+                        <span class="form-label-hint"><loc key="CompanySlugHint">(lowercase, letters, numbers, hyphens)</loc></span>
                     </label>
                     <input class="form-input" asp-for="CompanySlug" placeholder="my-company" pattern="[a-z0-9\-]+" title="Only lowercase letters, numbers, and hyphens allowed" required />
                 </div>

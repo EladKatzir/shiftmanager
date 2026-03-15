@@ -493,6 +493,45 @@ th { text-align: left; color: var(--text); }
   outline-offset: 1px;
 }
 
+/* Mobile: compact header action buttons */
+@media (max-width: 480px) {
+  .app-header-right {
+    gap: 0.25rem;
+  }
+
+  .action-btn {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  /* Hide text labels on action buttons (e.g. "Logout"), keep icons, badges, and language text */
+  .action-btn > span:not(:first-child):not([class]) {
+    display: none;
+  }
+
+  .page-title {
+    font-size: 1.1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Compact decision ribbon: badge-only for pending, "✓" only for all-clear */
+  .decision-ribbon-btn {
+    padding: 0.5rem;
+  }
+
+  .decision-ribbon-btn.has-pending > span:not(.ribbon-badge) {
+    display: none;
+  }
+
+  .decision-ribbon-btn:not(.has-pending) > span {
+    max-width: 1.2em;
+    overflow: hidden;
+    display: inline-block;
+  }
+}
+
 /* User Menu */
 .user-menu {
   display: flex;
@@ -6522,7 +6561,8 @@ code {
    ---------------------------------------- */
 :root[data-theme="dark"] select.form-field__input,
 :root[data-theme="dark"] .pagination__per-page select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aab' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
 }
 
 /* ----------------------------------------
@@ -6906,6 +6946,9 @@ code {
   /* SVG Icons - use lighter colors for dark backgrounds (DR-THEME-01) */
   :root:not([data-theme="light"]) .form-select {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23aab' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
   }
 
   :root:not([data-theme="light"]) .btn-close {
@@ -6933,6 +6976,9 @@ code {
    ---------------------------------------- */
 :root[data-theme="dark"] .form-select {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23aab' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
 }
 
 :root[data-theme="dark"] .btn-close {

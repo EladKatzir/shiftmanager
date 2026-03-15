@@ -13018,4 +13018,46 @@
   <data name="Error_OfficerRankRequired" xml:space="preserve">
     <value>סוג משמרת זה דורש דרגת קצין</value>
   </data>
+  <data name="Grant_Added" xml:space="preserve">
+    <value>הרשאה נוספה</value>
+  </data>
+  <data name="Grant_Removed" xml:space="preserve">
+    <value>הרשאה הוסרה</value>
+  </data>
+  <data name="Grant_FailedToAdd" xml:space="preserve">
+    <value>הוספת ההרשאה נכשלה</value>
+  </data>
+  <data name="Grant_FailedToRemove" xml:space="preserve">
+    <value>הסרת ההרשאה נכשלה</value>
+  </data>
+  <data name="Grant_RemoveConfirm" xml:space="preserve">
+    <value>להסיר הרשאה זו מהתבנית?</value>
+  </data>
+  <data name="Select_Default" xml:space="preserve">
+    <value>-- בחירה --</value>
+  </data>
+  <data name="Game_CurrentlyDisabled" xml:space="preserve">
+    <value>המשחק מושבת כרגע.</value>
+  </data>
+  <data name="Placeholder_EnglishName" xml:space="preserve">
+    <value>שם באנגלית</value>
+  </data>
+  <data name="Placeholder_HebrewName" xml:space="preserve">
+    <value>שם בעברית</value>
+  </data>
+  <data name="Placeholder_ExampleKey" xml:space="preserve">
+    <value>לדוגמה: SeniorOperator</value>
+  </data>
+  <data name="Placeholder_ExampleDisplayName" xml:space="preserve">
+    <value>לדוגמה: מפעיל בכיר</value>
+  </data>
+  <data name="RoleTemplates_SelectJobType" xml:space="preserve">
+    <value>-- בחר סוג עבודה --</value>
+  </data>
+  <data name="Placeholder_GrantKeyExample" xml:space="preserve">
+    <value>לדוגמה: ApproveVacations</value>
+  </data>
+  <data name="Placeholder_SecondGrantKeyExample" xml:space="preserve">
+    <value>לדוגמה: ApproveExtendedLeave</value>
+  </data>
 </root>

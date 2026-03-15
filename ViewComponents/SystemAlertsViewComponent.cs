@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.ViewComponents;
@@ -16,14 +18,16 @@ public class SystemAlertsViewComponent : ViewComponent
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
     private readonly IGrantService _grantService;
+    private readonly IStringLocalizer<SharedResources> _localizer;
     private const string CacheKey = "SystemAlerts";
 
-    public SystemAlertsViewComponent(IMemoryCache cache, IConfiguration configuration, IWebHostEnvironment env, IGrantService grantService)
+    public SystemAlertsViewComponent(IMemoryCache cache, IConfiguration configuration, IWebHostEnvironment env, IGrantService grantService, IStringLocalizer<SharedResources> localizer)
     {
         _cache = cache;
         _configuration = configuration;
         _env = env;
         _grantService = grantService;
+        _localizer = localizer;
     }
 
     public async Task<IViewComponentResult> InvokeAsync()
@@ -35,7 +39,8 @@ public class SystemAlertsViewComponent : ViewComponent
             return Content(string.Empty);
         }
 
-        var alerts = _cache.GetOrCreate(CacheKey, entry =>
+        var cultureCacheKey = $"{CacheKey}_{System.Globalization.CultureInfo.CurrentUICulture.Name}";
+        var alerts = _cache.GetOrCreate(cultureCacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
             return CollectAlerts();
@@ -56,7 +61,7 @@ public class SystemAlertsViewComponent : ViewComponent
             {
                 var walSizeMb = new FileInfo(walPath).Length / (1024.0 * 1024.0);
                 if (walSizeMb > 100)
-                    alerts.Add($"WARNING: SQLite WAL file is {walSizeMb:F0}MB. Consider running PRAGMA wal_checkpoint(TRUNCATE) during maintenance.");
+                    alerts.Add(_localizer["SystemAlert_WalSize", walSizeMb.ToString("F0")]);
             }
         }
         catch { /* Ignore WAL check errors */ }
@@ -68,9 +73,9 @@ public class SystemAlertsViewComponent : ViewComponent
             var driveInfo = new DriveInfo(Path.GetPathRoot(dbPath) ?? "C");
             var freePercent = (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize * 100;
             if (freePercent < 5)
-                alerts.Add($"CRITICAL: Disk space is critically low ({freePercent:F1}% free). Database may fail.");
+                alerts.Add(_localizer["SystemAlert_DiskCritical", freePercent.ToString("F1")]);
             else if (freePercent < 10)
-                alerts.Add($"WARNING: Disk space is low ({freePercent:F1}% free).");
+                alerts.Add(_localizer["SystemAlert_DiskLow", freePercent.ToString("F1")]);
         }
         catch { /* Ignore disk check errors */ }
 
@@ -86,13 +91,13 @@ public class SystemAlertsViewComponent : ViewComponent
                     .FirstOrDefault();
 
                 if (latestBackup == null)
-                    alerts.Add("WARNING: No database backups found.");
+                    alerts.Add(_localizer["SystemAlert_NoBackups"]);
                 else if ((DateTime.Now - latestBackup.CreationTime).TotalDays > 2)
-                    alerts.Add($"WARNING: Last backup is {(DateTime.Now - latestBackup.CreationTime).TotalDays:F0} days old.");
+                    alerts.Add(_localizer["SystemAlert_BackupOld", ((DateTime.Now - latestBackup.CreationTime).TotalDays).ToString("F0")]);
             }
             else
             {
-                alerts.Add("WARNING: Backup directory does not exist.");
+                alerts.Add(_localizer["SystemAlert_NoBackupDir"]);
             }
         }
         catch { /* Ignore backup check errors */ }
@@ -102,14 +107,14 @@ public class SystemAlertsViewComponent : ViewComponent
         {
             var keysDir = Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys");
             if (!Directory.Exists(keysDir) || !Directory.GetFiles(keysDir, "*.xml").Any())
-                alerts.Add("WARNING: DataProtection keys are missing. Sessions will be invalidated on restart.");
+                alerts.Add(_localizer["SystemAlert_NoDataProtectionKeys"]);
         }
         catch { /* Ignore */ }
 
         // Check HMAC secret (skip in Development — not relevant for local dev)
         var hmacSecret = _configuration.GetValue<string>("Security:ApiKeyHmacSecret");
         if (!_env.IsDevelopment() && (string.IsNullOrEmpty(hmacSecret) || hmacSecret == "ShiftManager-ApiKey-HMAC-v1-Default"))
-            alerts.Add("SECURITY: API key HMAC secret is using default value. Configure Security:ApiKeyHmacSecret.");
+            alerts.Add(_localizer["SystemAlert_DefaultHmacSecret"]);
 
         // G-04: Check Hebrew font availability for PDF exports
         try
@@ -119,7 +124,7 @@ public class SystemAlertsViewComponent : ViewComponent
             {
                 var hasArial = Directory.GetFiles(fontsDir, "arial*.ttf").Length > 0;
                 if (!hasArial)
-                    alerts.Add("WARNING: Arial font not found. PDF exports may render Hebrew text incorrectly. Install Hebrew language pack.");
+                    alerts.Add(_localizer["SystemAlert_NoHebrewFont"]);
             }
         }
         catch { /* Ignore font check errors */ }
@@ -136,9 +141,9 @@ public class SystemAlertsViewComponent : ViewComponent
                 var errors = root.GetProperty("Errors").GetInt32();
                 var lastRun = root.GetProperty("LastRun").GetDateTime();
                 if (errors > 0)
-                    alerts.Add($"WARNING: Last notification run had {errors} delivery failures ({lastRun:g} UTC).");
+                    alerts.Add(_localizer["SystemAlert_NotificationFailures", errors.ToString(), lastRun.ToString("g")]);
                 if ((DateTime.UtcNow - lastRun).TotalHours > 24)
-                    alerts.Add($"WARNING: No notification job run in {(DateTime.UtcNow - lastRun).TotalHours:F0} hours.");
+                    alerts.Add(_localizer["SystemAlert_NoNotificationRun", ((DateTime.UtcNow - lastRun).TotalHours).ToString("F0")]);
             }
         }
         catch { /* Ignore notification stats errors */ }
