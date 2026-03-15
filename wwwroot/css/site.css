@@ -229,6 +229,16 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border
   border-color: var(--danger);
 }
 
+/* Dark mode: invert card status colors for readable contrast.
+   --danger in dark mode is #FC8181 (light salmon) — too light for white text.
+   Use --danger-soft as background with --danger as text instead. */
+[data-theme="dark"] .card--status-danger {
+  background-color: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+
 /* Card Metric Variant (for analytics) */
 .card--metric {
   text-align: center;

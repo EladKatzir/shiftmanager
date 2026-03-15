@@ -14,6 +14,11 @@ public class JobType
     public string? Color { get; set; }  // For UI display (hex color code)
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
+    /// <summary>
+    /// When true, this job type only appears for Workforce and Helper molecules.
+    /// Tech and System molecules will not see it in dropdowns or assignments.
+    /// </summary>
+    public bool IsWorkforceOnly { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation

@@ -279,6 +279,12 @@ public class GriffinService : IGriffinService
             new Claim("AuthTimestamp", DateTime.UtcNow.ToString("o"))
         };
 
+        // Avatar claim for sidebar display (prevents 404 for users without avatars)
+        if (!string.IsNullOrWhiteSpace(user.AvatarFileName))
+        {
+            claims.Add(new Claim("AvatarFileName", user.AvatarFileName));
+        }
+
         // RoleTemplateKey claim for display and grant resolution
         if (user.RoleTemplate != null)
         {

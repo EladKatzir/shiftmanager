@@ -57,9 +57,9 @@ public static class ShiftyOrganizationSeed
         // ============================================================
         var jobTypes = new List<JobType>
         {
-            new() { AreaId = area.Id, Name = "Alhut", DisplayName = "אלחוט", Color = "#3b82f6", SortOrder = 1 },
+            new() { AreaId = area.Id, Name = "Alhut", DisplayName = "אלחוט", Color = "#3b82f6", SortOrder = 1, IsWorkforceOnly = true },
             new() { AreaId = area.Id, Name = "BR", DisplayName = "ב\"ר", Color = "#10b981", SortOrder = 2 },
-            new() { AreaId = area.Id, Name = "Text", DisplayName = "טקסט", Color = "#8b5cf6", SortOrder = 3 },
+            new() { AreaId = area.Id, Name = "Text", DisplayName = "טקסט", Color = "#8b5cf6", SortOrder = 3, IsWorkforceOnly = true },
             new() { AreaId = area.Id, Name = "Hakam", DisplayName = "חק\"ם", Color = "#f59e0b", SortOrder = 4 }
         };
         db.JobTypes.AddRange(jobTypes);
@@ -96,7 +96,7 @@ public static class ShiftyOrganizationSeed
 
         // Shikma-specific job type (organizational only — no shift eligibility impact)
         // Note: Hakam is the SAME area-wide job type used by all molecules — not duplicated here
-        var shikmaProjectManager = new JobType { AreaId = area.Id, MoleculeId = shikma.Id, Name = "ProjectManager", DisplayName = "מנהל פרוייקט", SortOrder = 10 };
+        var shikmaProjectManager = new JobType { AreaId = area.Id, MoleculeId = shikma.Id, Name = "ProjectManager", DisplayName = "פרויקטור", SortOrder = 10 };
         db.JobTypes.Add(shikmaProjectManager);
         await db.SaveChangesAsync();
 

@@ -29,10 +29,14 @@ public class JobTypeService : IJobTypeService
         var molecule = await _db.Molecules.FirstOrDefaultAsync(m => m.Id == moleculeId);
         if (molecule == null) return new List<JobType>();
 
+        var isWorkforce = molecule.Type == Models.Support.MoleculeType.Workforce
+                        || molecule.Type == Models.Support.MoleculeType.Helper;
+
         return await _db.JobTypes.IgnoreQueryFilters()
             .Where(jt => jt.IsActive
                 && jt.AreaId == molecule.AreaId
-                && (jt.MoleculeId == null || jt.MoleculeId == moleculeId))
+                && (jt.MoleculeId == null || jt.MoleculeId == moleculeId)
+                && (isWorkforce || !jt.IsWorkforceOnly))
             .OrderBy(jt => jt.SortOrder)
             .ThenBy(jt => jt.Name)
             .ToListAsync();

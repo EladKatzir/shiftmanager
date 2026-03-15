@@ -20,8 +20,9 @@
     var firstName = name.Split(' ').FirstOrDefault() ?? name;
     var sidebarUserId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     var sidebarCompanyId = user?.FindFirst("CompanyId")?.Value;
-    // Convention-based avatar URL — file existence checked client-side via onerror fallback
-    var sidebarAvatarUrl = !string.IsNullOrWhiteSpace(sidebarUserId) && !string.IsNullOrWhiteSpace(sidebarCompanyId)
+    // Avatar URL only generated when user has an avatar (AvatarFileName claim set during login)
+    var hasAvatar = !string.IsNullOrWhiteSpace(user?.FindFirst("AvatarFileName")?.Value);
+    var sidebarAvatarUrl = hasAvatar && !string.IsNullOrWhiteSpace(sidebarUserId) && !string.IsNullOrWhiteSpace(sidebarCompanyId)
         ? $"/avatars/{sidebarCompanyId}/{sidebarUserId}_thumb.jpg"
         : null;
     var currentCulture = CultureInfo.CurrentUICulture.Name;

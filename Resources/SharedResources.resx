@@ -11639,9 +11639,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="FeatureFlags_ChangesImmediate" xml:space="preserve">
     <value>Changes take effect immediately</value>
   </data>
-  <data name="Offline" xml:space="preserve">
-    <value>Offline</value>
-  </data>
   <data name="Blueprints_MigrationRequired" xml:space="preserve">
     <value>⚠️ Migration Required:</value>
   </data>
@@ -13087,6 +13084,9 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="RoleTemplates_SelectJobType" xml:space="preserve">
     <value>-- Select Job Type --</value>
+  </data>
+  <data name="Error_DiagnosticInfo" xml:space="preserve">
+    <value>Diagnostic Info</value>
   </data>
   <data name="Placeholder_GrantKeyExample" xml:space="preserve">
     <value>e.g. ApproveVacations</value>

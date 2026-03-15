@@ -144,6 +144,9 @@ public static class QaTestUserSeed
         var text = jobTypes.FirstOrDefault(j => j.Name == "Text");
         var hakam = jobTypes.FirstOrDefault(j => j.Name == "Hakam" && j.MoleculeId == null);
 
+        if (alhut == null || br == null || text == null || hakam == null)
+            return new List<TestUserDef>();
+
         var defs = new List<TestUserDef>();
 
         // --- Owner ---

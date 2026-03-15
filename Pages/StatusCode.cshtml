@@ -35,7 +35,25 @@
             <loc key="Error_GenericDesc">An unexpected error occurred. Please try again.</loc>
         </p>
     }
-    <a href="/" class="btn btn-primary">
+    <a href="/" class="btn btn-primary" style="margin-bottom: 1.5rem;">
         <loc key="Error_BackToHome">Back to Home</loc>
     </a>
+
+    @* Diagnostic info for unexpected status codes (visible to admins/developers) *@
+    @if (Model.Code != 404 && Model.Code != 403)
+    {
+        <details style="margin-top: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted);">
+            <summary style="cursor: pointer; margin-bottom: 0.5rem;"><loc key="Error_DiagnosticInfo">Diagnostic Info</loc></summary>
+            <div style="background: var(--surface-soft); padding: 0.75rem; border-radius: 0.5rem; font-family: monospace; word-break: break-all;">
+                <div><strong>Status:</strong> @Model.Code</div>
+                <div><strong>Time:</strong> @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") UTC</div>
+                <div><strong>Path:</strong> @HttpContext.Request.Headers["Referer"].ToString()</div>
+                <div><strong>Method:</strong> @HttpContext.Request.Method</div>
+                @if (User?.Identity?.IsAuthenticated == true)
+                {
+                    <div><strong>User:</strong> @User.Identity.Name</div>
+                }
+            </div>
+        </details>
+    }
 </div>

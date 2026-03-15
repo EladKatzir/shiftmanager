@@ -484,7 +484,7 @@
     <value>ערב</value>
   </data>
   <data name="OFFLINE" xml:space="preserve">
-    <value>לא זמין</value>
+    <value>אופליין</value>
   </data>
 
   
@@ -11605,9 +11605,6 @@
   <data name="FeatureFlags_ChangesImmediate" xml:space="preserve">
     <value>שינויים נכנסים לתוקף מיידית</value>
   </data>
-  <data name="Offline" xml:space="preserve">
-    <value>לא מקוון</value>
-  </data>
   <data name="Blueprints_MigrationRequired" xml:space="preserve">
     <value>⚠️ נדרשת הגירה:</value>
   </data>
@@ -13053,6 +13050,9 @@
   </data>
   <data name="RoleTemplates_SelectJobType" xml:space="preserve">
     <value>-- בחר סוג עבודה --</value>
+  </data>
+  <data name="Error_DiagnosticInfo" xml:space="preserve">
+    <value>מידע אבחוני</value>
   </data>
   <data name="Placeholder_GrantKeyExample" xml:space="preserve">
     <value>לדוגמה: ApproveVacations</value>
