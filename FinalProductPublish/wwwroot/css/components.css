@@ -41,14 +41,14 @@
    Default primary (#5B9BD5) with white text = ~2.8:1, below 4.5:1 threshold.
    Use card surface background with standard text for reliable contrast. */
 :root[data-theme="dark"] .skip-link {
-  background: var(--bg-card, #1e293b);
+  background: var(--surface, #1e293b);
   color: var(--text, #e2e8f0);
   border: 2px solid var(--primary);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .skip-link {
-    background: var(--bg-card, #1e293b);
+    background: var(--surface, #1e293b);
     color: var(--text, #e2e8f0);
     border: 2px solid var(--primary);
   }
@@ -3391,14 +3391,16 @@ picture img {
    ---------------------------------------- */
 :root[data-theme="dark"] select.form-field__input,
 :root[data-theme="dark"] .pagination__per-page select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aab' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
 }
 
 /* prefers-color-scheme support */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) select.form-field__input,
   :root:not([data-theme="light"]) .pagination__per-page select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aab' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
   }
 }
 
@@ -3430,11 +3432,13 @@ picture img {
   z-index: var(--z-fixed);
   width: 320px;
   max-width: calc(100vw - 2rem);
-  transition: transform var(--duration-normal) var(--ease-out);
 }
 
-.bottom-dock.is-collapsed {
-  transform: translateY(calc(100% - 44px));
+/* Collapse hides the content area, keeping only the header visible.
+   Uses display:none instead of translateY so it works at any position,
+   not just bottom:0. */
+.bottom-dock.is-collapsed .bottom-dock__content {
+  display: none;
 }
 
 .bottom-dock__toggle {
@@ -3483,6 +3487,7 @@ picture img {
   font-size: 14px;
   letter-spacing: 2px;
   user-select: none;
+  touch-action: none;
 }
 
 .bottom-dock__drag-handle:hover {

@@ -70,7 +70,7 @@
     function buildGroupName(calendarType, scope) {
         switch (calendarType) {
             case 'shifts':
-                return `shifts-${scope.moleculeId}-${scope.jobTypeId}`;
+                return `shifts-${scope.moleculeId}-${scope.jobTypeId ?? 0}`;
             case 'chores':
                 return `chores-${scope.moleculeId}`;
             case 'oncall':

@@ -1,6 +1,6 @@
 ﻿================================================================================
                     DEPLOYMENT VERIFICATION CHECKLIST
-                           Version 3.1.3
+                           Version 3.1.4
 ================================================================================
 
 This checklist confirms that the ProjectPublish package has been verified
@@ -10,15 +10,15 @@ and is ready for deployment to your air-gapped Windows Server 2022 environment.
 BUILD INFORMATION
 ================================================================================
 
-Version:        v3.1.3
-Build Date:     2026-03-13 21:15:05 UTC
-Git Commit:     bd28afa
+Version:        v3.1.4
+Build Date:     2026-03-15 03:12:58 UTC
+Git Commit:     d7af173
 Git Branch:     update
 
 Package Stats:
-  Total Files:  2424
+  Total Files:  4097
   DLL Count:    351
-  Package Size: 271 MB
+  Package Size: 371 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
 
 ================================================================================
@@ -66,9 +66,9 @@ AUTOMATED TESTING RESULTS
    âœ“ Disk space sufficient
 
 âœ… Build Verification:
-   âœ“ File count in expected range (2424 files, expected ~370)
+   âœ“ File count in expected range (4097 files, expected ~370)
    âœ“ DLL count in expected range (351 DLLs, expected ~335)
-   âœ“ Package size in expected range (271 MB, expected ~110 MB)
+   âœ“ Package size in expected range (371 MB, expected ~110 MB)
    âœ“ All critical files present
    âœ“ No test artifacts in package
    âœ“ Razor views precompiled
@@ -179,12 +179,12 @@ This ProjectPublish package has been:
    âœ… Tested automatically
    âœ… Verified for completeness
    âœ… Documented comprehensively
-   âœ… Tagged in git (v3.1.3)
+   âœ… Tagged in git (v3.1.4)
 
 Package is READY FOR PRODUCTION DEPLOYMENT.
 
 Verified by: ShiftManager Automated Release Builder v1.0.0
-Date: 2026-03-13 21:15:05 UTC
-Git Commit: bd28afa
+Date: 2026-03-15 03:12:58 UTC
+Git Commit: d7af173
 
 ================================================================================

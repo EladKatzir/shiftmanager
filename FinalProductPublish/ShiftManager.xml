@@ -726,13 +726,13 @@
         <member name="T:ShiftManager.Data.SeedData.TechShiftTypeSeed">
             <summary>
             Seed data for tech shift types (Hanava, Delta, Yekev, Moviltech).
-            These are department-scoped shift types used for technician scheduling.
+            Eligibility is company-based (via EligibleCompanyIds) and rank-based (via RequiresOfficerRank).
             </summary>
         </member>
-        <member name="M:ShiftManager.Data.SeedData.TechShiftTypeSeed.GetTechShiftTypes(System.Int32)">
+        <member name="M:ShiftManager.Data.SeedData.TechShiftTypeSeed.GetTechShiftTypes(System.Int32,System.Int32)">
             <summary>
-            Gets the tech shift types to be seeded for a given company.
-            Each tech shift type maps to a department-scoped grant for eligibility filtering.
+            Gets the tech shift types to be seeded for a given molecule.
+            Eligibility rules (EligibleCompanyIds) are set post-save in ShiftyOrganizationSeed.
             </summary>
         </member>
         <member name="F:ShiftManager.Data.SeedData.TechShiftTypeSeed.AllTechShiftTypeKeys">
@@ -2374,6 +2374,18 @@
             <inheritdoc />
         </member>
         <member name="M:ShiftManager.Migrations.AddCompanyNameHe.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.TechMoleculeConvergence">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.TechMoleculeConvergence.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.TechMoleculeConvergence.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.TechMoleculeConvergence.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
@@ -4092,6 +4104,18 @@
             A Program defines WHEN a specific shift type runs (weekly mask) and DEFAULT staffing.
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.ShiftType.EligibleCompanyIds">
+            <summary>
+            JSON array of CompanyIds whose users can be assigned this shift type.
+            Null = all companies in the molecule are eligible (default workforce behavior).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftType.RequiresOfficerRank">
+            <summary>
+            If true, only users with officer rank (>= SegenMishne) can be assigned.
+            Follows existing pattern from OnDutyTypeConfig.RequiresOfficerRank.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.ShiftType.CustomName">
             <summary>
             Custom display name for this shift type (company-specific).
@@ -4118,6 +4142,12 @@
             <summary>
             Get the sort order for this shift type (for consistent ordering across views).
             Morning=1, Middle=2, Afternoon=3, Night=4, Offline=99, Custom=50-98
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.ShiftType.GetEligibleCompanyIdList">
+            <summary>
+            Parses EligibleCompanyIds JSON into a list of ints.
+            Returns null if no restriction (all companies eligible).
             </summary>
         </member>
         <member name="T:ShiftManager.Models.Support.OnDutyType">
@@ -5072,8 +5102,9 @@
         </member>
         <member name="T:ShiftManager.Pages.Api.TechShift.EligibleModel">
             <summary>
-            API endpoint to get users eligible for a specific tech shift type.
-            Returns users with the corresponding grant (e.g., HANAVA -> CanBeAssignedHanava).
+            DEPRECATED: TechShift eligibility is now driven by ShiftType.EligibleCompanyIds
+            and ShiftType.RequiresOfficerRank fields. This endpoint returns an empty result
+            with a deprecation flag.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.TelemetryModel">
@@ -5276,7 +5307,7 @@
             </summary>
         </member>
         <member name="P:ShiftManager.Pages.Calendar.TableModel.IsMoleculeMode">
-            <summary>True when Calendar/Table is operating in molecule-scoped mode (MoleculeId + JobTypeId both set).</summary>
+            <summary>True when Calendar/Table is operating in molecule-scoped mode (MoleculeId + JobTypeId both set, or Tech molecule).</summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.TableModel.OnPostDetachInstanceAsync(ShiftManager.Pages.Calendar.TableModel.DetachInstanceRequest)">
             <summary>
@@ -8237,11 +8268,16 @@
             in 3-4 queries instead of N individual lookups.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IShiftCalendarService.GetCapacitiesBatchAsync(System.Int32,System.Int32,System.DateOnly,System.DateOnly)">
+        <member name="M:ShiftManager.Services.IShiftCalendarService.GetCapacitiesBatchAsync(System.Int32,System.Nullable{System.Int32},System.DateOnly,System.DateOnly)">
             <summary>
             Batch load capacity overrides for all shift types within a molecule/jobType/date range.
             Eliminates N+1 queries when loading capacity for many shift instances.
             Returns a dictionary keyed by (ShiftTypeId, Date) with the effective capacity.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftCalendarService.GetEligibleUsersForShiftTypeAsync(System.Int32,System.Int32)">
+            <summary>
+            Gets users eligible for a specific shift type based on EligibleCompanyIds and RequiresOfficerRank.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IShiftProgramService">
@@ -8328,22 +8364,6 @@
             <summary>
             Gets all ShiftInstances that were generated from a specific Program.
             Used for "Show all Operations from this Program" view.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.ITechShiftService.GetEligibleUsersForTechShiftAsync(System.String,System.Nullable{System.Int32})">
-            <summary>
-            Gets all users eligible for a specific tech shift type, based on their grants.
-            For example, "HANAVA" returns users who have the "CanBeAssignedHanava" grant.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.ITechShiftService.IsUserEligibleForTechShiftAsync(System.Int32,System.String)">
-            <summary>
-            Checks whether a specific user is eligible for a given tech shift type.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.ITechShiftService.GetTechShiftTypesAsync">
-            <summary>
-            Gets all known tech shift type keys (HANAVA, DELTA, YEKEV, MOVILTECH).
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ITenantResolver">
@@ -8950,10 +8970,11 @@
             Get shift types for a company, using cache when available
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.ShiftTypeCacheService.GetShiftTypesForMoleculeAsync(System.Int32,System.Int32)">
+        <member name="M:ShiftManager.Services.ShiftTypeCacheService.GetShiftTypesForMoleculeAsync(System.Int32,System.Nullable{System.Int32})">
             <summary>
             Get shift types for a molecule+jobtype combination, using cache when available.
             Uses IgnoreQueryFilters to load across company boundaries within the molecule.
+            When jobTypeId is null, loads Tech shift types (JobTypeId == null) for the molecule.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ShiftTypeCacheService.InvalidateCache(System.Int32)">
@@ -8962,10 +8983,11 @@
             Call this when shift types are created, updated, or deleted
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.ShiftTypeCacheService.InvalidateMoleculeCache(System.Int32,System.Int32)">
+        <member name="M:ShiftManager.Services.ShiftTypeCacheService.InvalidateMoleculeCache(System.Int32,System.Nullable{System.Int32})">
             <summary>
             Invalidate the molecule-scoped shift types cache.
             Call this when shift types are created, updated, or deleted for a molecule+jobtype combination.
+            When jobTypeId is null, invalidates the Tech shift types cache entry for the molecule.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.TeamCalendarEventAggregator">
@@ -9048,11 +9070,6 @@
             <summary>
             Replaces all members of a calendar with a new set.
             Efficient for the "Save Changes" operation in the member manager.
-            </summary>
-        </member>
-        <member name="F:ShiftManager.Services.TechShiftService.TechShiftGrantMap">
-            <summary>
-            Maps tech shift type key to the corresponding grant key that controls eligibility.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.TenantResolver">
