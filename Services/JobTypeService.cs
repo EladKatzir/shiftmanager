@@ -29,17 +29,10 @@ public class JobTypeService : IJobTypeService
         var molecule = await _db.Molecules.FirstOrDefaultAsync(m => m.Id == moleculeId);
         if (molecule == null) return new List<JobType>();
 
-        var query = _db.JobTypes.IgnoreQueryFilters()
-            .Where(jt => jt.IsActive && jt.AreaId == molecule.AreaId);
-
-        // Tech molecules have their own molecule-scoped job types — show only those.
-        // Workforce molecules use area-wide job types (MoleculeId == null).
-        if (molecule.Type == Models.Support.MoleculeType.Tech)
-            query = query.Where(jt => jt.MoleculeId == moleculeId);
-        else
-            query = query.Where(jt => jt.MoleculeId == null || jt.MoleculeId == moleculeId);
-
-        return await query
+        return await _db.JobTypes.IgnoreQueryFilters()
+            .Where(jt => jt.IsActive
+                && jt.AreaId == molecule.AreaId
+                && (jt.MoleculeId == null || jt.MoleculeId == moleculeId))
             .OrderBy(jt => jt.SortOrder)
             .ThenBy(jt => jt.Name)
             .ToListAsync();

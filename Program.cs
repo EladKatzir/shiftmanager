@@ -833,8 +833,10 @@ using (var scope = app.Services.CreateScope())
         {
             // Build name→ID lookup for all referenced JobTypes
             var jobTypeNames = sentinelMap.Values.ToHashSet();
+            // Use area-wide job types only (MoleculeId == null) — sentinel resolution targets
+            // area-scoped types like BR and Hakam, not molecule-specific variants
             var jobTypeLookup = await db.JobTypes
-                .Where(jt => jobTypeNames.Contains(jt.Name))
+                .Where(jt => jobTypeNames.Contains(jt.Name) && jt.MoleculeId == null)
                 .ToDictionaryAsync(jt => jt.Name, jt => jt.Id);
 
             // Build set of already-resolved grants to detect duplicates on re-run

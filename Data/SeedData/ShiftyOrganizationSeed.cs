@@ -94,13 +94,10 @@ public static class ShiftyOrganizationSeed
         db.Molecules.AddRange(oren, ella, harava, shaked, gefen, shikma, noc, shiklut, system);
         await db.SaveChangesAsync();
 
-        // Shikma-specific job types (organizational only — no shift eligibility impact)
-        var shikmaJobTypes = new List<JobType>
-        {
-            new() { AreaId = area.Id, MoleculeId = shikma.Id, Name = "ProjectManager", DisplayName = "מנהל פרוייקט", SortOrder = 10 },
-            new() { AreaId = area.Id, MoleculeId = shikma.Id, Name = "Hakam", DisplayName = "חק\"ם", SortOrder = 20 }
-        };
-        db.JobTypes.AddRange(shikmaJobTypes);
+        // Shikma-specific job type (organizational only — no shift eligibility impact)
+        // Note: Hakam is the SAME area-wide job type used by all molecules — not duplicated here
+        var shikmaProjectManager = new JobType { AreaId = area.Id, MoleculeId = shikma.Id, Name = "ProjectManager", DisplayName = "מנהל פרוייקט", SortOrder = 10 };
+        db.JobTypes.Add(shikmaProjectManager);
         await db.SaveChangesAsync();
 
         // ============================================================

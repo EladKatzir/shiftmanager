@@ -50,13 +50,12 @@ public static class QaTestUserSeed
             return;
         }
 
-        // Shikma-specific job types (molecule-scoped)
+        // Shikma-specific job type (ProjectManager is molecule-scoped; Hakam is the area-wide one)
         var shikmaProjectManager = jobTypes.FirstOrDefault(j => j.Name == "ProjectManager");
-        var shikmaHakam = jobTypes.FirstOrDefault(j => j.Name == "Hakam" && j.MoleculeId != null);
 
-        if (shikmaProjectManager == null || shikmaHakam == null)
+        if (shikmaProjectManager == null)
         {
-            logger.LogWarning("[QaTestUserSeed] Missing Shikma job types — expected ProjectManager, Hakam (molecule-scoped)");
+            logger.LogWarning("[QaTestUserSeed] Missing Shikma job type — expected ProjectManager");
             return;
         }
 
@@ -105,7 +104,7 @@ public static class QaTestUserSeed
         // ============================================================
         // 3. Create all test users
         // ============================================================
-        var users = BuildTestUserDefinitions(companyMap, templateMap, jobTypes, shikmaProjectManager, shikmaHakam);
+        var users = BuildTestUserDefinitions(companyMap, templateMap, jobTypes, shikmaProjectManager);
         int created = 0, updated = 0, skipped = 0;
 
         foreach (var def in users)
@@ -138,13 +137,12 @@ public static class QaTestUserSeed
         Dictionary<string, Company> companies,
         Dictionary<string, RoleTemplate> templates,
         List<JobType> jobTypes,
-        JobType shikmaProjectManager,
-        JobType shikmaHakam)
+        JobType shikmaProjectManager)
     {
         var alhut = jobTypes.FirstOrDefault(j => j.Name == "Alhut");
         var br = jobTypes.FirstOrDefault(j => j.Name == "BR");
         var text = jobTypes.FirstOrDefault(j => j.Name == "Text");
-        var hakam = jobTypes.FirstOrDefault(j => j.Name == "Hakam");
+        var hakam = jobTypes.FirstOrDefault(j => j.Name == "Hakam" && j.MoleculeId == null);
 
         var defs = new List<TestUserDef>();
 
@@ -213,8 +211,8 @@ public static class QaTestUserSeed
         AddUser(defs, "emp.matot.alhut@test", "Emp Matot Alhut", UserRole.Employee, "Matot", "Alhut", "Employee", companies, templates, alhut, br, text, hakam);
 
         // --- Employees (Tech/Shikma companies) ---
-        AddShikmaUser(defs, "emp.tech.pie@test", "Emp Tech Pie", UserRole.Employee, "Pie", "Employee", companies, templates, shikmaHakam);
-        AddShikmaUser(defs, "emp.tech.tao@test", "Emp Tech Tao", UserRole.Employee, "Tao", "Employee", companies, templates, shikmaHakam);
+        AddShikmaUser(defs, "emp.tech.pie@test", "Emp Tech Pie", UserRole.Employee, "Pie", "Employee", companies, templates, hakam);
+        AddShikmaUser(defs, "emp.tech.tao@test", "Emp Tech Tao", UserRole.Employee, "Tao", "Employee", companies, templates, hakam);
 
         // --- Trainees (Tzafona - all 4 job types) ---
         AddUser(defs, "trainee.alhut@test", "Trainee Alhut", UserRole.Trainee, "Tzafona", "Alhut", "Trainee", companies, templates, alhut, br, text, hakam);
