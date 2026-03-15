@@ -2388,6 +2388,18 @@
         <member name="M:ShiftManager.Migrations.TechMoleculeConvergence.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddJobTypeIsWorkforceOnly">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddJobTypeIsWorkforceOnly.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddJobTypeIsWorkforceOnly.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddJobTypeIsWorkforceOnly.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -3812,6 +3824,12 @@
             <summary>
             Optional molecule-specific scoping. When null, the job type applies to all molecules
             in the area. When set, it only applies to that specific molecule.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.JobType.IsWorkforceOnly">
+            <summary>
+            When true, this job type only appears for Workforce and Helper molecules.
+            Tech and System molecules will not see it in dropdowns or assignments.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.MasterProgram">
