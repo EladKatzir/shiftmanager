@@ -142,7 +142,11 @@ public class IndexModel : LocalizedPageModel
 
         if (FormMaxConsecutive < 1) FormMaxConsecutive = 1;
 
-        var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var currentUserId))
+        {
+            _logger.LogWarning("Invalid or missing NameIdentifier claim");
+            return RedirectToPage("/Auth/Login");
+        }
 
         try
         {

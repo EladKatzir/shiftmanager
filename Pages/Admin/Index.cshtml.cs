@@ -23,18 +23,21 @@ public class IndexModel : PageModel
     private readonly IDirectorService? _directorService;
     private readonly IGrantService _grantService;
     private readonly IFeatureFlagService _featureFlagService;
+    private readonly ILogger<IndexModel> _logger;
 
     public IndexModel(
         AppDbContext db,
         ITenantResolver tenantResolver,
         IGrantService grantService,
         IFeatureFlagService featureFlagService,
+        ILogger<IndexModel> logger,
         IDirectorService? directorService = null)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _grantService = grantService;
         _featureFlagService = featureFlagService;
+        _logger = logger;
         _directorService = directorService;
     }
 
@@ -71,6 +74,8 @@ public class IndexModel : PageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {
+            _logger.LogWarning("Invalid or missing NameIdentifier claim on {Page}", "Admin/Index");
+            Response.Redirect("/Auth/Login");
             return;
         }
 

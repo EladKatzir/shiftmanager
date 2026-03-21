@@ -36,6 +36,14 @@ public class RestoreChoreModel : PageModel
                     { StatusCode = 400 };
             }
 
+            // Verify chore belongs to accessible scope before restoring (IDOR prevention)
+            var chore = await _choreService.GetChoreByIdAsync(data.Id);
+            if (chore == null)
+            {
+                return new JsonResult(new { success = false, message = "Chore not found" })
+                    { StatusCode = 404 };
+            }
+
             var result = await _choreService.RestoreChoreAsync(data.Id);
 
             return new JsonResult(new { success = result.Success, message = result.Message })

@@ -344,6 +344,7 @@ builder.Services.AddScoped<TeamCalendarEventAggregator>();
 // Excel Calendars Services
 builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
 builder.Services.AddScoped<IChoreTypeService, ChoreTypeService>();
+builder.Services.AddScoped<IHomeTypeService, HomeTypeService>();
 builder.Services.AddScoped<IUserDayNoteService, UserDayNoteService>();
 
 // SignalR for real-time calendar updates
@@ -1397,15 +1398,29 @@ app.Use(async (context, next) =>
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
     // Content Security Policy — unsafe-inline required for inline event handlers (onclick, onchange, etc.)
-    // TEMPORARY: Relaxed CSP for Figma design capture — REVERT AFTER CAPTURE
-    context.Response.Headers["Content-Security-Policy"] =
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' https://*.figma.com https://mcp.figma.com; " +
-        "style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data: https://*.figma.com; " +
-        "font-src 'self'; " +
-        "connect-src 'self' ws: wss: https://*.figma.com https://mcp.figma.com; " +
-        "frame-ancestors 'none'";
+    string csp;
+    if (app.Environment.IsDevelopment())
+    {
+        // Dev-only: allow Figma MCP capture tool
+        csp = "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline' https://mcp.figma.com; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data: https://mcp.figma.com; " +
+            "font-src 'self'; " +
+            "connect-src 'self' ws: wss: https://mcp.figma.com; " +
+            "frame-ancestors 'none'";
+    }
+    else
+    {
+        csp = "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data:; " +
+            "font-src 'self'; " +
+            "connect-src 'self' ws: wss:; " +
+            "frame-ancestors 'none'";
+    }
+    context.Response.Headers["Content-Security-Policy"] = csp;
 
     // Remove potentially revealing server headers
     context.Response.Headers.Remove("Server");

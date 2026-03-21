@@ -3486,7 +3486,7 @@
     <value>הזכר לי לפני התורנויות שלי</value>
   </data>
   <data name="Settings_RemindBeforeChores_Desc" xml:space="preserve">
-    <value>קבל תזכורת יום לפני תורנות משוייכת</value>
+    <value>קבל תזכורת יום לפני מטלה משוייכת</value>
   </data>
   <data name="Settings_RemindBeforeOnDuty" xml:space="preserve">
     <value>הזכר לי לפני התורנות היומית שלי</value>
@@ -4822,6 +4822,18 @@
   </data>
   <data name="Success_EmailTemplateSaved" xml:space="preserve">
     <value>תבנית האימייל נשמרה בהצלחה</value>
+  </data>
+  <data name="Success_EmailTemplateAppliedToAll" xml:space="preserve">
+    <value>תבנית האימייל הוחלה על {0} חברות</value>
+  </data>
+  <data name="ApplyToAllCompanies" xml:space="preserve">
+    <value>החל על כל החברות</value>
+  </data>
+  <data name="ApplyToAllCompanies_Desc" xml:space="preserve">
+    <value>שמירה כתבנית בסיס לכל החברות בפעולה אחת. ניתן לדרוס לכל חברה בנפרד אח"כ.</value>
+  </data>
+  <data name="Confirm_ApplyToAllCompanies" xml:space="preserve">
+    <value>פעולה זו תחיל את ההגדרה על כל החברות. להמשיך?</value>
   </data>
   <data name="Success_EmailTemplateReset" xml:space="preserve">
     <value>תבנית האימייל אופסה לברירת מחדל</value>
@@ -6849,13 +6861,16 @@
     <value>ארגון</value>
   </data>
   <data name="Auth_StepRole" xml:space="preserve">
-    <value>תפקיד</value>
+    <value>פרטים</value>
   </data>
   <data name="Auth_SelectMolecule" xml:space="preserve">
     <value>בחר מולקולה</value>
   </data>
   <data name="Auth_ChooseMolecule" xml:space="preserve">
     <value>בחר מולקולה...</value>
+  </data>
+  <data name="Auth_ChooseMoleculeFirst" xml:space="preserve">
+    <value>-- בחר/י מולקולה קודם --</value>
   </data>
   <data name="Auth_ChooseCompanyFirst" xml:space="preserve">
     <value>בחר מולקולה קודם</value>
@@ -6876,7 +6891,7 @@
     <value>שגיאה בטעינת נתונים</value>
   </data>
   <data name="Auth_StepUnit" xml:space="preserve">
-    <value>יחידה</value>
+    <value>יחידה ותפקיד</value>
   </data>
   <data name="Auth_ChooseRoleFirst" xml:space="preserve">
     <value>בחר תפקיד קודם</value>
@@ -7527,13 +7542,13 @@
     <value>נא למלא את כל שדות החובה.</value>
   </data>
   <data name="Chore_Error_TitleRequired" xml:space="preserve">
-    <value>שם תורנות הוא שדה חובה.</value>
+    <value>שם מטלה הוא שדה חובה.</value>
   </data>
   <data name="Chore_Error_TitleTooLong" xml:space="preserve">
-    <value>שם תורנות לא יעלה על 200 תווים.</value>
+    <value>שם מטלה לא יעלה על 200 תווים.</value>
   </data>
   <data name="Chore_Error_NotesTooLong" xml:space="preserve">
-    <value>הערות תורנות לא יעלו על 1000 תווים.</value>
+    <value>הערות מטלה לא יעלו על 1000 תווים.</value>
   </data>
   <data name="Chore_Error_InvalidAssignee" xml:space="preserve">
     <value>משובץ לא תקין.</value>
@@ -7551,16 +7566,16 @@
     <value>לא ניתן לשבץ תורנויות למשתמש זה.</value>
   </data>
   <data name="Chore_Error_ShiftConflictReplace" xml:space="preserve">
-    <value>למשתמש זה יש משמרת בתאריך זה. האם ברצונך להחליף את המשמרת בתורנות?</value>
+    <value>למשתמש זה יש משמרת בתאריך זה. האם ברצונך להחליף את המשמרת במטלה?</value>
   </data>
   <data name="Chore_Error_ShiftConflict" xml:space="preserve">
     <value>למשתמש זה יש משמרת בתאריך זה.</value>
   </data>
   <data name="Chore_Success_Created" xml:space="preserve">
-    <value>תורנות נוצרה בהצלחה.</value>
+    <value>מטלה נוצרה בהצלחה.</value>
   </data>
   <data name="Chore_Error_CreatingFailed" xml:space="preserve">
-    <value>אירעה שגיאה ביצירת התורנות.</value>
+    <value>אירעה שגיאה ביצירת המטלה.</value>
   </data>
   <data name="Chore_Error_InvalidRequest" xml:space="preserve">
     <value>בקשה לא תקינה.</value>
@@ -7569,25 +7584,25 @@
     <value>אין לך הרשאה להחליף משמרות בתורנויות.</value>
   </data>
   <data name="Chore_Success_ShiftReplaced" xml:space="preserve">
-    <value>המשמרת הוחלפה בתורנות בהצלחה.</value>
+    <value>המשמרת הוחלפה במטלה בהצלחה.</value>
   </data>
   <data name="Chore_Error_ReplacingShiftFailed" xml:space="preserve">
     <value>אירעה שגיאה בהחלפת המשמרת.</value>
   </data>
   <data name="Chore_Error_InvalidId" xml:space="preserve">
-    <value>מזהה תורנות לא תקין.</value>
+    <value>מזהה מטלה לא תקין.</value>
   </data>
   <data name="Chore_Error_NoPermissionCancel" xml:space="preserve">
     <value>אין לך הרשאה לבטל תורנויות.</value>
   </data>
   <data name="Chore_Error_NotFound" xml:space="preserve">
-    <value>תורנות לא נמצאה.</value>
+    <value>מטלה לא נמצאה.</value>
   </data>
   <data name="Chore_Success_Canceled" xml:space="preserve">
-    <value>תורנות בוטלה בהצלחה.</value>
+    <value>מטלה בוטלה בהצלחה.</value>
   </data>
   <data name="Chore_Error_CancelingFailed" xml:space="preserve">
-    <value>אירעה שגיאה בביטול התורנות.</value>
+    <value>אירעה שגיאה בביטול המטלה.</value>
   </data>
   <data name="OnDuty_Error_FillRequiredFields" xml:space="preserve">
     <value>נא למלא את כל שדות החובה.</value>
@@ -7965,19 +7980,19 @@
     <value>שיבוץ משמרות דלתא</value>
   </data>
   <data name="Grant_AssignDeltaShifts_Desc" xml:space="preserve">
-    <value>שיבוץ משתמשים למשמרות טכנאי דלתא</value>
+    <value>שיבוץ משתמשים למשמרות דלתא</value>
   </data>
   <data name="Grant_AssignHanavaShifts" xml:space="preserve">
     <value>שיבוץ משמרות הנבה</value>
   </data>
   <data name="Grant_AssignHanavaShifts_Desc" xml:space="preserve">
-    <value>שיבוץ משתמשים למשמרות טכנאי הנבה</value>
+    <value>שיבוץ משתמשים למשמרות הנבה</value>
   </data>
   <data name="Grant_AssignMoviltechShifts" xml:space="preserve">
-    <value>שיבוץ משמרות מובילטק</value>
+    <value>שיבוץ משמרות מובילט</value>
   </data>
   <data name="Grant_AssignMoviltechShifts_Desc" xml:space="preserve">
-    <value>שיבוץ משתמשים למשמרות טכנאי מובילטק</value>
+    <value>שיבוץ משתמשים למשמרות מובילט</value>
   </data>
   <data name="Grant_AssignNOCChores" xml:space="preserve">
     <value>שיבוץ תורנויות NOC</value>
@@ -7995,7 +8010,7 @@
     <value>שיבוץ משמרות יקב</value>
   </data>
   <data name="Grant_AssignYekevShifts_Desc" xml:space="preserve">
-    <value>שיבוץ משתמשים למשמרות טכנאי יקב</value>
+    <value>שיבוץ משתמשים למשמרות יקב</value>
   </data>
   <data name="Grant_CanBeAssignedAlhutShifts" xml:space="preserve">
     <value>זכאי למשמרות אלחוט</value>
@@ -8013,7 +8028,7 @@
     <value>זכאי למשמרות דלתא</value>
   </data>
   <data name="Grant_CanBeAssignedDelta_Desc" xml:space="preserve">
-    <value>המשתמש יכול להיות משובץ למשמרות טכנאי דלתא</value>
+    <value>המשתמש יכול להיות משובץ למשמרות דלתא</value>
   </data>
   <data name="Grant_CanBeAssignedHakamShifts" xml:space="preserve">
     <value>זכאי לתורנות חק"ם</value>
@@ -8025,13 +8040,13 @@
     <value>זכאי למשמרות הנבה</value>
   </data>
   <data name="Grant_CanBeAssignedHanava_Desc" xml:space="preserve">
-    <value>המשתמש יכול להיות משובץ למשמרות טכנאי הנבה</value>
+    <value>המשתמש יכול להיות משובץ למשמרות הנבה</value>
   </data>
   <data name="Grant_CanBeAssignedMoviltech" xml:space="preserve">
-    <value>זכאי למשמרות מובילטק</value>
+    <value>זכאי למשמרות מובילט</value>
   </data>
   <data name="Grant_CanBeAssignedMoviltech_Desc" xml:space="preserve">
-    <value>המשתמש יכול להיות משובץ למשמרות טכנאי מובילטק</value>
+    <value>המשתמש יכול להיות משובץ למשמרות מובילט</value>
   </data>
   <data name="Grant_CanBeAssignedNOC" xml:space="preserve">
     <value>זכאי לתורנויות NOC</value>
@@ -8055,7 +8070,7 @@
     <value>זכאי למשמרות יקב</value>
   </data>
   <data name="Grant_CanBeAssignedYekev_Desc" xml:space="preserve">
-    <value>המשתמש יכול להיות משובץ למשמרות טכנאי יקב</value>
+    <value>המשתמש יכול להיות משובץ למשמרות יקב</value>
   </data>
   <data name="Grant_ManageAlhutBlueprints" xml:space="preserve">
     <value>ניהול תבניות אלחוט</value>
@@ -8085,13 +8100,13 @@
     <value>ניהול תבניות דלתא</value>
   </data>
   <data name="Grant_ManageDeltaBlueprints_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תבניות משמרות טכנאי דלתא</value>
+    <value>יצירה ועריכה של תבניות משמרות דלתא</value>
   </data>
   <data name="Grant_ManageDeltaPrograms" xml:space="preserve">
     <value>ניהול תוכניות דלתא</value>
   </data>
   <data name="Grant_ManageDeltaPrograms_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תוכניות משמרות טכנאי דלתא</value>
+    <value>יצירה ועריכה של תוכניות משמרות דלתא</value>
   </data>
   <data name="Grant_ManageHakamBlueprints" xml:space="preserve">
     <value>ניהול תבניות חק"ם</value>
@@ -8109,13 +8124,13 @@
     <value>ניהול תבניות הנבה</value>
   </data>
   <data name="Grant_ManageHanavaBlueprints_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תבניות משמרות טכנאי הנבה</value>
+    <value>יצירה ועריכה של תבניות משמרות הנבה</value>
   </data>
   <data name="Grant_ManageHanavaPrograms" xml:space="preserve">
     <value>ניהול תוכניות הנבה</value>
   </data>
   <data name="Grant_ManageHanavaPrograms_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תוכניות משמרות טכנאי הנבה</value>
+    <value>יצירה ועריכה של תוכניות משמרות הנבה</value>
   </data>
   <data name="Grant_ManageKatzinBlueprints" xml:space="preserve">
     <value>ניהול תבניות קצין</value>
@@ -8130,16 +8145,16 @@
     <value>יצירה ועריכה של תוכניות תורנויות קצין</value>
   </data>
   <data name="Grant_ManageMoviltechBlueprints" xml:space="preserve">
-    <value>ניהול תבניות מובילטק</value>
+    <value>ניהול תבניות מובילט</value>
   </data>
   <data name="Grant_ManageMoviltechBlueprints_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תבניות משמרות טכנאי מובילטק</value>
+    <value>יצירה ועריכה של תבניות משמרות מובילט</value>
   </data>
   <data name="Grant_ManageMoviltechPrograms" xml:space="preserve">
-    <value>ניהול תוכניות מובילטק</value>
+    <value>ניהול תוכניות מובילט</value>
   </data>
   <data name="Grant_ManageMoviltechPrograms_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תוכניות משמרות טכנאי מובילטק</value>
+    <value>יצירה ועריכה של תוכניות משמרות מובילט</value>
   </data>
   <data name="Grant_ManageNOCBlueprints" xml:space="preserve">
     <value>ניהול תבניות NOC</value>
@@ -8181,13 +8196,13 @@
     <value>ניהול תבניות יקב</value>
   </data>
   <data name="Grant_ManageYekevBlueprints_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תבניות משמרות טכנאי יקב</value>
+    <value>יצירה ועריכה של תבניות משמרות יקב</value>
   </data>
   <data name="Grant_ManageYekevPrograms" xml:space="preserve">
     <value>ניהול תוכניות יקב</value>
   </data>
   <data name="Grant_ManageYekevPrograms_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תוכניות משמרות טכנאי יקב</value>
+    <value>יצירה ועריכה של תוכניות משמרות יקב</value>
   </data>
   <data name="Grant_ViewAlhutShiftCalendar" xml:space="preserve">
     <value>צפייה בלוח אלחוט</value>
@@ -8205,7 +8220,7 @@
     <value>צפייה בלוח דלתא</value>
   </data>
   <data name="Grant_ViewDeltaCalendar_Desc" xml:space="preserve">
-    <value>צפייה בלוח משמרות טכנאי דלתא</value>
+    <value>צפייה בלוח משמרות דלתא</value>
   </data>
   <data name="Grant_ViewHakamShiftCalendar" xml:space="preserve">
     <value>צפייה בלוח חק"ם</value>
@@ -8217,13 +8232,13 @@
     <value>צפייה בלוח הנבה</value>
   </data>
   <data name="Grant_ViewHanavaCalendar_Desc" xml:space="preserve">
-    <value>צפייה בלוח משמרות טכנאי הנבה</value>
+    <value>צפייה בלוח משמרות הנבה</value>
   </data>
   <data name="Grant_ViewMoviltechCalendar" xml:space="preserve">
-    <value>צפייה בלוח מובילטק</value>
+    <value>צפייה בלוח מובילט</value>
   </data>
   <data name="Grant_ViewMoviltechCalendar_Desc" xml:space="preserve">
-    <value>צפייה בלוח משמרות טכנאי מובילטק</value>
+    <value>צפייה בלוח משמרות מובילט</value>
   </data>
   <data name="Grant_ViewNOCCalendar" xml:space="preserve">
     <value>צפייה בלוח NOC</value>
@@ -8247,7 +8262,7 @@
     <value>צפייה בלוח יקב</value>
   </data>
   <data name="Grant_ViewYekevCalendar_Desc" xml:space="preserve">
-    <value>צפייה בלוח משמרות טכנאי יקב</value>
+    <value>צפייה בלוח משמרות יקב</value>
   </data>
   <data name="KeyName" xml:space="preserve">
     <value>שם מפתח</value>
@@ -8421,7 +8436,7 @@
 
   <!-- Chores Calendar Feature -->
   <data name="ChoreType" xml:space="preserve">
-    <value>סוג תורנות</value>
+    <value>סוג מטלה</value>
     <comment>Label for chore type filter dropdown</comment>
   </data>
   <data name="Calendar_Empty_NoChores" xml:space="preserve">
@@ -8557,16 +8572,16 @@
     <value>צפייה בסקירה הכללית של לוח השנה החברתי</value>
   </data>
   <data name="TechShift_Hanava" xml:space="preserve">
-    <value>משמרת טכנאי הנבה</value>
+    <value>משמרת הנבה</value>
   </data>
   <data name="TechShift_Delta" xml:space="preserve">
-    <value>משמרת טכנאי דלתא</value>
+    <value>משמרת דלתא</value>
   </data>
   <data name="TechShift_Yekev" xml:space="preserve">
-    <value>משמרת טכנאי יקב</value>
+    <value>משמרת יקב</value>
   </data>
   <data name="TechShift_Moviltech" xml:space="preserve">
-    <value>משמרת טכנאי מובילטק</value>
+    <value>משמרת מובילט</value>
   </data>
   <data name="TechShift_NOC" xml:space="preserve">
     <value>תורנות NOC</value>
@@ -11386,7 +11401,7 @@
     <value>במשמרת</value>
   </data>
   <data name="Roster_HasChore" xml:space="preserve">
-    <value>בתורנות</value>
+    <value>במטלה</value>
   </data>
   <data name="Roster_Available" xml:space="preserve">
     <value>זמין</value>
@@ -12079,6 +12094,21 @@
   <data name="Auth_DirectorAutoHQ" xml:space="preserve">
     <value>כמפקד/ת, תשובצ/י אוטומטית לצוות מטה המולקולה</value>
   </data>
+  <data name="Auth_RoleHint_MoleculeAdmin" xml:space="preserve">
+    <value>מפק"מ מנהל/ת את כל המולקולה ללא תלות בסוג תפקיד — סוג תפקיד ופלוגה נקבעים אוטומטית.</value>
+  </data>
+  <data name="Auth_RoleHint_AreaAdmin" xml:space="preserve">
+    <value>קב"ב מנהל/ת את כל האזור (כל המולקולות) — סוג תפקיד ופלוגה נקבעים אוטומטית.</value>
+  </data>
+  <data name="Auth_SelectArea" xml:space="preserve">
+    <value>בחר/י אזור</value>
+  </data>
+  <data name="Auth_ChooseArea" xml:space="preserve">
+    <value>-- בחר/י אזור --</value>
+  </data>
+  <data name="Auth_RoleHint_Director" xml:space="preserve">
+    <value>מ"מ מנהל/ת סוג תפקיד ספציפי ברמת המולקולה — פלוגה נקבעת אוטומטית למטה.</value>
+  </data>
   <data name="Error_Signup_SelectMolecule" xml:space="preserve">
     <value>נא לבחור מולקולה</value>
   </data>
@@ -12102,6 +12132,12 @@
   </data>
   <data name="Grant_ManageHierarchy_Desc" xml:space="preserve">
     <value>הוספה, שינוי שם ומחיקה של פלוגות ומחלקות בהיררכיה הארגונית.</value>
+  </data>
+  <data name="Grant_ManageHomeTypes" xml:space="preserve">
+    <value>ניהול סוגי בית</value>
+  </data>
+  <data name="Grant_ManageHomeTypes_Desc" xml:space="preserve">
+    <value>יצירה, עריכה ויצירת תבניות סבב בית ושיבוצים.</value>
   </data>
   <data name="AllMolecules_AreaWide" xml:space="preserve">
     <value>הכל (ברמת מרחב)</value>
@@ -12655,7 +12691,7 @@
     <value>בוטל</value>
   </data>
   <data name="Error_TechShiftIneligible" xml:space="preserve">
-    <value>למשתמש אין את ההרשאה הנדרשת לסוג משמרת טכנאי זה.</value>
+    <value>למשתמש אין את ההרשאה הנדרשת לסוג משמרת זה.</value>
   </data>
   <data name="Error_OverlappingTimeOffRequest" xml:space="preserve">
     <value>כבר קיימת בקשת חופש עבור תאריכים חופפים.</value>
@@ -12875,10 +12911,58 @@
     <value>לעובד יש חופשה מאושרת בתאריך זה</value>
   </data>
   <data name="Warning_ChoreConflict" xml:space="preserve">
-    <value>לעובד יש תורנות משובצת בתאריך זה</value>
+    <value>לעובד יש מטלה משובצת בתאריך זה</value>
   </data>
   <data name="Warning_OnDutyConflict" xml:space="preserve">
     <value>לעובד יש כוננות משובצת בתאריך זה</value>
+  </data>
+  <data name="Warning_HomeConflict" xml:space="preserve">
+    <value>לעובד יש שיבוץ בית בתאריך זה</value>
+  </data>
+  <data name="Warning_ShiftExistsOnHomeDate" xml:space="preserve">
+    <value>לעובד יש משמרות משובצות בתאריך זה</value>
+  </data>
+  <data name="Error_DuplicateHome" xml:space="preserve">
+    <value>לעובד כבר יש שיבוץ בית בתאריך זה</value>
+  </data>
+  <data name="PrimaryShiftType" xml:space="preserve">
+    <value>משמרת ראשית</value>
+  </data>
+
+  <data name="Regulars" xml:space="preserve">
+    <value>תקני</value>
+  </data>
+  <data name="Trainees" xml:space="preserve">
+    <value>חפיפות</value>
+  </data>
+
+  <!-- HomeTypes admin page keys -->
+  <data name="HomeTypes" xml:space="preserve">
+    <value>סוגי סבב בית</value>
+  </data>
+  <data name="HomeTypes_Description" xml:space="preserve">
+    <value>ניהול תבניות סבב בית לשיבוץ משמרות</value>
+  </data>
+  <data name="CreateHomeType" xml:space="preserve">
+    <value>יצירת סוג בית</value>
+  </data>
+  <data name="NoHomeTypes" xml:space="preserve">
+    <value>לא הוגדרו סוגי בית למולקולה זו</value>
+  </data>
+  <data name="PaintHomeDays" xml:space="preserve">
+    <value>סמן ימי בית</value>
+  </data>
+  <data name="GenerateHomeShifts" xml:space="preserve">
+    <value>יצירת משמרות בית</value>
+  </data>
+  <data name="HebrewName" xml:space="preserve">
+    <value>שם בעברית</value>
+  </data>
+  <data name="DefaultStartTime" xml:space="preserve">
+    <value>שעת התחלה</value>
+  </data>
+  <data name="DefaultEndTime" xml:space="preserve">
+    <value>שעת סיום</value>
   </data>
 
   <!-- ChoreTypes & DutyTypes breadcrumb/title keys -->
@@ -12900,10 +12984,10 @@
     <value>סוגי תורנויות משויכים למולקולה ספציפית</value>
   </data>
   <data name="CreateNewChoreType" xml:space="preserve">
-    <value>יצירת סוג תורנות חדש</value>
+    <value>יצירת סוג מטלה חדש</value>
   </data>
   <data name="CreateChoreType" xml:space="preserve">
-    <value>צור סוג תורנות</value>
+    <value>צור סוג מטלה</value>
   </data>
   <data name="AllChoreTypes" xml:space="preserve">
     <value>כל סוגי התורנויות</value>
@@ -12915,25 +12999,25 @@
     <value>לדוגמה: kitchen_duty</value>
   </data>
   <data name="Error_ChoreTypeNameRequired" xml:space="preserve">
-    <value>שם סוג התורנות הוא שדה חובה</value>
+    <value>שם סוג המטלה הוא שדה חובה</value>
   </data>
   <data name="Error_ChoreTypeDisplayNameRequired" xml:space="preserve">
-    <value>שם התצוגה של סוג התורנות הוא שדה חובה</value>
+    <value>שם התצוגה של סוג המטלה הוא שדה חובה</value>
   </data>
   <data name="Error_ChoreTypeNotFound" xml:space="preserve">
-    <value>סוג התורנות לא נמצא</value>
+    <value>סוג המטלה לא נמצא</value>
   </data>
   <data name="Success_ChoreTypeCreated" xml:space="preserve">
-    <value>סוג תורנות '{0}' נוצר בהצלחה</value>
+    <value>סוג מטלה '{0}' נוצר בהצלחה</value>
   </data>
   <data name="Success_ChoreTypeUpdated" xml:space="preserve">
-    <value>סוג תורנות '{0}' עודכן בהצלחה</value>
+    <value>סוג מטלה '{0}' עודכן בהצלחה</value>
   </data>
   <data name="Success_ChoreTypeDeactivated" xml:space="preserve">
-    <value>סוג תורנות '{0}' הושבת</value>
+    <value>סוג מטלה '{0}' הושבת</value>
   </data>
   <data name="Success_ChoreTypeActivated" xml:space="preserve">
-    <value>סוג תורנות '{0}' הופעל</value>
+    <value>סוג מטלה '{0}' הופעל</value>
   </data>
 
   <!-- DutyTypes Admin Page -->
@@ -13059,5 +13143,416 @@
   </data>
   <data name="Placeholder_SecondGrantKeyExample" xml:space="preserve">
     <value>לדוגמה: ApproveExtendedLeave</value>
+  </data>
+  <data name="SearchUserPlaceholder" xml:space="preserve">
+    <value>חפש לפי שם או אימייל...</value>
+  </data>
+  <data name="ViewByPeople" xml:space="preserve">
+    <value>לפי אנשים</value>
+  </data>
+
+  <!-- Fix 25: Calendar CRUD error messages -->
+  <data name="Calendar_Error_StaffingRange" xml:space="preserve">
+    <value>מספר האנשים הנדרשים חייב להיות בין 1 ל-30</value>
+  </data>
+  <data name="Calendar_Error_ShiftTypeNotFound" xml:space="preserve">
+    <value>סוג משמרת לא נמצא</value>
+  </data>
+  <data name="Calendar_Error_ShiftInstanceExists" xml:space="preserve">
+    <value>מופע משמרת כבר קיים לתאריך זה</value>
+  </data>
+  <data name="Calendar_Error_EnsureShiftInstanceFailed" xml:space="preserve">
+    <value>יצירת/אחזור מופע משמרת נכשלה</value>
+  </data>
+  <data name="Calendar_Error_CreateShiftInstanceFailed" xml:space="preserve">
+    <value>יצירת מופע משמרת נכשלה</value>
+  </data>
+  <data name="Calendar_Error_AssignmentNotFound" xml:space="preserve">
+    <value>שיבוץ לא נמצא</value>
+  </data>
+  <data name="Calendar_Error_ValidationFailed" xml:space="preserve">
+    <value>האימות נכשל</value>
+  </data>
+  <data name="Calendar_Error_InvalidOverrideToken" xml:space="preserve">
+    <value>אסימון דריסה לא תקין או שפג תוקפו</value>
+  </data>
+  <data name="Calendar_Error_OverlappingShift" xml:space="preserve">
+    <value>לעובד יש משמרת חופפת: {0} ({1} - {2})</value>
+  </data>
+  <data name="Calendar_Error_AssignUserToSlotFailed" xml:space="preserve">
+    <value>שיבוץ המשתמש לתא נכשל</value>
+  </data>
+  <data name="Calendar_Error_InvalidUserSession" xml:space="preserve">
+    <value>הפעלת משתמש לא תקינה</value>
+  </data>
+  <data name="Calendar_Error_InsufficientPermissions" xml:space="preserve">
+    <value>אין הרשאות מספיקות לשיבוץ משמרות</value>
+  </data>
+  <data name="Calendar_Error_AssignEmployeeFailed" xml:space="preserve">
+    <value>שיבוץ העובד נכשל</value>
+  </data>
+  <data name="Calendar_Error_UnassignEmployeeFailed" xml:space="preserve">
+    <value>הסרת שיבוץ העובד נכשלה</value>
+  </data>
+  <data name="Calendar_Error_ClearAssignmentFailed" xml:space="preserve">
+    <value>ניקוי השיבוץ נכשל</value>
+  </data>
+  <data name="Calendar_Confirm_RemoveEmployees" xml:space="preserve">
+    <value>פעולה זו תסיר {0} עובדים משובצים. להמשיך?</value>
+  </data>
+  <data name="Calendar_Error_ShiftInstanceNotFound" xml:space="preserve">
+    <value>מופע משמרת לא נמצא</value>
+  </data>
+  <data name="Calendar_Error_UpdateStaffingFailed" xml:space="preserve">
+    <value>עדכון מספר האנשים הנדרשים נכשל</value>
+  </data>
+  <data name="Calendar_Error_UnauthorizedMolecule" xml:space="preserve">
+    <value>אין גישה למולקולה זו</value>
+  </data>
+  <data name="Calendar_Error_DeleteShiftInstanceFailed" xml:space="preserve">
+    <value>מחיקת מופע המשמרת נכשלה</value>
+  </data>
+  <data name="Calendar_Error_AddTraineeFailed" xml:space="preserve">
+    <value>הוספת הנחפף נכשלה</value>
+  </data>
+  <data name="Calendar_Error_RemoveTraineeFailed" xml:space="preserve">
+    <value>הסרת הנחפף נכשלה</value>
+  </data>
+  <data name="Calendar_Error_ChangeUserFailed" xml:space="preserve">
+    <value>החלפת המשתמש נכשלה</value>
+  </data>
+  <data name="Calendar_Error_ShiftNameEmpty" xml:space="preserve">
+    <value>שם המשמרת לא יכול להיות ריק</value>
+  </data>
+  <data name="Calendar_Error_InvalidTimeFormat" xml:space="preserve">
+    <value>פורמט שעה לא תקין</value>
+  </data>
+  <data name="Calendar_Error_UpdateMetadataFailed" xml:space="preserve">
+    <value>עדכון פרטי המשמרת נכשל</value>
+  </data>
+  <data name="Calendar_Error_CreateCustomShiftTypeFailed" xml:space="preserve">
+    <value>יצירת סוג משמרת מותאם אישית נכשלה</value>
+  </data>
+  <data name="Calendar_Error_DetachShiftInstanceFailed" xml:space="preserve">
+    <value>ניתוק מופע המשמרת נכשל</value>
+  </data>
+  <data name="Calendar_Error_ShiftNotDetached" xml:space="preserve">
+    <value>מופע המשמרת אינו מנותק מתוכנית</value>
+  </data>
+  <data name="Calendar_Error_ResetShiftInstanceFailed" xml:space="preserve">
+    <value>איפוס מופע המשמרת נכשל</value>
+  </data>
+  <data name="Calendar_Error_LoadEmployeesFailed" xml:space="preserve">
+    <value>טעינת העובדים נכשלה</value>
+  </data>
+  <data name="Calendar_Error_FillRangeTooLarge" xml:space="preserve">
+    <value>לא ניתן למלא יותר מ-730 תאריכים (שנתיים) בבת אחת</value>
+  </data>
+  <data name="Calendar_Error_SourceShiftNotFound" xml:space="preserve">
+    <value>משמרת מקור לא נמצאה</value>
+  </data>
+  <data name="Calendar_Error_SourceShiftNotLinkedToProgram" xml:space="preserve">
+    <value>משמרת המקור אינה מקושרת לתוכנית</value>
+  </data>
+  <data name="Calendar_Error_InvalidFillMode" xml:space="preserve">
+    <value>מצב מילוי לא תקין</value>
+  </data>
+  <data name="Calendar_Error_FillRangeFailed" xml:space="preserve">
+    <value>מילוי הטווח נכשל</value>
+  </data>
+  <data name="Calendar_Error_LoadConflictsFailed" xml:space="preserve">
+    <value>טעינת התנגשויות נכשלה</value>
+  </data>
+
+  <!-- Fix 26: Login lockout countdown strings -->
+  <data name="Login_Lockout_RetryNow" xml:space="preserve">
+    <value>ניתן לנסות להתחבר שוב כעת.</value>
+  </data>
+  <data name="Login_Lockout_Countdown" xml:space="preserve">
+    <value>החשבון נעול זמנית עקב ניסיונות כניסה כושלים חוזרים. נא לנסות שוב בעוד {0} דקות.</value>
+  </data>
+
+  <!-- Fix 28: HomeTypes confirm dialog -->
+  <data name="Confirm_DeleteHomeType" xml:space="preserve">
+    <value>האם למחוק את הגדרת סבב-בית הזו?</value>
+  </data>
+
+  <!-- Fix 31: AuditLog action strings -->
+  <data name="AuditAction_UserCreated" xml:space="preserve">
+    <value>משתמש נוצר</value>
+  </data>
+  <data name="AuditAction_UserEnabled" xml:space="preserve">
+    <value>משתמש הופעל</value>
+  </data>
+  <data name="AuditAction_UserDisabled" xml:space="preserve">
+    <value>משתמש הושבת</value>
+  </data>
+  <data name="AuditAction_UserUnlocked" xml:space="preserve">
+    <value>חשבון נפתח</value>
+  </data>
+  <data name="AuditAction_UserRankChanged" xml:space="preserve">
+    <value>דרגה שונתה</value>
+  </data>
+  <data name="AuditAction_JobTypeChanged" xml:space="preserve">
+    <value>סוג עבודה שונה</value>
+  </data>
+  <data name="AuditAction_PrimaryShiftTypeChanged" xml:space="preserve">
+    <value>משמרת ראשית שונתה</value>
+  </data>
+  <data name="AuditAction_PasswordReset" xml:space="preserve">
+    <value>סיסמה אופסה</value>
+  </data>
+  <data name="AuditAction_BatchApproveJoinRequest" xml:space="preserve">
+    <value>בקשת הצטרפות אושרה</value>
+  </data>
+  <data name="AuditAction_ShiftAssigned" xml:space="preserve">
+    <value>משמרת שובצה</value>
+  </data>
+  <data name="AuditAction_ShiftUnassigned" xml:space="preserve">
+    <value>שיבוץ משמרת הוסר</value>
+  </data>
+  <data name="AuditAction_ShiftTypeDeleted" xml:space="preserve">
+    <value>סוג משמרת נמחק</value>
+  </data>
+  <data name="AuditAction_ConfigUpdated" xml:space="preserve">
+    <value>הגדרות עודכנו</value>
+  </data>
+  <data name="AuditAction_ChoreCreated" xml:space="preserve">
+    <value>מטלה נוצרה</value>
+  </data>
+  <data name="AuditAction_ChoreCanceled" xml:space="preserve">
+    <value>מטלה בוטלה</value>
+  </data>
+  <data name="AuditAction_ChoreCreatedQuick" xml:space="preserve">
+    <value>מטלה מהירה נוצרה</value>
+  </data>
+  <data name="AuditAction_ChoreDeletedQuick" xml:space="preserve">
+    <value>מטלה מהירה נמחקה</value>
+  </data>
+  <data name="AuditAction_ShiftReplacedWithChore" xml:space="preserve">
+    <value>משמרת הוחלפה במטלה</value>
+  </data>
+  <data name="AuditAction_OnDutyCreated" xml:space="preserve">
+    <value>תורן נוצר</value>
+  </data>
+  <data name="AuditAction_OnDutyCanceled" xml:space="preserve">
+    <value>תורן בוטל</value>
+  </data>
+  <data name="AuditAction_OnDutyCreatedQuick" xml:space="preserve">
+    <value>תורן מהיר נוצר</value>
+  </data>
+  <data name="AuditAction_OnDutyDeletedQuick" xml:space="preserve">
+    <value>תורן מהיר נמחק</value>
+  </data>
+  <data name="AuditAction_OnDutyTypeCreated" xml:space="preserve">
+    <value>סוג תורנות נוצר</value>
+  </data>
+  <data name="AuditAction_OnDutyTypeDeleted" xml:space="preserve">
+    <value>סוג תורנות נמחק</value>
+  </data>
+  <data name="AuditAction_GrantAssigned" xml:space="preserve">
+    <value>הרשאה הוקצתה</value>
+  </data>
+  <data name="AuditAction_GrantRevoked" xml:space="preserve">
+    <value>הרשאה בוטלה</value>
+  </data>
+  <data name="AuditAction_AllGrantsRevoked" xml:space="preserve">
+    <value>כל ההרשאות בוטלו</value>
+  </data>
+  <data name="AuditAction_Create" xml:space="preserve">
+    <value>נוצר</value>
+  </data>
+  <data name="AuditAction_Update" xml:space="preserve">
+    <value>עודכן</value>
+  </data>
+  <data name="AuditAction_ToggleActive" xml:space="preserve">
+    <value>החלפת סטטוס פעיל</value>
+  </data>
+  <data name="AuditAction_BackupCreated" xml:space="preserve">
+    <value>גיבוי נוצר</value>
+  </data>
+  <data name="AuditAction_BackupRestored" xml:space="preserve">
+    <value>גיבוי שוחזר</value>
+  </data>
+  <data name="AuditAction_BackupDeleted" xml:space="preserve">
+    <value>גיבוי נמחק</value>
+  </data>
+  <data name="AuditAction_BackupDownloaded" xml:space="preserve">
+    <value>גיבוי הורד</value>
+  </data>
+  <data name="AuditAction_GriffinAutoProvision" xml:space="preserve">
+    <value>הקצאה אוטומטית של גריפין</value>
+  </data>
+  <data name="AuditAction_GriffinConfigUpdated" xml:space="preserve">
+    <value>הגדרות גריפין עודכנו</value>
+  </data>
+  <data name="AuditAction_GriffinConfigTestedSuccessfully" xml:space="preserve">
+    <value>הגדרות גריפין נבדקו</value>
+  </data>
+  <data name="AuditAction_GameConfigUpdated" xml:space="preserve">
+    <value>הגדרות משחק עודכנו</value>
+  </data>
+  <data name="AuditAction_EmailConfigUpdated" xml:space="preserve">
+    <value>הגדרות אימייל עודכנו</value>
+  </data>
+  <data name="AuditAction_TestEmailSent" xml:space="preserve">
+    <value>אימייל בדיקה נשלח</value>
+  </data>
+  <data name="AuditAction_OwnerSelectedCompany" xml:space="preserve">
+    <value>חברה נבחרה</value>
+  </data>
+  <data name="AuditAction_OwnerClearedCompanySelection" xml:space="preserve">
+    <value>בחירת חברה נוקתה</value>
+  </data>
+  <data name="AuditAction_DirectorSelectedMolecule" xml:space="preserve">
+    <value>מולקולה נבחרה</value>
+  </data>
+  <data name="AuditAction_ArchiveCreated" xml:space="preserve">
+    <value>ארכיון נוצר</value>
+  </data>
+  <data name="AuditAction_ArchivePreviewGenerated" xml:space="preserve">
+    <value>תצוגה מקדימה של ארכיון</value>
+  </data>
+  <data name="AuditAction_ArchiveDownloaded" xml:space="preserve">
+    <value>ארכיון הורד</value>
+  </data>
+  <data name="AuditAction_ArchiveValidated" xml:space="preserve">
+    <value>ארכיון אומת</value>
+  </data>
+  <data name="AuditAction_DataImported" xml:space="preserve">
+    <value>נתונים יובאו</value>
+  </data>
+  <data name="AuditAction_DataPurged" xml:space="preserve">
+    <value>נתונים נמחקו</value>
+  </data>
+  <data name="AuditAction_SignupRateLimitsCleared" xml:space="preserve">
+    <value>הגבלות קצב הרשמה נוקו</value>
+  </data>
+  <data name="AuditAction_HierarchyEntityCreated" xml:space="preserve">
+    <value>ישות היררכיה נוצרה</value>
+  </data>
+  <data name="AuditAction_HierarchyEntityRenamed" xml:space="preserve">
+    <value>ישות היררכיה שונתה שם</value>
+  </data>
+  <data name="AuditAction_HierarchyEntityMoved" xml:space="preserve">
+    <value>ישות היררכיה הועברה</value>
+  </data>
+  <data name="AuditAction_HierarchyEntityDeleted" xml:space="preserve">
+    <value>ישות היררכיה נמחקה</value>
+  </data>
+  <data name="AuditAction_HierarchyReorderApplied" xml:space="preserve">
+    <value>סידור מחדש של היררכיה</value>
+  </data>
+  <data name="AuditAction_LocalizationOverrideCreated" xml:space="preserve">
+    <value>דריסת לוקליזציה נוצרה</value>
+  </data>
+  <data name="AuditAction_LocalizationOverrideUpdated" xml:space="preserve">
+    <value>דריסת לוקליזציה עודכנה</value>
+  </data>
+  <data name="AuditAction_LocalizationOverridesBulkUpsert" xml:space="preserve">
+    <value>עדכון מרובה של דריסות לוקליזציה</value>
+  </data>
+  <data name="AuditAction_LocalizationOverrideDeleted" xml:space="preserve">
+    <value>דריסת לוקליזציה נמחקה</value>
+  </data>
+  <data name="AuditAction_LanguageSettingsUpdated" xml:space="preserve">
+    <value>הגדרות שפה עודכנו</value>
+  </data>
+  <data name="AuditAction_LanguageSettingsCreated" xml:space="preserve">
+    <value>הגדרות שפה נוצרו</value>
+  </data>
+  <data name="AuditAction_ApiKeyRequest.Created" xml:space="preserve">
+    <value>מפתח API התבקש</value>
+  </data>
+  <data name="AuditAction_ApiKeyRequest.Approved" xml:space="preserve">
+    <value>מפתח API אושר</value>
+  </data>
+  <data name="AuditAction_ApiKeyRequest.Rejected" xml:space="preserve">
+    <value>מפתח API נדחה</value>
+  </data>
+  <data name="AuditAction_ApiKey.Revoked" xml:space="preserve">
+    <value>מפתח API בוטל</value>
+  </data>
+  <data name="AuditAction_ApiKey.Regenerated" xml:space="preserve">
+    <value>מפתח API חודש</value>
+  </data>
+
+  <!-- Fix 31: AuditLog entity type strings -->
+  <data name="AuditEntity_User" xml:space="preserve">
+    <value>משתמש</value>
+  </data>
+  <data name="AuditEntity_AppUser" xml:space="preserve">
+    <value>משתמש</value>
+  </data>
+  <data name="AuditEntity_ShiftAssignment" xml:space="preserve">
+    <value>שיבוץ משמרת</value>
+  </data>
+  <data name="AuditEntity_ShiftType" xml:space="preserve">
+    <value>סוג משמרת</value>
+  </data>
+  <data name="AuditEntity_ShiftInstance" xml:space="preserve">
+    <value>מופע משמרת</value>
+  </data>
+  <data name="AuditEntity_Chore" xml:space="preserve">
+    <value>מטלה</value>
+  </data>
+  <data name="AuditEntity_OnDuty" xml:space="preserve">
+    <value>תורן</value>
+  </data>
+  <data name="AuditEntity_OnDutyTypeConfig" xml:space="preserve">
+    <value>הגדרת סוג תורנות</value>
+  </data>
+  <data name="AuditEntity_AppConfig" xml:space="preserve">
+    <value>הגדרות מערכת</value>
+  </data>
+  <data name="AuditEntity_Grant" xml:space="preserve">
+    <value>הרשאה</value>
+  </data>
+  <data name="AuditEntity_Database" xml:space="preserve">
+    <value>בסיס נתונים</value>
+  </data>
+  <data name="AuditEntity_GriffinConfig" xml:space="preserve">
+    <value>הגדרות גריפין</value>
+  </data>
+  <data name="AuditEntity_GameConfig" xml:space="preserve">
+    <value>הגדרות משחק</value>
+  </data>
+  <data name="AuditEntity_EmailConfig" xml:space="preserve">
+    <value>הגדרות אימייל</value>
+  </data>
+  <data name="AuditEntity_CompanySelection" xml:space="preserve">
+    <value>בחירת חברה</value>
+  </data>
+  <data name="AuditEntity_MoleculeSelection" xml:space="preserve">
+    <value>בחירת מולקולה</value>
+  </data>
+  <data name="AuditEntity_DataArchive" xml:space="preserve">
+    <value>ארכיון נתונים</value>
+  </data>
+  <data name="AuditEntity_RateLimiting" xml:space="preserve">
+    <value>הגבלת קצב</value>
+  </data>
+  <data name="AuditEntity_UserJoinRequest" xml:space="preserve">
+    <value>בקשת הצטרפות</value>
+  </data>
+  <data name="AuditEntity_CompanyLocalizationOverride" xml:space="preserve">
+    <value>דריסת לוקליזציה</value>
+  </data>
+  <data name="AuditEntity_CompanyLanguageSettings" xml:space="preserve">
+    <value>הגדרות שפה</value>
+  </data>
+  <data name="AuditEntity_ApiKeyRequest" xml:space="preserve">
+    <value>בקשת מפתח API</value>
+  </data>
+
+  <!-- Cross-agent .resx keys -->
+  <data name="HomeType_DaysSelected" xml:space="preserve">
+    <value>{0} ימים נבחרו</value>
+  </data>
+  <data name="Realtime_Disconnected" xml:space="preserve">
+    <value>החיבור נותק. מנסה שוב...</value>
+  </data>
+  <data name="Realtime_Reconnected" xml:space="preserve">
+    <value>החיבור חזר.</value>
   </data>
 </root>

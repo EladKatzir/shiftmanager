@@ -27,6 +27,7 @@ public class SignupModel : LocalizedPageModel
 
     private readonly ICompanyCacheService _companyCacheService;
     private readonly IRoleService _roleService;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public SignupModel(
         AppDbContext db,
@@ -37,7 +38,8 @@ public class SignupModel : LocalizedPageModel
         INotificationService notificationService,
         IRateLimitingService rateLimiting,
         ICompanyCacheService companyCacheService,
-        IRoleService roleService)
+        IRoleService roleService,
+        IServiceScopeFactory serviceScopeFactory)
         : base(localizer)
     {
         _db = db;
@@ -48,6 +50,7 @@ public class SignupModel : LocalizedPageModel
         _rateLimiting = rateLimiting;
         _companyCacheService = companyCacheService;
         _roleService = roleService;
+        _serviceScopeFactory = serviceScopeFactory;
     }
 
     [BindProperty, Required, EmailAddress]
@@ -89,8 +92,9 @@ public class SignupModel : LocalizedPageModel
         if (IsPublicSignupEnabled)
         {
             _logger.LogWarning("Public signup is enabled - this exposes organizational structure");
-            // Load molecules for the cascade - companies will be loaded via API
+            // Load molecules (with Area for AreaAdmin area selector) - companies will be loaded via API
             AvailableMolecules = await _db.Molecules
+                .Include(m => m.Area)
                 .Where(m => m.IsActive)
                 .OrderBy(m => m.DisplayName ?? m.Name)
                 .ToListAsync();
@@ -116,6 +120,7 @@ public class SignupModel : LocalizedPageModel
         if (IsPublicSignupEnabled)
         {
             AvailableMolecules = await _db.Molecules
+                .Include(m => m.Area)
                 .Where(m => m.IsActive)
                 .OrderBy(m => m.DisplayName ?? m.Name)
                 .ToListAsync();
@@ -192,8 +197,11 @@ public class SignupModel : LocalizedPageModel
             moleculeType = molecule?.Type;
         }
 
-        // Director/AreaAdmin HQ auto-resolve: get assigned to the molecule's HQ company
-        if (RequestedRole == UserRole.Director || RequestedRole == UserRole.AreaAdmin)
+        // Director/AreaAdmin/MoleculeAdmin HQ auto-resolve: get assigned to the molecule's HQ company
+        // MoleculeAdmin (מפק"מ) and AreaAdmin (קב"ב) manage beyond job-type level — no job type needed
+        var isJobTypeFreeScope = signupTemplate?.ScopeLevel == RoleScopeLevel.Molecule
+                              || signupTemplate?.ScopeLevel == RoleScopeLevel.Area;
+        if (RequestedRole == UserRole.Director || RequestedRole == UserRole.AreaAdmin || isJobTypeFreeScope)
         {
             if (!MoleculeId.HasValue || MoleculeId.Value <= 0)
             {
@@ -212,6 +220,12 @@ public class SignupModel : LocalizedPageModel
             }
 
             CompanyId = hqCompany.Id;
+
+            // MoleculeAdmin/AreaAdmin: clear JobTypeId (scope beyond job-type level)
+            if (isJobTypeFreeScope)
+            {
+                JobTypeId = 0; // Will be stored as null in the join request
+            }
         }
         if (CompanyId <= 0)
         {
@@ -296,21 +310,29 @@ public class SignupModel : LocalizedPageModel
         _logger.LogInformation("New join request created: {Email} requesting {Role} at {Company}",
             Email, RequestedRole, selectedCompany.Name);
 
-        // Notify all owners about the new access request (fire-and-forget with error handling)
+        // Notify all owners about the new access request (fire-and-forget with scoped service)
+        var capturedDisplayName = DisplayName;
+        var capturedEmail = Email;
+        var capturedCompanyName = selectedCompany.LocalizedName;
+        var capturedRequestId = joinRequest.Id;
+        var capturedCompanyId = selectedCompany.Id;
         _ = Task.Run(async () =>
         {
+            using var scope = _serviceScopeFactory.CreateScope();
             try
             {
-                await _notificationService.NotifyOwnersOfAccessRequestAsync(
-                    DisplayName,
-                    Email,
-                    selectedCompany.LocalizedName,
-                    joinRequest.Id,
-                    selectedCompany.Id);
+                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                await notificationService.NotifyOwnersOfAccessRequestAsync(
+                    capturedDisplayName,
+                    capturedEmail,
+                    capturedCompanyName,
+                    capturedRequestId,
+                    capturedCompanyId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to notify owners about join request {RequestId}", joinRequest.Id);
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<SignupModel>>();
+                logger.LogError(ex, "Failed to notify owners about join request {RequestId}", capturedRequestId);
             }
         });
 

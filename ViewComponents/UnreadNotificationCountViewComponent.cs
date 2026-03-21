@@ -22,9 +22,13 @@ public class UnreadNotificationCountViewComponent : ViewComponent
             return Content("");
         }
 
+        if (!int.TryParse(claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
+        {
+            return Content("");  // Graceful fallback — no notification count shown
+        }
+
         try
         {
-            var userId = int.Parse(claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var unreadCount = await _db.UserNotifications
                 .CountAsync(n => n.UserId == userId && !n.IsRead);
 

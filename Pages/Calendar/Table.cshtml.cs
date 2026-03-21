@@ -2,10 +2,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Hubs;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -28,6 +30,7 @@ public class TableModel : PageModel
     private readonly IJobTypeService _jobTypeService;
     private readonly ICompanyLocalizationService _companyLocalizationService;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public TableModel(
         AppDbContext db,
@@ -42,7 +45,8 @@ public class TableModel : PageModel
         IGrantService grantService,
         IJobTypeService jobTypeService,
         ICompanyLocalizationService companyLocalizationService,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _companyContext = companyContext;
@@ -57,6 +61,7 @@ public class TableModel : PageModel
         _jobTypeService = jobTypeService;
         _companyLocalizationService = companyLocalizationService;
         _tenantResolver = tenantResolver;
+        _localizer = localizer;
     }
 
     /// <summary>
@@ -399,7 +404,7 @@ public class TableModel : PageModel
         try
         {
             if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
-                return new JsonResult(new { success = false, error = "StaffingRequired must be between 1 and 30" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_StaffingRange"].Value });
 
             // Get or create instance (idempotent)
             // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
@@ -416,7 +421,7 @@ public class TableModel : PageModel
                 var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
                 if (shiftType == null)
                 {
-                    return new JsonResult(new { success = false, error = "Shift type not found" });
+                    return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value });
                 }
 
                 // Transaction: create instance + assignment slots atomically
@@ -502,7 +507,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error ensuring shift instance");
-            return new JsonResult(new { success = false, error = "Failed to create/retrieve shift instance" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_EnsureShiftInstanceFailed"].Value });
         }
     }
 
@@ -511,7 +516,7 @@ public class TableModel : PageModel
         try
         {
             if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
-                return new JsonResult(new { success = false, error = "StaffingRequired must be between 1 and 30" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_StaffingRange"].Value });
 
             // Check if instance already exists
             // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
@@ -521,14 +526,14 @@ public class TableModel : PageModel
 
             if (existingInstance != null)
             {
-                return new JsonResult(new { success = false, error = "Shift instance already exists for this date" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftInstanceExists"].Value });
             }
 
             // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
             if (shiftType == null)
             {
-                return new JsonResult(new { success = false, error = "Shift type not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value });
             }
 
             // Transaction: create instance + assignment slots atomically
@@ -584,7 +589,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating shift instance");
-            return new JsonResult(new { success = false, error = "Failed to create shift instance" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_CreateShiftInstanceFailed"].Value });
         }
     }
 
@@ -603,7 +608,7 @@ public class TableModel : PageModel
 
             if (assignment == null)
             {
-                return new JsonResult(new { success = false, error = "Assignment not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
 
             // Validate via service (job type, grouping, weekly cap, rest hours)
@@ -614,7 +619,7 @@ public class TableModel : PageModel
                 return new JsonResult(new
                 {
                     success = false,
-                    error = validation.Errors.FirstOrDefault()?.Message ?? "Validation failed",
+                    error = validation.Errors.FirstOrDefault()?.Message ?? _localizer["Calendar_Error_ValidationFailed"].Value,
                     errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
                 });
             }
@@ -637,7 +642,7 @@ public class TableModel : PageModel
             if (!string.IsNullOrEmpty(request.OverrideToken) &&
                 !_assignmentService.ValidateOverrideToken(request.OverrideToken, assignment.ShiftInstanceId, request.UserId))
             {
-                return new JsonResult(new { success = false, error = "Invalid or expired override token" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidOverrideToken"].Value });
             }
 
             // Overlap detection (kept as hard check — not part of service validation)
@@ -684,7 +689,7 @@ public class TableModel : PageModel
                     return new JsonResult(new
                     {
                         success = false,
-                        error = $"Employee has an overlapping shift: {overlapName} ({existingStart:HH:mm} - {existingEnd:HH:mm})"
+                        error = string.Format(_localizer["Calendar_Error_OverlappingShift"].Value, overlapName, existingStart.ToString("HH:mm"), existingEnd.ToString("HH:mm"))
                     });
                 }
             }
@@ -710,7 +715,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning user to slot");
-            return new JsonResult(new { success = false, error = "Failed to assign user to slot" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignUserToSlotFailed"].Value });
         }
     }
 
@@ -722,7 +727,7 @@ public class TableModel : PageModel
 
             // FINDING-002 FIX: Authorization check — verify user has shift assignment grant
             if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var currentUserId))
-                return new JsonResult(new { success = false, error = "Invalid user session" }) { StatusCode = 401 };
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
 
             var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
             if (!isAdmin)
@@ -734,7 +739,7 @@ public class TableModel : PageModel
                     || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTechShifts", companyId: companyId);
 
                 if (!hasAnyShiftGrant)
-                    return new JsonResult(new { success = false, error = "Insufficient permissions to assign shifts" }) { StatusCode = 403 };
+                    return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
             }
 
             // Get or create shift instance (service expects pre-existing instance)
@@ -749,7 +754,7 @@ public class TableModel : PageModel
                 var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
                 if (shiftType == null)
                 {
-                    return new JsonResult(new { success = false, error = "Shift type not found" });
+                    return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value });
                 }
 
                 instance = new ShiftInstance
@@ -775,7 +780,7 @@ public class TableModel : PageModel
                 return new JsonResult(new
                 {
                     success = false,
-                    error = validation.Errors.FirstOrDefault()?.Message ?? "Validation failed",
+                    error = validation.Errors.FirstOrDefault()?.Message ?? _localizer["Calendar_Error_ValidationFailed"].Value,
                     errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
                 });
             }
@@ -856,7 +861,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning employee");
-            return new JsonResult(new { success = false, error = "Failed to assign employee" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignEmployeeFailed"].Value });
         }
     }
 
@@ -873,7 +878,7 @@ public class TableModel : PageModel
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
-                return new JsonResult(new { success = false, error = "Assignment not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
 
             // Capture data before removal for notification
@@ -918,7 +923,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error unassigning employee");
-            return new JsonResult(new { success = false, error = "Failed to unassign employee" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UnassignEmployeeFailed"].Value });
         }
     }
 
@@ -934,7 +939,7 @@ public class TableModel : PageModel
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
-                return new JsonResult(new { success = false, error = "Assignment not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
 
             // Clear user and trainee without deleting the assignment slot
@@ -975,7 +980,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error clearing assignment");
-            return new JsonResult(new { success = false, error = "Failed to clear assignment" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ClearAssignmentFailed"].Value });
         }
     }
 
@@ -984,13 +989,13 @@ public class TableModel : PageModel
         try
         {
             if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
-                return new JsonResult(new { success = false, error = "StaffingRequired must be between 1 and 30" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_StaffingRange"].Value });
 
             // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var instance = await _db.ShiftInstances.IgnoreQueryFilters().FirstOrDefaultAsync(si => si.Id == request.ShiftInstanceId);
             if (instance == null)
             {
-                return new JsonResult(new { success = false, error = "Shift instance not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftInstanceNotFound"].Value });
             }
 
             // If this instance is from a Program and not yet detached, detach it now
@@ -1042,7 +1047,7 @@ public class TableModel : PageModel
                         success = false,
                         requiresConfirmation = true,
                         affectedAssignments = affectedCount,
-                        message = $"This will remove {affectedCount} assigned employee(s). Do you want to continue?"
+                        message = string.Format(_localizer["Calendar_Confirm_RemoveEmployees"].Value, affectedCount)
                     });
                 }
 
@@ -1109,7 +1114,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating shift staffing");
-            return new JsonResult(new { success = false, error = "Failed to update shift staffing" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UpdateStaffingFailed"].Value });
         }
     }
 
@@ -1126,7 +1131,7 @@ public class TableModel : PageModel
             {
                 // Verify caller has access to this molecule
                 if (!await IsCallerInMoleculeAsync(moleculeIdParam.Value))
-                    return new JsonResult(new { success = false, error = "Unauthorized molecule access" }) { StatusCode = 403 };
+                    return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UnauthorizedMolecule"].Value }) { StatusCode = 403 };
 
                 // SECURITY-AUDITED: SAFE — molecule access validated above, re-scoped by explicit shiftInstanceId
                 instance = await _db.ShiftInstances
@@ -1143,7 +1148,7 @@ public class TableModel : PageModel
 
             if (instance == null)
             {
-                return new JsonResult(new { success = false, error = "Shift instance not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftInstanceNotFound"].Value });
             }
 
             // Delete all assignments first
@@ -1198,7 +1203,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting shift instance {InstanceId}", request.ShiftInstanceId);
-            return new JsonResult(new { success = false, error = "Failed to delete shift instance" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DeleteShiftInstanceFailed"].Value });
         }
     }
 
@@ -1214,7 +1219,7 @@ public class TableModel : PageModel
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
-                return new JsonResult(new { success = false, error = "Assignment not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
 
             // Validate trainee assignment (self-training, same company, trainee role)
@@ -1225,7 +1230,7 @@ public class TableModel : PageModel
                 return new JsonResult(new
                 {
                     success = false,
-                    error = validation.Errors.FirstOrDefault()?.Message ?? "Validation failed",
+                    error = validation.Errors.FirstOrDefault()?.Message ?? _localizer["Calendar_Error_ValidationFailed"].Value,
                     errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
                 });
             }
@@ -1249,7 +1254,7 @@ public class TableModel : PageModel
             if (!string.IsNullOrEmpty(request.OverrideToken) &&
                 !_assignmentService.ValidateOverrideToken(request.OverrideToken, request.AssignmentId, request.TraineeUserId))
             {
-                return new JsonResult(new { success = false, error = "Invalid or expired override token" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidOverrideToken"].Value });
             }
 
             // Update trainee
@@ -1296,7 +1301,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding trainee");
-            return new JsonResult(new { success = false, error = "Failed to add trainee" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AddTraineeFailed"].Value });
         }
     }
 
@@ -1312,7 +1317,7 @@ public class TableModel : PageModel
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
-                return new JsonResult(new { success = false, error = "Assignment not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
 
             // Capture trainee info before clearing
@@ -1355,7 +1360,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing trainee");
-            return new JsonResult(new { success = false, error = "Failed to remove trainee" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_RemoveTraineeFailed"].Value });
         }
     }
 
@@ -1371,7 +1376,7 @@ public class TableModel : PageModel
                 .FirstOrDefaultAsync(a => a.Id == request.AssignmentId);
             if (assignment == null)
             {
-                return new JsonResult(new { success = false, error = "Assignment not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
 
             // Validate new user assignment via service
@@ -1382,7 +1387,7 @@ public class TableModel : PageModel
                 return new JsonResult(new
                 {
                     success = false,
-                    error = validation.Errors.FirstOrDefault()?.Message ?? "Validation failed",
+                    error = validation.Errors.FirstOrDefault()?.Message ?? _localizer["Calendar_Error_ValidationFailed"].Value,
                     errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
                 });
             }
@@ -1405,7 +1410,7 @@ public class TableModel : PageModel
             if (!string.IsNullOrEmpty(request.OverrideToken) &&
                 !_assignmentService.ValidateOverrideToken(request.OverrideToken, assignment.ShiftInstanceId, request.NewUserId))
             {
-                return new JsonResult(new { success = false, error = "Invalid or expired override token" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidOverrideToken"].Value });
             }
 
             // Change primary user
@@ -1452,7 +1457,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error changing user");
-            return new JsonResult(new { success = false, error = "Failed to change user" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ChangeUserFailed"].Value });
         }
     }
 
@@ -1466,27 +1471,27 @@ public class TableModel : PageModel
             var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
             if (shiftType == null)
             {
-                return new JsonResult(new { success = false, error = "Shift type not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value });
             }
 
             // Ownership check: must be company-owned or caller must be in the same molecule
             if (shiftType.CompanyId != companyId)
             {
                 if (!shiftType.MoleculeId.HasValue || !await IsCallerInMoleculeAsync(shiftType.MoleculeId.Value))
-                    return new JsonResult(new { success = false, error = "Shift type not found" }) { StatusCode = 403 };
+                    return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value }) { StatusCode = 403 };
             }
 
             // Validate name
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return new JsonResult(new { success = false, error = "Shift name cannot be empty" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftNameEmpty"].Value });
             }
 
             // Parse time strings
             if (!TimeOnly.TryParse(request.StartTime, out var startTime) ||
                 !TimeOnly.TryParse(request.EndTime, out var endTime))
             {
-                return new JsonResult(new { success = false, error = "Invalid time format" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidTimeFormat"].Value });
             }
 
             // Update metadata (company-scoped rename via CustomName)
@@ -1509,7 +1514,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating shift metadata");
-            return new JsonResult(new { success = false, error = "Failed to update shift metadata" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UpdateMetadataFailed"].Value });
         }
     }
 
@@ -1522,21 +1527,21 @@ public class TableModel : PageModel
             // Validate name
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return new JsonResult(new { success = false, error = "Shift name cannot be empty" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftNameEmpty"].Value });
             }
 
             // Parse time strings
             if (!TimeOnly.TryParse(request.StartTime, out var startTime) ||
                 !TimeOnly.TryParse(request.EndTime, out var endTime))
             {
-                return new JsonResult(new { success = false, error = "Invalid time format" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidTimeFormat"].Value });
             }
 
             // Validate molecule access if molecule scope requested
             if (request.MoleculeId.HasValue)
             {
                 if (!await IsCallerInMoleculeAsync(request.MoleculeId.Value))
-                    return new JsonResult(new { success = false, error = "Unauthorized molecule access" }) { StatusCode = 403 };
+                    return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UnauthorizedMolecule"].Value }) { StatusCode = 403 };
             }
 
             // Create custom shift type with a unique internal key but user-visible name
@@ -1598,7 +1603,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating custom shift type");
-            return new JsonResult(new { success = false, error = "Failed to create custom shift type" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_CreateCustomShiftTypeFailed"].Value });
         }
     }
 
@@ -1704,7 +1709,7 @@ public class TableModel : PageModel
 
             if (instance == null)
             {
-                return new JsonResult(new { success = false, error = "Shift instance not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftInstanceNotFound"].Value });
             }
 
             // Call service to detach instance
@@ -1719,7 +1724,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error detaching shift instance {InstanceId}", request.ShiftInstanceId);
-            return new JsonResult(new { success = false, error = "Failed to detach shift instance" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DetachShiftInstanceFailed"].Value });
         }
     }
 
@@ -1737,12 +1742,12 @@ public class TableModel : PageModel
 
             if (instance == null)
             {
-                return new JsonResult(new { success = false, error = "Shift instance not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftInstanceNotFound"].Value });
             }
 
             if (!instance.IsDetached || !instance.OriginalProgramId.HasValue)
             {
-                return new JsonResult(new { success = false, error = "Shift instance is not detached from a Program" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftNotDetached"].Value });
             }
 
             // Call service to reset instance to Program defaults
@@ -1757,7 +1762,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error resetting shift instance {InstanceId}", request.ShiftInstanceId);
-            return new JsonResult(new { success = false, error = "Failed to reset shift instance" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ResetShiftInstanceFailed"].Value });
         }
     }
 
@@ -1779,7 +1784,7 @@ public class TableModel : PageModel
         {
             // Verify caller has access to this molecule
             if (!await IsCallerInMoleculeAsync(moleculeId.Value))
-                return new JsonResult(new { error = "Unauthorized molecule access" }) { StatusCode = 403 };
+                return new JsonResult(new { error = _localizer["Calendar_Error_UnauthorizedMolecule"].Value }) { StatusCode = 403 };
 
             // SECURITY-AUDITED: SAFE — molecule access validated above, re-scoped by moleculeId + jobTypeId
             var molCompanyIds = await _db.Companies
@@ -1906,7 +1911,7 @@ public class TableModel : PageModel
             {
                 // Verify caller has access to this molecule
                 if (!await IsCallerInMoleculeAsync(moleculeIdParam.Value))
-                    return new JsonResult(new { error = "Unauthorized molecule access" }) { StatusCode = 403 };
+                    return new JsonResult(new { error = _localizer["Calendar_Error_UnauthorizedMolecule"].Value }) { StatusCode = 403 };
 
                 // Molecule mode: load from all companies in the molecule with matching JobType
                 // SECURITY-AUDITED: SAFE — molecule access validated above, re-scoped by moleculeId+jobTypeId
@@ -2000,7 +2005,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading roster employees");
-            return new JsonResult(new { success = false, error = "Failed to load employees" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_LoadEmployeesFailed"].Value });
         }
     }
 
@@ -2013,7 +2018,7 @@ public class TableModel : PageModel
         try
         {
             if (request.TargetDates.Count > 730)
-                return new JsonResult(new { success = false, error = "Cannot fill more than 730 dates (2 years) at once" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_FillRangeTooLarge"].Value });
 
             using var transaction = await _db.Database.BeginTransactionAsync();
 
@@ -2026,7 +2031,7 @@ public class TableModel : PageModel
 
             if (sourceInstance == null)
             {
-                return new JsonResult(new { success = false, error = "Source shift not found" });
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_SourceShiftNotFound"].Value });
             }
 
             // Load source assignments separately
@@ -2268,12 +2273,12 @@ public class TableModel : PageModel
                         }
                         else
                         {
-                            return new JsonResult(new { success = false, error = "Source shift is not linked to a Program" });
+                            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_SourceShiftNotLinkedToProgram"].Value });
                         }
                         break;
 
                     default:
-                        return new JsonResult(new { success = false, error = "Invalid fill mode" });
+                        return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidFillMode"].Value });
                 }
             }
 
@@ -2339,7 +2344,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error filling range");
-            return new JsonResult(new { success = false, error = "Failed to fill range" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_FillRangeFailed"].Value });
         }
     }
 
@@ -2398,7 +2403,7 @@ public class TableModel : PageModel
             {
                 // Verify caller has access to this molecule
                 if (!await IsCallerInMoleculeAsync(moleculeId.Value))
-                    return new JsonResult(new { error = "Unauthorized molecule access" }) { StatusCode = 403 };
+                    return new JsonResult(new { error = _localizer["Calendar_Error_UnauthorizedMolecule"].Value }) { StatusCode = 403 };
 
                 // SECURITY-AUDITED: SAFE — molecule access validated above, re-scoped by moleculeId+jobTypeId
                 instances = await _db.ShiftInstances
@@ -2476,7 +2481,7 @@ public class TableModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting conflicts");
-            return new JsonResult(new { success = false, error = "Failed to load conflicts" });
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_LoadConflictsFailed"].Value });
         }
     }
 

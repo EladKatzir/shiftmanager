@@ -16,8 +16,6 @@
     <link rel="stylesheet" href="~/css/tokens.css" />
     <link rel="stylesheet" href="~/css/auth.css" />
     <link rel="icon" type="image/svg+xml" href="~/images/shifty-logo.svg" />
-    <!-- TEMPORARY: Figma capture script for design export -->
-    <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
 </head>
 <body>
     <div class="auth-layout">
@@ -157,14 +155,12 @@
                     <button type="submit" class="auth-submit" @(Model.IsAccountLocked ? "disabled" : "")>
                         <loc key="Login" />
                     </button>
-                </form>
 
-                <!-- Signup Link -->
-                <div class="auth-secondary">
+                    <!-- Signup Link (inside form for identical width — <a> doesn't trigger submit) -->
                     <a href="/Auth/Signup" class="auth-secondary__link">
                         <loc key="RequestAccess" />
                     </a>
-                </div>
+                </form>
             </div>
         </main>
     </div>
@@ -245,12 +241,12 @@
             @:    if (!lockoutMessageEl) return;
             @:
             @:    let minutesRemaining = @Model.LockoutMinutesRemaining.Value;
-            @:    const isHebrew = document.documentElement.lang.startsWith('he');
+            @:    const lockoutRetryMessage = @Html.Raw(Json.Serialize(Localizer["Login_Lockout_RetryNow"].Value));
+            @:    const lockoutCountdownTemplate = @Html.Raw(Json.Serialize(Localizer["Login_Lockout_Countdown"].Value));
             @:
             @:    const updateCountdown = () => {
             @:        if (minutesRemaining <= 0) {
-            @:            const retryMessage = isHebrew ? 'ניתן לנסות להתחבר שוב כעת.' : 'You may try logging in again now.';
-            @:            lockoutMessageEl.textContent = retryMessage;
+            @:            lockoutMessageEl.textContent = lockoutRetryMessage;
             @:            const alertEl = lockoutMessageEl.closest('.auth-alert');
             @:            if (alertEl) {
             @:                alertEl.classList.remove('auth-alert--error');
@@ -258,10 +254,7 @@
             @:            }
             @:            return;
             @:        }
-            @:        const messageTemplate = isHebrew
-            @:            ? 'החשבון נעול זמנית עקב ניסיונות כניסה כושלים חוזרים. נא לנסות שוב בעוד {0} דקות.'
-            @:            : 'Account temporarily locked due to repeated failed login attempts. Please try again in {0} minutes.';
-            @:        lockoutMessageEl.textContent = messageTemplate.replace('{0}', Math.ceil(minutesRemaining));
+            @:        lockoutMessageEl.textContent = lockoutCountdownTemplate.replace('{0}', Math.ceil(minutesRemaining));
             @:    };
             @:
             @:    const timer = setInterval(() => {

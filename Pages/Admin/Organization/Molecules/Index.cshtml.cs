@@ -145,7 +145,11 @@ public class IndexModel : LocalizedPageModel
         var existingTasks = await _setupTaskService.GetTasksForMoleculeAsync(molecule.Id);
         if (!existingTasks.Any())
         {
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var currentUserId))
+            {
+                _logger.LogWarning("Invalid or missing NameIdentifier claim");
+                return RedirectToPage("/Auth/Login");
+            }
             await _setupTaskService.GenerateTasksForMoleculeAsync(molecule.Id, currentUserId);
             _logger.LogInformation("Auto-generated setup tasks for new molecule {MoleculeId}", molecule.Id);
         }

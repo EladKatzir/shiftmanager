@@ -383,7 +383,11 @@ public class CompaniesModel : LocalizedPageModel
                 var hasCompanyTasks = existingCompanyTasks.Any(t => t.CompanyId == company.Id);
                 if (!hasCompanyTasks)
                 {
-                    var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                    if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var currentUserId))
+                    {
+                        _logger.LogWarning("Invalid or missing NameIdentifier claim");
+                        return RedirectToPage("/Auth/Login");
+                    }
                     await _setupTaskService.GenerateTasksForCompanyAsync(company.Id, currentUserId);
                     _logger.LogInformation("Auto-generated setup tasks for new company {CompanyId}", company.Id);
                 }

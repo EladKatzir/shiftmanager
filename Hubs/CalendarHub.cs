@@ -16,15 +16,17 @@ public class CalendarHub : Hub
     private readonly ILogger<CalendarHub> _logger;
     private readonly AppDbContext _db;
     private readonly IRateLimitingService _rateLimiter;
+    private readonly IGrantService _grantService;
 
     private const int HubRateLimitMaxAttempts = 30;
     private const int HubRateLimitWindowMinutes = 1;
 
-    public CalendarHub(ILogger<CalendarHub> logger, AppDbContext db, IRateLimitingService rateLimiter)
+    public CalendarHub(ILogger<CalendarHub> logger, AppDbContext db, IRateLimitingService rateLimiter, IGrantService grantService)
     {
         _logger = logger;
         _db = db;
         _rateLimiter = rateLimiter;
+        _grantService = grantService;
     }
 
     /// <summary>
@@ -147,19 +149,31 @@ public class CalendarHub : Hub
             case "shifts":
                 // shifts-{moleculeId}-{jobTypeId} — validate molecule belongs to user's company
                 if (parts.Length >= 3 && int.TryParse(parts[1], out var shiftsMoleculeId))
-                    return await MoleculeBelongsToCompanyAsync(shiftsMoleculeId, userCompanyId);
+                {
+                    if (await MoleculeBelongsToCompanyAsync(shiftsMoleculeId, userCompanyId))
+                        return true;
+                    return await DirectorHasMoleculeAccessAsync(shiftsMoleculeId);
+                }
                 return false;
 
             case "chores":
                 // chores-{moleculeId} — validate molecule belongs to user's company
                 if (int.TryParse(parts[1], out var choresMoleculeId))
-                    return await MoleculeBelongsToCompanyAsync(choresMoleculeId, userCompanyId);
+                {
+                    if (await MoleculeBelongsToCompanyAsync(choresMoleculeId, userCompanyId))
+                        return true;
+                    return await DirectorHasMoleculeAccessAsync(choresMoleculeId);
+                }
                 return false;
 
             case "oncall":
                 // oncall-{areaId} — validate area is accessible to user's company
                 if (int.TryParse(parts[1], out var oncallAreaId))
-                    return await AreaBelongsToCompanyAsync(oncallAreaId, userCompanyId);
+                {
+                    if (await AreaBelongsToCompanyAsync(oncallAreaId, userCompanyId))
+                        return true;
+                    return await DirectorHasAreaAccessAsync(oncallAreaId);
+                }
                 return false;
 
             default:
@@ -186,6 +200,52 @@ public class CalendarHub : Hub
         // SECURITY-AUDITED: SAFE — validates tenant scope; IgnoreQueryFilters needed to check cross-tenant area ownership
         return await _db.Companies.IgnoreQueryFilters()
             .AnyAsync(c => c.Id == companyId && c.Molecule != null && c.Molecule.AreaId == areaId);
+    }
+
+    /// <summary>
+    /// Fallback: checks if the current user has DirectorHubAccess grant for any company in the given molecule.
+    /// Only called when the direct company check fails (most users pass the direct check).
+    /// </summary>
+    private async Task<bool> DirectorHasMoleculeAccessAsync(int moleculeId)
+    {
+        var userIdStr = GetUserId();
+        if (!int.TryParse(userIdStr, out var userId))
+            return false;
+
+        var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(userId, "DirectorHubAccess");
+        if (accessibleCompanyIds.Count == 0)
+            return false;
+
+        // SECURITY-AUDITED: SAFE — Directors need cross-company molecule lookup to validate SignalR group access
+        var moleculeCompanyIds = await _db.Companies.IgnoreQueryFilters()
+            .Where(c => c.MoleculeId == moleculeId)
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        return accessibleCompanyIds.Intersect(moleculeCompanyIds).Any();
+    }
+
+    /// <summary>
+    /// Fallback: checks if the current user has DirectorHubAccess grant for any company in the given area.
+    /// Only called when the direct company check fails.
+    /// </summary>
+    private async Task<bool> DirectorHasAreaAccessAsync(int areaId)
+    {
+        var userIdStr = GetUserId();
+        if (!int.TryParse(userIdStr, out var userId))
+            return false;
+
+        var accessibleCompanyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(userId, "DirectorHubAccess");
+        if (accessibleCompanyIds.Count == 0)
+            return false;
+
+        // SECURITY-AUDITED: SAFE — Directors need cross-company area lookup to validate SignalR group access
+        var areaCompanyIds = await _db.Companies.IgnoreQueryFilters()
+            .Where(c => c.Molecule != null && c.Molecule.AreaId == areaId)
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        return accessibleCompanyIds.Intersect(areaCompanyIds).Any();
     }
 }
 

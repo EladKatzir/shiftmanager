@@ -142,6 +142,9 @@ public class ChoresModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostCreateChoreAsync()
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return Unauthorized();
+
         try
         {
             // Input validation
@@ -270,6 +273,9 @@ public class ChoresModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostReplaceShiftWithChoreAsync()
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return Unauthorized();
+
         try
         {
             // Input validation
@@ -342,6 +348,9 @@ public class ChoresModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostCancelChoreAsync()
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return Unauthorized();
+
         try
         {
             // Validate input and permissions

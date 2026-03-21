@@ -151,6 +151,9 @@ public class OnDutyModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostCreateOnDutyAsync()
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return Unauthorized();
+
         try
         {
             // Input validation
@@ -244,6 +247,9 @@ public class OnDutyModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostCancelOnDutyAsync()
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return Unauthorized();
+
         try
         {
             // Validate input and permissions

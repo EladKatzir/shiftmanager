@@ -25,7 +25,7 @@
 
 /* Collapsed State */
 .app-sidebar.is-collapsed {
-  width: var(--sidebar-width-collapsed);
+  width: var(--sidebar-width-collapsed, 64px);
 }
 
 .app-sidebar.is-collapsed .sidebar-text {
@@ -42,7 +42,7 @@
 
 /* When sidebar-initially-collapsed is set on <html>, apply collapsed styles immediately */
 .sidebar-initially-collapsed .app-sidebar {
-  width: var(--sidebar-width-collapsed);
+  width: var(--sidebar-width-collapsed, 64px);
 }
 
 .sidebar-initially-collapsed .app-sidebar .sidebar-text,
@@ -853,11 +853,11 @@
 }
 
 .sidebar-user-menu__item--danger {
-  color: var(--error);
+  color: var(--danger);
 }
 
 .sidebar-user-menu__item--danger:hover {
-  background-color: var(--error-soft);
+  background-color: var(--danger-soft);
 }
 
 .sidebar-user-menu__logout-form {

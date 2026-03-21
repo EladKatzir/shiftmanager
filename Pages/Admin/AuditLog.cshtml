@@ -151,7 +151,7 @@
 {
     <div class="section-card">
         <div class="table-wrapper">
-            <table class="audit-table">
+            <table class="audit-table data-table--sticky-header">
                 <thead>
                     <tr>
                         <th>@Localizer["Timestamp"]</th>
@@ -179,11 +179,21 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="action-badge">@log.Action</span>
+                                @{
+                                    var actionKey = $"AuditAction_{log.Action}";
+                                    var localizedAction = Localizer[actionKey];
+                                    var actionDisplay = localizedAction.ResourceNotFound ? log.Action : localizedAction.Value;
+                                }
+                                <span class="action-badge">@actionDisplay</span>
                             </td>
                             <td>
                                 <div class="entity-cell">
-                                    <span class="entity-type">@log.EntityType</span>
+                                    @{
+                                        var entityKey = $"AuditEntity_{log.EntityType}";
+                                        var localizedEntity = Localizer[entityKey];
+                                        var entityDisplay = localizedEntity.ResourceNotFound ? log.EntityType : localizedEntity.Value;
+                                    }
+                                    <span class="entity-type">@entityDisplay</span>
                                     @if (log.EntityId.HasValue)
                                     {
                                         <span class="entity-id">#@log.EntityId</span>

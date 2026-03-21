@@ -1,0 +1,188 @@
+@page
+@model ShiftManager.Pages.Admin.HomeTypes.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = "Home Types";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/home-types.css" asp-append-version="true" />
+}
+
+<div class="page-header">
+    <h1><loc key="HomeTypes" /></h1>
+    <p style="color: var(--text-muted);"><loc key="HomeTypes_Description" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert--success">@Model.SuccessMessage</div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert--danger">@Model.ErrorMessage</div>
+}
+
+<!-- Molecule selector -->
+<form method="get" class="filter-bar">
+    <label><loc key="Molecule" /></label>
+    <select name="MoleculeId" class="form-input" onchange="this.form.submit()">
+        @foreach (var m in Model.AvailableMolecules)
+        {
+            <option value="@m.Id" selected="@(Model.MoleculeId == m.Id)">@m.Name</option>
+        }
+    </select>
+</form>
+
+<!-- Home Types List -->
+@if (Model.HomeTypes.Any())
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th><loc key="Name" /></th>
+                <th><loc key="Users" /></th>
+                <th><loc key="Pattern" /></th>
+                <th><loc key="Status" /></th>
+                <th><loc key="Actions" /></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var ht in Model.HomeTypes)
+        {
+            <tr>
+                <td>
+                    <strong>@ht.Name</strong>
+                    @if (!string.IsNullOrEmpty(ht.NameHe))
+                    {
+                        <br/><span style="color: var(--text-muted); font-size: 0.85em;">@ht.NameHe</span>
+                    }
+                </td>
+                <td>@ht.UserCount</td>
+                <td style="font-size: 0.85em; color: var(--text-muted);">@ht.CycleDescription</td>
+                <td>
+                    @if (ht.IsActive)
+                    {
+                        <span class="badge badge--success"><loc key="Active" /></span>
+                    }
+                    else
+                    {
+                        <span class="badge badge--muted"><loc key="Inactive" /></span>
+                    }
+                </td>
+                <td>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <form method="post" asp-page-handler="ToggleActive" style="display: inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@ht.Id" />
+                            <button type="submit" class="btn btn--sm btn--outline">
+                                @(ht.IsActive ? Localizer["Deactivate"] : Localizer["Activate"])
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn--sm btn--primary"
+                                onclick="showGenerateDialog(@ht.Id, '@ht.Name')">
+                            <loc key="Generate" />
+                        </button>
+                        <form method="post" asp-page-handler="Delete" style="display: inline;"
+                              onsubmit="return confirm(@Html.Raw(Json.Serialize(Localizer["Confirm_DeleteHomeType"].Value)))">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@ht.Id" />
+                            <button type="submit" class="btn btn--sm btn--danger"><loc key="Delete" /></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else if (Model.MoleculeId.HasValue)
+{
+    <div class="empty-state">
+        <p><loc key="NoHomeTypes" /></p>
+    </div>
+}
+
+<!-- Create Form -->
+@if (Model.MoleculeId.HasValue)
+{
+    <div class="card" style="margin-top: var(--space-6);">
+        <h3><loc key="CreateHomeType" /></h3>
+        <form method="post" asp-page-handler="Create">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="CreateMoleculeId" value="@Model.MoleculeId" />
+
+            <div class="form-group">
+                <label><loc key="Name" /></label>
+                <input type="text" name="Name" class="form-input" required placeholder="e.g., סבב א" />
+            </div>
+            <div class="form-group">
+                <label><loc key="HebrewName" /></label>
+                <input type="text" name="NameHe" class="form-input" placeholder="Optional Hebrew name" />
+            </div>
+            <div class="form-group">
+                <label><loc key="DefaultStartTime" /></label>
+                <input type="time" name="DefaultStartTime" class="form-input" value="06:00" />
+            </div>
+            <div class="form-group">
+                <label><loc key="DefaultEndTime" /></label>
+                <input type="time" name="DefaultEndTime" class="form-input" value="13:00" />
+            </div>
+
+            <div class="form-group">
+                <label><loc key="PaintHomeDays" /></label>
+                <div id="calendar-painter" class="home-type-calendar"></div>
+                <input type="hidden" name="PatternJson" id="pattern-json" />
+            </div>
+
+            <button type="submit" class="btn btn--primary"><loc key="Create" /></button>
+        </form>
+    </div>
+}
+
+<!-- Generate Dialog (hidden, shown via JS) -->
+<div id="generate-dialog" style="display: none; margin-top: var(--space-4);" class="card">
+    <h3><loc key="GenerateHomeShifts" /></h3>
+    <form method="post" asp-page-handler="Generate">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="GenerateHomeTypeId" id="generate-ht-id" />
+
+        <div class="form-group">
+            <label><loc key="StartDate" /></label>
+            <input type="date" name="GenerateStartDate" class="form-input"
+                   value="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="form-group">
+            <label><loc key="EndDate" /></label>
+            <input type="date" name="GenerateEndDate" class="form-input"
+                   value="@DateOnly.FromDateTime(DateTime.Today.AddYears(1)).ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="form-group">
+            <label><loc key="Mode" /></label>
+            <select name="GenerateMode" class="form-input">
+                <option value="keep">Keep manual changes</option>
+                <option value="overwrite">Overwrite all</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn--primary"><loc key="Generate" /></button>
+        <button type="button" class="btn btn--outline" onclick="hideGenerateDialog()"><loc key="Cancel" /></button>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/home-type-calendar.js" asp-append-version="true"></script>
+    <script>
+        function showGenerateDialog(htId, htName) {
+            document.getElementById('generate-ht-id').value = htId;
+            var dialog = document.getElementById('generate-dialog');
+            dialog.style.display = 'block';
+            dialog.scrollIntoView({ behavior: 'smooth' });
+        }
+        function hideGenerateDialog() {
+            document.getElementById('generate-dialog').style.display = 'none';
+        }
+    </script>
+}

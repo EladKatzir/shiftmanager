@@ -17,8 +17,6 @@
     <link rel="stylesheet" href="~/css/tokens.css" />
     <link rel="stylesheet" href="~/css/auth.css" />
     <link rel="icon" type="image/svg+xml" href="~/images/shifty-logo.svg" />
-    <!-- TEMPORARY: Figma capture script for design export -->
-    <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
 </head>
 <body>
     <div class="auth-layout">
@@ -137,7 +135,7 @@
                                    required />
                         </div>
 
-                        <!-- Step 2: Unit (Molecule + JobType) -->
+                        <!-- Step 2: Molecule + Role -->
                         <div class="auth-field" id="moleculeField">
                             <label class="auth-field__label" for="MoleculeId"><loc key="Auth_SelectMolecule" /></label>
                             <select id="MoleculeId"
@@ -148,6 +146,7 @@
                                 @foreach (var molecule in Model.AvailableMolecules)
                                 {
                                     <option value="@molecule.Id" data-area-id="@molecule.AreaId"
+                                            data-area-name="@(molecule.Area?.DisplayName ?? molecule.Area?.Name ?? "")"
                                             data-type="@((int)molecule.Type)"
                                             selected="@(Model.MoleculeId == molecule.Id)">
                                         @(molecule.DisplayName ?? molecule.Name)
@@ -156,29 +155,14 @@
                             </select>
                         </div>
 
-                        <div class="auth-field" id="jobTypeField">
-                            <label class="auth-field__label" for="JobTypeId"><loc key="Auth_SelectJobType" /></label>
-                            <select id="JobTypeId"
-                                    name="JobTypeId"
-                                    class="auth-field__select"
-                                    disabled
-                                    required>
-                                <option value="">@Localizer["Auth_ChooseJobTypeFirst"]</option>
-                            </select>
-                            <span asp-validation-for="JobTypeId" style="color: var(--danger); font-size: var(--text-tiny);"></span>
-                            <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
-                                <loc key="Loading" />...
-                            </div>
-                        </div>
-
-                        <!-- Step 3: Role + Company -->
                         <div class="auth-field">
                             <label class="auth-field__label" for="RequestedRole"><loc key="RequestedRole" /></label>
                             <select id="RequestedRole"
                                     name="RequestedRole"
                                     class="auth-field__select"
+                                    disabled
                                     required>
-                                <option value="">@Localizer["Loading"]...</option>
+                                <option value="">@Localizer["Auth_ChooseMoleculeFirst"]</option>
                             </select>
                             <input type="hidden" id="RequestedRoleTemplateId" name="RequestedRoleTemplateId" value="@Model.RequestedRoleTemplateId" />
                             <small style="color: var(--text-muted); font-size: var(--text-tiny); display: block; margin-top: var(--space-1);">
@@ -186,14 +170,33 @@
                             </small>
                         </div>
 
-                        <div class="auth-field" id="companyField">
+                        <div id="roleHintBanner" class="auth-alert auth-alert--info" style="display: none; margin-top: var(--space-2);">
+                            <span class="auth-alert__icon">ℹ️</span>
+                            <div class="auth-alert__content" id="roleHintText"></div>
+                        </div>
+
+                        <!-- Step 3: Placement (dynamic — shown only for roles that need it) -->
+                        <div class="auth-field" id="jobTypeField" style="display: none;">
+                            <label class="auth-field__label" for="JobTypeId"><loc key="Auth_SelectJobType" /></label>
+                            <select id="JobTypeId"
+                                    name="JobTypeId"
+                                    class="auth-field__select"
+                                    disabled>
+                                <option value="">@Localizer["Auth_SelectJobType"]</option>
+                            </select>
+                            <span asp-validation-for="JobTypeId" style="color: var(--danger); font-size: var(--text-tiny);"></span>
+                            <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
+                                <loc key="Loading" />...
+                            </div>
+                        </div>
+
+                        <div class="auth-field" id="companyField" style="display: none;">
                             <label class="auth-field__label" id="companyLabel" for="CompanyId"><loc key="Company" /></label>
                             <select id="CompanyId"
                                     name="CompanyId"
                                     class="auth-field__select"
-                                    disabled
-                                    required>
-                                <option value="">@Localizer["Auth_ChooseRoleFirst"]</option>
+                                    disabled>
+                                <option value="">@Localizer["SelectCompany"]</option>
                             </select>
                             <div id="companyLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
                                 <loc key="Loading" />...
@@ -202,10 +205,6 @@
 
                         @* Hidden field for DepartmentId (populated by JS for Tech molecules) *@
                         <input type="hidden" id="DepartmentId" name="DepartmentId" value="@(Model.DepartmentId > 0 ? Model.DepartmentId.ToString() : "")" />
-
-                        <div id="directorHqHint" class="auth-field" style="display: none; color: var(--info); font-size: var(--text-small);">
-                            @Localizer["Auth_DirectorAutoHQ"]
-                        </div>
 
                         <button type="submit" class="auth-submit">
                             <loc key="SubmitRequest" />
@@ -263,7 +262,7 @@
             }
         })();
 
-        // Cascading dropdowns: Molecule -> JobType -> Role -> Company
+        // Cascading dropdowns: Molecule -> Role -> JobType/Company
         (function() {
             var roleSelect = document.getElementById('RequestedRole');
             var templateIdInput = document.getElementById('RequestedRoleTemplateId');
@@ -276,7 +275,15 @@
             var departmentIdInput = document.getElementById('DepartmentId');
             var companyLoading = document.getElementById('companyLoading');
             var jobTypeLoading = document.getElementById('jobTypeLoading');
-            var directorHqHint = document.getElementById('directorHqHint');
+            var roleHintBanner = document.getElementById('roleHintBanner');
+            var roleHintText = document.getElementById('roleHintText');
+
+            // Role hint messages (localized)
+            var roleHints = {
+                moleculeAdmin: @Html.Raw(Json.Serialize(Localizer["Auth_RoleHint_MoleculeAdmin"].Value)),
+                areaAdmin: @Html.Raw(Json.Serialize(Localizer["Auth_RoleHint_AreaAdmin"].Value)),
+                director: @Html.Raw(Json.Serialize(Localizer["Auth_RoleHint_Director"].Value))
+            };
             var steps = document.querySelectorAll('.auth-step');
 
             if (!moleculeSelect || !companySelect || !roleSelect) return;
@@ -284,6 +291,11 @@
             var DIRECTOR_VALUE = '@((int)UserRole.Director)';
             var AREAADMIN_VALUE = '@((int)UserRole.AreaAdmin)';
             var MOLECULE_TYPE_TECH = '1';
+            var SCOPE_MOLECULE = 4;
+            var SCOPE_AREA = 6;
+            var SCOPE_COMPANY_JOBTYPE = 2;
+            var SCOPE_DEPARTMENT = 3;
+            var SCOPE_MOLECULE_JOBTYPE = 5;
             var isHebrew = document.documentElement.lang === 'he';
             var savedRole = '@((int)Model.RequestedRole)';
             var savedTemplateId = '@(Model.RequestedRoleTemplateId?.ToString() ?? "")';
@@ -291,60 +303,64 @@
             var savedJobTypeId = '@(Model.JobTypeId > 0 ? Model.JobTypeId.ToString() : "")';
             var savedDepartmentId = '@(Model.DepartmentId > 0 ? Model.DepartmentId.ToString() : "")';
             var currentMoleculeIsTech = false;
-
-            // Full list of role templates (loaded once, filtered per molecule type)
             var allRoleTemplates = [];
-
-            // RoleScopeLevel constants (from Models/Support/RoleScopeLevel.cs)
-            // Tech molecules: hide CompanyJobType (2) and MoleculeJobType (5) — these require a job type
-            // Workforce molecules: hide Department (3) — workforce doesn't use departments
-            var SCOPE_COMPANY_JOBTYPE = 2;
-            var SCOPE_DEPARTMENT = 3;
-            var SCOPE_MOLECULE_JOBTYPE = 5;
-
-            // Track company value when switching to Director role (Bug 2 fix)
             var savedCompanyValue = '';
+            // Track which molecule's data is currently loaded in the JobType/Company dropdowns
+            var loadedMoleculeId = '';
+
+            // ──────────────────────────────────────────────
+            // Helper: scope-level checks
+            // ──────────────────────────────────────────────
+
+            function getSelectedScopeLevel() {
+                var s = roleSelect.options[roleSelect.selectedIndex];
+                return s ? parseInt(s.getAttribute('data-scope-level') || '0') : 0;
+            }
+
+            function isJobTypeFreeScope() {
+                var sl = getSelectedScopeLevel();
+                return sl === SCOPE_MOLECULE || sl >= SCOPE_AREA;
+            }
+
+            function isHqAutoResolved() {
+                var v = roleSelect.value;
+                return v === DIRECTOR_VALUE || v === AREAADMIN_VALUE || isJobTypeFreeScope();
+            }
+
+            function needsJobType() { return roleSelect.value !== '' && !isJobTypeFreeScope(); }
+            function needsCompany() { return roleSelect.value !== '' && !isHqAutoResolved(); }
 
             // ──────────────────────────────────────────────
             // Role Templates: load once, filter per molecule
             // ──────────────────────────────────────────────
 
             fetch('/Api/Signup/GetSignupOptions?handler=RoleTemplates', { credentials: 'same-origin' })
-                .then(function(r) {
-                    if (!r.ok) throw new Error('Request failed: ' + r.status);
-                    return r.json();
-                })
+                .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
                 .then(function(data) {
                     if (!data.roleTemplates || data.roleTemplates.length === 0) return;
                     allRoleTemplates = data.roleTemplates;
-                    // If a molecule is already selected (post-back), apply filtering immediately
                     if (moleculeSelect.value) {
                         filterRoleTemplatesForMoleculeType(isMoleculeTech());
-                    } else {
-                        populateRoleDropdown(allRoleTemplates);
                     }
+                    // If no molecule selected, role stays disabled (placeholder: "Select molecule first")
                 })
-                .catch(function() {
-                    // Fallback: keep current state (page will have empty dropdown)
-                });
+                .catch(function() {});
 
-            // Populate role dropdown from a (potentially filtered) list of templates
             function populateRoleDropdown(templates) {
                 var previousTemplateId = templateIdInput ? templateIdInput.value : '';
                 roleSelect.innerHTML = '';
-                // Add placeholder option
                 var placeholder = document.createElement('option');
                 placeholder.value = '';
-                placeholder.textContent = '@Localizer["Auth_SelectRole"].Value.Trim()';
+                placeholder.textContent = @Html.Raw(Json.Serialize(Localizer["Auth_SelectRole"].Value));
                 roleSelect.appendChild(placeholder);
 
                 templates.forEach(function(rt) {
                     var opt = document.createElement('option');
                     opt.value = rt.derivedUserRole != null ? rt.derivedUserRole.toString() : '';
                     opt.setAttribute('data-template-id', rt.id);
+                    opt.setAttribute('data-scope-level', rt.scopeLevel != null ? rt.scopeLevel.toString() : '0');
                     var name = isHebrew ? (rt.displayNameHE || rt.displayNameEN) : (rt.displayNameEN || rt.displayNameHE);
                     opt.textContent = name || rt.displayName || rt.key;
-                    // Restore selection from form post-back or previous selection
                     var matchId = previousTemplateId || savedTemplateId;
                     if (matchId && rt.id.toString() === matchId) {
                         opt.selected = true;
@@ -353,55 +369,44 @@
                     }
                     roleSelect.appendChild(opt);
                 });
+                roleSelect.disabled = false;
                 syncTemplateId();
-                // Fire change to update company field based on selected role
                 roleSelect.dispatchEvent(new Event('change'));
             }
 
-            // Filter role templates based on molecule type
             function filterRoleTemplatesForMoleculeType(isTech) {
                 if (allRoleTemplates.length === 0) return;
                 var filtered = allRoleTemplates.filter(function(rt) {
                     if (isTech) {
-                        // Tech: exclude job-type-specific workforce roles (Lead, Director)
                         return rt.scopeLevel !== SCOPE_COMPANY_JOBTYPE && rt.scopeLevel !== SCOPE_MOLECULE_JOBTYPE;
                     } else {
-                        // Workforce/Helper: exclude department-scoped roles
                         return rt.scopeLevel !== SCOPE_DEPARTMENT;
                     }
                 });
                 populateRoleDropdown(filtered);
             }
 
-            // ──────────────────────────────────────────────
-            // Sync hidden RequestedRoleTemplateId
-            // ──────────────────────────────────────────────
-
             function syncTemplateId() {
-                var selected = roleSelect.options[roleSelect.selectedIndex];
-                if (selected && templateIdInput) {
-                    templateIdInput.value = selected.getAttribute('data-template-id') || '';
-                }
+                var s = roleSelect.options[roleSelect.selectedIndex];
+                if (s && templateIdInput) templateIdInput.value = s.getAttribute('data-template-id') || '';
             }
             roleSelect.addEventListener('change', function() { syncTemplateId(); });
 
-            function isDirectorOrAreaAdmin() {
-                return roleSelect.value === DIRECTOR_VALUE || roleSelect.value === AREAADMIN_VALUE;
+            function isMoleculeTech() {
+                var s = moleculeSelect.options[moleculeSelect.selectedIndex];
+                return s && s.getAttribute('data-type') === MOLECULE_TYPE_TECH;
             }
 
             // ──────────────────────────────────────────────
-            // Step indicator management
+            // Step indicators
             // ──────────────────────────────────────────────
 
             function updateSteps(currentStep) {
-                steps.forEach(function(step, index) {
-                    var stepNum = index + 1;
+                steps.forEach(function(step, i) {
+                    var n = i + 1;
                     step.classList.remove('is-active', 'is-complete');
-                    if (stepNum < currentStep) {
-                        step.classList.add('is-complete');
-                    } else if (stepNum === currentStep) {
-                        step.classList.add('is-active');
-                    }
+                    if (n < currentStep) step.classList.add('is-complete');
+                    else if (n === currentStep) step.classList.add('is-active');
                 });
             }
 
@@ -410,33 +415,20 @@
             var passwordInput = document.getElementById('Password');
 
             function checkProgress() {
-                // Step 1: Account details
                 var hasEmail = emailInput && emailInput.value.includes('@@');
                 var hasName = displayNameInput && displayNameInput.value.length >= 2;
                 var hasPassword = passwordInput && passwordInput.value.length >= 6;
+                if (!hasEmail || !hasName || !hasPassword) { updateSteps(1); return; }
 
-                if (!hasEmail || !hasName || !hasPassword) {
-                    updateSteps(1);
-                    return;
-                }
+                // Step 2: Molecule + Role
+                if (!moleculeSelect.value || !roleSelect.value) { updateSteps(2); return; }
 
-                // Step 2: Molecule + JobType (all molecule types require JobType)
-                var hasMolecule = moleculeSelect.value !== '';
-                var hasJobType = jobTypeSelect && jobTypeSelect.value !== '';
-                if (!hasMolecule || !hasJobType) {
-                    updateSteps(2);
-                    return;
-                }
+                // Step 3: Placement (only if the role needs additional fields)
+                var hasJobType = !needsJobType() || (jobTypeSelect && jobTypeSelect.value !== '');
+                var hasCompany = !needsCompany() || (companySelect && companySelect.value !== '');
+                if (!hasJobType || !hasCompany) { updateSteps(3); return; }
 
-                // Step 3: Role + Company (Director/AreaAdmin skips Company)
-                var hasRole = roleSelect.value !== '';
-                var hasCompany = isDirectorOrAreaAdmin() || (companySelect.value !== '');
-                if (!hasRole || !hasCompany) {
-                    updateSteps(3);
-                    return;
-                }
-
-                updateSteps(4); // All complete
+                updateSteps(4);
             }
 
             if (emailInput) emailInput.addEventListener('input', checkProgress);
@@ -444,183 +436,168 @@
             if (passwordInput) passwordInput.addEventListener('input', checkProgress);
 
             // ──────────────────────────────────────────────
-            // Detect molecule type
-            // ──────────────────────────────────────────────
-
-            function isMoleculeTech() {
-                var selected = moleculeSelect.options[moleculeSelect.selectedIndex];
-                return selected && selected.getAttribute('data-type') === MOLECULE_TYPE_TECH;
-            }
-
-            // ──────────────────────────────────────────────
-            // Load job types for selected molecule's area
+            // Load data helpers (for placement fields)
             // ──────────────────────────────────────────────
 
             async function loadJobTypesForMolecule(moleculeId) {
                 if (!jobTypeSelect) return;
-
-                // Reset job type dropdown
-                jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_ChooseJobTypeFirst"].Value.Trim()</option>';
+                jobTypeSelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Auth_SelectJobType"].Value)) + '</option>';
                 jobTypeSelect.disabled = true;
-
                 if (!moleculeId) return;
 
                 jobTypeLoading.style.display = 'block';
                 try {
                     var response = await fetch('/Api/Signup/GetSignupOptions?handler=JobTypes&moleculeId=' + moleculeId, { credentials: 'same-origin' });
-                    if (!response.ok) throw new Error('Request failed: ' + response.status);
+                    if (!response.ok) throw new Error(response.status);
                     var data = await response.json();
-
                     if (data.jobTypes && data.jobTypes.length > 0) {
-                        jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_SelectJobType"].Value.Trim()</option>';
-                        data.jobTypes.forEach(function(jobType) {
-                            var option = document.createElement('option');
-                            option.value = jobType.id;
-                            option.textContent = jobType.name;
-                            if (jobType.key) {
-                                option.dataset.key = jobType.key;
-                            }
-                            if (jobType.color) {
-                                option.style.color = jobType.color;
-                            }
-                            // Restore selection from post-back
-                            if (savedJobTypeId && jobType.id.toString() === savedJobTypeId) {
-                                option.selected = true;
-                            }
-                            jobTypeSelect.appendChild(option);
+                        jobTypeSelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Auth_SelectJobType"].Value)) + '</option>';
+                        data.jobTypes.forEach(function(jt) {
+                            var o = document.createElement('option');
+                            o.value = jt.id;
+                            o.textContent = jt.name;
+                            if (jt.key) o.dataset.key = jt.key;
+                            if (jt.color) o.style.color = jt.color;
+                            if (savedJobTypeId && jt.id.toString() === savedJobTypeId) o.selected = true;
+                            jobTypeSelect.appendChild(o);
                         });
                         jobTypeSelect.disabled = false;
                     } else {
-                        jobTypeSelect.innerHTML = '<option value="">@Localizer["Auth_NoJobTypesAvailable"].Value.Trim()</option>';
+                        jobTypeSelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Auth_NoJobTypesAvailable"].Value)) + '</option>';
                     }
-                } catch (error) {
-                    console.error('Error fetching job types:', error);
-                    jobTypeSelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"].Value.Trim()</option>';
+                } catch (e) {
+                    jobTypeSelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Error_LoadingData"].Value)) + '</option>';
                 } finally {
                     jobTypeLoading.style.display = 'none';
                 }
             }
 
-            // ──────────────────────────────────────────────
-            // Load companies or departments for the company dropdown
-            // (triggered by role change, not molecule change)
-            // ──────────────────────────────────────────────
-
             async function loadCompaniesForMolecule(moleculeId) {
                 if (!moleculeId) return;
-
-                // Reset company dropdown
-                companySelect.innerHTML = '<option value="">@Localizer["Loading"].Value.Trim()...</option>';
+                companySelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Loading"].Value)) + '...</option>';
                 companySelect.disabled = true;
                 if (departmentIdInput) departmentIdInput.value = '';
                 companyLoading.style.display = 'block';
 
-                // Fetch companies for all molecule types
-                if (companyLabel) companyLabel.textContent = '@Localizer["Company"].Value.Trim()';
                 try {
                     var response = await fetch('/Api/Signup/GetSignupOptions?handler=Companies&moleculeId=' + moleculeId, { credentials: 'same-origin' });
-                    if (!response.ok) throw new Error('Request failed: ' + response.status);
+                    if (!response.ok) throw new Error(response.status);
                     var data = await response.json();
-
                     if (data.companies && data.companies.length > 0) {
-                        companySelect.innerHTML = '<option value="">@Localizer["SelectCompany"].Value.Trim()</option>';
-                        data.companies.forEach(function(company) {
-                            var option = document.createElement('option');
-                            option.value = company.id;
-                            option.textContent = company.name;
-                            if (savedCompanyId && company.id.toString() === savedCompanyId) {
-                                option.selected = true;
-                            }
-                            companySelect.appendChild(option);
+                        companySelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["SelectCompany"].Value)) + '</option>';
+                        data.companies.forEach(function(c) {
+                            var o = document.createElement('option');
+                            o.value = c.id;
+                            o.textContent = c.name;
+                            if (savedCompanyId && c.id.toString() === savedCompanyId) o.selected = true;
+                            companySelect.appendChild(o);
                         });
                         companySelect.disabled = false;
                     } else {
-                        companySelect.innerHTML = '<option value="">@Localizer["Auth_NoCompaniesAvailable"].Value.Trim()</option>';
+                        companySelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Auth_NoCompaniesAvailable"].Value)) + '</option>';
                     }
-                } catch (error) {
-                    console.error('Error fetching companies:', error);
-                    companySelect.innerHTML = '<option value="">@Localizer["Error_LoadingData"].Value.Trim()</option>';
+                } catch (e) {
+                    companySelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Error_LoadingData"].Value)) + '</option>';
                 } finally {
                     companyLoading.style.display = 'none';
                 }
             }
 
             // ──────────────────────────────────────────────
-            // Molecule change handler
-            // Cascade: loads JobTypes (Workforce) + filters RoleTemplates
-            // Company loading is deferred to role change handler
+            // Show/hide placement field helpers
+            // ──────────────────────────────────────────────
+
+            function showJobType() {
+                if (jobTypeField) jobTypeField.style.display = '';
+                if (jobTypeSelect) jobTypeSelect.required = true;
+                // Load if not yet loaded for this molecule
+                if (moleculeSelect.value && loadedMoleculeId !== moleculeSelect.value) {
+                    loadedMoleculeId = moleculeSelect.value;
+                    loadJobTypesForMolecule(moleculeSelect.value);
+                }
+            }
+            function hideJobType() {
+                if (jobTypeField) jobTypeField.style.display = 'none';
+                if (jobTypeSelect) { jobTypeSelect.required = false; jobTypeSelect.value = ''; }
+            }
+            function showCompany() {
+                if (companyField) companyField.style.display = '';
+                if (companySelect) companySelect.required = true;
+                if (moleculeSelect.value) {
+                    if (savedCompanyValue && companySelect.options.length > 1 &&
+                        companySelect.querySelector('option[value="' + savedCompanyValue + '"]')) {
+                        companySelect.disabled = false;
+                        companySelect.value = savedCompanyValue;
+                    } else if (companySelect.options.length <= 1) {
+                        loadCompaniesForMolecule(moleculeSelect.value);
+                    }
+                }
+            }
+            function hideCompany() {
+                if (companySelect && companySelect.value) savedCompanyValue = companySelect.value;
+                if (companyField) companyField.style.display = 'none';
+                if (companySelect) { companySelect.required = false; companySelect.disabled = true; companySelect.value = ''; }
+            }
+
+            function showRoleHint(hintKey) {
+                if (roleHintBanner && roleHintText && roleHints[hintKey]) {
+                    roleHintText.textContent = roleHints[hintKey];
+                    roleHintBanner.style.display = '';
+                }
+            }
+            function hideRoleHint() {
+                if (roleHintBanner) roleHintBanner.style.display = 'none';
+            }
+
+            // ──────────────────────────────────────────────
+            // Molecule change → filter roles, reset placement
             // ──────────────────────────────────────────────
 
             moleculeSelect.addEventListener('change', function() {
-                var moleculeId = this.value;
                 currentMoleculeIsTech = isMoleculeTech();
+                loadedMoleculeId = ''; // Force reload of JobTypes/Companies on next role change
 
-                // Filter role templates by molecule type (Tech vs Workforce/Helper)
+                // Filter and populate role dropdown (preserves selection if still valid)
                 filterRoleTemplatesForMoleculeType(currentMoleculeIsTech);
 
-                // Reset company dropdown — will be populated after role selection
-                companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseRoleFirst"].Value.Trim()</option>';
-                companySelect.disabled = true;
+                // Reset placement dropdowns — will reload via role change handler
                 if (departmentIdInput) departmentIdInput.value = '';
-
-                // Always show JobType and load for all molecule types
-                if (companyLabel) companyLabel.textContent = '@Localizer["Company"].Value.Trim()';
-                if (jobTypeField) jobTypeField.style.display = '';
-                if (jobTypeSelect) jobTypeSelect.required = true;
-                loadJobTypesForMolecule(moleculeId);
-
                 checkProgress();
             });
 
             // ──────────────────────────────────────────────
-            // Role change handler (MAJOR: now loads companies)
-            // Cascade: Director/AreaAdmin hides company, others load companies
+            // Role change → show/hide placement fields
             // ──────────────────────────────────────────────
 
             roleSelect.addEventListener('change', function() {
-                if (isDirectorOrAreaAdmin()) {
-                    // Director/AreaAdmin: hide company field, auto-HQ
-                    if (companySelect.value) {
-                        savedCompanyValue = companySelect.value;
-                    }
-                    companyField.style.display = 'none';
-                    companySelect.required = false;
-                    companySelect.disabled = true;
-                    companySelect.value = '';
-                    if (directorHqHint) directorHqHint.style.display = 'block';
-                } else if (roleSelect.value !== '') {
-                    // Non-Director role selected: show and load company/department dropdown
-                    companyField.style.display = '';
-                    companySelect.required = true;
-                    if (directorHqHint) directorHqHint.style.display = 'none';
+                var scopeLevel = getSelectedScopeLevel();
 
-                    if (moleculeSelect.value) {
-                        // Bug 2 fix: if we already have options loaded, try to restore saved value
-                        if (savedCompanyValue && companySelect.options.length > 1 && companySelect.querySelector('option[value="' + savedCompanyValue + '"]')) {
-                            companySelect.disabled = false;
-                            companySelect.value = savedCompanyValue;
-                        } else {
-                            // Load companies/departments for the selected molecule
-                            loadCompaniesForMolecule(moleculeSelect.value);
-                        }
-                    } else {
-                        // No molecule selected yet — show placeholder
-                        companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseRoleFirst"].Value.Trim()</option>';
-                        companySelect.disabled = true;
-                    }
+                if (roleSelect.value === '') {
+                    // No role selected — hide all placement fields
+                    hideJobType();
+                    hideCompany();
+                    hideRoleHint();
+                } else if (isJobTypeFreeScope()) {
+                    // MoleculeAdmin / AreaAdmin: no placement needed (auto-HQ, no JobType)
+                    hideJobType();
+                    hideCompany();
+                    showRoleHint(scopeLevel >= SCOPE_AREA ? 'areaAdmin' : 'moleculeAdmin');
+                } else if (isHqAutoResolved()) {
+                    // Director: needs JobType, company is auto-HQ
+                    showJobType();
+                    hideCompany();
+                    showRoleHint('director');
                 } else {
-                    // No role selected (placeholder) — reset company to waiting state
-                    companyField.style.display = '';
-                    companySelect.innerHTML = '<option value="">@Localizer["Auth_ChooseRoleFirst"].Value.Trim()</option>';
-                    companySelect.disabled = true;
-                    companySelect.required = true;
-                    if (directorHqHint) directorHqHint.style.display = 'none';
+                    // Employee / Lead / BRDirector: needs JobType + Company
+                    showJobType();
+                    showCompany();
+                    hideRoleHint();
                 }
                 checkProgress();
             });
 
             // ──────────────────────────────────────────────
-            // Company/Department change -> sync hidden fields
+            // Placement field change handlers
             // ──────────────────────────────────────────────
 
             companySelect.addEventListener('change', function() {
@@ -628,31 +605,20 @@
                 checkProgress();
             });
 
-            // JobType change -> update progress
             if (jobTypeSelect) {
-                jobTypeSelect.addEventListener('change', function() {
-                    checkProgress();
-                });
+                jobTypeSelect.addEventListener('change', function() { checkProgress(); });
             }
 
             // ──────────────────────────────────────────────
-            // Post-back restoration: re-trigger cascading dropdowns
-            // Molecule change loads JobTypes + filters roles,
-            // then role change loads companies
+            // Post-back restoration
             // ──────────────────────────────────────────────
 
             if (moleculeSelect.value) {
                 currentMoleculeIsTech = isMoleculeTech();
-
-                // Always show JobType for all molecule types on post-back restoration
-                if (jobTypeField) jobTypeField.style.display = '';
-                if (jobTypeSelect) jobTypeSelect.required = true;
-                loadJobTypesForMolecule(moleculeSelect.value);
-
-                // Role templates are loaded asynchronously — the fetch callback above
-                // will call filterRoleTemplatesForMoleculeType which calls populateRoleDropdown
-                // which fires roleSelect change, which loads companies.
-                // So we don't need to manually trigger here — the async chain handles it.
+                // Role templates are loaded asynchronously — the fetch callback
+                // calls filterRoleTemplatesForMoleculeType → populateRoleDropdown
+                // → fires roleSelect change → shows/hides placement fields and loads data.
+                // No manual trigger needed — the async chain handles everything.
             }
         })();
     </script>

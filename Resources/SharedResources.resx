@@ -4998,6 +4998,18 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Success_EmailTemplateSaved" xml:space="preserve">
     <value>Email template saved successfully</value>
   </data>
+  <data name="Success_EmailTemplateAppliedToAll" xml:space="preserve">
+    <value>Email template applied to {0} companies</value>
+  </data>
+  <data name="ApplyToAllCompanies" xml:space="preserve">
+    <value>Apply to All Companies</value>
+  </data>
+  <data name="ApplyToAllCompanies_Desc" xml:space="preserve">
+    <value>Save as base template for all companies at once. Per-company overrides can still be set afterwards.</value>
+  </data>
+  <data name="Confirm_ApplyToAllCompanies" xml:space="preserve">
+    <value>This will apply this setting to ALL companies. Continue?</value>
+  </data>
   <data name="Success_EmailTemplateReset" xml:space="preserve">
     <value>Email template reset to default</value>
   </data>
@@ -7361,13 +7373,16 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Organization</value>
   </data>
   <data name="Auth_StepRole" xml:space="preserve">
-    <value>Role</value>
+    <value>Details</value>
   </data>
   <data name="Auth_SelectMolecule" xml:space="preserve">
     <value>Select a molecule</value>
   </data>
   <data name="Auth_ChooseMolecule" xml:space="preserve">
     <value>Choose a molecule...</value>
+  </data>
+  <data name="Auth_ChooseMoleculeFirst" xml:space="preserve">
+    <value>-- Select molecule first --</value>
   </data>
   <data name="Auth_ChooseCompanyFirst" xml:space="preserve">
     <value>Select a unit first</value>
@@ -7388,7 +7403,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Error loading data</value>
   </data>
   <data name="Auth_StepUnit" xml:space="preserve">
-    <value>Unit</value>
+    <value>Unit &amp; Role</value>
   </data>
   <data name="Auth_ChooseRoleFirst" xml:space="preserve">
     <value>Select a role first</value>
@@ -12113,6 +12128,21 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Auth_DirectorAutoHQ" xml:space="preserve">
     <value>As a director, you'll be assigned to your molecule's HQ team</value>
   </data>
+  <data name="Auth_RoleHint_MoleculeAdmin" xml:space="preserve">
+    <value>CO manages the entire molecule regardless of job type — job type and company are set automatically.</value>
+  </data>
+  <data name="Auth_RoleHint_AreaAdmin" xml:space="preserve">
+    <value>BC manages the entire area (all molecules) — job type and company are set automatically.</value>
+  </data>
+  <data name="Auth_SelectArea" xml:space="preserve">
+    <value>Select Area</value>
+  </data>
+  <data name="Auth_ChooseArea" xml:space="preserve">
+    <value>-- Choose Area --</value>
+  </data>
+  <data name="Auth_RoleHint_Director" xml:space="preserve">
+    <value>Platoon leader manages a specific job type within the molecule — company is set to HQ automatically.</value>
+  </data>
   <data name="Error_Signup_SelectMolecule" xml:space="preserve">
     <value>Please select a molecule</value>
   </data>
@@ -12136,6 +12166,12 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Grant_ManageHierarchy_Desc" xml:space="preserve">
     <value>Add, rename, and delete companies and departments in the organizational hierarchy.</value>
+  </data>
+  <data name="Grant_ManageHomeTypes" xml:space="preserve">
+    <value>Manage Home Types</value>
+  </data>
+  <data name="Grant_ManageHomeTypes_Desc" xml:space="preserve">
+    <value>Create, edit, and generate home rotation templates and assignments.</value>
   </data>
   <data name="AllMolecules_AreaWide" xml:space="preserve">
     <value>All (area-wide)</value>
@@ -12914,6 +12950,54 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Warning_OnDutyConflict" xml:space="preserve">
     <value>Employee has an on-duty assignment on this date</value>
   </data>
+  <data name="Warning_HomeConflict" xml:space="preserve">
+    <value>Employee has a home assignment on this date</value>
+  </data>
+  <data name="Warning_ShiftExistsOnHomeDate" xml:space="preserve">
+    <value>Employee has shifts assigned on this date</value>
+  </data>
+  <data name="Error_DuplicateHome" xml:space="preserve">
+    <value>Employee already has a home assignment on this date</value>
+  </data>
+  <data name="PrimaryShiftType" xml:space="preserve">
+    <value>Primary Shift</value>
+  </data>
+
+  <data name="Regulars" xml:space="preserve">
+    <value>Regulars</value>
+  </data>
+  <data name="Trainees" xml:space="preserve">
+    <value>Trainees</value>
+  </data>
+
+  <!-- HomeTypes admin page keys -->
+  <data name="HomeTypes" xml:space="preserve">
+    <value>Home Types</value>
+  </data>
+  <data name="HomeTypes_Description" xml:space="preserve">
+    <value>Manage home rotation templates for shift scheduling</value>
+  </data>
+  <data name="CreateHomeType" xml:space="preserve">
+    <value>Create Home Type</value>
+  </data>
+  <data name="NoHomeTypes" xml:space="preserve">
+    <value>No home types defined for this molecule</value>
+  </data>
+  <data name="PaintHomeDays" xml:space="preserve">
+    <value>Paint Home Days</value>
+  </data>
+  <data name="GenerateHomeShifts" xml:space="preserve">
+    <value>Generate Home Shifts</value>
+  </data>
+  <data name="HebrewName" xml:space="preserve">
+    <value>Hebrew Name</value>
+  </data>
+  <data name="DefaultStartTime" xml:space="preserve">
+    <value>Default Start Time</value>
+  </data>
+  <data name="DefaultEndTime" xml:space="preserve">
+    <value>Default End Time</value>
+  </data>
 
   <!-- ChoreTypes & DutyTypes breadcrumb/title keys -->
   <data name="ChoreTypes" xml:space="preserve">
@@ -13093,5 +13177,416 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Placeholder_SecondGrantKeyExample" xml:space="preserve">
     <value>e.g. ApproveExtendedLeave</value>
+  </data>
+  <data name="SearchUserPlaceholder" xml:space="preserve">
+    <value>Search by name or email...</value>
+  </data>
+  <data name="ViewByPeople" xml:space="preserve">
+    <value>View by People</value>
+  </data>
+
+  <!-- Fix 25: Calendar CRUD error messages -->
+  <data name="Calendar_Error_StaffingRange" xml:space="preserve">
+    <value>StaffingRequired must be between 1 and 30</value>
+  </data>
+  <data name="Calendar_Error_ShiftTypeNotFound" xml:space="preserve">
+    <value>Shift type not found</value>
+  </data>
+  <data name="Calendar_Error_ShiftInstanceExists" xml:space="preserve">
+    <value>Shift instance already exists for this date</value>
+  </data>
+  <data name="Calendar_Error_EnsureShiftInstanceFailed" xml:space="preserve">
+    <value>Failed to create/retrieve shift instance</value>
+  </data>
+  <data name="Calendar_Error_CreateShiftInstanceFailed" xml:space="preserve">
+    <value>Failed to create shift instance</value>
+  </data>
+  <data name="Calendar_Error_AssignmentNotFound" xml:space="preserve">
+    <value>Assignment not found</value>
+  </data>
+  <data name="Calendar_Error_ValidationFailed" xml:space="preserve">
+    <value>Validation failed</value>
+  </data>
+  <data name="Calendar_Error_InvalidOverrideToken" xml:space="preserve">
+    <value>Invalid or expired override token</value>
+  </data>
+  <data name="Calendar_Error_OverlappingShift" xml:space="preserve">
+    <value>Employee has an overlapping shift: {0} ({1} - {2})</value>
+  </data>
+  <data name="Calendar_Error_AssignUserToSlotFailed" xml:space="preserve">
+    <value>Failed to assign user to slot</value>
+  </data>
+  <data name="Calendar_Error_InvalidUserSession" xml:space="preserve">
+    <value>Invalid user session</value>
+  </data>
+  <data name="Calendar_Error_InsufficientPermissions" xml:space="preserve">
+    <value>Insufficient permissions to assign shifts</value>
+  </data>
+  <data name="Calendar_Error_AssignEmployeeFailed" xml:space="preserve">
+    <value>Failed to assign employee</value>
+  </data>
+  <data name="Calendar_Error_UnassignEmployeeFailed" xml:space="preserve">
+    <value>Failed to unassign employee</value>
+  </data>
+  <data name="Calendar_Error_ClearAssignmentFailed" xml:space="preserve">
+    <value>Failed to clear assignment</value>
+  </data>
+  <data name="Calendar_Confirm_RemoveEmployees" xml:space="preserve">
+    <value>This will remove {0} assigned employee(s). Do you want to continue?</value>
+  </data>
+  <data name="Calendar_Error_ShiftInstanceNotFound" xml:space="preserve">
+    <value>Shift instance not found</value>
+  </data>
+  <data name="Calendar_Error_UpdateStaffingFailed" xml:space="preserve">
+    <value>Failed to update shift staffing</value>
+  </data>
+  <data name="Calendar_Error_UnauthorizedMolecule" xml:space="preserve">
+    <value>Unauthorized molecule access</value>
+  </data>
+  <data name="Calendar_Error_DeleteShiftInstanceFailed" xml:space="preserve">
+    <value>Failed to delete shift instance</value>
+  </data>
+  <data name="Calendar_Error_AddTraineeFailed" xml:space="preserve">
+    <value>Failed to add trainee</value>
+  </data>
+  <data name="Calendar_Error_RemoveTraineeFailed" xml:space="preserve">
+    <value>Failed to remove trainee</value>
+  </data>
+  <data name="Calendar_Error_ChangeUserFailed" xml:space="preserve">
+    <value>Failed to change user</value>
+  </data>
+  <data name="Calendar_Error_ShiftNameEmpty" xml:space="preserve">
+    <value>Shift name cannot be empty</value>
+  </data>
+  <data name="Calendar_Error_InvalidTimeFormat" xml:space="preserve">
+    <value>Invalid time format</value>
+  </data>
+  <data name="Calendar_Error_UpdateMetadataFailed" xml:space="preserve">
+    <value>Failed to update shift metadata</value>
+  </data>
+  <data name="Calendar_Error_CreateCustomShiftTypeFailed" xml:space="preserve">
+    <value>Failed to create custom shift type</value>
+  </data>
+  <data name="Calendar_Error_DetachShiftInstanceFailed" xml:space="preserve">
+    <value>Failed to detach shift instance</value>
+  </data>
+  <data name="Calendar_Error_ShiftNotDetached" xml:space="preserve">
+    <value>Shift instance is not detached from a Program</value>
+  </data>
+  <data name="Calendar_Error_ResetShiftInstanceFailed" xml:space="preserve">
+    <value>Failed to reset shift instance</value>
+  </data>
+  <data name="Calendar_Error_LoadEmployeesFailed" xml:space="preserve">
+    <value>Failed to load employees</value>
+  </data>
+  <data name="Calendar_Error_FillRangeTooLarge" xml:space="preserve">
+    <value>Cannot fill more than 730 dates (2 years) at once</value>
+  </data>
+  <data name="Calendar_Error_SourceShiftNotFound" xml:space="preserve">
+    <value>Source shift not found</value>
+  </data>
+  <data name="Calendar_Error_SourceShiftNotLinkedToProgram" xml:space="preserve">
+    <value>Source shift is not linked to a Program</value>
+  </data>
+  <data name="Calendar_Error_InvalidFillMode" xml:space="preserve">
+    <value>Invalid fill mode</value>
+  </data>
+  <data name="Calendar_Error_FillRangeFailed" xml:space="preserve">
+    <value>Failed to fill range</value>
+  </data>
+  <data name="Calendar_Error_LoadConflictsFailed" xml:space="preserve">
+    <value>Failed to load conflicts</value>
+  </data>
+
+  <!-- Fix 26: Login lockout countdown strings -->
+  <data name="Login_Lockout_RetryNow" xml:space="preserve">
+    <value>You may try logging in again now.</value>
+  </data>
+  <data name="Login_Lockout_Countdown" xml:space="preserve">
+    <value>Account temporarily locked due to repeated failed login attempts. Please try again in {0} minutes.</value>
+  </data>
+
+  <!-- Fix 28: HomeTypes confirm dialog -->
+  <data name="Confirm_DeleteHomeType" xml:space="preserve">
+    <value>Are you sure you want to delete this home type?</value>
+  </data>
+
+  <!-- Fix 31: AuditLog action strings -->
+  <data name="AuditAction_UserCreated" xml:space="preserve">
+    <value>User Created</value>
+  </data>
+  <data name="AuditAction_UserEnabled" xml:space="preserve">
+    <value>User Enabled</value>
+  </data>
+  <data name="AuditAction_UserDisabled" xml:space="preserve">
+    <value>User Disabled</value>
+  </data>
+  <data name="AuditAction_UserUnlocked" xml:space="preserve">
+    <value>Account Unlocked</value>
+  </data>
+  <data name="AuditAction_UserRankChanged" xml:space="preserve">
+    <value>Rank Changed</value>
+  </data>
+  <data name="AuditAction_JobTypeChanged" xml:space="preserve">
+    <value>Job Type Changed</value>
+  </data>
+  <data name="AuditAction_PrimaryShiftTypeChanged" xml:space="preserve">
+    <value>Primary Shift Changed</value>
+  </data>
+  <data name="AuditAction_PasswordReset" xml:space="preserve">
+    <value>Password Reset</value>
+  </data>
+  <data name="AuditAction_BatchApproveJoinRequest" xml:space="preserve">
+    <value>Join Request Approved</value>
+  </data>
+  <data name="AuditAction_ShiftAssigned" xml:space="preserve">
+    <value>Shift Assigned</value>
+  </data>
+  <data name="AuditAction_ShiftUnassigned" xml:space="preserve">
+    <value>Shift Unassigned</value>
+  </data>
+  <data name="AuditAction_ShiftTypeDeleted" xml:space="preserve">
+    <value>Shift Type Deleted</value>
+  </data>
+  <data name="AuditAction_ConfigUpdated" xml:space="preserve">
+    <value>Configuration Updated</value>
+  </data>
+  <data name="AuditAction_ChoreCreated" xml:space="preserve">
+    <value>Chore Created</value>
+  </data>
+  <data name="AuditAction_ChoreCanceled" xml:space="preserve">
+    <value>Chore Canceled</value>
+  </data>
+  <data name="AuditAction_ChoreCreatedQuick" xml:space="preserve">
+    <value>Quick Chore Created</value>
+  </data>
+  <data name="AuditAction_ChoreDeletedQuick" xml:space="preserve">
+    <value>Quick Chore Deleted</value>
+  </data>
+  <data name="AuditAction_ShiftReplacedWithChore" xml:space="preserve">
+    <value>Shift Replaced With Chore</value>
+  </data>
+  <data name="AuditAction_OnDutyCreated" xml:space="preserve">
+    <value>On-Duty Created</value>
+  </data>
+  <data name="AuditAction_OnDutyCanceled" xml:space="preserve">
+    <value>On-Duty Canceled</value>
+  </data>
+  <data name="AuditAction_OnDutyCreatedQuick" xml:space="preserve">
+    <value>Quick On-Duty Created</value>
+  </data>
+  <data name="AuditAction_OnDutyDeletedQuick" xml:space="preserve">
+    <value>Quick On-Duty Deleted</value>
+  </data>
+  <data name="AuditAction_OnDutyTypeCreated" xml:space="preserve">
+    <value>On-Duty Type Created</value>
+  </data>
+  <data name="AuditAction_OnDutyTypeDeleted" xml:space="preserve">
+    <value>On-Duty Type Deleted</value>
+  </data>
+  <data name="AuditAction_GrantAssigned" xml:space="preserve">
+    <value>Grant Assigned</value>
+  </data>
+  <data name="AuditAction_GrantRevoked" xml:space="preserve">
+    <value>Grant Revoked</value>
+  </data>
+  <data name="AuditAction_AllGrantsRevoked" xml:space="preserve">
+    <value>All Grants Revoked</value>
+  </data>
+  <data name="AuditAction_Create" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="AuditAction_Update" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="AuditAction_ToggleActive" xml:space="preserve">
+    <value>Toggle Active</value>
+  </data>
+  <data name="AuditAction_BackupCreated" xml:space="preserve">
+    <value>Backup Created</value>
+  </data>
+  <data name="AuditAction_BackupRestored" xml:space="preserve">
+    <value>Backup Restored</value>
+  </data>
+  <data name="AuditAction_BackupDeleted" xml:space="preserve">
+    <value>Backup Deleted</value>
+  </data>
+  <data name="AuditAction_BackupDownloaded" xml:space="preserve">
+    <value>Backup Downloaded</value>
+  </data>
+  <data name="AuditAction_GriffinAutoProvision" xml:space="preserve">
+    <value>Griffin Auto-Provision</value>
+  </data>
+  <data name="AuditAction_GriffinConfigUpdated" xml:space="preserve">
+    <value>Griffin Config Updated</value>
+  </data>
+  <data name="AuditAction_GriffinConfigTestedSuccessfully" xml:space="preserve">
+    <value>Griffin Config Tested</value>
+  </data>
+  <data name="AuditAction_GameConfigUpdated" xml:space="preserve">
+    <value>Game Config Updated</value>
+  </data>
+  <data name="AuditAction_EmailConfigUpdated" xml:space="preserve">
+    <value>Email Config Updated</value>
+  </data>
+  <data name="AuditAction_TestEmailSent" xml:space="preserve">
+    <value>Test Email Sent</value>
+  </data>
+  <data name="AuditAction_OwnerSelectedCompany" xml:space="preserve">
+    <value>Company Selected</value>
+  </data>
+  <data name="AuditAction_OwnerClearedCompanySelection" xml:space="preserve">
+    <value>Company Selection Cleared</value>
+  </data>
+  <data name="AuditAction_DirectorSelectedMolecule" xml:space="preserve">
+    <value>Molecule Selected</value>
+  </data>
+  <data name="AuditAction_ArchiveCreated" xml:space="preserve">
+    <value>Archive Created</value>
+  </data>
+  <data name="AuditAction_ArchivePreviewGenerated" xml:space="preserve">
+    <value>Archive Preview Generated</value>
+  </data>
+  <data name="AuditAction_ArchiveDownloaded" xml:space="preserve">
+    <value>Archive Downloaded</value>
+  </data>
+  <data name="AuditAction_ArchiveValidated" xml:space="preserve">
+    <value>Archive Validated</value>
+  </data>
+  <data name="AuditAction_DataImported" xml:space="preserve">
+    <value>Data Imported</value>
+  </data>
+  <data name="AuditAction_DataPurged" xml:space="preserve">
+    <value>Data Purged</value>
+  </data>
+  <data name="AuditAction_SignupRateLimitsCleared" xml:space="preserve">
+    <value>Signup Rate Limits Cleared</value>
+  </data>
+  <data name="AuditAction_HierarchyEntityCreated" xml:space="preserve">
+    <value>Hierarchy Entity Created</value>
+  </data>
+  <data name="AuditAction_HierarchyEntityRenamed" xml:space="preserve">
+    <value>Hierarchy Entity Renamed</value>
+  </data>
+  <data name="AuditAction_HierarchyEntityMoved" xml:space="preserve">
+    <value>Hierarchy Entity Moved</value>
+  </data>
+  <data name="AuditAction_HierarchyEntityDeleted" xml:space="preserve">
+    <value>Hierarchy Entity Deleted</value>
+  </data>
+  <data name="AuditAction_HierarchyReorderApplied" xml:space="preserve">
+    <value>Hierarchy Reorder Applied</value>
+  </data>
+  <data name="AuditAction_LocalizationOverrideCreated" xml:space="preserve">
+    <value>Localization Override Created</value>
+  </data>
+  <data name="AuditAction_LocalizationOverrideUpdated" xml:space="preserve">
+    <value>Localization Override Updated</value>
+  </data>
+  <data name="AuditAction_LocalizationOverridesBulkUpsert" xml:space="preserve">
+    <value>Localization Overrides Bulk Update</value>
+  </data>
+  <data name="AuditAction_LocalizationOverrideDeleted" xml:space="preserve">
+    <value>Localization Override Deleted</value>
+  </data>
+  <data name="AuditAction_LanguageSettingsUpdated" xml:space="preserve">
+    <value>Language Settings Updated</value>
+  </data>
+  <data name="AuditAction_LanguageSettingsCreated" xml:space="preserve">
+    <value>Language Settings Created</value>
+  </data>
+  <data name="AuditAction_ApiKeyRequest.Created" xml:space="preserve">
+    <value>API Key Requested</value>
+  </data>
+  <data name="AuditAction_ApiKeyRequest.Approved" xml:space="preserve">
+    <value>API Key Approved</value>
+  </data>
+  <data name="AuditAction_ApiKeyRequest.Rejected" xml:space="preserve">
+    <value>API Key Rejected</value>
+  </data>
+  <data name="AuditAction_ApiKey.Revoked" xml:space="preserve">
+    <value>API Key Revoked</value>
+  </data>
+  <data name="AuditAction_ApiKey.Regenerated" xml:space="preserve">
+    <value>API Key Regenerated</value>
+  </data>
+
+  <!-- Fix 31: AuditLog entity type strings -->
+  <data name="AuditEntity_User" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="AuditEntity_AppUser" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="AuditEntity_ShiftAssignment" xml:space="preserve">
+    <value>Shift Assignment</value>
+  </data>
+  <data name="AuditEntity_ShiftType" xml:space="preserve">
+    <value>Shift Type</value>
+  </data>
+  <data name="AuditEntity_ShiftInstance" xml:space="preserve">
+    <value>Shift Instance</value>
+  </data>
+  <data name="AuditEntity_Chore" xml:space="preserve">
+    <value>Chore</value>
+  </data>
+  <data name="AuditEntity_OnDuty" xml:space="preserve">
+    <value>On-Duty</value>
+  </data>
+  <data name="AuditEntity_OnDutyTypeConfig" xml:space="preserve">
+    <value>On-Duty Type Config</value>
+  </data>
+  <data name="AuditEntity_AppConfig" xml:space="preserve">
+    <value>Application Config</value>
+  </data>
+  <data name="AuditEntity_Grant" xml:space="preserve">
+    <value>Grant</value>
+  </data>
+  <data name="AuditEntity_Database" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="AuditEntity_GriffinConfig" xml:space="preserve">
+    <value>Griffin Config</value>
+  </data>
+  <data name="AuditEntity_GameConfig" xml:space="preserve">
+    <value>Game Config</value>
+  </data>
+  <data name="AuditEntity_EmailConfig" xml:space="preserve">
+    <value>Email Config</value>
+  </data>
+  <data name="AuditEntity_CompanySelection" xml:space="preserve">
+    <value>Company Selection</value>
+  </data>
+  <data name="AuditEntity_MoleculeSelection" xml:space="preserve">
+    <value>Molecule Selection</value>
+  </data>
+  <data name="AuditEntity_DataArchive" xml:space="preserve">
+    <value>Data Archive</value>
+  </data>
+  <data name="AuditEntity_RateLimiting" xml:space="preserve">
+    <value>Rate Limiting</value>
+  </data>
+  <data name="AuditEntity_UserJoinRequest" xml:space="preserve">
+    <value>User Join Request</value>
+  </data>
+  <data name="AuditEntity_CompanyLocalizationOverride" xml:space="preserve">
+    <value>Localization Override</value>
+  </data>
+  <data name="AuditEntity_CompanyLanguageSettings" xml:space="preserve">
+    <value>Language Settings</value>
+  </data>
+  <data name="AuditEntity_ApiKeyRequest" xml:space="preserve">
+    <value>API Key Request</value>
+  </data>
+
+  <!-- Cross-agent .resx keys -->
+  <data name="HomeType_DaysSelected" xml:space="preserve">
+    <value>{0} days selected</value>
+  </data>
+  <data name="Realtime_Disconnected" xml:space="preserve">
+    <value>Connection lost. Retrying...</value>
+  </data>
+  <data name="Realtime_Reconnected" xml:space="preserve">
+    <value>Connection restored.</value>
   </data>
 </root>

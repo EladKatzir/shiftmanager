@@ -584,64 +584,9 @@
   margin-right: auto;
 }
 
-/* On-call contact RTL */
-[dir="rtl"] .oncall-contact {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .oncall-contact__info {
-  text-align: right;
-}
-
 /* Office number RTL */
 [dir="rtl"] .office-number {
   flex-direction: row-reverse;
-}
-
-/* Friend on-call RTL */
-[dir="rtl"] .friend-oncall {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .friend-oncall__info {
-  text-align: right;
-}
-
-/* Next shift widget RTL */
-[dir="rtl"] .next-shift {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .next-shift__details {
-  text-align: right;
-}
-
-/* Pending request RTL */
-[dir="rtl"] .pending-request {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .pending-request__content {
-  text-align: right;
-}
-
-/* Announcement RTL */
-[dir="rtl"] .announcement__header {
-  flex-direction: row-reverse;
-}
-
-/* Quick actions grid RTL */
-[dir="rtl"] .quick-actions {
-  direction: rtl;
-}
-
-/* Metrics widget RTL */
-[dir="rtl"] .metrics-widget {
-  direction: rtl;
-}
-
-[dir="rtl"] .metric {
-  text-align: right;
 }
 
 /* ========================================

@@ -525,6 +525,15 @@ select.form-field__input {
   gap: var(--space-5);
 }
 
+/* Normalize card heights within dashboard grids */
+.dashboard-grid .card,
+.home-dashboard .card {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .dashboard-section {
   margin-bottom: var(--space-6);
 }
@@ -2963,7 +2972,7 @@ img[loading="lazy"].loaded {
 
 .avatar__fallback {
   font-weight: var(--font-semibold);
-  color: var(--text-secondary);
+  color: var(--text-muted);
   text-transform: uppercase;
   user-select: none;
 }
@@ -3482,7 +3491,7 @@ picture img {
   display: flex;
   align-items: center;
   padding: 0 var(--space-1);
-  color: var(--primary-contrast);
+  color: var(--text-muted);
   opacity: 0.6;
   font-size: 14px;
   letter-spacing: 2px;

@@ -33,6 +33,7 @@
     let eventHandlers = {};
     let refreshCallback = null;
     let isPageVisible = true;
+    let elapsedUpdateTimer = null;
 
     /**
      * Initialize calendar real-time updates.
@@ -462,11 +463,15 @@
      * Shows a banner when SignalR is disconnected so users know data may be stale.
      */
     function updateConnectionIndicator() {
+        const dir = document.documentElement.dir || 'ltr';
+        const disconnectedMsg = window.AppLocalizer?.Realtime_Disconnected || 'Connection lost. Retrying...';
+        const reconnectedMsg = window.AppLocalizer?.Realtime_Reconnected || 'Connection restored.';
+
         let indicator = document.getElementById('calendar-connection-indicator');
         if (!indicator) {
             indicator = document.createElement('div');
             indicator.id = 'calendar-connection-indicator';
-            indicator.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;text-align:center;padding:4px 12px;font-size:0.85rem;transition:transform 0.3s ease;direction:rtl;';
+            indicator.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;text-align:center;padding:4px 12px;font-size:0.85rem;transition:transform 0.3s ease;direction:' + dir + ';';
             document.body.appendChild(indicator);
         }
 
@@ -478,14 +483,14 @@
             indicator.style.color = '#856404';
             indicator.style.borderBottom = '1px solid #ffc107';
             indicator.style.transform = 'translateY(0)';
-            indicator.textContent = '\u26A0 \u05DE\u05EA\u05D7\u05D1\u05E8 \u05DE\u05D7\u05D3\u05E9... \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD \u05E2\u05E9\u05D5\u05D9\u05D9\u05DD \u05DC\u05D0 \u05DC\u05D4\u05D9\u05D5\u05EA \u05E2\u05D3\u05DB\u05E0\u05D9\u05D9\u05DD'; // Reconnecting... Data may not be up to date
+            indicator.textContent = '\u26A0 ' + disconnectedMsg;
         } else {
             indicator.style.background = '#f8d7da';
             indicator.style.color = '#721c24';
             indicator.style.borderBottom = '1px solid #f5c6cb';
             indicator.style.transform = 'translateY(0)';
             const elapsed = disconnectedSince ? Math.floor((Date.now() - disconnectedSince) / 1000) : 0;
-            indicator.textContent = `\u26A0 \u05DE\u05E0\u05D5\u05EA\u05E7 (${elapsed}\u05E9') \u2014 \u05D4\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD \u05E2\u05DC\u05D5\u05DC\u05D9\u05DD \u05DC\u05D4\u05D9\u05D5\u05EA \u05DC\u05D0 \u05E2\u05D3\u05DB\u05E0\u05D9\u05D9\u05DD`; // Disconnected (Xs) — data may be stale
+            indicator.textContent = '\u26A0 ' + disconnectedMsg + ' (' + elapsed + 's)';
         }
     }
 
@@ -517,6 +522,11 @@
         stopPolling();
         removeShadowRefreshTriggers();
 
+        if (elapsedUpdateTimer) {
+            clearInterval(elapsedUpdateTimer);
+            elapsedUpdateTimer = null;
+        }
+
         if (shadowRefreshTimer) {
             clearTimeout(shadowRefreshTimer);
         }
@@ -533,7 +543,7 @@
     }
 
     // Update stale indicator elapsed time every 10s while disconnected
-    setInterval(() => {
+    elapsedUpdateTimer = setInterval(() => {
         if (connectionState !== 'connected' && disconnectedSince) {
             updateConnectionIndicator();
         }

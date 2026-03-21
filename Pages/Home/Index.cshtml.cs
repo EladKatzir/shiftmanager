@@ -19,12 +19,14 @@ namespace ShiftManager.Pages.Home
         private readonly AppDbContext _context;
         private readonly ICompanyContext _companyContext;
         private readonly IGrantService _grantService;
+        private readonly ILogger<IndexModel> _logger;
 
-        public IndexModel(AppDbContext context, ICompanyContext companyContext, IGrantService grantService)
+        public IndexModel(AppDbContext context, ICompanyContext companyContext, IGrantService grantService, ILogger<IndexModel> logger)
         {
             _context = context;
             _companyContext = companyContext;
             _grantService = grantService;
+            _logger = logger;
         }
 
         // Common properties (all users)
@@ -68,6 +70,8 @@ namespace ShiftManager.Pages.Home
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))
             {
+                _logger.LogWarning("Invalid or missing NameIdentifier claim on {Page}", "Home/Index");
+                Response.Redirect("/Auth/Login");
                 return;
             }
 
@@ -174,7 +178,7 @@ namespace ShiftManager.Pages.Home
                 .ToListAsync();
 
             var assignmentsTask = _context.ShiftAssignments
-                .Where(sa => sa.CompanyId == companyId && sa.ShiftInstance.WorkDate >= today && sa.ShiftInstance.WorkDate < next30Days)
+                .Where(sa => sa.CompanyId == companyId && sa.UserId != null && sa.ShiftInstance.WorkDate >= today && sa.ShiftInstance.WorkDate < next30Days)
                 .ToListAsync();
 
             var pendingTimeOffTask = _context.TimeOffRequests
