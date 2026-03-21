@@ -430,6 +430,11 @@ public class NotificationService : INotificationService
     {
         try
         {
+            // Set tenant context for this operation — this method is called from fire-and-forget
+            // Task.Run in Signup where there's no HttpContext, so tenant resolver returns 0.
+            // Without this, notifications are created with CompanyId=0 and become invisible.
+            _tenantResolver.SetCurrentTenantId(companyId);
+
             // Get owner users scoped to the target company (capped for safety — typically 1-5 per company)
             // IgnoreQueryFilters: called from anonymous signup context where tenant=0,
             // which would filter out ALL users. Scoped by companyId to prevent cross-company notification leak.
