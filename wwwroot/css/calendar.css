@@ -2547,10 +2547,14 @@
     font-size: var(--text-small);
 }
 
-/* Sticky header — offset by app header height so it doesn't hide behind it */
+/* Sticky header — sticks to top of the .excel-calendar scroll container.
+   top: 0 because the scroll container (.excel-calendar with overflow:auto) is
+   the sticky positioning reference, NOT the viewport. The --header-height offset
+   was incorrect here — it pushed the thead 64px down inside the scroll container,
+   overlapping the first data row(s) and making them unclickable. */
 .excel-calendar__header {
     position: sticky;
-    top: var(--header-height, 64px);
+    top: 0;
     z-index: var(--z-sticky);
     background: var(--primary);
     color: var(--primary-contrast) !important;
