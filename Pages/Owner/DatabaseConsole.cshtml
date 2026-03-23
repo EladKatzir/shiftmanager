@@ -96,12 +96,19 @@
                 </div>
             </form>
 
+            @if (Model.IsResultTruncated)
+            {
+                <div class="alert alert-warning" style="background: var(--warning-soft, #fff3cd); border: 1px solid var(--warning, #ffc107); color: var(--warning-text, #856404); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <strong>⚠️ Results limited to 1,000 rows.</strong> Add a LIMIT clause to your query for specific ranges.
+                </div>
+            }
+
             @if (Model.ResultRows.Any())
             {
                 <div class="results-container">
                     <h3>📊 <loc key="Owner_DatabaseConsole_QueryResults" /></h3>
                     <div class="results-table-wrapper">
-                        <table class="results-table">
+                        <table class="results-table data-table--sticky-header">
                             <thead>
                                 <tr>
                                     @foreach (var column in Model.ResultColumns)

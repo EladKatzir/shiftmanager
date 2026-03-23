@@ -38,6 +38,7 @@ public class DatabaseConsoleModel : PageModel
     public List<string> ResultColumns { get; set; } = new();
     public string? Error { get; set; }
     public int RowsAffected { get; set; }
+    public bool IsResultTruncated { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -90,8 +91,14 @@ public class DatabaseConsoleModel : PageModel
             await using var readOnlyConnection = new SqliteConnection(builder.ConnectionString);
             await readOnlyConnection.OpenAsync();
 
+            // Enforce a row limit to prevent OOM on large result sets.
+            // Wrap in a subquery with LIMIT 1001 (1 extra to detect truncation at 1000).
+            const int maxRows = 1000;
+            var hasUserLimit = upperQuery.Contains("LIMIT");
+            var effectiveQuery = hasUserLimit ? trimmedQuery : $"SELECT * FROM ({trimmedQuery}) LIMIT {maxRows + 1}";
+
             using var command = readOnlyConnection.CreateCommand();
-            command.CommandText = trimmedQuery;
+            command.CommandText = effectiveQuery;
             command.CommandType = CommandType.Text;
 
             using var reader = await command.ExecuteReaderAsync();
@@ -103,7 +110,7 @@ public class DatabaseConsoleModel : PageModel
                 ResultColumns.Add(reader.GetName(i));
             }
 
-            // Get rows
+            // Get rows (read up to maxRows + 1 to detect truncation)
             ResultRows = new List<Dictionary<string, object?>>();
             while (await reader.ReadAsync())
             {
@@ -115,9 +122,17 @@ public class DatabaseConsoleModel : PageModel
                 ResultRows.Add(row);
             }
 
-            QueryResult = $"Query executed successfully. {ResultRows.Count} rows returned.";
-            _logger.LogInformation("Database query executed: {Query}, Rows: {RowCount}",
-                trimmedQuery.Substring(0, Math.Min(trimmedQuery.Length, 100)), ResultRows.Count);
+            // Detect and handle truncation
+            if (!hasUserLimit && ResultRows.Count > maxRows)
+            {
+                ResultRows = ResultRows.Take(maxRows).ToList();
+                IsResultTruncated = true;
+            }
+
+            var truncatedNote = IsResultTruncated ? $" (limited to {maxRows:N0} rows)" : "";
+            QueryResult = $"Query executed successfully. {ResultRows.Count} rows returned{truncatedNote}.";
+            _logger.LogInformation("Database query executed: {Query}, Rows: {RowCount}, Truncated: {Truncated}",
+                trimmedQuery.Substring(0, Math.Min(trimmedQuery.Length, 100)), ResultRows.Count, IsResultTruncated);
 
             return Page();
         }
