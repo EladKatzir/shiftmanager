@@ -438,6 +438,13 @@ try {
             Copy-Item -LiteralPath $clients -Destination $SourceDir -Recurse -Force -ErrorAction Stop
         }
 
+        # Include Data folder (seed data files for reference/diagnostics in deployed package)
+        $dataDir = Join-Path $RepoRoot 'Data'
+        if (Test-Path -LiteralPath $dataDir) {
+            Copy-Item -LiteralPath $dataDir -Destination (Join-Path $SourceDir 'Data') -Recurse -Force -ErrorAction Stop
+            Write-Log -Level OK -Message "Data folder copied to publish output."
+        }
+
         Write-Log -Level OK -Message "dotnet publish fallback build completed."
     }
 
