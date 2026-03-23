@@ -18,17 +18,20 @@ public class GetOverviewDataModel : PageModel
 {
     private readonly IUserDayNoteService _noteService;
     private readonly ICompanyContext _companyContext;
+    private readonly IScopeFilterService _scopeFilterService;
     private readonly AppDbContext _db;
     private readonly ILogger<GetOverviewDataModel> _logger;
 
     public GetOverviewDataModel(
         IUserDayNoteService noteService,
         ICompanyContext companyContext,
+        IScopeFilterService scopeFilterService,
         AppDbContext db,
         ILogger<GetOverviewDataModel> logger)
     {
         _noteService = noteService;
         _companyContext = companyContext;
+        _scopeFilterService = scopeFilterService;
         _db = db;
         _logger = logger;
     }
@@ -58,6 +61,35 @@ public class GetOverviewDataModel : PageModel
             if (effectiveCompanyId <= 0)
             {
                 return new JsonResult(new { success = false, message = "Invalid company" }) { StatusCode = 400 };
+            }
+
+            // SECURITY: Validate user has access to the requested company
+            // User can view their own company; cross-company requires molecule or area grants
+            var currentUser = await _db.Users.FindAsync(currentUserId);
+            if (currentUser == null)
+            {
+                return new JsonResult(new { success = false, message = "User not found" }) { StatusCode = 401 };
+            }
+            if (currentUser.CompanyId != effectiveCompanyId)
+            {
+                // Not their own company — check if target company is in the user's molecule or area
+                var userCompany = await _db.Companies.FindAsync(currentUser.CompanyId);
+                var targetCompany = await _db.Companies.FindAsync(effectiveCompanyId);
+                var inSameMolecule = userCompany?.MoleculeId != null && targetCompany?.MoleculeId != null
+                    && userCompany.MoleculeId == targetCompany.MoleculeId;
+
+                if (!inSameMolecule)
+                {
+                    // Check broader scope grants (molecule/area level)
+                    var hasMoleculeAccess = await _scopeFilterService.ValidateScopeAccessAsync("molecule", null, "overview");
+                    var hasAreaAccess = await _scopeFilterService.ValidateScopeAccessAsync("area", null, "overview");
+                    if (!hasMoleculeAccess && !hasAreaAccess)
+                    {
+                        _logger.LogWarning("SECURITY: User {UserId} attempted to access overview for company {CompanyId} outside their scope",
+                            currentUserId, effectiveCompanyId);
+                        return new JsonResult(new { success = false, message = "Access denied" }) { StatusCode = 403 };
+                    }
+                }
             }
 
             // Get users in company (uses tenant filter, capped for memory safety)

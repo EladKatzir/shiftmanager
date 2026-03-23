@@ -68,6 +68,21 @@ public class GetShiftsDataModel : PageModel
                 return new JsonResult(new { success = false, message = "Invalid scope parameters" }) { StatusCode = 400 };
             }
 
+            // SECURITY: Validate user has access to the requested molecule scope
+            var hasAccess = await _scopeFilterService.ValidateScopeAccessAsync("molecule", moleculeId, "shifts");
+            if (!hasAccess)
+            {
+                // Also check if the user's own company belongs to this molecule
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == currentUserId);
+                var userCompany = user != null ? await _db.Companies.FindAsync(user.CompanyId) : null;
+                if (userCompany?.MoleculeId != moleculeId)
+                {
+                    _logger.LogWarning("SECURITY: User {UserId} attempted to access shifts for molecule {MoleculeId} outside their scope",
+                        currentUserId, moleculeId);
+                    return new JsonResult(new { success = false, message = "Access denied" }) { StatusCode = 403 };
+                }
+            }
+
             // Get company IDs for molecule scope
             var companyIds = await _scopeFilterService.ResolveCompanyIdsForScopeAsync("molecule", moleculeId);
 
@@ -135,7 +150,7 @@ public class GetShiftsDataModel : PageModel
                 });
             }
 
-            // Transform overlays
+            // Transform overlays (enriched with named items)
             var userOverlays = overlays.Select(kvp => new
             {
                 userId = kvp.Key.UserId,
@@ -143,7 +158,9 @@ public class GetShiftsDataModel : PageModel
                 hasVacation = kvp.Value.HasVacation,
                 hasChore = kvp.Value.HasChore,
                 hasOnDuty = kvp.Value.HasOnDuty,
-                otherShifts = kvp.Value.OtherShifts
+                otherShifts = kvp.Value.OtherShifts,
+                choreItems = kvp.Value.ChoreItems.Select(c => new { name = c.Name, color = c.Color }).ToList(),
+                onDutyItems = kvp.Value.OnDutyItems.Select(d => new { name = d.Name, color = d.Color }).ToList()
             }).ToList();
 
             _logger.LogDebug("GetShiftsData: Returned {CellCount} cells for molecule {MoleculeId}, job {JobTypeId}",

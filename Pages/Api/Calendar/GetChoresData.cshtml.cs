@@ -59,6 +59,21 @@ public class GetChoresDataModel : PageModel
                 return new JsonResult(new { success = false, message = "Invalid molecule" }) { StatusCode = 400 };
             }
 
+            // SECURITY: Validate user has access to the requested molecule scope
+            var hasAccess = await _scopeFilterService.ValidateScopeAccessAsync("molecule", moleculeId, "chores");
+            if (!hasAccess)
+            {
+                // Also check if the user's own company belongs to this molecule
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == currentUserId);
+                var userCompany = user != null ? await _db.Companies.FindAsync(user.CompanyId) : null;
+                if (userCompany?.MoleculeId != moleculeId)
+                {
+                    _logger.LogWarning("SECURITY: User {UserId} attempted to access chores for molecule {MoleculeId} outside their scope",
+                        currentUserId, moleculeId);
+                    return new JsonResult(new { success = false, message = "Access denied" }) { StatusCode = 403 };
+                }
+            }
+
             // Get company IDs for molecule
             var companyIds = await _scopeFilterService.ResolveCompanyIdsForScopeAsync("molecule", moleculeId);
 

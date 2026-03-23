@@ -56,6 +56,21 @@ public class GetOnCallDataModel : PageModel
                 return new JsonResult(new { success = false, message = "Invalid area" }) { StatusCode = 400 };
             }
 
+            // SECURITY: Validate user has access to the requested area scope
+            var hasAccess = await _scopeFilterService.ValidateScopeAccessAsync("area", areaId, "oncall");
+            if (!hasAccess)
+            {
+                // Also check if the user's own company belongs to a molecule in this area
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == currentUserId);
+                var userCompany = user != null ? await _db.Companies.Include(c => c.Molecule).FirstOrDefaultAsync(c => c.Id == user.CompanyId) : null;
+                if (userCompany?.Molecule?.AreaId != areaId)
+                {
+                    _logger.LogWarning("SECURITY: User {UserId} attempted to access on-call data for area {AreaId} outside their scope",
+                        currentUserId, areaId);
+                    return new JsonResult(new { success = false, message = "Access denied" }) { StatusCode = 403 };
+                }
+            }
+
             // Get company IDs for area
             var companyIds = await _scopeFilterService.ResolveCompanyIdsForScopeAsync("area", areaId);
 
