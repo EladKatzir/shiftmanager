@@ -866,6 +866,15 @@ public static class RoleTemplateSeed
         // Katzin duty management (ETP)
         grants.Add(G(11, 107, ETP, canGive: true));  // ManageKatzinBlueprints
         grants.Add(G(11, 108, ETP, canGive: true));  // ManageKatzinPrograms
+        // Home rotation management (P2-14 fix: Owner must have ManageHomeTypes)
+        grants.Add(G(11, 125, ETP, canGive: true));  // ManageHomeTypes
+
+        // ============================================
+        // LATE ADDITIONS (appended to preserve sequential IDs)
+        // ============================================
+
+        // MoleculeAdmin: ManageHomeTypes (molecule-scoped admin)
+        grants.Add(G(7, 125, ETM));  // ManageHomeTypes
 
         return grants;
     }
