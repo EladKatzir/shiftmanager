@@ -281,6 +281,11 @@ public static class GrantTypeSeed
         // ============================================
         grants.Add(new GrantType { Id = id++, Key = "ManageHierarchy", NameKey = "Grant_ManageHierarchy", DescriptionKey = "Grant_ManageHierarchy_Desc", Category = GrantCategory.Hierarchy, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
 
+        // ============================================
+        // HOME ROTATION (SP4 — Shikma pilot)
+        // ============================================
+        grants.Add(new GrantType { Id = id++, Key = "ManageHomeTypes", NameKey = "Grant_ManageHomeTypes", DescriptionKey = "Grant_ManageHomeTypes_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+
         return grants;
     }
 }

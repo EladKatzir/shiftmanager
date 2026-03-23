@@ -208,8 +208,19 @@
                         </div>
                     </div>
 
-                    <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">💾 <loc key="LangMgmt_AddOverrideBtn" /></button>
+                    <div class="card-footer" style="display: flex; flex-direction: column; gap: 0;">
+                        <div style="padding-bottom: var(--space-3);">
+                            <button type="submit" class="btn btn-primary">💾 <loc key="LangMgmt_AddOverrideBtn" /></button>
+                        </div>
+                        <div style="border-top: 1px solid var(--border); padding-top: var(--space-3); display: flex; align-items: center; gap: var(--space-3);">
+                            <span style="flex: 1; font-size: 0.85rem; color: var(--text-muted);">
+                                <loc key="ApplyToAllCompanies_Desc" />
+                            </span>
+                            <button type="submit" formaction="?handler=ApplyOverrideToAllCompanies" class="btn btn-warning btn-sm"
+                                    onclick="return confirm('@Localizer["Confirm_ApplyToAllCompanies"].Value.Trim()');">
+                                <loc key="ApplyToAllCompanies" />
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

@@ -1202,7 +1202,6 @@
             // Managers will handle their own retries through their registered sections
         });
 
-        console.log('[PartialData] Initialized (B-017)');
     }
 
     // Public API

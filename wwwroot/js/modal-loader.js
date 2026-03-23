@@ -28,7 +28,6 @@
         // Use event delegation for lazy modal triggers
         document.addEventListener('click', handleTriggerClick);
 
-        console.log('[ModalLoader] Initialized');
     }
 
     /**

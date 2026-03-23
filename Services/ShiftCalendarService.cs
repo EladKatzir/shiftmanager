@@ -416,6 +416,7 @@ public class ShiftCalendarService : IShiftCalendarService
 
         var choresTask = _db.Chores
             .IgnoreQueryFilters()
+            .Include(c => c.ChoreType)
             .Where(c => userIds.Contains(c.UserId)
                 && c.Date >= start
                 && c.Date <= end
@@ -428,6 +429,11 @@ public class ShiftCalendarService : IShiftCalendarService
                 && od.Date >= start
                 && od.Date <= end
                 && od.CanceledAt == null)
+            .ToListAsync();
+
+        // Load custom duty type configs for name/color resolution
+        var dutyTypeConfigsTask = _db.Set<OnDutyTypeConfig>()
+            .Where(c => c.IsActive)
             .ToListAsync();
 
         // C-07 OPTIMIZED: Use projection for shifts overlay — only need UserId, WorkDate, ShiftTypeName
@@ -445,17 +451,19 @@ public class ShiftCalendarService : IShiftCalendarService
             })
             .ToListAsync();
 
-        await Task.WhenAll(timeOffTask, choresTask, onDutiesTask, shiftsTask);
+        await Task.WhenAll(timeOffTask, choresTask, onDutiesTask, shiftsTask, dutyTypeConfigsTask);
 
         var timeOffRequests = timeOffTask.Result;
         var chores = choresTask.Result;
         var onDuties = onDutiesTask.Result;
         var shifts = shiftsTask.Result;
+        var dutyTypeConfigs = dutyTypeConfigsTask.Result;
 
         // Build lookup dictionaries for O(1) access
         var choreLookup = chores.ToLookup(c => (c.UserId, c.Date));
         var onDutyLookup = onDuties.ToLookup(od => (od.UserId, od.Date));
         var shiftLookup = shifts.ToLookup(s => (s.UserId, s.WorkDate));
+        var dutyConfigByType = dutyTypeConfigs.ToDictionary(c => c.TypeValue);
 
         // Build overlay data for each user-date combination
         foreach (var userId in userIds)
@@ -463,15 +471,40 @@ public class ShiftCalendarService : IShiftCalendarService
             for (var date = start; date <= end; date = date.AddDays(1))
             {
                 var hasVacation = timeOffRequests.Any(t => t.UserId == userId && t.StartDate <= date && t.EndDate >= date);
-                var hasChore = choreLookup[(userId, date)].Any();
-                var hasOnDuty = onDutyLookup[(userId, date)].Any();
+
+                var choreItems = choreLookup[(userId, date)]
+                    .Select(c =>
+                    {
+                        var name = c.ChoreType?.DisplayName ?? c.Title;
+                        if (c.StartTime.HasValue && c.EndTime.HasValue)
+                            name += $" {c.StartTime.Value:HH:mm}-{c.EndTime.Value:HH:mm}";
+                        return new FyiOverlayItem(name, c.ChoreType?.Color);
+                    })
+                    .ToList();
+
+                var onDutyItems = onDutyLookup[(userId, date)]
+                    .Select(od =>
+                    {
+                        var typeValue = (int)od.Type;
+                        if (dutyConfigByType.TryGetValue(typeValue, out var cfg))
+                            return new FyiOverlayItem(cfg.NameHe, cfg.Color);
+                        // Built-in types fallback
+                        return od.Type switch
+                        {
+                            OnDutyType.Hakam => new FyiOverlayItem("חק\"מ", "#8B4513"),
+                            OnDutyType.Lead => new FyiOverlayItem("מוביל", "#4A5568"),
+                            _ => new FyiOverlayItem($"כוננות {typeValue}", null)
+                        };
+                    })
+                    .ToList();
+
                 var otherShifts = shiftLookup[(userId, date)]
                     .Select(s => s.ShiftTypeName)
                     .ToList();
 
-                if (hasVacation || hasChore || hasOnDuty || otherShifts.Any())
+                if (hasVacation || choreItems.Count > 0 || onDutyItems.Count > 0 || otherShifts.Any())
                 {
-                    result[(userId, date)] = new FyiOverlayData(hasVacation, hasChore, hasOnDuty, otherShifts);
+                    result[(userId, date)] = new FyiOverlayData(hasVacation, choreItems, onDutyItems, otherShifts);
                 }
             }
         }

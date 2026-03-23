@@ -402,17 +402,34 @@ public class ShiftsModel : PageModel
 
         // Build rows - one per user
         var rows = new List<ExcelCalendarRow>();
-        foreach (var user in users)
-        {
-            var row = new ExcelCalendarRow
-            {
-                Id = $"user-{user.Id}",
-                Label = user.DisplayName
-            };
+        List<ExcelCalendarGroup>? groups = null;
 
-            // Build cells for each date
-            row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
-            rows.Add(row);
+        if (IsTechMolecule)
+        {
+            // SP3: Dynamic grouping for tech molecules — group by PrimaryShiftType or Company
+            (rows, groups) = await BuildTechGroupedRowsAsync(
+                users, instances, assignments, overlays, localizedShiftNames, moleculeId);
+        }
+        else
+        {
+            // Non-tech: flat user list (existing behavior)
+            foreach (var user in users)
+            {
+                var row = new ExcelCalendarRow
+                {
+                    Id = $"user-{user.Id}",
+                    Label = user.DisplayName
+                };
+                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
+                // Compute weekly hours for this user
+                var userShiftWindows = assignments
+                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
+                    .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
+                    .OrderBy(w => w.start)
+                    .ToList();
+                row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+                rows.Add(row);
+            }
         }
 
         CalendarData = new ExcelCalendarTableViewModel
@@ -422,8 +439,209 @@ public class ShiftsModel : PageModel
             ViewMode = ViewMode,
             IsReadOnly = !CanEdit,
             CalendarType = "shifts",
-            Rows = rows
+            Rows = rows,
+            Groups = groups
         };
+    }
+
+    /// <summary>
+    /// SP3: Build grouped rows for tech molecule user-mode calendar.
+    /// Groups users by PrimaryShiftType (shift-type sections) or by Company (for non-shift users).
+    /// Within shift-type groups, splits into regulars and trainees (localized via _localizer).
+    /// </summary>
+    private async Task<(List<ExcelCalendarRow> rows, List<ExcelCalendarGroup> groups)> BuildTechGroupedRowsAsync(
+        List<AppUser> users,
+        List<ShiftInstance> instances,
+        List<ShiftAssignment> assignments,
+        Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
+        Dictionary<int, string> localizedShiftNames,
+        int moleculeId)
+    {
+        var rows = new List<ExcelCalendarRow>();
+        var groups = new List<ExcelCalendarGroup>();
+
+        // Batch-load PrimaryShiftTypes for all users (1 query, IgnoreQueryFilters for cross-tenant FK)
+        // SECURITY-AUDITED: SAFE — PrimaryShiftTypeIds derived from molecule-scoped users
+        var primaryStIds = users.Where(u => u.PrimaryShiftTypeId.HasValue)
+            .Select(u => u.PrimaryShiftTypeId!.Value)
+            .Distinct()
+            .ToList();
+        var primaryShiftTypes = primaryStIds.Count > 0
+            ? await _db.ShiftTypes
+                .IgnoreQueryFilters()
+                .Where(st => primaryStIds.Contains(st.Id))
+                .ToDictionaryAsync(st => st.Id)
+            : new Dictionary<int, ShiftType>();
+
+        // Batch-check for trainee assignments in the viewed period (1 query)
+        var userIds = users.Select(u => u.Id).ToList();
+        var traineeUserIds = await _db.ShiftAssignments
+            .IgnoreQueryFilters()
+            .Where(sa => sa.IsTraineeShift
+                && sa.UserId.HasValue
+                && userIds.Contains(sa.UserId.Value)
+                && sa.ShiftInstance.WorkDate >= StartDate
+                && sa.ShiftInstance.WorkDate <= EndDate)
+            .Select(sa => sa.UserId!.Value)
+            .Distinct()
+            .ToListAsync();
+        var traineeUserIdSet = traineeUserIds.ToHashSet();
+
+        // Load company names for company groups
+        // SECURITY-AUDITED: SAFE — scoped by molecule-derived user CompanyIds
+        var companyIds = users.Select(u => u.CompanyId).Distinct().ToList();
+        var companyLookup = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => companyIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.LocalizedName);
+
+        // Batch-load HomeType names for SubLabel display (1 query)
+        var homeTypeIds = users.Where(u => u.HomeTypeId.HasValue)
+            .Select(u => u.HomeTypeId!.Value).Distinct().ToList();
+        var homeTypeNames = homeTypeIds.Count > 0
+            ? await _db.HomeTypes
+                .IgnoreQueryFilters()
+                .Where(ht => homeTypeIds.Contains(ht.Id))
+                .ToDictionaryAsync(ht => ht.Id, ht => ht.NameHe ?? ht.Name)
+            : new Dictionary<int, string>();
+
+        int sortOrder = 0;
+
+        // Classify users into groups
+        var shiftTypeGroups = new Dictionary<string, List<(AppUser user, bool isTrainee)>>();
+        var companyGroups = new Dictionary<int, List<AppUser>>();
+
+        foreach (var user in users)
+        {
+            if (user.PrimaryShiftTypeId.HasValue && primaryShiftTypes.TryGetValue(user.PrimaryShiftTypeId.Value, out var pst))
+            {
+                // Group by TechShiftType (e.g., "HANAVA") — not by specific time variant
+                var groupKey = pst.TechShiftType ?? pst.Key;
+                var isTrainee = traineeUserIdSet.Contains(user.Id);
+                if (!shiftTypeGroups.ContainsKey(groupKey))
+                    shiftTypeGroups[groupKey] = new List<(AppUser, bool)>();
+                shiftTypeGroups[groupKey].Add((user, isTrainee));
+            }
+            else
+            {
+                // No PrimaryShiftType → company group
+                if (!companyGroups.ContainsKey(user.CompanyId))
+                    companyGroups[user.CompanyId] = new List<AppUser>();
+                companyGroups[user.CompanyId].Add(user);
+            }
+        }
+
+        // Determine shift-type ordering: broader EligibleCompanyIds scope first
+        var shiftTypeOrder = ShiftTypes
+            .Where(st => st.TechShiftType != null)
+            .GroupBy(st => st.TechShiftType!)
+            .Select(g => new
+            {
+                Key = g.Key,
+                EligibleCount = g.First().GetEligibleCompanyIdList()?.Count ?? int.MaxValue
+            })
+            .OrderByDescending(x => x.EligibleCount == int.MaxValue ? int.MaxValue : x.EligibleCount)
+            .ThenBy(x => x.Key)
+            .Select(x => x.Key)
+            .ToList();
+
+        // Build shift-type groups (regulars then trainees for each type)
+        foreach (var techType in shiftTypeOrder)
+        {
+            if (!shiftTypeGroups.TryGetValue(techType, out var usersInGroup))
+                continue;
+
+            var regulars = usersInGroup.Where(x => !x.isTrainee).Select(x => x.user).ToList();
+            var trainees = usersInGroup.Where(x => x.isTrainee).Select(x => x.user).ToList();
+
+            // Resolve display name from the first ShiftType with this TechShiftType (use localized name)
+            var displaySt = ShiftTypes.FirstOrDefault(st => st.TechShiftType == techType);
+            var displayName = displaySt != null
+                ? localizedShiftNames.GetValueOrDefault(displaySt.Id, displaySt.CustomName ?? techType)
+                : techType;
+
+            if (regulars.Count > 0)
+            {
+                var groupId = $"st-{techType}-reg";
+                groups.Add(new ExcelCalendarGroup { Id = groupId, Name = $"{_localizer["Regulars"]} {displayName}", SortOrder = sortOrder++, Color = displaySt?.RowColor, MemberCount = regulars.Count });
+                foreach (var user in regulars)
+                {
+                    var row = new ExcelCalendarRow
+                    {
+                        Id = $"user-{user.Id}",
+                        Label = user.DisplayName,
+                        SubLabel = user.HomeTypeId.HasValue ? homeTypeNames.GetValueOrDefault(user.HomeTypeId.Value) : null,
+                        GroupId = groupId,
+                        CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
+                    };
+                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
+                    // Compute weekly hours for this user
+                    var userShiftWindows = assignments
+                        .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
+                        .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
+                        .OrderBy(w => w.start)
+                        .ToList();
+                    row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+                    rows.Add(row);
+                }
+            }
+
+            if (trainees.Count > 0)
+            {
+                var groupId = $"st-{techType}-trainee";
+                groups.Add(new ExcelCalendarGroup { Id = groupId, Name = $"{_localizer["Trainees"]} {displayName}", SortOrder = sortOrder++, Color = displaySt?.RowColor, MemberCount = trainees.Count });
+                foreach (var user in trainees)
+                {
+                    var row = new ExcelCalendarRow
+                    {
+                        Id = $"user-{user.Id}",
+                        Label = user.DisplayName,
+                        SubLabel = user.HomeTypeId.HasValue ? homeTypeNames.GetValueOrDefault(user.HomeTypeId.Value) : null,
+                        GroupId = groupId,
+                        CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
+                    };
+                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
+                    // Compute weekly hours for this user
+                    var userShiftWindows = assignments
+                        .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
+                        .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
+                        .OrderBy(w => w.start)
+                        .ToList();
+                    row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+                    rows.Add(row);
+                }
+            }
+        }
+
+        // Build company groups for users without PrimaryShiftType
+        foreach (var (cid, companyUsers) in companyGroups.OrderBy(kv => companyLookup.GetValueOrDefault(kv.Key, "")))
+        {
+            var companyName = companyLookup.GetValueOrDefault(cid, $"Company #{cid}");
+            var groupId = $"company-{cid}";
+            groups.Add(new ExcelCalendarGroup { Id = groupId, Name = companyName, SortOrder = sortOrder++, MemberCount = companyUsers.Count });
+
+            foreach (var user in companyUsers)
+            {
+                var row = new ExcelCalendarRow
+                {
+                    Id = $"user-{user.Id}",
+                    Label = user.DisplayName,
+                    SubLabel = user.HomeTypeId.HasValue ? homeTypeNames.GetValueOrDefault(user.HomeTypeId.Value) : null,
+                    GroupId = groupId
+                };
+                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
+                // Compute weekly hours for this user
+                var userShiftWindows = assignments
+                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
+                    .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
+                    .OrderBy(w => w.start)
+                    .ToList();
+                row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+                rows.Add(row);
+            }
+        }
+
+        return (rows, groups);
     }
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForShiftType(
@@ -492,15 +710,40 @@ public class ShiftsModel : PageModel
                 Id = a.Id,
                 Name = localizedShiftNames.GetValueOrDefault(a.ShiftInstance.ShiftTypeId,
                     a.ShiftInstance.ShiftType?.Name ?? _localizer["Shift"].Value),
+                SubLabel = a.Note,
+                Role = a.ShiftInstance.ShiftType?.RowColor,
                 IsTrainee = a.TraineeUserId == userId,
+                IsTraineeShift = a.IsTraineeShift,
                 UserId = a.UserId,
                 TraineeUserId = a.TraineeUserId,
                 TraineeName = a.Trainee?.DisplayName
             }).ToList();
 
-            // Add overlay data
+            // Add overlay data: render chore/duty items as non-removable assignment chips
             if (overlays.TryGetValue((userId, date), out var overlay))
             {
+                // Chore items rendered as colored assignment chips (Id=0 → non-removable)
+                foreach (var chore in overlay.ChoreItems)
+                {
+                    cell.Assignments.Add(new ExcelCalendarAssignment
+                    {
+                        Id = 0,
+                        Name = chore.Name,
+                        Role = chore.Color ?? "chore"
+                    });
+                }
+
+                // On-duty items rendered as colored assignment chips
+                foreach (var duty in overlay.OnDutyItems)
+                {
+                    cell.Assignments.Add(new ExcelCalendarAssignment
+                    {
+                        Id = 0,
+                        Name = duty.Name,
+                        Role = duty.Color ?? "duty"
+                    });
+                }
+
                 cell.Overlay = new ExcelCalendarOverlay
                 {
                     HasVacation = overlay.HasVacation,

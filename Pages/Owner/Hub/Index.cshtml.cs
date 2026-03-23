@@ -99,8 +99,10 @@ public class IndexModel : PageModel
             // Settings status
             EmailConfigured = await _db.EmailConfigs.IgnoreQueryFilters().AnyAsync(e => e.Enabled);
             AdfsConfigured = await _db.GriffinConfigs.IgnoreQueryFilters().AnyAsync(g => g.Enabled);
-            FeatureFlagsEnabled = await _db.Configs.IgnoreQueryFilters()
-                .CountAsync(c => c.Key.StartsWith("Feature:") && c.Value == "true");
+            // Feature flags are in the FeatureFlags table (not Configs).
+            // Count globally-enabled flags (CompanyId == null && UserId == null) to avoid counting per-company overrides.
+            FeatureFlagsEnabled = await _db.FeatureFlags.IgnoreQueryFilters()
+                .CountAsync(f => f.IsEnabled && f.CompanyId == null && f.UserId == null);
 
             // Analytics counts
             TotalAuditLogs = await _db.AuditLogs.IgnoreQueryFilters().CountAsync();

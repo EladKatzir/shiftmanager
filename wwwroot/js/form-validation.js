@@ -396,8 +396,6 @@
      * Initialize all forms on the page
      */
     function initialize() {
-        console.log('[FormValidation] Initializing enhanced form validation (B-008)');
-
         // Enhance all existing forms
         document.querySelectorAll(CONFIG.selectors.form).forEach(function(form) {
             enhanceFormValidation(form);

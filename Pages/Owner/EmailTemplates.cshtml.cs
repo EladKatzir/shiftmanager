@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
@@ -15,15 +17,18 @@ namespace ShiftManager.Pages.Owner;
 public class EmailTemplatesModel : LocalizedPageModel
 {
     private readonly IEmailTemplateService _templateService;
+    private readonly AppDbContext _db;
     private readonly ILogger<EmailTemplatesModel> _logger;
 
     public EmailTemplatesModel(
         IStringLocalizer<SharedResources> localizer,
         IEmailTemplateService templateService,
+        AppDbContext db,
         ILogger<EmailTemplatesModel> logger)
         : base(localizer)
     {
         _templateService = templateService;
+        _db = db;
         _logger = logger;
     }
 
@@ -146,6 +151,94 @@ public class EmailTemplatesModel : LocalizedPageModel
         {
             _logger.LogError(ex, "Error resetting email template {TemplateType}", templateType);
             Error = _localizer["Error_ResettingEmailTemplate"];
+            await LoadTemplatesAsync();
+            return Page();
+        }
+    }
+
+    /// <summary>
+    /// Apply a template to ALL companies at once (global base template).
+    /// Creates or updates the template for each company with the same content.
+    /// </summary>
+    public async Task<IActionResult> OnPostApplyToAllCompaniesAsync()
+    {
+        if (!ModelState.IsValid)
+        {
+            Error = _localizer["Error_InvalidInput"];
+            await LoadTemplatesAsync();
+            return Page();
+        }
+
+        if (CustomMessage.Length > 2000)
+        {
+            Error = _localizer["Error_EmailTemplate_MessageTooLong"];
+            await LoadTemplatesAsync();
+            return Page();
+        }
+
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                Error = "Invalid user claim";
+                await LoadTemplatesAsync();
+                return Page();
+            }
+
+            // Get all company IDs
+            // SECURITY-AUDITED: IgnoreQueryFilters SAFE — Owner-only page with AdminAccess grant
+            var allCompanyIds = await _db.Companies
+                .IgnoreQueryFilters()
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            var now = DateTime.UtcNow;
+            var updatedCount = 0;
+
+            foreach (var companyId in allCompanyIds)
+            {
+                var existing = await _db.EmailTemplateCustomizations
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(t => t.CompanyId == companyId && t.TemplateType == EditingTemplateType);
+
+                if (existing != null)
+                {
+                    existing.CustomMessage = CustomMessage;
+                    existing.IsEnabled = IsEnabled;
+                    existing.UpdatedAt = now;
+                    existing.UpdatedBy = userId;
+                }
+                else
+                {
+                    _db.EmailTemplateCustomizations.Add(new EmailTemplateCustomization
+                    {
+                        CompanyId = companyId,
+                        TemplateType = EditingTemplateType,
+                        CustomMessage = CustomMessage,
+                        IsEnabled = IsEnabled,
+                        CreatedAt = now,
+                        UpdatedAt = now,
+                        CreatedBy = userId
+                    });
+                }
+                updatedCount++;
+            }
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Applied email template {TemplateType} to {Count} companies by user {UserId}",
+                EditingTemplateType, updatedCount, userId);
+
+            TempData["SuccessMessage"] = string.Format(
+                _localizer["Success_EmailTemplateAppliedToAll"].Value,
+                updatedCount);
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying email template {TemplateType} to all companies", EditingTemplateType);
+            Error = _localizer["Error_SavingEmailTemplate"];
             await LoadTemplatesAsync();
             return Page();
         }

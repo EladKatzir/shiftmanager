@@ -290,8 +290,7 @@ public class BackupModel : PageModel
                 $"Backup downloaded: {backupFileName}",
                 null);
 
-            var fileBytes = await System.IO.File.ReadAllBytesAsync(backupFilePath);
-            return File(fileBytes, "application/octet-stream", backupFileName);
+            return PhysicalFile(backupFilePath, "application/octet-stream", backupFileName);
         }
         catch (Exception ex)
         {

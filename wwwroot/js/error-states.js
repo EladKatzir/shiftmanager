@@ -737,8 +737,6 @@
      * Initialize error states system
      */
     function initialize() {
-        console.log('Initializing error states system (B-004 + B-017)');
-
         // Set up network status listeners
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);

@@ -585,7 +585,7 @@
                 var msg = isHebrew() ? 'מתמחה שובץ בהצלחה' : 'Trainee assigned';
                 if (window.showToast) window.showToast(msg, 'success');
                 close();
-                setTimeout(function () { location.reload(); }, 500);
+                if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
             } else if (result.requiresOverride) {
                 // Show warnings and ask to confirm
                 var msgs = (result.warnings || []).map(function (w) { return w.message; }).join('\n');
@@ -603,7 +603,7 @@
                         if (r2.success) {
                             if (window.showToast) window.showToast(isHebrew() ? 'מתמחה שובץ בהצלחה' : 'Trainee assigned', 'success');
                             close();
-                            setTimeout(function () { location.reload(); }, 500);
+                            if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
                         } else {
                             if (window.showToast) window.showToast(r2.error || 'Error', 'error');
                         }
@@ -635,7 +635,7 @@
                 var msg = isHebrew() ? 'מתמחה הוסר בהצלחה' : 'Trainee removed';
                 if (window.showToast) window.showToast(msg, 'success');
                 close();
-                setTimeout(function () { location.reload(); }, 500);
+                if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
             } else {
                 if (window.showToast) window.showToast(result.error || 'Error', 'error');
             }
@@ -803,7 +803,7 @@
                     var msg = isHebrew() ? 'השיבוץ הוסר בהצלחה' : 'Assignment removed';
                     if (window.showToast) window.showToast(msg, 'success');
                     close();
-                    setTimeout(function () { location.reload(); }, 500);
+                    if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
                 } else {
                     if (window.showToast) window.showToast(result.error || 'Error', 'error');
                 }
@@ -908,11 +908,8 @@
     function init() {
         // Only activate on touch devices
         if (!isTouchDevice()) {
-            console.log('[BottomSheet] Not a touch device, skipping initialization');
             return;
         }
-
-        console.log('[BottomSheet] Initializing for touch device');
 
         // Listen for taps on calendar cells
         document.addEventListener('click', function (e) {
@@ -952,7 +949,6 @@
             }
         });
 
-        console.log('[BottomSheet] Initialized');
     }
 
     // --- Handle add-btn clicks (desktop + touch) ---

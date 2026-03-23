@@ -9,18 +9,27 @@
     DateOnly today = Model.Today;
     bool isReadOnly = Model.IsReadOnly;
     bool isCollapsed = Model.IsCollapsed;
+    bool hasWeeklyHours = Model.HasWeeklyHours;
 
     var style = row.Color != null ? $"--row-color: {row.Color}" : "";
     var hiddenStyle = isCollapsed ? "display: none;" : "";
 }
 
-<tr data-row-id="@row.Id" style="@style @hiddenStyle">
+<tr data-row-id="@row.Id" data-group-id="@(row.GroupId ?? "")" style="@style @hiddenStyle">
     <td class="excel-calendar__row-label">
-        @row.Label
-        @if (!string.IsNullOrEmpty(row.CompanyName))
-        {
-            <span class="company-badge" title="@row.CompanyName">🏢 @row.CompanyName</span>
-        }
+        <div class="excel-calendar__row-label-content">
+            <span class="excel-calendar__row-label-name">
+                @row.Label
+                @if (!string.IsNullOrEmpty(row.CompanyName))
+                {
+                    <span class="company-badge" title="@row.CompanyName">🏢 @row.CompanyName</span>
+                }
+            </span>
+            @if (!string.IsNullOrEmpty(row.SubLabel))
+            {
+                <span class="excel-calendar__row-sublabel">@row.SubLabel</span>
+            }
+        </div>
     </td>
     @foreach (var day in days)
     {
@@ -62,7 +71,11 @@
                              data-role-color="@roleColor"
                              style="@assignStyle">
                             <span class="excel-calendar__assignment-name">@assignment.Name</span>
-                            @if (assignment.IsTrainee)
+                            @if (!string.IsNullOrEmpty(assignment.SubLabel))
+                            {
+                                <span class="excel-calendar__assignment-note">@assignment.SubLabel</span>
+                            }
+                            @if (assignment.IsTrainee || assignment.IsTraineeShift)
                             {
                                 <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]">🎓</span>
                             }
@@ -96,17 +109,18 @@
                         {
                             <span class="excel-calendar__badge excel-calendar__badge--vacation" title="@Localizer["Vacation"]">🏖️</span>
                         }
-                        @if (cell.Overlay.HasChore)
-                        {
-                            <span class="excel-calendar__badge excel-calendar__badge--chore" title="@Localizer["Chore"]">🧹</span>
-                        }
-                        @if (cell.Overlay.HasOnDuty)
-                        {
-                            <span class="excel-calendar__badge excel-calendar__badge--onduty" title="@Localizer["OnDuty"]">📞</span>
-                        }
                     </div>
                 }
             </div>
+        </td>
+    }
+    @if (hasWeeklyHours)
+    {
+        <td class="excel-calendar__cell excel-calendar__cell--total">
+            @if (row.WeeklyHours.HasValue)
+            {
+                <span class="excel-calendar__hours">@($"{row.WeeklyHours:0.#}h")</span>
+            }
         </td>
     }
 </tr>

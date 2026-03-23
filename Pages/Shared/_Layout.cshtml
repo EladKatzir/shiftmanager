@@ -42,7 +42,7 @@
         ? "/Calendar/Chores" : "/Public/Chores";
     var onCallCalendarUrl = excelCalendarsEnabled && FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.ExcelCalendarOnCall)
         ? "/Calendar/OnCall" : "/Public/OnDuty";
-    var viewAsCompanyName = isViewingAsManager ? ViewAsModeService.GetViewAsCompanyNameAsync().Result : null;
+    var viewAsCompanyName = isViewingAsManager ? await ViewAsModeService.GetViewAsCompanyNameAsync() : null;
     var currentPath = HttpContextAccessor?.HttpContext?.Request.Path.Value ?? "";
 }
 <!DOCTYPE html>
@@ -58,7 +58,6 @@
     <link rel="apple-touch-icon" sizes="180x180" href="~/icons/apple-touch-icon.png">
     <link rel="manifest" href="~/site.webmanifest">
     <meta name="theme-color" content="#1E3A5F">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Shifty">
 
@@ -279,8 +278,6 @@
                     warning.style.cssText = 'position:fixed;top:0;left:0;right:0;background:var(--danger);color:var(--danger-text);padding:12px;text-align:center;z-index:9999;font-family:system-ui;font-size:14px';
                     warning.textContent = '@Localizer["Warning_CSSLoadingIssue"].Value.Trim()';
                     document.body.insertBefore(warning, document.body.firstChild);
-                } else {
-                    console.log('[OK] Sidebar CSS loaded correctly (display: flex)');
                 }
             }
         });

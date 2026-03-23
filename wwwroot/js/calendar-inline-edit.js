@@ -2,6 +2,21 @@
 // This file provides client-side functionality for creating and deleting chores and on-duty assignments
 // directly from the calendar views (Month, Week, Day)
 
+/**
+ * Trigger an in-place calendar refresh instead of a full page reload.
+ * Uses the CalendarRealtime shadow refresh mechanism when available,
+ * which fetches fresh data via AJAX and updates the DOM in place.
+ * Falls back to full page reload if CalendarRealtime is not initialized.
+ */
+function triggerCalendarRefresh() {
+    if (window.CalendarRealtime && typeof window.CalendarRealtime.refresh === 'function') {
+        window.CalendarRealtime.refresh();
+    } else {
+        // Fallback for pages that don't have CalendarRealtime initialized
+        location.reload();
+    }
+}
+
 // Localized error messages
 const ERROR_MESSAGES = {
     'he-IL': {
@@ -157,8 +172,8 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
                             if (confirm(manageMessage)) {
                                 window.location.href = '/Requests/Index#approved';
                             } else {
-                                // Just reload to show the new chore
-                                setTimeout(() => location.reload(), 500);
+                                // Refresh calendar to show the new chore
+                                triggerCalendarRefresh();
                             }
                         } else {
                             showToast(retryResult.message || window.AppLocalizer.ErrorCreatingChore, 'error');
@@ -180,8 +195,8 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
 
         if (result.success) {
             showToast(result.message || window.AppLocalizer.ChoreCreatedSuccessfully, 'success');
-            // Reload the page to show the new chore
-            setTimeout(() => location.reload(), 500);
+            // Refresh calendar in-place to show the new chore
+            triggerCalendarRefresh();
         } else {
             showToast(result.message || window.AppLocalizer.ErrorCreatingChore, 'error');
         }
@@ -280,8 +295,8 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                             if (confirm(manageMessage)) {
                                 window.location.href = '/Requests/Index#approved';
                             } else {
-                                // Just reload to show the new on-duty assignment
-                                setTimeout(() => location.reload(), 500);
+                                // Refresh calendar to show the new on-duty assignment
+                                triggerCalendarRefresh();
                             }
                         } else {
                             showToast(retryResult.message || window.AppLocalizer.ErrorCreatingOnDuty, 'error');
@@ -303,8 +318,8 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
 
         if (result.success) {
             showToast(result.message || window.AppLocalizer.OnDutyCreatedSuccessfully, 'success');
-            // Reload the page to show the new on-duty assignment
-            setTimeout(() => location.reload(), 500);
+            // Refresh calendar in-place to show the new on-duty assignment
+            triggerCalendarRefresh();
         } else {
             showToast(result.message || window.AppLocalizer.ErrorCreatingOnDuty, 'error');
         }
@@ -348,7 +363,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
             const culture = getCurrentCulture();
             const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
             showToast(result.message || successMsg, 'success');
-            setTimeout(() => location.reload(), 500);
+            triggerCalendarRefresh();
         } else if (result.error && result.error.indexOf('SHIFT_FULLY_STAFFED') !== -1 ||
                    (result.errorKey === 'SHIFT_FULLY_STAFFED' && !_retried)) {
             // Shift is at capacity — ask the user if they want to expand it
@@ -381,7 +396,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
                 if (retryResult.success) {
                     const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
                     showToast(retryResult.message || successMsg, 'success');
-                    setTimeout(() => location.reload(), 500);
+                    triggerCalendarRefresh();
                 } else {
                     showToast(retryResult.message || retryResult.error || 'Error', 'error');
                 }
@@ -488,7 +503,7 @@ async function deleteItem(itemType, itemId) {
                 showUndoToast(itemId, 'onduty');
             } else {
                 showToast(result.message || window.AppLocalizer?.ItemDeletedSuccessfully || 'Deleted', 'success');
-                setTimeout(() => location.reload(), 1500);
+                triggerCalendarRefresh();
             }
         } else {
             showToast(result.message || window.AppLocalizer?.ErrorDeletingItem || 'Error', 'error');
@@ -539,7 +554,7 @@ function showUndoToast(itemId, itemType) {
             clearInterval(countdown);
             if (!undone) {
                 toast.classList.remove('show');
-                setTimeout(function() { toast.remove(); location.reload(); }, 300);
+                setTimeout(function() { toast.remove(); triggerCalendarRefresh(); }, 300);
             }
         }
     }, 1000);
@@ -567,7 +582,7 @@ function showUndoToast(itemId, itemType) {
                 var data = await response.json();
                 if (data.success) {
                     toast.remove();
-                    location.reload();
+                    triggerCalendarRefresh();
                 } else {
                     showToast(data.message || window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
                     toast.remove();

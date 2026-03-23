@@ -17,9 +17,11 @@ public class ExcelCalendarRow
 {
     public string Id { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
+    public string? SubLabel { get; set; }  // Secondary info line (rotation group, emergency tier)
     public string? Color { get; set; }
     public string? GroupId { get; set; }
     public string? CompanyName { get; set; }
+    public double? WeeklyHours { get; set; }
     public Dictionary<DateOnly, ExcelCalendarCell> Cells { get; set; } = new();
 }
 
@@ -29,6 +31,8 @@ public class ExcelCalendarGroup
     public string Name { get; set; } = string.Empty;
     public bool IsCollapsed { get; set; }
     public int SortOrder { get; set; }
+    public string? Color { get; set; }
+    public int MemberCount { get; set; }
 }
 
 public class ExcelCalendarCell
@@ -44,8 +48,10 @@ public class ExcelCalendarAssignment
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string? SubLabel { get; set; }  // Note or annotation for this assignment
     public string? Role { get; set; }
     public bool IsTrainee { get; set; }
+    public bool IsTraineeShift { get; set; }  // Shikma: trainee takes shift directly
     public int? UserId { get; set; }
     public int? TraineeUserId { get; set; }
     public string? TraineeName { get; set; }

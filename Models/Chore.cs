@@ -39,6 +39,17 @@ public class Chore : IBelongsToCompany
     public string Title { get; set; } = string.Empty;
 
     /// <summary>
+    /// Optional start time for timed chores (e.g., guard duty 10:00-14:00).
+    /// Stored as "HH:mm" string in SQLite.
+    /// </summary>
+    public TimeOnly? StartTime { get; set; }
+
+    /// <summary>
+    /// Optional end time for timed chores.
+    /// </summary>
+    public TimeOnly? EndTime { get; set; }
+
+    /// <summary>
     /// Optional additional notes/details
     /// </summary>
     public string? Notes { get; set; }

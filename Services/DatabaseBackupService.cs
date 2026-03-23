@@ -10,7 +10,7 @@ namespace ShiftManager.Services;
 /// Background service that automatically backs up the SQLite database.
 /// - Runs backup on startup
 /// - Daily scheduled backups (configurable time)
-/// - 7-day rotation (configurable retention)
+/// - Retains 2 most recent backups
 /// - Logs every backup with file size and SHA256 checksum
 /// Fixes: C-02 (no automated backup), E-07 (backup Owner-only dependency)
 /// </summary>
@@ -20,7 +20,6 @@ public class DatabaseBackupService : BackgroundService
     private readonly ILogger<DatabaseBackupService> _logger;
     private readonly string _dbPath;
     private readonly string _backupDirectory;
-    private readonly int _retentionDays;
     private readonly TimeOnly _scheduledTime;
     private readonly string? _encryptionPassphrase;
 
@@ -38,9 +37,6 @@ public class DatabaseBackupService : BackgroundService
         // Configurable backup directory, defaults to ./Backups
         _backupDirectory = configuration.GetValue<string>("Backup:Directory") ?? "Backups";
 
-        // Configurable retention period, defaults to 7 days
-        _retentionDays = configuration.GetValue<int>("Backup:RetentionDays", 7);
-
         // Configurable backup time, defaults to 03:00 local time
         var timeStr = configuration.GetValue<string>("Backup:ScheduledTime") ?? "03:00";
         _scheduledTime = TimeOnly.Parse(timeStr);
@@ -51,8 +47,8 @@ public class DatabaseBackupService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Database Backup Service started. Schedule: daily at {Time}, retention: {Days} days, directory: {Dir}",
-            _scheduledTime, _retentionDays, Path.GetFullPath(_backupDirectory));
+        _logger.LogInformation("Database Backup Service started. Schedule: daily at {Time}, retention: {Retention}, directory: {Dir}",
+            _scheduledTime, "2 most recent backups", Path.GetFullPath(_backupDirectory));
 
         // Wait briefly for app to fully initialize
         await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);

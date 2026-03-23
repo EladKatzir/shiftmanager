@@ -91,6 +91,7 @@ echo Counting total DLL files...
 echo.
 
 REM Count DLLs
+set DLL_COUNT=0
 for /f %%A in ('dir /s /b *.dll 2^>nul ^| %SystemRoot%\System32\find.exe /c ".dll"') do set DLL_COUNT=%%A
 
 echo   Total DLL files found: %DLL_COUNT%

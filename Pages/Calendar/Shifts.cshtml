@@ -101,6 +101,18 @@
                 </a>
             </div>
 
+            @if (Model.CalendarData.Groups != null)
+            {
+                <div class="group-toggle-buttons" style="display: inline-flex; gap: var(--space-1); margin-inline-start: var(--space-2);">
+                    <button type="button" class="btn btn--sm btn--outline" onclick="collapseAllGroups()">
+                        <span>&#9650;</span> @Localizer["CollapseAll"]
+                    </button>
+                    <button type="button" class="btn btn--sm btn--outline" onclick="expandAllGroups()">
+                        <span>&#9660;</span> @Localizer["ExpandAll"]
+                    </button>
+                </div>
+            }
+
             @if (Model.CanEdit)
             {
                 <div class="cal-toolbar__toggle-group">
@@ -225,6 +237,7 @@ else
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
+    <script src="~/js/excel-calendar-groups.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
     <script>

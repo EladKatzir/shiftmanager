@@ -670,5 +670,4 @@ window.ApiClient = (function() {
     };
 })();
 
-// Log initialization
-console.log('[ApiClient] Initialized with rate limit handling (B-027) and error handling (B-017)');
+// ApiClient initialized

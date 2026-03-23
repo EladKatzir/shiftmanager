@@ -389,7 +389,7 @@ builder.Services.AddControllers()
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>(tags: new[] { "ready" })
     .AddCheck<DiskSpaceHealthCheck>("disk_space", tags: new[] { "ready" })
-    .AddCheck("memory", new MemoryHealthCheck(), tags: new[] { "live", "ready" });
+    .AddCheck<MemoryHealthCheck>("memory", tags: new[] { "live", "ready" });
 
 // B-026: Swagger/OpenAPI configuration
 builder.Services.AddEndpointsApiExplorer();

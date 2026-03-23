@@ -255,11 +255,15 @@ public class IndexModel : LocalizedPageModel
         }
 
         var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
-        var hasAccess = await ValidateAccessToRequestAsync(currentUser!, r.CompanyId);
+        if (currentUser == null)
+        {
+            return new JsonResult(new { success = false, message = "User not found" }) { StatusCode = 403 };
+        }
+        var hasAccess = await ValidateAccessToRequestAsync(currentUser, r.CompanyId);
         if (!hasAccess)
         {
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve time off request {RequestId} for unauthorized company {CompanyId}",
-                currentUserId, currentUser!.Role, id, r.CompanyId);
+                currentUserId, currentUser.Role, id, r.CompanyId);
             Error = _localizer["Error_NoPermissionApproveRequest"];
             await OnGetAsync();
             return Page();
@@ -335,11 +339,15 @@ public class IndexModel : LocalizedPageModel
         }
 
         var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
-        var hasAccess = await ValidateAccessToRequestAsync(currentUser!, r.CompanyId);
+        if (currentUser == null)
+        {
+            return new JsonResult(new { success = false, message = "User not found" }) { StatusCode = 403 };
+        }
+        var hasAccess = await ValidateAccessToRequestAsync(currentUser, r.CompanyId);
         if (!hasAccess)
         {
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to decline time off request {RequestId} for unauthorized company {CompanyId}",
-                currentUserId, currentUser!.Role, id, r.CompanyId);
+                currentUserId, currentUser.Role, id, r.CompanyId);
             Error = _localizer["Error_NoPermissionDeclineRequest"];
             await OnGetAsync();
             return Page();
@@ -407,11 +415,16 @@ public class IndexModel : LocalizedPageModel
         }
 
         var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
-        var hasAccess = await ValidateAccessToRequestAsync(currentUser!, s.CompanyId);
+        if (currentUser == null)
+        {
+            await trx.RollbackAsync();
+            return new JsonResult(new { success = false, message = "User not found" }) { StatusCode = 403 };
+        }
+        var hasAccess = await ValidateAccessToRequestAsync(currentUser, s.CompanyId);
         if (!hasAccess)
         {
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve swap request {RequestId} for unauthorized company {CompanyId}",
-                currentUserId, currentUser!.Role, id, s.CompanyId);
+                currentUserId, currentUser.Role, id, s.CompanyId);
             Error = _localizer["Error_NoPermissionApproveRequest"];
             await trx.RollbackAsync();
             await OnGetAsync();
@@ -513,11 +526,15 @@ public class IndexModel : LocalizedPageModel
         }
 
         var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
-        var hasAccess = await ValidateAccessToRequestAsync(currentUser!, s.CompanyId);
+        if (currentUser == null)
+        {
+            return new JsonResult(new { success = false, message = "User not found" }) { StatusCode = 403 };
+        }
+        var hasAccess = await ValidateAccessToRequestAsync(currentUser, s.CompanyId);
         if (!hasAccess)
         {
             _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to decline swap request {RequestId} for unauthorized company {CompanyId}",
-                currentUserId, currentUser!.Role, id, s.CompanyId);
+                currentUserId, currentUser.Role, id, s.CompanyId);
             Error = _localizer["Error_NoPermissionDeclineRequest"];
             await OnGetAsync();
             return Page();

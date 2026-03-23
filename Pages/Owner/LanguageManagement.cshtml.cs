@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Resources;
 using ShiftManager.Services;
@@ -24,6 +26,7 @@ public class LanguageManagementModel : PageModel
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<LanguageManagementModel> _logger;
     private readonly RequestLocalizationOptions _localizationOptions;
+    private readonly AppDbContext _db;
 
     public LanguageManagementModel(
         ILanguageManagementService languageManagementService,
@@ -31,7 +34,8 @@ public class LanguageManagementModel : PageModel
         IOwnerCompanySelectorService ownerCompanySelector,
         IStringLocalizer<SharedResources> localizer,
         ILogger<LanguageManagementModel> logger,
-        IOptions<RequestLocalizationOptions> localizationOptions)
+        IOptions<RequestLocalizationOptions> localizationOptions,
+        AppDbContext db)
     {
         _languageManagementService = languageManagementService;
         _companyLocalizationService = companyLocalizationService;
@@ -39,6 +43,7 @@ public class LanguageManagementModel : PageModel
         _localizer = localizer;
         _logger = logger;
         _localizationOptions = localizationOptions.Value;
+        _db = db;
     }
 
     // Language Settings
@@ -213,6 +218,50 @@ public class LanguageManagementModel : PageModel
             _logger.LogError(ex, "Failed to delete override");
             Error = "Failed to delete override. Please try again.";
             return RedirectToPage();
+        }
+    }
+
+    /// <summary>
+    /// Apply a localization override to ALL companies at once (global base override).
+    /// </summary>
+    public async Task<IActionResult> OnPostApplyOverrideToAllCompaniesAsync()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(OverrideKey) || string.IsNullOrWhiteSpace(OverrideValue) || string.IsNullOrWhiteSpace(OverrideCulture))
+            {
+                Error = "All fields are required to apply a global override.";
+                await OnGetAsync();
+                return Page();
+            }
+
+            var userId = GetCurrentUserId();
+
+            // Get all company IDs
+            // SECURITY-AUDITED: IgnoreQueryFilters SAFE — Owner-only page with AdminAccess grant
+            var allCompanyIds = await _db.Companies
+                .IgnoreQueryFilters()
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            foreach (var companyId in allCompanyIds)
+            {
+                await _companyLocalizationService.UpsertOverrideAsync(
+                    companyId, OverrideCulture, OverrideKey, OverrideValue, userId);
+            }
+
+            _logger.LogInformation("Applied localization override '{Key}' ({Culture}) to {Count} companies by user {UserId}",
+                OverrideKey, OverrideCulture, allCompanyIds.Count, userId);
+
+            Success = $"Override '{OverrideKey}' applied to all {allCompanyIds.Count} companies.";
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to apply override to all companies");
+            Error = "Failed to apply override to all companies. Please try again.";
+            await OnGetAsync();
+            return Page();
         }
     }
 

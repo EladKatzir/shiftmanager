@@ -21,13 +21,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Apply saved theme or detect system preference
   if (saved) {
     root.setAttribute('data-theme', saved);
-    console.log('Using saved theme:', saved);
   } else {
     // Detect system preference
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const systemTheme = prefersDark ? 'dark' : 'light';
     root.setAttribute('data-theme', systemTheme);
-    console.log('No saved theme, using system preference:', systemTheme);
   }
 
   // Listen for system theme changes
@@ -37,7 +35,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!getStorage('theme')) {
         const newTheme = e.matches ? 'dark' : 'light';
         root.setAttribute('data-theme', newTheme);
-        console.log('System theme changed to:', newTheme);
       }
     });
   }
@@ -51,11 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
       const newTheme = current === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', newTheme);
       setStorage('theme', newTheme);
-      console.log('Theme manually switched to:', newTheme);
+      console.log('[Shifty] Theme switched to:', newTheme);
     });
-    console.log('Dark mode toggle initialized');
-  } else {
-    console.warn('Theme toggle button not found');
   }
 
   // Sidebar User Menu
@@ -116,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
-    console.log('Sidebar user menu initialized');
   }
 
   // Easter egg: Shift Swap game (Ctrl+Click on .brand)
@@ -128,18 +121,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // If not clicking within .brand area, ignore
     if (!brandElement) return;
 
-    console.log('Brand area clicked! Ctrl:', e.ctrlKey, 'Meta:', e.metaKey, 'Clicked element:', e.target.tagName, e.target.className);
+    // Brand area clicked
 
     // Only trigger game if Ctrl/Cmd key is pressed
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       e.stopPropagation();
 
-      console.log('Ctrl+click detected on .brand! ShiftSwapGame available:', !!window.ShiftSwapGame);
-
       // Dynamically load game assets if not already loaded
       if (!window.ShiftSwapGame) {
-        console.log('Loading Shift Swap game assets...');
 
         // Load CSS
         if (!document.querySelector('link[href*="shift-swap-game.css"]')) {
@@ -168,7 +158,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Open the Shift Swap game
       if (window.ShiftSwapGame) {
-        console.log('Opening Shift Swap game...');
         window.ShiftSwapGame.open();
       } else {
         console.error('ShiftSwapGame not loaded!');
@@ -177,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Normal clicks work as usual (no special handling needed)
   });
 
-  console.log('Easter egg Ctrl+click handler initialized for .brand');
+  // Easter egg handler ready
 
 });
 
@@ -459,9 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentModalData = null;
 
 function openShiftModal(date) {
-  console.log('Opening shift modal for date:', date);
   const availableTypes = window.shiftTypes || [];
-  console.log('Available shift types:', availableTypes);
   currentModalData = { date, availableTypes };
 
   const modal = document.getElementById('shiftModal');

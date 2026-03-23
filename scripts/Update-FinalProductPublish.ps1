@@ -473,7 +473,7 @@ try {
             $srcStats.FileCount, $expectedMin, $expectedMax, $FileCountTolerance)
     }
 
-    $critical = @('ShiftManager.exe','ShiftManager.dll','VERIFY_FILES.bat','appsettings.json')
+    $critical = @('ShiftManager.exe','ShiftManager.dll','VERIFY_FILES.bat','appsettings.json','web.config','wwwroot\css\site.css','wwwroot\js\site.js','he-IL\ShiftManager.resources.dll')
     Assert-CriticalFiles -BaseDir $SourceDir -CriticalFiles $critical
     Write-Log -Level OK -Message "Critical files present in ProjectPublish."
 

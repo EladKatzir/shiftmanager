@@ -285,6 +285,7 @@
             'PRE_DEMO_CHECKLIST.txt',
             'TROUBLESHOOT_DEMO.txt',
             'DIAGNOSE_GRIFFIN_ISSUE.bat',
+            'FIX_IIS_500_ERROR.bat',
             'README.txt',
             'QUICK_START.txt',
             'DEPLOYMENT_GUIDE.txt',
@@ -329,6 +330,11 @@
             Copy-Item -LiteralPath $clients -Destination $OutputFolder -Recurse -Force
         } else {
             $missing += 'clients (directory)'
+        }
+
+        $dataDir = Join-Path $ScriptRoot 'Data'
+        if (Test-Path -LiteralPath $dataDir) {
+            Copy-Item -LiteralPath $dataDir -Destination $OutputFolder -Recurse -Force
         }
 
         if ($missing.Count -gt 0) {

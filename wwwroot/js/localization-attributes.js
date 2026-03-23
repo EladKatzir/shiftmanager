@@ -28,8 +28,6 @@
     }
 
     function init() {
-        console.log('[Localization Attributes] Initializing...');
-
         // Apply attribute localizations
         applyAttributeLocalizations();
 
@@ -37,8 +35,6 @@
         if (isEditModeActive()) {
             initAttributeEditMode();
         }
-
-        console.log('[Localization Attributes] Initialized');
     }
 
     /**
@@ -68,7 +64,6 @@
         const elements = document.querySelectorAll('[data-loc-attr-title], [data-loc-attr-placeholder], [data-loc-attr-aria-label], [data-loc-attr-aria-description]');
 
         if (elements.length === 0) {
-            console.log('[Localization Attributes] No elements with data-loc-attr-* found');
             return;
         }
 
@@ -109,8 +104,6 @@
             }
         });
 
-        console.log(`[Localization Attributes] Found ${keysToFetch.size} unique keys across ${elements.length} elements`);
-
         // Fetch all localizations in batch
         const keysArray = Array.from(keysToFetch);
         window.Localization.getMany(keysArray).then(localizations => {
@@ -126,7 +119,6 @@
                 });
             });
 
-            console.log(`[Localization Attributes] Applied ${keysArray.length} localizations`);
         }).catch(error => {
             console.error('[Localization Attributes] Failed to fetch localizations:', error);
         });

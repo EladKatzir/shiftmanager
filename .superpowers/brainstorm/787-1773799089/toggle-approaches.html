@@ -1,0 +1,104 @@
+<h2>Sidebar Toggle Button — 3 Approaches</h2>
+<p class="subtitle">The toggle button exists but is invisible because the sidebar's <code>overflow-y: auto</code> clips it. Here are 3 ways to fix it:</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Edge Tab — your &raquo; idea</h3>
+      <p>A small <strong>&raquo;</strong> tab that sticks to the sidebar's inner edge. Looks like a drawer handle. Always visible.</p>
+      <div style="display:flex;gap:24px;margin-top:12px;">
+        <div>
+          <div style="font-size:10px;color:#888;margin-bottom:4px;">Expanded:</div>
+          <div style="position:relative;width:200px;height:140px;background:#1a1a2e;border-radius:8px;overflow:hidden;">
+            <div style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:#4a90d9;color:white;padding:10px 4px;border-radius:6px 0 0 6px;font-size:13px;cursor:pointer;line-height:1;font-weight:bold;">&raquo;</div>
+            <div style="padding:12px;color:#999;font-size:11px;">
+              <div style="font-weight:bold;margin-bottom:8px;color:#ccc;">SHIFTY</div>
+              <div style="margin-bottom:5px;">📅 Schedule</div>
+              <div style="margin-bottom:5px;">👁️ Overview</div>
+              <div style="margin-bottom:5px;">👥 People</div>
+              <div style="margin-bottom:5px;">⚙️ Settings</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#888;margin-bottom:4px;">Collapsed:</div>
+          <div style="position:relative;width:56px;height:140px;background:#1a1a2e;border-radius:8px;overflow:hidden;">
+            <div style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:#4a90d9;color:white;padding:10px 4px;border-radius:6px 0 0 6px;font-size:13px;cursor:pointer;line-height:1;font-weight:bold;">&laquo;</div>
+            <div style="padding:8px;text-align:center;color:#999;font-size:16px;">
+              <div style="font-size:10px;font-weight:bold;margin-bottom:8px;color:#ccc;">S</div>
+              <div style="margin-bottom:8px;">📅</div>
+              <div style="margin-bottom:8px;">👁️</div>
+              <div style="margin-bottom:8px;">👥</div>
+              <div style="margin-bottom:8px;">⚙️</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Bottom Toggle (next to user profile)</h3>
+      <p>Place a &raquo; button in the sidebar footer, below the user avatar. No clipping issues.</p>
+      <div style="display:flex;gap:24px;margin-top:12px;">
+        <div>
+          <div style="font-size:10px;color:#888;margin-bottom:4px;">Expanded:</div>
+          <div style="width:200px;height:140px;background:#1a1a2e;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="flex:1;padding:12px;color:#999;font-size:11px;">
+              <div style="font-weight:bold;margin-bottom:8px;color:#ccc;">SHIFTY</div>
+              <div style="margin-bottom:5px;">📅 Schedule</div>
+              <div style="margin-bottom:5px;">👁️ Overview</div>
+              <div style="margin-bottom:5px;">👥 People</div>
+            </div>
+            <div style="border-top:1px solid #333;padding:6px 12px;display:flex;align-items:center;justify-content:space-between;">
+              <span style="color:#aaa;font-size:10px;">👤 Test Owner</span>
+              <span style="color:white;background:#4a90d9;padding:2px 6px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:bold;">&raquo;</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Fix Existing + Restyle as &raquo;</h3>
+      <p>Fix the overflow CSS bug AND restyle the existing ◀ button as a &raquo; tab. Best of both worlds — minimal code change, looks like you want.</p>
+      <div style="display:flex;gap:24px;margin-top:12px;">
+        <div>
+          <div style="font-size:10px;color:#888;margin-bottom:4px;">Expanded (button protrudes from edge):</div>
+          <div style="position:relative;width:200px;height:140px;background:#1a1a2e;border-radius:8px;">
+            <div style="position:absolute;right:-14px;top:50%;transform:translateY(-50%);background:#4a90d9;color:white;padding:10px 4px;border-radius:0 6px 6px 0;font-size:13px;cursor:pointer;line-height:1;font-weight:bold;z-index:2;">&raquo;</div>
+            <div style="padding:12px;color:#999;font-size:11px;overflow:hidden;border-radius:8px;">
+              <div style="font-weight:bold;margin-bottom:8px;color:#ccc;">SHIFTY</div>
+              <div style="margin-bottom:5px;">📅 Schedule</div>
+              <div style="margin-bottom:5px;">👁️ Overview</div>
+              <div style="margin-bottom:5px;">👥 People</div>
+              <div style="margin-bottom:5px;">⚙️ Settings</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#888;margin-bottom:4px;">Collapsed:</div>
+          <div style="position:relative;width:56px;height:140px;background:#1a1a2e;border-radius:8px;">
+            <div style="position:absolute;right:-14px;top:50%;transform:translateY(-50%);background:#4a90d9;color:white;padding:10px 4px;border-radius:0 6px 6px 0;font-size:13px;cursor:pointer;line-height:1;font-weight:bold;z-index:2;">&laquo;</div>
+            <div style="padding:8px;text-align:center;color:#999;font-size:16px;overflow:hidden;border-radius:8px;">
+              <div style="font-size:10px;font-weight:bold;margin-bottom:8px;color:#ccc;">S</div>
+              <div style="margin-bottom:8px;">📅</div>
+              <div style="margin-bottom:8px;">👁️</div>
+              <div style="margin-bottom:8px;">👥</div>
+              <div style="margin-bottom:8px;">⚙️</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:8px;font-size:12px;color:#888;"><strong>How:</strong> Move overflow scroll to an inner wrapper div, keep sidebar overflow visible. Restyle toggle from ◀ circle to &raquo; tab. All existing JS (click, Ctrl+B, localStorage) keeps working.</p>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top:24px;color:#999;font-size:14px;"><strong>My recommendation:</strong> Option C — fix the overflow bug + restyle the button as &raquo;. It reuses all existing JS infrastructure (toggle, Ctrl+B, localStorage persistence, FOUC prevention) and just needs CSS + minor HTML changes.</p>

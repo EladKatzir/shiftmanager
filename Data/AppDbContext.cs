@@ -46,6 +46,8 @@ public class AppDbContext : DbContext
     public DbSet<GriffinConfig> GriffinConfigs => Set<GriffinConfig>();
     public DbSet<GriffinApiLog> GriffinApiLogs => Set<GriffinApiLog>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
+    public DbSet<HomeType> HomeTypes => Set<HomeType>();
+    public DbSet<HomeTypeOverride> HomeTypeOverrides => Set<HomeTypeOverride>();
 
     // Language Management (tenant-scoped)
     public DbSet<CompanyLanguageSettings> CompanyLanguageSettings => Set<CompanyLanguageSettings>();
@@ -160,6 +162,12 @@ public class AppDbContext : DbContext
             .Property(p => p.DateOfBirth).HasConversion(dateConverter);
         modelBuilder.Entity<AppUser>()
             .Property(p => p.HireDate).HasConversion(dateConverter);
+
+        // Chore timed assignments (SP1b: guard duty 10:00-14:00)
+        modelBuilder.Entity<Chore>()
+            .Property(p => p.StartTime).HasConversion(timeConverter);
+        modelBuilder.Entity<Chore>()
+            .Property(p => p.EndTime).HasConversion(timeConverter);
 
         // Phase 6: DailyNotificationPreference TimeOnly field
         modelBuilder.Entity<DailyNotificationPreference>()
@@ -686,6 +694,12 @@ public class AppDbContext : DbContext
 
             // Note: ApiRequestLog does NOT have a query filter — CompanyId is nullable (logs unauthenticated attempts)
 
+            // Home Rotation System: Query filters for tenant scoping
+            modelBuilder.Entity<HomeType>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+            modelBuilder.Entity<HomeTypeOverride>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
             // Note: ProgramDay and MasterProgramItem don't need query filters - accessed through parent entities
             // Note: DirectorCompany does NOT have query filter - it's a cross-tenant mapping table
             // Note: OnDuty does NOT have query filter - it's a global/public table visible across all tenancies
@@ -1127,6 +1141,61 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(u => u.RoleTemplateId)
             .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // HomeType time converters
+        modelBuilder.Entity<HomeType>()
+            .Property(p => p.DefaultStartTime).HasConversion(timeConverter);
+        modelBuilder.Entity<HomeType>()
+            .Property(p => p.DefaultEndTime).HasConversion(timeConverter);
+
+        // AppUser → HomeType relationship
+        modelBuilder.Entity<AppUser>()
+            .HasOne(u => u.HomeType)
+            .WithMany()
+            .HasForeignKey(u => u.HomeTypeId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        // HomeType → Creator relationship (no reverse nav on AppUser)
+        modelBuilder.Entity<HomeType>()
+            .HasOne(h => h.Creator)
+            .WithMany()
+            .HasForeignKey(h => h.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // HomeTypeOverride → User/Creator relationships (no reverse nav on AppUser)
+        modelBuilder.Entity<HomeTypeOverride>()
+            .HasOne(o => o.User)
+            .WithMany()
+            .HasForeignKey(o => o.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<HomeTypeOverride>()
+            .HasOne(o => o.Creator)
+            .WithMany()
+            .HasForeignKey(o => o.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // HomeTypeOverride → HomeType relationship
+        modelBuilder.Entity<HomeTypeOverride>()
+            .HasOne(o => o.HomeType)
+            .WithMany()
+            .HasForeignKey(o => o.HomeTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // HomeTypeOverride → User (unique per HomeType+User)
+        modelBuilder.Entity<HomeTypeOverride>()
+            .HasIndex(o => new { o.HomeTypeId, o.UserId })
+            .IsUnique();
+
+        // AppUser → PrimaryShiftType relationship (cross-tenant FK)
+        // SECURITY-AUDITED: SAFE — PrimaryShiftType may belong to a different company than the user
+        // (e.g., tech shift types belong to hq-shikma CompanyId). Access via IgnoreQueryFilters().
+        modelBuilder.Entity<AppUser>()
+            .HasOne(u => u.PrimaryShiftType)
+            .WithMany()
+            .HasForeignKey(u => u.PrimaryShiftTypeId)
+            .OnDelete(DeleteBehavior.SetNull)
             .IsRequired(false);
 
         // UserJoinRequest → RoleTemplate relationship

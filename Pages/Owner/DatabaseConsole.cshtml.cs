@@ -94,7 +94,7 @@ public class DatabaseConsoleModel : PageModel
             // Enforce a row limit to prevent OOM on large result sets.
             // Wrap in a subquery with LIMIT 1001 (1 extra to detect truncation at 1000).
             const int maxRows = 1000;
-            var hasUserLimit = upperQuery.Contains("LIMIT");
+            var hasUserLimit = System.Text.RegularExpressions.Regex.IsMatch(upperQuery, @"\bLIMIT\s+\d+");
             var effectiveQuery = hasUserLimit ? trimmedQuery : $"SELECT * FROM ({trimmedQuery}) LIMIT {maxRows + 1}";
 
             using var command = readOnlyConnection.CreateCommand();

@@ -2,12 +2,23 @@ using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
+/// <summary>
+/// A named+colored overlay item (chore or on-duty) for rich calendar display.
+/// </summary>
+public record FyiOverlayItem(string Name, string? Color);
+
 public record FyiOverlayData(
     bool HasVacation,
-    bool HasChore,
-    bool HasOnDuty,
+    List<FyiOverlayItem> ChoreItems,
+    List<FyiOverlayItem> OnDutyItems,
     List<string> OtherShifts
-);
+)
+{
+    /// <summary>Backward-compatible: true if any chore items exist.</summary>
+    public bool HasChore => ChoreItems.Count > 0;
+    /// <summary>Backward-compatible: true if any on-duty items exist.</summary>
+    public bool HasOnDuty => OnDutyItems.Count > 0;
+};
 
 public record RestViolationWarning(
     string ShiftName,

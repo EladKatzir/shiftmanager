@@ -56,4 +56,38 @@ public static class TimeHelpers
         int delta = ((int)date.DayOfWeek - (int)startDay + 7) % 7;
         return date.AddDays(-delta);
     }
+
+    /// <summary>
+    /// Merges overlapping time windows and sums total unique hours.
+    /// Prevents double-counting when shifts overlap (e.g., two overlapping 8hr offline shifts
+    /// should count as 8hr, not 16hr). Ported from ConflictChecker.
+    /// </summary>
+    public static double MergeAndSumHours(List<(DateTime start, DateTime end)> windows)
+    {
+        if (windows.Count == 0) return 0;
+
+        double total = 0;
+        var currentStart = windows[0].start;
+        var currentEnd = windows[0].end;
+
+        for (int i = 1; i < windows.Count; i++)
+        {
+            if (windows[i].start <= currentEnd)
+            {
+                // Overlapping — extend the merged window
+                if (windows[i].end > currentEnd)
+                    currentEnd = windows[i].end;
+            }
+            else
+            {
+                // No overlap — add the merged window and start a new one
+                total += (currentEnd - currentStart).TotalHours;
+                currentStart = windows[i].start;
+                currentEnd = windows[i].end;
+            }
+        }
+
+        total += (currentEnd - currentStart).TotalHours;
+        return total;
+    }
 }

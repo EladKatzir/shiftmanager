@@ -15,6 +15,8 @@
 
   const STORAGE_PREFIX = 'shifty_widget_';
   const COLLAPSED_CLASS = 'is-collapsed';
+  const QUICK_INFO_SEEN_KEY = STORAGE_PREFIX + 'quickInfoSeen';
+  const QUICK_INFO_WIDGET_ID = 'oncall';
 
   /**
    * Check if reduced motion is preferred
@@ -121,13 +123,21 @@
     // Restore state from localStorage (with slight delay to ensure DOM is ready)
     const savedState = getCollapsedState(widgetId);
     if (savedState !== null) {
-      // Apply state without animation on initial load
-      if (prefersReducedMotion()) {
-        // Instant state change for reduced motion
-        toggleWidget(widget, header, savedState);
-      } else {
-        // Still apply immediately on page load, animation happens via CSS
-        toggleWidget(widget, header, savedState);
+      // User has an explicit preference — apply it
+      toggleWidget(widget, header, savedState);
+    } else if (widgetId === QUICK_INFO_WIDGET_ID) {
+      // Quick Info widget auto-collapse: collapse after first view
+      try {
+        var seen = localStorage.getItem(QUICK_INFO_SEEN_KEY);
+        if (seen) {
+          // Not first visit — auto-collapse
+          toggleWidget(widget, header, true);
+        } else {
+          // First visit — show expanded, mark as seen
+          localStorage.setItem(QUICK_INFO_SEEN_KEY, 'true');
+        }
+      } catch (e) {
+        // localStorage unavailable
       }
     }
 

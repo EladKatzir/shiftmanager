@@ -318,6 +318,9 @@ namespace ShiftManager.Migrations
                     b.Property<string>("HireDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("HomeTypeId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
@@ -353,6 +356,9 @@ namespace ShiftManager.Migrations
                     b.Property<string>("PreferredName")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PrimaryShiftTypeId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("ProfileLastUpdated")
                         .HasColumnType("TEXT");
 
@@ -378,7 +384,11 @@ namespace ShiftManager.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("HomeTypeId");
+
                     b.HasIndex("JobTypeId");
+
+                    b.HasIndex("PrimaryShiftTypeId");
 
                     b.HasIndex("RoleTemplateId");
 
@@ -539,10 +549,16 @@ namespace ShiftManager.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("EndTime")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("MoleculeId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StartTime")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
@@ -1523,6 +1539,92 @@ namespace ShiftManager.Migrations
                     b.ToTable("GriffinConfigs");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.HomeType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DefaultEndTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DefaultStartTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DerivedRule")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MoleculeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NameHe")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PatternJson")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("MoleculeId");
+
+                    b.ToTable("HomeTypes");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.HomeTypeOverride", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("HomeTypeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OverridePatternJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("HomeTypeId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("HomeTypeOverrides");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.JobType", b =>
                 {
                     b.Property<int>("Id")
@@ -2162,6 +2264,13 @@ namespace ShiftManager.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsTraineeShift")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.Property<byte[]>("RowVersion")
@@ -3194,10 +3303,20 @@ namespace ShiftManager.Migrations
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ShiftManager.Models.HomeType", "HomeType")
+                        .WithMany()
+                        .HasForeignKey("HomeTypeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("ShiftManager.Models.JobType", "JobType")
                         .WithMany("Users")
                         .HasForeignKey("JobTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ShiftManager.Models.ShiftType", "PrimaryShiftType")
+                        .WithMany()
+                        .HasForeignKey("PrimaryShiftTypeId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("ShiftManager.Models.RoleTemplate", "RoleTemplate")
                         .WithMany()
@@ -3206,7 +3325,11 @@ namespace ShiftManager.Migrations
 
                     b.Navigation("Department");
 
+                    b.Navigation("HomeType");
+
                     b.Navigation("JobType");
+
+                    b.Navigation("PrimaryShiftType");
 
                     b.Navigation("RoleTemplate");
                 });
@@ -3709,6 +3832,52 @@ namespace ShiftManager.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.HomeType", b =>
+                {
+                    b.HasOne("ShiftManager.Models.AppUser", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.Molecule", "Molecule")
+                        .WithMany()
+                        .HasForeignKey("MoleculeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("Molecule");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.HomeTypeOverride", b =>
+                {
+                    b.HasOne("ShiftManager.Models.AppUser", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.HomeType", "HomeType")
+                        .WithMany()
+                        .HasForeignKey("HomeTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShiftManager.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("HomeType");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.JobType", b =>

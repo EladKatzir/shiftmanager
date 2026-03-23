@@ -34,6 +34,7 @@ public class UsersModel : LocalizedPageModel
     private readonly IJobTypeService _jobTypeService;
     private readonly IConcurrencyService _concurrencyService;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IHierarchyService _hierarchyService;
 
     public UsersModel(
         IStringLocalizer<SharedResources> localizer,
@@ -49,7 +50,8 @@ public class UsersModel : LocalizedPageModel
         IRoleService roleService,
         IJobTypeService jobTypeService,
         IConcurrencyService concurrencyService,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        IHierarchyService hierarchyService)
         : base(localizer)
     {
         _db = db;
@@ -65,9 +67,10 @@ public class UsersModel : LocalizedPageModel
         _jobTypeService = jobTypeService;
         _concurrencyService = concurrencyService;
         _tenantResolver = tenantResolver;
+        _hierarchyService = hierarchyService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, int? PrimaryShiftTypeId, string? PrimaryShiftTypeName);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId);
     public record MoleculeOption(int Id, string Name, string AreaName);
     public record JobTypeOption(int Id, string Name, string AreaName, string? Key);
@@ -87,6 +90,7 @@ public class UsersModel : LocalizedPageModel
     /// <summary>Tooltip data: director user ID → list of managed company names</summary>
     public Dictionary<int, List<string>> DirectorCompanyNames { get; set; } = new();
     public List<JobTypeOption> AvailableJobTypes { get; set; } = new();
+    public List<ShiftType> AvailableShiftTypes { get; set; } = new();
 
     // Pagination properties
     [BindProperty(SupportsGet = true)]
@@ -370,6 +374,14 @@ public class UsersModel : LocalizedPageModel
             .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area?.DisplayName ?? "", jt.Name))
             .ToList();
 
+        // Load available shift types for PrimaryShiftType dropdown (tech molecule shift types)
+        // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed because tech shift types may belong to hq company
+        AvailableShiftTypes = await _db.ShiftTypes
+            .IgnoreQueryFilters()
+            .Where(st => st.MoleculeId != null && st.Key != ShiftType.KEY_OFFLINE && st.Key != ShiftType.KEY_HOME)
+            .OrderBy(st => st.MoleculeId).ThenBy(st => st.Start)
+            .ToListAsync();
+
         // Load assignable role templates (filtered by CanBeAssignedByDefault and user's grant level)
         AssignableRoleTemplates = await _roleService.GetAssignableRoleTemplatesAsync();
 
@@ -383,21 +395,25 @@ public class UsersModel : LocalizedPageModel
         if (IsOwner)
         {
             // Owner sees ALL users across all companies
+            // SECURITY-AUDITED: IgnoreQueryFilters propagates to PrimaryShiftType Include (cross-tenant FK)
             usersQuery = _db.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.JobType)
                 .Include(u => u.Department)
+                .Include(u => u.PrimaryShiftType)
                 .AsNoTracking();
         }
         else
         {
             // Other roles see filtered by accessible companies
             // SECURITY-AUDITED: SAFE — scoped by accessibleCompanyIds from grant resolution;
-            // IgnoreQueryFilters needed for directors who manage users across multiple companies
+            // IgnoreQueryFilters needed for directors who manage users across multiple companies;
+            // PrimaryShiftType is cross-tenant FK (IgnoreQueryFilters propagates to Include)
             usersQuery = _db.Users
                 .IgnoreQueryFilters()
                 .Include(u => u.JobType)
                 .Include(u => u.Department)
+                .Include(u => u.PrimaryShiftType)
                 .AsNoTracking()
                 .Where(u => accessibleCompanyIds.Contains(u.CompanyId));
         }
@@ -542,7 +558,9 @@ public class UsersModel : LocalizedPageModel
                     u.JobType?.Name,
                     u.Department?.DisplayName,
                     userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
-                    u.RoleTemplateId
+                    u.RoleTemplateId,
+                    u.PrimaryShiftTypeId,
+                    u.PrimaryShiftType?.CustomName ?? u.PrimaryShiftType?.Name
                 ));
             }
             else
@@ -570,7 +588,9 @@ public class UsersModel : LocalizedPageModel
                         u.JobType?.Name,
                         u.Department?.DisplayName,
                         userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
-                        u.RoleTemplateId
+                        u.RoleTemplateId,
+                        u.PrimaryShiftTypeId,
+                        u.PrimaryShiftType?.CustomName ?? u.PrimaryShiftType?.Name
                     ));
                 }
             }
@@ -875,6 +895,36 @@ public class UsersModel : LocalizedPageModel
             {
                 Error = _localizer["Error_ConcurrencyConflict"];
                 return RedirectToPage();
+            }
+
+            // Reactivation: restore grants from RoleTemplate if user has no grants
+            if (u.IsActive && u.RoleTemplateId.HasValue)
+            {
+                var grantCount = await _db.Grants.IgnoreQueryFilters().Where(g => g.UserId == u.Id).CountAsync();
+                if (grantCount == 0)
+                {
+                    _logger.LogInformation("Reactivated user {UserId} has 0 grants but RoleTemplateId={TemplateId} — re-provisioning",
+                        u.Id, u.RoleTemplateId.Value);
+                    try
+                    {
+                        var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(u.Id);
+                        var roleScope = new GrantScope(
+                            ProjectId: hierarchyContext?.Path.Project?.Id,
+                            AreaId: hierarchyContext?.Path.Area?.Id,
+                            MoleculeId: hierarchyContext?.Path.Molecule?.Id,
+                            DepartmentId: u.DepartmentId,
+                            CompanyId: u.CompanyId,
+                            JobTypeId: hierarchyContext?.JobType?.Id
+                        );
+                        await _grantService.ApplyAutoGrantsAsync(u.Id, u.RoleTemplateId.Value, roleScope);
+                        _logger.LogInformation("Grants restored for reactivated user {UserId}", u.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to restore grants for reactivated user {UserId}", u.Id);
+                        // Non-fatal: user is still reactivated, grants can be manually assigned
+                    }
+                }
             }
 
             // FINDING-008 FIX: Audit log for user enable/disable
@@ -1208,6 +1258,79 @@ public class UsersModel : LocalizedPageModel
         return RedirectToPage();
     }
 
+    public async Task<IActionResult> OnPostPrimaryShiftTypeAsync(int id, int? primaryShiftTypeId)
+    {
+        if (id <= 0)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"].Value;
+            return RedirectToPage();
+        }
+
+        // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed for cross-company user lookup
+        var u = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
+        if (u == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        // Grant check: same pattern as JobType handler
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
+            return RedirectToPage();
+        }
+
+        var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
+        var hasEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(
+            currentUserId, "EditCompanyUsers", u.CompanyId);
+        if (!hasEditGrant)
+        {
+            _logger.LogWarning("User {CurrentUserId} attempted PrimaryShiftType change on user {TargetUserId} without grant",
+                currentUserId, id);
+            TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
+            return RedirectToPage();
+        }
+
+        // Validate shift type exists (if provided)
+        string? stName = null;
+        if (primaryShiftTypeId.HasValue)
+        {
+            // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed for cross-tenant ShiftType (may belong to different company)
+            var st = await _db.ShiftTypes.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(s => s.Id == primaryShiftTypeId.Value);
+            if (st == null)
+            {
+                TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
+                return RedirectToPage();
+            }
+            stName = st.CustomName ?? st.Name;
+        }
+
+        var oldPstId = u.PrimaryShiftTypeId;
+        u.PrimaryShiftTypeId = primaryShiftTypeId;
+
+        var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+            () => _db.SaveChangesAsync(), "AppUser", id);
+        if (!saveResult.Success)
+        {
+            Error = _localizer["Error_ConcurrencyConflict"];
+            return RedirectToPage();
+        }
+
+        await _auditLogService.LogUserActionAsync(
+            userId: currentUserId,
+            action: "PrimaryShiftTypeChanged",
+            entityType: "User",
+            entityId: u.Id,
+            description: $"Changed primary shift type for {u.DisplayName} from {oldPstId} to {primaryShiftTypeId}"
+        );
+
+        TempData["SuccessMessage"] = $"{u.DisplayName}: {stName ?? "-"}";
+        return RedirectToPage();
+    }
+
     public async Task<IActionResult> OnPostResetPasswordAsync(int id, string newPassword)
     {
         // ✅ SECURITY FIX: Input validation
@@ -1453,50 +1576,86 @@ public class UsersModel : LocalizedPageModel
                 await _db.Grants.IgnoreQueryFilters().Where(g => g.UserId == id).ExecuteDeleteAsync();
             }
 
-            // 3b. Soft-delete DirectorCompany mappings
+            // 3b. Delete DirectorCompany mappings where user is a director
             // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by specific userId
-            var directorMappings = await _db.DirectorCompanies
-                .IgnoreQueryFilters()
-                .Where(dc => dc.UserId == id && !dc.IsDeleted)
-                .ToListAsync();
-            if (directorMappings.Any())
-            {
-                _logger.LogInformation("Soft-deleting {Count} DirectorCompany mappings for deactivated user {UserId}", directorMappings.Count, id);
-                foreach (var mapping in directorMappings)
-                    mapping.IsDeleted = true;
-            }
+            await _db.DirectorCompanies.IgnoreQueryFilters()
+                .Where(dc => dc.UserId == id).ExecuteDeleteAsync();
+            // Reassign GrantedBy where deleted user was the grantor for other directors
+            await _db.DirectorCompanies.IgnoreQueryFilters()
+                .Where(dc => dc.GrantedBy == id)
+                .ExecuteUpdateAsync(dc => dc.SetProperty(x => x.GrantedBy, currentUserId));
 
             // 3c. Clear TraineeUserId references on shift assignments where this user is the trainee
-            // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by specific userId as trainee
-            var traineeRefCount = await _db.ShiftAssignments
-                .IgnoreQueryFilters()
+            await _db.ShiftAssignments.IgnoreQueryFilters()
                 .Where(sa => sa.TraineeUserId == id)
-                .CountAsync();
-            if (traineeRefCount > 0)
-            {
-                _logger.LogInformation("Clearing {Count} trainee references for deactivated user {UserId}", traineeRefCount, id);
-                await _db.ShiftAssignments
-                    .IgnoreQueryFilters()
-                    .Where(sa => sa.TraineeUserId == id)
-                    .ExecuteUpdateAsync(sa => sa.SetProperty(a => a.TraineeUserId, (int?)null));
-            }
+                .ExecuteUpdateAsync(sa => sa.SetProperty(a => a.TraineeUserId, (int?)null));
 
-            // 4. Deactivate the user (soft-delete to preserve audit trail integrity)
-            _logger.LogInformation("Deactivating user {UserId} ({UserName})", id, user.DisplayName);
-            user.IsActive = false;
+            // 3d. Delete user-owned records (belong to deleted user)
+            await _db.UserNotifications.IgnoreQueryFilters().Where(n => n.UserId == id).ExecuteDeleteAsync();
+            await _db.Chores.IgnoreQueryFilters().Where(c => c.UserId == id).ExecuteDeleteAsync();
+            await _db.OnDuties.IgnoreQueryFilters().Where(o => o.UserId == id).ExecuteDeleteAsync();
+            await _db.UserDayNotes.IgnoreQueryFilters().Where(n => n.UserId == id).ExecuteDeleteAsync();
+            await _db.UserFriendships.IgnoreQueryFilters().Where(f => f.UserId == id || f.FriendId == id).ExecuteDeleteAsync();
+            await _db.GameScores.IgnoreQueryFilters().Where(g => g.UserId == id).ExecuteDeleteAsync();
+            await _db.OnDutyRoleSubscriptions.IgnoreQueryFilters().Where(s => s.UserId == id).ExecuteDeleteAsync();
+            await _db.DutyRotationEntries.IgnoreQueryFilters().Where(e => e.UserId == id).ExecuteDeleteAsync();
+            await _db.DailyNotificationPreferences.IgnoreQueryFilters().Where(p => p.UserId == id).ExecuteDeleteAsync();
+            await _db.TeamCalendarMembers.IgnoreQueryFilters().Where(m => m.MemberUserId == id).ExecuteDeleteAsync();
+            await _db.TeamCalendars.IgnoreQueryFilters().Where(t => t.OwnerId == id).ExecuteDeleteAsync();
+            await _db.UserRoleAssignments.IgnoreQueryFilters().Where(r => r.UserId == id).ExecuteDeleteAsync();
+            await _db.Feedbacks.IgnoreQueryFilters().Where(f => f.SubmittedBy == id).ExecuteDeleteAsync();
+            await _db.Announcements.IgnoreQueryFilters().Where(a => a.CreatedBy == id).ExecuteDeleteAsync();
+            await _db.ApiKeys.IgnoreQueryFilters().Where(a => a.CreatedBy == id).ExecuteDeleteAsync();
+            await _db.ApiKeyRequests.IgnoreQueryFilters().Where(a => a.RequestedBy == id).ExecuteDeleteAsync();
 
-            {
-                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
-                    () => _db.SaveChangesAsync(), "AppUser", user.Id);
-                if (!saveResult.Success)
-                {
-                    Error = _localizer["Error_ConcurrencyConflict"];
-                    return RedirectToPage();
-                }
-            }
+            // 3e. Nullify nullable FK references (preserve records, clear user link)
+            await _db.AuditLogs.IgnoreQueryFilters().Where(a => a.UserId == id)
+                .ExecuteUpdateAsync(a => a.SetProperty(x => x.UserId, (int?)null));
+            await _db.DutyRotationLogs.IgnoreQueryFilters().Where(d => d.AssignedUserId == id)
+                .ExecuteUpdateAsync(d => d.SetProperty(x => x.AssignedUserId, (int?)null));
+            await _db.DutyRotationLogs.IgnoreQueryFilters().Where(d => d.SkippedUserId == id)
+                .ExecuteUpdateAsync(d => d.SetProperty(x => x.SkippedUserId, (int?)null));
+            await _db.VacationApprovalRules.IgnoreQueryFilters().Where(v => v.ApproverUserId == id)
+                .ExecuteUpdateAsync(v => v.SetProperty(x => x.ApproverUserId, (int?)null));
+            await _db.ApiKeyRequests.IgnoreQueryFilters().Where(a => a.ReviewedBy == id)
+                .ExecuteUpdateAsync(a => a.SetProperty(x => x.ReviewedBy, (int?)null));
+            await _db.SwapRequests.IgnoreQueryFilters().Where(s => s.ReviewedBy == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReviewedBy, (int?)null));
+
+            // 3f. Reassign non-nullable CreatedBy/UpdatedBy on shared config to current admin
+            await _db.ChoreTypes.IgnoreQueryFilters().Where(ct => ct.CreatedByUserId == id)
+                .ExecuteUpdateAsync(ct => ct.SetProperty(x => x.CreatedByUserId, currentUserId));
+            await _db.ShiftCapacityOverrides.IgnoreQueryFilters().Where(s => s.CreatedByUserId == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.CreatedByUserId, currentUserId));
+            await _db.ShiftPrograms.IgnoreQueryFilters().Where(s => s.CreatedBy == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.CreatedBy, currentUserId));
+            await _db.ShiftPrograms.IgnoreQueryFilters().Where(s => s.UpdatedBy == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.UpdatedBy, currentUserId));
+            await _db.MasterPrograms.IgnoreQueryFilters().Where(m => m.CreatedBy == id)
+                .ExecuteUpdateAsync(m => m.SetProperty(x => x.CreatedBy, currentUserId));
+            await _db.MasterPrograms.IgnoreQueryFilters().Where(m => m.UpdatedBy == id)
+                .ExecuteUpdateAsync(m => m.SetProperty(x => x.UpdatedBy, currentUserId));
+            await _db.DutyRotations.IgnoreQueryFilters().Where(d => d.CreatedBy == id)
+                .ExecuteUpdateAsync(d => d.SetProperty(x => x.CreatedBy, currentUserId));
+            await _db.VacationApprovalRules.IgnoreQueryFilters().Where(v => v.CreatedBy == id)
+                .ExecuteUpdateAsync(v => v.SetProperty(x => x.CreatedBy, currentUserId));
+
+            // 3g. Delete audit records about the deleted user (main AuditLog already nullified above)
+            await _db.ProfileChangeAudits.IgnoreQueryFilters()
+                .Where(p => p.TargetUserId == id || p.ChangedBy == id).ExecuteDeleteAsync();
+            await _db.RoleAssignmentAudits.IgnoreQueryFilters()
+                .Where(r => r.TargetUserId == id || r.ChangedBy == id).ExecuteDeleteAsync();
+
+            _logger.LogInformation("Completed cleanup of all related records for user {UserId}", id);
+
+            // 4. Hard-delete the user from the database
+            _logger.LogInformation("Permanently deleting user {UserId} ({UserName})", id, user.DisplayName);
+            _db.Users.Remove(user);
+            await _db.SaveChangesAsync();
+
             await transaction.CommitAsync();
 
-            _logger.LogInformation("Successfully deactivated user {UserId} ({UserName}) and cleaned up all related data", id, user.DisplayName);
+            _logger.LogInformation("Successfully deleted user {UserId} ({UserName}) and all related data", id, user.DisplayName);
 
             // Use TempData to show success message after redirect
             TempData["SuccessMessage"] = string.Format(_localizer["Success_UserDeleted"], user.DisplayName);

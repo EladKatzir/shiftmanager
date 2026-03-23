@@ -43,7 +43,6 @@
         // Initialize freeze interactions toggle
         initFreezeToggle();
 
-        console.log('[Language Edit Mode] Initialized');
     }
 
     /**

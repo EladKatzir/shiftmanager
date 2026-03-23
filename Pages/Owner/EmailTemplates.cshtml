@@ -167,9 +167,22 @@
                         <p id="defaultMessage" class="mb-0 mt-2"></p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()"><loc key="Action_Cancel" /></button>
-                    <button type="submit" class="btn btn-primary"><loc key="Action_SaveChanges" /></button>
+                <div class="modal-footer" style="flex-direction: column; gap: 0;">
+                    <div style="display: flex; gap: var(--space-3); width: 100%; justify-content: flex-end; padding-bottom: var(--space-3);">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()"><loc key="Action_Cancel" /></button>
+                        <button type="submit" class="btn btn-primary"><loc key="Action_SaveChanges" /></button>
+                    </div>
+                    <div style="width: 100%; border-top: 1px solid var(--border); padding-top: var(--space-3);">
+                        <div style="display: flex; align-items: center; gap: var(--space-3);">
+                            <div style="flex: 1; font-size: var(--text-small); color: var(--text-muted);">
+                                <loc key="ApplyToAllCompanies_Desc" />
+                            </div>
+                            <button type="submit" class="btn btn-warning btn-sm" formaction="?handler=ApplyToAllCompanies"
+                                    onclick="return confirm('@Localizer["Confirm_ApplyToAllCompanies"].Value.Trim()');">
+                                <loc key="ApplyToAllCompanies" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </form>
     </div>

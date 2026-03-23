@@ -12,6 +12,7 @@ public class ShiftType : IBelongsToCompany
     public const string KEY_NIGHT = "NIGHT";
     public const string KEY_OFFLINE = "OFFLINE";
     public const string KEY_EVENING = "EVENING";
+    public const string KEY_HOME = "HOME";
 
     // Tech shift type keys
     public const string TECH_HANAVA = "HANAVA";
@@ -73,6 +74,7 @@ public class ShiftType : IBelongsToCompany
                 KEY_MIDDLE => "Mid Shift",
                 KEY_EVENING => "Evening Shift",
                 KEY_OFFLINE => "Offline",
+                KEY_HOME => "Home",
                 _ => FormatCustomKey(Key)
             };
         }
@@ -101,6 +103,13 @@ public class ShiftType : IBelongsToCompany
     public bool IsOffline => Key == KEY_OFFLINE;
 
     /// <summary>
+    /// Returns true if this is the special "Home" shift type (rotation day off).
+    /// HOME shifts are exempt from overlap, rest period, and weekly cap checks.
+    /// </summary>
+    [NotMapped]
+    public bool IsHome => Key == KEY_HOME;
+
+    /// <summary>
     /// Get the sort order for this shift type (for consistent ordering across views).
     /// Morning=1, Middle=2, Afternoon=3, Night=4, Offline=99, Custom=50-98
     /// </summary>
@@ -116,6 +125,7 @@ public class ShiftType : IBelongsToCompany
                 KEY_AFTERNOON => 3,
                 KEY_NOON => 3, // Same as AFTERNOON
                 KEY_NIGHT => 4,
+                KEY_HOME => 98,    // Near the end, before OFFLINE
                 KEY_OFFLINE => 99, // Always last
                 _ => 50 // Custom shifts in the middle
             };

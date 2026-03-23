@@ -34,6 +34,7 @@
     let refreshCallback = null;
     let isPageVisible = true;
     let elapsedUpdateTimer = null;
+    let isDisposing = false;
 
     /**
      * Initialize calendar real-time updates.
@@ -110,6 +111,7 @@
         // Set up connection state handlers
         connection.onreconnecting((error) => {
             connectionState = 'reconnecting';
+            if (isDisposing) return; // Intentional teardown — suppress warnings
             disconnectedSince = disconnectedSince || Date.now();
             console.log('[CalendarRealtime] Reconnecting...', error?.message);
             updateConnectionIndicator();
@@ -129,6 +131,7 @@
 
         connection.onclose((error) => {
             connectionState = 'disconnected';
+            if (isDisposing) return; // Intentional teardown — suppress warnings
             disconnectedSince = disconnectedSince || Date.now();
             console.log('[CalendarRealtime] Connection closed:', error?.message);
             updateConnectionIndicator();
@@ -223,6 +226,7 @@
 
         } catch (error) {
             connectionState = 'disconnected';
+            if (isDisposing) return; // Intentional teardown — suppress warnings
             disconnectedSince = disconnectedSince || Date.now();
             console.warn('[CalendarRealtime] Connection failed:', error.message);
             updateConnectionIndicator();
@@ -280,6 +284,7 @@
      * Attempt to reconnect with exponential backoff.
      */
     function attemptReconnect() {
+        if (isDisposing) return;
         if (reconnectAttempts >= CONFIG.maxReconnectAttempts) {
             console.warn('[CalendarRealtime] Max reconnect attempts reached, using polling only');
             return;
@@ -292,6 +297,7 @@
         reconnectAttempts++;
 
         setTimeout(() => {
+            if (isDisposing) return;
             if (connectionState === 'disconnected') {
                 startConnection();
             }
@@ -302,6 +308,7 @@
      * Check if polling should be activated.
      */
     function checkPollingNeeded() {
+        if (isDisposing) return;
         if (pollingTimer) return; // Already polling
 
         if (disconnectedSince && (Date.now() - disconnectedSince) >= CONFIG.pollingActivationDelay) {
@@ -309,7 +316,10 @@
         } else if (disconnectedSince) {
             // Check again after the remaining time
             const remaining = CONFIG.pollingActivationDelay - (Date.now() - disconnectedSince);
-            setTimeout(checkPollingNeeded, remaining + 100);
+            setTimeout(() => {
+                if (isDisposing) return;
+                checkPollingNeeded();
+            }, remaining + 100);
         }
     }
 
@@ -519,6 +529,7 @@
      * Cleanup - call when leaving the page.
      */
     async function dispose() {
+        isDisposing = true;
         stopPolling();
         removeShadowRefreshTriggers();
 

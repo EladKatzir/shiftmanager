@@ -42,6 +42,7 @@
 
 .widget__header:hover {
   background-color: var(--surface);
+  box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb), 0.1);
 }
 
 .widget__header:focus-visible {
@@ -91,16 +92,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   color: var(--text-muted);
+  background: rgba(var(--primary-rgb), 0.08);
+  border-radius: var(--radius-sm);
   transition: transform var(--duration-normal) var(--ease-out),
-              color var(--duration-normal) var(--ease-out);
+              color var(--duration-normal) var(--ease-out),
+              background var(--duration-normal) var(--ease-out);
   flex-shrink: 0;
 }
 
 .widget__header:hover .widget__toggle {
   color: var(--text);
+  background: rgba(var(--primary-rgb), 0.15);
 }
 
 .widget.is-collapsed .widget__toggle {

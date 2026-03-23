@@ -193,5 +193,4 @@
         }
     };
 
-    console.log('[CacheManager] Initialized with version', lastModified);
 })();

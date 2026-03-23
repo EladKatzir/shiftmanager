@@ -18,6 +18,18 @@ public class ShiftAssignment : IBelongsToCompany
     public int? TraineeUserId { get; set; }
     public AppUser? Trainee { get; set; }
 
+    /// <summary>
+    /// Per-assignment trainee flag (Shikma model: trainees take shifts directly, not shadowing).
+    /// Mutually exclusive with TraineeUserId — set one or the other, not both.
+    /// </summary>
+    public bool IsTraineeShift { get; set; } = false;
+
+    /// <summary>
+    /// Cell-level annotation for display in calendar (e.g., "עולה ב13", "רחב").
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.MaxLength(500)]
+    public string? Note { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>

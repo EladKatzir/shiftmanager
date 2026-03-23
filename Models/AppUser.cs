@@ -70,8 +70,27 @@ public class AppUser : IBelongsToCompany
     /// </summary>
     public int? RoleTemplateId { get; set; }
 
+    /// <summary>
+    /// Which shift type this user primarily operates (for calendar grouping).
+    /// NULL = user doesn't do shifts → appears in company group.
+    /// Points to a ShiftType which may belong to a different company (cross-tenant FK via IgnoreQueryFilters).
+    /// </summary>
+    public int? PrimaryShiftTypeId { get; set; }
+
+    /// <summary>
+    /// User's assigned home rotation type. Single source of truth for home type assignment.
+    /// NULL = no rotation assigned.
+    /// </summary>
+    public int? HomeTypeId { get; set; }
+
     // Navigation
     public JobType? JobType { get; set; }
     public Department? Department { get; set; }
     public RoleTemplate? RoleTemplate { get; set; }
+    /// <summary>
+    /// SECURITY-AUDITED: Cross-tenant FK — PrimaryShiftType may belong to a different company.
+    /// Load via IgnoreQueryFilters() when needed.
+    /// </summary>
+    public ShiftType? PrimaryShiftType { get; set; }
+    public HomeType? HomeType { get; set; }
 }

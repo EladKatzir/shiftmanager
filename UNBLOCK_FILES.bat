@@ -63,7 +63,13 @@ for %%D in (%CRITICAL_DLLS%) do (
         REM G-08: Use cmd-native ADS deletion — works even when PowerShell is blocked by Group Policy
         echo. > "%%D:Zone.Identifier" 2>nul
         del /f "%%D:Zone.Identifier" 2>nul
-        echo   [OK] Processed %%D
+        REM Verify removal
+        dir /r "%%D" 2>nul | findstr /i "Zone.Identifier" >nul 2>&1
+        if errorlevel 1 (
+            echo   [OK] Processed: %%~nxD
+        ) else (
+            echo   [WARN] May still be blocked: %%~nxD
+        )
     ) else (
         echo   [WARNING] %%D not found
     )

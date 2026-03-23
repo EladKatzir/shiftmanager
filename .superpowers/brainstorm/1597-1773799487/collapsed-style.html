@@ -1,0 +1,106 @@
+<h2>Collapsed Sidebar — Tab Position</h2>
+<p class="subtitle">Sidebar fully hidden when collapsed. Content takes full width. Only a small tab to re-expand.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:bold;">Option A: Flush at screen edge</div>
+      <div style="position:relative;width:100%;height:220px;background:#0d1117;border-radius:6px;overflow:hidden;border:1px solid #333;">
+        <div style="position:absolute;left:0;top:50%;transform:translateY(-50%);background:#4a90d9;color:white;padding:16px 5px;border-radius:0 6px 6px 0;font-size:15px;cursor:pointer;line-height:1;font-weight:bold;z-index:5;">&laquo;</div>
+        <div style="background:#161b22;padding:10px 16px 10px 24px;border-bottom:1px solid #333;color:#ccc;font-size:12px;display:flex;justify-content:space-between;">
+          <span style="font-weight:bold;">לוח משמרות</span>
+          <span style="color:#888;">🌐 עב &nbsp; 🌓 &nbsp; 🚪</span>
+        </div>
+        <div style="padding:10px 16px 10px 24px;">
+          <div style="color:#888;font-size:10px;margin-bottom:8px;">שקמה &nbsp; | &nbsp; שבוע &nbsp; | &nbsp; <span style="background:#4a90d9;color:white;padding:1px 6px;border-radius:3px;">לפי אנשים</span> &nbsp; לפי משמרות</div>
+          <div style="display:grid;grid-template-columns:90px repeat(7,1fr);gap:1px;font-size:9px;">
+            <div style="background:#1a1a2e;padding:4px;"></div>
+            <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">ראשון<br><span style="font-size:8px;">15.03</span></div>
+            <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">שני<br><span style="font-size:8px;">16.03</span></div>
+            <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">שלישי<br><span style="font-size:8px;">17.03</span></div>
+            <div style="background:#1a1a2e;padding:4px;color:#fff;text-align:center;border-bottom:2px solid #4a90d9;">רביעי<br><span style="font-size:8px;">18.03</span></div>
+            <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">חמישי<br><span style="font-size:8px;">19.03</span></div>
+            <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">שישי<br><span style="font-size:8px;">20.03</span></div>
+            <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">שבת<br><span style="font-size:8px;">21.03</span></div>
+            <div style="grid-column:1/-1;background:#1e2a3a;padding:3px 8px;color:#7ab3ef;font-size:9px;">▼ תקני משמרת דלתא &nbsp;⋮⋮</div>
+            <div style="background:#161b22;padding:4px;color:#ddd;">Emp Tech Pie <span style="font-size:7px;color:#4a90d9;">פאי</span></div>
+            <div style="background:#161b22;padding:4px;"></div>
+            <div style="background:#161b22;padding:4px;"></div>
+            <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">דלתא</span></div>
+            <div style="background:#161b22;padding:4px;"></div>
+            <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">דלתא</span></div>
+            <div style="background:#161b22;padding:4px;"></div>
+            <div style="background:#161b22;padding:4px;"></div>
+            <div style="grid-column:1/-1;background:#1e2a3a;padding:3px 8px;color:#7ab3ef;font-size:9px;">▼ תקני משמרת הנבה &nbsp;⋮⋮</div>
+            <div style="background:#161b22;padding:4px;color:#ddd;">Emp Tech Tao <span style="font-size:7px;color:#4a90d9;">טאו</span></div>
+            <div style="background:#161b22;padding:4px;"></div>
+            <div style="background:#161b22;padding:4px;"></div>
+            <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">הנבה</span></div>
+            <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">הנבה</span></div>
+            <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">הנבה</span></div>
+            <div style="background:#161b22;padding:4px;"></div>
+            <div style="background:#161b22;padding:4px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Flush — zero sidebar width</h3>
+      <p>Sidebar width becomes <strong>0px</strong>. The &laquo; tab overlays the content edge. Content gets 100% screen width. Tab is always clickable via z-index.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:bold;">Option B: Thin anchor strip (4px)</div>
+      <div style="position:relative;width:100%;height:220px;background:#0d1117;border-radius:6px;overflow:hidden;border:1px solid #333;display:flex;">
+        <div style="width:4px;background:#161b22;border-right:1px solid #333;flex-shrink:0;position:relative;">
+          <div style="position:absolute;left:0;top:50%;transform:translateY(-50%);background:#4a90d9;color:white;padding:16px 5px;border-radius:0 6px 6px 0;font-size:15px;cursor:pointer;line-height:1;font-weight:bold;z-index:5;">&laquo;</div>
+        </div>
+        <div style="flex:1;overflow:hidden;">
+          <div style="background:#161b22;padding:10px 16px;border-bottom:1px solid #333;color:#ccc;font-size:12px;display:flex;justify-content:space-between;">
+            <span style="font-weight:bold;">לוח משמרות</span>
+            <span style="color:#888;">🌐 עב &nbsp; 🌓 &nbsp; 🚪</span>
+          </div>
+          <div style="padding:10px 16px;">
+            <div style="color:#888;font-size:10px;margin-bottom:8px;">שקמה &nbsp; | &nbsp; שבוע &nbsp; | &nbsp; <span style="background:#4a90d9;color:white;padding:1px 6px;border-radius:3px;">לפי אנשים</span> &nbsp; לפי משמרות</div>
+            <div style="display:grid;grid-template-columns:90px repeat(7,1fr);gap:1px;font-size:9px;">
+              <div style="background:#1a1a2e;padding:4px;"></div>
+              <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">ראשון<br><span style="font-size:8px;">15.03</span></div>
+              <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">שני<br><span style="font-size:8px;">16.03</span></div>
+              <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">שלישי<br><span style="font-size:8px;">17.03</span></div>
+              <div style="background:#1a1a2e;padding:4px;color:#fff;text-align:center;border-bottom:2px solid #4a90d9;">רביעי<br><span style="font-size:8px;">18.03</span></div>
+              <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">חמישי<br><span style="font-size:8px;">19.03</span></div>
+              <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">שישי<br><span style="font-size:8px;">20.03</span></div>
+              <div style="background:#1a1a2e;padding:4px;color:#aaa;text-align:center;">שבת<br><span style="font-size:8px;">21.03</span></div>
+              <div style="grid-column:1/-1;background:#1e2a3a;padding:3px 8px;color:#7ab3ef;font-size:9px;">▼ תקני משמרת דלתא &nbsp;⋮⋮</div>
+              <div style="background:#161b22;padding:4px;color:#ddd;">Emp Tech Pie <span style="font-size:7px;color:#4a90d9;">פאי</span></div>
+              <div style="background:#161b22;padding:4px;"></div>
+              <div style="background:#161b22;padding:4px;"></div>
+              <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">דלתא</span></div>
+              <div style="background:#161b22;padding:4px;"></div>
+              <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">דלתא</span></div>
+              <div style="background:#161b22;padding:4px;"></div>
+              <div style="background:#161b22;padding:4px;"></div>
+              <div style="grid-column:1/-1;background:#1e2a3a;padding:3px 8px;color:#7ab3ef;font-size:9px;">▼ תקני משמרת הנבה &nbsp;⋮⋮</div>
+              <div style="background:#161b22;padding:4px;color:#ddd;">Emp Tech Tao <span style="font-size:7px;color:#4a90d9;">טאו</span></div>
+              <div style="background:#161b22;padding:4px;"></div>
+              <div style="background:#161b22;padding:4px;"></div>
+              <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">הנבה</span></div>
+              <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">הנבה</span></div>
+              <div style="background:#161b22;padding:4px;"><span style="background:#2a4a6a;color:#9cc5f0;padding:1px 4px;border-radius:2px;font-size:8px;">הנבה</span></div>
+              <div style="background:#161b22;padding:4px;"></div>
+              <div style="background:#161b22;padding:4px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Thin strip anchor (4px)</h3>
+      <p>A barely-visible 4px dark strip stays as a visual anchor. The &laquo; tab protrudes from it. Gives a subtle sense of "something is here to open."</p>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top:20px;color:#999;font-size:13px;">Both show the Shikma calendar at near-full width. Click the one you prefer.</p>

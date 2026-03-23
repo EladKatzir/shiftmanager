@@ -64,6 +64,18 @@ public static class TechShiftTypeSeed
                 End = new TimeOnly(16, 0),
                 RowColor = "#D9A04A",
                 RequiresOfficerRank = true
+            },
+            // HOME shift type — rotation day off, exempt from overlap/rest/cap validation
+            new ShiftType
+            {
+                CompanyId = companyId,
+                MoleculeId = moleculeId,
+                Key = ShiftType.KEY_HOME,
+                CustomName = "Home",
+                NameKey = "Home",
+                Start = new TimeOnly(0, 0),
+                End = new TimeOnly(23, 59),
+                RowColor = "#F8E7B1"
             }
         };
     }

@@ -1,0 +1,123 @@
+<h2>Collapsed Sidebar — Tab Position</h2>
+<p class="subtitle">Sidebar fully hidden when collapsed. Main content takes full width. Only a small tab to re-expand.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-size:10px;color:#888;margin-bottom:6px;">Option A: Flush at screen edge</div>
+      <!-- Full page mockup -->
+      <div style="position:relative;width:100%;height:200px;background:#0d1117;border-radius:6px;overflow:hidden;border:1px solid #333;">
+        <!-- No sidebar visible -->
+        <!-- Tab flush at left edge -->
+        <div style="position:absolute;left:0;top:50%;transform:translateY(-50%);background:#4a90d9;color:white;padding:14px 5px;border-radius:0 6px 6px 0;font-size:14px;cursor:pointer;line-height:1;font-weight:bold;z-index:5;">&laquo;</div>
+        <!-- Header bar -->
+        <div style="background:#161b22;padding:8px 16px 8px 28px;border-bottom:1px solid #333;color:#ccc;font-size:11px;display:flex;justify-content:space-between;">
+          <span>לוח משמרות</span>
+          <span style="color:#888;">🌐 עב &nbsp; 🌓 &nbsp; 🚪</span>
+        </div>
+        <!-- Full-width content area -->
+        <div style="padding:8px 16px 8px 28px;">
+          <div style="color:#888;font-size:9px;margin-bottom:6px;">שקמה &nbsp;|&nbsp; שבוע &nbsp;|&nbsp; לפי אנשים</div>
+          <!-- Calendar grid stretching full width -->
+          <div style="display:grid;grid-template-columns:80px repeat(7,1fr);gap:1px;font-size:8px;">
+            <div style="background:#1a1a2e;padding:3px;color:#666;"></div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">ראשון</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">שני</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">שלישי</div>
+            <div style="background:#1a1a2e;padding:3px;color:#fff;text-align:center;border-bottom:2px solid #4a90d9;">רביעי</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">חמישי</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">שישי</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">שבת</div>
+            <!-- Group header -->
+            <div style="grid-column:1/-1;background:#1e2a3a;padding:2px 6px;color:#7ab3ef;font-size:8px;">▼ תקני משמרת דלתא</div>
+            <!-- Row 1 -->
+            <div style="background:#161b22;padding:3px;color:#ccc;">Emp Tech Pie <span style="font-size:7px;color:#4a90d9;">🏢פאי</span></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת דלתא</div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת דלתא</div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <!-- Group header 2 -->
+            <div style="grid-column:1/-1;background:#1e2a3a;padding:2px 6px;color:#7ab3ef;font-size:8px;">▼ תקני משמרת הנבה</div>
+            <!-- Row 2 -->
+            <div style="background:#161b22;padding:3px;color:#ccc;">Emp Tech Tao <span style="font-size:7px;color:#4a90d9;">🏢טאו</span></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת הנבה</div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת הנבה</div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת הנבה</div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Flush at screen edge</h3>
+      <p>Tab sits at x=0, left edge of screen. Content starts immediately after it. Tab overlaps content slightly.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="font-size:10px;color:#888;margin-bottom:6px;">Option B: Floating pull-handle</div>
+      <!-- Full page mockup -->
+      <div style="position:relative;width:100%;height:200px;background:#0d1117;border-radius:6px;overflow:hidden;border:1px solid #333;">
+        <!-- Thin sliver of sidebar background -->
+        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#161b22;border-right:1px solid #333;"></div>
+        <!-- Tab protruding from the sliver -->
+        <div style="position:absolute;left:0;top:50%;transform:translateY(-50%);background:#4a90d9;color:white;padding:14px 5px;border-radius:0 6px 6px 0;font-size:14px;cursor:pointer;line-height:1;font-weight:bold;z-index:5;">&laquo;</div>
+        <!-- Header bar -->
+        <div style="background:#161b22;padding:8px 16px 8px 20px;border-bottom:1px solid #333;color:#ccc;font-size:11px;display:flex;justify-content:space-between;margin-left:4px;">
+          <span>לוח משמרות</span>
+          <span style="color:#888;">🌐 עב &nbsp; 🌓 &nbsp; 🚪</span>
+        </div>
+        <!-- Full-width content area -->
+        <div style="padding:8px 16px 8px 20px;margin-left:4px;">
+          <div style="color:#888;font-size:9px;margin-bottom:6px;">שקמה &nbsp;|&nbsp; שבוע &nbsp;|&nbsp; לפי אנשים</div>
+          <!-- Calendar grid -->
+          <div style="display:grid;grid-template-columns:80px repeat(7,1fr);gap:1px;font-size:8px;">
+            <div style="background:#1a1a2e;padding:3px;color:#666;"></div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">ראשון</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">שני</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">שלישי</div>
+            <div style="background:#1a1a2e;padding:3px;color:#fff;text-align:center;border-bottom:2px solid #4a90d9;">רביעי</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">חמישי</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">שישי</div>
+            <div style="background:#1a1a2e;padding:3px;color:#aaa;text-align:center;">שבת</div>
+            <!-- Group header -->
+            <div style="grid-column:1/-1;background:#1e2a3a;padding:2px 6px;color:#7ab3ef;font-size:8px;">▼ תקני משמרת דלתא</div>
+            <!-- Row 1 -->
+            <div style="background:#161b22;padding:3px;color:#ccc;">Emp Tech Pie <span style="font-size:7px;color:#4a90d9;">🏢פאי</span></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת דלתא</div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת דלתא</div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <!-- Group header 2 -->
+            <div style="grid-column:1/-1;background:#1e2a3a;padding:2px 6px;color:#7ab3ef;font-size:8px;">▼ תקני משמרת הנבה</div>
+            <!-- Row 2 -->
+            <div style="background:#161b22;padding:3px;color:#ccc;">Emp Tech Tao <span style="font-size:7px;color:#4a90d9;">🏢טאו</span></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת הנבה</div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת הנבה</div>
+            <div style="background:#161b22;padding:3px;color:#7ab3ef;font-size:7px;">משמרת הנבה</div>
+            <div style="background:#161b22;padding:3px;"></div>
+            <div style="background:#161b22;padding:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Floating pull-handle</h3>
+      <p>A thin 4px sidebar remnant stays visible as context. The &laquo; tab protrudes from it. Content gets nearly full width.</p>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top:20px;color:#999;font-size:13px;">Both mockups show the Shikma calendar with full-width content. The only difference is whether the tab is truly flush (A) or has a thin anchor strip (B).</p>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -217,6 +218,13 @@ public class CreateModel : PageModel
                 }));
 
             return new JsonResult(new { success = true, entityId = entityId, message = result });
+        }
+        catch (DbUpdateException dbEx) when (dbEx.InnerException is SqliteException sqliteEx
+            && (sqliteEx.SqliteExtendedErrorCode == 2067 /* SQLITE_CONSTRAINT_UNIQUE */
+                || sqliteEx.SqliteExtendedErrorCode == 1555 /* SQLITE_CONSTRAINT_PRIMARYKEY */))
+        {
+            _logger.LogWarning(dbEx, "Duplicate hierarchy entity creation attempted");
+            return new JsonResult(new { success = false, message = "An item with this name already exists." }) { StatusCode = 409 };
         }
         catch (Exception ex)
         {

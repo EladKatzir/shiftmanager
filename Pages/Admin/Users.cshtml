@@ -694,6 +694,88 @@
 <div class="section-card">
     <h2 class="section-title">@Localizer["ExistingUsers"]</h2>
 
+    <!-- Add User Form (moved above table for quick access) -->
+    <div style="margin-bottom: var(--space-4); padding: var(--space-3); background: var(--surface-soft); border-radius: var(--radius-md);">
+        <h3 class="section-title" style="margin-bottom: var(--space-2);">@Localizer["AddUser"]</h3>
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="alert alert-error" style="margin-bottom: 1rem;">
+                <span>✗</span>
+                <span>@Model.Error</span>
+            </div>
+        }
+        <form method="post" asp-page-handler="Add">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>@Localizer["Email"]</label>
+                    <input class="form-input" asp-for="NewEmail" type="email" autocomplete="email" required />
+                </div>
+                <div class="filter-group">
+                    <label>@Localizer["DisplayName"]</label>
+                    <input class="form-input" asp-for="NewDisplayName" autocomplete="name" required />
+                </div>
+                <div class="filter-group">
+                    <label>@Localizer["Role"]</label>
+                    <select class="form-input" asp-for="NewRoleTemplateId">
+                        @foreach (var rt in Model.AssignableRoleTemplates)
+                        {
+                            <option value="@rt.Id" data-derived-role="@rt.DerivedUserRole">@RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)</option>
+                        }
+                    </select>
+                </div>
+                @if (Model.Companies.Count > 0)
+                {
+                    <div class="filter-group" id="addUserCompanyField">
+                        <label>@Localizer["Company"]</label>
+                        <select asp-for="NewUserCompanyId" class="form-input" required>
+                            @if (Model.Companies.Count > 1)
+                            {
+                                <option value="">-- @Localizer["SelectCompany"] --</option>
+                            }
+                            @foreach (var company in Model.Companies)
+                            {
+                                <option value="@company.Id">@company.LocalizedName</option>
+                            }
+                        </select>
+                    </div>
+                }
+                @if (Model.IsOwner)
+                {
+                    <div class="filter-group" id="addUserMoleculeField" style="display:none;">
+                        <label>@Localizer["Molecule"]</label>
+                        <select asp-for="NewMoleculeId" class="form-input">
+                            <option value="">-- @Localizer["SelectMolecule"] --</option>
+                            @foreach (var mol in Model.AvailableMolecules)
+                            {
+                                <option value="@mol.Id">@mol.Name</option>
+                            }
+                        </select>
+                    </div>
+                }
+                <div class="filter-group">
+                    <label>@Localizer["JobType"]</label>
+                    <select asp-for="NewJobTypeId" class="form-input" id="addUserJobType">
+                        <option value="">-- @Localizer["SelectJobType"] --</option>
+                        @foreach (var jobType in Model.AvailableJobTypes)
+                        {
+                            <option value="@jobType.Id" data-key="@jobType.Key">@jobType.AreaName - @jobType.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>@Localizer["Password"]</label>
+                    <input class="form-input" asp-for="NewPassword" type="password" autocomplete="new-password" minlength="6" required />
+                </div>
+                <div class="filter-group" style="display: flex; align-items: end;">
+                    <button class="btn btn-primary" type="submit" style="width: 100%;">
+                        <span>+</span>
+                        <span>@Localizer["Add"]</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <!-- Filters -->
     <form method="get">
         <input type="hidden" name="FilterStatus" value="@((int)Model.FilterStatus)" />
@@ -768,8 +850,16 @@
         </div>
     </form>
 
-    <div style="overflow-x: auto;">
-    <table class="data-table" style="min-width: 900px;">
+    <div style="margin-bottom: var(--space-3);">
+        <label class="sr-only" for="userSearch">@Localizer["SearchUser"]</label>
+        <input type="text" id="userSearch" class="form-input"
+               placeholder="@Localizer["SearchUserPlaceholder"]"
+               oninput="filterUserTable(this.value)"
+               style="max-width: 300px;" />
+    </div>
+
+    <div style="overflow-x: clip; overflow-y: visible;">
+    <table id="usersTable" class="data-table data-table--sticky-header data-table--sticky-col" style="min-width: 900px;">
         <thead>
             <tr>
                 <th>@Localizer["Name"]</th>
@@ -777,6 +867,7 @@
                 <th>@Localizer["Company"]</th>
                 <th>@Localizer["JobType"]</th>
                 <th>@Localizer["Department"]</th>
+                <th><loc key="PrimaryShiftType" /></th>
                 <th>@Localizer["Role"]</th>
                 <th>@Localizer["Grants"]</th>
                 <th>@Localizer["Status"]</th>
@@ -825,6 +916,29 @@
                     </div>
                 </td>
                 <td>@(u.DepartmentName ?? "-")</td>
+                <td class="editable-cell" data-cell-type="primaryshifttype" data-user-id="@u.Id">
+                    <div class="cell-display">
+                        <span class="cell-display__value">@(u.PrimaryShiftTypeName ?? "-")</span>
+                        <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="Edit" aria-label="Edit">
+                            ⚙️
+                        </button>
+                    </div>
+                    <div class="cell-edit">
+                        <form method="post" asp-page-handler="PrimaryShiftType" style="display:inline; margin: 0;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <select class="form-input cell-edit__select" name="primaryShiftTypeId" data-original-value="@(u.PrimaryShiftTypeId?.ToString() ?? "")">
+                                <option value="" selected="@(!u.PrimaryShiftTypeId.HasValue)">-</option>
+                                @foreach (var st in Model.AvailableShiftTypes)
+                                {
+                                    <option value="@st.Id" selected="@(u.PrimaryShiftTypeId == st.Id)">@(st.CustomName ?? st.Name)</option>
+                                }
+                            </select>
+                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]">✓</button>
+                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]">✗</button>
+                        </form>
+                    </div>
+                </td>
                 <td class="editable-cell" data-cell-type="role" data-user-id="@u.Id">
                     <div class="cell-display">
                         <span class="cell-display__value">@RoleDisplayHelper.GetRoleDisplayName(Localizer, u.Role, u.JobTypeKey)</span>
@@ -874,7 +988,7 @@
                     <input type="hidden" name="id" value="@u.Id" />
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <input class="form-input" type="password" name="newPassword" placeholder="@Localizer["NewPassword"]"
-                               minlength="6" style="min-width: 100px;" loc-aria-label="Admin_ResetPassword" />
+                               autocomplete="new-password" minlength="6" style="min-width: 100px;" loc-aria-label="Admin_ResetPassword" />
                         <button class="btn btn-sm">@Localizer["Set"]</button>
                     </div>
                     </form>
@@ -960,87 +1074,6 @@
     </div>
 </div>
 
-<!-- Add User Section -->
-<div class="section-card">
-    <h2 class="section-title">@Localizer["AddUser"]</h2>
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-error" style="margin-bottom: 1rem;">
-            <span>✗</span>
-            <span>@Model.Error</span>
-        </div>
-    }
-    <form method="post" asp-page-handler="Add">
-        <div class="filters-grid">
-            <div class="filter-group">
-                <label>@Localizer["Email"]</label>
-                <input class="form-input" asp-for="NewEmail" type="email" required />
-            </div>
-            <div class="filter-group">
-                <label>@Localizer["DisplayName"]</label>
-                <input class="form-input" asp-for="NewDisplayName" required />
-            </div>
-            <div class="filter-group">
-                <label>@Localizer["Role"]</label>
-                <select class="form-input" asp-for="NewRoleTemplateId">
-                    @foreach (var rt in Model.AssignableRoleTemplates)
-                    {
-                        <option value="@rt.Id" data-derived-role="@rt.DerivedUserRole">@RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)</option>
-                    }
-                </select>
-            </div>
-            @if (Model.Companies.Count > 0)
-            {
-                <div class="filter-group" id="addUserCompanyField">
-                    <label>@Localizer["Company"]</label>
-                    <select asp-for="NewUserCompanyId" class="form-input" required>
-                        @if (Model.Companies.Count > 1)
-                        {
-                            <option value="">-- @Localizer["SelectCompany"] --</option>
-                        }
-                        @foreach (var company in Model.Companies)
-                        {
-                            <option value="@company.Id">@company.LocalizedName</option>
-                        }
-                    </select>
-                </div>
-            }
-            @if (Model.IsOwner)
-            {
-                <div class="filter-group" id="addUserMoleculeField" style="display:none;">
-                    <label>@Localizer["Molecule"]</label>
-                    <select asp-for="NewMoleculeId" class="form-input">
-                        <option value="">-- @Localizer["SelectMolecule"] --</option>
-                        @foreach (var mol in Model.AvailableMolecules)
-                        {
-                            <option value="@mol.Id">@mol.Name</option>
-                        }
-                    </select>
-                </div>
-            }
-            <div class="filter-group">
-                <label>@Localizer["JobType"]</label>
-                <select asp-for="NewJobTypeId" class="form-input" id="addUserJobType">
-                    <option value="">-- @Localizer["SelectJobType"] --</option>
-                    @foreach (var jobType in Model.AvailableJobTypes)
-                    {
-                        <option value="@jobType.Id" data-key="@jobType.Key">@jobType.AreaName - @jobType.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>@Localizer["Password"]</label>
-                <input class="form-input" asp-for="NewPassword" type="password" minlength="6" required />
-            </div>
-            <div class="filter-group" style="display: flex; align-items: end;">
-                <button class="btn btn-primary" type="submit" style="width: 100%;">
-                    <span>+</span>
-                    <span>@Localizer["Add"]</span>
-                </button>
-            </div>
-        </div>
-    </form>
-</div>
 
 @* I-07: Bulk user import from CSV *@
 <div class="section-card" style="margin-top: 1rem;">
@@ -1068,6 +1101,16 @@
 @section Scripts {
     <script>
         const selectedText = '@(Localizer["Selected"].Value.Trim())';
+
+        // Client-side user table search filter
+        function filterUserTable(query) {
+            var rows = document.querySelectorAll('#usersTable tbody tr');
+            var q = query.toLowerCase();
+            rows.forEach(function(row) {
+                var text = row.textContent.toLowerCase();
+                row.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
 
         function toggleAllRequests(selectAllCheckbox) {
             const checkboxes = document.querySelectorAll('.request-checkbox');

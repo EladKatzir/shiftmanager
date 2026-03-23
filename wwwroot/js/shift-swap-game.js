@@ -166,7 +166,7 @@
         if (modalElement) return;
 
         ANIMATION_DURATION = getAnimationDuration();
-        console.log('[ShiftSwapGame] Animation duration:', ANIMATION_DURATION, 'ms');
+        // Animation duration configured
 
         // Load configuration and localization
         const configLoaded = await loadGameConfiguration();
@@ -609,7 +609,6 @@
      * Attempt to swap two tiles
      */
     async function attemptSwap(tile1, tile2) {
-        console.log(`🔄 User swap: (${tile1.row},${tile1.col}) ↔ (${tile2.row},${tile2.col})`);
         isAnimating = true;
 
         // Swap tiles
@@ -621,16 +620,13 @@
         await sleep(ANIMATION_DURATION / 2);
 
         // Check for matches
-        console.log('  Checking for matches after swap...');
         const matches = findAllMatches();
 
         if (matches.length > 0) {
-            console.log(`  ✅ Valid swap! Processing ${matches.length} matches...`);
             // Valid swap - clear matches and continue
             selectedTile = null;
             await processMatches(matches);
         } else {
-            console.log('  ❌ Invalid swap - swapping back');
             // Invalid swap - swap back
             grid[tile2.row][tile2.col] = grid[tile1.row][tile1.col];
             grid[tile1.row][tile1.col] = temp;
@@ -641,7 +637,6 @@
 
         isAnimating = false;
         renderGrid();
-        console.log('🔄 Swap complete - game ready for input');
     }
 
     /**
@@ -721,8 +716,6 @@
 
         // ✅ SUPER-MERGE: Attach super-merge lines to result
         matchArray.superMergeLines = superMergeLines;
-
-        console.log(`⏱️ findAllMatches took ${(performance.now() - findStart).toFixed(2)}ms - found ${matchArray.length} matches, ${superMergeLines.length} super-merge lines`);
 
         return matchArray;
     }
@@ -836,7 +829,6 @@
             }
         }
 
-        console.log(`⏱️ getPossibleMerges(findAll=${findAll}) took ${(performance.now() - start).toFixed(2)}ms - found ${possibleMoves.length} possible moves`);
         return possibleMoves;
     }
 
@@ -895,16 +887,9 @@
     async function checkForLoseCondition() {
         if (gameOver) return;
 
-        console.log('🔍 Checking for lose condition...');
-        const loseCheckStart = performance.now();
-
         const possibleMoves = getPossibleMerges(false); // Early exit for performance
 
-        console.log(`  Lose check took ${(performance.now() - loseCheckStart).toFixed(2)}ms`);
-        console.log(`  Possible moves found: ${possibleMoves.length}`);
-
         if (possibleMoves.length === 0) {
-            console.log('❌ No possible moves - Game Over!');
             gameOver = true;
 
             // Wait a moment for player to see the board
@@ -912,8 +897,6 @@
 
             // Trigger game over with special message
             await triggerGameOver();
-        } else {
-            console.log('✅ Player still has moves available');
         }
     }
 
@@ -998,49 +981,31 @@
      * ✅ SUPER-MERGE: Process matches (with super-merge combo detection)
      */
     async function processMatches(matches) {
-        console.log('🔍 processMatches called with', matches.length, 'matched tiles');
-
-        // ✅ SUPER-MERGE: Check for mega combo (2+ lines of 4)
+        // Check for mega combo (2+ lines of 4)
         const superMergeLines = matches.superMergeLines || [];
-        console.log('🔍 Super-merge lines found:', superMergeLines.length);
-
-        if (superMergeLines.length > 0) {
-            superMergeLines.forEach((line, idx) => {
-                const len = getLineLength(line);
-                console.log(`  Line ${idx + 1}: ${line.type}, length=${len}`);
-            });
-        }
 
         const isMegaCombo = superMergeLines.length >= 2;
 
         if (isMegaCombo) {
-            console.log('🎆 MEGA COMBO DETECTED! Lines:', superMergeLines.length);
-            // 🎆 MEGA COMBO: Try to trigger mega combo (returns true if processed)
+            // MEGA COMBO: Try to trigger mega combo (returns true if processed)
             const megaComboProcessed = await handleMegaCombo(superMergeLines);
 
             if (megaComboProcessed) {
-                console.log('✅ Mega combo was processed');
                 return; // Exit early after mega combo
-            } else {
-                console.log('⚠️ Mega combo threshold not met - falling through to individual super-merge handling');
-                // Fall through to handle as individual super-merges
             }
+            // Fall through to handle as individual super-merges
         }
 
         if (superMergeLines.length === 1) {
-            console.log('✨ SUPER-MERGE DETECTED! Length:', getLineLength(superMergeLines[0]));
-            // ✨ SUPER-MERGE: Single 4-in-a-row combo
+            // SUPER-MERGE: Single 4-in-a-row combo
             await handleSuperMerge(superMergeLines[0], matches);
             return; // Exit early after super-merge
         } else if (superMergeLines.length >= 2) {
-            console.log('✨ MULTIPLE SUPER-MERGES! Processing each individually...');
             // Process the longest line first
             const sortedLines = superMergeLines.sort((a, b) => getLineLength(b) - getLineLength(a));
             await handleSuperMerge(sortedLines[0], matches);
             return; // Exit early (cascades will handle remaining matches)
         }
-
-        console.log('📝 Regular 3-match processing');
 
         // Regular match processing (3-in-a-row)
         const points = POINTS_3_MATCH; // Configured points for 3-match
@@ -1090,12 +1055,6 @@
      * ✨ SUPER-MERGE: Handle single 4-in-a-row combo
      */
     async function handleSuperMerge(line, matches) {
-        const startTime = performance.now();
-        console.log('✨ handleSuperMerge START', {
-            type: line.type,
-            line: line
-        });
-
         // Extract tiles that belong to the super-merge line
         let superMergeTiles = [];
 
@@ -1115,36 +1074,26 @@
         let points = 0;
         let clearEntireRowCol = false;
 
-        console.log(`  Line length: ${lineLength} tiles`);
-
         if (lineLength === 4) {
             // 4-in-a-row: configured points
             points = POINTS_4_MATCH;
-            console.log(`  4-match: ${points} points`);
         } else if (lineLength >= 5) {
             // 5+ in-a-row: configured points + clear entire row/column
             points = POINTS_5_PLUS_MATCH;
             clearEntireRowCol = true;
-            console.log(`  5+ match: ${points} points + CLEAR ENTIRE ${line.type === 'horizontal' ? 'ROW' : 'COLUMN'}`);
         }
 
         score += points;
         checkMilestones();
         updateScore();
 
-        console.log('  Showing super-merge effect...');
         // Show super-merge notification
         showSuperMergeEffect();
 
-        // ✅ PERFORMANCE FIX: Cache all tiles once, then iterate
-        console.log('  Querying all tiles...');
-        const queryStart = performance.now();
+        // Cache all tiles once, then iterate
         const allTiles = document.querySelectorAll('.shift-swap-tile');
-        console.log(`  Found ${allTiles.length} tiles in ${(performance.now() - queryStart).toFixed(2)}ms`);
 
         // Mark tiles for animation
-        console.log('  Marking tiles for animation...');
-        const markStart = performance.now();
         let markedCount = 0;
 
         if (clearEntireRowCol) {
@@ -1178,15 +1127,10 @@
             });
         }
 
-        console.log(`  Marked ${markedCount} tiles in ${(performance.now() - markStart).toFixed(2)}ms`);
-
         const animDuration = ANIMATION_DURATION * 1.5;
-        console.log(`  Waiting ${animDuration}ms for animation...`);
         await sleep(animDuration);
 
         // Clear tiles based on match length
-        console.log('  Clearing tiles from grid...');
-        const clearStart = performance.now();
 
         if (clearEntireRowCol) {
             // Clear entire row or column for 5+
@@ -1194,59 +1138,38 @@
                 for (let c = 0; c < GRID_SIZE; c++) {
                     grid[line.row][c] = null;
                 }
-                console.log(`  Cleared entire row ${line.row}`);
             } else {
                 for (let r = 0; r < GRID_SIZE; r++) {
                     grid[r][line.col] = null;
                 }
-                console.log(`  Cleared entire column ${line.col}`);
             }
         } else {
             // Clear only matched tiles for 4-match
             superMergeTiles.forEach(({ row, col }) => {
                 grid[row][col] = null;
             });
-            console.log(`  Cleared ${superMergeTiles.length} matched tiles`);
         }
 
-        console.log(`  Grid cleared in ${(performance.now() - clearStart).toFixed(2)}ms`);
-
         // Apply gravity
-        console.log('  Applying gravity...');
-        const gravityStart = performance.now();
         applyGravity();
-        console.log(`  Gravity applied in ${(performance.now() - gravityStart).toFixed(2)}ms`);
-
-        console.log('  Rendering grid...');
         renderGrid();
         await sleep(ANIMATION_DURATION);
 
         // Refill empty spaces
-        console.log('  Refilling empty spaces...');
-        const refillStart = performance.now();
         refillGrid();
-        console.log(`  Refilled in ${(performance.now() - refillStart).toFixed(2)}ms`);
 
         renderGrid();
         await sleep(ANIMATION_DURATION);
 
         // Check for new matches (cascade)
-        console.log('  Checking for cascades...');
-        const cascadeStart = performance.now();
         const newMatches = findAllMatches();
-        console.log(`  Cascade check took ${(performance.now() - cascadeStart).toFixed(2)}ms, found ${newMatches.length} new matches`);
 
         if (newMatches.length > 0) {
-            console.log('  ♻️ CASCADE TRIGGERED');
             await processMatches(newMatches);
         } else {
             // No more cascades - check if any moves left
-            console.log('  No cascades - checking for lose condition...');
             await checkForLoseCondition();
         }
-
-        const totalTime = performance.now() - startTime;
-        console.log(`✨ handleSuperMerge COMPLETE - Total time: ${totalTime.toFixed(2)}ms`);
     }
 
     /**
@@ -1254,31 +1177,15 @@
      * @returns {boolean} True if mega combo was processed, false if threshold not met
      */
     async function handleMegaCombo(lines) {
-        const startTime = performance.now();
-        console.log('🎆 handleMegaCombo START with', lines.length, 'lines');
-
         // Defensive check
         if (!lines || lines.length === 0) {
-            console.warn('handleMegaCombo called with no lines');
             return false;
         }
 
-        console.log('  Counting lines by size...');
-        const countStart = performance.now();
-
         // Count lines by size
         const count3Lines = lines.filter(line => getLineLength(line) === 3).length;
-        console.log(`  3-tile lines: ${count3Lines}`);
-
         const count4Lines = lines.filter(line => getLineLength(line) === 4).length;
-        console.log(`  4-tile lines: ${count4Lines}`);
-
         const count5Lines = lines.filter(line => getLineLength(line) >= 5).length;
-        console.log(`  5+ tile lines: ${count5Lines}`);
-
-        console.log(`  Line counting took ${(performance.now() - countStart).toFixed(2)}ms`);
-
-        console.log(`  Thresholds: 3-match min=${MEGA_COMBO_MIN_3_LINES}, 4-match min=${MEGA_COMBO_MIN_4_LINES}, 5-match min=${MEGA_COMBO_MIN_5_LINES}`);
 
         // Check if any threshold is met
         const megaComboTriggered =
@@ -1286,93 +1193,63 @@
             (MEGA_COMBO_MIN_4_LINES > 0 && count4Lines >= MEGA_COMBO_MIN_4_LINES) ||
             (MEGA_COMBO_MIN_5_LINES > 0 && count5Lines >= MEGA_COMBO_MIN_5_LINES);
 
-        console.log(`  Mega combo triggered: ${megaComboTriggered}`);
-
         if (!megaComboTriggered) {
-            console.log('  No mega combo threshold met - returning false');
             return false; // Threshold not met - caller should handle as regular super-merge
         }
 
-        console.log('  ✅ Mega combo threshold MET - processing mega combo!');
-
         // Apply configured multiplier to current score
-        console.log(`  Applying ${MEGA_COMBO_MULTIPLIER}x multiplier to score ${score}`);
         score = score * MEGA_COMBO_MULTIPLIER;
-        console.log(`  New score: ${score}`);
 
         checkMilestones();
         updateScore();
 
         // Show mega combo explosion effect
-        console.log('  Showing mega combo effect...');
         showMegaComboEffect();
 
-        // ✅ PERFORMANCE FIX: Query all tiles once, add class with CSS-based stagger
-        console.log('  Querying all tiles for mega combo animation...');
-        const queryStart = performance.now();
+        // Query all tiles once, add class with CSS-based stagger
         const allTiles = document.querySelectorAll('.shift-swap-tile');
-        console.log(`  Found ${allTiles.length} tiles in ${(performance.now() - queryStart).toFixed(2)}ms`);
 
-        console.log('  Adding mega-combo class with staggered animation...');
-        const animStart = performance.now();
         allTiles.forEach((tile, index) => {
             tile.classList.add('mega-combo');
             // Use CSS animation-delay for stagger effect (no blocking!)
             tile.style.animationDelay = `${index * 20}ms`;
         });
-        console.log(`  Animation classes added in ${(performance.now() - animStart).toFixed(2)}ms`);
 
-        // Wait for wave effect to complete (36 tiles × 20ms) + base animation
+        // Wait for wave effect to complete (36 tiles x 20ms) + base animation
         const waitDuration = ANIMATION_DURATION * 2 + (allTiles.length * 20);
-        console.log(`  Waiting ${waitDuration}ms for mega combo animation...`);
         await sleep(waitDuration);
 
         // Clear entire grid
-        console.log('  Clearing entire grid...');
-        const clearStart = performance.now();
         for (let row = 0; row < GRID_SIZE; row++) {
             for (let col = 0; col < GRID_SIZE; col++) {
                 grid[row][col] = null;
             }
         }
-        console.log(`  Grid cleared in ${(performance.now() - clearStart).toFixed(2)}ms`);
 
         // Clean up animation delays
-        console.log('  Cleaning up animation delays...');
         allTiles.forEach(tile => {
             tile.style.animationDelay = '';
         });
 
-        console.log('  Rendering grid...');
         renderGrid();
         await sleep(ANIMATION_DURATION);
 
         // Refill with completely new grid
-        console.log('  Refilling grid...');
-        const refillStart = performance.now();
         refillGrid();
-        console.log(`  Refilled in ${(performance.now() - refillStart).toFixed(2)}ms`);
 
         renderGrid();
         await sleep(ANIMATION_DURATION * 1.5);
 
         // Check for new matches (cascade)
-        console.log('  Checking for cascades after mega combo...');
-        const cascadeStart = performance.now();
         const newMatches = findAllMatches();
-        console.log(`  Cascade check took ${(performance.now() - cascadeStart).toFixed(2)}ms, found ${newMatches.length} new matches`);
 
         if (newMatches.length > 0) {
-            console.log('  ♻️ CASCADE after mega combo');
             await processMatches(newMatches);
         } else {
             // No more cascades - check if any moves left
-            console.log('  No cascades - checking for lose condition...');
             await checkForLoseCondition();
         }
 
-        const totalTime = performance.now() - startTime;
-        console.log(`🎆 handleMegaCombo COMPLETE - Total time: ${totalTime.toFixed(2)}ms`);
         return true; // Successfully processed mega combo
     }
 
@@ -1389,11 +1266,9 @@
      * 🎆 Show mega combo visual effect
      */
     function showMegaComboEffect() {
-        console.log('    Showing mega combo floating text...');
         const culture = getCurrentCulture();
         const message = culture === 'he-IL' ? '🎆 מגה קומבו! ניקוי מלא! 🎆' : '🎆 MEGA COMBO! BOARD CLEAR! 🎆';
         showFloatingText(message, 'mega-combo-text');
-        console.log('    Mega combo effect shown');
     }
 
     /**
@@ -1420,35 +1295,27 @@
      * ✅ PHASE 19: Check for milestone crossings and show popup
      */
     function checkMilestones() {
-        console.log(`  Checking milestones (score=${score}, highest=${highestMilestone})...`);
         for (const milestone of MILESTONES) {
             if (score >= milestone && !crossedMilestones.has(milestone)) {
-                console.log(`  🏆 NEW MILESTONE REACHED: ${milestone}`);
                 crossedMilestones.add(milestone);
                 highestMilestone = Math.max(highestMilestone, milestone);
 
                 // Show milestone popup with roasting message
-                console.log(`  Showing milestone popup for ${milestone}...`);
                 showMilestonePopup(milestone);
                 break; // Only show one popup at a time
             }
         }
-        console.log(`  Milestone check complete`);
     }
 
     /**
      * ✅ Show milestone reached popup with roasting message
      */
     function showMilestonePopup(milestone) {
-        console.log(`    showMilestonePopup called for ${milestone}`);
         const roastMessage = getRandomRoast(milestone);
 
         if (!roastMessage) {
-            console.log(`    No roast message found for ${milestone}`);
             return;
         }
-
-        console.log(`    Creating milestone popup DOM...`);
 
         // Create popup HTML
         const popupHTML = `
@@ -1491,17 +1358,14 @@
         `;
 
         document.body.insertAdjacentHTML('beforeend', popupHTML);
-        console.log(`    Milestone popup DOM created and added`);
 
         // Auto-close after 5 seconds
         const popup = document.body.lastElementChild;
         setTimeout(() => {
             if (popup && popup.parentElement) {
-                console.log(`    Auto-removing milestone popup for ${milestone}`);
                 popup.remove();
             }
         }, 5000);
-        console.log(`    Milestone popup displayed successfully`);
     }
 
     /**
@@ -1564,7 +1428,6 @@
         close: closeGame
     };
 
-    console.log('✅ PHASE 19 + SUPER-MERGE: Shift Swap game loaded with leaderboard support and super combos! 🎆');
-    console.log('🐛 DEBUG MODE: Performance logging enabled');
+    // Game module loaded (debug logs removed for production)
 
 })();

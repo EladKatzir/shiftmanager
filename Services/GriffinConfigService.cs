@@ -59,10 +59,11 @@ public class GriffinConfigService : IGriffinConfigService
         try
         {
             // SECURITY-AUDITED: IgnoreQueryFilters needed — called from login page before tenant context exists;
-            // returns first enabled config to determine if Griffin SSO is available at all
+            // returns the most recently updated enabled config to ensure admin changes take effect
             var config = await _dbContext.GriffinConfigs
                 .IgnoreQueryFilters()
                 .Where(c => c.Enabled && !string.IsNullOrEmpty(c.BaseUrl) && !string.IsNullOrEmpty(c.TokenConsumerUrl))
+                .OrderByDescending(c => c.LastUpdated)
                 .FirstOrDefaultAsync();
 
             if (config != null)

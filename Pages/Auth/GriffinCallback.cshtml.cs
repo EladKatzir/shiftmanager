@@ -37,10 +37,11 @@ public class GriffinCallbackModel : LocalizedPageModel
     public async Task<IActionResult> OnGetAsync(
         [FromQuery(Name = "token")] string? token,
         [FromQuery(Name = "HashedToken")] string? hashedToken,
+        [FromQuery(Name = "hasedToken")] string? hasedToken,
         string? returnUrl = null)
     {
-        // 1. Validate token parameter — Griffin may send as "token" or "HashedToken"
-        var effectiveToken = token ?? hashedToken;
+        // 1. Validate token parameter — Griffin may send as "token", "HashedToken", or "hasedToken"
+        var effectiveToken = token ?? hashedToken ?? hasedToken;
         if (string.IsNullOrEmpty(effectiveToken))
         {
             Error = _localizer["Error_MissingAuthToken"].Value;

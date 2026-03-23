@@ -66,8 +66,7 @@
         // Set initial state
         prefersReducedMotion = mediaQuery.matches;
 
-        // Log initial state
-        console.log('[ReducedMotion] Initialized, reduced motion:', prefersReducedMotion ? 'enabled' : 'disabled');
+        // Initialized
 
         // Set up listener for changes (user can toggle in OS settings)
         // Use addEventListener with proper fallback for older browsers
@@ -92,8 +91,6 @@
         // Only process if actually changed
         if (newValue !== prefersReducedMotion) {
             prefersReducedMotion = newValue;
-
-            console.log('[ReducedMotion] Preference changed, reduced motion:', prefersReducedMotion ? 'enabled' : 'disabled');
 
             // Update document attribute
             updateDocumentAttribute();
@@ -358,7 +355,5 @@
             return mediaQuery;
         }
     };
-
-    console.log('[ReducedMotion] Utility loaded');
 
 })();

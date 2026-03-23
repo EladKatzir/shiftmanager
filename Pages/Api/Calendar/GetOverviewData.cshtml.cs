@@ -57,7 +57,7 @@ public class GetOverviewDataModel : PageModel
             }
 
             // Use current company if not specified
-            var effectiveCompanyId = companyId ?? _companyContext.CompanyId;
+            int effectiveCompanyId = companyId ?? _companyContext.CompanyId ?? 0;
             if (effectiveCompanyId <= 0)
             {
                 return new JsonResult(new { success = false, message = "Invalid company" }) { StatusCode = 400 };
@@ -92,16 +92,18 @@ public class GetOverviewDataModel : PageModel
                 }
             }
 
-            // Get users in company (uses tenant filter, capped for memory safety)
+            // Get users in the effective company, capped for memory safety
+            // SECURITY-AUDITED: IgnoreQueryFilters is SAFE — effectiveCompanyId validated above via scope/grant checks
             var users = await _db.Users
-                .Where(u => u.IsActive)
+                .IgnoreQueryFilters()
+                .Where(u => u.CompanyId == effectiveCompanyId && u.IsActive)
                 .OrderBy(u => u.DisplayName)
                 .Take(2000)
                 .Select(u => new { id = u.Id, name = u.DisplayName })
                 .ToListAsync();
 
             // Get notes for date range
-            var notesDict = await _noteService.GetNotesForCompanyAsync(effectiveCompanyId!.Value, start, end);
+            var notesDict = await _noteService.GetNotesForCompanyAsync(effectiveCompanyId, start, end);
             var notes = notesDict.Select(kvp => new
             {
                 userId = kvp.Key.UserId,
@@ -110,8 +112,11 @@ public class GetOverviewDataModel : PageModel
             }).ToList();
 
             // Get vacations (approved only)
+            // SECURITY-AUDITED: IgnoreQueryFilters is SAFE — effectiveCompanyId validated above via scope/grant checks
             var vacations = await _db.TimeOffRequests
-                .Where(t => t.Status == RequestStatus.Approved
+                .IgnoreQueryFilters()
+                .Where(t => t.CompanyId == effectiveCompanyId
+                    && t.Status == RequestStatus.Approved
                     && t.StartDate <= end
                     && t.EndDate >= start)
                 .Select(t => new
@@ -124,8 +129,10 @@ public class GetOverviewDataModel : PageModel
                 .ToListAsync();
 
             // Get chores (active only)
+            // SECURITY-AUDITED: IgnoreQueryFilters is SAFE — effectiveCompanyId validated above via scope/grant checks
             var chores = await _db.Chores
-                .Where(c => c.Date >= start && c.Date <= end && c.CanceledAt == null)
+                .IgnoreQueryFilters()
+                .Where(c => c.CompanyId == effectiveCompanyId && c.Date >= start && c.Date <= end && c.CanceledAt == null)
                 .Select(c => new
                 {
                     userId = c.UserId,
@@ -148,10 +155,13 @@ public class GetOverviewDataModel : PageModel
                 .ToListAsync();
 
             // Get shift assignments
+            // SECURITY-AUDITED: IgnoreQueryFilters is SAFE — effectiveCompanyId validated above via scope/grant checks
             var shifts = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
                 .Include(sa => sa.ShiftInstance)
                     .ThenInclude(si => si.ShiftType)
-                .Where(sa => sa.ShiftInstance.WorkDate >= start
+                .Where(sa => sa.CompanyId == effectiveCompanyId
+                    && sa.ShiftInstance.WorkDate >= start
                     && sa.ShiftInstance.WorkDate <= end
                     && sa.UserId.HasValue)
                 .Select(sa => new

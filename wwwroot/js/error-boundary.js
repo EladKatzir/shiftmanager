@@ -548,7 +548,6 @@
         // Inject styles
         injectStyles();
 
-        console.log('[ErrorBoundary] Initialized');
     }
 
     /**

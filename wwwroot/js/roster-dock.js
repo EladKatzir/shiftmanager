@@ -39,7 +39,6 @@
         // Load employees when dock is opened
         loadEmployees();
 
-        console.log('[Roster Dock] Initialized');
     }
 
     /**
@@ -393,8 +392,8 @@
             if (result.success) {
                 showToast(window.AppLocalizer?.Roster_AssignedSuccess || 'Employee assigned successfully', 'success');
 
-                // Reload the page to show the updated assignment
-                window.location.reload();
+                // Refresh calendar data or reload as fallback
+                if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { window.location.reload(); }
             } else {
                 throw new Error(result.error || (window.AppLocalizer?.Roster_AssignmentFailed || 'Assignment failed'));
             }

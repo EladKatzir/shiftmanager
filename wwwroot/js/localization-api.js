@@ -25,8 +25,6 @@
         clearCache: clearCache
     };
 
-    console.log('[Localization API] Initialized');
-
     /**
      * Get a single localized string
      * @param {string} key - Resource key
@@ -102,8 +100,6 @@
                 result[k] = cache[k] || k; // Fallback to key if not found
             });
 
-            console.log(`[Localization API] Fetched ${uncachedKeys.length} strings, ${Object.keys(cache).length} in cache`);
-
             return result;
         } catch (error) {
             console.error('[Localization API] Failed to fetch localizations:', error);
@@ -143,7 +139,6 @@
      */
     function clearCache() {
         Object.keys(cache).forEach(key => delete cache[key]);
-        console.log('[Localization API] Cache cleared');
     }
 
     // Clear cache when language changes (culture cookie changes)
@@ -152,7 +147,6 @@
     setInterval(() => {
         const currentCulture = getCookie('.AspNetCore.Culture');
         if (currentCulture !== lastCulture) {
-            console.log('[Localization API] Culture changed, clearing cache');
             clearCache();
             lastCulture = currentCulture;
 

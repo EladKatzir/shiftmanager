@@ -695,16 +695,12 @@
      * Initialize the offline handler
      */
     function initialize() {
-        console.log('[OfflineHandler] Initializing (B-050)');
-
         // Set up event listeners for browser online/offline events
         window.addEventListener('online', function() {
-            console.log('[OfflineHandler] Browser reports online');
             checkConnection(); // Verify with actual request
         });
 
         window.addEventListener('offline', function() {
-            console.log('[OfflineHandler] Browser reports offline');
             handleOffline();
         });
 

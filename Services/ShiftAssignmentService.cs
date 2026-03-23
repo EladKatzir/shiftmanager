@@ -293,6 +293,8 @@ public class ShiftAssignmentService : IShiftAssignmentService
         // --- Unified validation: load nearby assignments for overlap + rest checks ---
         var shiftType = shiftInstance.ShiftType;
         bool isOfflineShift = shiftType.IsOffline;
+        bool isHomeShift = shiftType.IsHome;
+        bool isExemptShift = isOfflineShift || isHomeShift;
         var (newStart, newEnd) = TimeHelpers.GetShiftWindow(shiftType, shiftInstance.WorkDate);
 
         var windowStart = TimeHelpers.WeekStart(shiftInstance.WorkDate).AddDays(-1);
@@ -307,15 +309,16 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 sa.ShiftInstance.WorkDate,
                 sa.ShiftInstance.ShiftType.Start,
                 sa.ShiftInstance.ShiftType.End,
-                IsOffline = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_OFFLINE
+                IsOffline = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_OFFLINE,
+                IsHome = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME
             }).ToListAsync();
 
-        // B. Overlap detection (Error — hard block)
-        if (!isOfflineShift)
+        // B. Overlap detection (Error — hard block; exempt for OFFLINE and HOME shifts)
+        if (!isExemptShift)
         {
             foreach (var ra in nearbyAssignments)
             {
-                if (ra.IsOffline) continue;
+                if (ra.IsOffline || ra.IsHome) continue;
                 var (rs, re) = TimeHelpers.GetShiftWindow(
                     new ShiftType { Start = ra.Start, End = ra.End }, ra.WorkDate);
                 if (rs < newEnd && newStart < re)
@@ -328,21 +331,21 @@ public class ShiftAssignmentService : IShiftAssignmentService
             }
         }
 
-        // C. Rest period (Error — hard block, replaces old Warning)
-        if (!isOfflineShift)
+        // C. Rest period (Error — hard block; exempt for OFFLINE and HOME shifts)
+        if (!isExemptShift)
         {
             var restRequired = effectiveSettings?.RestHours ?? 8;
-            var nonOfflineWindows = nearbyAssignments
-                .Where(ra => !ra.IsOffline)
+            var nonExemptWindows = nearbyAssignments
+                .Where(ra => !ra.IsOffline && !ra.IsHome)
                 .Select(ra => TimeHelpers.GetShiftWindow(
                     new ShiftType { Start = ra.Start, End = ra.End }, ra.WorkDate))
                 .ToList();
 
-            var before = nonOfflineWindows
+            var before = nonExemptWindows
                 .Where(w => w.end <= newStart)
                 .OrderByDescending(w => w.end)
                 .FirstOrDefault();
-            var after = nonOfflineWindows
+            var after = nonExemptWindows
                 .Where(w => w.start >= newEnd)
                 .OrderBy(w => w.start)
                 .FirstOrDefault();
@@ -358,6 +361,40 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 errors.Add(new ValidationIssue(
                     "REST_HOURS_VIOLATION", _localizer["Error_RestHoursViolation"],
                     ValidationSeverity.Error, ValidationCategory.RestHours));
+            }
+        }
+
+        // HOME mutual exclusion: warn when assigning a real shift on a HOME day (overrideable)
+        if (!isExemptShift)
+        {
+            bool hasHomeOnDate = nearbyAssignments.Any(ra => ra.IsHome && ra.WorkDate == shiftInstance.WorkDate);
+            if (hasHomeOnDate)
+            {
+                warnings.Add(new ValidationIssue(
+                    "HOME_CONFLICT", _localizer["Warning_HomeConflict"],
+                    ValidationSeverity.Warning, ValidationCategory.HomeConflict));
+            }
+        }
+
+        // HOME mutual exclusion (reverse): warn when assigning HOME on a day with real shifts
+        if (isHomeShift)
+        {
+            bool hasRealShiftOnDate = nearbyAssignments.Any(ra =>
+                !ra.IsOffline && !ra.IsHome && ra.WorkDate == shiftInstance.WorkDate);
+            if (hasRealShiftOnDate)
+            {
+                warnings.Add(new ValidationIssue(
+                    "SHIFT_EXISTS_CONFLICT", _localizer["Warning_ShiftExistsOnHomeDate"],
+                    ValidationSeverity.Warning, ValidationCategory.HomeConflict));
+            }
+
+            // Duplicate HOME on same day is a hard error
+            bool hasDuplicateHome = nearbyAssignments.Any(ra => ra.IsHome && ra.WorkDate == shiftInstance.WorkDate);
+            if (hasDuplicateHome)
+            {
+                errors.Add(new ValidationIssue(
+                    "DUPLICATE_HOME", _localizer["Error_DuplicateHome"],
+                    ValidationSeverity.Error, ValidationCategory.Overlap));
             }
         }
 
@@ -400,46 +437,49 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 ValidationSeverity.Warning, ValidationCategory.OnDutyConflict));
         }
 
-        // Check weekly cap using configurable settings from hierarchy
-        var weeklyCap = effectiveSettings?.WeeklyCap ?? 56;
-
-        // Use configurable week start day from AppConfig
-        var weekStartDayConfig = await _configCache.GetConfigAsync(shiftInstance.CompanyId, "WeekStartDay");
-        var weekStartDayOfWeek = (DayOfWeek)Math.Clamp(
-            int.TryParse(weekStartDayConfig?.Value, out var d) ? d : 0, 0, 6);
-        var startOfWeek = TimeHelpers.WeekStart(shiftInstance.WorkDate, weekStartDayOfWeek);
-        var endOfWeek = startOfWeek.AddDays(6);
-
-        // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed to count ALL assignments across companies within molecule
-        var weekShiftTimes = await _db.ShiftAssignments
-            .IgnoreQueryFilters()
-            .Include(sa => sa.ShiftInstance)
-                .ThenInclude(si => si.ShiftType)
-            .Where(sa => sa.UserId == userId
-                && sa.ShiftInstance.WorkDate >= startOfWeek
-                && sa.ShiftInstance.WorkDate <= endOfWeek)
-            .Select(sa => new { sa.ShiftInstance.WorkDate, sa.ShiftInstance.ShiftType.Start, sa.ShiftInstance.ShiftType.End })
-            .ToListAsync();
-
-        // Deduplicate overlapping time windows before summing (ported from ConflictChecker)
-        var weekWindows = weekShiftTimes
-            .Select(s => TimeHelpers.GetShiftWindow(new ShiftType { Start = s.Start, End = s.End }, s.WorkDate))
-            .OrderBy(w => w.start)
-            .ToList();
-        var weeklyHours = MergeAndSumHours(weekWindows);
-
-        var shiftHours = TimeHelpers.Hours(shiftInstance.ShiftType, shiftInstance.WorkDate);
-        if ((weeklyHours + shiftHours) > weeklyCap)
+        // Check weekly cap using configurable settings from hierarchy (exempt for OFFLINE and HOME)
+        if (!isExemptShift)
         {
-            warnings.Add(new ValidationIssue(
-                "EXCEEDS_WEEKLY_CAP",
-                _localizer["Error_ExceedsWeeklyCap"],
-                ValidationSeverity.Warning,
-                ValidationCategory.WeeklyHours));
+            var weeklyCap = effectiveSettings?.WeeklyCap ?? 56;
+
+            // Use configurable week start day from AppConfig
+            var weekStartDayConfig = await _configCache.GetConfigAsync(shiftInstance.CompanyId, "WeekStartDay");
+            var weekStartDayOfWeek = (DayOfWeek)Math.Clamp(
+                int.TryParse(weekStartDayConfig?.Value, out var d) ? d : 0, 0, 6);
+            var startOfWeek = TimeHelpers.WeekStart(shiftInstance.WorkDate, weekStartDayOfWeek);
+            var endOfWeek = startOfWeek.AddDays(6);
+
+            // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed to count ALL assignments across companies within molecule
+            var weekShiftTimes = await _db.ShiftAssignments
+                .IgnoreQueryFilters()
+                .Include(sa => sa.ShiftInstance)
+                    .ThenInclude(si => si.ShiftType)
+                .Where(sa => sa.UserId == userId
+                    && sa.ShiftInstance.WorkDate >= startOfWeek
+                    && sa.ShiftInstance.WorkDate <= endOfWeek)
+                .Select(sa => new { sa.ShiftInstance.WorkDate, sa.ShiftInstance.ShiftType.Start, sa.ShiftInstance.ShiftType.End })
+                .ToListAsync();
+
+            // Deduplicate overlapping time windows before summing (ported from ConflictChecker)
+            var weekWindows = weekShiftTimes
+                .Select(s => TimeHelpers.GetShiftWindow(new ShiftType { Start = s.Start, End = s.End }, s.WorkDate))
+                .OrderBy(w => w.start)
+                .ToList();
+            var weeklyHours = MergeAndSumHours(weekWindows);
+
+            var shiftHours = TimeHelpers.Hours(shiftInstance.ShiftType, shiftInstance.WorkDate);
+            if ((weeklyHours + shiftHours) > weeklyCap)
+            {
+                warnings.Add(new ValidationIssue(
+                    "EXCEEDS_WEEKLY_CAP",
+                    _localizer["Error_ExceedsWeeklyCap"],
+                    ValidationSeverity.Warning,
+                    ValidationCategory.WeeklyHours));
+            }
         }
 
-        // FINDING-003 FIX: Warn when assigning to past dates (back-fill allowed via override)
-        if (shiftInstance.WorkDate < DateOnly.FromDateTime(DateTime.UtcNow))
+        // FINDING-003 FIX: Warn when assigning to past dates (back-fill allowed via override; exempt for HOME)
+        if (!isExemptShift && shiftInstance.WorkDate < DateOnly.FromDateTime(DateTime.UtcNow))
         {
             warnings.Add(new ValidationIssue(
                 "PAST_DATE",
@@ -917,14 +957,33 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 errors.Add(new ValidationIssue("OFFICER_RANK_REQUIRED", _localizer["Error_OfficerRankRequired"], ValidationSeverity.Error, ValidationCategory.TechShift));
             }
 
-            // Weekly cap (using pre-loaded data)
-            var effectiveSettings = await _hierarchySettingsService.GetEffectiveSettingsAsync(shiftInstance.CompanyId);
-            var weeklyCap = effectiveSettings?.WeeklyCap ?? 56;
-            var userWeeklyHours = weeklyHoursByUser.GetValueOrDefault(userId, 0.0);
-            var shiftHours = GetShiftHours(shiftInstance.ShiftType.Start, shiftInstance.ShiftType.End);
-            if ((userWeeklyHours + shiftHours) > weeklyCap)
+            // Weekly cap (using pre-loaded data; exempt for OFFLINE and HOME shifts — consistent with single validation)
+            bool isExemptShift = shiftInstance.ShiftType.IsOffline || shiftInstance.ShiftType.IsHome;
+            if (!isExemptShift)
             {
-                warnings.Add(new ValidationIssue("EXCEEDS_WEEKLY_CAP", _localizer["Error_ExceedsWeeklyCap"], ValidationSeverity.Warning, ValidationCategory.WeeklyHours));
+                var effectiveSettings = await _hierarchySettingsService.GetEffectiveSettingsAsync(shiftInstance.CompanyId);
+                var weeklyCap = effectiveSettings?.WeeklyCap ?? 56;
+                var userWeeklyHours = weeklyHoursByUser.GetValueOrDefault(userId, 0.0);
+                var shiftHours = GetShiftHours(shiftInstance.ShiftType.Start, shiftInstance.ShiftType.End);
+                if ((userWeeklyHours + shiftHours) > weeklyCap)
+                {
+                    warnings.Add(new ValidationIssue("EXCEEDS_WEEKLY_CAP", _localizer["Error_ExceedsWeeklyCap"], ValidationSeverity.Warning, ValidationCategory.WeeklyHours));
+                }
+            }
+
+            // HOME mutual exclusion (consistent with single validation)
+            if (isExemptShift && shiftInstance.ShiftType.IsHome)
+            {
+                // DUPLICATE_HOME: check if another HOME assignment exists on same date
+                var sameDateHomeExists = existingAssignments.Any(ea =>
+                    ea.UserId == userId
+                    && shiftInstances.TryGetValue(ea.ShiftInstanceId, out var otherSi)
+                    && otherSi.ShiftType.Key == ShiftType.KEY_HOME
+                    && otherSi.WorkDate == shiftInstance.WorkDate);
+                if (sameDateHomeExists)
+                {
+                    errors.Add(new ValidationIssue("DUPLICATE_HOME", _localizer["Error_DuplicateHome"], ValidationSeverity.Error, ValidationCategory.Overlap));
+                }
             }
 
             // Note: rest hours check skipped in batch (would require N additional queries per assignment)
@@ -954,37 +1013,10 @@ public class ShiftAssignmentService : IShiftAssignmentService
 
     /// <summary>
     /// Merges overlapping time windows and sums total unique hours.
-    /// Prevents double-counting when shifts overlap (e.g., two overlapping 8hr offline shifts
-    /// should count as 8hr, not 16hr). Ported from ConflictChecker.
+    /// Delegates to shared TimeHelpers implementation.
     /// </summary>
     private static double MergeAndSumHours(List<(DateTime start, DateTime end)> windows)
-    {
-        if (windows.Count == 0) return 0;
-
-        double total = 0;
-        var currentStart = windows[0].start;
-        var currentEnd = windows[0].end;
-
-        for (int i = 1; i < windows.Count; i++)
-        {
-            if (windows[i].start <= currentEnd)
-            {
-                // Overlapping — extend the merged window
-                if (windows[i].end > currentEnd)
-                    currentEnd = windows[i].end;
-            }
-            else
-            {
-                // No overlap — add the merged window and start a new one
-                total += (currentEnd - currentStart).TotalHours;
-                currentStart = windows[i].start;
-                currentEnd = windows[i].end;
-            }
-        }
-
-        total += (currentEnd - currentStart).TotalHours;
-        return total;
-    }
+        => TimeHelpers.MergeAndSumHours(windows);
 
     /// <summary>
     /// Checks whether a user's company belongs to the specified molecule.

@@ -22,8 +22,6 @@
             return;
         }
 
-        // Already has onclick="toggleRadarMode()" in HTML, so we just need to define the function
-        console.log('[Radar Mode] Initialized');
     }
 
     /**
@@ -50,7 +48,7 @@
                 applyConflictHighlights();
             }, 30000);
 
-            console.log('[Radar Mode] Activated');
+            // Radar mode activated
         } else {
             // Disable Radar Mode
             if (radarBtn) {
@@ -65,7 +63,7 @@
                 refreshInterval = null;
             }
 
-            console.log('[Radar Mode] Deactivated');
+            // Radar mode deactivated
         }
     };
 
@@ -98,7 +96,7 @@
             const data = await response.json();
             conflicts = data.conflicts || [];
 
-            console.log(`[Radar Mode] Loaded ${conflicts.length} conflicts`);
+            // Conflicts loaded
 
         } catch (error) {
             console.error('[Radar Mode] Error loading conflicts:', error);
@@ -114,7 +112,7 @@
         clearConflictHighlights();
 
         if (conflicts.length === 0) {
-            console.log('[Radar Mode] No conflicts to display');
+            // No conflicts to display
             return;
         }
 
@@ -129,7 +127,7 @@
             applyConflictStyle(cell, conflict);
         });
 
-        console.log(`[Radar Mode] Applied highlights to ${conflicts.length} cells`);
+        // Highlights applied
     }
 
     /**

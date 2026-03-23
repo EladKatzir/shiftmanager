@@ -1,3 +1,430 @@
-@page "{userId:int}"
+@page "{userId:int?}"
 @model ShiftManager.Pages.Owner.Hub.ExportUserDataModel
-@* This page only handles GET requests to download user data JSON *@
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Export User Data";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["OwnerHub_Title"], Url = "/Owner/Hub" },
+    new BreadcrumbItem { Label = "Export User Data", IsActive = true }
+})
+
+<div class="export-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">&#x1F4E4;</span>
+            Export User Data
+        </h1>
+        <p class="page-subtitle">Export complete user data as JSON for GDPR compliance or administrative review.</p>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger" role="alert">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <p style="margin: 0;">@error.ErrorMessage</p>
+            }
+        </div>
+    }
+
+    <div class="section-card">
+        <div class="section-header">
+            <span>&#x1F465; Select Users to Export</span>
+            <span class="user-count-badge" id="selectedCount">0 selected</span>
+        </div>
+
+        <div class="toolbar">
+            <input
+                type="text"
+                id="userSearchInput"
+                class="form-input search-input"
+                placeholder="Search by name, email, or company..."
+                aria-label="Search users" />
+            <div class="toolbar-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnSelectAll">Select All</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnDeselectAll">Deselect All</button>
+            </div>
+        </div>
+
+        <form method="post" asp-page-handler="ExportBatch" id="exportForm">
+            @Html.AntiForgeryToken()
+
+            <div class="user-list" id="userList" role="list">
+                @if (Model.AllUsers.Count == 0)
+                {
+                    <div class="empty-state">No active users found.</div>
+                }
+                else
+                {
+                    string? currentCompany = null;
+                    foreach (var user in Model.AllUsers)
+                    {
+                        if (user.CompanyName != currentCompany)
+                        {
+                            currentCompany = user.CompanyName;
+                            <div class="company-group-header" data-company-id="@user.CompanyName">@user.CompanyName</div>
+                        }
+                        <label class="user-row" role="listitem" data-name="@user.DisplayName.ToLower()" data-email="@user.Email.ToLower()" data-company="@user.CompanyName.ToLower()" data-company-id="@user.CompanyName">
+                            <input
+                                type="checkbox"
+                                name="SelectedUserIds"
+                                value="@user.Id"
+                                class="user-checkbox"
+                                aria-label="Select @user.DisplayName" />
+                            <span class="user-name">@user.DisplayName</span>
+                            <span class="user-email">@user.Email</span>
+                            <span class="user-company-badge">@user.CompanyName</span>
+                        </label>
+                    }
+                }
+            </div>
+
+            <div class="export-footer">
+                <div class="export-info">
+                    <span id="exportSummary">No users selected.</span>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnExport" disabled>
+                    &#x1F4E4; Export as JSON
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="section-card info-card">
+        <div class="section-header">&#x2139; About This Export</div>
+        <ul class="info-list">
+            <li>Each user's exported package includes: profile, shift assignments, chores, on-duty entries, time-off requests, swap requests, notifications, game scores, audit log entries, grants, role assignments, day notes, and friendships.</li>
+            <li>Exported data is provided as a single JSON file containing all selected users.</li>
+            <li>Sensitive fields (password hash &amp; salt) are excluded from the export.</li>
+            <li>You can also export a single user by navigating to <code>/Owner/Hub/ExportUserData/{userId}</code>.</li>
+        </ul>
+    </div>
+</div>
+
+@section Styles {
+<style>
+.export-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.page-icon {
+    font-size: 2.5rem;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-count-badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--primary);
+    color: var(--primary-contrast) !important;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    margin-inline-start: auto;
+}
+
+.toolbar {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.toolbar-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+}
+
+.user-list {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 480px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.company-group-header {
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    background: var(--background);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.user-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s ease;
+}
+
+.user-row:last-child {
+    border-bottom: none;
+}
+
+.user-row:hover {
+    background: var(--background);
+}
+
+.user-row:has(.user-checkbox:checked) {
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.user-checkbox {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.user-name {
+    font-weight: 500;
+    min-width: 160px;
+}
+
+.user-email {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    flex: 1;
+}
+
+.user-company-badge {
+    font-size: 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.15rem 0.4rem;
+    white-space: nowrap;
+    color: var(--text-muted);
+}
+
+.user-row[hidden] {
+    display: none;
+}
+
+.empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.export-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.export-info {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.info-card {
+    font-size: 0.9rem;
+}
+
+.info-list {
+    margin: 0;
+    padding-inline-start: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--text-muted);
+}
+
+.info-list code {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+    font-size: 0.85em;
+}
+
+.alert-danger {
+    background: color-mix(in srgb, var(--danger, #ef4444) 10%, transparent);
+    border: 1px solid var(--danger, #ef4444);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: var(--danger, #ef4444);
+    margin-bottom: 1rem;
+}
+
+@@media (max-width: 768px) {
+    .export-container {
+        padding: 1rem;
+    }
+
+    .user-name {
+        min-width: 100px;
+    }
+
+    .user-company-badge {
+        display: none;
+    }
+}
+</style>
+}
+
+@section Scripts {
+<script>
+(function () {
+    'use strict';
+
+    var searchInput = document.getElementById('userSearchInput');
+    var userList = document.getElementById('userList');
+    var btnSelectAll = document.getElementById('btnSelectAll');
+    var btnDeselectAll = document.getElementById('btnDeselectAll');
+    var btnExport = document.getElementById('btnExport');
+    var selectedCountEl = document.getElementById('selectedCount');
+    var exportSummaryEl = document.getElementById('exportSummary');
+
+    function getVisibleRows() {
+        return Array.from(userList.querySelectorAll('.user-row:not([hidden])'));
+    }
+
+    function getVisibleCompanyHeaders() {
+        return Array.from(userList.querySelectorAll('.company-group-header'));
+    }
+
+    function updateSelectionUI() {
+        var allCheckboxes = Array.from(userList.querySelectorAll('.user-checkbox'));
+        var checkedCount = allCheckboxes.filter(function (cb) { return cb.checked; }).length;
+
+        selectedCountEl.textContent = checkedCount + ' selected';
+        btnExport.disabled = checkedCount === 0;
+
+        if (checkedCount === 0) {
+            exportSummaryEl.textContent = 'No users selected.';
+        } else if (checkedCount === 1) {
+            exportSummaryEl.textContent = '1 user will be exported.';
+        } else {
+            exportSummaryEl.textContent = checkedCount + ' users will be exported.';
+        }
+    }
+
+    function updateCompanyHeaderVisibility() {
+        // Hide company group headers if all their rows are hidden
+        var headers = getVisibleCompanyHeaders();
+        headers.forEach(function (header) {
+            var companyId = header.dataset.companyId;
+            var rows = Array.from(userList.querySelectorAll('.user-row')).filter(function (r) {
+                return r.dataset.companyId === companyId;
+            });
+            var anyVisible = rows.some(function (r) { return !r.hidden; });
+            header.hidden = !anyVisible;
+        });
+    }
+
+    // Search/filter
+    searchInput.addEventListener('input', function () {
+        var term = searchInput.value.trim().toLowerCase();
+        var rows = Array.from(userList.querySelectorAll('.user-row'));
+
+        rows.forEach(function (row) {
+            if (!term) {
+                row.hidden = false;
+                return;
+            }
+            var name = row.dataset.name || '';
+            var email = row.dataset.email || '';
+            var company = row.dataset.company || '';
+            row.hidden = !(name.includes(term) || email.includes(term) || company.includes(term));
+        });
+
+        updateCompanyHeaderVisibility();
+    });
+
+    // Select All — only affects VISIBLE rows
+    btnSelectAll.addEventListener('click', function () {
+        getVisibleRows().forEach(function (row) {
+            var cb = row.querySelector('.user-checkbox');
+            if (cb) cb.checked = true;
+        });
+        updateSelectionUI();
+    });
+
+    // Deselect All — deselects ALL rows (including hidden), clear is cleaner UX
+    btnDeselectAll.addEventListener('click', function () {
+        Array.from(userList.querySelectorAll('.user-checkbox')).forEach(function (cb) {
+            cb.checked = false;
+        });
+        updateSelectionUI();
+    });
+
+    // Checkbox change
+    userList.addEventListener('change', function (e) {
+        if (e.target && e.target.classList.contains('user-checkbox')) {
+            updateSelectionUI();
+        }
+    });
+
+    // Initial state
+    updateSelectionUI();
+}());
+</script>
+}

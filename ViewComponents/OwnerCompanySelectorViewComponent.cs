@@ -31,13 +31,39 @@ public class OwnerCompanySelectorViewComponent : ViewComponent
             return Content(string.Empty);
         }
 
+        var companies = await _db.Companies
+            .Include(c => c.Molecule)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+
+        // Disambiguate duplicate LocalizedNames by appending the molecule name.
+        // e.g. multiple "כלל צוותי" become "כלל צוותי - אורן", "כלל צוותי - גפן"
+        var nameGroups = companies.GroupBy(c => c.LocalizedName);
+        var disambiguatedOptions = new List<CompanyOption>();
+        foreach (var group in nameGroups)
+        {
+            if (group.Count() > 1)
+            {
+                // Duplicate names exist — append molecule name for disambiguation
+                foreach (var c in group)
+                {
+                    var moleculeName = c.Molecule?.DisplayName ?? c.Molecule?.Name;
+                    var displayName = !string.IsNullOrEmpty(moleculeName)
+                        ? $"{c.LocalizedName} - {moleculeName}"
+                        : c.LocalizedName;
+                    disambiguatedOptions.Add(new CompanyOption { Id = c.Id, Name = displayName });
+                }
+            }
+            else
+            {
+                var c = group.Single();
+                disambiguatedOptions.Add(new CompanyOption { Id = c.Id, Name = c.LocalizedName });
+            }
+        }
+
         var model = new OwnerCompanySelectorViewModel
         {
-            Companies = (await _db.Companies
-                .OrderBy(c => c.Name)
-                .ToListAsync())
-                .Select(c => new CompanyOption { Id = c.Id, Name = c.LocalizedName })
-                .ToList(),
+            Companies = disambiguatedOptions,
             SelectedCompanyId = _ownerCompanySelector.GetSelectedCompanyId(),
             HomeCompanyId = _ownerCompanySelector.GetHomeCompanyId()
         };

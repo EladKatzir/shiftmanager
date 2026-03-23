@@ -623,6 +623,7 @@ public class ChoreService : IChoreService
             .Include(c => c.Creator)
             .Include(c => c.Canceler)
             .Include(c => c.Molecule)
+            .Include(c => c.ChoreType)
             .AsQueryable();
 
         if (startDate.HasValue)

@@ -12,6 +12,8 @@
     var culture = System.Globalization.CultureInfo.CurrentUICulture;
     var dayNames = culture.DateTimeFormat.DayNames;
     var shortDayNames = culture.DateTimeFormat.AbbreviatedDayNames;
+    var hasWeeklyHours = Model.Rows.Any(r => r.WeeklyHours.HasValue);
+    var totalColCount = days.Count + 1 + (hasWeeklyHours ? 1 : 0);
 }
 
 @if (Model.IsReadOnly)
@@ -47,6 +49,12 @@
                         <span class="excel-calendar__day-date">@day.ToString("dd/MM")</span>
                     </th>
                 }
+                @if (hasWeeklyHours)
+                {
+                    <th class="excel-calendar__header-total" scope="col">
+                        <span class="excel-calendar__day-name">@Localizer["Total"]</span>
+                    </th>
+                }
             </tr>
         </thead>
         <tbody>
@@ -55,10 +63,14 @@
                 foreach (var group in Model.Groups.OrderBy(g => g.SortOrder))
                 {
                     <tr class="excel-calendar__group-header" data-group-id="@group.Id">
-                        <td colspan="@(days.Count + 1)">
+                        <td colspan="@totalColCount" style="@(group.Color != null ? $"--group-color: {group.Color}" : "")">
                             <div class="excel-calendar__group-toggle">
                                 <span class="excel-calendar__group-chevron @(group.IsCollapsed ? "excel-calendar__group-chevron--collapsed" : "")">▼</span>
                                 <span class="excel-calendar__group-name" data-editable="true">@group.Name</span>
+                                @if (group.MemberCount > 0)
+                                {
+                                    <span class="excel-calendar__group-count">(@group.MemberCount)</span>
+                                }
                                 <span class="excel-calendar__group-grip" title="@Localizer["DragToReorder"]">⋮⋮</span>
                             </div>
                         </td>
@@ -74,7 +86,8 @@
                             Days = days,
                             Today = today,
                             IsReadOnly = Model.IsReadOnly,
-                            IsCollapsed = group.IsCollapsed
+                            IsCollapsed = group.IsCollapsed,
+                            HasWeeklyHours = hasWeeklyHours
                         })
                     }
                 }
@@ -88,7 +101,8 @@
                         Days = days,
                         Today = today,
                         IsReadOnly = Model.IsReadOnly,
-                        IsCollapsed = false
+                        IsCollapsed = false,
+                        HasWeeklyHours = hasWeeklyHours
                     })
                 }
             }
@@ -102,7 +116,8 @@
                         Days = days,
                         Today = today,
                         IsReadOnly = Model.IsReadOnly,
-                        IsCollapsed = false
+                        IsCollapsed = false,
+                        HasWeeklyHours = hasWeeklyHours
                     })
                 }
             }
@@ -118,5 +133,6 @@
         public DateOnly Today { get; set; }
         public bool IsReadOnly { get; set; }
         public bool IsCollapsed { get; set; }
+        public bool HasWeeklyHours { get; set; }
     }
 }

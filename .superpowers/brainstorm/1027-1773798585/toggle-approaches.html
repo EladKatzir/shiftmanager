@@ -1,0 +1,86 @@
+<h2>Sidebar Toggle Button — 3 Approaches</h2>
+<p class="subtitle">The toggle button exists but is invisible because the sidebar's <code>overflow-y: auto</code> clips it. Here are 3 ways to fix it:</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Edge Tab (your &raquo; idea)</h3>
+      <p>A small <strong>&raquo;</strong> tab that sticks to the sidebar edge, positioned <em>inside</em> the sidebar boundary so overflow doesn't clip it. Looks like a drawer handle.</p>
+      <div style="display:flex;gap:20px;margin-top:12px;">
+        <div style="position:relative;width:200px;height:120px;background:var(--surface-alt,#1a1a2e);border-radius:8px;overflow:hidden;">
+          <div style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:var(--primary,#4a90d9);color:white;padding:8px 3px;border-radius:4px 0 0 4px;font-size:11px;cursor:pointer;line-height:1;">&raquo;</div>
+          <div style="padding:12px;color:#888;font-size:10px;">
+            <div style="margin-bottom:6px;">SHIFTY</div>
+            <div style="margin-bottom:4px;">📅 Schedule</div>
+            <div style="margin-bottom:4px;">👁️ Overview</div>
+            <div style="margin-bottom:4px;">👥 People</div>
+          </div>
+        </div>
+        <div style="position:relative;width:50px;height:120px;background:var(--surface-alt,#1a1a2e);border-radius:8px;overflow:hidden;">
+          <div style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:var(--primary,#4a90d9);color:white;padding:8px 3px;border-radius:4px 0 0 4px;font-size:11px;cursor:pointer;line-height:1;">&laquo;</div>
+          <div style="padding:8px;text-align:center;color:#888;font-size:14px;">
+            <div style="margin-bottom:8px;">S</div>
+            <div style="margin-bottom:6px;">📅</div>
+            <div style="margin-bottom:6px;">👁️</div>
+            <div style="margin-bottom:6px;">👥</div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Always visible, intuitive "pull" metaphor</li><li>Works with sidebar overflow</li><li>RTL-compatible</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Takes a few px from nav width</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Bottom Bar Button (next to user avatar)</h3>
+      <p>Place the collapse button in the sidebar footer area, next to the user profile section. No overflow clipping issue since it's inside the sidebar.</p>
+      <div style="display:flex;gap:20px;margin-top:12px;">
+        <div style="width:200px;height:120px;background:var(--surface-alt,#1a1a2e);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="flex:1;padding:12px;color:#888;font-size:10px;">
+            <div style="margin-bottom:6px;">SHIFTY</div>
+            <div style="margin-bottom:4px;">📅 Schedule</div>
+            <div style="margin-bottom:4px;">👁️ Overview</div>
+          </div>
+          <div style="border-top:1px solid #333;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="color:#aaa;font-size:10px;">👤 Test Owner</span>
+            <span style="color:#4a90d9;font-size:12px;cursor:pointer;">&laquo;</span>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul><li>No overflow issues</li><li>Discoverable near profile</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Less intuitive — not at the edge where "closing" metaphor lives</li><li>Easily missed among footer elements</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Fix the Current Button (1-line CSS fix)</h3>
+      <p>Just fix <code>overflow-y: auto</code> → <code>overflow-y: visible</code> with a scrollable inner wrapper. The existing ◀ button at the sidebar edge will appear immediately. No design change needed.</p>
+      <div style="display:flex;gap:20px;margin-top:12px;">
+        <div style="position:relative;width:200px;height:120px;background:var(--surface-alt,#1a1a2e);border-radius:8px;">
+          <div style="position:absolute;right:-10px;top:50%;transform:translateY(-50%);background:var(--surface-alt,#2a2a3e);border:1px solid #444;color:#aaa;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;">◀</div>
+          <div style="padding:12px;color:#888;font-size:10px;overflow:hidden;border-radius:8px;">
+            <div style="margin-bottom:6px;">SHIFTY</div>
+            <div style="margin-bottom:4px;">📅 Schedule</div>
+            <div style="margin-bottom:4px;">👁️ Overview</div>
+            <div style="margin-bottom:4px;">👥 People</div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Minimal change — just CSS</li><li>All existing JS, tooltips, FOUC prevention already work</li><li>Ctrl+B shortcut already wired</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Small circular ◀ might still be hard to discover</li><li>Positioned between sidebar and content — could be visually subtle</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top:20px;color:var(--text-secondary,#999);font-size:14px;"><strong>My recommendation:</strong> Option A gives you the &raquo; look you described and is always visible. Option C is the quickest fix but keeps the subtle circular button. We could also combine: fix the overflow (C) and restyle the button as a &raquo; tab (A).</p>

@@ -150,21 +150,19 @@ if exist "UNBLOCK_FILES.bat" (
 echo Deployment file checks passed.
 
 REM ------------------------------------------------------------------------------
-REM STEP 4/5: Validate configuration (SEED_ADMIN_PASSWORD must not be empty)
+REM STEP 4/5: Validate configuration (admin password must be changed)
 REM ------------------------------------------------------------------------------
 echo.
 echo [STEP 4/5] Validating configuration...
 
-findstr /C:"\"SEED_ADMIN_PASSWORD\": \"\"" appsettings.json >NUL 2>&1
+findstr /C:"\"Password\": \"admin123\"" appsettings.json >NUL 2>&1
 if not errorlevel 1 (
     echo.
-    echo [ERROR] SEED_ADMIN_PASSWORD is empty in appsettings.json.
-    echo You must set it before first run.
-    echo Example:
-    echo   "SEED_ADMIN_PASSWORD": "YourStrongPassword123!",
+    echo [WARNING] Default admin password detected in appsettings.json.
+    echo Change the password in appsettings.json under Seeding ^> Owner ^> Password
+    echo before deploying to production.
     echo.
     pause
-    exit /b 1
 )
 
 echo Configuration looks OK.
