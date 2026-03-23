@@ -270,6 +270,9 @@
   <data name="ReviewAndApproveTeamRequests" xml:space="preserve">
     <value>סקור ואשר בקשות חופש והחלפות משמרות מהצוות שלך</value>
   </data>
+  <data name="ViewYourRequests" xml:space="preserve">
+    <value>צפה בבקשות החופש והחלפות המשמרות הממתינות והמאושרות שלך</value>
+  </data>
   <data name="ManageUsersJoinRequestsAndPermissions" xml:space="preserve">
     <value>נהל משתמשים, בקשות הצטרפות והרשאות בארגון שלך</value>
   </data>
@@ -4349,18 +4352,18 @@
     <value>בברכה</value>
   </data>
   <data name="Email_ShiftManagerTeam" xml:space="preserve">
-    <value>צוות Shift Manager</value>
+    <value>צוות Shifty</value>
   </data>
 
   
   <data name="Email_PasswordRecoverySubject" xml:space="preserve">
-    <value>שחזור סיסמה - Shift Manager</value>
+    <value>שחזור סיסמה - Shifty</value>
   </data>
   <data name="Email_PasswordRecoveryTitle" xml:space="preserve">
     <value>בקשת שחזור סיסמה</value>
   </data>
   <data name="Email_PasswordRecoveryBody" xml:space="preserve">
-    <value>ביקשת לשחזר את הסיסמה שלך עבור מערכת Shift Manager.</value>
+    <value>ביקשת לשחזר את הסיסמה שלך עבור Shifty.</value>
   </data>
   <data name="Email_YourTemporaryPassword" xml:space="preserve">
     <value>הסיסמה הזמנית שלך היא</value>
@@ -6807,7 +6810,7 @@
     <value>התנתקת</value>
   </data>
   <data name="Auth_SecurelyLoggedOutMessage" xml:space="preserve">
-    <value>התנתקת בצורה מאובטחת ממערכת Shift Manager.</value>
+    <value>התנתקת בצורה מאובטחת מ-Shifty.</value>
   </data>
   <data name="Auth_RedirectingToLogin" xml:space="preserve">
     <value>מפנה לדף הכניסה בעוד 3 שניות...</value>

@@ -388,7 +388,14 @@
 <!-- Page Header -->
 <div class="page-header">
     <h2 class="page-header-title"><loc key="Requests" /></h2>
-    <p class="page-subtitle"><loc key="ReviewAndApproveTeamRequests" /></p>
+    @if (Model.IsManager)
+    {
+        <p class="page-subtitle"><loc key="ReviewAndApproveTeamRequests" /></p>
+    }
+    else
+    {
+        <p class="page-subtitle"><loc key="ViewYourRequests" /></p>
+    }
 </div>
 
 <!-- Error/Success Messages -->
@@ -499,6 +506,8 @@
                         }
                     </div>
 
+                    @if (Model.IsManager)
+                    {
                     <div class="request-actions">
                         <form method="post" asp-page-handler="ApproveTimeOff" style="margin: 0;">
                             <input type="hidden" name="id" value="@r.Id" />
@@ -515,6 +524,15 @@
                             </button>
                         </form>
                     </div>
+                    }
+                    else
+                    {
+                    <div class="request-actions">
+                        <div style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; text-align: center; background: var(--warning-soft, #fff3cd); color: var(--warning, #856404);">
+                            <loc key="PendingApproval" />
+                        </div>
+                    </div>
+                    }
                 </div>
             </div>
         }
@@ -572,6 +590,8 @@
                         </div>
                     </div>
 
+                    @if (Model.IsManager)
+                    {
                     <div class="request-actions">
                         <form method="post" asp-page-handler="ApproveSwap" style="margin: 0;">
                             <input type="hidden" name="id" value="@s.Id" />
@@ -588,6 +608,15 @@
                             </button>
                         </form>
                     </div>
+                    }
+                    else
+                    {
+                    <div class="request-actions">
+                        <div style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; text-align: center; background: var(--warning-soft, #fff3cd); color: var(--warning, #856404);">
+                            <loc key="PendingApproval" />
+                        </div>
+                    </div>
+                    }
                 </div>
             </div>
         }
@@ -675,7 +704,7 @@
                         </div>
 
                         <div class="request-actions">
-                            @if (isFuture)
+                            @if (Model.IsManager && isFuture)
                             {
                                 <form method="post" asp-page-handler="DeleteTimeOff" style="margin: 0;" data-user-name="@timeOff.UserName" data-confirm-msg="@Localizer["ConfirmDeleteTimeOff"].Value.Trim()"
                                       onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.userName));">
@@ -685,6 +714,12 @@
                                         <span><loc key="Delete" /></span>
                                     </button>
                                 </form>
+                            }
+                            else if (isFuture)
+                            {
+                                <div style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600; text-align: center; background: var(--success-soft); color: var(--success);">
+                                    @Localizer["Approved"]
+                                </div>
                             }
                             else
                             {

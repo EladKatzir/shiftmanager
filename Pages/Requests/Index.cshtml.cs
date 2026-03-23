@@ -14,9 +14,10 @@ using System.Security.Claims;
 
 namespace ShiftManager.Pages.Requests;
 
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ManagerHomeAccess policy;
-// cross-company queries by design — managers/Directors view requests across accessible companies in hierarchy
-[Authorize(Policy = "Grant:ManagerHomeAccess")]
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — [Authorize] + grant-based filtering;
+// Managers/Directors view all requests across accessible companies; Employees see only their own.
+// POST handlers independently verify ManagerHomeAccess grant before allowing approve/decline/delete.
+[Authorize]
 public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
@@ -75,13 +76,19 @@ public class IndexModel : LocalizedPageModel
 
     public string? Message { get; set; }
 
+    /// <summary>
+    /// True if the user has ManagerHomeAccess grant (can approve/decline/delete requests).
+    /// False for employees who can only view their own requests.
+    /// </summary>
+    public bool IsManager { get; set; }
+
     public async Task OnGetAsync()
     {
         try
         {
-            _logger.LogInformation("Loading admin requests page");
+            _logger.LogInformation("Loading requests page");
 
-            // Phase 8.2.1: Get current user for company filtering (fixed to use NameIdentifier instead of Email)
+            // Get current user for company/scope filtering
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var currentUserId))
             {
@@ -96,7 +103,45 @@ public class IndexModel : LocalizedPageModel
                 return;
             }
 
-            // Determine accessible company IDs based on grants (not role)
+            // Check if user has manager-level access (can approve/decline requests)
+            IsManager = await _grantService.HasGrantAsync(currentUser.Id, "ManagerHomeAccess");
+
+            if (!IsManager)
+            {
+                // Employee: show only their OWN requests (pending time-off + pending swaps + approved time-off)
+                _logger.LogInformation("Loading own requests for employee {UserId}", currentUserId);
+
+                TimeOff = await _db.TimeOffRequests
+                    .Where(r => r.UserId == currentUserId && r.Status == RequestStatus.Pending)
+                    .OrderBy(r => r.CreatedAt)
+                    .Select(r => new TimeOffVM(r.Id, currentUser.DisplayName, r.StartDate, r.EndDate, r.Reason))
+                    .ToListAsync();
+
+                // IgnoreQueryFilters: need to join across tenant boundaries for swap request details
+                Swaps = await (from s in _db.SwapRequests.IgnoreQueryFilters()
+                               join a in _db.ShiftAssignments.IgnoreQueryFilters() on s.FromAssignmentId equals a.Id
+                               join si in _db.ShiftInstances.IgnoreQueryFilters() on a.ShiftInstanceId equals si.Id
+                               join st in _db.ShiftTypes.IgnoreQueryFilters() on si.ShiftTypeId equals st.Id
+                               join u2 in _db.Users.IgnoreQueryFilters() on s.ToUserId equals u2.Id into toUserJoin
+                               from u2 in toUserJoin.DefaultIfEmpty()
+                               where s.Status == RequestStatus.Pending && a.UserId == currentUserId
+                               orderby s.CreatedAt
+                               select new SwapVM(s.Id, currentUser.DisplayName,
+                                   si.WorkDate.ToString("yyyy-MM-dd") + " " + st.Key,
+                                   u2 != null ? u2.DisplayName : "Open Request")).ToListAsync();
+
+                ApprovedTimeOffs = await _db.TimeOffRequests
+                    .Where(r => r.UserId == currentUserId && r.Status == RequestStatus.Approved)
+                    .OrderByDescending(r => r.StartDate)
+                    .Select(r => new ApprovedTimeOffVM(r.Id, currentUser.DisplayName, r.StartDate, r.EndDate, r.Reason, r.CreatedAt, r.CreatedAt))
+                    .ToListAsync();
+
+                _logger.LogInformation("Loaded {TimeOffCount} pending, {SwapCount} swaps, {ApprovedCount} approved for employee",
+                    TimeOff.Count, Swaps.Count, ApprovedTimeOffs.Count);
+                return;
+            }
+
+            // Manager/Director/Admin path: determine accessible company IDs based on grants
             List<int> accessibleCompanyIds;
             var isAdmin = await _grantService.HasGrantAsync(currentUser.Id, "AdminAccess");
             if (isAdmin)
@@ -116,12 +161,12 @@ public class IndexModel : LocalizedPageModel
                 }
                 else
                 {
-                    // Regular user sees only their own company
+                    // Regular manager sees only their own company
                     accessibleCompanyIds = new List<int> { currentUser.CompanyId };
                 }
             }
 
-            // Phase 8.2.1: Load pending time-off requests with company filtering
+            // Load pending time-off requests with company filtering
             _logger.LogInformation("Loading pending time off requests");
             // IgnoreQueryFilters: accessibleCompanyIds already scoped — tenant filter breaks multi-company views
             var pendingTO = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
@@ -132,7 +177,7 @@ public class IndexModel : LocalizedPageModel
             TimeOff = pendingTO;
             _logger.LogInformation("Loaded {Count} pending time off requests", TimeOff.Count);
 
-            // Phase 8.2.1: Load pending swap requests with company filtering
+            // Load pending swap requests with company filtering
             _logger.LogInformation("Loading pending swap requests");
             // IgnoreQueryFilters: all joined tables have tenant filters that break multi-company views
             var pendingSwaps = await (from s in _db.SwapRequests.IgnoreQueryFilters()
@@ -155,8 +200,7 @@ public class IndexModel : LocalizedPageModel
             Swaps = pendingSwaps.Select(x => new SwapVM(x.Id, x.FromUser, x.When, x.ToUser)).ToList();
             _logger.LogInformation("Loaded {Count} pending swap requests", Swaps.Count);
 
-            // ✅ Phase 18: Load approved time-off requests
-            // Phase 8.2.1: Simplified to reuse accessibleCompanyIds from above
+            // Load approved time-off requests
             _logger.LogInformation("Loading approved time off requests");
             // IgnoreQueryFilters: same multi-company scope as pending queries above
             ApprovedTimeOffs = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
@@ -178,6 +222,10 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostApproveTimeOffAsync(int id)
     {
+        // SECURITY: Only managers can approve requests
+        if (!await RequireManagerAccessAsync())
+            return Forbid();
+
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
@@ -254,6 +302,10 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeclineTimeOffAsync(int id)
     {
+        // SECURITY: Only managers can decline requests
+        if (!await RequireManagerAccessAsync())
+            return Forbid();
+
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
@@ -322,6 +374,10 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostApproveSwapAsync(int id)
     {
+        // SECURITY: Only managers can approve swaps
+        if (!await RequireManagerAccessAsync())
+            return Forbid();
+
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
@@ -427,6 +483,10 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeclineSwapAsync(int id)
     {
+        // SECURITY: Only managers can decline swaps
+        if (!await RequireManagerAccessAsync())
+            return Forbid();
+
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
@@ -517,6 +577,10 @@ public class IndexModel : LocalizedPageModel
     // ✅ Phase 18: Delete approved time-off (consolidated from Admin/TimeOff page)
     public async Task<IActionResult> OnPostDeleteTimeOffAsync(int id)
     {
+        // SECURITY: Only managers can delete time-off requests
+        if (!await RequireManagerAccessAsync())
+            return Forbid();
+
         try
         {
             _logger.LogInformation("Admin attempting to delete approved time-off request {RequestId}", id);
@@ -623,6 +687,23 @@ public class IndexModel : LocalizedPageModel
             await OnGetAsync();
             return Page();
         }
+    }
+
+    /// <summary>
+    /// Checks if the current user has ManagerHomeAccess grant (required for approve/decline/delete actions).
+    /// </summary>
+    private async Task<bool> RequireManagerAccessAsync()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+            return false;
+
+        var hasGrant = await _grantService.HasGrantAsync(userId, "ManagerHomeAccess");
+        if (!hasGrant)
+        {
+            _logger.LogWarning("SECURITY: User {UserId} attempted manager action on Requests page without ManagerHomeAccess grant", userId);
+        }
+        return hasGrant;
     }
 
     /// <summary>
