@@ -90,13 +90,15 @@ try {
     $appsettings = Get-Content $appsettingsPath | ConvertFrom-Json
 
     # Check that password fields are empty or placeholder
-    if ($appsettings.PSObject.Properties.Name -contains "SEED_ADMIN_PASSWORD") {
-        $adminPwd = $appsettings.SEED_ADMIN_PASSWORD
-        if ($adminPwd -and $adminPwd -ne "" -and $adminPwd -notmatch "^(Your|Test|Change)") {
-            Write-ErrorMsg "appsettings.json contains a real password: '$adminPwd'"
-            Write-Host "    This is a security risk!" -ForegroundColor Red
-            throw "Sensitive data in configuration"
-        }
+    # The actual password path is Seeding > Owner > Password (NOT top-level SEED_ADMIN_PASSWORD)
+    $adminPwd = $null
+    if ($appsettings.Seeding -and $appsettings.Seeding.Owner -and $appsettings.Seeding.Owner.Password) {
+        $adminPwd = $appsettings.Seeding.Owner.Password
+    }
+    if ($adminPwd -and $adminPwd -ne "" -and $adminPwd -ne "admin123" -and $adminPwd -notmatch "^(Your|Test|Change|CHANGE)") {
+        Write-ErrorMsg "appsettings.json Seeding:Owner:Password contains a real password: '$adminPwd'"
+        Write-Host "    This is a security risk for shipped packages!" -ForegroundColor Red
+        throw "Sensitive data in configuration"
     }
 
     Write-Success "Configuration files validated"

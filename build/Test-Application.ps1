@@ -17,6 +17,7 @@ $ErrorActionPreference = "Stop"
 
 function Write-Success { param([string]$Message) Write-Host "  ✅ " -ForegroundColor Green -NoNewline; Write-Host $Message }
 function Write-ErrorMsg { param([string]$Message) Write-Host "  ❌ " -ForegroundColor Red -NoNewline; Write-Host $Message }
+function Write-WarnMsg { param([string]$Message) Write-Host "  ⚠️ " -ForegroundColor Yellow -NoNewline; Write-Host $Message }
 function Write-Info { param([string]$Message) Write-Host "  ⏳ " -ForegroundColor Blue -NoNewline; Write-Host $Message }
 
 $testProcess = $null
@@ -31,13 +32,21 @@ try {
 
     Copy-Item -Path $appsettingsPath -Destination $appsettingsBackup -Force
 
-    # Set test password
+    # Set test password at the correct JSON path: Seeding > Owner > Password
     $appsettings = Get-Content $appsettingsPath | ConvertFrom-Json
-    if ($null -eq (Get-Member -InputObject $appsettings -Name "SEED_ADMIN_PASSWORD" -MemberType Properties)) {
-        $appsettings | Add-Member -MemberType NoteProperty -Name "SEED_ADMIN_PASSWORD" -Value "TestPassword2025!"
-    } else {
-        $appsettings.SEED_ADMIN_PASSWORD = "TestPassword2025!"
+
+    # Remove stale SEED_ADMIN_PASSWORD top-level key if it exists from a previous run
+    if ($null -ne (Get-Member -InputObject $appsettings -Name "SEED_ADMIN_PASSWORD" -MemberType Properties)) {
+        $appsettings.PSObject.Properties.Remove("SEED_ADMIN_PASSWORD")
     }
+
+    # Navigate to the correct JSON path: Seeding > Owner > Password
+    if ($appsettings.Seeding -and $appsettings.Seeding.Owner) {
+        $appsettings.Seeding.Owner.Password = "TestPassword2025!"
+    } else {
+        Write-WarnMsg "Seeding:Owner:Password path not found in appsettings.json — test may use default password"
+    }
+
     $appsettings | ConvertTo-Json -Depth 10 | Set-Content $appsettingsPath
     Write-Success "Test configuration prepared"
 
