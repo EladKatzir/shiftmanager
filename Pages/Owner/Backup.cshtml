@@ -47,7 +47,7 @@
             <button type="submit" class="btn btn-primary">💾 <loc key="Owner_Backup_CreateNew" /></button>
         </form>
         <p class="help-text">
-            <loc key="Owner_Backup_HelpText" />
+            Backups are created automatically on application startup and daily at 03:00. A maximum of 2 system backups are retained. You can also create manual backups using the button above.
         </p>
     </div>
 
@@ -119,12 +119,53 @@
         }
     </div>
 
+    @if (Model.SystemBackups.Any())
+    {
+        <div class="backups-list-card">
+            <h2>🔄 System Backups (Auto-generated)</h2>
+            <div class="backups-table-wrapper">
+                <table class="backups-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="Owner_Backup_FileName" /></th>
+                            <th><loc key="Owner_Backup_Size" /></th>
+                            <th><loc key="Owner_Backup_CreatedDate" /></th>
+                            <th><loc key="Owner_Backup_Actions" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var backup in Model.SystemBackups)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="file-icon">🔄</span>
+                                    <span class="file-name">@backup.FileName</span>
+                                </td>
+                                <td>@backup.SizeFormatted</td>
+                                <td>@backup.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="/Owner/Backup?handler=DownloadBackup&backupFileName=@backup.FileName"
+                                           class="btn-action btn-download"
+                                           loc-title="Owner_Backup_Download">
+                                            ⬇️
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
     <div class="info-card">
         <h3>ℹ️ <loc key="Owner_Backup_ImportantInfo" /></h3>
         <ul>
             <li><strong><loc key="Owner_Backup_AutoBackups" />:</strong> <loc key="Owner_Backup_AutoBackups_Desc" /></li>
             <li><strong><loc key="Owner_Backup_BeforeRestore" />:</strong> <loc key="Owner_Backup_BeforeRestore_Desc" /></li>
-            <li><strong><loc key="Owner_Backup_AppRestart" />:</strong> <loc key="Owner_Backup_AppRestart_Desc" /></li>
+            <li><strong><loc key="Owner_Backup_AppRestart" />:</strong> After restoring, restart the application by recycling the IIS App Pool or restarting the Windows Service. For development, stop and restart <code>dotnet run</code>.</li>
             <li><strong><loc key="Owner_Backup_StorageLocation" />:</strong> <loc key="Owner_Backup_StorageLocation_Desc" /></li>
             <li><strong><loc key="Owner_Backup_DownloadInfo" />:</strong> <loc key="Owner_Backup_DownloadInfo_Desc" /></li>
         </ul>
