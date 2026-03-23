@@ -297,6 +297,8 @@ public class DatabaseBackupService : BackgroundService
         }
     }
 
+    private const int MaxBackupsRetained = 2;
+
     private void CleanupOldBackups()
     {
         try
@@ -304,20 +306,28 @@ public class DatabaseBackupService : BackgroundService
             if (!Directory.Exists(_backupDirectory))
                 return;
 
-            var cutoff = DateTime.Now.AddDays(-_retentionDays);
-            var backupFiles = Directory.GetFiles(_backupDirectory, "app.db.backup-*")
-                .Select(f => new FileInfo(f))
-                .Where(f => f.CreationTime < cutoff)
-                .OrderBy(f => f.CreationTime)
+            // Collect ALL backup files (auto-backups + pre-migration + encrypted)
+            var allBackupFiles = new List<FileInfo>();
+            foreach (var pattern in new[] { "app.db.backup-*", "app.db.pre-migration-*" })
+            {
+                allBackupFiles.AddRange(
+                    Directory.GetFiles(_backupDirectory, pattern)
+                        .Select(f => new FileInfo(f)));
+            }
+
+            // Sort newest first by last write time, delete everything beyond MaxBackupsRetained
+            var toDelete = allBackupFiles
+                .OrderByDescending(f => f.LastWriteTime)
+                .Skip(MaxBackupsRetained)
                 .ToList();
 
-            foreach (var file in backupFiles)
+            foreach (var file in toDelete)
             {
                 try
                 {
                     file.Delete();
                     _logger.LogInformation("Deleted old backup: {FileName} (created {Date})",
-                        file.Name, file.CreationTime);
+                        file.Name, file.LastWriteTime);
                 }
                 catch (Exception ex)
                 {
@@ -325,10 +335,10 @@ public class DatabaseBackupService : BackgroundService
                 }
             }
 
-            if (backupFiles.Count > 0)
+            if (toDelete.Count > 0)
             {
-                _logger.LogInformation("Cleaned up {Count} old backup(s) older than {Days} days",
-                    backupFiles.Count, _retentionDays);
+                _logger.LogInformation("Cleaned up {Count} old backup(s), retained max {Max}",
+                    toDelete.Count, MaxBackupsRetained);
             }
         }
         catch (Exception ex)
@@ -368,11 +378,18 @@ public class DatabaseBackupService : BackgroundService
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
-    private static string ExtractDbPath(string connectionString)
+    internal static string ExtractDbPath(string connectionString)
     {
-        // Parse "Data Source=app.db" or "Data Source=path/to/app.db"
-        var parts = connectionString.Split('=', 2);
-        return parts.Length > 1 ? parts[1].Trim() : "app.db";
+        // Use SqliteConnectionStringBuilder for robust parsing (handles Busy Timeout and other parameters)
+        try
+        {
+            var builder = new SqliteConnectionStringBuilder(connectionString);
+            return string.IsNullOrEmpty(builder.DataSource) ? "app.db" : builder.DataSource;
+        }
+        catch
+        {
+            return "app.db";
+        }
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

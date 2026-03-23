@@ -388,7 +388,7 @@ builder.Services.AddControllers()
 // Readiness (/ready) includes DB, disk, and memory checks.
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>(tags: new[] { "ready" })
-    .AddCheck("disk_space", new DiskSpaceHealthCheck(), tags: new[] { "ready" })
+    .AddCheck<DiskSpaceHealthCheck>("disk_space", tags: new[] { "ready" })
     .AddCheck("memory", new MemoryHealthCheck(), tags: new[] { "live", "ready" });
 
 // B-026: Swagger/OpenAPI configuration
@@ -458,7 +458,7 @@ using (var scope = app.Services.CreateScope())
     // ============================================================
     {
         var connStr = app.Configuration.GetConnectionString("Default") ?? "Data Source=app.db";
-        var dbFilePath = connStr.Split('=', 2).Length > 1 ? connStr.Split('=', 2)[1].Trim() : "app.db";
+        var dbFilePath = DatabaseBackupService.ExtractDbPath(connStr);
 
         if (File.Exists(dbFilePath))
         {
@@ -471,6 +471,25 @@ using (var scope = app.Services.CreateScope())
                 File.Copy(dbFilePath, preMigrationPath, overwrite: false);
                 logger.LogInformation("Pre-migration backup created: {Path} ({SizeKB:F1} KB)",
                     preMigrationPath, new FileInfo(preMigrationPath).Length / 1024.0);
+
+                // Clean up old pre-migration backups — keep only the 2 most recent
+                try
+                {
+                    var preMigrationFiles = Directory.GetFiles(backupDir, "app.db.pre-migration-*")
+                        .Select(f => new FileInfo(f))
+                        .OrderByDescending(f => f.LastWriteTime)
+                        .Skip(2)
+                        .ToList();
+                    foreach (var oldFile in preMigrationFiles)
+                    {
+                        oldFile.Delete();
+                        logger.LogInformation("Cleaned up old pre-migration backup: {FileName}", oldFile.Name);
+                    }
+                }
+                catch (Exception cleanupEx)
+                {
+                    logger.LogWarning(cleanupEx, "Failed to clean up old pre-migration backups");
+                }
             }
             catch (Exception ex)
             {
@@ -484,7 +503,7 @@ using (var scope = app.Services.CreateScope())
     // SQLite cannot create the file if the directory doesn't exist, causing HTTP 500.30.
     {
         var connStr = app.Configuration.GetConnectionString("Default") ?? "Data Source=app.db";
-        var dbFilePath = connStr.Split('=', 2).Length > 1 ? connStr.Split('=', 2)[1].Trim() : "app.db";
+        var dbFilePath = DatabaseBackupService.ExtractDbPath(connStr);
         var dbDir = Path.GetDirectoryName(Path.GetFullPath(dbFilePath));
         if (!string.IsNullOrEmpty(dbDir) && !Directory.Exists(dbDir))
         {
@@ -499,6 +518,8 @@ using (var scope = app.Services.CreateScope())
     // SQLITE WAL MODE + BUSY TIMEOUT (fixes C-01)
     // WAL mode allows concurrent reads during writes.
     // busy_timeout prevents immediate SQLITE_BUSY errors under contention.
+    // NOTE: busy_timeout is also applied via the connection string (Busy Timeout=5000)
+    // which covers all connections. This PRAGMA is retained as defense-in-depth.
     // ============================================================
     try
     {
@@ -1376,7 +1397,21 @@ app.UseMiddleware<ShiftManager.Middleware.CorrelationIdMiddleware>();
 var enableHttps = app.Configuration.GetValue<bool>("EnableHttpsRedirection", !app.Environment.IsDevelopment());
 if (enableHttps)
 {
-    app.UseHttpsRedirection();
+    // Custom HTTPS redirect that excludes /Auth/GriffinCallback.
+    // Griffin (ADFS) may POST the callback over HTTP when the IdP hasn't migrated to HTTPS yet.
+    // This exclusion is self-resolving: once Griffin migrates to HTTPS, this path will naturally use HTTPS.
+    app.Use(async (context, next) =>
+    {
+        if (!context.Request.IsHttps
+            && !context.Request.Path.StartsWithSegments("/Auth/GriffinCallback"))
+        {
+            var host = context.Request.Host;
+            var url = $"https://{host}{context.Request.Path}{context.Request.QueryString}";
+            context.Response.Redirect(url, permanent: false);
+            return;
+        }
+        await next();
+    });
 }
 
 // Response compression middleware (C-04) — before static files
@@ -1733,7 +1768,7 @@ app.MapGet("/api/v1/version", () =>
     // SQLite network share detection (fixes G-05)
     {
         var connStr = app.Configuration.GetConnectionString("Default") ?? "Data Source=app.db";
-        var dbFilePath = connStr.Split('=', 2).Length > 1 ? connStr.Split('=', 2)[1].Trim() : "app.db";
+        var dbFilePath = DatabaseBackupService.ExtractDbPath(connStr);
         var fullDbPath = Path.GetFullPath(dbFilePath);
 
         if (fullDbPath.StartsWith(@"\\") || fullDbPath.StartsWith("//"))
