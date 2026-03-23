@@ -53,10 +53,14 @@ public class SystemAlertsViewComponent : ViewComponent
     {
         var alerts = new List<string>();
 
+        // Parse DB path from connection string (not hardcoded)
+        var connStr = _configuration.GetConnectionString("Default") ?? "Data Source=app.db";
+        var dbPath = Path.GetFullPath(ShiftManager.Services.DatabaseBackupService.ExtractDbPath(connStr));
+
         // C-07: Check WAL file size (large WAL = checkpoint issues)
         try
         {
-            var walPath = Path.Combine(AppContext.BaseDirectory, "app.db-wal");
+            var walPath = dbPath + "-wal";
             if (File.Exists(walPath))
             {
                 var walSizeMb = new FileInfo(walPath).Length / (1024.0 * 1024.0);
@@ -69,7 +73,6 @@ public class SystemAlertsViewComponent : ViewComponent
         // Check disk space
         try
         {
-            var dbPath = Path.Combine(AppContext.BaseDirectory, "app.db");
             var driveInfo = new DriveInfo(Path.GetPathRoot(dbPath) ?? "C");
             var freePercent = (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize * 100;
             if (freePercent < 5)

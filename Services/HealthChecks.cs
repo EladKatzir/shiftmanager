@@ -14,11 +14,19 @@ public class DiskSpaceHealthCheck : IHealthCheck
     private const long MinFreeSpaceMB = 100;       // Absolute minimum 100MB free
     private const long MaxWalSizeMB = 100;         // Warn if WAL exceeds 100MB
 
+    private readonly string _dbPath;
+
+    public DiskSpaceHealthCheck(IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("Default") ?? "Data Source=app.db";
+        _dbPath = DatabaseBackupService.ExtractDbPath(connectionString);
+    }
+
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
         try
         {
-            var dbPath = Path.Combine(AppContext.BaseDirectory, "app.db");
+            var dbPath = Path.GetFullPath(_dbPath);
             var driveInfo = new DriveInfo(Path.GetPathRoot(dbPath) ?? "C");
 
             var freeSpaceMB = driveInfo.AvailableFreeSpace / 1024 / 1024;

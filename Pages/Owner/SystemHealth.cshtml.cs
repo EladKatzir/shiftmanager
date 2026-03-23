@@ -120,8 +120,9 @@ public class SystemHealthModel : PageModel
             // Test database connection
             DatabaseHealthy = await _db.Database.CanConnectAsync();
 
-            // Get database size
-            var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "app.db");
+            // Get database size (parse path from connection string, not hardcoded)
+            var connStr = _configuration.GetConnectionString("Default") ?? "Data Source=app.db";
+            var dbPath = Path.GetFullPath(Services.DatabaseBackupService.ExtractDbPath(connStr));
             if (System.IO.File.Exists(dbPath))
             {
                 var fileInfo = new System.IO.FileInfo(dbPath);
@@ -261,7 +262,8 @@ public class SystemHealthModel : PageModel
     {
         try
         {
-            var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "app.db");
+            var connStr = _configuration.GetConnectionString("Default") ?? "Data Source=app.db";
+            var dbPath = Path.GetFullPath(Services.DatabaseBackupService.ExtractDbPath(connStr));
             var root = Path.GetPathRoot(dbPath) ?? "C:\\";
             var driveInfo = new DriveInfo(root);
             DiskFreeSpaceMB = driveInfo.AvailableFreeSpace / 1024 / 1024;
