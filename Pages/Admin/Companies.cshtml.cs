@@ -331,27 +331,9 @@ public class CompaniesModel : LocalizedPageModel
                 successUserInfo = string.Format(_localizer["Success_ManagerCreated"], ManagerEmail);
             }
 
-            // 3. Create default shift types for the new company
-            var defaultShiftTypes = new[]
-            {
-                new ShiftType { CompanyId = company.Id, Key = "MORNING", Start = new TimeOnly(8, 0), End = new TimeOnly(16, 0) },
-                new ShiftType { CompanyId = company.Id, Key = "NOON", Start = new TimeOnly(16, 0), End = new TimeOnly(0, 0) },
-                new ShiftType { CompanyId = company.Id, Key = "NIGHT", Start = new TimeOnly(0, 0), End = new TimeOnly(8, 0) },
-                new ShiftType { CompanyId = company.Id, Key = "MIDDLE", Start = new TimeOnly(12, 0), End = new TimeOnly(20, 0) }
-            };
-
-            _db.ShiftTypes.AddRange(defaultShiftTypes);
-            {
-                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
-                    () => _db.SaveChangesAsync(), "Company", company.Id);
-                if (!saveResult.Success)
-                {
-                    Error = _localizer["Error_ConcurrencyConflict"];
-                    return Page();
-                }
-            }
-
-            _logger.LogInformation("Created default shift types for company {CompanyName}", company.Name);
+            // Shift types are now molecule-scoped — no per-company seeding needed.
+            // Shifts are seeded when the molecule is created (see IShiftTypeSeedService).
+            _logger.LogInformation("Company {CompanyName} created — shift types are molecule-scoped, no per-company seed", company.Name);
 
             // 4. Create default config for the new company
             var defaultConfigs = new[]
@@ -560,8 +542,8 @@ public class CompaniesModel : LocalizedPageModel
             // 4. Delete all shift instances
             await _db.ShiftInstances.IgnoreQueryFilters().Where(si => si.CompanyId == id).ExecuteDeleteAsync();
 
-            // 5. Delete all shift types
-            await _db.ShiftTypes.IgnoreQueryFilters().Where(st => st.CompanyId == id).ExecuteDeleteAsync();
+            // 5. Delete company-scoped shift types only (molecule-scoped shifts are shared)
+            await _db.ShiftTypes.Where(st => st.CompanyId == id).ExecuteDeleteAsync();
 
             // 6. Delete all configs
             await _db.Configs.IgnoreQueryFilters().Where(c => c.CompanyId == id).ExecuteDeleteAsync();

@@ -66,10 +66,13 @@ public class ProgramsModel : PageModel
 
         Programs = await _programService.GetCompanyProgramsAsync(companyId, includeInactive: false);
 
-        // Load data first, then sort by SortOrder (which is [NotMapped])
-        var allShiftTypes = await _db.ShiftTypes
-            .Where(st => st.CompanyId == companyId)
-            .ToListAsync();
+        // Load shift types by molecule (shift types are molecule-scoped now)
+        var moleculeId = await _db.Companies.Where(c => c.Id == companyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+        var allShiftTypes = moleculeId.HasValue
+            ? await _db.ShiftTypes
+                .Where(st => st.MoleculeId == moleculeId)
+                .ToListAsync()
+            : new List<ShiftType>();
         ShiftTypes = allShiftTypes.OrderBy(st => st.SortOrder).ToList();
     }
 

@@ -374,10 +374,9 @@ public class UsersModel : LocalizedPageModel
             .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area?.DisplayName ?? "", jt.Name))
             .ToList();
 
-        // Load available shift types for PrimaryShiftType dropdown (tech molecule shift types)
-        // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed because tech shift types may belong to hq company
+        // Load available shift types for PrimaryShiftType dropdown
+        // No query filter on ShiftType — scope-based visibility now
         AvailableShiftTypes = await _db.ShiftTypes
-            .IgnoreQueryFilters()
             .Where(st => st.MoleculeId != null && st.Key != ShiftType.KEY_OFFLINE && st.Key != ShiftType.KEY_HOME)
             .OrderBy(st => st.MoleculeId).ThenBy(st => st.Start)
             .ToListAsync();

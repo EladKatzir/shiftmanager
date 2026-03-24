@@ -310,7 +310,14 @@ public class TableModel : PageModel
 
             var relevantShiftTypeIds = shiftTypeIdsWithInstances.Union(shiftTypeIdsFromPrograms).ToHashSet();
 
-            var allShiftTypes = await _shiftTypeCache.GetShiftTypesAsync(companyId);
+            // Resolve molecule from company for shift type lookup (shift types are molecule-scoped)
+            var companyMoleculeId = await _db.Companies
+                .Where(c => c.Id == companyId)
+                .Select(c => c.MoleculeId)
+                .FirstOrDefaultAsync();
+            var allShiftTypes = companyMoleculeId.HasValue
+                ? await _shiftTypeCache.GetShiftTypesForMoleculeAsync(companyMoleculeId.Value, null)
+                : new List<ShiftType>();
             ShiftTypes = allShiftTypes
                 .Where(st => relevantShiftTypeIds.Contains(st.Id))
                 .OrderBy(st => st.IsOffline ? 1 : 0)

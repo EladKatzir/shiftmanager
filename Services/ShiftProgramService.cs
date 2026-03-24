@@ -40,13 +40,17 @@ public class ShiftProgramService : IShiftProgramService
             "Creating Program '{Name}' for ShiftType {ShiftTypeId} in Company {CompanyId}",
             name, shiftTypeId, companyId);
 
-        // Validate ShiftType exists and belongs to company
+        // Validate ShiftType exists and is accessible from this company's molecule
+        var companyMoleculeId = await _db.Companies
+            .Where(c => c.Id == companyId)
+            .Select(c => c.MoleculeId)
+            .FirstOrDefaultAsync();
         var shiftType = await _db.ShiftTypes
-            .FirstOrDefaultAsync(st => st.Id == shiftTypeId && st.CompanyId == companyId);
+            .FirstOrDefaultAsync(st => st.Id == shiftTypeId && st.MoleculeId == companyMoleculeId);
 
         if (shiftType == null)
         {
-            throw new InvalidOperationException($"ShiftType {shiftTypeId} not found or does not belong to Company {companyId}");
+            throw new InvalidOperationException($"ShiftType {shiftTypeId} not found or not accessible from Company {companyId}");
         }
 
         // Validate at least one day selected

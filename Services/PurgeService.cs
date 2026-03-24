@@ -288,10 +288,14 @@ public class PurgeService : IPurgeService
     private async Task<int> DeleteOfflineShiftsAsync(int companyId, DateOnly cutoffDate)
     {
         // Auto-cleanup OFFLINE shifts when purging TimeOff
-        var offlineShiftTypeId = await _db.ShiftTypes
-            .Where(st => st.CompanyId == companyId && st.Key == ShiftType.KEY_OFFLINE)
-            .Select(st => st.Id)
-            .FirstOrDefaultAsync();
+        // Resolve molecule from company for shift type lookup
+        var moleculeId = await _db.Companies.Where(c => c.Id == companyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+        var offlineShiftTypeId = moleculeId.HasValue
+            ? await _db.ShiftTypes
+                .Where(st => st.MoleculeId == moleculeId && st.Key == ShiftType.KEY_OFFLINE)
+                .Select(st => st.Id)
+                .FirstOrDefaultAsync()
+            : 0;
 
         if (offlineShiftTypeId == 0)
             return 0;
@@ -311,10 +315,13 @@ public class PurgeService : IPurgeService
     private async Task<(int shifts, int assignments)> DeleteShiftsAsync(int companyId, DateOnly cutoffDate)
     {
         // Get ShiftInstances to delete (excluding OFFLINE - handled separately)
-        var offlineShiftTypeId = await _db.ShiftTypes
-            .Where(st => st.CompanyId == companyId && st.Key == ShiftType.KEY_OFFLINE)
-            .Select(st => st.Id)
-            .FirstOrDefaultAsync();
+        var molId = await _db.Companies.Where(c => c.Id == companyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+        var offlineShiftTypeId = molId.HasValue
+            ? await _db.ShiftTypes
+                .Where(st => st.MoleculeId == molId && st.Key == ShiftType.KEY_OFFLINE)
+                .Select(st => st.Id)
+                .FirstOrDefaultAsync()
+            : 0;
 
         var shiftsToDelete = await _db.ShiftInstances
             .Where(si => si.CompanyId == companyId &&

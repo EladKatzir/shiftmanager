@@ -209,10 +209,14 @@ public class ImportService : IImportService
             // 7. Check for missing shift types
             if (referencedShiftTypeKeys.Count > 0)
             {
-                var existingShiftTypeKeys = await _db.ShiftTypes
-                    .Where(st => st.CompanyId == companyId && referencedShiftTypeKeys.Contains(st.Key))
-                    .Select(st => st.Key)
-                    .ToListAsync();
+                // Resolve molecule from company for shift type lookup
+                var valMoleculeId = await _db.Companies.Where(c => c.Id == companyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+                var existingShiftTypeKeys = valMoleculeId.HasValue
+                    ? await _db.ShiftTypes
+                        .Where(st => st.MoleculeId == valMoleculeId && referencedShiftTypeKeys.Contains(st.Key))
+                        .Select(st => st.Key)
+                        .ToListAsync()
+                    : new List<string>();
 
                 result.MissingShiftTypeKeys = referencedShiftTypeKeys
                     .Except(existingShiftTypeKeys, StringComparer.OrdinalIgnoreCase)
@@ -271,9 +275,13 @@ public class ImportService : IImportService
                 .Where(u => u.CompanyId == companyId)
                 .ToDictionaryAsync(u => u.Email.ToLowerInvariant(), u => u.Id);
 
-            var shiftTypeLookup = await _db.ShiftTypes
-                .Where(st => st.CompanyId == companyId)
-                .ToDictionaryAsync(st => st.Key.ToLowerInvariant(), st => st);
+            // Resolve molecule from company for shift type lookup
+            var importMoleculeId = await _db.Companies.Where(c => c.Id == companyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+            var shiftTypeLookup = importMoleculeId.HasValue
+                ? await _db.ShiftTypes
+                    .Where(st => st.MoleculeId == importMoleculeId)
+                    .ToDictionaryAsync(st => st.Key.ToLowerInvariant(), st => st)
+                : new Dictionary<string, ShiftType>();
 
             // 4. Begin transaction
             using var transaction = await _db.Database.BeginTransactionAsync();
