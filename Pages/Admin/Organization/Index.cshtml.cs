@@ -322,7 +322,7 @@ public class IndexModel : LocalizedPageModel
             await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.CompanyId == EntityId).ExecuteDeleteAsync();
             await _db.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.CompanyId == EntityId).ExecuteDeleteAsync();
             await _db.ShiftInstances.IgnoreQueryFilters().Where(si => si.CompanyId == EntityId).ExecuteDeleteAsync();
-            await _db.ShiftTypes.IgnoreQueryFilters().Where(st => st.CompanyId == EntityId).ExecuteDeleteAsync();
+            await _db.ShiftTypes.Where(st => st.CompanyId == EntityId).ExecuteDeleteAsync(); // Only deletes company-scoped shifts (molecule-scoped have CompanyId=null)
             await _db.Configs.IgnoreQueryFilters().Where(c => c.CompanyId == EntityId).ExecuteDeleteAsync();
             await _db.DirectorCompanies.Where(dc => dc.CompanyId == EntityId).ExecuteDeleteAsync();
             await _db.UserNotifications.IgnoreQueryFilters().Where(n => n.CompanyId == EntityId).ExecuteDeleteAsync();
