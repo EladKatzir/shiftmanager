@@ -300,7 +300,7 @@ public class ShiftsModel : PageModel
             .OrderBy(st => st.Start)
             .ToListAsync())
             .OrderBy(st => st.Start)
-            .ThenBy(st => st.CustomName ?? st.Key)
+            .ThenBy(st => st.NameEn ?? st.Key)
             .ToList();
 
         // Expose shift types for user-mode bottom-sheet dropdown
@@ -335,7 +335,7 @@ public class ShiftsModel : PageModel
                 Id = $"shift-{shiftType.Id}",
                 Label = $"{localizedName} ({shiftType.Start:HH:mm}-{shiftType.End:HH:mm})",
                 Color = shiftType.RowColor,
-                CompanyName = companyNames.GetValueOrDefault(shiftType.CompanyId)
+                CompanyName = shiftType.CompanyId.HasValue ? companyNames.GetValueOrDefault(shiftType.CompanyId.Value) : null
             };
 
             // Build cells for each date
@@ -371,7 +371,7 @@ public class ShiftsModel : PageModel
             .OrderBy(st => st.Start)
             .ToListAsync())
             .OrderBy(st => st.Start)
-            .ThenBy(st => st.CustomName ?? st.Key)
+            .ThenBy(st => st.NameEn ?? st.Key)
             .ToList();
 
         // Get users for this molecule/job type
@@ -557,7 +557,7 @@ public class ShiftsModel : PageModel
             // Resolve display name from the first ShiftType with this TechShiftType (use localized name)
             var displaySt = ShiftTypes.FirstOrDefault(st => st.TechShiftType == techType);
             var displayName = displaySt != null
-                ? localizedShiftNames.GetValueOrDefault(displaySt.Id, displaySt.CustomName ?? techType)
+                ? localizedShiftNames.GetValueOrDefault(displaySt.Id, displaySt.NameEn ?? techType)
                 : techType;
 
             if (regulars.Count > 0)

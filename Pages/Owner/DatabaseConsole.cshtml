@@ -68,7 +68,7 @@
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT u.DisplayName, u.Email, u.Role FROM Users u WHERE u.IsActive = 1 ORDER BY u.DisplayName LIMIT 50')">
                     <loc key="Owner_DatabaseConsole_ActiveUsers" />
                 </button>
-                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT sa.Id, u.DisplayName, COALESCE(st.CustomName, st.Key) as ShiftType, si.WorkDate FROM ShiftAssignments sa JOIN Users u ON sa.UserId = u.Id JOIN ShiftInstances si ON sa.ShiftInstanceId = si.Id JOIN ShiftTypes st ON si.ShiftTypeId = st.Id WHERE si.WorkDate >= date(\'now\') ORDER BY si.WorkDate LIMIT 30')">
+                <button type="button" class="quick-query-btn" onclick="setQuery('SELECT sa.Id, u.DisplayName, COALESCE(st.NameEn, st.Key) as ShiftType, si.WorkDate FROM ShiftAssignments sa JOIN Users u ON sa.UserId = u.Id JOIN ShiftInstances si ON sa.ShiftInstanceId = si.Id JOIN ShiftTypes st ON si.ShiftTypeId = st.Id WHERE si.WorkDate >= date(\'now\') ORDER BY si.WorkDate LIMIT 30')">
                     <loc key="Owner_DatabaseConsole_UpcomingAssignments" />
                 </button>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT tor.Id, u.DisplayName, tor.StartDate, tor.EndDate, tor.Status FROM TimeOffRequests tor JOIN Users u ON tor.UserId = u.Id WHERE tor.Status = 0 ORDER BY tor.StartDate LIMIT 20')">

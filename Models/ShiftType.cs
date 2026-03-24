@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using ShiftManager.Models.Support;
 
 namespace ShiftManager.Models;
 
-public class ShiftType : IBelongsToCompany
+public class ShiftType
 {
     // Predefined shift type keys
     public const string KEY_MORNING = "MORNING";
@@ -21,14 +22,30 @@ public class ShiftType : IBelongsToCompany
     public const string TECH_MOVILTECH = "MOVILTECH";
 
     public int Id { get; set; }
-    public int CompanyId { get; set; }
+
+    /// <summary>
+    /// Owning company for company-scoped shifts. Null for molecule/area-scoped shifts.
+    /// </summary>
+    public int? CompanyId { get; set; }
+
     public string Key { get; set; } = string.Empty; // MORNING, NOON, NIGHT, MIDDLE, OFFLINE, or CUSTOM_*
+
+    /// <summary>
+    /// The organizational scope at which this shift type is defined.
+    /// Company = per-company, Molecule = shared across molecule, Area = cross-molecule.
+    /// </summary>
+    public ShiftScope Scope { get; set; } = ShiftScope.Molecule;
 
     // v3.0: Organizational hierarchy scope
     public int? MoleculeId { get; set; }
     public int? JobTypeId { get; set; }        // For workforce shifts (Alhut, Text)
     public int? ShiftGroupingId { get; set; }  // For grouped shifts (Tzafon, Darom)
     public string? TechShiftType { get; set; } // For tech shifts (Hanava, Delta, Support)
+
+    /// <summary>
+    /// Area ID for area-scoped shifts. Required when Scope = Area.
+    /// </summary>
+    public int? AreaId { get; set; }
 
     /// <summary>
     /// JSON array of CompanyIds whose users can be assigned this shift type.
@@ -43,10 +60,15 @@ public class ShiftType : IBelongsToCompany
     public bool RequiresOfficerRank { get; set; } = false;
 
     /// <summary>
-    /// Custom display name for this shift type (company-specific).
+    /// English display name for this shift type (molecule/area-scoped custom names).
     /// If null/empty, falls back to predefined names based on Key.
     /// </summary>
-    public string? CustomName { get; set; }
+    public string? NameEn { get; set; }
+
+    /// <summary>
+    /// Hebrew display name for this shift type (molecule/area-scoped custom names).
+    /// </summary>
+    public string? NameHe { get; set; }
 
     /// <summary>
     /// Resource key for localized shift name (e.g., "ShiftType_MORNING_Name").
@@ -60,9 +82,9 @@ public class ShiftType : IBelongsToCompany
     {
         get
         {
-            // Use CustomName if provided (company-specific override)
-            if (!string.IsNullOrWhiteSpace(CustomName))
-                return CustomName;
+            // Use NameEn if provided (molecule/area-scoped custom name)
+            if (!string.IsNullOrWhiteSpace(NameEn))
+                return NameEn;
 
             // Otherwise use predefined names
             return Key switch
@@ -91,6 +113,12 @@ public class ShiftType : IBelongsToCompany
         return System.Globalization.CultureInfo.CurrentCulture.TextInfo
             .ToTitleCase(name.Replace('_', ' ').ToLower());
     }
+
+    /// <summary>
+    /// Returns CompanyId for company-scoped shifts, or resolves from context for molecule/area-scoped.
+    /// Used when creating ShiftInstances that need a non-nullable CompanyId.
+    /// </summary>
+    public int GetEffectiveCompanyId(int fallbackCompanyId) => CompanyId ?? fallbackCompanyId;
 
     public TimeOnly Start { get; set; }
     public TimeOnly End { get; set; } // if End <= Start => wraps to next day
@@ -150,7 +178,9 @@ public class ShiftType : IBelongsToCompany
     }
 
     // v3.0: Navigation properties
+    public Company? Company { get; set; }
     public Molecule? Molecule { get; set; }
+    public Area? Area { get; set; }
     public JobType? JobType { get; set; }
     public ShiftGrouping? ShiftGrouping { get; set; }
 }

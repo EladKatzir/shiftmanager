@@ -127,10 +127,10 @@ public class WidgetService : IWidgetService
 
         // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
         // First, get the IDs of Hakam shift types
-        // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
+        // Note: ShiftType.Name is [NotMapped], so we search by NameEn or Key instead
         var hakamShiftTypeIds = await _context.ShiftTypes
             .IgnoreQueryFilters()
-            .Where(st => (st.CustomName != null && st.CustomName.Contains("Hakam")) || st.Key.Contains("Hakam"))
+            .Where(st => (st.NameEn != null && st.NameEn.Contains("Hakam")) || st.Key.Contains("Hakam"))
             .Select(st => st.Id)
             .ToListAsync();
 
@@ -187,12 +187,12 @@ public class WidgetService : IWidgetService
         var companyDisplayName = companyEntity.LocalizedName;
 
         // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
-        // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
+        // Note: ShiftType.Name is [NotMapped], so we search by NameEn or Key instead
         var brShiftTypes = await _context.ShiftTypes
             .IgnoreQueryFilters()
-            .Where(st => (st.CustomName != null && (st.CustomName.Contains("BR") || st.CustomName.Contains("Katzin")))
+            .Where(st => (st.NameEn != null && (st.NameEn.Contains("BR") || st.NameEn.Contains("Katzin")))
                       || st.Key.Contains("BR") || st.Key.Contains("Katzin"))
-            .Select(st => new { st.Id, Name = st.CustomName ?? st.Key })
+            .Select(st => new { st.Id, Name = st.NameEn ?? st.Key })
             .ToListAsync();
 
         if (!brShiftTypes.Any()) return contacts;
@@ -294,10 +294,10 @@ public class WidgetService : IWidgetService
             .ToListAsync();
 
         // Pre-fetch on-call shift type IDs to avoid [NotMapped] ShiftType.Name in LINQ-to-SQL
-        // Note: ShiftType.Name is [NotMapped], so we search by CustomName or Key instead
+        // Note: ShiftType.Name is [NotMapped], so we search by NameEn or Key instead
         var onCallShiftTypeIds = await _context.ShiftTypes
             .IgnoreQueryFilters()
-            .Where(st => (st.CustomName != null && (st.CustomName.Contains("BR") || st.CustomName.Contains("Katzin") || st.CustomName.Contains("Hakam")))
+            .Where(st => (st.NameEn != null && (st.NameEn.Contains("BR") || st.NameEn.Contains("Katzin") || st.NameEn.Contains("Hakam")))
                       || st.Key.Contains("BR") || st.Key.Contains("Katzin") || st.Key.Contains("Hakam"))
             .Select(st => st.Id)
             .ToListAsync();

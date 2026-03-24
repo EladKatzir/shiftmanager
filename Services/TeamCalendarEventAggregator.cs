@@ -308,7 +308,7 @@ public class TeamCalendarEventAggregator
             return new DayStatus
             {
                 Type = DayStatusType.Shift,
-                Label = shift.CustomName ?? shift.ShiftTypeName,
+                Label = shift.NameEn ?? shift.ShiftTypeName,
                 TimeRange = $"{shift.Start:HH:mm} - {shift.End:HH:mm}",
                 Metadata = shift.ShiftTypeKey,
                 TargetUrl = "/Calendar/Table"
@@ -413,7 +413,7 @@ public class TeamCalendarEventAggregator
                 Date = a.ShiftInstance.WorkDate,
                 ShiftTypeKey = a.ShiftInstance.ShiftType.Key,
                 ShiftTypeName = a.ShiftInstance.ShiftType.Name,
-                CustomName = a.ShiftInstance.ShiftType.CustomName,
+                NameEn = a.ShiftInstance.ShiftType.NameEn,
                 Start = a.ShiftInstance.ShiftType.Start,
                 End = a.ShiftInstance.ShiftType.End
             })
@@ -480,7 +480,7 @@ public class ShiftEvent
     public DateOnly Date { get; set; }
     public string ShiftTypeKey { get; set; } = string.Empty;
     public string ShiftTypeName { get; set; } = string.Empty;
-    public string? CustomName { get; set; }
+    public string? NameEn { get; set; }
     public TimeOnly Start { get; set; }
     public TimeOnly End { get; set; }
 }

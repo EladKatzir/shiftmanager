@@ -560,7 +560,7 @@ public class UsersModel : LocalizedPageModel
                     userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
                     u.RoleTemplateId,
                     u.PrimaryShiftTypeId,
-                    u.PrimaryShiftType?.CustomName ?? u.PrimaryShiftType?.Name
+                    u.PrimaryShiftType?.NameEn ?? u.PrimaryShiftType?.Name
                 ));
             }
             else
@@ -590,7 +590,7 @@ public class UsersModel : LocalizedPageModel
                         userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
                         u.RoleTemplateId,
                         u.PrimaryShiftTypeId,
-                        u.PrimaryShiftType?.CustomName ?? u.PrimaryShiftType?.Name
+                        u.PrimaryShiftType?.NameEn ?? u.PrimaryShiftType?.Name
                     ));
                 }
             }
@@ -1305,7 +1305,7 @@ public class UsersModel : LocalizedPageModel
                 TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
                 return RedirectToPage();
             }
-            stName = st.CustomName ?? st.Name;
+            stName = st.NameEn ?? st.Name;
         }
 
         var oldPstId = u.PrimaryShiftTypeId;

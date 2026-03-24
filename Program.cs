@@ -1092,27 +1092,8 @@ using (var scope = app.Services.CreateScope())
     }
 
     // SECURITY-AUDITED: All IgnoreQueryFilters() in this startup seeding block are SAFE — runs at app startup only, not user-facing
-    // H-04: Seed shift types — upsert-style (insert missing by Key per company)
-    {
-        var defaultShiftTypes = new[]
-        {
-            new ShiftType{ CompanyId=company.Id, Key="MORNING", Start=new TimeOnly(8,0), End=new TimeOnly(16,0)},
-            new ShiftType{ CompanyId=company.Id, Key="NOON", Start=new TimeOnly(16,0), End=new TimeOnly(0,0)},
-            new ShiftType{ CompanyId=company.Id, Key="NIGHT", Start=new TimeOnly(0,0), End=new TimeOnly(8,0)},
-            new ShiftType{ CompanyId=company.Id, Key="MIDDLE", Start=new TimeOnly(12,0), End=new TimeOnly(20,0)},
-            new ShiftType{ CompanyId=company.Id, Key="OFFLINE", Start=new TimeOnly(0,0), End=new TimeOnly(0,0)},
-        };
-        var existingKeys = db.ShiftTypes.IgnoreQueryFilters()
-            .Where(st => st.CompanyId == company.Id)
-            .Select(st => st.Key)
-            .ToHashSet();
-        var newTypes = defaultShiftTypes.Where(st => !existingKeys.Contains(st.Key)).ToArray();
-        if (newTypes.Length > 0)
-        {
-            db.ShiftTypes.AddRange(newTypes);
-            await db.SaveChangesAsync();
-        }
-    }
+    // H-04: Shift types are now molecule-scoped (seeded by ShiftyOrganizationSeed)
+    // No per-company shift type seeding needed here — skip legacy seed
 
     // H-04: Seed config — upsert-style (insert missing by Key per company)
     {
@@ -1175,18 +1156,8 @@ using (var scope = app.Services.CreateScope())
             db.Companies.Add(company2);
             await db.SaveChangesAsync();
 
-            // Seed shift types for second company
-            if (!db.ShiftTypes.IgnoreQueryFilters().Any(st => st.CompanyId == company2.Id))
-            {
-                db.ShiftTypes.AddRange(new[] {
-                    new ShiftType{ CompanyId=company2.Id, Key="MORNING", Start=new TimeOnly(8,0), End=new TimeOnly(16,0)},
-                    new ShiftType{ CompanyId=company2.Id, Key="NOON", Start=new TimeOnly(16,0), End=new TimeOnly(0,0)},
-                    new ShiftType{ CompanyId=company2.Id, Key="NIGHT", Start=new TimeOnly(0,0), End=new TimeOnly(8,0)},
-                    new ShiftType{ CompanyId=company2.Id, Key="MIDDLE", Start=new TimeOnly(12,0), End=new TimeOnly(20,0)},
-                    new ShiftType{ CompanyId=company2.Id, Key="OFFLINE", Start=new TimeOnly(0,0), End=new TimeOnly(0,0)}, // Special shift type that can overlap
-                });
-                await db.SaveChangesAsync();
-            }
+            // Shift types are now molecule-scoped (seeded by ShiftyOrganizationSeed)
+            // No per-company shift type seeding needed
 
             // Seed config for second company
             if (!db.Configs.IgnoreQueryFilters().Any(c => c.CompanyId == company2.Id))

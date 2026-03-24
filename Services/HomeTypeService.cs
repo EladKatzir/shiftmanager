@@ -225,16 +225,17 @@ public class HomeTypeService : IHomeTypeService
 
         if (homeShiftType == null)
         {
-            // Auto-create HOME ShiftType with defaults
+            // Auto-create HOME ShiftType with defaults (molecule-scoped, no CompanyId)
             homeShiftType = new ShiftType
             {
                 Key = ShiftType.KEY_HOME,
                 MoleculeId = homeType.MoleculeId,
-                CompanyId = homeType.CompanyId,
+                Scope = Models.Support.ShiftScope.Molecule,
                 Start = new TimeOnly(0, 0),
                 End = new TimeOnly(23, 59),
                 RowColor = "#F8E7B1",
-                CustomName = "Home"
+                NameEn = "Home",
+                NameHe = "בית"
             };
             _db.ShiftTypes.Add(homeShiftType);
             await _db.SaveChangesAsync();
@@ -318,7 +319,7 @@ public class HomeTypeService : IHomeTypeService
             var newInstances = missingDates.Select(date => new ShiftInstance
             {
                 ShiftTypeId = homeShiftType.Id,
-                CompanyId = homeShiftType.CompanyId,
+                CompanyId = homeShiftType.GetEffectiveCompanyId(homeType.CompanyId),
                 WorkDate = date,
                 StaffingRequired = 99 // HOME has no capacity limit
             }).ToList();

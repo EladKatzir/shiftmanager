@@ -257,7 +257,7 @@ public class TableModel : PageModel
                 // Show all molecule shift types (not just those with instances — leads need to see unfilled shifts too)
                 .OrderBy(st => st.IsOffline ? 1 : 0)
                 .ThenBy(st => st.Start)
-                .ThenBy(st => st.CustomName ?? st.Name)
+                .ThenBy(st => st.NameEn ?? st.Name)
                 .ToList();
 
             // Load employees from ALL companies in the molecule with matching JobType
@@ -315,7 +315,7 @@ public class TableModel : PageModel
                 .Where(st => relevantShiftTypeIds.Contains(st.Id))
                 .OrderBy(st => st.IsOffline ? 1 : 0)
                 .ThenBy(st => st.Start)
-                .ThenBy(st => st.CustomName ?? st.Name)
+                .ThenBy(st => st.NameEn ?? st.Name)
                 .ToList();
 
             Employees = await _db.Users
@@ -403,6 +403,7 @@ public class TableModel : PageModel
     {
         try
         {
+            var companyId = _companyContext.GetCompanyIdOrThrow();
             if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_StaffingRange"].Value });
 
@@ -431,7 +432,7 @@ public class TableModel : PageModel
                     // Create new instance
                     instance = new ShiftInstance
                     {
-                        CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
+                        CompanyId = shiftType.GetEffectiveCompanyId(companyId),  // Use ShiftType's company, not caller's tenant
                         ShiftTypeId = request.ShiftTypeId,
                         WorkDate = request.Date,
                         StaffingRequired = request.StaffingRequired,
@@ -448,7 +449,7 @@ public class TableModel : PageModel
                     {
                         var assignment = new ShiftAssignment
                         {
-                            CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
+                            CompanyId = shiftType.GetEffectiveCompanyId(companyId),  // Use ShiftType's company, not caller's tenant
                             ShiftInstanceId = instance.Id,
                             UserId = null // Unassigned slot
                         };
@@ -515,6 +516,7 @@ public class TableModel : PageModel
     {
         try
         {
+            var companyId = _companyContext.GetCompanyIdOrThrow();
             if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_StaffingRange"].Value });
 
@@ -543,7 +545,7 @@ public class TableModel : PageModel
                 // Create shift instance with staffing requirement
                 var instance = new ShiftInstance
                 {
-                    CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
+                    CompanyId = shiftType.GetEffectiveCompanyId(companyId),  // Use ShiftType's company, not caller's tenant
                     ShiftTypeId = request.ShiftTypeId,
                     WorkDate = request.Date,
                     StaffingRequired = request.StaffingRequired,
@@ -560,7 +562,7 @@ public class TableModel : PageModel
                 {
                     var assignment = new ShiftAssignment
                     {
-                        CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
+                        CompanyId = shiftType.GetEffectiveCompanyId(companyId),  // Use ShiftType's company, not caller's tenant
                         ShiftInstanceId = instance.Id,
                         UserId = null // Unassigned slot
                     };
@@ -759,7 +761,7 @@ public class TableModel : PageModel
 
                 instance = new ShiftInstance
                 {
-                    CompanyId = shiftType.CompanyId,  // Use ShiftType's company, not caller's tenant
+                    CompanyId = shiftType.GetEffectiveCompanyId(companyId),  // Use ShiftType's company, not caller's tenant
                     ShiftTypeId = request.ShiftTypeId,
                     WorkDate = request.Date,
                     StaffingRequired = 1,
@@ -1494,8 +1496,8 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidTimeFormat"].Value });
             }
 
-            // Update metadata (company-scoped rename via CustomName)
-            shiftType.CustomName = request.Name.Trim();
+            // Update metadata (company-scoped rename via NameEn)
+            shiftType.NameEn = request.Name.Trim();
             shiftType.Start = startTime;
             shiftType.End = endTime;
 
@@ -1505,7 +1507,8 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             // Invalidate caches
-            _shiftTypeCache.InvalidateCache(shiftType.CompanyId);
+            if (shiftType.CompanyId.HasValue)
+                _shiftTypeCache.InvalidateCache(shiftType.CompanyId.Value);
             if (shiftType.MoleculeId.HasValue)
                 _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
 
@@ -1551,7 +1554,7 @@ public class TableModel : PageModel
             {
                 CompanyId = companyId,
                 Key = customKey,
-                CustomName = request.Name.Trim(), // User-provided name (NO KEY LEAKAGE)
+                NameEn = request.Name.Trim(), // User-provided name (NO KEY LEAKAGE)
                 Start = startTime,
                 End = endTime,
                 MoleculeId = request.MoleculeId,
@@ -1565,7 +1568,7 @@ public class TableModel : PageModel
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
             _logger.LogInformation("Created custom shift type {ShiftTypeId} with name '{Name}' for company {CompanyId}",
-                shiftType.Id, shiftType.CustomName, companyId);
+                shiftType.Id, shiftType.NameEn, companyId);
 
             // Invalidate caches so the new shift type appears immediately
             _shiftTypeCache.InvalidateCache(companyId);

@@ -1610,7 +1610,7 @@
                             <div class="shift-metadata" id="metadata-@shiftType.Id">
                                 <strong>@Model.LocalizedShiftTypeNames.GetValueOrDefault(shiftType.Id, shiftType.Name)</strong>
                                 <small style="color: var(--text-muted);">@Localization.FormatTime(shiftType.Start) - @Localization.FormatTime(shiftType.End)</small>
-                                @if (Model.IsMoleculeMode && Model.CompanyNames.TryGetValue(shiftType.CompanyId, out var ownerName))
+                                @if (Model.IsMoleculeMode && shiftType.CompanyId.HasValue && Model.CompanyNames.TryGetValue(shiftType.CompanyId.Value, out var ownerName))
                                 {
                                     <span class="company-badge" title="@ownerName">🏢 @ownerName</span>
                                 }

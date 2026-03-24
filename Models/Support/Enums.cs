@@ -69,6 +69,17 @@ public enum OnDutyType
     Lead = 1    // מובילתו - Day Shift: Lead
 }
 
+/// <summary>
+/// Defines the organizational scope at which a ShiftType is defined and managed.
+/// Ordered narrowest→broadest to enable safe comparison (scope >= ShiftScope.Molecule = "at least molecule-wide").
+/// </summary>
+public enum ShiftScope
+{
+    Company = 0,    // Company-specific, visible molecule-wide but badged with company flair
+    Molecule = 1,   // Default for seeded shifts — visible to all in the molecule
+    Area = 2        // Cross-molecule, AreaAdmin-level management only
+}
+
 public enum EmailTemplateType
 {
     ShiftAssigned = 0,

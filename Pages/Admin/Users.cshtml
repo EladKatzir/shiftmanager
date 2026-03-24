@@ -931,7 +931,7 @@
                                 <option value="" selected="@(!u.PrimaryShiftTypeId.HasValue)">-</option>
                                 @foreach (var st in Model.AvailableShiftTypes)
                                 {
-                                    <option value="@st.Id" selected="@(u.PrimaryShiftTypeId == st.Id)">@(st.CustomName ?? st.Name)</option>
+                                    <option value="@st.Id" selected="@(u.PrimaryShiftTypeId == st.Id)">@(st.NameEn ?? st.Name)</option>
                                 }
                             </select>
                             <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]">✓</button>

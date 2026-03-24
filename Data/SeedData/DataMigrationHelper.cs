@@ -157,12 +157,13 @@ public class DataMigrationHelper
     }
 
     /// <summary>
-    /// Updates ShiftType records to link to molecules, job types, and shift groupings.
+    /// Updates ShiftType records to link to molecules and set scope.
+    /// For legacy company-scoped shifts without MoleculeId, derives from company.
     /// </summary>
     private async Task<int> UpdateShiftTypesAsync()
     {
         var shiftTypes = await _db.ShiftTypes
-            .Where(st => st.MoleculeId == null)
+            .Where(st => st.MoleculeId == null && st.CompanyId != null)
             .ToListAsync();
 
         if (!shiftTypes.Any())
@@ -179,7 +180,7 @@ public class DataMigrationHelper
         int updated = 0;
         foreach (var shiftType in shiftTypes)
         {
-            if (companyMolecules.TryGetValue(shiftType.CompanyId, out var moleculeId))
+            if (shiftType.CompanyId.HasValue && companyMolecules.TryGetValue(shiftType.CompanyId.Value, out var moleculeId))
             {
                 shiftType.MoleculeId = moleculeId;
                 updated++;

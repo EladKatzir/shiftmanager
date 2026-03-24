@@ -315,9 +315,11 @@ public class CompanyLocalizationService : ICompanyLocalizationService
             if (!loc.ResourceNotFound) return loc.Value;
         }
 
-        // 6. CustomName (non-localized single-language fallback)
-        if (!string.IsNullOrWhiteSpace(shiftType.CustomName))
-            return shiftType.CustomName;
+        // 6. Direct bilingual name on ShiftType (molecule/area-scoped shifts)
+        if (culture == "he-IL" && !string.IsNullOrWhiteSpace(shiftType.NameHe))
+            return shiftType.NameHe;
+        if (!string.IsNullOrWhiteSpace(shiftType.NameEn))
+            return shiftType.NameEn;
 
         // 7. Computed Name from ShiftType model
         return shiftType.Name;

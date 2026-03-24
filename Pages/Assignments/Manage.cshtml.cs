@@ -72,10 +72,7 @@ public class ManageModel : LocalizedPageModel
             return RedirectToPage("/Calendar/Month");
         }
 
-        // Company is determined by the shift type's CompanyId
-        var companyId = Type.CompanyId;
-
-        // Validate user has access to this company
+        // Validate user identity
         // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
@@ -90,6 +87,9 @@ public class ManageModel : LocalizedPageModel
             _logger.LogError("User {UserId} not found in database", currentUserId);
             return RedirectToPage("/Error");
         }
+
+        // Company context: use shift type's CompanyId if company-scoped, else current user's company
+        var companyId = Type.GetEffectiveCompanyId(currentUser.CompanyId);
 
         // Check access via grants (not role)
         var isAdmin = await _grantService.HasGrantAsync(currentUser.Id, "AdminAccess");

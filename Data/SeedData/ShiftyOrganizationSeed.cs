@@ -182,13 +182,25 @@ public static class ShiftyOrganizationSeed
         await db.SaveChangesAsync();
 
         // ============================================================
-        // TECH SHIFT TYPES (for Shikma)
+        // SHIFT TYPES (molecule-scoped for all molecules)
         // ============================================================
-        var hqShikma = db.Companies.Local.FirstOrDefault(c => c.MoleculeId == shikma.Id && c.IsHeadquarters)
-            ?? await db.Companies.FirstOrDefaultAsync(c => c.MoleculeId == shikma.Id && c.IsHeadquarters);
-        if (hqShikma != null)
+
+        // --- Workforce molecules: seed per-JobType shifts + shared HOME/OFFLINE ---
+        var workforceMolecules = new[] { oren, ella, harava, shaked, gefen };
+        var workforceJobTypes = new[] { alhut, text }; // Per-jobtype shifts (MORNING/AFTERNOON/NIGHT)
+        foreach (var mol in workforceMolecules)
         {
-            var techShiftTypes = TechShiftTypeSeed.GetTechShiftTypes(hqShikma.Id, shikma.Id);
+            foreach (var jt in workforceJobTypes)
+            {
+                db.ShiftTypes.AddRange(TechShiftTypeSeed.GetWorkforceShiftTypes(mol.Id, jt.Id));
+            }
+            db.ShiftTypes.AddRange(TechShiftTypeSeed.GetWorkforceSharedShiftTypes(mol.Id));
+        }
+        await db.SaveChangesAsync();
+
+        // --- Tech molecule (Shikma): tech shift types + HOME/OFFLINE ---
+        {
+            var techShiftTypes = TechShiftTypeSeed.GetTechShiftTypes(shikma.Id);
 
             // Set EligibleCompanyIds now that company IDs are known
             foreach (var st in techShiftTypes)

@@ -65,7 +65,7 @@ public interface ICompanyLocalizationService
     /// 3. .resx for NameKey
     /// 4. .resx for "ShiftType_{Key}" pattern
     /// 5. .resx for raw Key (e.g., "MORNING" → "בוקר")
-    /// 6. CustomName (non-localized single-language fallback)
+    /// 6. NameHe/NameEn (direct bilingual name on ShiftType for molecule/area-scoped shifts)
     /// 7. Computed Name from ShiftType model
     /// </summary>
     Task<string> ResolveShiftTypeNameAsync(ShiftType shiftType, int companyId, string culture);

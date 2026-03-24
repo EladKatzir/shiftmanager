@@ -220,15 +220,31 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<AppUser>()
             .HasIndex(u => u.Email).IsUnique();
 
-        // Multitenancy: Add composite index for ShiftType (CompanyId, Key)
+        // ShiftType indexes for scope-based queries
         modelBuilder.Entity<ShiftType>()
-            .HasIndex(s => new { s.CompanyId, s.Key });
+            .HasIndex(s => new { s.CompanyId, s.Key })
+            .HasFilter("CompanyId IS NOT NULL");
 
         // Prevent duplicate ShiftType Keys within the same molecule+jobType scope
         modelBuilder.Entity<ShiftType>()
             .HasIndex(s => new { s.MoleculeId, s.JobTypeId, s.Key })
             .IsUnique()
-            .HasFilter("MoleculeId IS NOT NULL AND JobTypeId IS NOT NULL");
+            .HasFilter("MoleculeId IS NOT NULL");
+
+        // Scope-based lookup indexes
+        modelBuilder.Entity<ShiftType>()
+            .HasIndex(s => new { s.Scope, s.MoleculeId });
+        modelBuilder.Entity<ShiftType>()
+            .HasIndex(s => new { s.Scope, s.AreaId });
+
+        // CHECK constraints: scope consistency
+        modelBuilder.Entity<ShiftType>()
+            .ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_ShiftType_Company_Scope", "Scope != 0 OR CompanyId IS NOT NULL");
+                t.HasCheckConstraint("CK_ShiftType_Area_Scope", "Scope != 2 OR AreaId IS NOT NULL");
+                t.HasCheckConstraint("CK_ShiftType_Molecule_Scope", "Scope != 1 OR MoleculeId IS NOT NULL");
+            });
 
         // Multitenancy Phase 1: Update ShiftAssignment index to include CompanyId
         modelBuilder.Entity<ShiftAssignment>()
@@ -584,8 +600,7 @@ public class AppDbContext : DbContext
         // Multitenancy Phase 2: Global query filters for automatic tenant scoping
         if (_tenantResolver != null)
         {
-            modelBuilder.Entity<ShiftType>()
-                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+            // ShiftType: NO query filter — scope-based visibility (molecule/area), not tenant-based
 
             modelBuilder.Entity<ShiftInstance>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());

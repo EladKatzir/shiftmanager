@@ -86,16 +86,20 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 .Select(sgc => sgc.CompanyId)
                 .ToListAsync();
 
-            // Fall back to shift type's company if grouping has no companies
+            // Fall back to shift type's company or all companies in molecule
             if (!companyIds.Any())
             {
-                companyIds = new List<int> { shiftType.CompanyId };
+                companyIds = shiftType.CompanyId.HasValue
+                    ? new List<int> { shiftType.CompanyId.Value }
+                    : await _db.Companies.Where(c => c.MoleculeId == shiftType.MoleculeId).Select(c => c.Id).ToListAsync();
             }
         }
         else
         {
-            // No grouping: use only the shift type's company
-            companyIds = new List<int> { shiftType.CompanyId };
+            // No grouping: use shift type's company or all companies in molecule
+            companyIds = shiftType.CompanyId.HasValue
+                ? new List<int> { shiftType.CompanyId.Value }
+                : await _db.Companies.Where(c => c.MoleculeId == shiftType.MoleculeId).Select(c => c.Id).ToListAsync();
         }
 
         // Start with active users from the determined companies

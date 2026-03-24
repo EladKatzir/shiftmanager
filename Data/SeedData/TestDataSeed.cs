@@ -387,54 +387,28 @@ public static class TestDataSeed
             jobTypeId = jobType?.Id;
         }
 
-        // Check if shift types exist for this company
+        // Check if shift types exist for this molecule (molecule-scoped, not company-scoped)
+        var moleculeId = company.MoleculeId;
         var shiftTypes = await context.ShiftTypes
-            .IgnoreQueryFilters()
-            .Where(st => st.CompanyId == companyId)
+            .Where(st => st.MoleculeId == moleculeId && st.JobTypeId == jobTypeId)
             .ToListAsync();
 
-        if (!shiftTypes.Any())
+        if (!shiftTypes.Any() && moleculeId.HasValue)
         {
-            // Create basic shift types with proper molecule/jobType scoping
-            // so they appear in the Calendar/Shifts page dropdown filters
-            var morningShift = new ShiftType
-            {
-                CompanyId = companyId,
-                MoleculeId = company.MoleculeId,
-                JobTypeId = jobTypeId,
-                Key = ShiftType.KEY_MORNING,
-                CustomName = "Morning Shift",
-                Start = new TimeOnly(6, 0),
-                End = new TimeOnly(14, 0)
-            };
+            // Create molecule-scoped shift types (no CompanyId)
+            shiftTypes = TechShiftTypeSeed.GetWorkforceShiftTypes(moleculeId.Value, jobTypeId ?? 0);
+            context.ShiftTypes.AddRange(shiftTypes);
 
-            var afternoonShift = new ShiftType
+            // Also seed shared HOME/OFFLINE if not already present
+            var hasShared = await context.ShiftTypes
+                .AnyAsync(st => st.MoleculeId == moleculeId && st.JobTypeId == null && st.Key == ShiftType.KEY_HOME);
+            if (!hasShared)
             {
-                CompanyId = companyId,
-                MoleculeId = company.MoleculeId,
-                JobTypeId = jobTypeId,
-                Key = ShiftType.KEY_AFTERNOON,
-                CustomName = "Afternoon Shift",
-                Start = new TimeOnly(14, 0),
-                End = new TimeOnly(22, 0)
-            };
+                context.ShiftTypes.AddRange(TechShiftTypeSeed.GetWorkforceSharedShiftTypes(moleculeId.Value));
+            }
 
-            var nightShift = new ShiftType
-            {
-                CompanyId = companyId,
-                MoleculeId = company.MoleculeId,
-                JobTypeId = jobTypeId,
-                Key = ShiftType.KEY_NIGHT,
-                CustomName = "Night Shift",
-                Start = new TimeOnly(22, 0),
-                End = new TimeOnly(6, 0)
-            };
-
-            context.ShiftTypes.AddRange(morningShift, afternoonShift, nightShift);
             await context.SaveChangesAsync();
-
-            shiftTypes = new List<ShiftType> { morningShift, afternoonShift, nightShift };
-            logger.LogInformation("Created {Count} shift types for test company", shiftTypes.Count);
+            logger.LogInformation("Created {Count} shift types for test molecule", shiftTypes.Count);
         }
 
         // Check if shift instances already exist
