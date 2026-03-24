@@ -238,8 +238,8 @@ public class BlueprintsModel : PageModel
             // Also update localization overrides if company-scoped
             if (shiftType.Scope == ShiftScope.Company && shiftType.CompanyId.HasValue && !string.IsNullOrWhiteSpace(shiftType.NameKey))
             {
-                await _localizationService.UpsertOverrideAsync(shiftType.CompanyId.Value, "en-US", shiftType.NameKey, nameEn, userId);
-                await _localizationService.UpsertOverrideAsync(shiftType.CompanyId.Value, "he-IL", shiftType.NameKey, nameHe, userId);
+                await _localizationService.UpsertOverrideAsync(shiftType.CompanyId.Value, "en-US", shiftType.NameKey, nameEn ?? "", userId);
+                await _localizationService.UpsertOverrideAsync(shiftType.CompanyId.Value, "he-IL", shiftType.NameKey, nameHe ?? "", userId);
             }
 
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
