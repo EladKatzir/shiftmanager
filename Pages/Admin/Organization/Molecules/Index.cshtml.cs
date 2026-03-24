@@ -19,16 +19,19 @@ public class IndexModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
     private readonly ISetupTaskService _setupTaskService;
+    private readonly IShiftTypeSeedService _shiftTypeSeedService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<IndexModel> logger,
-        ISetupTaskService setupTaskService) : base(localizer)
+        ISetupTaskService setupTaskService,
+        IShiftTypeSeedService shiftTypeSeedService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _setupTaskService = setupTaskService;
+        _shiftTypeSeedService = shiftTypeSeedService;
     }
 
     // View Models
@@ -140,6 +143,9 @@ public class IndexModel : LocalizedPageModel
 
         _logger.LogInformation("Created molecule {MoleculeId}: {MoleculeName} (Type: {Type}) in Area {AreaId} with HQ company {HQCompanyId}",
             molecule.Id, molecule.Name, molecule.Type, molecule.AreaId, hqCompany.Id);
+
+        // Auto-seed standard shift types (HOME, OFFLINE) for the new molecule
+        await _shiftTypeSeedService.SeedForMoleculeAsync(molecule.Id);
 
         // Auto-generate setup tasks for the new molecule (duplicate guard: only if none exist)
         var existingTasks = await _setupTaskService.GetTasksForMoleculeAsync(molecule.Id);

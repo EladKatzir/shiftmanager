@@ -120,9 +120,9 @@ public class ProgramManagementAuthorizationTests : IDisposable
         var blueprint = new ShiftType
         {
             Id = 1,
-            CompanyId = 1,
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule, MoleculeId = 1,
             Key = "TEST_SHIFT",
-            CustomName = "Test Shift",
+            NameEn = "Test Shift",
             Start = new TimeOnly(9, 0),
             End = new TimeOnly(17, 0)
         };
@@ -156,9 +156,9 @@ public class ProgramManagementAuthorizationTests : IDisposable
         var blueprint = new ShiftType
         {
             Id = 2,
-            CompanyId = 1, // Manager's company
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule, MoleculeId = 1, // Manager's company
             Key = "MANAGER_SHIFT",
-            CustomName = "Manager Shift",
+            NameEn = "Manager Shift",
             Start = new TimeOnly(8, 0),
             End = new TimeOnly(16, 0)
         };
@@ -168,7 +168,7 @@ public class ProgramManagementAuthorizationTests : IDisposable
         // Assert
         var saved = await _db.ShiftTypes.FindAsync(2);
         saved.Should().NotBeNull("Manager should be able to create blueprints for their company");
-        saved!.CompanyId.Should().Be(1, "Manager's blueprint should be for their company");
+        saved!.MoleculeId.Should().Be(1, "Manager's blueprint should be for their molecule");
     }
 
     [Fact]
@@ -204,9 +204,9 @@ public class ProgramManagementAuthorizationTests : IDisposable
         var blueprint = new ShiftType
         {
             Id = 3,
-            CompanyId = 1, // Director's assigned company
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule, MoleculeId = 1, // Director's assigned company
             Key = "DIRECTOR_SHIFT",
-            CustomName = "Director Shift",
+            NameEn = "Director Shift",
             Start = new TimeOnly(10, 0),
             End = new TimeOnly(18, 0)
         };
@@ -216,7 +216,7 @@ public class ProgramManagementAuthorizationTests : IDisposable
         // Assert
         var saved = await _db.ShiftTypes.FindAsync(3);
         saved.Should().NotBeNull("Director should be able to create blueprints for assigned companies");
-        saved!.CompanyId.Should().Be(1, "Director's blueprint should be for assigned company");
+        saved!.MoleculeId.Should().Be(1, "Director's blueprint should be for their molecule");
     }
 
     [Fact]

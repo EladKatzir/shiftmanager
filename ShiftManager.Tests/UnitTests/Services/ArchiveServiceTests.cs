@@ -70,7 +70,7 @@ public class ArchiveServiceTests : IDisposable
     {
         var shiftType = new ShiftType
         {
-            CompanyId = TestCompanyId,
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule,
             Key = shiftTypeKey,
             Name = shiftTypeKey,
             MoleculeId = 1,

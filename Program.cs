@@ -257,6 +257,7 @@ builder.Services.AddMemoryCache(options =>
 
 // Phase 2C: Performance Optimization - Caching Services
 builder.Services.AddScoped<IShiftTypeCacheService, ShiftTypeCacheService>();
+builder.Services.AddScoped<IShiftTypeSeedService, ShiftTypeSeedService>();
 builder.Services.AddScoped<IAppConfigCacheService, AppConfigCacheService>();
 builder.Services.AddScoped<ICompanyCacheService, CompanyCacheService>();
 

@@ -110,17 +110,19 @@ public class DirectorCrossTenantTests : IDisposable
         var shiftType1 = new ShiftType
         {
             Id = 1,
-            CompanyId = 1,
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule,
+            MoleculeId = 1, // Assume test molecules exist
             Key = ShiftType.KEY_MORNING,
-            CustomName = "Morning"
+            NameEn = "Morning"
         };
 
         var shiftType2 = new ShiftType
         {
             Id = 2,
-            CompanyId = 2,
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule,
+            MoleculeId = 1,
             Key = ShiftType.KEY_EVENING,
-            CustomName = "Evening"
+            NameEn = "Evening"
         };
 
         _db.ShiftTypes.AddRange(shiftType1, shiftType2);

@@ -361,4 +361,11 @@ public static class CalendarGroups
     public static string Chores(int moleculeId) => $"chores-{moleculeId}";
     public static string OnCall(int areaId) => $"oncall-{areaId}";
     public static string Overview(int companyId) => $"overview-{companyId}";
+
+    /// <summary>
+    /// Get all shift group names for molecules in an area (for area-scoped shift notifications).
+    /// Caller must resolve moleculeIds from the area.
+    /// </summary>
+    public static IEnumerable<string> ShiftsForArea(IEnumerable<int> moleculeIds, int? jobTypeId)
+        => moleculeIds.Select(mid => Shifts(mid, jobTypeId));
 }

@@ -139,7 +139,7 @@ public class ShiftAssignmentServiceTests : IDisposable
         // Create shift type with job type restriction
         var shiftType = new ShiftType
         {
-            CompanyId = company1.Id,
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule,
             MoleculeId = molecule.Id,
             JobTypeId = alhutJobType.Id,
             ShiftGroupingId = shiftGrouping.Id,
@@ -335,7 +335,7 @@ public class ShiftAssignmentServiceTests : IDisposable
         // Create BR shift type (no JobType filter, applies to all BR users in molecule)
         var brShiftType = new ShiftType
         {
-            CompanyId = hierarchy.Companies[0].Id,
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule,
             MoleculeId = hierarchy.Molecule.Id,
             JobTypeId = hierarchy.JobTypes["BR"].Id, // BR job type
             ShiftGroupingId = null, // BR shifts are molecule-wide, not grouped
