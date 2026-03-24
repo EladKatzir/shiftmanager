@@ -55,7 +55,7 @@
     function initialize() {
         // Check if matchMedia is supported
         if (!window.matchMedia) {
-            console.warn('[ReducedMotion] matchMedia not supported, defaulting to full motion');
+            Logger.warn('ReducedMotion', 'matchMedia not supported, defaulting to full motion');
             prefersReducedMotion = false;
             return;
         }
@@ -100,7 +100,7 @@
                 try {
                     callback(prefersReducedMotion);
                 } catch (error) {
-                    console.error('[ReducedMotion] Error in change listener:', error);
+                    Logger.error('ReducedMotion', 'Error in change listener:', error);
                 }
             });
         }
@@ -151,7 +151,7 @@
      */
     function onChange(callback) {
         if (typeof callback !== 'function') {
-            console.warn('[ReducedMotion] onChange expects a function');
+            Logger.warn('ReducedMotion', 'onChange expects a function');
             return () => {};
         }
 
@@ -194,7 +194,7 @@
      */
     function animate(element, keyframes, options, onComplete) {
         if (!element || !keyframes) {
-            console.warn('[ReducedMotion] animate requires element and keyframes');
+            Logger.warn('ReducedMotion', 'animate requires element and keyframes');
             return null;
         }
 
@@ -222,7 +222,7 @@
 
         // Check for Web Animations API support
         if (!element.animate) {
-            console.warn('[ReducedMotion] Web Animations API not supported');
+            Logger.warn('ReducedMotion', 'Web Animations API not supported');
             // Fallback: apply styles directly
             const finalKeyframe = Array.isArray(keyframes)
                 ? keyframes[keyframes.length - 1]
@@ -262,7 +262,7 @@
      */
     function animateWithClass(element, animationClass, duration, onComplete) {
         if (!element || !animationClass) {
-            console.warn('[ReducedMotion] animateWithClass requires element and animationClass');
+            Logger.warn('ReducedMotion', 'animateWithClass requires element and animationClass');
             return;
         }
 

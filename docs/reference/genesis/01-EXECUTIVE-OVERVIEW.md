@@ -146,7 +146,7 @@ It's not about scaling to millions of users (cloud SaaS strength) - it's about:
 #### FR-2: Shift Conflict Detection
 **Business Need:** Prevent scheduling errors (double-booking, overlapping shifts, insufficient rest hours)
 
-**Implementation:** ConflictChecker service validates shift assignments against business rules
+**Implementation:** `ShiftAssignmentService.ValidateShiftAssignmentAsync` validates shift assignments against business rules
 
 **Why Critical:** Errors lead to no-shows, safety violations, regulatory fines
 
@@ -256,7 +256,7 @@ It's not about scaling to millions of users (cloud SaaS strength) - it's about:
 1. **Shift Planning (Monday, 08:00):** Open month view calendar, create shifts for upcoming weeks
 2. **Assign Personnel (09:00-11:00):** Drag-and-drop soldiers onto shifts in Table view, system highlights conflicts
 3. **Review Requests (14:00):** /Requests/Index page - batch approve time-off, decline swaps if understaffing
-4. **Resolve Conflicts (As Needed):** ConflictChecker alerts on rest hour violations, reassign shifts
+4. **Resolve Conflicts (As Needed):** `ShiftAssignmentService.ValidateShiftAssignmentAsync` alerts on rest hour violations, reassign shifts
 5. **Analytics Review (Friday, 16:00):** Check weekly hours per soldier, ensure no one exceeding 60 hours
 
 **Pain Points (Before ShiftManager):**

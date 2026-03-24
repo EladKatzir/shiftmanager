@@ -93,7 +93,7 @@ ShiftManager implements a **dual authentication system**:
 - ✅ **Multi-tenancy** - CompanyId claim for tenant isolation
 - ✅ **V3 Grant-based authorization** - Hierarchical permissions with scoping *(NEW)*
 - ✅ **V3 Role templates** - Bundles of grants with auto-application *(NEW)*
-- ✅ **Legacy role-based authorization** - 6 roles (supplementary)
+- ✅ **Legacy role-based authorization** - 7 roles (supplementary)
 - ✅ **SAML SSO support** - Griffin ADFS integration
 - ✅ **Session timeout** - 7 days sliding expiration with client-side warning
 - ✅ **Auto-provisioning** - Optional user creation from ADFS claims
@@ -1033,11 +1033,12 @@ public async Task<IActionResult> OnGet()
 public enum UserRole
 {
     Owner = 0,       // Full system access
-    Director = 1,    // Cross-company access
-    Manager = 2,     // Department management
-    Assigner = 3,    // Shift assignment
-    Employee = 4,    // Standard user
-    Trainee = 5      // Limited access (shadowing)
+    Manager = 1,     // Department management
+    Employee = 2,    // Standard user
+    Director = 3,    // Cross-company access
+    Trainee = 4,     // Limited access (shadowing)
+    Assigner = 5,    // Shift assignment
+    AreaAdmin = 6    // Area-wide administration
 }
 ```
 
@@ -1045,12 +1046,13 @@ public enum UserRole
 
 | Role | Capabilities | V3 Migration |
 |------|--------------|--------------|
-| **Owner** | Full system access, company config, billing, Griffin setup | Maps to `Owner` RoleTemplate with all grants |
-| **Director** | Cross-company access, on-duty management, reporting | Maps to `Director` RoleTemplate (scoped to Area) |
-| **Manager** | Shift creation, approval workflows, user management | Maps to `MoleculeAdmin` or `CompanyManager` RoleTemplate |
-| **Assigner** | Shift assignment, chore creation | Maps to `Assigner` RoleTemplate with shift grants |
-| **Employee** | View schedule, request time-off/swaps, submit feedback | Maps to `Employee` RoleTemplate with read grants |
-| **Trainee** | View-only, shadowing shifts (trainee assignments) | Maps to `Trainee` RoleTemplate with limited grants |
+| **Owner** (0) | Full system access, company config, billing, Griffin setup | Maps to `Owner` RoleTemplate with all grants |
+| **Manager** (1) | Shift creation, approval workflows, user management | Maps to `MoleculeAdmin` or `CompanyManager` RoleTemplate |
+| **Employee** (2) | View schedule, request time-off/swaps, submit feedback | Maps to `Employee` RoleTemplate with read grants |
+| **Director** (3) | Cross-company access, on-duty management, reporting | Maps to `Director` RoleTemplate (scoped to Area) |
+| **Trainee** (4) | View-only, shadowing shifts (trainee assignments) | Maps to `Trainee` RoleTemplate with limited grants |
+| **Assigner** (5) | Shift assignment, chore creation | Maps to `Assigner` RoleTemplate with shift grants |
+| **AreaAdmin** (6) | Area-wide administration and configuration | Maps to `AreaAdmin` RoleTemplate (scoped to Area) |
 
 **Role Assignment:**
 - Set by Owner/Director on user creation or profile edit
@@ -1112,7 +1114,7 @@ public enum UserRole
 
 **Location:** `Data/SeedData/GrantTypeSeed.cs`
 
-ShiftManager defines **90+ grant types** across **12 categories**:
+ShiftManager defines **125 grant types** across **12 categories**:
 
 | Category | Grant Types | Description |
 |----------|-------------|-------------|
@@ -1846,11 +1848,11 @@ var displayName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
 - ✅ Session status API (`/Api/SessionStatus`)
 
 **Authorization (V3 Update):**
-- ✅ **V3 Grant-based authorization** - Primary mechanism with 90+ grant types
+- ✅ **V3 Grant-based authorization** - Primary mechanism with 125 grant types
 - ✅ **V3 Role Templates** - 11 built-in templates with auto-grant application
 - ✅ **Hierarchical scoping** - Project → Area → Molecule → Company/Department
 - ✅ **Grant delegation** - CanOwn/CanGive flags for permission sharing
-- ✅ **Legacy role support** - 6 roles (Owner, Director, Manager, Assigner, Employee, Trainee)
+- ✅ **Legacy role support** - 7 roles (Owner, Manager, Employee, Director, Trainee, Assigner, AreaAdmin)
 - ✅ **18+ policies** - Both grant-based and role-based enforcement
 
 **Security Features:**
@@ -1880,7 +1882,7 @@ var displayName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
 - `Services/RoleService.cs` *(V3)* - Role template management
 - `Models/Authorization/Grant.cs` *(V3)* - Grant entity
 - `Models/Authorization/RoleTemplate.cs` *(V3)* - Role template entity
-- `Data/SeedData/GrantTypeSeed.cs` *(V3)* - 90+ grant types
+- `Data/SeedData/GrantTypeSeed.cs` *(V3)* - 125 grant types
 - `Data/SeedData/RoleTemplateSeed.cs` *(V3)* - 11 role templates
 
 **Next Steps:**

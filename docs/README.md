@@ -37,10 +37,11 @@ ShiftManager is an enterprise-grade shift scheduling system designed specificall
 - **Rest Hours Enforcement** - Configurable minimum rest periods between shifts
 - **Weekly Hour Caps** - Automatic tracking and enforcement of maximum weekly hours
 - **OFFLINE Shift Type** - Special shift type for non-working days and scheduled time off
+- **HOME Shift Type** - Special shift type for home/remote work rotation assignments
 
 ### User Management
 - **Multi-Tenant Architecture** - Complete company data isolation with automatic scoping
-- **Role-Based Access Control** - Six roles with granular permissions (Owner, Director, Admin, Manager, Employee, Trainee)
+- **Role-Based Access Control** - Seven roles: Owner (0), Manager (1), Employee (2), Director (3), Trainee (4), Assigner (5), AreaAdmin (6)
 - **Self-Service Signup** - Employee join requests with admin approval workflow
 - **Cross-Company Directors** - Director role with access to multiple companies
 - **Trainee Shadowing** - Assign trainees to shadow experienced employees
@@ -143,7 +144,7 @@ docs/
 │   └── genesis/           ← 23-chapter architecture deep-dive (verified accurate)
 ├── testing/               ← QA plans, test data, flaky-test policy
 └── archive/               ← Completed plans, historical docs (kept for traceability)
-    ├── plans/             ← 22 completed implementation plans (all implemented)
+    ├── plans/             ← 27 completed implementation plans (all implemented)
     ├── planner/           ← Old UI spec documents
     ├── audits/            ← Historical audit reports
     ├── ui-overhaul/       ← UI overhaul completion records
@@ -378,7 +379,7 @@ Navigate to **http://localhost:5000** and login with:
 - **Self-contained deployment**: Complete .NET runtime included (111 MB, 378 files)
 - **Air-gapped ready**: No internet connection required for operation
 - **Service-oriented**: Clean separation of concerns with injectable services
-- **API-first**: 27 REST endpoints for external integrations
+- **API-first**: 42 REST endpoints for external integrations
 
 **For detailed architecture documentation, see [reference/project.md](reference/project.md)**
 
@@ -520,7 +521,7 @@ ShiftManager supports authentication via Griffin ADFS for air-gapped military/go
 **For complete troubleshooting, see:**
 - [FinalProductPublish/DEPLOYMENT_GUIDE.txt](FinalProductPublish/DEPLOYMENT_GUIDE.txt) Section 8
 - [AIR_GAPPED_DEPLOYMENT_GUIDE.txt](AIR_GAPPED_DEPLOYMENT_GUIDE.txt) Troubleshooting section
-- [USAGE_GUIDE.md](USAGE_GUIDE.md) FAQ section
+- [USAGE_GUIDE.md](guides/USAGE_GUIDE.md) FAQ section
 
 ---
 
@@ -562,7 +563,7 @@ ShiftManager supports authentication via Griffin ADFS for air-gapped military/go
 
 - **HTTP by default**: Configure HTTPS for production network access
 - **Database encryption**: SQLite database stored unencrypted (consider SQLCipher for production)
-- **No rate limiting**: Consider adding rate limiting for production deployments
+- **Rate limiting**: Rate limiting is implemented via IRateLimitingService on Login, Signup, and API endpoints
 - **Security headers**: Add CSP, HSTS, X-Frame-Options for production
 
 **Reporting Vulnerabilities:**

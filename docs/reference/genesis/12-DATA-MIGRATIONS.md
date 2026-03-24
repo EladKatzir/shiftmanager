@@ -24,12 +24,12 @@
 
 ## Overview
 
-ShiftManager evolved through **36 database migrations** over 3 months (September-December 2025), transforming from a basic shift scheduler to a comprehensive multi-tenant workforce management system.
+ShiftManager evolved through **70+ database migrations** over its development lifecycle, transforming from a basic shift scheduler to a comprehensive multi-tenant workforce management system.
 
 **Migration Statistics:**
-- **Total Migrations:** 36
-- **Timespan:** Sept 27, 2025 - Dec 15, 2025 (79 days)
-- **Tables Added:** 28 core tables
+- **Total Migrations:** 70+
+- **Timespan:** Sept 27, 2025 - Present
+- **Entities:** 70+ entities (DbSets)
 - **Features Added:** Multi-tenancy, API infrastructure, Griffin ADFS, team calendars, gamification
 - **Database Size:** ~50 MB (production data)
 - **Migration Tool:** Entity Framework Core 9.0.9
@@ -1083,8 +1083,8 @@ PRAGMA integrity_check;
 ## Summary
 
 **Migration Journey:**
-- **36 migrations** over **79 days**
-- **28 core tables** created
+- **70+ migrations** over the development lifecycle
+- **70+ entities** created
 - **7 major feature phases**
 - **Zero data loss** incidents
 
@@ -1110,7 +1110,7 @@ PRAGMA integrity_check;
 
 **Document Status:** ✅ Complete
 **Lines:** 1,080
-**Coverage:** All 36 migrations documented with timeline, schema changes, and business impact
+**Coverage:** First 36 migrations documented in detail; 70+ total migrations exist including V3 hierarchy, grants, and scheduling
 
 **Cross-References:**
 - 02-ARCHITECTURE-BLUEPRINT.md - Database architecture

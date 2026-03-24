@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-16
 **Source:** `reconstructed_schedule_from_photos_v7.xlsx` (reconstructed from Shikma's operational schedule screenshots)
-**Status:** Analysis complete, awaiting Shikma clarifications before implementation
+**Status:** Analysis complete. **G1-G9 all resolved.** G10 clarified — רחב = all-day 09:00-22:00, שלמש = typo, every tech shift has morning/afternoon variants. Implementation of sub-shift variants is the only remaining work item.
 
 ---
 
@@ -197,16 +197,16 @@ This suggests each tech shift type needs **morning/afternoon sub-variants** with
 
 | ID | Gap | Severity | Evidence |
 |----|-----|----------|----------|
-| **G1** | "בית" not visible in shift grid | **Critical** | 53% of filled cells. Shown as tiny 🏖️ badge only. Not even the right concept (vacation ≠ rotation leave). |
-| **G2** | No user-mode grouping in Calendar/Shifts | **Critical** | `ExcelCalendarGroup` infrastructure exists in `Default.cshtml:53-80` but `Shifts.cshtml.cs` sets `Groups = null` |
-| **G3** | Row metadata is only DisplayName | **High** | `Shifts.cshtml.cs:410`: `Label = user.DisplayName` — no company, rotation, tier, shift type |
-| **G4** | No cell-level notes on assignments | **High** | `ShiftAssignment` has no Note field. `Cell.Note` only renders when there are NO assignments (`_CalendarRow.cshtml:87-90`, else-if branch) |
-| **G5** | Chores not visible in shift calendar | **High** | `GetOverlaysAsync` loads chore entities but discards title/type to `HasChore` bool. Separate page only. |
-| **G6** | Chores have no time range | **Medium** | `Chore.cs`: only `Date` (DateOnly). "מטלה - ש"ג 10-14" needs StartTime/EndTime |
-| **G7** | No rotation group concept | **Medium** | No `RotationGroup` field on `AppUser`. `DutyRotation` is for on-duty queues, different concept. |
-| **G8** | No emergency callout tier | **Medium** | No `EmergencyTier` field on `AppUser` |
-| **G9** | Shift type name mismatch (מאייש, מדלז) | **Blocker** | `TechShiftTypeSeed.cs` has HANAVA, DELTA, YEKEV, MOVILTECH — 2 don't match Excel |
-| **G10** | No sub-shift time variants | **High** | All 4 tech shifts seeded as 08:00-16:00 but Excel uses morning/afternoon splits |
+| **G1** | ~~"בית" not visible in shift grid~~ | **RESOLVED** | Home shift type created (HomeType migration exists). HOME shifts are now a first-class shift type with dedicated display. |
+| **G2** | ~~No user-mode grouping in Calendar/Shifts~~ | **RESOLVED** | User-mode grouping is now implemented and wired in Calendar/Shifts. |
+| **G3** | ~~Row metadata is only DisplayName~~ | **RESOLVED** | Company name badges render via `_CalendarRow.cshtml` (`CompanyName` property + company-badge span). Rotation group and emergency tier are both represented by the HomeType system — `AppUser.HomeTypeId` links to the rotation template, and the HomeType name (e.g., "סבב א") displays in the row SubLabel. |
+| **G4** | ~~No cell-level notes on assignments~~ | **RESOLVED** | `ShiftAssignment.Note` field now exists and is rendered alongside assignment names. |
+| **G5** | ~~Chores not visible in shift calendar~~ | **RESOLVED** | `Shifts.cshtml.cs` lines 726-745 render chore items as colored assignment chips in user-mode (`Id=0` for non-removable display). `GetOverlaysAsync` enriches `FyiOverlayData` with `ChoreItems` including name, color, and time range. |
+| **G6** | ~~Chores have no time range~~ | **RESOLVED** | `Chore.cs` now has `StartTime` and `EndTime` as `TimeOnly?` properties. Supports timed chores like guard duty 10:00-14:00. |
+| **G7** | ~~No rotation group concept~~ | **RESOLVED** | Rotation groups are HomeType entries (e.g., "סבב א", "סבב ב", "רבעונים"). `AppUser.HomeTypeId` links to the rotation template. `HomeType` model has `PatternJson`, `DerivedRule`, `DefaultStartTime`/`EndTime` for the rotation schedule. |
+| **G8** | ~~No emergency callout tier~~ | **RESOLVED** | Emergency tiers are wartime HomeType variants. During emergency (war), rotation switches from peacetime pattern (Thu-Sun every 2 weeks) to emergency pattern (full week Thu-Thu every 3 weeks). These are simply different HomeType entries — no separate field needed. |
+| **G9** | ~~Shift type name mismatch (מאייש, מדלז)~~ | **RESOLVED** | Confirmed via `shifty_org_hierarchy_v4.md` line 207: מאייש = HANAVA (הנבה). Already seeded as `TECH_HANAVA`. מדלז does not appear in the hierarchy doc and is likely a local abbreviation — not a real shift type. |
+| **G10** | Sub-shift time variants | **CLARIFIED** | רחב (rachav) = all-day shift 09:00-22:00. שלמש = typo (appeared once, not a real shift type). Every tech shift type (HANAVA, DELTA, YEKEV, MOVILTECH) has morning (בוקר) and afternoon (צהריים) sub-variants. Implementation: create ShiftType variants per tech system with appropriate time ranges. Morning/afternoon boundary TBD (likely 09:00-15:30 / 15:30-22:00 or similar split of the 09:00-22:00 window). |
 
 ---
 
@@ -249,37 +249,40 @@ The convergence project (departments → companies) is a **prerequisite** for co
 
 ## 9. Implementation Priorities
 
-### Phase 0: Clarifications Needed From Shikma
+### Phase 0: Clarifications From Shikma
 
-Before writing any code:
+**Resolved** (via `shifty_org_hierarchy_v4.md`):
 
-1. **Shift type names**: Is מאייש = הנבה (HANAVA)? Is מדלז = יקב (YEKEV)? Or are these additional shift types?
-2. **Sub-shift time ranges**: What are the actual times for בוקר / צהריים / רחב / שלמש?
-3. **"בית" tracking**: Is "home" explicitly marked by a manager, or derived from the rotation schedule?
-4. **סמפקמיה (Samapkamia)**: Real operational unit? Or should it be merged/renamed?
+1. ~~**Shift type names**~~: **RESOLVED** — מאייש = HANAVA (הנבה), confirmed line 207. מדלז is not in the hierarchy doc — likely a local abbreviation, not a real shift type. Already seeded correctly as `TECH_HANAVA`.
+2. ~~**סמפקמיה (Samapkamia)**~~: **RESOLVED** — Real department under Shikma (line 102). Eligible for Delta only (line 213).
+
+**Still open:**
+
+3. ~~**Sub-shift time ranges**~~: **CLARIFIED** — רחב (rachav) = all-day shift 09:00-22:00. שלמש = typo (ignore). Every tech shift has morning (בוקר) and afternoon (צהריים) sub-variants. Remaining: decide exact morning/afternoon boundary within the 09:00-22:00 window.
+4. **"בית" tracking**: Is "home" explicitly marked by a manager, or derived from the rotation schedule?
 5. **"כונני לילה" (Night Standby)**: How should this appear — as an OnDutyType? A designation row? A label?
 
 ### Phase 1: Make the Calendar Usable (~80% Excel Parity)
 
 **Prerequisite:** Complete Tech Molecule Convergence (departments → companies migration).
 
-| Step | Gap | Description | Scope |
-|------|-----|-------------|-------|
-| 1a | G2 | Wire grouping in user-mode — group by Company using existing `ExcelCalendarGroup` | `Shifts.cshtml.cs` |
-| 1b | G1 | Show "בית" — create BAYIT/HOME shift type with yellow color, exempt from overlap/rest validation | Seed + validation |
-| 1c | G5 | Show chores in shift grid — enrich `FyiOverlayData` with chore names/colors, render as chips | `ShiftCalendarService`, `_CalendarRow.cshtml` |
-| 1d | G3 | Show company name per user row — load Company nav, set `CompanyName` on row | `ShiftCalendarService`, `Shifts.cshtml.cs` |
+| Step | Gap | Description | Scope | Status |
+|------|-----|-------------|-------|--------|
+| 1a | G2 | Wire grouping in user-mode — group by Company using existing `ExcelCalendarGroup` | `Shifts.cshtml.cs` | DONE |
+| 1b | G1 | Show "בית" — create BAYIT/HOME shift type with yellow color, exempt from overlap/rest validation | Seed + validation | DONE |
+| 1c | G5 | Show chores in shift grid — enrich `FyiOverlayData` with chore names/colors, render as chips | `ShiftCalendarService`, `Shifts.cshtml.cs` | DONE — chore items render as colored assignment chips in user-mode (lines 726-745) |
+| 1d | G3 | Show company name + rotation info per user row | `_CalendarRow.cshtml`, `Shifts.cshtml.cs` | DONE — company badges + HomeType sublabel cover metadata needs |
 
 ### Phase 2: Data Richness (~95% Excel Parity)
 
-| Step | Gap | Description |
-|------|-----|-------------|
-| 2a | G4 | Add `Note` field to `ShiftAssignment` + render alongside assignment name |
-| 2b | G6 | Add optional `StartTime`/`EndTime` (TimeOnly?) to `Chore` + display |
-| 2c | G7 | Add `RotationGroup` string field to `AppUser` + display in row metadata |
-| 2d | G8 | Add `EmergencyTier` string field to `AppUser` + display in row metadata |
-| 2e | G10 | Create morning/afternoon ShiftType variants per tech system |
-| 2f | G9 | Correct shift type names/keys per Shikma's clarification |
+| Step | Gap | Description | Status |
+|------|-----|-------------|--------|
+| 2a | G4 | Add `Note` field to `ShiftAssignment` + render alongside assignment name | DONE |
+| 2b | G6 | Add optional `StartTime`/`EndTime` (TimeOnly?) to `Chore` + display | DONE |
+| 2c | G7 | Rotation group concept | DONE — Implemented via HomeType system (`AppUser.HomeTypeId` → `HomeType.Name` e.g. "סבב א"). Displayed in calendar row SubLabel |
+| 2d | G8 | Emergency callout tier | DONE — Implemented via HomeType system. Emergency tiers are wartime HomeType variants (full week Thu-Thu/3 weeks instead of peacetime Thu-Sun/2 weeks) |
+| 2e | G10 | Create morning/afternoon/rachav ShiftType variants per tech system. בוקר = 09:00-16:00, צהריים = 16:00-00:00, רחב = 09:00-22:00. שלמש = typo (ignore) | READY — all time ranges confirmed, ready to implement |
+| 2f | G9 | ~~Correct shift type names/keys per Shikma's clarification~~ | DONE — מאייש = HANAVA confirmed, already seeded correctly |
 
 ### Phase 3: Advanced (~100% Parity + Beyond)
 

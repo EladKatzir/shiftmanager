@@ -42,7 +42,7 @@
 | 10 | Default `AllowPublicSignup` to `false` | TODO |
 | 11 | API key salting | TODO |
 | 12 | Grant change audit trail | TODO |
-| 13 | CSP nonce-based script loading | TODO |
+| 13 | CSP nonce-based script loading | WONT-FIX -- CSP nonces cause browsers to ignore 'unsafe-inline', which breaks all 80+ inline event handlers (onclick, onchange, onsubmit). Nonces only work on `<script>` elements, not on inline attributes. Reverted in c926fc3. |
 
 ## Phase 3: Concurrency & Data Integrity (Est. 20h)
 

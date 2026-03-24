@@ -391,7 +391,7 @@ builder.Services.AddScoped<ICompanyCacheService, CompanyCacheService>();
 ### 9. Business Logic Services (Lines 128-146)
 
 ```csharp
-builder.Services.AddScoped<IConflictChecker, ConflictChecker>();
+builder.Services.AddScoped<IShiftAssignmentService, ShiftAssignmentService>(); // Includes ValidateShiftAssignmentAsync (replaces former ConflictChecker)
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDirectorService, DirectorService>();
 builder.Services.AddScoped<ITraineeService, TraineeService>();
@@ -415,7 +415,7 @@ builder.Services.AddScoped<ISecurityLogger, SecurityLogger>();
 
 | Service | Purpose | Key Methods |
 |---------|---------|-------------|
-| `ConflictChecker` | Detect shift conflicts | CheckShiftConflictAsync, CheckRestHoursViolation |
+| `ShiftAssignmentService` | Shift assignment and validation | ValidateShiftAssignmentAsync, AssignShiftAsync |
 | `NotificationService` | Send in-app notifications | CreateNotificationAsync, MarkAsReadAsync |
 | `DirectorService` | Director cross-company access | GetAccessibleCompaniesAsync, SwitchCompanyAsync |
 | `TraineeService` | Trainee shadowing logic | AssignTraineeToShiftAsync |
@@ -1653,7 +1653,7 @@ DashboardModel (Razor Page)
 │  ├─ AppDbContext (Scoped)
 │  │  ├─ CompanyIdInterceptor (Singleton)
 │  │  └─ ITenantResolver (Scoped)
-│  ├─ IConflictChecker (Scoped)
+│  ├─ IShiftAssignmentService (Scoped) [includes validation via ValidateShiftAssignmentAsync]
 │  │  └─ AppDbContext (Scoped) [same instance]
 │  └─ IShiftTypeCacheService (Scoped)
 │     └─ IMemoryCache (Singleton)

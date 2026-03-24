@@ -117,9 +117,7 @@
         }
 
         // Always log to console in development
-        if (isDevelopment()) {
-            console.error('[ErrorBoundary]', error, context);
-        }
+        Logger.log('ErrorBoundary', error, context);
     }
 
     /**
@@ -136,7 +134,7 @@
             showToast(message, 'error');
         } else {
             // Last resort: console
-            console.error('[ErrorBoundary Toast]', message);
+            Logger.error('ErrorBoundary', message);
         }
     }
 

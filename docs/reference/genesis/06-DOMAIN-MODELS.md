@@ -28,12 +28,13 @@
 17. [Enums Reference](#enums-reference)
 18. [Entity Relationships](#entity-relationships)
 19. [Business Rules](#business-rules)
+20. [Additional Entities (Post-V3)](#additional-entities-post-v3)
 
 ---
 
 ## Overview
 
-ShiftManager's domain model consists of **54 entities** (tables) organized into logical categories. V3 adds 23 new entities for organizational hierarchy, grant-based authorization, enhanced scheduling, and localization.
+ShiftManager's domain model consists of **71 entities** (tables) organized into logical categories. V3 added 23 entities for organizational hierarchy, grant-based authorization, enhanced scheduling, and localization. Post-V3 added 16 more for home rotation, telemetry, duty rotation, announcements, and more.
 
 **Design Principles:**
 - **Multi-tenancy:** Entities implement `IBelongsToCompany` for tenant isolation
@@ -2130,12 +2131,14 @@ public enum UserRole
     Employee = 2,   // Standard user
     Director = 3,   // Cross-company visibility
     Trainee = 4,    // Limited access, shadowing
-    Assigner = 5    // Can edit Chores only, not On-Duty
+    Assigner = 5,   // Can edit Chores only, not On-Duty
+    AreaAdmin = 6   // Area-level administrative access
 }
 ```
 
 **Role Hierarchy:**
 - **Owner:** Full access (company settings, billing, all features)
+- **AreaAdmin:** Area-level administrative access
 - **Director:** Cross-company visibility, management access
 - **Manager:** Shift planning, approve requests, manage users
 - **Assigner:** Assign chores (but not on-duty)
@@ -2336,9 +2339,540 @@ DirectorCompany (M) ──> (1) AppUser (Director)
 
 ---
 
+## Additional Entities (Post-V3)
+
+The following entities were added after V3 to support home rotation, chore categorization, calendar enhancements, telemetry, duty rotation automation, announcements, vacation workflow configuration, and role display name customization.
+
+---
+
+### HomeType
+
+**Purpose:** Named rotation template defining when users are home. Admin paints home days on a monthly calendar; system derives a recurrence rule for HOME shift generation.
+
+**File:** `Models/HomeType.cs`
+
+```csharp
+public class HomeType : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public int MoleculeId { get; set; }
+
+    [Required]
+    [MaxLength(200)]
+    public string Name { get; set; } = string.Empty;
+    public string? NameHe { get; set; }
+
+    // Pattern data
+    public string? PatternJson { get; set; }   // JSON array of painted dates (yyyy-MM-dd)
+    public string? DerivedRule { get; set; }    // JSON: { cycleWeeks, homeDays, weekOffsets }
+
+    // Default time block
+    public TimeOnly? DefaultStartTime { get; set; }
+    public TimeOnly? DefaultEndTime { get; set; }
+
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int CreatedBy { get; set; }
+
+    // Navigation
+    public Molecule Molecule { get; set; } = null!;
+    public AppUser Creator { get; set; } = null!;
+}
+```
+
+**Key Properties:**
+| Property | Type | Purpose |
+|----------|------|---------|
+| `MoleculeId` | int | Molecule scope for this rotation |
+| `PatternJson` | string? | Admin-painted dates serialized as JSON |
+| `DerivedRule` | string? | System-derived recurrence rule; null = custom non-repeating |
+| `DefaultStartTime` | TimeOnly? | Default home block start (e.g., Thursday 06:00) |
+| `DefaultEndTime` | TimeOnly? | Default home block end (e.g., Sunday 13:00) |
+
+---
+
+### HomeTypeOverride
+
+**Purpose:** Per-user pattern deviation from a HomeType template. Created when admin explicitly overrides a specific user's home pattern.
+
+**File:** `Models/HomeTypeOverride.cs`
+
+```csharp
+public class HomeTypeOverride : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public int HomeTypeId { get; set; }
+    public int UserId { get; set; }
+    public string OverridePatternJson { get; set; } = "[]";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int CreatedBy { get; set; }
+
+    // Navigation
+    public HomeType HomeType { get; set; } = null!;
+    public AppUser User { get; set; } = null!;
+    public AppUser Creator { get; set; } = null!;
+}
+```
+
+**Relationships:**
+- **HomeType** (FK: HomeTypeId) -- the template being overridden
+- **User** (FK: UserId) -- the user whose pattern differs
+- **Creator** (FK: CreatedBy) -- admin who created the override
+
+---
+
+### ChoreType
+
+**Purpose:** Categorizes chores by type within a molecule. Each ChoreType has a display name, optional hex color for calendar rendering, and sort order.
+
+**File:** `Models/ChoreType.cs`
+
+```csharp
+public class ChoreType
+{
+    public int Id { get; set; }
+    public int MoleculeId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? Color { get; set; }          // Hex color e.g. "#F0C14B"
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int CreatedByUserId { get; set; }
+
+    // Navigation
+    public Molecule Molecule { get; set; } = null!;
+    public AppUser CreatedByUser { get; set; } = null!;
+    public List<Chore> Chores { get; set; } = new();
+}
+```
+
+**Note:** Scoped via MoleculeId rather than IBelongsToCompany. Admin page at `/Admin/Organization/ChoreTypes` requires `EditChoreTypes` grant. Color validated via `#RRGGBB` regex (SanitizeColor) to prevent CSS injection.
+
+---
+
+### ShiftCapacityOverride
+
+**Purpose:** Overrides the default staffing capacity for a specific shift type on a specific date. Allows managers to adjust capacity for holidays, special events, or scheduling needs.
+
+**File:** `Models/ShiftCapacityOverride.cs`
+
+```csharp
+public class ShiftCapacityOverride
+{
+    public int Id { get; set; }
+    public int ShiftTypeId { get; set; }
+    public int MoleculeId { get; set; }
+    public int? JobTypeId { get; set; }
+    public DateOnly Date { get; set; }
+    public int Capacity { get; set; }
+    public int CreatedByUserId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public ShiftType ShiftType { get; set; } = null!;
+    public Molecule Molecule { get; set; } = null!;
+    public JobType? JobType { get; set; }
+    public AppUser CreatedByUser { get; set; } = null!;
+}
+```
+
+**Key Properties:**
+| Property | Type | Purpose |
+|----------|------|---------|
+| `ShiftTypeId` | int | Which shift type to override |
+| `MoleculeId` | int | Molecule scope |
+| `JobTypeId` | int? | Optional job type scope (null = all job types) |
+| `Date` | DateOnly | The specific date for the override |
+| `Capacity` | int | The overridden staffing capacity |
+
+---
+
+### UserDayNote
+
+**Purpose:** Free-text notes attached to a specific user on a specific date. Displayed as overlays on the calendar grid. Supports create/update/delete with SignalR real-time notifications.
+
+**File:** `Models/UserDayNote.cs`
+
+```csharp
+public class UserDayNote : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public DateOnly Date { get; set; }
+    public int CompanyId { get; set; }
+    public string Note { get; set; } = string.Empty;
+    public int CreatedByUserId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+
+    // Navigation
+    public AppUser User { get; set; } = null!;
+    public Company Company { get; set; } = null!;
+    public AppUser CreatedByUser { get; set; } = null!;
+}
+```
+
+---
+
+### FeatureFlag
+
+**Purpose:** Feature toggle system with hierarchical scoping. Resolution priority: User+Company specific (highest) > Company-specific > Global (lowest).
+
+**File:** `Models/FeatureFlag.cs`
+
+```csharp
+public class FeatureFlag
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;       // e.g., "FF_WIDGETS_ENABLED"
+    public bool IsEnabled { get; set; }
+    public string? Description { get; set; }
+    public int? CompanyId { get; set; }                    // null = global flag
+    public int? UserId { get; set; }                       // null = all users in scope
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation (optional)
+    public Company? Company { get; set; }
+    public AppUser? User { get; set; }
+}
+```
+
+**Note:** Service uses `IgnoreQueryFilters()` -- safe because resolution includes explicit userId/companyId params. Not tenant-scoped (no IBelongsToCompany).
+
+---
+
+### ClientAnalyticsEvent
+
+**Purpose:** Tracks user interactions in the UI for air-gapped local observability. No external analytics dependencies. User identity stored as SHA256 hash only (no PII).
+
+**File:** `Models/Telemetry/ClientAnalyticsEvent.cs`
+
+```csharp
+public class ClientAnalyticsEvent
+{
+    public long Id { get; set; }
+    public string EventType { get; set; } = string.Empty;
+    public string? EventData { get; set; }         // JSON payload
+    public string UserIdHash { get; set; } = string.Empty;  // SHA256 -- no PII
+    public string? SessionId { get; set; }
+    public string PageUrl { get; set; } = string.Empty;
+    public string? UserAgent { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+```
+
+**Event Types:** `calendar_view_changed`, `scope_changed`, `context_switched`, `widget_toggled`, `navigation_category_toggled`
+
+---
+
+### ClientError
+
+**Purpose:** Captures client-side JavaScript errors (unhandled errors and promise rejections) for local error tracking.
+
+**File:** `Models/Telemetry/ClientError.cs`
+
+```csharp
+public class ClientError
+{
+    public long Id { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public string? StackTrace { get; set; }
+    public string? Source { get; set; }
+    public int? LineNumber { get; set; }
+    public int? ColumnNumber { get; set; }
+    public string? ErrorType { get; set; }     // e.g., "TypeError", "ReferenceError"
+    public string PageUrl { get; set; } = string.Empty;
+    public string? UserAgent { get; set; }
+    public string UserIdHash { get; set; } = string.Empty;
+    public DateTime Timestamp { get; set; }
+    public string? BrowserInfo { get; set; }
+}
+```
+
+---
+
+### PerformanceMetric
+
+**Purpose:** Captures Core Web Vitals (LCP, FID, INP, CLS, TTFB) for Real User Monitoring in air-gapped environments.
+
+**File:** `Models/Telemetry/PerformanceMetric.cs`
+
+```csharp
+public class PerformanceMetric
+{
+    public long Id { get; set; }
+    public string MetricName { get; set; } = string.Empty;  // LCP, FID, INP, CLS, TTFB
+    public double Value { get; set; }
+    public string? Rating { get; set; }             // "good", "needs-improvement", "poor"
+    public string PageUrl { get; set; } = string.Empty;
+    public string? UserAgent { get; set; }
+    public string? ConnectionType { get; set; }
+    public string? EffectiveType { get; set; }
+    public double? DeviceMemory { get; set; }       // GB
+    public int? HardwareConcurrency { get; set; }   // CPU cores
+    public DateTime Timestamp { get; set; }
+    public string? BrowserInfo { get; set; }
+}
+```
+
+**Note:** All three telemetry entities use `long Id` for high-volume writes and are global (no CompanyId).
+
+---
+
+### DutyRotation
+
+**Purpose:** Configurable rotation queue for automated on-duty shift assignments. Supports multiple frequencies and skip logic.
+
+**File:** `Models/DutyRotation.cs`
+
+```csharp
+public class DutyRotation : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public OnDutyType DutyType { get; set; }
+    public RotationFrequency Frequency { get; set; } = RotationFrequency.Daily;
+    public string Name { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public bool IncludeWeekends { get; set; } = false;
+    public int MaxConsecutiveDays { get; set; } = 1;
+    public int CurrentQueuePosition { get; set; } = 0;
+    public DateOnly? LastAssignedDate { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+
+    // Navigation
+    public Company? Company { get; set; }
+    public AppUser? Creator { get; set; }
+    public List<DutyRotationEntry> Entries { get; set; } = new();
+    public List<DutyRotationLog> Logs { get; set; } = new();
+}
+```
+
+---
+
+### DutyRotationEntry
+
+**Purpose:** Individual user position in a rotation queue. Position determines assignment order.
+
+**File:** `Models/DutyRotationEntry.cs`
+
+```csharp
+public class DutyRotationEntry
+{
+    public int Id { get; set; }
+    public int DutyRotationId { get; set; }
+    public int UserId { get; set; }
+    public int Position { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public DutyRotation? DutyRotation { get; set; }
+    public AppUser? User { get; set; }
+}
+```
+
+---
+
+### DutyRotationLog
+
+**Purpose:** Audit trail for rotation assignments including skip reasons (vacation, conflict, inactive, rank).
+
+**File:** `Models/DutyRotationLog.cs`
+
+```csharp
+public class DutyRotationLog
+{
+    public int Id { get; set; }
+    public int DutyRotationId { get; set; }
+    public int? AssignedUserId { get; set; }
+    public int? SkippedUserId { get; set; }
+    public string? SkipReason { get; set; }    // VACATION, CONFLICT, INACTIVE, RANK
+    public DateOnly AssignmentDate { get; set; }
+    public int? OnDutyId { get; set; }
+    public bool WasAutoAssigned { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public DutyRotation? DutyRotation { get; set; }
+    public AppUser? AssignedUser { get; set; }
+    public AppUser? SkippedUser { get; set; }
+    public OnDuty? OnDuty { get; set; }
+}
+```
+
+---
+
+### Announcement
+
+**Purpose:** Company-wide announcement with scoped visibility. Supports markdown content, pinning, and optional expiration.
+
+**File:** `Models/Announcement.cs`
+
+```csharp
+public class Announcement : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;    // Supports markdown
+    public int CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+    public AnnouncementScope Scope { get; set; } = AnnouncementScope.All;
+    public int? TargetDepartmentId { get; set; }
+    public string? TargetRole { get; set; }
+    public bool IsPinned { get; set; }
+    public bool IsActive { get; set; } = true;
+
+    // Navigation
+    public AppUser? Creator { get; set; }
+    public Department? TargetDepartment { get; set; }
+}
+```
+
+---
+
+### VacationApprovalRule
+
+**Purpose:** Configures vacation approval workflows. Rules can target specific job types, route to specific approvers, support auto-approval thresholds, and require two-level approval for extended leave.
+
+**File:** `Models/VacationApprovalRule.cs`
+
+```csharp
+public class VacationApprovalRule : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public int? JobTypeId { get; set; }              // null = default rule
+    public int? ApproverUserId { get; set; }         // null = any with grant
+    public string ApproverGrantKey { get; set; } = "ApproveVacations";
+    public int MaxAutoApproveDays { get; set; } = 0; // 0 = no auto-approve
+    public bool RequiresSecondApproval { get; set; } = false;
+    public int ExtendedLeaveDaysThreshold { get; set; } = 5;
+    public string? SecondApproverGrantKey { get; set; }
+    public int Priority { get; set; } = 0;           // Higher = checked first
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int CreatedBy { get; set; }
+
+    // Navigation
+    public Company? Company { get; set; }
+    public JobType? JobType { get; set; }
+    public AppUser? ApproverUser { get; set; }
+}
+```
+
+---
+
+### RoleTemplateJobTypeLabel
+
+**Purpose:** Optional per-job-type display name overrides for role templates. Cross-company entity.
+
+**File:** `Models/RoleTemplateJobTypeLabel.cs`
+
+```csharp
+public class RoleTemplateJobTypeLabel
+{
+    public int Id { get; set; }
+    public int RoleTemplateId { get; set; }
+    public int JobTypeId { get; set; }
+    public string DisplayNameEN { get; set; } = string.Empty;
+    public string DisplayNameHE { get; set; } = string.Empty;
+
+    // Navigation
+    public RoleTemplate? RoleTemplate { get; set; }
+    public JobType? JobType { get; set; }
+}
+```
+
+**Note:** Does NOT implement IBelongsToCompany -- operates across companies.
+
+---
+
+### UserFriendship
+
+**Purpose:** User-to-user friendship connections for social features (friend highlighting on calendar).
+
+**File:** `Models/UserFriendship.cs`
+
+```csharp
+public class UserFriendship
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public int FriendId { get; set; }
+    public FriendshipStatus Status { get; set; }
+    public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? AcceptedAt { get; set; }
+
+    // Navigation
+    public AppUser User { get; set; } = null!;
+    public AppUser Friend { get; set; } = null!;
+}
+```
+
+---
+
+### Additional Enums (Post-V3)
+
+#### RotationFrequency
+
+**File:** `Models/Support/RotationFrequency.cs`
+
+```csharp
+public enum RotationFrequency
+{
+    Daily = 0,
+    Weekly = 1,
+    Biweekly = 2,
+    Monthly = 3
+}
+```
+
+**Used By:** DutyRotation
+
+#### FriendshipStatus
+
+**File:** `Models/Support/FriendshipStatus.cs`
+
+```csharp
+public enum FriendshipStatus
+{
+    Pending = 0,
+    Accepted = 1,
+    Rejected = 2
+}
+```
+
+**Used By:** UserFriendship
+
+#### AnnouncementScope
+
+**File:** `Models/Announcement.cs` (defined inline)
+
+```csharp
+public enum AnnouncementScope
+{
+    All = 0,           // Visible to all employees in company
+    Department = 1,    // Visible to specific department
+    Role = 2           // Visible to specific role
+}
+```
+
+**Used By:** Announcement
+
+---
+
 ## Summary
 
-ShiftManager's domain model consists of **28 entities** across 10 functional categories:
+ShiftManager's domain model consists of **71 entities** across 10+ functional categories:
 
 **Entity Count by Category:**
 - Core Domain: 2 (Company, AppUser)

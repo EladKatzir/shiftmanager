@@ -32,7 +32,7 @@
      */
     async function get(key) {
         if (!key) {
-            console.warn('[Localization API] Empty key provided to get()');
+            Logger.warn('LocAPI', 'Empty key provided to get()');
             return '';
         }
 
@@ -46,7 +46,7 @@
             const result = await getMany([key]);
             return result[key] || key; // Fallback to key if not found
         } catch (error) {
-            console.error(`[Localization API] Failed to fetch key: ${key}`, error);
+            Logger.error('LocAPI', `Failed to fetch key: ${key}`, error);
             return key; // Fallback to key on error
         }
     }
@@ -102,7 +102,7 @@
 
             return result;
         } catch (error) {
-            console.error('[Localization API] Failed to fetch localizations:', error);
+            Logger.error('LocAPI', 'Failed to fetch localizations:', error);
 
             // Return keys as fallback
             const fallback = {};

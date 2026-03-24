@@ -84,6 +84,8 @@
     }
     @* Lucide Icons - MIT licensed SVG icon library (local copy for air-gapped environments) *@
     <script src="~/lib/lucide/lucide.min.js" asp-append-version="true"></script>
+    @* Centralized logger — must load before any JS that uses Logger *@
+    <script src="~/js/logger.js" asp-append-version="true"></script>
     @* B-007: Calendar skeleton loading handler *@
     <script src="~/js/calendar-skeleton.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Styles", required: false)

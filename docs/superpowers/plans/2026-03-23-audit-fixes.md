@@ -36,14 +36,14 @@
 - `FinalProductPublish/web.config`
 - `scripts/Update-FinalProductPublish.ps1`
 
-### Task 1.1: busy_timeout in Connection String (P1-2)
+### Task 1.1: busy_timeout in Connection String (P1-2) -- DONE
 
 **Files:**
 - Modify: `appsettings.json` (connection string)
 
 Note: There is no `appsettings.Development.json` in this project. Only `appsettings.json` and `appsettings.Production.template.json`.
 
-- [ ] **Step 1: Update connection string**
+- [x] **Step 1: Update connection string**
 
 In `appsettings.json`, change:
 ```json
@@ -56,36 +56,36 @@ to:
 
 Apply the same change to any other appsettings files that have a connection string.
 
-- [ ] **Step 2: Verify startup still works**
+- [x] **Step 2: Verify startup still works**
 
 Run: `dotnet run`
 Expected: App starts normally. Startup log should still show "SQLite busy_timeout set to 5000ms"
 
-- [ ] **Step 3: Verify the PRAGMA startup code is now redundant but harmless**
+- [x] **Step 3: Verify the PRAGMA startup code is now redundant but harmless**
 
 The existing `PRAGMA busy_timeout=5000` in Program.cs is now redundant (connection string applies it per-connection), but leave it as defense-in-depth. Add a comment noting the connection string is the primary mechanism.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add appsettings.json
 git commit -m "fix: apply busy_timeout via connection string for all connections (P1-2)"
 ```
 
-### Task 1.2: Database Restore Safety (P1-3)
+### Task 1.2: Database Restore Safety (P1-3) -- DONE
 
 **Files:**
 - Modify: `Pages/Owner/Backup.cshtml.cs` (restore handler)
 - Modify: `Pages/Owner/Backup.cshtml` (restart instructions)
 
-- [ ] **Step 1: Read the current restore handler thoroughly**
+- [x] **Step 1: Read the current restore handler thoroughly**
 
 Read `Pages/Owner/Backup.cshtml.cs` — find the `OnPostRestoreAsync` handler. Understand:
 - How it currently copies the file
 - What feedback it gives the user
 - Whether it does any WAL checkpoint
 
-- [ ] **Step 2: Implement safe restore sequence**
+- [x] **Step 2: Implement safe restore sequence**
 
 In `OnPostRestoreAsync`, before the file copy:
 1. Open a NEW raw SQLite connection (not from EF pool) for the checkpoint
@@ -95,216 +95,216 @@ In `OnPostRestoreAsync`, before the file copy:
 5. Then perform the file overwrite
 6. Set a success message with clear restart instructions
 
-- [ ] **Step 3: Add clear restart instructions to the UI**
+- [x] **Step 3: Add clear restart instructions to the UI**
 
 In `Backup.cshtml`, update the success message and the "Important Information" section to include:
 - "After restoring, restart the application by recycling the IIS App Pool or restarting the service"
 - For development: "Stop and restart `dotnet run`"
 
-- [ ] **Step 4: Test restore flow**
+- [x] **Step 4: Test restore flow**
 
 Run the app, create a backup, make a data change, restore the backup, restart the app, verify the data change is gone.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add Pages/Owner/Backup.cshtml.cs Pages/Owner/Backup.cshtml
 git commit -m "fix: safe database restore with WAL checkpoint and clear restart instructions (P1-3)"
 ```
 
-### Task 1.3: DatabaseConsole Row Limit (P2-6)
+### Task 1.3: DatabaseConsole Row Limit (P2-6) -- DONE
 
 **Files:**
 - Modify: `Pages/Owner/DatabaseConsole.cshtml.cs`
 - Modify: `Pages/Owner/DatabaseConsole.cshtml` (show limit message)
 
-- [ ] **Step 1: Read the current query execution code**
+- [x] **Step 1: Read the current query execution code**
 
 Read `Pages/Owner/DatabaseConsole.cshtml.cs` lines 97-117. Understand how results are loaded.
 
-- [ ] **Step 2: Add row limit**
+- [x] **Step 2: Add row limit**
 
 After the query is received but before execution, check if the query already has a LIMIT clause. If not, wrap or append `LIMIT 1001` (1001 to detect if limit was hit). After execution, if exactly 1001 rows returned, truncate to 1000 and set a flag `IsResultTruncated = true`.
 
-- [ ] **Step 3: Show truncation message in UI**
+- [x] **Step 3: Show truncation message in UI**
 
 In `DatabaseConsole.cshtml`, when `IsResultTruncated` is true, show: "Results limited to 1,000 rows. Add a LIMIT clause to your query for specific ranges."
 
-- [ ] **Step 4: Test with broad query**
+- [x] **Step 4: Test with broad query**
 
 Run: `SELECT * FROM Users` — should return max 1000 rows with truncation message.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add Pages/Owner/DatabaseConsole.cshtml.cs Pages/Owner/DatabaseConsole.cshtml
 git commit -m "fix: limit DatabaseConsole results to 1000 rows to prevent OOM (P2-6)"
 ```
 
-### Task 1.4: Health Checks Use Connection String Path (P2-10)
+### Task 1.4: Health Checks Use Connection String Path (P2-10) -- DONE
 
 **Files:**
 - Modify: `Services/HealthChecks.cs`
 - Modify: `Pages/Owner/SystemHealth.cshtml.cs`
 - Modify: `ViewComponents/SystemAlertsViewComponent.cs`
 
-- [ ] **Step 1: Create a helper method to extract DB path from connection string**
+- [x] **Step 1: Create a helper method to extract DB path from connection string**
 
 Add a static helper (or use existing pattern) that parses `Data Source=<path>` from the configured connection string. Use `IConfiguration` to read the connection string.
 
-- [ ] **Step 2: Update HealthChecks.cs**
+- [x] **Step 2: Update HealthChecks.cs**
 
 Replace `Path.Combine(AppContext.BaseDirectory, "app.db")` with the parsed path from connection string.
 
-- [ ] **Step 3: Update SystemHealth.cshtml.cs**
+- [x] **Step 3: Update SystemHealth.cshtml.cs**
 
 Replace `Path.Combine(Directory.GetCurrentDirectory(), "app.db")` with the parsed path.
 
-- [ ] **Step 4: Update SystemAlertsViewComponent.cs**
+- [x] **Step 4: Update SystemAlertsViewComponent.cs**
 
 Replace hardcoded `app.db` references with the parsed path.
 
-- [ ] **Step 5: Test**
+- [x] **Step 5: Test**
 
 Run the app, navigate to `/Owner/SystemHealth`. Verify DB size, disk space, and WAL size show correct values.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add Services/HealthChecks.cs Pages/Owner/SystemHealth.cshtml.cs ViewComponents/SystemAlertsViewComponent.cs
 git commit -m "fix: health checks use connection string DB path instead of hardcoded app.db (P2-10)"
 ```
 
-### Task 1.5: Backup Retention Max 2 (P2-12)
+### Task 1.5: Backup Retention Max 2 (P2-12) -- DONE
 
 **Files:**
 - Modify: `Services/DatabaseBackupService.cs` (retention logic)
 - Modify: `Program.cs` (pre-migration backup cleanup)
 
-- [ ] **Step 1: Read current retention logic**
+- [x] **Step 1: Read current retention logic**
 
 Read `DatabaseBackupService.cs` — find the cleanup method. Understand: what pattern it matches, how it counts, what the current retention is (7 days).
 
-- [ ] **Step 2: Change retention to keep max 2 backups**
+- [x] **Step 2: Change retention to keep max 2 backups**
 
 Modify the cleanup logic to: after creating a new backup, delete ALL backups except the 2 most recent (by file modification time). Apply this to ALL backup file patterns (startup, scheduled, manual).
 
-- [ ] **Step 3: Add cleanup for pre-migration backups**
+- [x] **Step 3: Add cleanup for pre-migration backups**
 
 In `Program.cs`, after the pre-migration backup is created, add cleanup logic that deletes all pre-migration backups except the 2 most recent. The pattern is `app.db.pre-migration-*`.
 
-- [ ] **Step 4: Test**
+- [x] **Step 4: Test**
 
 Restart the app multiple times. Verify only 2 backup files remain after each restart.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add Services/DatabaseBackupService.cs Program.cs
 git commit -m "fix: backup retention keeps max 2 backups, cleanup pre-migration backups (P2-12)"
 ```
 
-### Task 1.6: Backup Page Text + System Backup Visibility (P3-4/5)
+### Task 1.6: Backup Page Text + System Backup Visibility (P3-4/5) -- DONE
 
 **Files:**
 - Modify: `Pages/Owner/Backup.cshtml` (UI text and backup list)
 - Modify: `Pages/Owner/Backup.cshtml.cs` (load system backups)
 
-- [ ] **Step 1: Fix the "Automatic Backups" text**
+- [x] **Step 1: Fix the "Automatic Backups" text**
 
 Change "Backups are created manually using the button above" to accurately describe: "Backups are created automatically on application startup and daily at 03:00. A maximum of 2 backups are retained. You can also create manual backups using the button above."
 
-- [ ] **Step 2: Show system-level backups in the list**
+- [x] **Step 2: Show system-level backups in the list**
 
 In the page model's `OnGetAsync`, also load system-level backup files (matching `app.db.backup-*` and `app.db.pre-migration-*` patterns from the Backups folder). Display them in a separate "System Backups" section, read-only (no restore/delete for system backups, or allow restore but not delete).
 
-- [ ] **Step 3: Test**
+- [x] **Step 3: Test**
 
 Navigate to `/Owner/Backup`. Verify:
 - Accurate text about auto-backups
 - System backups visible in the list with timestamps and sizes
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Pages/Owner/Backup.cshtml Pages/Owner/Backup.cshtml.cs
 git commit -m "fix: backup page shows accurate auto-backup info and lists system backups (P3-4/5)"
 ```
 
-### Task 1.7: Manual Backup VACUUM INTO (P3-10)
+### Task 1.7: Manual Backup VACUUM INTO (P3-10) -- DONE
 
 **Files:**
 - Modify: `Pages/Owner/Backup.cshtml.cs` (create backup handler)
 
-- [ ] **Step 1: Read current manual backup code**
+- [x] **Step 1: Read current manual backup code**
 
 Find the `OnPostCreateBackupAsync` handler. It currently uses `FileStream.CopyToAsync`.
 
-- [ ] **Step 2: Replace with VACUUM INTO**
+- [x] **Step 2: Replace with VACUUM INTO**
 
 Use the same `VACUUM INTO` approach as `DatabaseBackupService.cs`. Open a raw SQLite connection, execute `VACUUM INTO '<backup_path>'`. This ensures a consistent backup with WAL data included.
 
-- [ ] **Step 3: Test**
+- [x] **Step 3: Test**
 
 Create a manual backup via the Owner Backup page. Verify the file is created and has the correct size.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Pages/Owner/Backup.cshtml.cs
 git commit -m "fix: manual backup uses VACUUM INTO for consistency (P3-10)"
 ```
 
-### Task 1.8: VERSION.txt Encoding (P3-11)
+### Task 1.8: VERSION.txt Encoding (P3-11) -- DONE
 
 **Files:**
 - Modify: `FinalProductPublish/VERSION.txt`
 
-- [ ] **Step 1: Re-save with correct encoding**
+- [x] **Step 1: Re-save with correct encoding**
 
 Read the file, identify garbled characters, re-save as UTF-8 with BOM. Replace corrupted characters with their correct Unicode equivalents (checkmarks, emojis, copyright symbol).
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add FinalProductPublish/VERSION.txt
 git commit -m "fix: VERSION.txt re-saved with correct UTF-8 encoding (P3-11)"
 ```
 
-### Task 1.9: stdout Logging in web.config (P3-15)
+### Task 1.9: stdout Logging in web.config (P3-15) -- DONE
 
 **Files:**
 - Modify: `FinalProductPublish/web.config`
 
-- [ ] **Step 1: Enable stdout logging**
+- [x] **Step 1: Enable stdout logging**
 
 Change `stdoutLogEnabled="false"` to `stdoutLogEnabled="true"`.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add FinalProductPublish/web.config
 git commit -m "fix: enable stdout logging in web.config for IIS troubleshooting (P3-15)"
 ```
 
-### Task 1.10: Publish Script Include Data Folder (NEW)
+### Task 1.10: Publish Script Include Data Folder (NEW) -- DONE
 
 **Files:**
 - Modify: `scripts/Update-FinalProductPublish.ps1`
 
-- [ ] **Step 1: Read the current publish script**
+- [x] **Step 1: Read the current publish script**
 
 Understand what it copies to `FinalProductPublish/`. Find where other folders are included.
 
-- [ ] **Step 2: Add Data folder copy**
+- [x] **Step 2: Add Data folder copy**
 
 Add a step that copies the `Data/` folder (containing required seed files) to `FinalProductPublish/Data/`.
 
-- [ ] **Step 3: Test**
+- [x] **Step 3: Test**
 
 Run the publish script. Verify `FinalProductPublish/Data/` exists with seed files.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/Update-FinalProductPublish.ps1
@@ -330,7 +330,7 @@ git commit -m "fix: publish script includes Data folder with required seed files
 - `Data/SeedData/RoleTemplateSeed.cs` — role→grant mappings
 - `Models/AppUser.cs` — user model (CompanyId, MoleculeId chain)
 
-### Task 2.1: Calendar API Molecule-Scope Validation (P1-1)
+### Task 2.1: Calendar API Molecule-Scope Validation (P1-1) -- DONE
 
 **Files:**
 - Modify: `Pages/Api/Calendar/GetShiftsData.cshtml.cs`
@@ -338,14 +338,14 @@ git commit -m "fix: publish script includes Data folder with required seed files
 - Modify: `Pages/Api/Calendar/GetOnCallData.cshtml.cs`
 - Modify: `Pages/Api/Calendar/GetOverviewData.cshtml.cs`
 
-- [ ] **Step 1: Understand the current scope resolution**
+- [x] **Step 1: Understand the current scope resolution**
 
 Read each endpoint's `OnGetAsync`. Understand:
 - What parameters they accept (moleculeId, areaId, companyId)
 - How they currently query data
 - What the user's molecule/company chain looks like (User → Company → Molecule)
 
-- [ ] **Step 2: Determine the right validation approach**
+- [x] **Step 2: Determine the right validation approach**
 
 The user's `CompanyId` claim → their Company → Company.MoleculeId. The user should only be able to query:
 - GetShiftsData/GetChoresData: molecules their company belongs to (or molecules they have grants for)
@@ -354,83 +354,83 @@ The user's `CompanyId` claim → their Company → Company.MoleculeId. The user 
 
 **IMPORTANT:** The endpoints already use `IScopeFilterService.ResolveCompanyIdsForScopeAsync()` for data resolution. Understand what this service already does before adding new scope logic — it may provide the needed scope resolution. The validation should check that the user's company is within the resolved scope, not duplicate the scope logic.
 
-- [ ] **Step 3: Add validation to GetShiftsData**
+- [x] **Step 3: Add validation to GetShiftsData**
 
 In `OnGetAsync`, after parsing `moleculeId`:
 1. Get the user's CompanyId from claims (use `int.TryParse` per project convention)
 2. Look up the user's Company.MoleculeId
 3. If the requested `moleculeId` doesn't match the user's molecule (and user doesn't have cross-molecule grants via `IScopeFilterService`), return `Forbid()` or `new JsonResult(new { error = "Access denied" }) { StatusCode = 403 }`
 
-- [ ] **Step 4: Apply same pattern to GetChoresData**
+- [x] **Step 4: Apply same pattern to GetChoresData**
 
 Same molecule validation.
 
-- [ ] **Step 5: Apply same pattern to GetOnCallData**
+- [x] **Step 5: Apply same pattern to GetOnCallData**
 
 For area validation: get user's Company → Molecule → Area. Validate the requested `areaId` matches.
 
-- [ ] **Step 6: Apply same pattern to GetOverviewData**
+- [x] **Step 6: Apply same pattern to GetOverviewData**
 
 For company validation: validate the requested companyId is within the user's accessible companies.
 
-- [ ] **Step 7: Test with browser**
+- [x] **Step 7: Test with browser**
 
 Login as Employee, open the Calendar/Shifts page. Inspect the AJAX call URL. Try manually changing the `moleculeId` parameter to a different molecule. Expected: 403 response.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add Pages/Api/Calendar/GetShiftsData.cshtml.cs Pages/Api/Calendar/GetChoresData.cshtml.cs Pages/Api/Calendar/GetOnCallData.cshtml.cs Pages/Api/Calendar/GetOverviewData.cshtml.cs
 git commit -m "fix: add molecule/area scope validation to calendar API endpoints (P1-1)"
 ```
 
-### Task 2.2: HomeTypes 403 for Owner (P2-14)
+### Task 2.2: HomeTypes 403 for Owner (P2-14) -- DONE
 
 **Files:**
 - Modify: `Pages/Admin/HomeTypes/Index.cshtml.cs` (authorization attribute)
 - Possibly modify: `Data/SeedData/RoleTemplateSeed.cs` or `Data/SeedData/GrantTypeSeed.cs`
 
-- [ ] **Step 1: Check the authorization policy**
+- [x] **Step 1: Check the authorization policy**
 
 Read `HomeTypes/Index.cshtml.cs`. Find the `[Authorize(Policy = "...")]` attribute. Identify which grant it requires.
 
-- [ ] **Step 2: Add the grant to the Owner role template**
+- [x] **Step 2: Add the grant to the Owner role template**
 
 The `ManageHomeTypes` grant exists in `GrantTypeSeed.cs` but is NOT assigned to ANY role template in `RoleTemplateSeed.cs`. Add it to the Owner template (and consider Manager/Director templates depending on who should manage home types). Follow the existing pattern for adding grant mappings — ALWAYS append at the end, never insert in the middle (IDs use sequential `id++`).
 
-- [ ] **Step 3: Test**
+- [x] **Step 3: Test**
 
 Login as Owner. Navigate to `/Admin/HomeTypes`. Expected: 200 OK.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Pages/Admin/HomeTypes/Index.cshtml.cs Data/SeedData/RoleTemplateSeed.cs
 git commit -m "fix: Owner role can access HomeTypes page (P2-14)"
 ```
 
-### Task 2.3: Employee Can View Own Requests (P3-8)
+### Task 2.3: Employee Can View Own Requests (P3-8) -- DONE
 
 **Files:**
 - Modify: `Pages/Requests/Index.cshtml.cs` (authorization or logic)
 - Possibly modify: `Data/SeedData/RoleTemplateSeed.cs`
 
-- [ ] **Step 1: Check why Requests/Index is denied for Employee**
+- [x] **Step 1: Check why Requests/Index is denied for Employee**
 
 Read `Requests/Index.cshtml.cs`. Find the authorization policy. Determine if it requires a manager-level grant for viewing ALL requests, and whether employees should see their OWN requests on this page.
 
-- [ ] **Step 2: Fix access**
+- [x] **Step 2: Fix access**
 
 Option A: Add a "ViewOwnRequests" grant to the Employee role template.
 Option B: Change the page to allow any authenticated user, but filter to show only their own requests unless they have the manager grant.
 
 Choose the approach that matches the existing pattern in the codebase.
 
-- [ ] **Step 3: Test**
+- [x] **Step 3: Test**
 
 Login as Employee. Navigate to `/Requests/Index`. Expected: page loads, shows only the employee's own requests (if any).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Pages/Requests/Index.cshtml.cs
@@ -460,17 +460,17 @@ git commit -m "fix: Employee can view own requests on Requests page (P3-8)"
 
 **IMPORTANT: Wait for Agent 4 to complete Task 4.2 (P1-5 _Layout async fix) before modifying _Layout.cshtml**
 
-### Task 3.1: Quick Info Widget Auto-Collapse + Affordances (P2-1)
+### Task 3.1: Quick Info Widget Auto-Collapse + Affordances (P2-1) -- DONE
 
 **Files:**
 - Modify: `wwwroot/js/site.js` or `wwwroot/js/widget-persistence.js` (auto-collapse logic)
 - Modify: `wwwroot/css/widgets.css` (affordance styling)
 
-- [ ] **Step 1: Read widget initialization code**
+- [x] **Step 1: Read widget initialization code**
 
 Find how the Quick Info widget is initialized and how its state (expanded/collapsed) is managed. Check if `localStorage` is already used for widget state.
 
-- [ ] **Step 2: Implement auto-collapse after first view**
+- [x] **Step 2: Implement auto-collapse after first view**
 
 On page load:
 - Check `localStorage` for key `quickInfoSeen`
@@ -478,28 +478,28 @@ On page load:
 - If already set: show widget collapsed by default
 - When user manually collapses/expands, remember that preference
 
-- [ ] **Step 3: Improve visual affordances**
+- [x] **Step 3: Improve visual affordances**
 
 Make the drag handle and collapse button more visually obvious:
-- Larger grip indicator (⋮⋮) with hover effect
+- Larger grip indicator with hover effect
 - Visible "minimize" icon/button with tooltip
 - Subtle border or shadow to indicate interactivity
 
-- [ ] **Step 4: Test across pages**
+- [x] **Step 4: Test across pages**
 
 Navigate to multiple pages. Verify:
 - First visit: widget expanded
 - After collapse: stays collapsed on navigation
 - Clear localStorage, refresh: widget expanded again
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add wwwroot/js/site.js wwwroot/css/widgets.css
 git commit -m "fix: Quick Info widget auto-collapses after first view, improved affordances (P2-1)"
 ```
 
-### Task 3.2: Debug Console Cleanup (P2-2)
+### Task 3.2: Debug Console Cleanup (P2-2) -- DONE
 
 **Files:**
 - Modify: Multiple JS files (search for `console.log`)
@@ -535,128 +535,128 @@ git add wwwroot/js/*.js
 git commit -m "fix: clean up console output - remove init spam, keep meaningful logs (P2-2)"
 ```
 
-### Task 3.3: Mobile Header Truncation (P2-13)
+### Task 3.3: Mobile Header Truncation (P2-13) -- DONE
 
 **Files:**
 - Modify: `wwwroot/css/site.css` (responsive header styles)
 
-- [ ] **Step 1: Find the header h1 styles**
+- [x] **Step 1: Find the header h1 styles**
 
 Search for the header/banner h1 styling. Find what causes truncation at small viewports (likely `max-width`, `overflow: hidden`, `text-overflow: ellipsis`).
 
-- [ ] **Step 2: Add responsive rule**
+- [x] **Step 2: Add responsive rule**
 
 Add a media query for small viewports (`max-width: 576px`) that either:
 - Reduces font size to fit
 - Removes max-width constraint
 - Allows wrapping
 
-- [ ] **Step 3: Test at 375px viewport**
+- [x] **Step 3: Test at 375px viewport**
 
 Verify "Home", "Shifts Calendar", "Admin Hub" all show fully without truncation.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add wwwroot/css/site.css
 git commit -m "fix: prevent header title truncation on mobile viewports (P2-13)"
 ```
 
-### Task 3.4: Sidebar Labels Hidden in Collapsed State (P3-1)
+### Task 3.4: Sidebar Labels Hidden in Collapsed State (P3-1) -- DONE
 
 **Files:**
 - Modify: `wwwroot/css/navigation.css` or `wwwroot/css/site.css`
 
-- [ ] **Step 1: Find collapsed sidebar styles**
+- [x] **Step 1: Find collapsed sidebar styles**
 
 Find the CSS class applied when sidebar is collapsed. Identify why partial text ("MY SHI...") shows instead of being hidden.
 
-- [ ] **Step 2: Hide text labels in collapsed state**
+- [x] **Step 2: Hide text labels in collapsed state**
 
 When sidebar is collapsed, add `visibility: hidden` or `display: none` to the text labels, keeping only icons visible. Or set `width: 0; overflow: hidden` on the text span.
 
-- [ ] **Step 3: Test in both LTR and RTL**
+- [x] **Step 3: Test in both LTR and RTL**
 
 Collapse sidebar in English (LTR) and Hebrew (RTL). Verify icons show cleanly without text fragments.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add wwwroot/css/navigation.css
 git commit -m "fix: hide sidebar text labels in collapsed state, show icons only (P3-1)"
 ```
 
-### Task 3.5: Remove Deprecated Meta Tag (P4-4)
+### Task 3.5: Remove Deprecated Meta Tag (P4-4) -- DONE
 
 **Files:**
 - Modify: `Pages/Shared/_Layout.cshtml`
 
 **PREREQUISITE: Agent 4 must complete Task 4.2 first**
 
-- [ ] **Step 1: Find and remove the deprecated meta tag**
+- [x] **Step 1: Find and remove the deprecated meta tag**
 
 Search for `apple-mobile-web-app-capable` in `_Layout.cshtml`. Remove the entire `<meta name="apple-mobile-web-app-capable" content="yes">` line.
 
-- [ ] **Step 2: Test**
+- [x] **Step 2: Test**
 
 Load any page. Verify no more deprecation warning in console.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add Pages/Shared/_Layout.cshtml
 git commit -m "fix: remove deprecated apple-mobile-web-app-capable meta tag (P4-4)"
 ```
 
-### Task 3.6: SignalR Connection Warnings (P4-5)
+### Task 3.6: SignalR Connection Warnings (P4-5) -- DONE
 
 **Files:**
 - Modify: `wwwroot/js/calendar-realtime.js`
 
-- [ ] **Step 1: Investigate the warning source**
+- [x] **Step 1: Investigate the warning source**
 
 Read `calendar-realtime.js`. Find where "Connection failed" is logged. Determine if it's fired during intentional page navigation (connection teardown) or unexpected disconnection.
 
-- [ ] **Step 2: Fix based on root cause**
+- [x] **Step 2: Fix based on root cause**
 
 If it's during intentional navigation: add a `isDisposing` flag set during `dispose()`, and suppress the warning when `isDisposing` is true.
 
 If it's an actual reconnection issue: fix the reconnection logic.
 
-- [ ] **Step 3: Test**
+- [x] **Step 3: Test**
 
 Navigate between calendar pages. Verify no warning in console during normal navigation. Verify reconnection still works after network blip (if applicable).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add wwwroot/js/calendar-realtime.js
 git commit -m "fix: suppress SignalR connection warning during intentional page navigation (P4-5)"
 ```
 
-### Task 3.7: Missing Autocomplete Attributes (P4-8)
+### Task 3.7: Missing Autocomplete Attributes (P4-8) -- DONE
 
 **Files:**
 - Modify: `Pages/Admin/Users.cshtml` (or the relevant page with missing autocomplete)
 
-- [ ] **Step 1: Find the 5 input elements**
+- [x] **Step 1: Find the 5 input elements**
 
 The inputs are on Admin/Users page (email, display name, password fields in the Add User form and inline password set).
 
-- [ ] **Step 2: Add appropriate autocomplete attributes**
+- [x] **Step 2: Add appropriate autocomplete attributes**
 
 - Email input: `autocomplete="email"`
 - Display name: `autocomplete="name"`
 - Password inputs: `autocomplete="new-password"`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add Pages/Admin/Users.cshtml
 git commit -m "fix: add autocomplete attributes to Admin/Users form inputs (P4-8)"
 ```
 
-### Task 3.8: Calendar Filters Horizontal Compact on Mobile (M-2)
+### Task 3.8: Calendar Filters Horizontal Compact on Mobile (M-2) -- DONE
 
 **Files:**
 - Modify: `wwwroot/css/calendar.css` or `wwwroot/css/site.css`
@@ -688,24 +688,24 @@ git add wwwroot/css/calendar.css
 git commit -m "fix: horizontal compact calendar filters on mobile viewports (M-2)"
 ```
 
-### Task 3.9: Breadcrumb Truncation (M-3)
+### Task 3.9: Breadcrumb Truncation (M-3) -- DONE
 
 **Files:**
 - Modify: `wwwroot/css/site.css` (breadcrumb styles)
 
-- [ ] **Step 1: Find breadcrumb truncation CSS**
+- [x] **Step 1: Find breadcrumb truncation CSS**
 
 Search for breadcrumb styles. Find what causes "Shifts Calen..." truncation.
 
-- [ ] **Step 2: Fix for small viewports**
+- [x] **Step 2: Fix for small viewports**
 
 Either allow wrapping, reduce font size, or use shorter text at small breakpoints. Ensure breadcrumb remains on one line if possible.
 
-- [ ] **Step 3: Test at 375px and 768px**
+- [x] **Step 3: Test at 375px and 768px**
 
 Verify breadcrumbs are readable at both sizes.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add wwwroot/css/site.css
@@ -751,16 +751,16 @@ Verify all fixes work in dark mode too.
 - `Hubs/CalendarHub.cs` — SignalR hub
 - Company display patterns across pages (how company names appear in dropdowns)
 
-### Task 4.1: HTTPS Redirect with Griffin Exclusion (P0-1)
+### Task 4.1: HTTPS Redirect with Griffin Exclusion (P0-1) -- DONE
 
 **Files:**
 - Modify: `Program.cs` (middleware section)
 
-- [ ] **Step 1: Find the current HTTPS redirect setup**
+- [x] **Step 1: Find the current HTTPS redirect setup**
 
 Read `Program.cs` around line 1376. Find the `UseHttpsRedirection()` call and the `enableHttps` configuration.
 
-- [ ] **Step 2: Replace with custom middleware**
+- [x] **Step 2: Replace with custom middleware**
 
 Replace `app.UseHttpsRedirection()` with:
 ```csharp
@@ -781,22 +781,22 @@ if (enableHttps)
 }
 ```
 
-- [ ] **Step 3: Add a comment explaining the Griffin exclusion**
+- [x] **Step 3: Add a comment explaining the Griffin exclusion**
 
 Add a comment explaining why `/Auth/GriffinCallback` is excluded and that this is self-resolving when Griffin migrates to HTTPS.
 
-- [ ] **Step 4: Test**
+- [x] **Step 4: Test**
 
 Verify HTTPS redirect still works for normal pages. Verify `/Auth/GriffinCallback` is excluded.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add Program.cs
 git commit -m "fix: HTTPS redirect excludes Griffin callback path for HTTP ADFS compatibility (P0-1)"
 ```
 
-### Task 4.2: _Layout.cshtml Async Fix (P1-5)
+### Task 4.2: _Layout.cshtml Async Fix (P1-5) -- DONE
 
 **Files:**
 - Modify: `Pages/Shared/_Layout.cshtml`
@@ -804,15 +804,15 @@ git commit -m "fix: HTTPS redirect excludes Griffin callback path for HTTP ADFS 
 
 **CRITICAL: This must complete before Agent 3 touches _Layout.cshtml**
 
-- [ ] **Step 1: Read the current .Result call**
+- [x] **Step 1: Read the current .Result call**
 
 Read `_Layout.cshtml` line 45. Understand what `ViewAsModeService.GetViewAsCompanyNameAsync().Result` does and where its result is used in the layout.
 
-- [ ] **Step 2: Read ViewAsModeService.GetViewAsCompanyNameAsync**
+- [x] **Step 2: Read ViewAsModeService.GetViewAsCompanyNameAsync**
 
 Understand what this method does — does it hit the DB? How expensive is it?
 
-- [ ] **Step 3: Choose the safest async approach**
+- [x] **Step 3: Choose the safest async approach**
 
 Options:
 - A: Move to a ViewComponent (cleanest — ViewComponents support async natively)
@@ -821,11 +821,11 @@ Options:
 
 Choose the approach that matches existing patterns in the codebase. Check if other layout-level data is resolved via ViewComponents or middleware.
 
-- [ ] **Step 4: Implement the fix**
+- [x] **Step 4: Implement the fix**
 
 Apply the chosen approach. Ensure the company name is still available where it was used in the layout.
 
-- [ ] **Step 5: Test thoroughly**
+- [x] **Step 5: Test thoroughly**
 
 Test all pages — every page uses _Layout. Verify:
 - ViewAs mode works for directors
@@ -833,23 +833,23 @@ Test all pages — every page uses _Layout. Verify:
 - No deadlocks under rapid page loads
 - Both English and Hebrew render correctly
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add Pages/Shared/_Layout.cshtml
 git commit -m "fix: replace .Result with async pattern in _Layout to prevent IIS deadlock (P1-5)"
 ```
 
-### Task 4.3: Owner Hub Feature Flag Count (P2-5)
+### Task 4.3: Owner Hub Feature Flag Count (P2-5) -- DONE
 
 **Files:**
 - Modify: `Pages/Owner/Hub/Index.cshtml.cs`
 
-- [ ] **Step 1: Read the current flag count query**
+- [x] **Step 1: Read the current flag count query**
 
 Find where "flags on" count is calculated. Understand why it returns 0 when 55 flags are enabled.
 
-- [ ] **Step 2: Fix the query**
+- [x] **Step 2: Fix the query**
 
 The current code queries the `Configs` table (`DbSet<AppConfig>`) for keys starting with `"Feature:"`, but feature flags are stored in the `FeatureFlags` table (`DbSet<FeatureFlag>`). These are DIFFERENT tables. First understand the relationship:
 - `FeatureFlags` table = seed definitions with `IsEnabled` boolean
@@ -857,42 +857,42 @@ The current code queries the `Configs` table (`DbSet<AppConfig>`) for keys start
 
 Fix the count to query the correct table (`FeatureFlags`) and count where `IsEnabled == true`.
 
-- [ ] **Step 3: Test**
+- [x] **Step 3: Test**
 
 Navigate to Owner Hub. Verify the Settings card shows the correct number of enabled flags (should be 55 or similar).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Pages/Owner/Hub/Index.cshtml.cs
 git commit -m "fix: Owner Hub Settings card shows correct feature flag count (P2-5)"
 ```
 
-### Task 4.4: Duplicate Company Names with Molecule (P3-6)
+### Task 4.4: Duplicate Company Names with Molecule (P3-6) -- DONE
 
 **Files:**
-- Determine which file(s) populate company dropdowns across the app
+- Modify: `ViewComponents/OwnerCompanySelectorViewComponent.cs`
 
-- [ ] **Step 1: Find how company dropdowns are populated**
+- [x] **Step 1: Find how company dropdowns are populated**
 
 Search for where company names appear in `<select>` dropdowns. Find the service or page model method that loads company lists. Check if there's a shared service or if each page loads companies independently.
 
-- [ ] **Step 2: Modify display name generation**
+- [x] **Step 2: Modify display name generation**
 
 When loading companies for dropdowns, for companies named "כלל צוותי", append the molecule name: "כלל צוותי - {MoleculeName}". This could be done at the service level (affecting all dropdowns) or the display level.
 
-- [ ] **Step 3: Test**
+- [x] **Step 3: Test**
 
 Navigate to Owner Backup page. Verify the company dropdown shows "כלל צוותי - אורן", "כלל צוותי - גפן", etc. instead of multiple identical "כלל צוותי" entries.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add [affected files]
 git commit -m "fix: disambiguate duplicate company names with molecule prefix (P3-6)"
 ```
 
-### Task 4.5: Calendar Assignment In-Place Update (P3-7)
+### Task 4.5: Calendar Assignment In-Place Update (P3-7) -- DONE
 
 **Files:**
 - Modify: `wwwroot/js/calendar-inline-edit.js` (PRIMARY — contains the `fetch()` + `location.reload()` logic)
@@ -901,9 +901,9 @@ git commit -m "fix: disambiguate duplicate company names with molecule prefix (P
 
 **CRITICAL: Test extensively after this change. This is the most complex fix.**
 
-**NOTE:** The assignment is ALREADY an AJAX `fetch()` call (in `calendar-inline-edit.js` line 324). The problem is that after a successful response, the code calls `setTimeout(() => location.reload(), 500)` (line 351). The fix is to replace `location.reload()` with an in-place DOM update using the response data. There are also `location.reload()` calls for chore (~line 491) and on-duty (~line 570) assignment flows that should be similarly addressed.
+**NOTE:** All assignment handlers now use `triggerCalendarRefresh()` which calls `CalendarRealtime.refresh()` for in-place AJAX DOM updates. The only remaining `location.reload()` is in the fallback path of `triggerCalendarRefresh()` for pages without CalendarRealtime (does not apply to calendar pages).
 
-- [ ] **Step 1: Read calendar-inline-edit.js thoroughly**
+- [x] **Step 1: Read calendar-inline-edit.js thoroughly**
 
 Understand:
 - `quickAddShift()` function — the AJAX POST to `/Calendar/Table?handler=AssignEmployee`
@@ -911,11 +911,11 @@ Understand:
 - Where `location.reload()` is called (lines ~351, ~491, ~542, ~570)
 - How the calendar DOM is structured (row IDs, cell structure)
 
-- [ ] **Step 2: Read calendar-realtime.js**
+- [x] **Step 2: Read calendar-realtime.js**
 
 Understand the `AssignmentChanged` SignalR event handler. This already handles in-place updates from OTHER clients. We need to reuse this same DOM update logic for the assigning client's own response.
 
-- [ ] **Step 3: Replace location.reload() with in-place DOM update for shifts**
+- [x] **Step 3: Replace location.reload() with in-place DOM update for shifts**
 
 In `quickAddShift()` success handler (around line 351):
 1. Parse the server response for assignment data
@@ -923,55 +923,55 @@ In `quickAddShift()` success handler (around line 351):
 3. Remove `setTimeout(() => location.reload(), 500)`
 4. Show a brief success toast instead
 
-- [ ] **Step 4: Apply same pattern to chore and on-duty assignments**
+- [x] **Step 4: Apply same pattern to chore and on-duty assignments**
 
 Replace `location.reload()` in chore assignment (~line 491) and on-duty assignment (~line 570) with similar in-place DOM updates.
 
-- [ ] **Step 5: Deduplicate with SignalR handler**
+- [x] **Step 5: Deduplicate with SignalR handler**
 
 Ensure the assigning client doesn't get a double update (AJAX response + SignalR echo). Either:
 - Mark the assignment as "own action" and skip the SignalR echo
 - Or let SignalR handle ALL updates and just close the dialog on AJAX success
 
-- [ ] **Step 6: Test extensively**
+- [x] **Step 6: Test extensively**
 
 Test ALL of these scenarios:
-- Assign a user (shift) → cell updates in-place ✓
-- Assign a user (chore) → cell updates in-place ✓
-- Assign a user (on-duty) → cell updates in-place ✓
-- Assign same user twice → error toast ✓
-- Assign user with conflict → warning/error handled ✓
-- Two browser tabs → second tab gets SignalR update ✓
-- Unassign a user → cell updates ✓
-- Switch between shift/user mode → assignments persist ✓
-- Page refresh → assignments still there ✓
-- Hebrew RTL mode → assignment dialog works ✓
+- Assign a user (shift) → cell updates in-place
+- Assign a user (chore) → cell updates in-place
+- Assign a user (on-duty) → cell updates in-place
+- Assign same user twice → error toast
+- Assign user with conflict → warning/error handled
+- Two browser tabs → second tab gets SignalR update
+- Unassign a user → cell updates
+- Switch between shift/user mode → assignments persist
+- Page refresh → assignments still there
+- Hebrew RTL mode → assignment dialog works
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add wwwroot/js/calendar-inline-edit.js wwwroot/js/calendar-bottom-sheet.js
 git commit -m "fix: calendar assignment updates in-place instead of page reload (P3-7)"
 ```
 
-### Task 4.6: Hierarchy Duplicate Returns 409 (P3-17)
+### Task 4.6: Hierarchy Duplicate Returns 409 (P3-17) -- DONE
 
 **Files:**
 - Modify: `Pages/Api/Hierarchy/Create.cshtml.cs`
 
-- [ ] **Step 1: Read the current error handling**
+- [x] **Step 1: Read the current error handling**
 
 Find the catch block that handles database exceptions during entity creation.
 
-- [ ] **Step 2: Catch unique constraint violation specifically**
+- [x] **Step 2: Catch unique constraint violation specifically**
 
 Catch `Microsoft.Data.Sqlite.SqliteException` and check for unique constraint error code (SQLITE_CONSTRAINT_UNIQUE = 2067 or 19). Return a 409 Conflict with a user-friendly message like "An item with this name already exists."
 
-- [ ] **Step 3: Test**
+- [x] **Step 3: Test**
 
 Try creating a hierarchy entity with a duplicate name. Expected: 409 with clear message instead of 500.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Pages/Api/Hierarchy/Create.cshtml.cs
@@ -997,125 +997,125 @@ git commit -m "fix: hierarchy create returns 409 for duplicate names instead of 
 - `Pages/StatusCode.cshtml` — branding
 - `appsettings.Production.template.json` — Linux paths
 
-### Task 5.1: Standardize Branding to "Shifty" (P2-3)
+### Task 5.1: Standardize Branding to "Shifty" (P2-3) -- DONE
 
 **Files:**
 - Modify: Multiple `.cshtml` files, `.resx` files, possibly JS files
 
-- [ ] **Step 1: Search for all branding references**
+- [x] **Step 1: Search for all branding references**
 
 Search entire codebase for: "Shift Manager", "ShiftManager" (in user-visible text), "shifty" (lowercase in titles). Do NOT change namespace/class names — only user-visible text.
 
-- [ ] **Step 2: Replace in English .resx**
+- [x] **Step 2: Replace in English .resx**
 
 Change all instances of "Shift Manager" to "Shifty" in `SharedResources.resx` (English values for AppName, page titles, etc.)
 
-- [ ] **Step 3: Fix Hebrew .resx too**
+- [x] **Step 3: Fix Hebrew .resx too**
 
 Verify `SharedResources.he-IL.resx` uses "מנהל משמרות" for the app name. Note: there are ~4 instances of "Shift Manager" in the Hebrew .resx (in email templates and logout messages at lines ~4352, 4357, 4363, 6810) — update these to "Shifty" as well.
 
-- [ ] **Step 4: Fix page titles and headers**
+- [x] **Step 4: Fix page titles and headers**
 
 Update Login page, AccessDenied, Error page, StatusCode page to use the localized app name from .resx instead of hardcoded "Shift Manager".
 
-- [ ] **Step 5: Fix page `<title>` generation**
+- [x] **Step 5: Fix page `<title>` generation**
 
 If page titles use a format like "Page - Shift Manager", update to "Page - Shifty".
 
-- [ ] **Step 6: Test both languages**
+- [x] **Step 6: Test both languages**
 
 Verify:
 - English: "Shifty" appears consistently
 - Hebrew: "מנהל משמרות" appears consistently
 - No instances of "Shift Manager" remain in English UI
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add Resources/*.resx Pages/**/*.cshtml
 git commit -m "fix: standardize branding to 'Shifty' (EN) / 'מנהל משמרות' (HE) (P2-3)"
 ```
 
-### Task 5.2: Developer Jargon Text (P3-2)
+### Task 5.2: Developer Jargon Text (P3-2) -- DONE
 
 **Files:**
 - Modify: `Pages/Admin/Index.cshtml`
 
-- [ ] **Step 1: Find the jargon text**
+- [x] **Step 1: Find the jargon text**
 
 Locate "RestHours, WeeklyCap, OnDuty types" in the Company Settings card description.
 
-- [ ] **Step 2: Replace with user-friendly text**
+- [x] **Step 2: Replace with user-friendly text**
 
 Change to "Rest periods, weekly hour limits, duty types" (or localize via .resx key).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add Pages/Admin/Index.cshtml
 git commit -m "fix: replace developer jargon in Company Settings description (P3-2)"
 ```
 
-### Task 5.3: "Mapotz" → "Team Leader" (P3-3)
+### Task 5.3: "Mapotz" → "Team Leader" (P3-3) -- DONE
 
 **Files:**
 - Modify: `Resources/SharedResources.resx`
 
-- [ ] **Step 1: Find the Mapotz key**
+- [x] **Step 1: Find the Mapotz key**
 
 Search .resx for "Mapotz". Find the key and its current English value.
 
-- [ ] **Step 2: Change English value to "Team Leader"**
+- [x] **Step 2: Change English value to "Team Leader"**
 
 Update the English value from "Mapotz" to "Team Leader".
 
-- [ ] **Step 3: Check for other untranslated role template names**
+- [x] **Step 3: Check for other untranslated role template names**
 
 Search for other Hebrew transliterations in the .resx that should have English equivalents. Fix any found.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Resources/SharedResources.resx
 git commit -m "fix: translate 'Mapotz' to 'Team Leader' in English resources (P3-3)"
 ```
 
-### Task 5.4: Linux Paths in Production Template (P3-12)
+### Task 5.4: Linux Paths in Production Template (P3-12) -- DONE
 
 **Files:**
 - Modify: `appsettings.Production.template.json`
 
-- [ ] **Step 1: Replace Linux paths with Windows paths**
+- [x] **Step 1: Replace Linux paths with Windows paths**
 
 Change `"Data Source=/var/lib/shiftmanager/production.db"` to `"Data Source=C:\\ShiftManager\\Data\\app.db"`.
 
-- [ ] **Step 2: Annotate Docker/K8s sections**
+- [x] **Step 2: Annotate Docker/K8s sections**
 
 Add comment or note that Docker/Kubernetes sections are not applicable for Windows/IIS deployment.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add appsettings.Production.template.json
 git commit -m "fix: production template uses Windows paths, annotate Docker sections (P3-12)"
 ```
 
-### Task 5.5: Double Colon Typo (P4-1)
+### Task 5.5: Double Colon Typo (P4-1) -- DONE
 
 **Files:**
 - Modify: `Pages/Admin/Users.cshtml`
 
 **NOTE:** This may already be fixed. The file is modified in the working tree. Verify first.
 
-- [ ] **Step 1: Search for the typo**
+- [x] **Step 1: Search for the typo**
 
 Search `Pages/Admin/Users.cshtml` for "permanently remove::" or similar double-punctuation. If NOT found, skip this task — it's already fixed.
 
-- [ ] **Step 2: Fix if found**
+- [x] **Step 2: Fix if found**
 
 Change "permanently remove::" to "permanently remove:".
 
-- [ ] **Step 3: Commit (only if change was needed)**
+- [x] **Step 3: Commit (only if change was needed)**
 
 ```bash
 git add Pages/Admin/Users.cshtml
@@ -1139,7 +1139,7 @@ git commit -m "fix: double colon typo in user deletion warning (P4-1)"
 - `Pages/Admin/Users.cshtml.cs` — existing CSV export (for pattern)
 - `Data/AppDbContext.cs` — entity relationships
 
-### Task 6.1: Enhance ExportUserData Page with Batch Support and Selection UI
+### Task 6.1: Enhance ExportUserData Page with Batch Support and Selection UI -- DONE
 
 **NOTE:** The page ALREADY EXISTS at `Pages/Owner/Hub/ExportUserData.cshtml` and `.cshtml.cs`. The current implementation has a single-user JSON export via GET handler with `{userId:int}` route parameter. This task ENHANCES it with a multi-user selection UI and batch export.
 
@@ -1148,18 +1148,18 @@ git commit -m "fix: double colon typo in user deletion warning (P4-1)"
 - Modify: `Pages/Owner/Hub/ExportUserData.cshtml.cs` (add batch handler)
 - Read: `Services/UserDataExportService.cs` (existing export service)
 
-- [ ] **Step 1: Read existing implementation**
+- [x] **Step 1: Read existing implementation**
 
 Read both files thoroughly. Understand:
 - The current route pattern (`@page "{userId:int}"`)
 - The `UserDataExportService` — what data it already exports
 - The authorization policy used (`Grant:AdminAccess`)
 
-- [ ] **Step 2: Add index route (no userId)**
+- [x] **Step 2: Add index route (no userId)**
 
 Modify the `@page` directive to support both `"{userId:int}"` (existing single-user) and no parameter (new selection page). Add a GET handler that, when no userId is provided, renders a user selection form.
 
-- [ ] **Step 3: Create the selection UI**
+- [x] **Step 3: Create the selection UI**
 
 Add to the view:
 - User list with checkboxes (loaded from DB, show name + email + company)
@@ -1168,7 +1168,7 @@ Add to the view:
 - Export format selector (JSON / CSV)
 - "Export" button
 
-- [ ] **Step 4: Add batch POST handler**
+- [x] **Step 4: Add batch POST handler**
 
 Add `OnPostExportBatchAsync` that:
 - Accepts array of selected userIds
@@ -1176,14 +1176,14 @@ Add `OnPostExportBatchAsync` that:
 - Bundles results into a single JSON array or multi-sheet CSV
 - Returns as file download
 
-- [ ] **Step 5: Test**
+- [x] **Step 5: Test**
 
 - Navigate to `/Owner/Hub/ExportUserData` (no userId) — should show selection UI
 - Select multiple users, export as JSON — should download complete data
 - Navigate to `/Owner/Hub/ExportUserData/8` — existing single-user export still works
 - Verify Quick Link from Owner Hub works (no more 404)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add Pages/Owner/Hub/ExportUserData.cshtml Pages/Owner/Hub/ExportUserData.cshtml.cs

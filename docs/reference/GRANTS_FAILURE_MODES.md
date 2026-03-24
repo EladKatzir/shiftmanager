@@ -63,9 +63,8 @@ During the migration from role-based to grant-based authorization, users may los
    - Flag any users who would lose permissions
 
 2. **Rollback Capability**
-   - Maintain role-based authorization in parallel for 2 weeks
-   - Feature flag to switch between systems: `UseGrantAuthorization`
    - Database backup before migration
+   - **Note:** The migration to grant-based authorization is complete. The `UseGrantAuthorization` / `UseRoleAuthorization` feature flags referenced in the original design do not exist — no rollback flags were implemented because the migration was done incrementally with full validation. The grant-based system is the sole authorization mechanism.
 
 3. **Admin Override Grant**
    - Emergency grant `AdminAccess` (ID 57) bypasses all checks
@@ -81,11 +80,10 @@ During the migration from role-based to grant-based authorization, users may los
 
 ### Recovery Procedure
 
-1. Enable feature flag `UseRoleAuthorization` to fall back to legacy system
-2. Identify affected users from error logs
-3. Manually assign missing grants via Admin panel
-4. Re-run migration with corrected mapping
-5. Disable fallback feature flag
+1. Identify affected users from error logs
+2. Manually assign missing grants via Admin panel
+3. Re-run migration with corrected mapping
+4. **Note:** No `UseRoleAuthorization` rollback flag exists. The migration to grant-based auth is complete and the legacy role-based system has been removed. Recovery is done by fixing grant assignments directly.
 
 ---
 
@@ -481,7 +479,7 @@ alerts:
 ### Core Implementation
 - `Services/GrantService.cs` - Grant checking implementation
 - `Services/IGrantService.cs` - Grant service interface
-- `Data/SeedData/GrantTypeSeed.cs` - Grant type definitions (114 grants)
+- `Data/SeedData/GrantTypeSeed.cs` - Grant type definitions (125 grants)
 - `Data/SeedData/RoleTemplateSeed.cs` - Role template grant mappings
 
 ### Test Files

@@ -24,7 +24,7 @@
 - CSRF protected via `X-Requested-With: XMLHttpRequest` header
 - Used by browser UI (Razor Pages JS)
 - **Not versioned** — internal endpoints follow the UI release cycle
-- Endpoints: Calendar, Game, Localization, ScopeSwitcher, Telemetry, ScheduleExport, SessionStatus
+- Endpoints: team-calendars, SessionStatus, Calendar, Game, GriffinCallback, Localization, ScopeSwitcher, SelectMolecule, Signup, Telemetry, ScheduleExport, Hierarchy, OnDuty, Friends, TechShift, admin/verify-grants
 
 ## Breaking Change Policy
 

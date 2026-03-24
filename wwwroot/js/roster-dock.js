@@ -20,7 +20,7 @@
         const searchInput = document.getElementById('rosterSearch');
 
         if (!dock || !dockToggle) {
-            console.warn('[Roster Dock] Elements not found, skipping initialization');
+            Logger.warn('RosterDock', 'Elements not found, skipping initialization');
             return;
         }
 
@@ -101,7 +101,7 @@
         const employeeList = document.getElementById('rosterEmployeeList');
 
         if (!employeeList) {
-            console.error('[Roster Dock] Employee list element not found');
+            Logger.error('RosterDock', 'Employee list element not found');
             return;
         }
 
@@ -128,7 +128,7 @@
 
             renderEmployeeList(employees);
         } catch (error) {
-            console.error('[Roster Dock] Error loading employees:', error);
+            Logger.error('RosterDock', 'Error loading employees:', error);
             employeeList.innerHTML = '<p class="error-text">' + (window.AppLocalizer?.Roster_FailedToLoad || 'Failed to load employees. Please try again.') + '</p>';
         }
     }
@@ -342,14 +342,14 @@
             const slot = event.currentTarget.closest('.assignment-slot');
 
             if (!slot) {
-                console.error('[Roster Dock] Could not find assignment slot');
+                Logger.error('RosterDock', 'Could not find assignment slot');
                 return;
             }
 
             const assignmentId = parseInt(slot.dataset.assignmentId, 10);
 
             if (!assignmentId) {
-                console.error('[Roster Dock] Invalid assignment ID');
+                Logger.error('RosterDock', 'Invalid assignment ID');
                 return;
             }
 
@@ -357,7 +357,7 @@
             await assignUserToSlot(assignmentId, userId);
 
         } catch (error) {
-            console.error('[Roster Dock] Error handling drop:', error);
+            Logger.error('RosterDock', 'Error handling drop:', error);
             showToast(window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign employee', 'error');
         }
 
@@ -399,7 +399,7 @@
             }
 
         } catch (error) {
-            console.error('[Roster Dock] Assignment error:', error);
+            Logger.error('RosterDock', 'Assignment error:', error);
             showToast(error.message || (window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign employee'), 'error');
         }
     }
@@ -430,7 +430,7 @@
         }
 
         // Fallback: console log
-        console.log(`[Toast ${type}]`, message);
+        Logger.log('RosterDock', `[Toast ${type}]`, message);
         alert(message);
     }
 

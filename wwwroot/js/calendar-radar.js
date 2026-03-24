@@ -18,7 +18,7 @@
         const radarToggle = document.getElementById('radarToggle');
 
         if (!radarToggle) {
-            console.warn('[Radar Mode] Toggle button not found, skipping initialization');
+            Logger.warn('Radar', 'Toggle button not found, skipping initialization');
             return;
         }
 
@@ -99,7 +99,7 @@
             // Conflicts loaded
 
         } catch (error) {
-            console.error('[Radar Mode] Error loading conflicts:', error);
+            Logger.error('Radar', 'Error loading conflicts:', error);
             showToast(window.AppLocalizer?.Radar_FailedToLoad || 'Failed to load conflict data', 'error');
         }
     }
@@ -120,7 +120,7 @@
             const cell = findCellByConflict(conflict);
 
             if (!cell) {
-                console.warn('[Radar Mode] Could not find cell for conflict:', conflict);
+                Logger.warn('Radar', 'Could not find cell for conflict:', conflict);
                 return;
             }
 
@@ -318,7 +318,7 @@
             return;
         }
 
-        console.log(`[Toast ${type}]`, message);
+        Logger.log('Radar', `[Toast ${type}]`, message);
     }
 
     // Initialize when DOM is ready

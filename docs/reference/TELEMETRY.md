@@ -36,7 +36,7 @@ All telemetry data stays on-premise and is never transmitted externally.
 
 - **No PII collected**: Email addresses, phone numbers, and tokens are scrubbed before transmission
 - **Session-based**: Random session IDs (`sess_*`), NOT user IDs, are used for grouping
-- **Rate limited**: Maximum 10 events per minute per client
+- **Rate limited**: Maximum 30 requests per minute per IP (see RateLimitingService for current limits)
 - **Batched**: Events queue locally and send in batches of 10 every 5 seconds
 - **Max queue**: 100 events maximum before oldest are dropped
 - **Offline support**: Events queue when offline and retry when connection restores
@@ -55,7 +55,7 @@ No individual consent banner is displayed. This is documented for internal gover
 ## Endpoint
 
 - **URL**: `POST /Api/Telemetry`
-- **Authentication**: Session cookie (authenticated users only)
+- **Authentication**: AllowAnonymous (supports pre-auth pages such as the login page; session cookie used when available for user context)
 - **Format**: JSON batch array
 
 ## Configuration

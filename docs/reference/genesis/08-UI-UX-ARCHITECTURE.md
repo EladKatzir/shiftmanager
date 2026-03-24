@@ -24,8 +24,10 @@
 14. [Configuration UI Enhancements](#configuration-ui-enhancements)
 15. [Easter Egg: Shift Swap Game](#easter-egg-shift-swap-game)
 16. [Performance Considerations](#performance-considerations)
-17. [No-Build Philosophy](#no-build-philosophy)
-18. [Reconstruction Notes](#reconstruction-notes)
+17. [Tag Helpers](#tag-helpers)
+18. [Real-Time Updates (SignalR CalendarHub)](#real-time-updates-signalr-calendarhub)
+19. [No-Build Philosophy](#no-build-philosophy)
+20. [Reconstruction Notes](#reconstruction-notes)
 
 ---
 
@@ -36,10 +38,11 @@ ShiftManager's frontend architecture is built on **ASP.NET Core Razor Pages** wi
 ### Key Statistics
 
 - **110+ Razor Pages** organized across 14 functional folders (incl. V3 Organization)
-- **4,698 lines of CSS** (3,800 main + 123 RTL + 775 game)
-- **4,248 lines of vanilla JavaScript** across 6 files
-- **7 View Components** for reusable UI elements
-- **3 Tag Helpers** for localization and authorization
+- **23,411 lines of CSS** across 15 files (site, calendar, components, navigation, etc.)
+- **19,407 lines of vanilla JavaScript** across 38 files
+- **19 View Components** for reusable UI elements
+- **5 Tag Helpers** for localization, authorization, icons, and image optimization
+- **1 SignalR Hub** (CalendarHub) for real-time calendar updates
 - **0 npm packages** - no build process required
 - **111 MB deployment** - includes everything (runtime, assets, database)
 
@@ -244,13 +247,25 @@ TOTAL: 66 Razor Pages
 
 ## CSS Design System
 
-### File Structure (3 CSS Files, 4,698 lines total)
+### File Structure (15 CSS Files, 23,411 lines total)
 
 ```
 wwwroot/css/
-├── site.css                  # 3,800 lines - Main stylesheet
-├── rtl.css                   # 123 lines - RTL overrides for Hebrew
-└── shift-swap-game.css       # 775 lines - Easter egg game styles
+├── site.css                  # 7,184 lines - Main stylesheet (design tokens, layouts, base components)
+├── calendar.css              # 3,722 lines - Calendar grid, shift cards, bottom sheet, overlays
+├── components.css            # 3,620 lines - Shared components (cards, modals, tables, forms)
+├── print.css                 # 1,427 lines - Print-specific styles for calendar export
+├── navigation.css            # 1,337 lines - Sidebar, header, mobile nav, breadcrumbs
+├── rtl.css                   # 1,189 lines - RTL overrides for Hebrew layout
+├── shift-swap-game.css       # 831 lines - Easter egg game styles
+├── widgets.css               # 828 lines - Dashboard widget styles (on-call, overview)
+├── auth.css                  # 720 lines - Login, signup, forgot-password pages
+├── tokens.css                # 615 lines - CSS custom properties / design tokens
+├── calendar-skeleton.css     # 645 lines - Skeleton loading placeholders for calendar
+├── calendar-landing.css      # 475 lines - Calendar landing/selection page
+├── language-edit-mode.css    # 391 lines - Inline localization editing UI
+├── icons.css                 # 366 lines - Icon system (emoji + SVG fallbacks)
+└── home-types.css            # 61 lines - Home rotation type indicators
 ```
 
 ### Design Tokens (CSS Custom Properties)
@@ -462,16 +477,47 @@ ShiftManager uses **rem-based spacing** for consistency:
 
 ## JavaScript Architecture
 
-### File Structure (6 Files, 4,248 lines total)
+### File Structure (38 Files, 19,407 lines total)
 
 ```
 wwwroot/js/
-├── site.js                    # 1,113 lines - Core app logic
-├── myteam.js                  # 660 lines - Team calendar management
-├── shift-swap-game.js         # 1,376 lines - Easter egg game
-├── calendar-inline-edit.js    # 450 lines - Calendar interaction
-├── session-check.js           # 614 lines - Session validation
-└── hebrew-audit.js            # 35 lines - RTL diagnostics
+├── site.js                    # 1,305 lines - Core app logic (dark mode, command palette, sidebar)
+├── shift-swap-game.js         # 1,433 lines - Easter egg game
+├── partial-data.js            # 1,238 lines - Partial/paginated data loading for large datasets
+├── error-states.js            # 1,025 lines - Comprehensive error state UI management
+├── offline-handler.js         # 991 lines - Offline detection and graceful degradation
+├── calendar-bottom-sheet.js   # 988 lines - Mobile bottom sheet for calendar actions
+├── keyboard-nav.js            # 872 lines - Full keyboard navigation support
+├── error-boundary.js          # 849 lines - JavaScript error boundary / global error handler
+├── myteam.js                  # 830 lines - Team calendar management
+├── calendar-inline-edit.js    # 828 lines - Calendar cell inline editing
+├── api-client.js              # 673 lines - Centralized fetch wrapper with retry/auth
+├── session-check.js           # 633 lines - Session validation and expiry detection
+├── calendar-realtime.js       # 575 lines - SignalR client for real-time calendar updates
+├── language-edit-mode.js      # 524 lines - Inline localization string editing
+├── calendar-fill-handle.js    # 455 lines - Excel-style fill handle for bulk copy
+├── telemetry.js               # 450 lines - Client-side analytics and RUM
+├── form-validation.js         # 445 lines - Client-side form validation
+├── roster-dock.js             # 444 lines - Employee drag-and-drop roster dock
+├── calendar-skeleton.js       # 438 lines - Skeleton loading for calendar grid
+├── date-format.js             # 387 lines - Date formatting and locale helpers
+├── toast-notifications.js     # 379 lines - Toast notification system
+├── reduced-motion.js          # 359 lines - Reduced motion accessibility support
+├── modal-loader.js            # 345 lines - Dynamic modal loading from partials
+├── modal-focus.js             # 315 lines - Modal focus trapping and management
+├── a11y-enhancements.js       # 302 lines - Accessibility enhancements (ARIA, screen readers)
+├── lazy-loader.js             # 299 lines - Lazy loading for images and heavy components
+├── localization-attributes.js # 293 lines - data-localize attribute processing
+├── mobile-nav.js              # 238 lines - Mobile navigation (hamburger menu, swipe)
+├── widget-persistence.js      # 231 lines - Dashboard widget state persistence
+├── cache-management.js        # 196 lines - Client-side cache management
+├── localization-api.js        # 173 lines - Localization API client
+├── calendar-print.js          # 133 lines - Calendar print formatting
+├── home-type-calendar.js      # 121 lines - Home type rotation calendar UI
+├── calendar-lazy-rows.js      # 114 lines - Lazy row loading for large calendars
+├── excel-calendar-groups.js   # 99 lines - Excel calendar grouping logic
+├── friends-highlight.js       # 67 lines - Friend highlighting on calendar
+└── hebrew-audit.js            # 22 lines - RTL diagnostics
 ```
 
 ### Module Organization
@@ -998,7 +1044,7 @@ else
 
 ## View Components
 
-ShiftManager uses **3 View Components** for reusable UI elements.
+ShiftManager uses **19 View Components** for reusable UI elements. Each has a ViewComponent class in `ViewComponents/` and a Razor view in `Pages/Shared/Components/{Name}/`.
 
 ### 1. UnreadNotificationCount
 
@@ -1060,6 +1106,106 @@ ShiftManager uses **3 View Components** for reusable UI elements.
 ```csharp
 @await Component.InvokeAsync("ShowMyItemsToggle")
 ```
+
+---
+
+### 4. CalendarSkeleton
+
+**Location**: `Pages/Shared/Components/CalendarSkeleton/`
+
+**Purpose**: Skeleton loading placeholder for calendar grids. Shows animated placeholder rows/cells while data loads.
+
+---
+
+### 5. ContextSwitcher
+
+**Location**: `Pages/Shared/Components/ContextSwitcher/`
+
+**Purpose**: Company/molecule/job-type context selector in the header. Allows switching between organizational scopes.
+
+---
+
+### 6. ErrorBanner
+
+**Location**: `Pages/Shared/Components/ErrorBanner/`
+
+**Purpose**: Persistent error banner displayed at the top of the page for critical errors that need user attention.
+
+---
+
+### 7. ErrorToast
+
+**Location**: `Pages/Shared/Components/ErrorToast/`
+
+**Purpose**: Temporary toast notification for transient errors and success messages.
+
+---
+
+### 8. ExcelCalendarTable
+
+**Location**: `Pages/Shared/Components/ExcelCalendarTable/`
+
+**Purpose**: Excel-style calendar table rendering with grouping support, shift cards, and capacity indicators.
+
+---
+
+### 9. HierarchyTree
+
+**Location**: `Pages/Shared/Components/HierarchyTree/`
+
+**Purpose**: Tree view rendering for the organizational hierarchy (Project > Area > Molecule > Company > Department).
+
+---
+
+### 10. LoadingSkeleton
+
+**Location**: `Pages/Shared/Components/LoadingSkeleton/`
+
+**Purpose**: Generic skeleton loading placeholder for non-calendar content (tables, lists, forms).
+
+---
+
+### 11. LoadingSpinner
+
+**Location**: `Pages/Shared/Components/LoadingSpinner/`
+
+**Purpose**: Simple loading spinner indicator for inline actions and button states.
+
+---
+
+### 12. OnCallWidget
+
+**Location**: `Pages/Shared/Components/OnCallWidget/`
+
+**Purpose**: Dashboard widget showing current on-call assignments for the user's area.
+
+---
+
+### 13. Pagination
+
+**Location**: `Pages/Shared/Components/Pagination/`
+
+**Purpose**: Reusable pagination controls for list pages (audit logs, requests, notifications).
+
+---
+
+### 14. ScopeSwitcher
+
+**Location**: `Pages/Shared/Components/ScopeSwitcher/`
+
+**Purpose**: Scope selector for filtering by molecule/company context in calendar and admin pages.
+
+---
+
+### 15-19. Additional View Components
+
+| # | Component | Purpose |
+|---|-----------|---------|
+| 15 | **Breadcrumb** | Hierarchical breadcrumb navigation |
+| 16 | **DecisionRibbon** | Action ribbon for approval/decline workflows |
+| 17 | **LanguageEditModeBanner** | Banner for inline localization editing mode |
+| 18 | **OwnerCompanySelector** | Company selector for Owner-role users |
+| 19 | **SystemAlerts** | System-level alert banner (maintenance, version updates) |
 
 ---
 
@@ -2569,6 +2715,116 @@ app.UseResponseCompression();  // Automatic gzip for CSS/JS/HTML
 
 ---
 
+## Tag Helpers
+
+ShiftManager uses **5 custom Tag Helpers** in `TagHelpers/`:
+
+### 1. RequireGrantTagHelper
+
+**File:** `TagHelpers/RequireGrantTagHelper.cs`
+
+**Purpose:** Conditionally renders UI elements based on grant-based authorization. Checks whether the current user has the specified grant key.
+
+**Usage:**
+```html
+<div require-grant key="EditShifts">
+    <button>Edit Shift</button>
+</div>
+```
+
+If the user lacks the `EditShifts` grant, the entire element is suppressed from output.
+
+### 2. LocalizationTagHelper
+
+**File:** `TagHelpers/LocalizationTagHelper.cs`
+
+**Purpose:** Server-side localization of element content using `IStringLocalizer<SharedResources>`.
+
+### 3. LocalizationAttributeTagHelper
+
+**File:** `TagHelpers/LocalizationAttributeTagHelper.cs`
+
+**Purpose:** Localizes HTML attribute values (e.g., `placeholder`, `title`, `aria-label`) using the localization system.
+
+### 4. IconTagHelper
+
+**File:** `TagHelpers/IconTagHelper.cs`
+
+**Purpose:** Renders icons using the emoji/SVG icon system. Abstracts icon rendering so icon sources can change without updating every page.
+
+### 5. OptimizedImageTagHelper
+
+**File:** `TagHelpers/OptimizedImageTagHelper.cs`
+
+**Purpose:** Adds lazy loading, width/height attributes, and responsive image optimizations to `<img>` elements.
+
+---
+
+## Real-Time Updates (SignalR CalendarHub)
+
+ShiftManager uses **ASP.NET Core SignalR** for real-time calendar updates. When a shift is assigned, capacity changes, notes are edited, or chores/on-call duties are modified, all connected clients viewing the same calendar scope receive instant updates.
+
+### Architecture
+
+**Hub:** `Hubs/CalendarHub.cs`
+
+**Client:** `wwwroot/js/calendar-realtime.js` (575 lines)
+
+### Group Naming Convention
+
+Clients join groups based on their current calendar scope:
+
+| Group Pattern | Example | Scope |
+|---------------|---------|-------|
+| `shifts-{moleculeId}-{jobTypeId}` | `shifts-5-3` | Shift calendar for specific molecule and job type |
+| `chores-{moleculeId}` | `chores-2` | Chore calendar for a molecule |
+| `oncall-{areaId}` | `oncall-4` | On-call calendar for an area |
+| `overview-{companyId}` | `overview-7` | Company overview dashboard |
+
+### Hub Methods
+
+| Method | Direction | Purpose |
+|--------|-----------|---------|
+| `JoinCalendarGroup(groupName)` | Client -> Server | Subscribe to a calendar scope |
+| `LeaveCalendarGroup(groupName)` | Client -> Server | Unsubscribe from a scope |
+| `AssignmentChanged` | Server -> Client | Shift assignment added/removed |
+| `CapacityChanged` | Server -> Client | Shift capacity updated |
+| `NoteChanged` | Server -> Client | User day note created/updated/deleted |
+| `ChoreChanged` | Server -> Client | Chore assigned/unassigned/updated |
+| `OnCallChanged` | Server -> Client | On-call duty assigned/unassigned/updated |
+
+### Security
+
+- **[Authorize]** attribute requires authentication
+- **Group access validation:** `ValidateGroupAccessAsync` checks that the group's molecule/area/company belongs to the user's tenant
+- **Director fallback:** Directors with `DirectorHubAccess` grant can access cross-company groups
+- **Rate limiting:** 30 join/leave requests per minute per user via `IRateLimitingService`
+
+### Server-Side Notification Service
+
+`ICalendarNotificationService` / `CalendarNotificationService` is injected into services and page handlers that modify calendar data:
+
+```csharp
+// Example: After assigning a shift
+await _calendarNotificationService.NotifyAssignmentChangedAsync(
+    CalendarGroups.Shifts(moleculeId, jobTypeId),
+    new CalendarAssignmentChangedEvent(instanceId, userId, displayName, date, shiftTypeId, shiftTypeName, "assigned")
+);
+```
+
+### Group Name Helpers
+
+`CalendarGroups` static class provides type-safe group name construction:
+
+```csharp
+CalendarGroups.Shifts(moleculeId, jobTypeId)  // "shifts-5-3"
+CalendarGroups.Chores(moleculeId)              // "chores-5"
+CalendarGroups.OnCall(areaId)                  // "oncall-2"
+CalendarGroups.Overview(companyId)             // "overview-7"
+```
+
+---
+
 ## Reconstruction Notes
 
 ### Critical Frontend Decisions
@@ -2695,16 +2951,18 @@ ShiftManager's frontend is a **modern, responsive web application** built withou
 
 **Key Takeaways**:
 
-1. **66 Razor Pages** organized into 11 functional folders
-2. **4,698 lines of CSS** with dark mode and RTL support
-3. **4,248 lines of vanilla JavaScript** (no frameworks)
-4. **Zero-build approach** for air-gapped deployment
-5. **Progressive enhancement** - core functionality works without JavaScript
-6. **Design system** based on CSS custom properties
-7. **Command palette** (Ctrl+K) for fast navigation
-8. **Dark mode** with system preference detection
-9. **RTL support** for Hebrew localization
-10. **Easter egg game** (Ctrl+click brand logo)
+1. **110+ Razor Pages** organized into 14 functional folders
+2. **23,411 lines of CSS** across 15 files with dark mode and RTL support
+3. **19,407 lines of vanilla JavaScript** across 38 files (no frameworks)
+4. **19 View Components** and **5 Tag Helpers** for reusable UI
+5. **SignalR CalendarHub** for real-time calendar updates
+6. **Zero-build approach** for air-gapped deployment
+7. **Progressive enhancement** - core functionality works without JavaScript
+8. **Design system** based on CSS custom properties
+9. **Command palette** (Ctrl+K) for fast navigation
+10. **Dark mode** with system preference detection
+11. **RTL support** for Hebrew localization
+12. **Easter egg game** (Ctrl+click brand logo)
 
 **Next Document**: [09-API-LAYER.md](09-API-LAYER.md) - REST API documentation (27 endpoints, authentication, request/response schemas)
 

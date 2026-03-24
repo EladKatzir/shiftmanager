@@ -106,7 +106,7 @@ ShiftManager's 90+ services are organized into 21 functional categories:
 - `OwnerCompanySelectorService` - Owner cross-company switching via cookie selection
 
 ### 2. Business Logic Services (5 services)
-- `ConflictChecker` - Validates shift assignments (overlap, rest periods, weekly caps)
+- `ShiftAssignmentService` - Validates and assigns shifts (via `ValidateShiftAssignmentAsync`; overlap, rest periods, weekly caps)
 - `NotificationService` - Creates notifications and sends emails (808 lines)
 - `BusyUserService` - Detects user availability conflicts
 - `AnalyticsService` - Generates reports and statistics
@@ -231,7 +231,7 @@ All services are registered in `Program.cs` using the following patterns:
 builder.Services.AddScoped<ITenantResolver, TenantResolver>();
 builder.Services.AddScoped<ICompanyContext, CompanyContext>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<IConflictChecker, ConflictChecker>();
+builder.Services.AddScoped<IShiftAssignmentService, ShiftAssignmentService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 
 // PATTERN 2: Singleton Services (Caching, background jobs)
@@ -412,32 +412,33 @@ public class DirectorService : IDirectorService
 
 ## Business Logic Services
 
-### 1. ConflictChecker Service
+### 1. ShiftAssignmentService (Validation)
 
-**File**: `Services/ConflictChecker.cs`
+**File**: `Services/ShiftAssignmentService.cs`
 **Lifetime**: Scoped
-**Purpose**: Validates shift assignments against business rules
-**Size**: 127 lines
+**Purpose**: Validates and assigns shifts; replaces the former `ConflictChecker` class
+**Note**: Validation is now unified in `ValidateShiftAssignmentAsync` with errors (hard blocks) and warnings (overrideable via HMAC token)
 
 **Key Methods**:
 
 ```csharp
-public interface IConflictChecker
+public interface IShiftAssignmentService
 {
-    Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance instance, CancellationToken ct = default);
+    Task<ValidationResult> ValidateShiftAssignmentAsync(int userId, ShiftInstance instance, CancellationToken ct = default);
+    Task<AssignResult> AssignShiftAsync(int userId, int shiftInstanceId, ...);
 }
 
-public class ConflictChecker : IConflictChecker
+public class ShiftAssignmentService : IShiftAssignmentService
 {
     private readonly AppDbContext _db;
     private readonly IAppConfigCacheService _configCache;
 
-    public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance instance, CancellationToken ct = default)
+    public async Task<ValidationResult> ValidateShiftAssignmentAsync(int userId, ShiftInstance instance, CancellationToken ct = default)
     {
         // 1. User active check
         var user = await _db.Users.FindAsync(new object?[] { userId }, ct);
         if (user == null || !user.IsActive)
-            return ConflictResult.Fail("User inactive or not found.");
+            return ValidationResult.Error("User inactive or not found.");
 
         // 2. Approved time-off blocks
         bool hasTimeOff = await _db.TimeOffRequests
@@ -445,7 +446,7 @@ public class ConflictChecker : IConflictChecker
                         && r.Status == RequestStatus.Approved
                         && instance.WorkDate >= r.StartDate
                         && instance.WorkDate <= r.EndDate, ct);
-        if (hasTimeOff) return ConflictResult.Fail("Approved time-off covers this date.");
+        if (hasTimeOff) return ValidationResult.Warning("VACATION", "Approved time-off covers this date.");
 
         // 3. Overlap detection (fetch assignments in ±7 day window)
         var relevantAssignments = await (from a in _db.ShiftAssignments
@@ -461,20 +462,20 @@ public class ConflictChecker : IConflictChecker
             var (rs, re) = TimeHelpers.GetShiftWindow(new ShiftType { Start = ra.Start, End = ra.End }, ra.WorkDate);
             bool overlaps = rs < end && start < re;
             if (overlaps && !isOfflineShift)
-                return ConflictResult.Fail("Overlap with existing assignment.");
+                return ValidationResult.Error("Overlap with existing assignment.");
         }
 
-        // 4. Rest period check (minimum 8 hours between shifts)
+        // 4. Rest period check (minimum 8 hours between shifts) — hard error
         int restHours = await GetConfigIntAsync(instance.CompanyId, "RestHours", 8, ct);
         if (before.end != default && (start - before.end).TotalHours < restHours)
-            return ConflictResult.Fail($"Rest period too short (< {restHours}h) from previous shift.");
+            return ValidationResult.Error($"Rest period too short (< {restHours}h) from previous shift.");
 
-        // 5. Weekly hours cap check
-        int weeklyCap = await GetConfigIntAsync(instance.CompanyId, "WeeklyHoursCap", 40, ct);
+        // 5. Weekly hours cap check (56h default) — overrideable warning
+        int weeklyCap = await GetConfigIntAsync(instance.CompanyId, "WeeklyHoursCap", 56, ct);
         if (totalHoursThisWeek > weeklyCap)
-            return ConflictResult.Fail($"Weekly hours cap exceeded (> {weeklyCap}h).");
+            return ValidationResult.Warning("WEEKLY_CAP", $"Weekly hours cap exceeded (> {weeklyCap}h).");
 
-        return ConflictResult.Ok();
+        return ValidationResult.Ok();
     }
 }
 ```
@@ -483,8 +484,10 @@ public class ConflictChecker : IConflictChecker
 1. User must be active
 2. No approved time-off during shift date
 3. No overlapping shifts (except OFFLINE shift type)
-4. Minimum 8-hour rest period between shifts (configurable)
-5. Maximum 40 hours per week (configurable)
+4. Minimum 8-hour rest period between shifts (configurable) - **hard error**
+5. Maximum 56 hours per week (configurable) - **overrideable warning**
+
+**Validation categories**: Errors are hard blocks; Warnings are overrideable via HMAC token. Exempt shifts (IsOffline or IsHome) skip overlap, rest, weekly cap, and past-date checks.
 
 **Performance Note**: Uses `IAppConfigCacheService` to avoid repeated database queries for `RestHours` and `WeeklyHoursCap` config values.
 
@@ -693,7 +696,7 @@ public class ShiftTypeCacheService : IShiftTypeCacheService
 **Usage Example**:
 
 ```csharp
-// In ConflictChecker service
+// In ShiftAssignmentService
 private async Task<int> GetConfigIntAsync(int companyId, string key, int defaultValue, CancellationToken ct = default)
 {
     var config = await _configCache.GetConfigAsync(companyId, key);
@@ -2675,7 +2678,7 @@ graph TD
 | Service | Dependencies |
 |---------|-------------|
 | **NotificationService** | `AppDbContext`, `ITenantResolver`, `IMailService`, `IStringLocalizer`, `IConfiguration`, `ILogger` |
-| **ConflictChecker** | `AppDbContext`, `IAppConfigCacheService`, `IHierarchySettingsService` |
+| **ShiftAssignmentService** | `AppDbContext`, `IAppConfigCacheService`, `IHierarchySettingsService` |
 | **ProfileService** | `AppDbContext`, `ITenantResolver`, `IStringLocalizer`, `ILogger` |
 | **ChoreService** | `AppDbContext`, `ITenantResolver`, `IHttpContextAccessor`, `IDirectorService`, `IGrantService`, `ILogger` |
 | **OnDutyService** | `AppDbContext`, `IHttpContextAccessor`, `IDirectorService`, `IGrantService`, `ILogger` |
@@ -2855,12 +2858,12 @@ var config = await _db.Configs.FirstOrDefaultAsync(c => c.CompanyId == companyId
 
 ```csharp
 [Fact]
-public async Task ConflictChecker_ShouldFailWhenUserHasApprovedTimeOff()
+public async Task ShiftAssignmentService_ShouldWarnWhenUserHasApprovedTimeOff()
 {
     // Arrange
     var mockDb = CreateMockDbContext();
     var mockConfigCache = new Mock<IAppConfigCacheService>();
-    var conflictChecker = new ConflictChecker(mockDb, mockConfigCache.Object);
+    var service = new ShiftAssignmentService(mockDb, mockConfigCache.Object);
 
     var userId = 1;
     var shiftInstance = new ShiftInstance
@@ -2958,7 +2961,7 @@ Services must be registered in `Program.cs` in this order:
 5. **Caching Services**: `IShiftTypeCacheService`, `IAppConfigCacheService`
 6. **V3 Hierarchy Services**: `IHierarchyService`, `IHierarchySettingsService`, `IJobTypeService`, `IShiftGroupingService`
 7. **V3 Authorization Services**: `IGrantService`, `IRoleService`
-8. **Business Logic Services**: `IConflictChecker`, `INotificationService`, etc.
+8. **Business Logic Services**: `IShiftAssignmentService`, `INotificationService`, etc.
 9. **V3 Scheduling Services**: `IShiftProgramService`, `IMasterProgramService`, `ISetupTaskService`
 10. **V3 Data Lifecycle Services**: `IArchiveService`, `IPurgeService`, `IImportService`
 11. **V3 Social Services**: `IFriendshipService`

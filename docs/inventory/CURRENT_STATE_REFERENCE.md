@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Date:** 2026-02-04
-**Branch:** UiChanging (v2.8.3)
+**Branch:** update
 
 ---
 
@@ -115,7 +115,8 @@ public enum UserRole
     Employee = 2,   // Standard worker
     Director = 3,   // Multi-company admin
     Trainee = 4,    // Learning worker
-    Assigner = 5    // Can edit Chores only
+    Assigner = 5,   // Can edit Chores only
+    AreaAdmin = 6   // Area-wide administration
 }
 ```
 
@@ -167,7 +168,7 @@ Project (Owner)
 | Email | 2 | SendNotifications, ConfigureEmailSettings |
 | System | 4 | AdminAccess, SystemConfiguration, ViewAuditLog |
 
-**Total:** 97+ defined grant types
+**Total:** 125 defined grant types
 
 ### 2.4 Role Assignment
 

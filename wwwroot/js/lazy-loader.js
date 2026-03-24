@@ -50,14 +50,14 @@ window.LazyLoader = (function() {
             script.onload = () => {
                 loadedScripts.add(src);
                 loadingPromises.delete(src);
-                console.log('[LazyLoader] Loaded script:', src);
+                Logger.log('LazyLoader', 'Loaded script:', src);
                 resolve();
             };
 
             script.onerror = () => {
                 loadingPromises.delete(src);
                 const error = new Error(`Failed to load script: ${src}`);
-                console.error('[LazyLoader]', error.message);
+                Logger.error('LazyLoader', error.message);
                 reject(error);
             };
 
@@ -106,13 +106,13 @@ window.LazyLoader = (function() {
 
             link.onload = () => {
                 loadedStyles.add(href);
-                console.log('[LazyLoader] Loaded stylesheet:', href);
+                Logger.log('LazyLoader', 'Loaded stylesheet:', href);
                 resolve();
             };
 
             link.onerror = () => {
                 const error = new Error(`Failed to load stylesheet: ${href}`);
-                console.error('[LazyLoader]', error.message);
+                Logger.error('LazyLoader', error.message);
                 reject(error);
             };
 
@@ -146,7 +146,7 @@ window.LazyLoader = (function() {
                         loadScript(scriptSrc).then(() => {
                             if (callback) callback(entry.target);
                         }).catch(err => {
-                            console.error('[LazyLoader] loadOnVisible error:', err);
+                            Logger.error('LazyLoader', 'loadOnVisible error:', err);
                         });
                         observer.disconnect();
                     }
@@ -190,7 +190,7 @@ window.LazyLoader = (function() {
             loadScript(scriptSrc).then(() => {
                 if (callback) callback(e.currentTarget, e);
             }).catch(err => {
-                console.error('[LazyLoader] loadOnInteraction error:', err);
+                Logger.error('LazyLoader', 'loadOnInteraction error:', err);
             });
         };
 
@@ -236,7 +236,7 @@ window.LazyLoader = (function() {
         link.as = 'script';
         link.href = src;
         document.head.appendChild(link);
-        console.log('[LazyLoader] Preloading script:', src);
+        Logger.log('LazyLoader', 'Preloading script:', src);
     }
 
     /**
@@ -252,7 +252,7 @@ window.LazyLoader = (function() {
         link.rel = 'prefetch';
         link.href = src;
         document.head.appendChild(link);
-        console.log('[LazyLoader] Prefetching script:', src);
+        Logger.log('LazyLoader', 'Prefetching script:', src);
     }
 
     /**

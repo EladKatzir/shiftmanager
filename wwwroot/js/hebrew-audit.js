@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   if (!rtlStylesheet) {
-    console.warn('[Shifty] RTL stylesheet not found');
+    Logger.warn('HebrewAudit', 'RTL stylesheet not found');
   }
 
   // Utility: Add visual debugging for RTL layout (development only)

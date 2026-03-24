@@ -71,7 +71,7 @@
                 return true;
             }
         } catch (error) {
-            console.error('Failed to load game localization:', error);
+            Logger.error('Game', 'Failed to load game localization:', error);
         }
 
         // Fallback to English defaults
@@ -124,7 +124,7 @@
 
                 // Check if game is enabled
                 if (gameConfig.enabled === false) {
-                    console.log('Game is disabled by configuration');
+                    Logger.log('Game', 'Game is disabled by configuration');
                     return false;
                 }
 
@@ -141,19 +141,19 @@
 
                 // Validate grid size
                 if (GRID_SIZE < 4 || GRID_SIZE > 10) {
-                    console.error('Invalid grid size:', GRID_SIZE, '- falling back to 6');
+                    Logger.error('Game', 'Invalid grid size:', GRID_SIZE, '- falling back to 6');
                     GRID_SIZE = 6;
                 }
 
-                console.log('Game configuration loaded:', gameConfig);
+                Logger.log('Game', 'Game configuration loaded:', gameConfig);
                 return true;
             }
         } catch (error) {
-            console.error('Failed to load game configuration:', error);
+            Logger.error('Game', 'Failed to load game configuration:', error);
         }
 
         // Use defaults if config fails to load
-        console.log('Using default game configuration');
+        Logger.log('Game', 'Using default game configuration');
         return true;
     }
 
@@ -373,7 +373,7 @@
     function getRandomRoast(milestone) {
         // Defensive null checks to prevent TypeError
         if (!localization || !localization.roasts) {
-            console.error('Localization data not loaded for roasting system');
+            Logger.error('Game', 'Localization data not loaded for roasting system');
             return null;
         }
 
@@ -416,10 +416,10 @@
             if (response.ok) {
                 const result = await response.json();
                 showToast(localization.scoreSaved, 'success');
-                console.log('Score saved! Rank:', result.rank);
+                Logger.log('Game', 'Score saved! Rank:', result.rank);
             }
         } catch (error) {
-            console.error('Failed to save score:', error);
+            Logger.error('Game', 'Failed to save score:', error);
         }
     }
 
@@ -450,7 +450,7 @@
     function initializeGrid() {
         // Defensive validation
         if (!GRID_SIZE || GRID_SIZE < 4 || GRID_SIZE > 10) {
-            console.error('Invalid GRID_SIZE:', GRID_SIZE, '- using default 6');
+            Logger.error('Game', 'Invalid GRID_SIZE:', GRID_SIZE, '- using default 6');
             GRID_SIZE = 6;
         }
 
@@ -845,7 +845,7 @@
 
         if (possibleMoves.length === 0) {
             // No hints available - should trigger lose condition
-            console.warn('No possible moves available');
+            Logger.warn('Game', 'No possible moves available');
             return;
         }
 

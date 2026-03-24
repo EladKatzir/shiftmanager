@@ -95,7 +95,7 @@
      */
     window.trackEvent = function(eventType, eventData) {
         if (isRateLimited()) {
-            console.debug('[Telemetry] Rate limited, skipping event:', eventType);
+            Logger.log('Telemetry', 'Rate limited, skipping event:', eventType);
             return;
         }
 
@@ -143,7 +143,7 @@
 
     function trackError(message, source, lineno, colno, error) {
         if (isRateLimited()) {
-            console.debug('[Telemetry] Rate limited, skipping error');
+            Logger.log('Telemetry', 'Rate limited, skipping error');
             return;
         }
 
@@ -226,7 +226,7 @@
 
     function trackPerformanceMetric(name, value) {
         if (isRateLimited()) {
-            console.debug('[Telemetry] Rate limited, skipping metric:', name);
+            Logger.log('Telemetry', 'Rate limited, skipping metric:', name);
             return;
         }
 
@@ -267,7 +267,7 @@
             });
             lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
         } catch (e) {
-            console.debug('[Telemetry] LCP observer not supported');
+            Logger.log('Telemetry', 'LCP observer not supported');
         }
 
         // FID (First Input Delay)
@@ -280,7 +280,7 @@
             });
             fidObserver.observe({ type: 'first-input', buffered: true });
         } catch (e) {
-            console.debug('[Telemetry] FID observer not supported');
+            Logger.log('Telemetry', 'FID observer not supported');
         }
 
         // CLS (Cumulative Layout Shift)
@@ -328,7 +328,7 @@
                 }
             });
         } catch (e) {
-            console.debug('[Telemetry] CLS observer not supported');
+            Logger.log('Telemetry', 'CLS observer not supported');
         }
 
         // INP (Interaction to Next Paint)
@@ -352,7 +352,7 @@
                 }
             });
         } catch (e) {
-            console.debug('[Telemetry] INP observer not supported');
+            Logger.log('Telemetry', 'INP observer not supported');
         }
 
         // TTFB (Time to First Byte)
@@ -365,7 +365,7 @@
                 }
             }
         } catch (e) {
-            console.debug('[Telemetry] TTFB measurement failed');
+            Logger.log('Telemetry', 'TTFB measurement failed');
         }
     }
 
@@ -384,7 +384,7 @@
             body: JSON.stringify(data),
             keepalive: true // Ensure request completes even if page unloads
         }).catch(function(err) {
-            console.debug('[Telemetry] Failed to send batch:', err);
+            Logger.log('Telemetry', 'Failed to send batch:', err);
         });
     }
 
@@ -446,5 +446,5 @@
         trackError: trackError
     };
 
-    console.debug('[Telemetry] Initialized with session:', CONFIG.sessionId);
+    Logger.log('Telemetry', 'Initialized with session:', CONFIG.sessionId);
 })();

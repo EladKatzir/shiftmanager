@@ -63,7 +63,7 @@
         // Set up visibility change handler
         setupVisibilityHandler();
 
-        console.log('[CalendarRealtime] Initialized for group:', currentGroup);
+        Logger.log('CalendarRT', 'Initialized for group:', currentGroup);
     }
 
     /**
@@ -89,7 +89,7 @@
      */
     function initializeSignalR() {
         if (typeof signalR === 'undefined') {
-            console.warn('[CalendarRealtime] SignalR library not loaded, falling back to polling');
+            Logger.warn('CalendarRT', 'SignalR library not loaded, falling back to polling');
             startPolling();
             return;
         }
@@ -113,7 +113,7 @@
             connectionState = 'reconnecting';
             if (isDisposing) return; // Intentional teardown — suppress warnings
             disconnectedSince = disconnectedSince || Date.now();
-            console.log('[CalendarRealtime] Reconnecting...', error?.message);
+            Logger.log('CalendarRT', 'Reconnecting...', error?.message);
             updateConnectionIndicator();
             checkPollingNeeded();
         });
@@ -122,7 +122,7 @@
             connectionState = 'connected';
             disconnectedSince = null;
             reconnectAttempts = 0;
-            console.log('[CalendarRealtime] Reconnected:', connectionId);
+            Logger.log('CalendarRT', 'Reconnected:', connectionId);
             updateConnectionIndicator();
             stopPolling();
             rejoinGroup();
@@ -133,7 +133,7 @@
             connectionState = 'disconnected';
             if (isDisposing) return; // Intentional teardown — suppress warnings
             disconnectedSince = disconnectedSince || Date.now();
-            console.log('[CalendarRealtime] Connection closed:', error?.message);
+            Logger.log('CalendarRT', 'Connection closed:', error?.message);
             updateConnectionIndicator();
             checkPollingNeeded();
             attemptReconnect();
@@ -153,7 +153,7 @@
         if (!connection) return;
 
         connection.on('AssignmentChanged', (evt) => {
-            console.log('[CalendarRealtime] AssignmentChanged:', evt);
+            Logger.log('CalendarRT', 'AssignmentChanged:', evt);
             if (eventHandlers.onAssignmentChanged) {
                 eventHandlers.onAssignmentChanged(evt);
             } else {
@@ -162,7 +162,7 @@
         });
 
         connection.on('CapacityChanged', (evt) => {
-            console.log('[CalendarRealtime] CapacityChanged:', evt);
+            Logger.log('CalendarRT', 'CapacityChanged:', evt);
             if (eventHandlers.onCapacityChanged) {
                 eventHandlers.onCapacityChanged(evt);
             } else {
@@ -171,7 +171,7 @@
         });
 
         connection.on('NoteChanged', (evt) => {
-            console.log('[CalendarRealtime] NoteChanged:', evt);
+            Logger.log('CalendarRT', 'NoteChanged:', evt);
             if (eventHandlers.onNoteChanged) {
                 eventHandlers.onNoteChanged(evt);
             } else {
@@ -180,7 +180,7 @@
         });
 
         connection.on('ChoreChanged', (evt) => {
-            console.log('[CalendarRealtime] ChoreChanged:', evt);
+            Logger.log('CalendarRT', 'ChoreChanged:', evt);
             if (eventHandlers.onChoreChanged) {
                 eventHandlers.onChoreChanged(evt);
             } else {
@@ -189,7 +189,7 @@
         });
 
         connection.on('OnCallChanged', (evt) => {
-            console.log('[CalendarRealtime] OnCallChanged:', evt);
+            Logger.log('CalendarRT', 'OnCallChanged:', evt);
             if (eventHandlers.onOnCallChanged) {
                 eventHandlers.onOnCallChanged(evt);
             } else {
@@ -218,7 +218,7 @@
             connectionState = 'connected';
             disconnectedSince = null;
             reconnectAttempts = 0;
-            console.log('[CalendarRealtime] Connected to hub');
+            Logger.log('CalendarRT', 'Connected to hub');
 
             updateConnectionIndicator();
             stopPolling();
@@ -228,7 +228,7 @@
             connectionState = 'disconnected';
             if (isDisposing) return; // Intentional teardown — suppress warnings
             disconnectedSince = disconnectedSince || Date.now();
-            console.warn('[CalendarRealtime] Connection failed:', error.message);
+            Logger.warn('CalendarRT', 'Connection failed:', error.message);
             updateConnectionIndicator();
             checkPollingNeeded();
             attemptReconnect();
@@ -243,9 +243,9 @@
 
         try {
             await connection.invoke('JoinCalendarGroup', currentGroup);
-            console.log('[CalendarRealtime] Joined group:', currentGroup);
+            Logger.log('CalendarRT', 'Joined group:', currentGroup);
         } catch (error) {
-            console.error('[CalendarRealtime] Failed to join group:', error);
+            Logger.error('CalendarRT', 'Failed to join group:', error);
         }
     }
 
@@ -264,9 +264,9 @@
 
         try {
             await connection.invoke('LeaveCalendarGroup', currentGroup);
-            console.log('[CalendarRealtime] Left group:', currentGroup);
+            Logger.log('CalendarRT', 'Left group:', currentGroup);
         } catch (error) {
-            console.error('[CalendarRealtime] Failed to leave group:', error);
+            Logger.error('CalendarRT', 'Failed to leave group:', error);
         }
     }
 
@@ -286,7 +286,7 @@
     function attemptReconnect() {
         if (isDisposing) return;
         if (reconnectAttempts >= CONFIG.maxReconnectAttempts) {
-            console.warn('[CalendarRealtime] Max reconnect attempts reached, using polling only');
+            Logger.warn('CalendarRT', 'Max reconnect attempts reached, using polling only');
             return;
         }
 
@@ -329,7 +329,7 @@
     function startPolling() {
         if (pollingTimer) return;
 
-        console.log('[CalendarRealtime] Starting polling fallback');
+        Logger.log('CalendarRT', 'Starting polling fallback');
         pollingTimer = setInterval(() => {
             if (isPageVisible) {
                 triggerShadowRefresh();
@@ -342,7 +342,7 @@
      */
     function stopPolling() {
         if (pollingTimer) {
-            console.log('[CalendarRealtime] Stopping polling');
+            Logger.log('CalendarRT', 'Stopping polling');
             clearInterval(pollingTimer);
             pollingTimer = null;
         }
@@ -416,7 +416,7 @@
             isPageVisible = document.visibilityState === 'visible';
 
             if (isPageVisible) {
-                console.log('[CalendarRealtime] Page became visible, refreshing');
+                Logger.log('CalendarRT', 'Page became visible, refreshing');
 
                 // Check if we've been away for a while
                 const hiddenDuration = Date.now() - lastRefreshTime;
@@ -458,11 +458,11 @@
 
             if (refreshCallback && isPageVisible) {
                 try {
-                    console.log('[CalendarRealtime] Executing shadow refresh');
+                    Logger.log('CalendarRT', 'Executing shadow refresh');
                     await refreshCallback();
                     lastRefreshTime = Date.now();
                 } catch (error) {
-                    console.error('[CalendarRealtime] Shadow refresh failed:', error);
+                    Logger.error('CalendarRT', 'Shadow refresh failed:', error);
                 }
             }
         }, CONFIG.shadowRefreshDebounce);
@@ -550,7 +550,7 @@
 
         connectionState = 'disconnected';
         currentGroup = null;
-        console.log('[CalendarRealtime] Disposed');
+        Logger.log('CalendarRT', 'Disposed');
     }
 
     // Update stale indicator elapsed time every 10s while disconnected

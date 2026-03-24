@@ -1,175 +1,178 @@
 # ShiftManager Pages Inventory
 
-**Audit Date:** 2026-03-03
+**Audit Date:** 2026-03-03 (updated 2026-03-23)
 **Model:** claude-opus-4-6 (Strongest model -- final validation audit)
-**Total Pages/Endpoints Audited:** 170 (11 Root/Auth/Home + 25 Admin + 29 API + 11 Calendar/Schedule + 29 Owner + 13 My/Director + 10 Friends/Game/MyTeam/Assignments/Requests/Public + 19 Shared Components + 23 Layout/Partials)
+**Total Pages/Endpoints Audited:** 151 (12 Root/Auth/Home + 28 Admin + 30 API + 11 Calendar/Schedule + 29 Owner + 11 My/Director + 11 Friends/Game/MyTeam/Assignments/Requests/Public + 19 Shared Components/Layout)
 
 ---
 
 ## Table of Contents
 
-### I. Root, Auth & Home Pages (Pages 1-11)
+### I. Root, Auth & Home Pages (Pages 1-12)
 - [1. Root Index (/)](#1-root-index)
-- [2. Auth/Login](#2-authlogin)
-- [3. Auth/Logout](#3-authlogout)
-- [4. Auth/GriffinCallback](#4-authgriffincallback)
-- [5. Auth/Signup](#5-authsignup)
-- [6. Home/Index](#6-homeindex)
-- [7. Home/Announcements](#7-homeannouncements)
-- [8. Home/ChangePassword](#8-homechangepassword)
-- [9. Home/Notifications](#9-homenotifications)
-- [10. Error](#10-error)
-- [11. AccessDenied](#11-accessdenied)
+- [2. AccessDenied](#2-accessdenied)
+- [3. Error](#3-error)
+- [4. Diagnostic](#4-diagnostic)
+- [5. GriffinDiagnostic](#5-griffindiagnostic)
+- [6. StatusCode](#6-statuscode)
+- [7. Auth/Login](#7-authlogin)
+- [8. Auth/Logout](#8-authlogout)
+- [9. Auth/GriffinCallback](#9-authgriffincallback)
+- [10. Auth/Signup](#10-authsignup)
+- [11. Auth/ForgotPassword](#11-authforgotpassword)
+- [12. Home/Index](#12-homeindex)
 
-### II. Admin Pages (Pages 12-36)
-- [12. Admin/Index](#12-adminindex)
-- [13. Admin/Analytics](#13-adminanalytics)
-- [14. Admin/Announcements](#14-adminannouncements)
-- [15. Admin/AuditLog](#15-adminauditlog)
-- [16. Admin/Companies](#16-admincompanies)
-- [17. Admin/Config](#17-adminconfig)
-- [18. Admin/Directors](#18-admindirectors)
-- [19. Admin/DutyRotation/Index](#19-admindutyrotationindex)
-- [20. Admin/EditProfile](#20-admineditprofile)
-- [21. Admin/Users](#21-adminusers)
-- [22. Admin/Organization/Index](#22-adminorganizationindex)
-- [23. Admin/Organization/Areas](#23-adminorganizationareas)
-- [24. Admin/Organization/Departments](#24-adminorganizationdepartments)
-- [25. Admin/Organization/Grants/Index](#25-adminorganizationgrantsindex)
-- [26. Admin/Organization/Grants/Assign](#26-adminorganizationgrantsassign)
-- [27. Admin/Organization/Hierarchy](#27-adminorganizationhierarchy)
-- [28. Admin/Organization/JobTypes](#28-adminorganizationjobtypes)
-- [29. Admin/Organization/Molecules](#29-adminorganizationmolecules)
-- [30. Admin/Organization/Projects](#30-adminorganizationprojects)
-- [31. Admin/Organization/Roles/Index](#31-adminorganizationrolesindex)
-- [32. Admin/Organization/Roles/Assign](#32-adminorganizationrolesassign)
-- [33. Admin/Organization/ShiftGroupings](#33-adminorganizationshiftgroupings)
-- [34. Admin/Settings/Index](#34-adminsettingsindex)
-- [35. Admin/Settings/ApprovalRules](#35-adminsettingsapprovalrules)
-- [36. Admin/SetupTasks/Index](#36-adminsetuptasksindex)
+### II. Admin Pages (Pages 13-41)
+- [13. Admin/Index](#13-adminindex)
+- [14. Admin/Analytics](#14-adminanalytics)
+- [15. Admin/Announcements](#15-adminannouncements)
+- [16. Admin/AuditLog](#16-adminauditlog)
+- [17. Admin/Companies](#17-admincompanies)
+- [19. Admin/Config](#19-adminconfig)
+- [20. Admin/Directors](#20-admindirectors)
+- [21. Admin/DutyRotation/Index](#21-admindutyrotationindex)
+- [22. Admin/EditProfile](#22-admineditprofile)
+- [23. Admin/HomeTypes/Index](#23-adminhometypesindex)
+- [24. Admin/Users](#24-adminusers)
+- [25. Admin/Organization/Index](#25-adminorganizationindex)
+- [26. Admin/Organization/Areas](#26-adminorganizationareas)
+- [27. Admin/Organization/ChoreTypes/Index](#27-adminorganizationchoretypesindex)
+- [28. Admin/Organization/Departments](#28-adminorganizationdepartments)
+- [29. Admin/Organization/DutyTypes/Index](#29-adminorganizationdutytypesindex)
+- [30. Admin/Organization/Grants/Index](#30-adminorganizationgrantsindex)
+- [31. Admin/Organization/Grants/Assign](#31-adminorganizationgrantsassign)
+- [32. Admin/Organization/Hierarchy](#32-adminorganizationhierarchy)
+- [33. Admin/Organization/JobTypes](#33-adminorganizationjobtypes)
+- [34. Admin/Organization/Molecules](#34-adminorganizationmolecules)
+- [35. Admin/Organization/Projects](#35-adminorganizationprojects)
+- [36. Admin/Organization/Roles/Index](#36-adminorganizationrolesindex)
+- [37. Admin/Organization/Roles/Assign](#37-adminorganizationrolesassign)
+- [38. Admin/Organization/ShiftGroupings](#38-adminorganizationshiftgroupings)
+- [39. Admin/Settings/Index](#39-adminsettingsindex)
+- [40. Admin/Settings/ApprovalRules](#40-adminsettingsapprovalrules)
+- [41. Admin/SetupTasks/Index](#41-adminsetuptasksindex)
 
-### III. API Endpoints (Pages 37-65)
-- [37. Api/Calendar/GetShiftsData](#37-apicalendargetshiftsdata)
-- [38. Api/Calendar/GetChoresData](#38-apicalendargetchoresdata)
-- [39. Api/Calendar/GetOnCallData](#39-apicalendargetoncalldata)
-- [40. Api/Calendar/GetOverviewData](#40-apicalendargetoverviewdata)
-- [41. Api/Calendar/QuickAddChore](#41-apicalendarquickaddchore)
-- [42. Api/Calendar/QuickAddOnDuty](#42-apicalendarquickaddonduty)
-- [43. Api/Calendar/DeleteChore](#43-apicalendardeletechore)
-- [44. Api/Calendar/DeleteOnDuty](#44-apicalendardeleteonduty)
-- [45. Api/Calendar/RestoreChore](#45-apicalendarrestorechore)
-- [46. Api/Calendar/ShiftHistory](#46-apicalendarshifthistory)
-- [47. Api/Friends/Ids](#47-apifriendsids)
-- [48. Api/Game/GetConfiguration](#48-apigamegetconfiguration)
-- [49. Api/Game/GetLeaderboard](#49-apigamegetleaderboard)
-- [50. Api/Game/GetLocalization](#50-apigamegetlocalization)
-- [51. Api/Game/SaveScore](#51-apigamesavescore)
-- [52. Api/Hierarchy/Create](#52-apihierarchycreate)
-- [53. Api/Hierarchy/Delete](#53-apihierarchydelete)
-- [54. Api/Hierarchy/Move](#54-apihierarchymove)
-- [55. Api/Hierarchy/MoveTargets](#55-apihierarchymovetargets)
-- [56. Api/Hierarchy/Rename](#56-apihierarchyrename)
-- [57. Api/Hierarchy/Reorder](#57-apihierarchyreorder)
-- [58. Api/Localization](#58-apilocalization)
-- [59. Api/OnDuty/GetEligibleUsers](#59-apiondutygeteligibleusers)
-- [60. Api/ScheduleExport](#60-apischeduleexport)
-- [61. Api/ScopeSwitcher](#61-apiscopeswitcher)
-- [62. Api/SessionStatus](#62-apisessionstatus)
-- [63. Api/Signup/GetSignupOptions](#63-apisignupgetsignupoptions)
-- [64. Api/TechShift/Eligible](#64-apitechshifteligible)
-- [65. Api/Telemetry](#65-apitelemetry)
+### III. API Endpoints (Pages 42-71)
+- [42. Api/Calendar/GetShiftsData](#42-apicalendargetshiftsdata)
+- [43. Api/Calendar/GetChoresData](#43-apicalendargetchoresdata)
+- [44. Api/Calendar/GetOnCallData](#44-apicalendargetoncalldata)
+- [45. Api/Calendar/GetOverviewData](#45-apicalendargetoverviewdata)
+- [46. Api/Calendar/QuickAddChore](#46-apicalendarquickaddchore)
+- [47. Api/Calendar/QuickAddOnDuty](#47-apicalendarquickaddonduty)
+- [48. Api/Calendar/DeleteChore](#48-apicalendardeletechore)
+- [49. Api/Calendar/DeleteOnDuty](#49-apicalendardeleteonduty)
+- [50. Api/Calendar/RestoreChore](#50-apicalendarrestorechore)
+- [51. Api/Calendar/ShiftHistory](#51-apicalendarshifthistory)
+- [52. Api/Friends/Ids](#52-apifriendsids)
+- [53. Api/Game/GetConfiguration](#53-apigamegetconfiguration)
+- [54. Api/Game/GetLeaderboard](#54-apigamegetleaderboard)
+- [55. Api/Game/GetLocalization](#55-apigamegetlocalization)
+- [56. Api/Game/SaveScore](#56-apigamesavescore)
+- [57. Api/Hierarchy/Create](#57-apihierarchycreate)
+- [58. Api/Hierarchy/Delete](#58-apihierarchydelete)
+- [59. Api/Hierarchy/Move](#59-apihierarchymove)
+- [60. Api/Hierarchy/MoveTargets](#60-apihierarchymovetargets)
+- [61. Api/Hierarchy/Rename](#61-apihierarchyrename)
+- [62. Api/Hierarchy/Reorder](#62-apihierarchyreorder)
+- [63. Api/Localization](#63-apilocalization)
+- [64. Api/OnDuty/GetEligibleUsers](#64-apiondutygeteligibleusers)
+- [65. Api/ScheduleExport](#65-apischeduleexport)
+- [66. Api/ScopeSwitcher](#66-apiscopeswitcher)
+- [67. Api/SelectMolecule](#67-apiselectmolecule)
+- [68. Api/SessionStatus](#68-apisessionstatus)
+- [69. Api/Signup/GetSignupOptions](#69-apisignupgetsignupoptions)
+- [70. Api/TechShift/Eligible](#70-apitechshifteligible)
+- [71. Api/Telemetry](#71-apitelemetry)
 
-### IV. Calendar & Schedule Pages (Pages 66-76)
-- [66. Calendar/Index](#66-calendarindex)
-- [67. Calendar/Shifts](#67-calendarshifts)
-- [68. Calendar/Table](#68-calendartable)
-- [69. Calendar/Day](#69-calendarday)
-- [70. Calendar/Week](#70-calendarweek)
-- [71. Calendar/Month](#71-calendarmonth)
-- [72. Calendar/Chores](#72-calendarchores)
-- [73. Calendar/OnCall](#73-calendaroncall)
-- [74. Calendar/Overview](#74-calendaroverview)
-- [75. Chores/Calendar](#75-chorescalendar)
-- [76. Schedule/Index](#76-scheduleindex)
+### IV. Calendar & Schedule Pages (Pages 72-82)
+- [72. Calendar/Index](#72-calendarindex)
+- [73. Calendar/Shifts](#73-calendarshifts)
+- [74. Calendar/Table](#74-calendartable)
+- [75. Calendar/Day](#75-calendarday)
+- [76. Calendar/Week](#76-calendarweek)
+- [77. Calendar/Month](#77-calendarmonth)
+- [78. Calendar/Chores](#78-calendarchores)
+- [79. Calendar/OnCall](#79-calendaroncall)
+- [80. Calendar/Overview](#80-calendaroverview)
+- [81. Chores/Calendar](#81-chorescalendar)
+- [82. Schedule/Index](#82-scheduleindex)
 
-### V. Owner Pages (Pages 77-105)
-- [77. Owner/Index](#77-ownerindex)
-- [78. Owner/AreaConfig](#78-ownerareaconfig)
-- [79. Owner/Backup](#79-ownerbackup)
-- [80. Owner/Blueprints](#80-ownerblueprints)
-- [81. Owner/ClearCompanySelection](#81-ownerclearcompanyselection)
-- [82. Owner/DataLifecycle](#82-ownerdatalifecycle)
-- [83. Owner/DatabaseConsole](#83-ownerdatabaseconsole)
-- [84. Owner/EmailConfig](#84-owneremailconfig)
-- [85. Owner/EmailTemplates](#85-owneremailtemplates)
-- [86. Owner/FeatureFlags](#86-ownerfeatureflags)
-- [87. Owner/GameConfig](#87-ownergameconfig)
-- [88. Owner/GriffinConfig](#88-ownergriffinconfig)
-- [89. Owner/LanguageEditMode](#89-ownerlanguageeditmode)
-- [90. Owner/LanguageManagement](#90-ownerlanguagemanagement)
-- [91. Owner/LockedUsers](#91-ownerlockedusers)
-- [92. Owner/MasterPrograms](#92-ownermasterprograms)
-- [93. Owner/Permissions](#93-ownerpermissions)
-- [94. Owner/Programs](#94-ownerprograms)
-- [95. Owner/SelectCompany](#95-ownerselectcompany)
-- [96. Owner/SystemHealth](#96-ownersystemhealth)
-- [97. Owner/Telemetry](#97-ownertelemetry)
-- [98. Owner/Hub/Index](#98-ownerhubindex)
-- [99. Owner/Hub/AuditSearch](#99-ownerhubauditsearch)
-- [100. Owner/Hub/ExportUserData](#100-ownerhubexportuserdata)
-- [101. Owner/Hub/Grants](#101-ownerhubgrants)
-- [102. Owner/Hub/SeedData](#102-ownerhubseeddata)
-- [103. Owner/Hub/RoleTemplates/Index](#103-ownerhubroletemplatesindex)
-- [104. Owner/Hub/RoleTemplates/Create](#104-ownerhubroletemplatescreate)
-- [105. Owner/Hub/RoleTemplates/Edit](#105-ownerhubroletemplatesedit)
+### V. Owner Pages (Pages 83-111)
+- [83. Owner/Index](#83-ownerindex)
+- [84. Owner/AreaConfig](#84-ownerareaconfig)
+- [85. Owner/Backup](#85-ownerbackup)
+- [86. Owner/Blueprints](#86-ownerblueprints)
+- [87. Owner/ClearCompanySelection](#87-ownerclearcompanyselection)
+- [88. Owner/DataLifecycle](#88-ownerdatalifecycle)
+- [89. Owner/DatabaseConsole](#89-ownerdatabaseconsole)
+- [90. Owner/EmailConfig](#90-owneremailconfig)
+- [91. Owner/EmailTemplates](#91-owneremailtemplates)
+- [92. Owner/FeatureFlags](#92-ownerfeatureflags)
+- [93. Owner/GameConfig](#93-ownergameconfig)
+- [94. Owner/GriffinConfig](#94-ownergriffinconfig)
+- [95. Owner/LanguageEditMode](#95-ownerlanguageeditmode)
+- [96. Owner/LanguageManagement](#96-ownerlanguagemanagement)
+- [97. Owner/LockedUsers](#97-ownerlockedusers)
+- [98. Owner/MasterPrograms](#98-ownermasterprograms)
+- [99. Owner/Permissions](#99-ownerpermissions)
+- [100. Owner/Programs](#100-ownerprograms)
+- [101. Owner/SelectCompany](#101-ownerselectcompany)
+- [102. Owner/SystemHealth](#102-ownersystemhealth)
+- [103. Owner/Telemetry](#103-ownertelemetry)
+- [104. Owner/Hub/Index](#104-ownerhubindex)
+- [105. Owner/Hub/AuditSearch](#105-ownerhubauditsearch)
+- [106. Owner/Hub/ExportUserData](#106-ownerhubexportuserdata)
+- [107. Owner/Hub/Grants](#107-ownerhubgrants)
+- [108. Owner/Hub/SeedData](#108-ownerhubseeddata)
+- [109. Owner/Hub/RoleTemplates/Index](#109-ownerhubroletemplatesindex)
+- [110. Owner/Hub/RoleTemplates/Create](#110-ownerhubroletemplatescreate)
+- [111. Owner/Hub/RoleTemplates/Edit](#111-ownerhubroletemplatesedit)
 
-### VI. My & Director Pages (Pages 106-118)
-- [106. My/Index](#106-myindex)
-- [107. My/Profile](#107-myprofile)
-- [108. My/Requests](#108-myrequests)
-- [109. My/ShiftSwap](#109-myshiftswap)
-- [110. My/Preferences](#110-mypreferences)
-- [111. My/Documents](#111-mydocuments)
-- [112. My/Training](#112-mytraining)
-- [113. Director/Index](#113-directorindex)
-- [114. Director/Companies](#114-directorcompanies)
-- [115. Director/MoleculeOverview](#115-directormoleculeoverview)
-- [116. Director/Users](#116-directorusers)
-- [117. Director/Calendar](#117-directorcalendar)
-- [118. Director/Reports](#118-directorreports)
+### VI. My & Director Pages (Pages 112-122)
+- [112. My/Index](#112-myindex)
+- [113. My/ApiKeys](#113-myapikeys)
+- [114. My/Help](#114-myhelp)
+- [115. My/NotificationCenter](#115-mynotificationcenter)
+- [116. My/Onboarding](#116-myonboarding)
+- [117. My/Profile](#117-myprofile)
+- [118. My/Requests](#118-myrequests)
+- [119. My/Settings](#119-mysettings)
+- [120. Director/CompanyFilter](#120-directorcompanyfilter)
+- [121. Director/NotificationHub](#121-directornotificationhub)
+- [122. Director/ViewAsMode](#122-directorviewasmode)
 
-### VII. Friends, Game, MyTeam, Assignments, Requests & Public (Pages 119-128)
-- [119. Friends/Index](#119-friendsindex)
-- [120. Game/Index](#120-gameindex)
-- [121. MyTeam/Index](#121-myteamindex)
-- [122. MyTeam/Calendar](#122-myteamcalendar)
-- [123. Assignments/Manage](#123-assignmentsmanage)
-- [124. Assignments/OnDuty](#124-assignmentsonduty)
-- [125. Requests/Index](#125-requestsindex)
-- [126. Requests/Create](#126-requestscreate)
-- [127. Public/Chores](#127-publicchores)
-- [128. Public/OnDuty](#128-publiconduty)
+### VII. Friends, Game, MyTeam, Assignments, Requests & Public (Pages 123-132)
+- [123. Friends/Index](#123-friendsindex)
+- [123a. Game/Leaderboard](#123a-gameleaderboard)
+- [124. MyTeam/Index](#124-myteamindex)
+- [125. Assignments/Manage](#125-assignmentsmanage)
+- [126. Requests/Index](#126-requestsindex)
+- [127. Requests/Swaps/Create](#127-requestsswapscreate)
+- [128. Requests/TimeOff/Create](#128-requeststimeoffcreate)
+- [129. Public/Chores](#129-publicchores)
+- [130. Public/Feedback](#130-publicfeedback)
+- [131. Public/OnDuty](#131-publiconduty)
 
-### VIII. Shared Components & Layout (Items 129-147)
-- [129. _Layout.cshtml](#129-_layoutcshtml)
-- [130. _ViewImports.cshtml](#130-_viewimportscshtml)
-- [131. _LocalizationScript.cshtml](#131-_localizationscriptcshtml)
-- [132. _ValidationMessage.cshtml](#132-_validationmessagecshtml)
-- [133. CalendarSkeleton ViewComponent](#133-calendarskeleton-viewcomponent)
-- [134. ContextSwitcher ViewComponent](#134-contextswitcher-viewcomponent)
-- [135. ErrorBanner ViewComponent](#135-errorbanner-viewcomponent)
-- [136. ErrorToast ViewComponent](#136-errortoast-viewcomponent)
-- [137. ExcelCalendarTable ViewComponent](#137-excelcalendartable-viewcomponent)
-- [138. HierarchyTree ViewComponent](#138-hierarchytree-viewcomponent)
-- [139. LanguageToggle ViewComponent](#139-languagetoggle-viewcomponent)
-- [140. LoadingSkeleton ViewComponent](#140-loadingskeleton-viewcomponent)
-- [141. LoadingSpinner ViewComponent](#141-loadingspinner-viewcomponent)
-- [142. OnCallWidget ViewComponent](#142-oncallwidget-viewcomponent)
-- [143. Pagination ViewComponent](#143-pagination-viewcomponent)
-- [144. ScopeSwitcher ViewComponent](#144-scopeswitcher-viewcomponent)
-- [145. ShowMyItemsToggle ViewComponent](#145-showmyitemstoggle-viewcomponent)
-- [146. UnreadNotificationCount ViewComponent](#146-unreadnotificationcount-viewcomponent)
-- [147. Layout Navigation Summary](#147-layout-navigation-summary)
+### VIII. Shared Components & Layout (Items 132-150)
+- [132. _Layout.cshtml](#132-_layoutcshtml)
+- [133. _ViewImports.cshtml](#133-_viewimportscshtml)
+- [134. _LocalizationScript.cshtml](#134-_localizationscriptcshtml)
+- [135. _ValidationMessage.cshtml](#135-_validationmessagecshtml)
+- [136. CalendarSkeleton ViewComponent](#136-calendarskeleton-viewcomponent)
+- [137. ContextSwitcher ViewComponent](#137-contextswitcher-viewcomponent)
+- [138. ErrorBanner ViewComponent](#138-errorbanner-viewcomponent)
+- [139. ErrorToast ViewComponent](#139-errortoast-viewcomponent)
+- [140. ExcelCalendarTable ViewComponent](#140-excelcalendartable-viewcomponent)
+- [141. HierarchyTree ViewComponent](#141-hierarchytree-viewcomponent)
+- [142. LanguageToggle ViewComponent](#142-languagetoggle-viewcomponent)
+- [143. LoadingSkeleton ViewComponent](#143-loadingskeleton-viewcomponent)
+- [144. LoadingSpinner ViewComponent](#144-loadingspinner-viewcomponent)
+- [145. OnCallWidget ViewComponent](#145-oncallwidget-viewcomponent)
+- [146. Pagination ViewComponent](#146-pagination-viewcomponent)
+- [147. ScopeSwitcher ViewComponent](#147-scopeswitcher-viewcomponent)
+- [148. ShowMyItemsToggle ViewComponent](#148-showmyitemstoggle-viewcomponent)
+- [149. UnreadNotificationCount ViewComponent](#149-unreadnotificationcount-viewcomponent)
+- [150. Layout Navigation Summary](#150-layout-navigation-summary)
 
 ### IX. Cross-Cutting Analysis
 - [Route-Flow Diagram](#route-flow-diagram)
@@ -215,7 +218,7 @@
 - **Empty states:** "No upcoming shifts" message when `NextShift` is null. "No announcements" when `Announcements.Count == 0`.
 
 #### 5) Navigation Map
-- **Nav targets:** `/Calendar/Month`, `/Requests/Index`, `/Admin/Users` (admin) or `/MyTeam/Index` (manager), `/Admin/Analytics`, `/My/Requests`, `/My/Profile`, `/Home/Announcements`
+- **Nav targets:** `/Calendar/Month`, `/Requests/Index`, `/Admin/Users` (admin) or `/MyTeam/Index` (manager), `/Admin/Analytics`, `/My/Requests`, `/My/Profile`
 - **Reached from:** `/Auth/Login` (redirect on success), sidebar nav "Home" link
 - **Breadcrumb:** None (root page)
 
@@ -234,7 +237,7 @@
 #### 8) Interesting Behaviors
 - Admin vs employee path determined by `HasGrantAsync("AccessAdminNavigation")`, not by `UserRole`
 - Next-shift calculation finds the nearest future ShiftAssignment for the current user with date >= today
-- Announcement feed shows most recent 5, with "View All" link to `/Home/Announcements`
+- Announcement feed shows most recent 5, with "View All" link
 - Dashboard stat counts use simple `.CountAsync()` with tenant query filter (not aggregated/cached)
 
 #### 9) Traceability
@@ -243,327 +246,44 @@
 
 ---
 
-### 2. Auth/Login
+### 2. AccessDenied
 
 #### 1) Identity & Routing
-- **Route:** `/Auth/Login` (`@page`)
-- **Purpose:** Username/password login form. Also handles ADFS/Griffin SSO redirect initiation.
-- **Redirects inbound:** `[AllowAnonymous]` -- unauthenticated users redirected here by ASP.NET auth middleware. SessionStatus returns `redirectUrl: /Auth/Login?reason=authRequired` for expired sessions.
-- **Redirects outbound:** On success, Owner users -> `/Owner/Hub/Index`, others -> `/` (root). ADFS flow -> external ADFS URL.
-- **Query params:** `ReturnUrl` (string, redirect after login), `reason` (string, display reason for redirect -- e.g., "authRequired", "sessionExpired").
+- **Route:** `/AccessDenied` (`@page`)
+- **Purpose:** 403 Forbidden page shown when user lacks required authorization.
 
 #### 2) Access Control & Scope
-- **Auth:** `[AllowAnonymous]` -- must be accessible to unauthenticated users.
-- **Rate limiting:** `IRateLimitingService` -- 5 attempts per 15 minutes per IP for password login. Lockout: 5 failed attempts -> 15-minute account lockout (`LockoutEnd` field).
-- **ADFS guard:** ADFS login button only shown if `GriffinConfig.IsEnabled`.
-- **Brute force protections:** Failed attempts increment `FailedLoginAttempts`; lockout threshold = 5; lockout duration = 15 minutes; audit log records failed attempts with IP address.
+- **Auth:** `[AllowAnonymous]` -- must be accessible to display the denial message.
 
 #### 3) Localization
-- Keys: `Login`, `LoginSubtitle`, `Username`, `Password`, `SignIn`, `ForgotPassword`, `InvalidCredentials`, `AccountLocked`, `AccountInactive`, `LoginWithADFS`, `Or`, `DontHaveAccount`, `SignUp`, `SessionExpired`, `AuthRequired`.
-- `<loc>` tag helpers + `@Localizer["..."]` used.
-
-#### 4) UI & Design Inventory
-- **Layout:** `_Layout` (renders minimal version for unauthenticated)
-- **Form:** Username input, Password input, Sign In button
-- **ADFS section:** "Login with ADFS" button (conditionally shown)
-- **Links:** "Forgot Password" (disabled/placeholder), "Sign Up" (if PublicSignupEnabled)
-- **Error messages:** Inline error display with localized messages
-- **CSS:** Inline styles, centered card layout
-
-#### 5) Navigation Map
-- **Nav targets:** `/` or `/Owner/Hub/Index` (on success), `/Auth/Signup` (if enabled), ADFS external URL
-- **Reached from:** Any unauthenticated access, `/Api/SessionStatus` redirect, explicit navigation
-- **Breadcrumb:** None (unauthenticated page)
-
-#### 6) Data Dependencies & Side Effects
-- **Reads:** `AppDbContext.Users` (by username), `GriffinConfig` (for ADFS button visibility), `IFeatureFlagService` (PublicSignupEnabled)
-- **Writes:** On success: creates auth cookie via `HttpContext.SignInAsync()`, resets `FailedLoginAttempts`, updates `LastLoginDate`. On failure: increments `FailedLoginAttempts`, sets `LockoutEnd` if threshold reached.
-- **Audit:** `IAuditLogService.LogAsync` for both success (`"LoginSuccess"`) and failure (`"LoginFailed"` with IP address).
-
-#### 7) Forms & Submissions
-- **Login form:** `Username` (required), `Password` (required)
-- **Handler:** `OnPostAsync`
-- **Validation:** Server-side only (no client-side JS validation). Checks: user exists, user IsActive, not locked out, password hash matches via `PasswordHasher.Verify()`.
-
-#### 8) Interesting Behaviors
-- **Password verification:** Uses `PasswordHasher.Verify(password, hash, salt)` -- PBKDF2/SHA256/100k iterations.
-- **Claims created:** NameIdentifier (userId), Name (display name), CompanyId, Role, JobTypeId, MoleculeId, SelectedCompanyId (for owner).
-- **ADFS flow:** Redirects to `GriffinConfig.BaseUrl + "/adfs/ls/"` with WS-Federation params. Callback handled by `/Auth/GriffinCallback`.
-- **Lockout bypass:** If lockout expired (`LockoutEnd < DateTime.UtcNow`), automatically resets counter.
-
-#### 9) Traceability
-- **Services:** `IRateLimitingService`, `IAuditLogService`, `IFeatureFlagService`
-- **Models:** `LoginInputModel` (Username, Password)
-
----
-
-### 3. Auth/Logout
-
-#### 1) Identity & Routing
-- **Route:** `/Auth/Logout` (`@page`)
-- **Purpose:** Sign out current user and redirect to login.
-- **HTTP Methods:** GET and POST both handled.
-
-#### 2) Access Control & Scope
-- **Auth:** `[Authorize]` -- requires authenticated user to sign out.
-
-#### 3) Localization
-- Not applicable (redirect-only page).
-
-#### 4) UI & Design Inventory
-- No rendered UI (immediate redirect after sign-out).
-
-#### 5) Navigation Map
-- **Redirect:** `/Auth/Login` after sign-out.
-- **Reached from:** Sidebar nav "Logout" link, session timeout redirect.
-
-#### 6) Data Dependencies & Side Effects
-- **Writes:** `HttpContext.SignOutAsync()` -- clears authentication cookie.
-- **Audit:** `IAuditLogService.LogAsync` with action `"Logout"`.
-
-#### 7) Forms & Submissions
-- **OnGet/OnPost:** Both call `SignOutAsync()` and redirect.
-
-#### 8) Interesting Behaviors
-- Both GET and POST supported for flexibility (sidebar link uses GET, potential form uses POST).
-
-#### 9) Traceability
-- **Services:** `IAuditLogService`
-
----
-
-### 4. Auth/GriffinCallback
-
-#### 1) Identity & Routing
-- **Route:** `/Auth/GriffinCallback` (`@page`)
-- **Purpose:** ADFS/WS-Federation SSO callback handler. Processes ADFS token, matches/creates user, signs in.
-- **HTTP Methods:** POST (ADFS sends form POST with WS-Federation token).
-
-#### 2) Access Control & Scope
-- **Auth:** `[AllowAnonymous]` -- callback from external IdP.
-- **[IgnoreAntiforgeryToken]** -- ADFS POST does not include antiforgery token.
-- **Token validation:** Validates WS-Federation response XML, extracts UPN/email/name claims.
-
-#### 3) Localization
-- Minimal (error messages only).
-
-#### 4) UI & Design Inventory
-- No rendered UI (processes token and redirects).
-
-#### 5) Navigation Map
-- **Redirect on success:** `/` (root) for non-Owner, `/Owner/Hub/Index` for Owner.
-- **Redirect on failure:** `/Auth/Login?error=adfs_failed` or `/Auth/Login?error=adfs_user_not_found`.
-- **Reached from:** ADFS external redirect only.
-
-#### 6) Data Dependencies & Side Effects
-- **Reads:** `GriffinConfig` (ADFS settings), `AppDbContext.Users` (match by email/UPN).
-- **Writes:** Creates auth cookie via `SignInAsync()`. If auto-provision enabled and user not found, creates new user. Updates `LastLoginDate`.
-- **Services:** `IGriffinConfigService`, `IGriffinApiLogService`
-- **Audit:** Logs ADFS callback success/failure.
-
-#### 7) Forms & Submissions
-- **OnPostAsync:** Processes WS-Federation `wresult` form field containing SAML token.
-
-#### 8) Interesting Behaviors
-- **Auto-provisioning:** If `GriffinConfig.AutoProvision` is enabled, creates a new user from ADFS claims when no matching user exists.
-- **Email matching:** Attempts to match ADFS UPN claim against `User.Email` field.
-- **API log:** Records all ADFS callback attempts for debugging.
-- **Token parsing:** Extracts claims from WS-Federation XML response (not using standard WS-Federation middleware -- custom parsing).
-
-#### 9) Traceability
-- **Services:** `IGriffinConfigService`, `IGriffinApiLogService`, `IAuditLogService`
-
----
-
-### 5. Auth/Signup
-
-#### 1) Identity & Routing
-- **Route:** `/Auth/Signup` (`@page`)
-- **Purpose:** Public self-registration form with cascading dropdowns (Molecule -> Company/JobType/Department) and optional role template selection.
-- **Query params:** None.
-- **Feature gate:** Returns `NotFound()` if `AllowPublicSignup` feature flag is disabled.
-
-#### 2) Access Control & Scope
-- **Auth:** `[AllowAnonymous]` -- public registration.
-- **Rate limiting:** `IRateLimitingService` -- limits signup attempts per IP.
-- **Feature flag:** `AllowPublicSignup` must be enabled.
-
-#### 3) Localization
-- Keys: `Signup`, `SignupSubtitle`, `CreateAccount`, `FirstName`, `LastName`, `Email`, `Username`, `Password`, `ConfirmPassword`, `SelectMolecule`, `SelectCompany`, `SelectJobType`, `SelectDepartment`, `SelectRole`, `PasswordRequirements`, `PasswordMismatch`, `UsernameTaken`, `EmailTaken`, `SignupSuccess`, `BackToLogin`.
-- Uses `<loc>` tag helpers.
-
-#### 4) UI & Design Inventory
-- **Layout:** `_Layout` (minimal for unauthenticated)
-- **Form:** Multi-step cascading: personal info (name, email, username, password) -> organization (molecule -> company, job type, department) -> role template
-- **Cascading dropdowns:** JS fetches from `/Api/Signup/GetSignupOptions` handlers
-- **Validation:** Client + server-side
-- **CSS:** Inline styles, centered card
-
-#### 5) Navigation Map
-- **Nav targets:** `/Auth/Login` (after success or via "Back to Login" link)
-- **Reached from:** `/Auth/Login` "Sign Up" link
-
-#### 6) Data Dependencies & Side Effects
-- **Reads:** `/Api/Signup/GetSignupOptions` (molecules, companies, job types, departments, role templates)
-- **Writes:** Creates new `AppUser` with hashed password, sets initial company/job type/department/role. Creates `UserJoinRequest` if approval required.
-- **Services:** `IRateLimitingService`, `IFeatureFlagService`
-
-#### 7) Forms & Submissions
-- **OnPostAsync:** FirstName, LastName, Email, Username, Password, ConfirmPassword, MoleculeId, CompanyId, JobTypeId, DepartmentId, RoleTemplateId.
-- **Validation:** Password complexity, username uniqueness, email uniqueness, molecule/company existence.
-
-#### 8) Interesting Behaviors
-- **Cascading dropdown pattern:** Molecule selection triggers AJAX load of companies, job types, and departments filtered by that molecule.
-- **Join request flow:** If company requires approval, creates a `UserJoinRequest` instead of immediately activating the user.
-- **Password hashing:** Uses `PasswordHasher.CreateHash(password)` returning `(hash, salt)`.
-
-#### 9) Traceability
-- **Services:** `IRateLimitingService`, `IFeatureFlagService`, `AppDbContext`
-
----
-
-### 6. Home/Index
-
-#### 1) Identity & Routing
-- **Route:** `/Home` or `/Home/Index` (`@page`)
-- **Purpose:** Alternate home/landing page. In practice, redirects to `/` (root Index). May serve as a disambiguation page.
-
-#### 2) Access Control & Scope
-- **Auth:** `[Authorize]`
-
-#### 3) Localization
-- Minimal.
-
-#### 4-9) Summary
-- Lightweight page that largely mirrors or redirects to the Root Index page. Serves as an alternate entry point.
-
----
-
-### 7. Home/Announcements
-
-#### 1) Identity & Routing
-- **Route:** `/Home/Announcements` (`@page`)
-- **Purpose:** Full announcements listing with pagination. Extends the dashboard's "View All" announcements link.
-- **Query params:** `page` (int, pagination).
-
-#### 2) Access Control & Scope
-- **Auth:** `[Authorize]` -- any authenticated user.
-- **Tenant scope:** Announcements filtered by company ID via tenant query filter.
-
-#### 3) Localization
-- Keys: `Announcements`, `AnnouncementsSubtitle`, `NoAnnouncements`, `PostedBy`, `PostedOn`.
+- Keys: `AccessDenied`, `AccessDeniedMessage`, `ReturnHome`, `ContactAdmin`.
 
 #### 4) UI & Design Inventory
 - **Layout:** `_Layout`
-- **Components:** Breadcrumb, Pagination
-- **Design:** Card list of announcements with author, date, content. Pagination at bottom.
+- **Design:** Access denied message with "Return Home" link
 - **CSS:** Inline styles
 
 #### 5) Navigation Map
-- **Reached from:** Root Index "View All" link
-- **Breadcrumb:** Home > Announcements
+- **Reached from:** ASP.NET authorization middleware when policy check fails
+- **Links to:** `/Calendar/Month` (auto-redirect after 2 seconds)
 
 #### 6) Data Dependencies & Side Effects
-- **Reads:** `Announcements` with User include, paginated (10 per page)
-- **Writes:** None
+- None
 
 #### 7) Forms & Submissions
 - None
 
 #### 8) Interesting Behaviors
-- Standard pagination via Pagination ViewComponent
-- Announcements ordered by `CreatedAt` descending
+- Configured as the `AccessDeniedPath` in cookie authentication options
+- 2-second auto-redirect timeout is hardcoded with no user control
+- Protected paths list prevents redirect loops including to /AccessDenied itself
 
 #### 9) Traceability
-- **Services:** `AppDbContext`
+- None (display-only)
 
 ---
 
-### 8. Home/ChangePassword
-
-#### 1) Identity & Routing
-- **Route:** `/Home/ChangePassword` (`@page`)
-- **Purpose:** Self-service password change form.
-
-#### 2) Access Control & Scope
-- **Auth:** `[Authorize]` -- any authenticated user.
-- **Self-service only:** Can only change own password.
-
-#### 3) Localization
-- Keys: `ChangePassword`, `CurrentPassword`, `NewPassword`, `ConfirmNewPassword`, `PasswordChanged`, `CurrentPasswordIncorrect`, `PasswordMismatch`, `PasswordRequirements`.
-
-#### 4) UI & Design Inventory
-- **Layout:** `_Layout`
-- **Form:** Current password, New password, Confirm new password
-- **CSS:** Inline styles, centered card
-
-#### 5) Navigation Map
-- **Reached from:** My/Profile, sidebar user menu
-- **Breadcrumb:** Home > Change Password
-
-#### 6) Data Dependencies & Side Effects
-- **Reads:** Current user's password hash/salt for verification
-- **Writes:** Updates `PasswordHash` and `PasswordSalt` on success
-- **Audit:** Logs password change event
-
-#### 7) Forms & Submissions
-- **OnPostAsync:** CurrentPassword, NewPassword, ConfirmNewPassword
-- **Validation:** Current password verified, new password complexity checked, passwords must match
-
-#### 8) Interesting Behaviors
-- Uses `PasswordHasher.Verify()` for current password check
-- Uses `PasswordHasher.CreateHash()` for new password
-- Success redirects with flash message
-
-#### 9) Traceability
-- **Services:** `IAuditLogService`, `AppDbContext`
-
----
-
-### 9. Home/Notifications
-
-#### 1) Identity & Routing
-- **Route:** `/Home/Notifications` (`@page`)
-- **Purpose:** Notification center -- view all notifications, mark as read, bulk actions.
-- **Query params:** `filter` (all|unread), `page` (int).
-
-#### 2) Access Control & Scope
-- **Auth:** `[Authorize]` -- any authenticated user.
-- **Self-service:** Only sees own notifications (filtered by userId).
-
-#### 3) Localization
-- Keys: `Notifications`, `MarkAllRead`, `NoNotifications`, `AllNotifications`, `UnreadOnly`, `MarkRead`, `Delete`.
-
-#### 4) UI & Design Inventory
-- **Layout:** `_Layout`
-- **Components:** Breadcrumb, Pagination
-- **Design:** Notification list with read/unread styling, filter toggle, bulk "Mark All Read" button
-- **CSS:** Inline styles
-
-#### 5) Navigation Map
-- **Reached from:** Bell icon in header (UnreadNotificationCount ViewComponent), sidebar
-- **Breadcrumb:** Home > Notifications
-
-#### 6) Data Dependencies & Side Effects
-- **Reads:** `Notifications` filtered by userId, ordered by CreatedAt desc, paginated
-- **Writes:** Mark as read (individual or bulk), delete
-- **Services:** `INotificationService`
-
-#### 7) Forms & Submissions
-- **OnPostMarkReadAsync:** notificationId -> marks single notification as read
-- **OnPostMarkAllReadAsync:** marks all user's notifications as read
-- **OnPostDeleteAsync:** notificationId -> deletes notification
-
-#### 8) Interesting Behaviors
-- Unread count badge updated via `UnreadNotificationCount` ViewComponent in layout
-- Bulk "Mark All Read" updates all in single query
-
-#### 9) Traceability
-- **Services:** `INotificationService`
-
----
-
-### 10. Error
+### 3. Error
 
 #### 1) Identity & Routing
 - **Route:** `/Error` (`@page`)
@@ -592,7 +312,8 @@
 - None
 
 #### 8) Interesting Behaviors
-- Shows trace identifier for support/debugging
+- Extremely minimal -- no request ID or correlation displayed
+- Code-behind uses global namespace (no namespace declaration)
 - Does not expose exception details to users (production safe)
 
 #### 9) Traceability
@@ -600,45 +321,244 @@
 
 ---
 
-### 11. AccessDenied
+### 4. Diagnostic
 
 #### 1) Identity & Routing
-- **Route:** `/AccessDenied` (`@page`)
-- **Purpose:** 403 Forbidden page shown when user lacks required authorization.
+- **Route:** `/Diagnostic` (`@page`)
+- **Purpose:** Owner-only diagnostic page showing system internals (shift instances, database stats).
 
 #### 2) Access Control & Scope
-- **Auth:** `[AllowAnonymous]` -- must be accessible to display the denial message.
+- **Auth:** `[Authorize(Roles = nameof(UserRole.Owner))]` -- role-based (known exception from grant-based pattern).
+- **IgnoreQueryFilters:** Used for cross-tenant diagnostic queries. Audited safe.
 
 #### 3) Localization
-- Keys: `AccessDenied`, `AccessDeniedMessage`, `ReturnHome`, `ContactAdmin`.
+- Pattern: tag-helper + inline
+- Key count: ~12. Note: `ShiftInstancesForOctober2025` is hardcoded to a specific month name.
+
+#### 4-9) Summary
+- Read-only diagnostic page. Take(500) limit on ShiftInstances prevents OOM on large deployments. Uses role-based `[Authorize(Roles)]` instead of grant-based policy -- known exception.
+
+---
+
+### 5. GriffinDiagnostic
+
+#### 1) Identity & Routing
+- **Route:** `/GriffinDiagnostic` (`@page`)
+- **Purpose:** ADFS/Griffin SSO diagnostic page showing connection status, config details, and test results.
+
+#### 2) Access Control & Scope
+- **Auth:** `[Authorize(Policy = "Grant:AdminAccess")]`
+- **Scope:** Tenant-scoped.
+
+#### 3-9) Summary
+- Makes actual HTTP connection test to Griffin server during page load. Layout=null standalone page with custom CSS, inconsistent with admin page pattern. Uses `border-left` instead of `border-inline-start` in CSS (RTL bug). Services: `IGriffinConfigService`, `IGriffinService`, `IHttpClientFactory`, `IConfiguration`, `AppDbContext`.
+
+---
+
+### 6. StatusCode
+
+#### 1) Identity & Routing
+- **Route:** `/StatusCode` (`@page`)
+- **Purpose:** Custom HTTP status code display page for non-success responses (404, etc.).
+- **Query params:** `code` (int, the HTTP status code to display).
+
+#### 2) Access Control & Scope
+- **Auth:** `[AllowAnonymous]`, `[IgnoreAntiforgeryToken]`
+
+#### 3-9) Summary
+- Minimal page that receives a status code parameter, sets `Response.StatusCode`, and displays the error. Used by the status code pages middleware for user-friendly error display.
+
+---
+
+### 7. Auth/Login
+
+#### 1) Identity & Routing
+- **Route:** `/Auth/Login` (`@page`)
+- **Purpose:** Username/password login form. Also handles ADFS/Griffin SSO redirect initiation.
+- **Redirects inbound:** `[AllowAnonymous]` -- unauthenticated users redirected here by ASP.NET auth middleware. SessionStatus returns `redirectUrl: /Auth/Login?reason=authRequired` for expired sessions.
+- **Redirects outbound:** On success, Owner users -> `/Owner/Hub/Index`, others -> `/` (root) or `/My/Onboarding`. ADFS flow -> external ADFS URL.
+- **Query params:** `ReturnUrl` (string, redirect after login), `reason` (string, display reason for redirect -- e.g., "authRequired", "sessionExpired").
+
+#### 2) Access Control & Scope
+- **Auth:** `[AllowAnonymous]` -- must be accessible to unauthenticated users.
+- **Rate limiting:** `IRateLimitingService` -- 10 attempts per 15 minutes per IP for password login, 15 per 15 minutes per account. Lockout: 10 failed attempts -> 3-minute account lockout (`LockoutEnd` field).
+- **ADFS guard:** ADFS login button only shown if `GriffinConfig.IsEnabled`.
+- **Brute force protections:** Failed attempts increment `FailedLoginAttempts`; lockout threshold = 10; lockout duration = 3 minutes; audit log records failed attempts with IP address.
+
+#### 3) Localization
+- Keys: `Login`, `LoginSubtitle`, `Username`, `Password`, `SignIn`, `ForgotPassword`, `InvalidCredentials`, `AccountLocked`, `AccountInactive`, `LoginWithADFS`, `Or`, `DontHaveAccount`, `SignUp`, `SessionExpired`, `AuthRequired`.
+- `<loc>` tag helpers + `@Localizer["..."]` used.
 
 #### 4) UI & Design Inventory
-- **Layout:** `_Layout`
-- **Design:** Access denied message with "Return Home" and "Contact Admin" links
-- **CSS:** Inline styles
+- **Layout:** `_Layout` (renders minimal version for unauthenticated)
+- **Form:** Username input, Password input, Sign In button
+- **ADFS section:** "Login with ADFS" button (conditionally shown)
+- **Links:** "Forgot Password", "Sign Up" (if PublicSignupEnabled)
+- **Error messages:** Inline error display with localized messages
+- **CSS:** Inline styles, centered card layout
 
 #### 5) Navigation Map
-- **Reached from:** ASP.NET authorization middleware when policy check fails
-- **Links to:** `/` (Return Home)
+- **Nav targets:** `/` or `/Owner/Hub/Index` or `/My/Onboarding` (on success), `/Auth/Signup` (if enabled), `/Auth/ForgotPassword`, ADFS external URL
+- **Reached from:** Any unauthenticated access, `/Api/SessionStatus` redirect, explicit navigation
+- **Breadcrumb:** None (unauthenticated page)
 
 #### 6) Data Dependencies & Side Effects
-- None
+- **Reads:** `AppDbContext.Users` (by username), `GriffinConfig` (for ADFS button visibility), `IFeatureFlagService` (PublicSignupEnabled)
+- **Writes:** On success: creates auth cookie via `HttpContext.SignInAsync()`, resets `FailedLoginAttempts`, updates `LastLoginDate`. On failure: increments `FailedLoginAttempts`, sets `LockoutEnd` if threshold reached. Login-time RoleTemplate backfill and auto-grant reconciliation on every login.
+- **Audit:** `IAuditLogService.LogAsync` for both success (`"LoginSuccess"`) and failure (`"LoginFailed"` with IP address).
+- **IgnoreQueryFilters:** Used for cross-tenant user lookup.
 
 #### 7) Forms & Submissions
-- None
+- **Login form:** `Username` (required), `Password` (required)
+- **Handler:** `OnPostAsync`, `OnPostGriffinAsync`
+- **Validation:** Server-side only (no client-side JS validation). Checks: user exists, user IsActive, not locked out, password hash matches via `PasswordHasher.Verify()`.
 
 #### 8) Interesting Behaviors
-- Configured as the `AccessDeniedPath` in cookie authentication options
-- Shows which page/resource was denied access to (via query string from middleware)
+- **Password verification:** Uses `PasswordHasher.Verify(password, hash, salt)` -- PBKDF2/SHA256/100k iterations.
+- **Claims created:** NameIdentifier (userId), Name (display name), CompanyId, Role, JobTypeId, MoleculeId, SelectedCompanyId (for owner).
+- **ADFS flow:** Redirects to Griffin ADFS URL. Callback handled by `/Auth/GriffinCallback`.
+- **Lockout bypass:** If lockout expired (`LockoutEnd < DateTime.UtcNow`), automatically resets counter.
+- **Email domain suggestion:** Hardcodes @d360.dom domain.
 
 #### 9) Traceability
-- None (display-only)
+- **Services:** `IRateLimitingService`, `IAuditLogService`, `IValidationService`, `IGriffinConfigService`, `IGriffinService`, `IHierarchyService`, `IGrantService`, `IRoleService`
+
+---
+
+### 8. Auth/Logout
+
+#### 1) Identity & Routing
+- **Route:** `/Auth/Logout` (`@page`)
+- **Purpose:** Sign out current user and redirect to login.
+- **HTTP Methods:** POST handled; GET shows "Logging out" page.
+
+#### 2) Access Control & Scope
+- **Auth:** `[AllowAnonymous]` -- accessible for logout flow.
+
+#### 3) Localization
+- Tag-helper + inline pattern. ~8 keys.
+
+#### 4) UI & Design Inventory
+- 3-second auto-redirect via HTML meta refresh after logout.
+
+#### 5) Navigation Map
+- **Redirect:** `/Auth/Login` after sign-out.
+- **Reached from:** Layout navigation POST form.
+
+#### 6) Data Dependencies & Side Effects
+- **Writes:** `HttpContext.SignOutAsync()` -- clears authentication cookie.
+- Differentiates Griffin ADFS logout (clears token cookie + cache) from regular logout.
+
+#### 7) Forms & Submissions
+- **OnPostAsync:** Calls `SignOutAsync()` and redirects.
+
+#### 8) Interesting Behaviors
+- GET to /Auth/Logout shows "Logging out... Please wait" indefinitely (no GET handler).
+
+#### 9) Traceability
+- **Services:** `IMemoryCache`
+
+---
+
+### 9. Auth/GriffinCallback
+
+#### 1) Identity & Routing
+- **Route:** `/Auth/GriffinCallback` (`@page`)
+- **Purpose:** ADFS/WS-Federation SSO callback handler. Processes ADFS token, matches/creates user, signs in.
+- **HTTP Methods:** GET (processes callback from Griffin ADFS server).
+
+#### 2) Access Control & Scope
+- **Auth:** `[AllowAnonymous]` -- callback from external IdP.
+
+#### 3-9) Summary
+- Processes Griffin ADFS callback. Cookie-based returnUrl approach with query string fallback. Checks for pending approval users separately if main auth returns null. Uses Bootstrap alert classes inconsistently with other auth pages. Services: `IGriffinService`, `IGriffinConfigService`, `ISecurityLogger`.
+
+---
+
+### 10. Auth/Signup
+
+#### 1) Identity & Routing
+- **Route:** `/Auth/Signup` (`@page`)
+- **Purpose:** Public self-registration form with cascading dropdowns (Molecule -> Company/JobType/Department) and optional role template selection.
+- **Query params:** None.
+- **Feature gate:** Returns `NotFound()` if `AllowPublicSignup` feature flag is disabled.
+
+#### 2) Access Control & Scope
+- **Auth:** `[AllowAnonymous]` -- public registration.
+- **Rate limiting:** `IRateLimitingService` -- 50 attempts per 10 minutes per IP.
+- **Feature flag:** `AllowPublicSignup` must be enabled.
+- **IgnoreQueryFilters:** Used for cross-tenant signup data.
+
+#### 3) Localization
+- Keys: `Signup`, `SignupSubtitle`, `CreateAccount`, `FirstName`, `LastName`, `Email`, `Username`, `Password`, `ConfirmPassword`, `SelectMolecule`, `SelectCompany`, `SelectJobType`, `SelectDepartment`, `SelectRole`, `PasswordRequirements`, `PasswordMismatch`, `UsernameTaken`, `EmailTaken`, `SignupSuccess`, `BackToLogin`.
+- Uses `<loc>` tag helpers.
+
+#### 4) UI & Design Inventory
+- **Layout:** `_Layout` (minimal for unauthenticated)
+- **Form:** Multi-step cascading: personal info (name, email, username, password) -> organization (molecule -> company, job type, department) -> role template
+- **Cascading dropdowns:** JS fetches from `/Api/Signup/GetSignupOptions` handlers
+- **Validation:** Client + server-side
+- **CSS:** Inline styles, centered card
+
+#### 5) Navigation Map
+- **Nav targets:** `/Auth/Login` (after success or via "Back to Login" link)
+- **Reached from:** `/Auth/Login` "Sign Up" link
+
+#### 6) Data Dependencies & Side Effects
+- **Reads:** `/Api/Signup/GetSignupOptions` (molecules, companies, job types, departments, role templates)
+- **Writes:** Creates new `AppUser` with hashed password, sets initial company/job type/department/role. Creates `UserJoinRequest` if approval required.
+- **Services:** `IRateLimitingService`, `IFeatureFlagService`, `IValidationService`, `INotificationService`, `ICompanyCacheService`, `IRoleService`
+
+#### 7) Forms & Submissions
+- **OnPostAsync:** FirstName, LastName, Email, Username, Password, ConfirmPassword, MoleculeId, CompanyId, JobTypeId, DepartmentId, RoleTemplateId.
+- **Validation:** Password complexity (HTML minlength=6 but no server-side min length enforcement documented), username uniqueness, email uniqueness, molecule/company existence.
+
+#### 8) Interesting Behaviors
+- **Cascading dropdown pattern:** Molecule selection triggers AJAX load of companies, job types, and departments filtered by that molecule.
+- **Join request flow:** If company requires approval, creates a `UserJoinRequest` instead of immediately activating the user.
+- **Password hashing:** Uses `PasswordHasher.CreateHash(password)` returning `(hash, salt)`.
+- Exposes organizational structure (molecules, companies, departments) when signup enabled.
+
+#### 9) Traceability
+- **Services:** `IRateLimitingService`, `IFeatureFlagService`, `AppDbContext`
+
+---
+
+### 11. Auth/ForgotPassword
+
+#### 1) Identity & Routing
+- **Route:** `/Auth/ForgotPassword` (`@page`)
+- **Purpose:** Password reset flow -- username lookup, email delivery (or air-gapped display), and password change form.
+
+#### 2) Access Control & Scope
+- **Auth:** `[AllowAnonymous]` -- must be accessible to locked-out users.
+- **IgnoreQueryFilters:** Used for cross-tenant user lookup.
+
+#### 3-9) Summary
+- Two POST handlers: `OnPostAsync` (lookup/email), `OnPostChangePasswordAsync` (actual change). HTML minlength=6 but server enforces 12 chars (UX inconsistency). 800ms constant-time delay on failed lookup to prevent user enumeration. Air-gapped fallback: displays temp password on screen when email delivery fails. Services: `AppDbContext`, `IMailService`, `IRateLimitingService`, `IValidationService`.
+
+---
+
+### 12. Home/Index
+
+#### 1) Identity & Routing
+- **Route:** `/Home` or `/Home/Index` (`@page`)
+- **Purpose:** Alternate home/landing page. In practice, redirects to `/` (root Index). May serve as a disambiguation page.
+
+#### 2) Access Control & Scope
+- **Auth:** `[Authorize]`
+
+#### 3) Localization
+- Minimal.
+
+#### 4-9) Summary
+- Lightweight page that largely mirrors or redirects to the Root Index page. Serves as an alternate entry point.
 
 ---
 
 ## II. Admin Pages
 
-### 12. Admin/Index
+### 13. Admin/Index
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Index` (default page for `/Admin/`)
@@ -687,7 +607,7 @@
 
 ---
 
-### 13. Admin/Analytics
+### 14. Admin/Analytics
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Analytics`
@@ -712,7 +632,7 @@
 
 ---
 
-### 14. Admin/Announcements
+### 15. Admin/Announcements
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Announcements`
@@ -736,7 +656,7 @@
 
 ---
 
-### 15. Admin/AuditLog
+### 16. Admin/AuditLog
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/AuditLog`
@@ -752,7 +672,7 @@
 
 ---
 
-### 16. Admin/Companies
+### 17. Admin/Companies
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Companies`
@@ -775,7 +695,7 @@
 
 ---
 
-### 17. Admin/Config
+### 19. Admin/Config
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Config`
@@ -789,7 +709,7 @@
 
 ---
 
-### 18. Admin/Directors
+### 20. Admin/Directors
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Directors`
@@ -804,7 +724,7 @@
 
 ---
 
-### 19. Admin/DutyRotation/Index
+### 21. Admin/DutyRotation/Index
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/DutyRotation`
@@ -820,7 +740,7 @@
 
 ---
 
-### 20. Admin/EditProfile
+### 22. Admin/EditProfile
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/EditProfile`
@@ -839,7 +759,22 @@
 
 ---
 
-### 21. Admin/Users
+### 23. Admin/HomeTypes/Index
+
+#### 1) Identity & Routing
+- **Route**: `/Admin/HomeTypes`
+- **Purpose**: HomeType CRUD management -- configure home shift type definitions per molecule.
+
+#### 2) Access Control & Scope
+- **Policy**: `[Authorize(Policy = "Grant:ManageHomeTypes")]`
+- **IgnoreQueryFilters**: Used. SECURITY-AUDITED: home type management is molecule-scoped configuration data.
+
+#### 3-9) Summary
+- Create/edit/delete home types with molecule scoping. Available molecules dropdown. Services: `IHomeTypeService`, `AppDbContext`, `IStringLocalizer<SharedResources>`.
+
+---
+
+### 24. Admin/Users
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Users`
@@ -859,7 +794,7 @@
 
 ---
 
-### 22. Admin/Organization/Index
+### 25. Admin/Organization/Index
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization`
@@ -871,11 +806,11 @@
 - **IgnoreQueryFilters**: Used for hierarchy queries. Audited safe.
 
 #### 3-9) Summary
-- Hub page linking to Areas, Molecules, Projects, Departments, JobTypes, Roles, Grants, ShiftGroupings, Hierarchy. Displays org tree summary. Quick action buttons.
+- Hub page linking to Areas, Molecules, Projects, Departments, JobTypes, Roles, Grants, ShiftGroupings, Hierarchy, ChoreTypes, DutyTypes. Displays org tree summary. Quick action buttons.
 
 ---
 
-### 23. Admin/Organization/Areas
+### 26. Admin/Organization/Areas
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/Areas`
@@ -890,7 +825,22 @@
 
 ---
 
-### 24. Admin/Organization/Departments
+### 27. Admin/Organization/ChoreTypes/Index
+
+#### 1) Identity & Routing
+- **Route**: `/Admin/Organization/ChoreTypes`
+- **Purpose**: ChoreType CRUD management -- configure chore type definitions per molecule.
+
+#### 2) Access Control & Scope
+- **Policy**: `[Authorize(Policy = "Grant:EditChoreTypes")]`
+- **Scope**: Molecule-scoped.
+
+#### 3-9) Summary
+- Create/edit/delete chore types with molecule scoping. Color picker with `#RRGGBB` regex validation (`SanitizeColor`) to prevent CSS injection. Services: `IChoreTypeService`.
+
+---
+
+### 28. Admin/Organization/Departments
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/Departments`
@@ -905,7 +855,22 @@
 
 ---
 
-### 25. Admin/Organization/Grants/Index
+### 29. Admin/Organization/DutyTypes/Index
+
+#### 1) Identity & Routing
+- **Route**: `/Admin/Organization/DutyTypes`
+- **Purpose**: DutyType CRUD management -- configure on-duty type definitions.
+
+#### 2) Access Control & Scope
+- **Policy**: `[Authorize(Policy = "Grant:ManageOnDutyTypes")]`
+- **Scope**: Global scope.
+
+#### 3-9) Summary
+- Create/edit/delete duty types. Built-in types (TypeValue 0=Hakam, 1=Lead) are read-only. Color picker with `#RRGGBB` regex validation. `ManageOnDutyTypes` is distinct from `ManageOnDuty` (admin config vs operational assignment).
+
+---
+
+### 30. Admin/Organization/Grants/Index
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/Grants`
@@ -920,7 +885,7 @@
 
 ---
 
-### 26. Admin/Organization/Grants/Assign
+### 31. Admin/Organization/Grants/Assign
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/Grants/Assign`
@@ -936,7 +901,7 @@
 
 ---
 
-### 27. Admin/Organization/Hierarchy
+### 32. Admin/Organization/Hierarchy
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/Hierarchy`
@@ -960,7 +925,7 @@
 
 ---
 
-### 28. Admin/Organization/JobTypes
+### 33. Admin/Organization/JobTypes
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/JobTypes`
@@ -975,7 +940,7 @@
 
 ---
 
-### 29. Admin/Organization/Molecules
+### 34. Admin/Organization/Molecules
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/Molecules`
@@ -989,7 +954,7 @@
 
 ---
 
-### 30. Admin/Organization/Projects
+### 35. Admin/Organization/Projects
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/Projects`
@@ -1003,7 +968,7 @@
 
 ---
 
-### 31. Admin/Organization/Roles/Index
+### 36. Admin/Organization/Roles/Index
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/Roles`
@@ -1018,7 +983,7 @@
 
 ---
 
-### 32. Admin/Organization/Roles/Assign
+### 37. Admin/Organization/Roles/Assign
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/Roles/Assign`
@@ -1033,7 +998,7 @@
 
 ---
 
-### 33. Admin/Organization/ShiftGroupings
+### 38. Admin/Organization/ShiftGroupings
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Organization/ShiftGroupings`
@@ -1047,7 +1012,7 @@
 
 ---
 
-### 34. Admin/Settings/Index
+### 39. Admin/Settings/Index
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Settings`
@@ -1062,7 +1027,7 @@
 
 ---
 
-### 35. Admin/Settings/ApprovalRules
+### 40. Admin/Settings/ApprovalRules
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/Settings/ApprovalRules`
@@ -1077,7 +1042,7 @@
 
 ---
 
-### 36. Admin/SetupTasks/Index
+### 41. Admin/SetupTasks/Index
 
 #### 1) Identity & Routing
 - **Route**: `/Admin/SetupTasks`
@@ -1095,7 +1060,7 @@
 
 ## III. API Endpoints
 
-### 37. Api/Calendar/GetShiftsData
+### 42. Api/Calendar/GetShiftsData
 
 #### 1) Identity & Routing
 - **Route:** `/Api/Calendar/GetShiftsData`
@@ -1120,7 +1085,7 @@
 
 ---
 
-### 38. Api/Calendar/GetChoresData
+### 43. Api/Calendar/GetChoresData
 
 #### 1) Identity & Routing
 - **Route:** `/Api/Calendar/GetChoresData` -- GET only
@@ -1136,7 +1101,7 @@
 
 ---
 
-### 39. Api/Calendar/GetOnCallData
+### 44. Api/Calendar/GetOnCallData
 
 #### 1) Identity & Routing
 - **Route:** `/Api/Calendar/GetOnCallData` -- GET only
@@ -1148,7 +1113,7 @@
 
 ---
 
-### 40. Api/Calendar/GetOverviewData
+### 45. Api/Calendar/GetOverviewData
 
 #### 1) Identity & Routing
 - **Route:** `/Api/Calendar/GetOverviewData` -- GET only
@@ -1164,7 +1129,7 @@
 
 ---
 
-### 41. Api/Calendar/QuickAddChore
+### 46. Api/Calendar/QuickAddChore
 
 #### 1) Identity & Routing
 - **Route:** `/Api/Calendar/QuickAddChore` -- POST only
@@ -1180,7 +1145,7 @@
 
 ---
 
-### 42. Api/Calendar/QuickAddOnDuty
+### 47. Api/Calendar/QuickAddOnDuty
 
 #### 1-8) Summary
 - **Route:** `/Api/Calendar/QuickAddOnDuty` -- POST only
@@ -1188,7 +1153,7 @@
 
 ---
 
-### 43. Api/Calendar/DeleteChore
+### 48. Api/Calendar/DeleteChore
 
 #### 1-8) Summary
 - **Route:** `/Api/Calendar/DeleteChore` -- POST only
@@ -1196,7 +1161,7 @@
 
 ---
 
-### 44. Api/Calendar/DeleteOnDuty
+### 49. Api/Calendar/DeleteOnDuty
 
 #### 1-8) Summary
 - **Route:** `/Api/Calendar/DeleteOnDuty` -- POST only
@@ -1204,7 +1169,7 @@
 
 ---
 
-### 45. Api/Calendar/RestoreChore
+### 50. Api/Calendar/RestoreChore
 
 #### 1-8) Summary
 - **Route:** `/Api/Calendar/RestoreChore` -- POST only
@@ -1212,7 +1177,7 @@
 
 ---
 
-### 46. Api/Calendar/ShiftHistory
+### 51. Api/Calendar/ShiftHistory
 
 #### 1) Identity & Routing
 - **Route:** `/Api/Calendar/ShiftHistory` -- GET only
@@ -1228,7 +1193,7 @@
 
 ---
 
-### 47. Api/Friends/Ids
+### 52. Api/Friends/Ids
 
 #### 1-8) Summary
 - **Route:** `/Api/Friends/Ids` -- GET only
@@ -1236,7 +1201,7 @@
 
 ---
 
-### 48. Api/Game/GetConfiguration
+### 53. Api/Game/GetConfiguration
 
 #### 1-8) Summary
 - **Route:** `/Api/Game/GetConfiguration` -- GET only
@@ -1244,7 +1209,7 @@
 
 ---
 
-### 49. Api/Game/GetLeaderboard
+### 54. Api/Game/GetLeaderboard
 
 #### 1-8) Summary
 - **Route:** `/Api/Game/GetLeaderboard` -- GET only
@@ -1252,7 +1217,7 @@
 
 ---
 
-### 50. Api/Game/GetLocalization
+### 55. Api/Game/GetLocalization
 
 #### 1-8) Summary
 - **Route:** `/Api/Game/GetLocalization` -- GET (synchronous)
@@ -1260,7 +1225,7 @@
 
 ---
 
-### 51. Api/Game/SaveScore
+### 56. Api/Game/SaveScore
 
 #### 1-8) Summary
 - **Route:** `/Api/Game/SaveScore` -- POST only
@@ -1268,7 +1233,7 @@
 
 ---
 
-### 52. Api/Hierarchy/Create
+### 57. Api/Hierarchy/Create
 
 #### 1) Identity & Routing
 - **Route:** `/Api/Hierarchy/Create` -- POST only
@@ -1280,7 +1245,7 @@
 
 ---
 
-### 53. Api/Hierarchy/Delete
+### 58. Api/Hierarchy/Delete
 
 #### 1-8) Summary
 - **Route:** `/Api/Hierarchy/Delete` -- POST only
@@ -1288,7 +1253,7 @@
 
 ---
 
-### 54. Api/Hierarchy/Move
+### 59. Api/Hierarchy/Move
 
 #### 1-8) Summary
 - **Route:** `/Api/Hierarchy/Move` -- POST only
@@ -1296,7 +1261,7 @@
 
 ---
 
-### 55. Api/Hierarchy/MoveTargets
+### 60. Api/Hierarchy/MoveTargets
 
 #### 1-8) Summary
 - **Route:** `/Api/Hierarchy/MoveTargets` -- GET only
@@ -1304,7 +1269,7 @@
 
 ---
 
-### 56. Api/Hierarchy/Rename
+### 61. Api/Hierarchy/Rename
 
 #### 1-8) Summary
 - **Route:** `/Api/Hierarchy/Rename` -- POST only
@@ -1312,7 +1277,7 @@
 
 ---
 
-### 57. Api/Hierarchy/Reorder
+### 62. Api/Hierarchy/Reorder
 
 #### 1-8) Summary
 - **Route:** `/Api/Hierarchy/Reorder` -- POST only
@@ -1320,7 +1285,7 @@
 
 ---
 
-### 58. Api/Localization
+### 63. Api/Localization
 
 #### 1-8) Summary
 - **Route:** `/Api/Localization` -- GET only
@@ -1328,7 +1293,7 @@
 
 ---
 
-### 59. Api/OnDuty/GetEligibleUsers
+### 64. Api/OnDuty/GetEligibleUsers
 
 #### 1-8) Summary
 - **Route:** `/Api/OnDuty/GetEligibleUsers` -- GET only
@@ -1336,7 +1301,7 @@
 
 ---
 
-### 60. Api/ScheduleExport
+### 65. Api/ScheduleExport
 
 #### 1-8) Summary
 - **Route:** `/Api/ScheduleExport` -- POST only
@@ -1344,7 +1309,7 @@
 
 ---
 
-### 61. Api/ScopeSwitcher
+### 66. Api/ScopeSwitcher
 
 #### 1-8) Summary
 - **Route:** `/Api/ScopeSwitcher` -- GET with two handlers
@@ -1352,7 +1317,22 @@
 
 ---
 
-### 62. Api/SessionStatus
+### 67. Api/SelectMolecule
+
+#### 1) Identity & Routing
+- **Route:** `/Api/SelectMolecule` -- POST only (GET redirects to `/Admin/Users`)
+- **Purpose:** Director molecule context switcher. Sets cookie with selected molecule ID for molecule-level context switching. Mirrors the Owner/SelectCompany pattern but operates at molecule level.
+
+#### 2) Access Control & Scope
+- `[Authorize(Policy = "Grant:DirectorHubAccess")]`
+- Rate limited (10/15min). IP logged.
+
+#### 3-8) Summary
+- POST-only for CSRF prevention (GET removed). Sets `director_selected_molecule` cookie. Validates molecule is in director's scope. Services: `IGrantService`, `IAuditLogService`, `IRateLimitingService`.
+
+---
+
+### 68. Api/SessionStatus
 
 #### 1-8) Summary
 - **Route:** `/Api/SessionStatus` -- GET only
@@ -1360,7 +1340,7 @@
 
 ---
 
-### 63. Api/Signup/GetSignupOptions
+### 69. Api/Signup/GetSignupOptions
 
 #### 1-8) Summary
 - **Route:** `/Api/Signup/GetSignupOptions` -- GET with 6 handlers (Molecules, Companies, JobTypes, Departments, AllJobTypes, RoleTemplates)
@@ -1368,7 +1348,7 @@
 
 ---
 
-### 64. Api/TechShift/Eligible
+### 70. Api/TechShift/Eligible
 
 #### 1-8) Summary
 - **Route:** `/Api/TechShift/Eligible` -- GET only
@@ -1376,7 +1356,7 @@
 
 ---
 
-### 65. Api/Telemetry
+### 71. Api/Telemetry
 
 #### 1) Identity & Routing
 - **Route:** `/Api/Telemetry` -- POST with 6 handlers (Event, EventBatch, Error, ErrorBatch, Performance, PerformanceBatch)
@@ -1389,7 +1369,7 @@
 
 ## IV. Calendar & Schedule Pages
 
-### 66. Calendar/Index
+### 72. Calendar/Index
 
 #### 1) Identity & Routing
 - **Route**: `/Calendar` -- Calendar landing page with 4 cards (Shifts, Chores, On-Call, Overview)
@@ -1402,7 +1382,7 @@
 
 ---
 
-### 67. Calendar/Shifts
+### 73. Calendar/Shifts
 
 #### 1) Identity & Routing
 - **Route**: `/Calendar/Shifts`
@@ -1428,7 +1408,7 @@
 
 ---
 
-### 68. Calendar/Table
+### 74. Calendar/Table
 
 #### 1) Identity & Routing
 - **Route**: `/Calendar/Table`
@@ -1445,7 +1425,7 @@
 
 ---
 
-### 69. Calendar/Day
+### 75. Calendar/Day
 
 #### 1) Identity & Routing
 - **Route**: `/Calendar/Day`
@@ -1457,14 +1437,14 @@
 
 ---
 
-### 70. Calendar/Week
+### 76. Calendar/Week
 
 #### 1-9) Summary
 - **Route**: `/Calendar/Week` -- 7-column grid. Same scope/loading/quick-add patterns as Day. **Massive code duplication** with Day and Month models. Week starts Sunday.
 
 ---
 
-### 71. Calendar/Month
+### 77. Calendar/Month
 
 #### 1) Identity & Routing
 - **Route**: `/Calendar/Month` -- 6-week grid (42 days).
@@ -1475,35 +1455,35 @@
 
 ---
 
-### 72. Calendar/Chores
+### 78. Calendar/Chores
 
 #### 1-9) Summary
 - **Route**: `/Calendar/Chores` -- Excel-style chores calendar (users as rows, dates as columns). Molecule-scoped. ChoreType filter. Read-only. No SignalR. Services: `IChoreService`, `IChoreTypeService`, `IGrantService`.
 
 ---
 
-### 73. Calendar/OnCall
+### 79. Calendar/OnCall
 
 #### 1-9) Summary
 - **Route**: `/Calendar/OnCall` -- Excel-style on-call calendar (duty types as rows). Area-scoped (on-duty is global by design). Built-in types (Hakam, Lead) + custom types. Backup type detection heuristic. Services: `IOnDutyService`, `IGrantService`.
 
 ---
 
-### 74. Calendar/Overview
+### 80. Calendar/Overview
 
 #### 1-9) Summary
 - **Route**: `/Calendar/Overview` -- Aggregated user overview calendar. Company-scoped (NOT cross-company). Note editing gated by `WriteOverviewNotes`. Vacation overlay, shift badges with trainee suffix. Services: `IUserDayNoteService`, `IGrantService`.
 
 ---
 
-### 75. Chores/Calendar
+### 81. Chores/Calendar
 
 #### 1-9) Summary
 - **Route**: `/Chores/Calendar` -- Manager-facing chore management with CRUD. `[Authorize(Policy = "Grant:ManagerHomeAccess")]`. Shift conflict resolution dialog. Manual form binding for CancelChore. Extends `LocalizedPageModel`. Services: `IChoreService`, `INotificationService`, `IAuditLogService`.
 
 ---
 
-### 76. Schedule/Index
+### 82. Schedule/Index
 
 #### 1-9) Summary
 - **Route**: `/Schedule` -- Lightweight routing shell. Sets IsAdmin, UserName, DefaultView, DefaultMode. Largely a dispatcher/container page. May be redundant with Calendar/Index.
@@ -1512,203 +1492,203 @@
 
 ## V. Owner Pages
 
-### 77. Owner/Index
+### 83. Owner/Index
 
 #### 1-9) Summary
 - **Route**: `/Owner/Index`. `[Authorize(Policy = "Grant:AdminAccess")]`. Dashboard landing, redirects to `/Owner/Hub/Index`. Legacy panel via `?handler=Legacy`. Cross-tenant stats (IgnoreQueryFilters). Database file size, process uptime. Links to all Owner pages.
 
 ---
 
-### 78. Owner/AreaConfig
+### 84. Owner/AreaConfig
 
 #### 1-9) Summary
 - **Route**: `/Owner/AreaConfig`. `[Authorize(Policy = "Grant:AdminAccess")]`. Area-level settings (rest hours, weekly cap). Cross-tenant. Upsert pattern. Audit logged.
 
 ---
 
-### 79. Owner/Backup
+### 85. Owner/Backup
 
 #### 1-9) Summary
 - **Route**: `/Owner/Backup`. `[Authorize(Policy = "Grant:AdminAccess")]`. Create/download/restore/delete SQLite backups. Path traversal protection. Pre-restore safety backup. All operations audit-logged.
 
 ---
 
-### 80. Owner/Blueprints
+### 86. Owner/Blueprints
 
 #### 1-9) Summary
 - **Route**: `/Owner/Blueprints`. `[Authorize(Policy = "Grant:ManagerHomeAccess")]`. ShiftType CRUD with bilingual names. Tenant-scoped. Concurrency handling. Cache invalidation. Publish/unpublish to molecule. Migration helper for NameKey. Services: `IShiftTypeCacheService`, `IConcurrencyService`, `ICompanyLocalizationService`.
 
 ---
 
-### 81. Owner/ClearCompanySelection
+### 87. Owner/ClearCompanySelection
 
 #### 1-9) Summary
 - **Route**: `/Owner/ClearCompanySelection`. POST-only redirect. Clears company selection cookie. Services: `IOwnerCompanySelectorService`.
 
 ---
 
-### 82. Owner/DataLifecycle
+### 88. Owner/DataLifecycle
 
 #### 1-9) Summary
 - **Route**: `/Owner/DataLifecycle`. `[Authorize(Policy = "Grant:SystemConfiguration")]`. Archive (SHA256 hash, CSV/NDJSON), purge (typed confirmation, optional VACUUM), import (file upload, conflict policy). Services: `IArchiveService`, `IPurgeService`, `IImportService`.
 
 ---
 
-### 83. Owner/DatabaseConsole
+### 89. Owner/DatabaseConsole
 
 #### 1-9) Summary
 - **Route**: `/Owner/DatabaseConsole`. `[Authorize(Policy = "Grant:SystemConfiguration")]`. SQL query execution against read-only SQLite connection. SELECT-only, semicolon rejection. Table sidebar, quick query buttons.
 
 ---
 
-### 84. Owner/EmailConfig
+### 90. Owner/EmailConfig
 
 #### 1-9) Summary
 - **Route**: `/Owner/EmailConfig`. `[Authorize(Policy = "Grant:ConfigureEmailSettings")]`. Email service config (API URL, key, from address). Test email, diagnostics, log export (JSON/CSV with UTF-8 BOM). API key encrypted at rest. Services: `IEmailConfigService`, `IMailService`, `IEmailApiLogService`.
 
 ---
 
-### 85. Owner/EmailTemplates
+### 91. Owner/EmailTemplates
 
 #### 1-9) Summary
 - **Route**: `/Owner/EmailTemplates`. `[Authorize(Policy = "Grant:AdminAccess")]`. Template CRUD for all `EmailTemplateType` enum values. Custom messages (max 2000 chars), enable/disable, reset to default. Services: `IEmailTemplateService`.
 
 ---
 
-### 86. Owner/FeatureFlags
+### 92. Owner/FeatureFlags
 
 #### 1-9) Summary
 - **Route**: `/Owner/FeatureFlags`. `[Authorize(Policy = "Grant:SystemConfiguration")]`. Global flag toggles with collapsible categories. Immediate cache invalidation. Only shows global flags (filters out company/user overrides). Services: `IFeatureFlagService`.
 
 ---
 
-### 87. Owner/GameConfig
+### 93. Owner/GameConfig
 
 #### 1-9) Summary
 - **Route**: `/Owner/GameConfig`. `[Authorize(Policy = "Grant:AdminAccess")]`. Match-3 game settings (scoring, grid size, milestones). Company-scoped. Extensive range validation. Key-value in AppConfig table.
 
 ---
 
-### 88. Owner/GriffinConfig
+### 94. Owner/GriffinConfig
 
 #### 1-9) Summary
 - **Route**: `/Owner/GriffinConfig`. `[Authorize(Policy = "Grant:AdminAccess")]`. ADFS/Griffin SSO configuration. System-wide. Test connection saves config first. Diagnostic output. "Find This" modal for base URL discovery. Services: `IGriffinConfigService`, `IGriffinApiLogService`.
 
 ---
 
-### 89. Owner/LanguageEditMode
+### 95. Owner/LanguageEditMode
 
 #### 1-9) Summary
 - **Route**: `/Owner/LanguageEditMode`. `[Authorize(Policy = "Grant:AdminAccess")]`. GET-only cookie setter for in-app translation editing. Cookies: `language_edit_mode`, `language_edit_companyId`, `language_edit_culture` (2hr expiry, HttpOnly=false for JS access).
 
 ---
 
-### 90. Owner/LanguageManagement
+### 96. Owner/LanguageManagement
 
 #### 1-9) Summary
 - **Route**: `/Owner/LanguageManagement`. `[Authorize(Policy = "Grant:AdminAccess")]`. `[IgnoreAntiforgeryToken]` for JSON POST. Company language settings, translation override table, bulk draft save. Services: `ILanguageManagementService`, `ICompanyLocalizationService`.
 
 ---
 
-### 91. Owner/LockedUsers
+### 97. Owner/LockedUsers
 
 #### 1-9) Summary
 - **Route**: `/Owner/LockedUsers`. `[Authorize(Policy = "Grant:AdminAccess")]`. Cross-tenant locked user viewer. Unlock accounts, clear signup rate limits. Source IP enrichment from audit logs. Shows both active and recently-expired lockouts.
 
 ---
 
-### 92. Owner/MasterPrograms
+### 98. Owner/MasterPrograms
 
 #### 1-9) Summary
 - **Route**: `/Owner/MasterPrograms`. `[Authorize(Policy = "Grant:ManagerHomeAccess")]`. Manage collections of Programs. Generate shift instances over date range. Services: `IMasterProgramService`, `IShiftProgramService`.
 
 ---
 
-### 93. Owner/Permissions
+### 99. Owner/Permissions
 
 #### 1-9) Summary
 - **Route**: `/Owner/Permissions`. `[Authorize(Policy = "Grant:AdminAccess")]`. Cross-tenant permissions dashboard. Stats grid, top 10 grant types, recent grants. Links to Grants/Assign/Roles pages. May overlap with Owner/Hub/Grants.
 
 ---
 
-### 94. Owner/Programs
+### 100. Owner/Programs
 
 #### 1-9) Summary
 - **Route**: `/Owner/Programs`. `[Authorize(Policy = "Grant:ManagerHomeAccess")]`. Weekly schedule template CRUD. Per-day staffing overrides (JSON). Date range validation (max 365 days). Generation via `IShiftProgramService.ApplyProgramToDateRangeAsync()`. Services: `IShiftProgramService`.
 
 ---
 
-### 95. Owner/SelectCompany
+### 101. Owner/SelectCompany
 
 #### 1-9) Summary
 - **Route**: `/Owner/SelectCompany`. `[Authorize(Policy = "Grant:AdminAccess")]`. POST-only company switching. Rate limited (10/15min). IP logged. D-03 fix: GET removed for CSRF prevention. `Url.IsLocalUrl()` validation. Services: `IOwnerCompanySelectorService`, `IRateLimitingService`.
 
 ---
 
-### 96. Owner/SystemHealth
+### 102. Owner/SystemHealth
 
 #### 1-9) Summary
 - **Route**: `/Owner/SystemHealth`. `[Authorize(Policy = "Grant:AdminAccess")]`. Health dashboard: Database, Memory (500MB threshold), Uptime, Configuration, Disk (100MB threshold), Error count (>10 warning). Security warnings: default password check (admin123), public signup enabled check.
 
 ---
 
-### 97. Owner/Telemetry
+### 103. Owner/Telemetry
 
 #### 1-9) Summary
 - **Route**: `/Owner/Telemetry`. `[Authorize(Policy = "Grant:SystemConfiguration")]`. Client telemetry dashboard with 4 tabs (Errors, Performance/Web Vitals, Events, Cleanup). Lazy tab loading. Web Vitals rating system. Retention-based cleanup (1-365 days). Services: `IClientTelemetryService`.
 
 ---
 
-### 98. Owner/Hub/Index
+### 104. Owner/Hub/Index
 
 #### 1-9) Summary
 - **Route**: `/Owner/Hub`. `[Authorize(Policy = "Grant:AdminAccess")]`. Consolidated admin dashboard with 7 category cards and 19 quick-link buttons. Cross-tenant stats via IgnoreQueryFilters. Orphaned companies health check. 3-column responsive grid. Services: `IRoleService`, `ICompanyCacheService`.
 
 ---
 
-### 99. Owner/Hub/AuditSearch
+### 105. Owner/Hub/AuditSearch
 
 #### 1-9) Summary
 - **Route**: `/Owner/Hub/AuditSearch`. `[Authorize(Policy = "Grant:AdminAccess")]`. Cross-tenant audit log search with filters, pagination (50/page), CSV export (max 10,000 rows, UTF-8 BOM, formula injection protection). Expandable detail rows.
 
 ---
 
-### 100. Owner/Hub/ExportUserData
+### 106. Owner/Hub/ExportUserData
 
 #### 1-9) Summary
 - **Route**: `/Owner/Hub/ExportUserData/{userId:int}`. `[Authorize(Policy = "Grant:AdminAccess")]`. GDPR-style JSON user data export. Services: `UserDataExportService`.
 
 ---
 
-### 101. Owner/Hub/Grants
+### 107. Owner/Hub/Grants
 
 #### 1-9) Summary
 - **Route**: `/Owner/Hub/Grants`. `[Authorize(Policy = "Grant:AdminAccess")]`. Unified grant management UI with 12 AJAX handlers. User search, grant assignment/revocation with CanGive delegation, role template grant CRUD. One of the largest code-behind files. 14 inner model classes. Services: `IGrantService`, `IRoleService`, `IConcurrencyService`.
 
 ---
 
-### 102. Owner/Hub/SeedData
+### 108. Owner/Hub/SeedData
 
 #### 1-9) Summary
 - **Route**: `/Owner/Hub/SeedData`. `[Authorize(Policy = "Grant:AdminAccess")]`. Seed status dashboard (10-item grid), seeding actions (GrantTypes, RoleTemplates, Organization, FeatureFlags), diagnostics (orphan detection). Idempotent seeding. Services: `IJobTypeService`, seed classes.
 
 ---
 
-### 103. Owner/Hub/RoleTemplates/Index
+### 109. Owner/Hub/RoleTemplates/Index
 
 #### 1-9) Summary
 - **Route**: `/Owner/Hub/RoleTemplates`. `[Authorize(Policy = "Grant:AdminAccess")]`. Role template list with stats. System/Custom badges, scope level, grant/user/label counts. Create/Edit links.
 
 ---
 
-### 104. Owner/Hub/RoleTemplates/Create
+### 110. Owner/Hub/RoleTemplates/Create
 
 #### 1-9) Summary
 - **Route**: `/Owner/Hub/RoleTemplates/Create`. `[Authorize(Policy = "Grant:AdminAccess")]`. Create custom role template with Key regex validation, scope level, display names EN/HE, job type labels (parallel arrays). Transaction wraps creation. Auto-generates NameKey/DescriptionKey. Services: `IJobTypeService`.
 
 ---
 
-### 105. Owner/Hub/RoleTemplates/Edit
+### 111. Owner/Hub/RoleTemplates/Edit
 
 #### 1-9) Summary
 - **Route**: `/Owner/Hub/RoleTemplates/Edit?id=X`. `[Authorize(Policy = "Grant:AdminAccess")]`. Three-tab editor (Metadata, Grants, Labels). System templates lock Key/ScopeLevel/DerivedUserRole. Grant editing with debounced auto-save (300ms). Category-based collapsible sections with search. Toast notifications. Labels use delete-then-add strategy. Services: `IGrantService`, `IJobTypeService`.
@@ -1717,7 +1697,7 @@
 
 ## VI. My & Director Pages
 
-### 106. My/Index
+### 112. My/Index
 
 #### 1) Identity & Routing
 - **Route**: `/My`
@@ -1732,101 +1712,139 @@
 
 ---
 
-### 107. My/Profile
-
-#### 1-9) Summary
-- **Route**: `/My/Profile`. Self-service profile viewer/editor. Limited editable fields (phone, email preferences). Links to ChangePassword. Display-only for name, company, job type, department.
-
----
-
-### 108. My/Requests
-
-#### 1-9) Summary
-- **Route**: `/My/Requests`. Personal time-off request listing with status filters (pending/approved/rejected/all). Create new request link. Cancel pending request functionality. Services: `IVacationApprovalService`.
-
----
-
-### 109. My/ShiftSwap
-
-#### 1-9) Summary
-- **Route**: `/My/ShiftSwap`. Shift swap request management. View incoming/outgoing swap requests. Accept/reject. Feature-flagged.
-
----
-
-### 110. My/Preferences
-
-#### 1-9) Summary
-- **Route**: `/My/Preferences`. User preference settings (notification preferences, display preferences, theme). Self-service. Services: `IUserPreferenceService`.
-
----
-
-### 111. My/Documents
-
-#### 1-9) Summary
-- **Route**: `/My/Documents`. Personal document viewer. Read-only access to company-assigned documents.
-
----
-
-### 112. My/Training
-
-#### 1-9) Summary
-- **Route**: `/My/Training`. Training status and requirements viewer. Read-only.
-
----
-
-### 113. Director/Index
+### 113. My/ApiKeys
 
 #### 1) Identity & Routing
-- **Route**: `/Director` or `/Director/Index`
-- **Purpose**: Director dashboard with molecule-level overview.
+- **Route**: `/My/ApiKeys`
+- **Purpose**: Self-service API key management for external integrations.
+
+#### 2) Access Control & Scope
+- `[Authorize]`. Self-service only. Feature flag gated.
+
+#### 3-9) Summary
+- Create/revoke personal API keys. Shows active keys with masked values. Grant-based key scope. Services: `IApiKeyService`, `IGrantService`, `IFeatureFlagService`.
+
+---
+
+### 114. My/Help
+
+#### 1) Identity & Routing
+- **Route**: `/My/Help`
+- **Purpose**: Help/documentation page.
+
+#### 2) Access Control & Scope
+- `[Authorize]`. Any authenticated user.
+
+#### 3-9) Summary
+- Minimal page with no code-behind logic (empty `OnGet`). Static help content rendered from Razor view.
+
+---
+
+### 115. My/NotificationCenter
+
+#### 1) Identity & Routing
+- **Route**: `/My/NotificationCenter`
+- **Purpose**: Notification center -- view all notifications, mark as read, bulk actions.
+- **Query params:** Filter support for read/unread.
+
+#### 2) Access Control & Scope
+- `[Authorize]`. Self-service -- user sees only own notifications (filtered by userId).
+
+#### 3-9) Summary
+- Notification list with read/unread styling, filter toggle, bulk "Mark All Read" button. POST handlers for mark read (individual/bulk) and delete. Pagination. Unread count badge updated via `UnreadNotificationCount` ViewComponent in layout. Extends `LocalizedPageModel`. Services: `AppDbContext`.
+
+---
+
+### 116. My/Onboarding
+
+#### 1) Identity & Routing
+- **Route**: `/My/Onboarding`
+- **Purpose**: First-login onboarding/welcome page.
+
+#### 2) Access Control & Scope
+- `[Authorize]`. Any authenticated user.
+
+#### 3-9) Summary
+- Displays user's display name and role. ViewData title set to "Welcome". Reached from Login page on first login. Services: `AppDbContext`.
+
+---
+
+### 117. My/Profile
+
+#### 1-9) Summary
+- **Route**: `/My/Profile`. Self-service profile viewer/editor. Limited editable fields (phone, email preferences). Display-only for name, company, job type, department.
+
+---
+
+### 118. My/Requests
+
+#### 1-9) Summary
+- **Route**: `/My/Requests`. Personal time-off request listing with status filters (pending/approved/rejected/all). Create new request link. Cancel pending request functionality. Employee can view own requests. Links to `/Requests/Swaps/Create` and `/Requests/TimeOff/Create`.
+
+---
+
+### 119. My/Settings
+
+#### 1) Identity & Routing
+- **Route**: `/My/Settings`
+- **Purpose**: User settings page for managing notification preferences.
+
+#### 2) Access Control & Scope
+- `[Authorize]`. Self-service only.
+
+#### 3-9) Summary
+- Notification preference management. Company-scoped settings. Services: `AppDbContext`, `ITenantResolver`, `IStringLocalizer<SharedResources>`.
+
+---
+
+### 120. Director/CompanyFilter
+
+#### 1) Identity & Routing
+- **Route**: `/Director/CompanyFilter`
+- **Purpose**: Filters which companies the director sees in their dashboard.
 
 #### 2) Access Control & Scope
 - `[Authorize(Policy = "Grant:DirectorHubAccess")]`
-- Scope: Director's managed companies within their molecule.
+- **IgnoreQueryFilters**: Used. Molecule-scoped company list.
 
 #### 3-9) Summary
-- Stats for all companies in director's molecule. Quick links to Companies, Users, Calendar, Reports. OnCallWidget ViewComponent. Services: `IDirectorService`, `IGrantService`.
+- Company selection persisted in session/cookie. Molecule-scoped company list from `IDirectorService.GetDirectorCompanyIdsAsync()`. GET+POST handlers. Extends `LocalizedPageModel`. Services: `IDirectorService`, `ICompanyFilterService`, `AppDbContext`.
 
 ---
 
-### 114. Director/Companies
+### 121. Director/NotificationHub
 
-#### 1-9) Summary
-- **Route**: `/Director/Companies`. `[Authorize(Policy = "Grant:DirectorHubAccess")]`. List and manage companies within director's molecule. Staff counts, active shift counts.
+#### 1) Identity & Routing
+- **Route**: `/Director/NotificationHub`
+- **Purpose**: Aggregated notifications across managed companies for directors.
 
----
+#### 2) Access Control & Scope
+- `[Authorize(Policy = "Grant:DirectorHubAccess")]`
+- **IgnoreQueryFilters**: Used. SECURITY-AUDITED: cross-company queries by design.
 
-### 115. Director/MoleculeOverview
-
-#### 1-9) Summary
-- **Route**: `/Director/MoleculeOverview`. Cross-company molecule-level analytics. Shift coverage, chore completion, staffing metrics across all companies in molecule.
-
----
-
-### 116. Director/Users
-
-#### 1-9) Summary
-- **Route**: `/Director/Users`. User listing for director's managed companies. Search, filter, profile links. Molecule-scoped via IgnoreQueryFilters + companyIds filter.
+#### 3-9) Summary
+- Aggregated notifications across managed companies. Mark-read functionality for director-level notifications. Molecule-scoped notification aggregation. Services: `IDirectorService`, `AppDbContext`.
 
 ---
 
-### 117. Director/Calendar
+### 122. Director/ViewAsMode
 
-#### 1-9) Summary
-- **Route**: `/Director/Calendar`. Molecule-scoped calendar view for directors. Similar to Calendar/Month but pre-scoped to director's molecule.
+#### 1) Identity & Routing
+- **Route**: `/Director/ViewAsMode`
+- **Purpose**: Impersonation feature -- director can view system as a specific manager.
 
----
+#### 2) Access Control & Scope
+- `[Authorize(Policy = "Grant:DirectorHubAccess")]`
+- **IgnoreQueryFilters**: Used. Security-sensitive -- validates target user is in director's scope.
 
-### 118. Director/Reports
-
-#### 1-9) Summary
-- **Route**: `/Director/Reports`. Molecule-level reports (staffing coverage, shift distribution, overtime analysis). Date range selection. Export capability.
+#### 3-9) Summary
+- `IViewAsModeService` stores the impersonation context. GET+POST handlers. Extends `LocalizedPageModel`. Services: `IViewAsModeService`, `IDirectorService`, `AppDbContext`.
 
 ---
 
 ## VII. Friends, Game, MyTeam, Assignments, Requests & Public
 
-### 119. Friends/Index
+### 123. Friends/Index
 
 #### 1) Identity & Routing
 - **Route**: `/Friends`
@@ -1842,72 +1860,79 @@
 
 ---
 
-### 120. Game/Index
+### 123a. Game/Leaderboard
 
-#### 1-9) Summary
-- **Route**: `/Game`. Match-3 puzzle game. Feature flag: `GameEnabled`. Client-side game engine in JS. Configuration from `/Api/Game/GetConfiguration`. Localization from `/Api/Game/GetLocalization`. Leaderboard from `/Api/Game/GetLeaderboard`. Score save via `/Api/Game/SaveScore`. 4 JS files (~2500 lines total).
+#### 1) Identity & Routing
+- **Route:** `/Game/Leaderboard` (`@page`)
+- **Purpose:** Game leaderboard page showing top scores (all-time and monthly). Company-scoped.
 
----
+#### 2) Access Control & Scope
+- `[Authorize]`. Company-scoped via user's CompanyId claim.
 
-### 121. MyTeam/Index
-
-#### 1-9) Summary
-- **Route**: `/MyTeam`. Manager team dashboard. Shows team members with shift status, upcoming assignments, leave status. Quick actions for common management tasks. `[Authorize(Policy = "Grant:ManagerHomeAccess")]`. Services: `IGrantService`, `AppDbContext`.
-
----
-
-### 122. MyTeam/Calendar
-
-#### 1-9) Summary
-- **Route**: `/MyTeam/Calendar`. Team calendar view showing all team members' schedules in unified grid. Company-scoped.
+#### 3-9) Summary
+- Displays all-time and monthly leaderboards. Company-scoped with OPSEC name abbreviation. Match-3 game with client-side scoring (no server-side anti-cheat). API endpoints: `/Api/Game/GetConfiguration`, `/Api/Game/GetLeaderboard`, `/Api/Game/GetLocalization`, `/Api/Game/SaveScore`. Services: `AppDbContext`.
 
 ---
 
-### 123. Assignments/Manage
+### 124. MyTeam/Index
 
 #### 1-9) Summary
-- **Route**: `/Assignments/Manage`. Shift assignment management with notification support. `[Authorize(Policy = "Grant:ManagerHomeAccess")]`. Creates notifications (unlike Calendar/Table). Services: `IShiftAssignmentService`, `INotificationService`.
+- **Route**: `/MyTeam`. Manager team dashboard. SPA-like page with mostly client-side rendering. Empty code-behind -- minimal server logic. Company-scoped team member list. `[Authorize]`. Services: `AppDbContext`.
 
 ---
 
-### 124. Assignments/OnDuty
+### 125. Assignments/Manage
 
 #### 1-9) Summary
-- **Route**: `/Assignments/OnDuty`. On-duty assignment management. `[Authorize(Policy = "Grant:ManageOnDuty")]`. Create/edit/cancel on-duty assignments. Eligible user dropdown via `/Api/OnDuty/GetEligibleUsers`. Services: `IOnDutyService`, `INotificationService`.
+- **Route**: `/Assignments/Manage`. Shift assignment management with notification support. `[Authorize(Policy = "Grant:ManagerHomeAccess")]`. IDOR protections: HIGH-001 validates user belongs to manager's scope, HIGH-002 validates assignment belongs to company. Creates notifications (unlike Calendar/Table). Full audit logging for all assignment mutations. Services: `IShiftAssignmentService`, `INotificationService`, `IAuditLogService`.
 
 ---
 
-### 125. Requests/Index
+### 126. Requests/Index
 
 #### 1-9) Summary
-- **Route**: `/Requests`. Vacation/time-off request management for managers. View pending requests, approve/reject with comments. Batch approval support. `[Authorize(Policy = "Grant:ApproveVacations")]`. Services: `IVacationApprovalService`, `INotificationService`.
+- **Route**: `/Requests`. Vacation/time-off and swap request management for managers. View pending requests, approve/reject with comments. WCAG 2.1 accessible tabs for time-off and swap requests. Transactional swap approval with atomic side-effects. `[Authorize(Policy = "Grant:ManagerHomeAccess")]`. Company-scoped. Services: `IVacationApprovalService`, `ISwapService`, `INotificationService`, `IAuditLogService`.
 
 ---
 
-### 126. Requests/Create
+### 127. Requests/Swaps/Create
 
 #### 1-9) Summary
-- **Route**: `/Requests/Create`. Time-off request creation form. Date range picker, request type, notes. Conflict detection (existing shifts/chores). Services: `IVacationApprovalService`.
+- **Route**: `/Requests/Swaps/Create`. Shift swap request creation form. `[Authorize]`. Creates swap request between two shift assignments. Validates both assignments exist and are swappable. Notification sent to target user and managers. Extends `LocalizedPageModel`. Services: `ISwapService`, `INotificationService`, `ICompanyContext`, `IGrantService`, `AppDbContext`.
 
 ---
 
-### 127. Public/Chores
+### 128. Requests/TimeOff/Create
 
 #### 1-9) Summary
-- **Route**: `/Public/Chores`. Read-only public chore board. `[Authorize]` (authenticated but no specific grants). Shows company's chore schedule for current/upcoming period.
+- **Route**: `/Requests/TimeOff/Create`. Time-off request creation form. `[Authorize]`. Date range picker, request type (TimeOffType enum), reason field. Overlap prevention: checks for existing approved/pending time-off in date range. Auto-approval rules applied if configured. Extends `LocalizedPageModel`. Services: `AppDbContext`.
 
 ---
 
-### 128. Public/OnDuty
+### 129. Public/Chores
 
 #### 1-9) Summary
-- **Route**: `/Public/OnDuty`. Read-only public on-duty board. `[Authorize]`. Shows who's on duty today/this week. Quick reference for team members.
+- **Route**: `/Public/Chores`. Read-only public chore board. `[AllowAnonymous]`. Shows company's chore schedule. Company-scoped via query parameter. Services: `IChoreService`.
+
+---
+
+### 130. Public/Feedback
+
+#### 1-9) Summary
+- **Route**: `/Public/Feedback`. Dual-purpose feedback form -- employee feedback and owner system feedback. `[Authorize]`. File upload support. Notification to admins. Extends `LocalizedPageModel`. Services: `AppDbContext`, `ITenantResolver`, `INotificationService`, `IGrantService`.
+
+---
+
+### 131. Public/OnDuty
+
+#### 1-9) Summary
+- **Route**: `/Public/OnDuty`. Read-only public on-duty board. `[AllowAnonymous]`. Shows who's on duty today/this week. Military rank display with rank abbreviations. Company-scoped via query parameter. Services: `IOnDutyService`.
 
 ---
 
 ## VIII. Shared Components & Layout
 
-### 129. _Layout.cshtml
+### 132. _Layout.cshtml
 
 - **File**: `Pages/Shared/_Layout.cshtml` (1042 lines)
 - **Purpose**: Master layout for entire application. HTML shell, sidebar navigation, header bar, bottom dock, command palette, global scripts/CSS.
@@ -1920,56 +1945,56 @@
 
 ---
 
-### 130. _ViewImports.cshtml
+### 133. _ViewImports.cshtml
 
 - **Purpose**: Global Razor imports, tag helper registrations, namespace imports.
 - **Imports**: Microsoft.AspNetCore.Mvc.Localization, ShiftManager.Models, ShiftManager.Services, tag helpers from ShiftManager.TagHelpers.
 
 ---
 
-### 131. _LocalizationScript.cshtml
+### 134. _LocalizationScript.cshtml
 
 - **Purpose**: Renders inline `<script>` block with localization config (current culture, direction, date format patterns) for client-side JS.
 - **Data exposed**: `window.__localization = { culture, direction, dateFormat, timeFormat, ... }`.
 
 ---
 
-### 132. _ValidationMessage.cshtml
+### 135. _ValidationMessage.cshtml
 
 - **Purpose**: Shared partial for rendering validation/success/error messages from TempData.
 - **Pattern**: Checks `TempData["SuccessMessage"]` and `TempData["ErrorMessage"]`, renders `.alert-success`/`.alert-error` divs.
 
 ---
 
-### 133. CalendarSkeleton ViewComponent
+### 136. CalendarSkeleton ViewComponent
 
 - **Purpose**: Loading placeholder for calendar pages. Shows skeleton UI while data loads.
 - **Usage**: Calendar/Day, Week, Month. `data-calendar-skeleton-container` pattern -- JS signals when content ready.
 
 ---
 
-### 134. ContextSwitcher ViewComponent
+### 137. ContextSwitcher ViewComponent
 
 - **Purpose**: Owner/Director context switching UI. Allows switching between molecule/company contexts.
-- **Used by**: Admin/Index, Director/Index.
+- **Used by**: Admin/Index, Director pages.
 
 ---
 
-### 135. ErrorBanner ViewComponent
+### 138. ErrorBanner ViewComponent
 
 - **Purpose**: Displays error/warning banners from TempData or ViewData.
 - **Pattern**: Reads `ViewData["ErrorBanner"]` or `TempData["ErrorBanner"]`.
 
 ---
 
-### 136. ErrorToast ViewComponent
+### 139. ErrorToast ViewComponent
 
 - **Purpose**: JS-driven toast notification for AJAX error responses.
 - **Pattern**: Renders hidden toast container; JS populates and shows on error.
 
 ---
 
-### 137. ExcelCalendarTable ViewComponent
+### 140. ExcelCalendarTable ViewComponent
 
 - **Purpose**: Core calendar grid renderer. Used by all 4 Excel-style calendars (Shifts, Chores, OnCall, Overview).
 - **Input**: `ExcelCalendarTableViewModel` with rows, columns, cells, overlays.
@@ -1978,7 +2003,7 @@
 
 ---
 
-### 138. HierarchyTree ViewComponent
+### 141. HierarchyTree ViewComponent
 
 - **Purpose**: Interactive org hierarchy tree visualization.
 - **Used by**: Admin/Organization/Hierarchy.
@@ -1986,7 +2011,7 @@
 
 ---
 
-### 139. LanguageToggle ViewComponent
+### 142. LanguageToggle ViewComponent
 
 - **Purpose**: Language/culture switcher (EN/HE toggle).
 - **Used by**: _Layout (global).
@@ -1994,37 +2019,37 @@
 
 ---
 
-### 140. LoadingSkeleton ViewComponent
+### 143. LoadingSkeleton ViewComponent
 
 - **Purpose**: Generic skeleton loading placeholder for async content areas.
 - **Parameters**: `lines` (number of skeleton lines), `style` (table|card|list).
 
 ---
 
-### 141. LoadingSpinner ViewComponent
+### 144. LoadingSpinner ViewComponent
 
 - **Purpose**: Simple inline loading spinner indicator.
 - **Parameters**: `size` (sm|md|lg).
 
 ---
 
-### 142. OnCallWidget ViewComponent
+### 145. OnCallWidget ViewComponent
 
 - **Purpose**: Shows today's on-call/duty assignments as a compact widget.
-- **Used by**: Home/Index, Director/Index.
+- **Used by**: Home/Index, Director pages.
 - **Data**: Loads today's OnDuty entries for current company/molecule.
 
 ---
 
-### 143. Pagination ViewComponent
+### 146. Pagination ViewComponent
 
 - **Purpose**: Page navigation controls (First/Previous/numbered/Next/Last).
 - **Parameters**: `currentPage`, `totalPages`, `baseUrl`, `queryParams`.
-- **Used by**: Admin/AuditLog, Admin/Users, Owner/Hub/AuditSearch, Home/Notifications.
+- **Used by**: Admin/AuditLog, Admin/Users, Owner/Hub/AuditSearch.
 
 ---
 
-### 144. ScopeSwitcher ViewComponent
+### 147. ScopeSwitcher ViewComponent
 
 - **Purpose**: Mine/Company/Molecule/Area scope selection UI.
 - **Used by**: Calendar/Day, Week, Month.
@@ -2032,22 +2057,22 @@
 
 ---
 
-### 145. ShowMyItemsToggle ViewComponent
+### 148. ShowMyItemsToggle ViewComponent
 
 - **Purpose**: Toggle between "My Items" and "All Items" on calendar views.
 - **Used by**: Calendar/Day, Week, Month.
 
 ---
 
-### 146. UnreadNotificationCount ViewComponent
+### 149. UnreadNotificationCount ViewComponent
 
 - **Purpose**: Renders unread notification badge count in header.
 - **Used by**: _Layout (global).
-- **Data**: `INotificationService.GetUnreadCountAsync(userId)`.
+- **Data**: `AppDbContext` query for unread notification count by userId.
 
 ---
 
-### 147. Layout Navigation Summary
+### 150. Layout Navigation Summary
 
 The sidebar navigation structure (from _Layout.cshtml):
 
@@ -2062,13 +2087,18 @@ The sidebar navigation structure (from _Layout.cshtml):
    - Day View (`/Calendar/Day`)
 4. **My Team** (`/MyTeam`) -- grant-gated: `ManagerHomeAccess`
 5. **Admin** (`/Admin`) -- grant-gated: `AccessAdminNavigation`
-6. **Director** (`/Director`) -- grant-gated: `DirectorHubAccess`
+6. **Director** -- grant-gated: `DirectorHubAccess`
+   - Company Filter (`/Director/CompanyFilter`)
+   - Notification Hub (`/Director/NotificationHub`)
+   - View As Mode (`/Director/ViewAsMode`)
 7. **Owner** (`/Owner/Hub`) -- grant-gated: `AdminAccess`
 8. **Requests** (`/Requests`) -- grant-gated: `ApproveVacations`
 9. **Friends** (`/Friends`) -- feature-flagged: `FriendshipsEnabled`
-10. **Game** (`/Game`) -- feature-flagged: `GameEnabled`
-11. **Notifications** (`/Home/Notifications`) -- always visible
-12. **Change Password** (`/Home/ChangePassword`) -- always visible
+10. **Game** (`/Game/Leaderboard`) -- feature-flagged: `GameEnabled`
+11. **Notifications** (`/My/NotificationCenter`) -- always visible
+12. **My Profile** (`/My/Profile`) -- always visible
+13. **My Settings** (`/My/Settings`) -- always visible
+14. **Help** (`/My/Help`) -- always visible
 
 ---
 
@@ -2080,6 +2110,7 @@ The sidebar navigation structure (from _Layout.cshtml):
 flowchart TD
     Login[Auth/Login] --> Root[Root Index /]
     Login --> OwnerHub[Owner/Hub]
+    Login --> Onboarding[My/Onboarding]
 
     Root --> Calendar[Calendar Landing]
     Root --> My[My/Index]
@@ -2087,7 +2118,7 @@ flowchart TD
     Root --> Requests[Requests/Index]
     Root --> MyTeam[MyTeam/Index]
     Root --> Friends[Friends/Index]
-    Root --> Game[Game/Index]
+    Root --> Game[Game/Leaderboard]
 
     Calendar --> Shifts[Calendar/Shifts]
     Calendar --> Chores[Calendar/Chores]
@@ -2126,6 +2157,8 @@ flowchart TD
     OrgIndex --> Roles[Admin/Organization/Roles]
     OrgIndex --> Grants[Admin/Organization/Grants]
     OrgIndex --> ShiftGroupings[Admin/Organization/ShiftGroupings]
+    OrgIndex --> ChoreTypes[Admin/Organization/ChoreTypes]
+    OrgIndex --> DutyTypes[Admin/Organization/DutyTypes]
 
     Hierarchy -->|AJAX| ApiHCreate[Api/Hierarchy/Create]
     Hierarchy -->|AJAX| ApiHDelete[Api/Hierarchy/Delete]
@@ -2161,19 +2194,16 @@ flowchart TD
 
     My --> MyProfile[My/Profile]
     My --> MyRequests[My/Requests]
-    My --> MyShiftSwap[My/ShiftSwap]
-    My --> MyPreferences[My/Preferences]
-    My --> MyDocuments[My/Documents]
+    My --> MySettings[My/Settings]
+    My --> MyNotifications[My/NotificationCenter]
+    My --> MyApiKeys[My/ApiKeys]
 
-    MyTeam --> MyTeamCal[MyTeam/Calendar]
+    MyRequests --> SwapCreate[Requests/Swaps/Create]
+    MyRequests --> TimeOffCreate[Requests/TimeOff/Create]
 
-    Director[Director/Index] --> DirCompanies[Director/Companies]
-    Director --> DirMolecule[Director/MoleculeOverview]
-    Director --> DirUsers[Director/Users]
-    Director --> DirCalendar[Director/Calendar]
-    Director --> DirReports[Director/Reports]
-
-    Requests --> RequestsCreate[Requests/Create]
+    Director_CompanyFilter[Director/CompanyFilter]
+    Director_NotificationHub[Director/NotificationHub]
+    Director_ViewAsMode[Director/ViewAsMode]
 
     Table --> ChoresCal[Chores/Calendar]
 
@@ -2185,11 +2215,12 @@ flowchart TD
         ApiSession[Api/SessionStatus]
         ApiSignup[Api/Signup/GetSignupOptions]
         AuthSignup[Auth/Signup]
-    end
-
-    subgraph Public_Pages
         PublicChores[Public/Chores]
         PublicOnDuty[Public/OnDuty]
+    end
+
+    subgraph Feedback
+        PublicFeedback[Public/Feedback]
     end
 ```
 
@@ -2221,7 +2252,7 @@ flowchart TD
 | `CalendarSkeleton` | Calendar/Day, Week, Month |
 | `ShowMyItemsToggle` | Calendar/Day, Week, Month |
 | `HierarchyTree` | Admin/Organization/Hierarchy |
-| `OnCallWidget` | Home/Index, Director/Index |
+| `OnCallWidget` | Home/Index, _Layout bottom dock |
 | `Pagination` | Admin/AuditLog, Admin/Users, Owner/Hub/AuditSearch |
 | `LanguageToggle` | _Layout (global) |
 | `UnreadNotificationCount` | _Layout (global) |
@@ -2237,10 +2268,11 @@ flowchart TD
 | `/Api/Calendar/QuickAdd*` | Calendar/Day, Week, Month (quick-add forms) |
 | `/Api/Calendar/Delete*` | Calendar/Day, Week, Month |
 | `/Api/Friends/Ids` | Calendar/Shifts (friend highlighting) |
-| `/Api/Game/*` | Game/Index |
+| `/Api/Game/*` | Game/Leaderboard |
 | `/Api/Hierarchy/*` | Admin/Organization/Hierarchy |
 | `/Api/Localization` | _Layout JS (dynamic localization) |
 | `/Api/ScopeSwitcher` | ScopeSwitcher ViewComponent |
+| `/Api/SelectMolecule` | Director molecule context switching |
 | `/Api/SessionStatus` | _Layout JS (session heartbeat) |
 | `/Api/Signup/GetSignupOptions` | Auth/Signup (cascading dropdowns) |
 | `/Api/Telemetry` | _Layout JS (telemetry collector) |
@@ -2255,6 +2287,7 @@ flowchart TD
 6. **Owner/ClearCompanySelection** -- POST-only utility endpoint. Correct by design.
 7. **Owner/LanguageEditMode** -- GET-only cookie-setter. Only reachable from Owner/LanguageManagement.
 8. **Owner/SelectCompany** -- POST-only handler from OwnerCompanySelector ViewComponent. Correct by design.
+9. **Api/SelectMolecule** -- POST-only handler for Director molecule switching. Correct by design.
 
 ### Common Patterns
 
@@ -2299,7 +2332,7 @@ flowchart TD
 
 3. **Mixed localization patterns**: No convention for `@Localizer["key"]` vs `<loc key="..." />`. Both used on same pages.
 
-4. **Feature flag enforcement gaps**: Friends/Index and Game/Index check flags only on GET, not POST. Direct POST bypasses disabled features.
+4. **Feature flag enforcement gaps**: Friends/Index and Game/Leaderboard check flags only on GET, not POST. Direct POST bypasses disabled features.
 
 5. **Base class inconsistency**: Admin pages all use `LocalizedPageModel`; Owner pages mix `PageModel` (24) and `LocalizedPageModel` (5).
 
@@ -2321,48 +2354,48 @@ flowchart TD
 
 #### CRITICAL (Security)
 
-1. **Calendar API scope validation (Pages 37-39)**: Add molecule/area membership validation to GetShiftsData, GetChoresData, GetOnCallData. Any authenticated user can currently query any scope.
+1. **Calendar API scope validation (Pages 42-44)**: Add molecule/area membership validation to GetShiftsData, GetChoresData, GetOnCallData. Any authenticated user can currently query any scope.
 
-2. **Feature flag enforcement on POST (Pages 119, 120)**: Friends/Index and Game/Index POST handlers must check feature flags, not just GET.
+2. **Feature flag enforcement on POST (Pages 123)**: Friends/Index POST handlers must check feature flags, not just GET.
 
-3. **Calendar/Table POST authorization (Page 68)**: Add explicit grant checks to EnsureShiftInstance and CreateShiftInstance handlers.
+3. **Calendar/Table POST authorization (Page 74)**: Add explicit grant checks to EnsureShiftInstance and CreateShiftInstance handlers.
 
-4. **GetOverviewData companyId bypass (Page 40)**: Validate user access to specified company or remove the parameter.
+4. **GetOverviewData companyId bypass (Page 45)**: Validate user access to specified company or remove the parameter.
 
 #### HIGH (Data Integrity)
 
-5. **RestoreChore audit logging (Page 45)**: Add audit log and notification to match DeleteChore.
+5. **RestoreChore audit logging (Page 50)**: Add audit log and notification to match DeleteChore.
 
-6. **Hierarchy Delete inconsistency (Page 53)**: Make Company deletion consistent (soft-delete) or document deviation. Fix Molecule child-check IsActive filter.
+6. **Hierarchy Delete inconsistency (Page 58)**: Make Company deletion consistent (soft-delete) or document deviation. Fix Molecule child-check IsActive filter.
 
-7. **Game SaveScore validation (Page 51)**: Add score cap, rate limiting, duplicate detection.
+7. **Game SaveScore validation (Page 56)**: Add score cap, rate limiting, duplicate detection.
 
-8. **ShiftHistory string matching (Page 46)**: Replace fragile `Description.Contains` with structured metadata.
+8. **ShiftHistory string matching (Page 51)**: Replace fragile `Description.Contains` with structured metadata.
 
 #### MEDIUM (Consistency)
 
-9. **Calendar code deduplication (Pages 69-71)**: Extract shared methods into base class or service.
+9. **Calendar code deduplication (Pages 75-77)**: Extract shared methods into base class or service.
 
-10. **Localization key fix (Page 71)**: Fix OnDuty key naming inconsistency between Month and Day/Week.
+10. **Localization key fix (Page 77)**: Fix OnDuty key naming inconsistency between Month and Day/Week.
 
-11. **Owner page base class (Pages 77-105)**: Standardize to `LocalizedPageModel`.
+11. **Owner page base class (Pages 83-111)**: Standardize to `LocalizedPageModel`.
 
 12. **CSS deduplication**: Extract repeated inline CSS into shared stylesheet.
 
-13. **API error response standardization (Pages 37-65)**: Ensure all endpoints use consistent envelope and 500 catch-all.
+13. **API error response standardization (Pages 42-71)**: Ensure all endpoints use consistent envelope and 500 catch-all.
 
 #### LOW (Code Quality)
 
-14. **User email in API (Page 59)**: Remove or document email exposure.
+14. **User email in API (Page 64)**: Remove or document email exposure.
 
 15. **SignalR parity**: Add real-time updates to Chores/OnCall/Overview calendars.
 
 16. **Dead page cleanup**: Evaluate Schedule/Index and Owner/Permissions for deprecation.
 
-17. **GetSignupOptions exposure (Page 63)**: Evaluate org structure exposure to anonymous users.
+17. **GetSignupOptions exposure (Page 69)**: Evaluate org structure exposure to anonymous users.
 
 ---
 
 *End of ShiftManager Pages Inventory*
-*Generated: 2026-03-03*
-*Total items catalogued: 147 (128 pages/endpoints + 19 shared components)*
+*Generated: 2026-03-03 (updated 2026-03-23)*
+*Total items catalogued: 150 (131 pages/endpoints + 19 shared components/layout)*

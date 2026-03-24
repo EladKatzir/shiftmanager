@@ -36,15 +36,14 @@ ShiftManager employs a **pragmatic testing strategy** focused on:
 
 **Current Test Coverage:**
 - **Test Project:** `ShiftManager.Tests` (.NET 8.0)
-- **Test Files:** 1 test class (DirectorServiceTests.cs - 300 lines, 13 test cases)
-- **Coverage Focus:** Authorization logic, multi-company access control, role hierarchy
-- **Test Execution Time:** <1 second (InMemory database = fast tests)
+- **Test Files:** ~28 test files across multiple service and validation areas
+- **Coverage Focus:** Authorization logic, multi-company access control, role hierarchy, shift validation, grant system
+- **Test Execution Time:** <5 seconds (InMemory database = fast tests)
 
 **Testing Status:**
 - ✅ Test infrastructure established (xUnit, Moq, FluentAssertions, InMemory EF)
-- ✅ Example test suite demonstrating patterns (DirectorServiceTests)
-- ⚠️ **Limited coverage** - Only 1 service tested out of 40+ services
-- 🎯 **Expansion needed** - Critical services need test coverage (ConflictChecker, NotificationService, etc.)
+- ✅ ~28 test files covering services, validation, and authorization
+- ⚠️ **Expanding coverage** - Additional services still need test coverage (NotificationService, etc.)
 
 ---
 
@@ -140,15 +139,16 @@ public void IsDirector_ReturnsTrue_ForOwner()
 ShiftManager.Tests/
 ├── UnitTests/
 │   ├── Services/
-│   │   ├── DirectorServiceTests.cs (300 lines, 13 tests)
-│   │   ├── [FUTURE] ConflictCheckerTests.cs
-│   │   ├── [FUTURE] NotificationServiceTests.cs
-│   │   ├── [FUTURE] ChoreServiceTests.cs
-│   │   └── [FUTURE] TimeOffServiceTests.cs
+│   │   ├── DirectorServiceTests.cs
+│   │   ├── ShiftAssignmentServiceTests.cs
+│   │   ├── NotificationServiceTests.cs
+│   │   ├── ChoreServiceTests.cs
+│   │   ├── GrantServiceTests.cs
+│   │   └── ... (~28 test files total)
 │   ├── Validation/
-│   │   └── [FUTURE] RequestValidationTests.cs
+│   │   └── ShiftValidationTests.cs
 │   └── Authorization/
-│       └── [FUTURE] PolicyTests.cs
+│       └── GrantPolicyTests.cs
 ├── IntegrationTests/
 │   ├── [FUTURE] ApiTests/
 │   │   ├── TimeOffApiTests.cs
@@ -814,27 +814,23 @@ private Mock<IMemoryCache> CreateMockCache()
 
 | **Category** | **Total Classes** | **Tested Classes** | **Coverage %** |
 |--------------|-------------------|--------------------|----------------|
-| **Services** | 40+ | 1 (DirectorService) | ~2% |
+| **Services** | 130+ | ~28 test files | ~20% |
 | **Controllers** | 12 | 0 | 0% |
 | **Razor Pages** | 66 | 0 | 0% |
 | **Validation** | 15+ | 0 | 0% |
 | **Authorization** | 6 policies | 0 | 0% |
 
-**Overall Test Coverage: <5%** ⚠️
+**Overall Test Coverage: ~20%** ⚠️
 
 ### High-Priority Services to Test
 
-**Critical Services (Should be tested next):**
+**Critical Services (next priorities):**
 
-1. **ConflictChecker** (127 lines)
-   - Validates shift assignments against business rules
-   - Critical for preventing double-booking, rest period violations
-   - **Test Cases Needed:**
-     - Time-off conflict detection
-     - Overlapping shift detection
-     - Rest period validation (8h default)
-     - Weekly hours cap validation (40h default)
-     - OFFLINE shift type (special overlap rules)
+1. **ShiftAssignmentService** (`ValidateShiftAssignmentAsync`)
+   - Validates shift assignments against business rules (replaces former ConflictChecker)
+   - Errors: Overlap, Rest period (8h), User not found, Molecule boundary, Duplicate
+   - Warnings (overrideable via HMAC): Vacation, Chore, On-duty, Weekly cap (56h), Job type mismatch, Past date
+   - Exempt shifts (IsOffline/IsHome) skip overlap, rest, weekly cap checks
 
 2. **NotificationService** (808 lines)
    - Creates in-app notifications and email alerts
@@ -920,11 +916,10 @@ public async Task ShiftAssignmentWorkflow_CompleteFlow_Success()
     db.ShiftTypes.Add(shiftType);
     await db.SaveChangesAsync();
 
-    var conflictChecker = new ConflictChecker(db, ...);
-    var assignmentService = new AssignmentService(db, conflictChecker);
+    var shiftAssignmentService = new ShiftAssignmentService(db, ...);
 
     // Act: Create shift assignment
-    var result = await assignmentService.CreateAsync(
+    var result = await shiftAssignmentService.AssignShiftAsync(
         userId: 10,
         workDate: DateTime.Today,
         shiftTypeKey: "MORNING");
@@ -933,9 +928,9 @@ public async Task ShiftAssignmentWorkflow_CompleteFlow_Success()
     result.Should().NotBeNull();
     db.ShiftAssignments.Should().HaveCount(1);
 
-    // Assert: Verify no conflicts
-    var conflicts = await conflictChecker.CheckAsync(userId: 10);
-    conflicts.Should().BeEmpty();
+    // Assert: Verify no validation errors
+    var validation = await shiftAssignmentService.ValidateShiftAssignmentAsync(userId: 10, ...);
+    validation.Errors.Should().BeEmpty();
 }
 ```
 
@@ -1122,11 +1117,11 @@ function Invoke-Tests {
 
 ### Phase 1: Expand Service Coverage (Weeks 1-2)
 - ✅ DirectorService (DONE - 13 tests)
-- ⏳ ConflictChecker (15-20 tests)
-  - Time-off conflict detection
-  - Overlapping shift detection
-  - Rest period validation
-  - Weekly hours cap
+- ⏳ ShiftAssignmentService / ValidateShiftAssignmentAsync (15-20 tests)
+  - Time-off conflict detection (warning)
+  - Overlapping shift detection (error)
+  - Rest period validation (error)
+  - Weekly hours cap (warning, 56h default)
 - ⏳ NotificationService (10-15 tests)
   - Notification creation for each type
   - Email sending verification
@@ -1410,11 +1405,11 @@ Following the initial golden-frolicking-wombat testing phase, additional verific
 | **Database Testing** | EF Core InMemory 9.0.9 | ✅ Implemented |
 | **Integration Testing** | ASP.NET Mvc.Testing 8.0.10 | ⏳ Prepared (not used) |
 | **Code Coverage** | Coverlet 6.0.0 | ⏳ Configured (not run) |
-| **Current Coverage** | <5% | ⚠️ Expansion needed |
+| **Current Coverage** | ~20% | ⚠️ Expansion needed |
 | **CI Integration** | Build-Release.ps1 | ⚠️ Missing unit test stage |
 
 **Next Steps:**
-1. Write tests for ConflictChecker (highest priority)
+1. Write tests for ShiftAssignmentService.ValidateShiftAssignmentAsync (highest priority)
 2. Write tests for NotificationService
 3. Add unit test stage to Build-Release.ps1
 4. Expand coverage to 30% (critical services)

@@ -45,13 +45,13 @@
         const modalUrl = trigger.dataset.modalUrl;
 
         if (!modalId || !modalUrl) {
-            console.error('[ModalLoader] Missing data-modal-lazy or data-modal-url');
+            Logger.error('ModalLoader', 'Missing data-modal-lazy or data-modal-url');
             return;
         }
 
         // Check if already loading
         if (loadingModals.has(modalId)) {
-            console.log('[ModalLoader] Modal already loading:', modalId);
+            Logger.log('ModalLoader', 'Modal already loading:', modalId);
             return;
         }
 
@@ -114,7 +114,7 @@
             openModal(modalId, html);
 
         } catch (error) {
-            console.error('[ModalLoader] Failed to load modal:', error);
+            Logger.error('ModalLoader', 'Failed to load modal:', error);
 
             // Show error notification
             if (window.ErrorStates) {
@@ -182,7 +182,7 @@
             bubbles: true
         }));
 
-        console.log('[ModalLoader] Opened modal:', modalId);
+        Logger.log('ModalLoader', 'Opened modal:', modalId);
     }
 
     /**
@@ -272,7 +272,7 @@
             bubbles: true
         }));
 
-        console.log('[ModalLoader] Closed modal:', modalId);
+        Logger.log('ModalLoader', 'Closed modal:', modalId);
     }
 
     /**
@@ -299,10 +299,10 @@
             if (response.ok) {
                 const html = await response.text();
                 modalCache.set(modalId, html);
-                console.log('[ModalLoader] Preloaded modal:', modalId);
+                Logger.log('ModalLoader', 'Preloaded modal:', modalId);
             }
         } catch (error) {
-            console.warn('[ModalLoader] Failed to preload modal:', modalId, error);
+            Logger.warn('ModalLoader', 'Failed to preload modal:', modalId, error);
         }
     }
 

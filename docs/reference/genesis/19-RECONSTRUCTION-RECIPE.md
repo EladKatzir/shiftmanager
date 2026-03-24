@@ -220,7 +220,7 @@ dotnet build
 
 **Time Estimate:** 1-2 days
 
-**Objective:** Create complete database schema with 28 tables, relationships, and migrations.
+**Objective:** Create complete database schema with 70+ entities (DbSets), relationships, and migrations.
 
 ### Step 2.1: Create Domain Models
 
@@ -231,11 +231,12 @@ namespace ShiftManager.Models.Support;
 public enum UserRole
 {
     Owner = 0,
-    Director = 1,
-    Manager = 2,
-    Assigner = 3,
-    Employee = 4,
-    Trainee = 5
+    Manager = 1,
+    Employee = 2,
+    Director = 3,
+    Trainee = 4,
+    Assigner = 5,
+    AreaAdmin = 6
 }
 
 public enum RequestStatus
@@ -326,7 +327,7 @@ public class Company
 
 **Reference:**
 - `docs/genesis/03-DATABASE-SCHEMA.md` - Complete schema with relationships
-- `docs/genesis/06-DOMAIN-MODELS.md` - All 28 entities explained
+- `docs/genesis/06-DOMAIN-MODELS.md` - All 70+ entities explained
 
 ### Step 2.2: Create AppDbContext
 
@@ -424,7 +425,7 @@ dir ShiftManager.db
 sqlitebrowser ShiftManager.db
 ```
 
-**Expected Tables:** 28 tables created (Companies, Users, ShiftTypes, etc.)
+**Expected Tables:** 70+ entities created (Companies, Users, ShiftTypes, etc.)
 
 **Reference:**
 - `docs/genesis/12-DATA-MIGRATIONS.md` - All 36 migrations documented
@@ -815,7 +816,7 @@ public class LoginModel : PageModel
 
 **Time Estimate:** 3-4 days
 
-**Objective:** Implement 40+ services with business logic.
+**Objective:** Implement 130+ services with business logic.
 
 ### Step 5.1: Create Core Services
 
@@ -887,8 +888,8 @@ public class DirectorService
 }
 ```
 
-**Create 39 more services following docs/genesis/07-SERVICE-LAYER.md:**
-- ConflictChecker.cs (127 lines) - Shift conflict detection
+**Create remaining services following docs/genesis/07-SERVICE-LAYER.md:**
+- ShiftAssignmentService.cs - Shift assignment and validation (includes `ValidateShiftAssignmentAsync`)
 - NotificationService.cs (808 lines) - Notification creation & email
 - ChoreService.cs (640 lines) - Chore assignment logic
 - OnDutyService.cs (448 lines) - On-duty assignment
@@ -898,7 +899,7 @@ public class DirectorService
 - ... (33 more services)
 
 **Reference:**
-- `docs/genesis/07-SERVICE-LAYER.md` - All 40+ services documented
+- `docs/genesis/07-SERVICE-LAYER.md` - All 130+ services documented
 
 ### Step 5.2: Register Services in Program.cs
 
@@ -906,11 +907,11 @@ public class DirectorService
 ```csharp
 // Register services
 builder.Services.AddScoped<DirectorService>();
-builder.Services.AddScoped<ConflictChecker>();
+builder.Services.AddScoped<IShiftAssignmentService, ShiftAssignmentService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ChoreService>();
 builder.Services.AddScoped<OnDutyService>();
-// ... (add all 40+ services)
+// ... (add all 130+ services)
 
 // Register cache services (singleton for lifetime)
 builder.Services.AddSingleton<ShiftTypeCacheService>();
@@ -1069,12 +1070,12 @@ body {
 public class ManageModel : PageModel
 {
     private readonly AppDbContext _db;
-    private readonly ConflictChecker _conflictChecker;
+    private readonly IShiftAssignmentService _shiftAssignmentService;
 
-    public ManageModel(AppDbContext db, ConflictChecker conflictChecker)
+    public ManageModel(AppDbContext db, IShiftAssignmentService shiftAssignmentService)
     {
         _db = db;
-        _conflictChecker = conflictChecker;
+        _shiftAssignmentService = shiftAssignmentService;
     }
 
     public async Task<IActionResult> OnPostAsync(int userId, DateTime workDate, string shiftTypeKey)
@@ -1525,7 +1526,7 @@ pause
 - [ ] Manager approves time-off → auto-delete overlapping shifts
 - [ ] Manager declines time-off → no shifts deleted
 - [ ] Create swap request
-- [ ] ConflictChecker validates before swap approval
+- [ ] ShiftAssignmentService.ValidateShiftAssignmentAsync validates before swap approval
 - [ ] Notifications sent on approval/decline
 
 **5. Authorization ✓**
@@ -1683,10 +1684,10 @@ var users = await _db.Users.ToListAsync(); // Query filter applies current Compa
 **Phase Completion Checklist:**
 
 - [ ] **Phase 1:** Project foundation (solution, packages, folder structure)
-- [ ] **Phase 2:** Database schema (28 tables, migrations, relationships)
+- [ ] **Phase 2:** Database schema (70+ entities, migrations, relationships)
 - [ ] **Phase 3:** Multi-tenancy (CompanyId interceptor, query filters, middleware)
-- [ ] **Phase 4:** Authentication (cookie auth, password hashing, login page, 6 roles)
-- [ ] **Phase 5:** Service layer (40+ services, business logic)
+- [ ] **Phase 4:** Authentication (cookie auth, password hashing, login page, 7 roles)
+- [ ] **Phase 5:** Service layer (130+ services, business logic)
 - [ ] **Phase 6:** UI layer (66 Razor Pages, layout, navigation, CSS)
 - [ ] **Phase 7:** Business workflows (shift assignment, time-off, swaps, notifications)
 - [ ] **Phase 8:** Localization (en-US, he-IL, RTL CSS)
@@ -1711,8 +1712,8 @@ Read these documents in order for complete understanding:
 4. `03-DATABASE-SCHEMA.md` - Complete ERD
 5. `04-STARTUP-AND-MIDDLEWARE.md` - Program.cs deep dive
 6. `05-MULTI-TENANCY-DEEP-DIVE.md` - Row-level security
-7. `06-DOMAIN-MODELS.md` - All 28 entities
-8. `07-SERVICE-LAYER.md` - 40+ services
+7. `06-DOMAIN-MODELS.md` - All 70+ entities
+8. `07-SERVICE-LAYER.md` - 130+ services
 9. `08-UI-UX-ARCHITECTURE.md` - 66 Razor Pages
 10. `09-API-LAYER.md` - 27 REST endpoints
 11. `10-AUTHENTICATION-AND-AUTHORIZATION.md` - Auth system

@@ -96,10 +96,11 @@ All v2 components use standardized design tokens defined in `:root`:
   --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.18);
 
   /* Colors - Primary */
-  --primary-color: #007bff;
-  --primary-color-light: #4da3ff;
-  --primary-color-dark: #0056b3;
-  --primary-rgb: 0, 123, 255; /* For rgba() */
+  --primary: #1E3A5F;              /* Deep Navy */
+  --primary-hover: #162d4a;        /* Hover state */
+  --primary-soft: #e8edf3;         /* Backgrounds */
+  --primary-contrast: #FFFFFF;     /* Text on primary */
+  --primary-rgb: 30, 58, 95;      /* For rgba() */
 
   /* Animation Durations */
   --duration-fast: 0.15s;
@@ -298,7 +299,7 @@ Used for actionable elements, primary CTAs, and brand identity:
 
 ```css
 /* Solid Primary */
-background: var(--primary-color);           /* #007bff */
+background: var(--primary);                  /* #1E3A5F */
 
 /* With Transparency (Soft Air) */
 background: rgba(var(--primary-rgb), 0.05); /* Very subtle */
@@ -321,7 +322,7 @@ background: linear-gradient(135deg,
 }
 
 .metric-item.metric-shifts .metric-value {
-  color: var(--primary-color);
+  color: var(--primary);
 }
 ```
 

@@ -973,6 +973,12 @@ When an endpoint is disabled, it returns `404 Not Found` with message "This API 
 
 ## Changelog
 
+### v1.2.0 (2026-03-23)
+- Added Admin Grants Controller
+  - `GET /api/v1/admin/grants` - List grant assignments (requires admin scope)
+  - `POST /api/v1/admin/grants` - Create/modify grant assignments (requires admin scope)
+- **Note:** The internal API whitelist in `ApiAuthenticationMiddleware.cs` has grown significantly beyond Telemetry and ScopeSwitcher. Current whitelisted internal endpoints include: team-calendars, SessionStatus, Calendar, Game, GriffinCallback, Localization, ScopeSwitcher, SelectMolecule, Signup, Telemetry, ScheduleExport, Hierarchy, OnDuty, Friends, TechShift, admin/verify-grants. See `ApiAuthenticationMiddleware.IsInternalWebUiEndpoint()` for the authoritative list.
+
 ### v1.1.0 (2026-01-31)
 - Added Scope Switcher API (A-003-EXT)
   - `GET /Api/ScopeSwitcher` - Fetch user's available scopes

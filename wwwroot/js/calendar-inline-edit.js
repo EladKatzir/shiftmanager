@@ -80,7 +80,7 @@ function handleApiError(response, error = null) {
 
     if (error) {
         // Network error
-        console.error('API Error:', error);
+        Logger.error('InlineEdit', 'API Error:', error);
         showToast(getErrorMessage('networkError'), 'error');
     }
 }

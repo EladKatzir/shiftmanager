@@ -37,6 +37,8 @@ This document describes all internal API endpoints used by the ShiftManager appl
 
 These endpoints are used by client-side JavaScript and require cookie-based authentication. They are whitelisted in `ApiAuthenticationMiddleware` and do NOT require API keys.
 
+> **Note:** The following internal endpoints exist in the codebase but are not yet fully documented in this file: Hierarchy API (`/Api/Hierarchy`), SelectMolecule API (`/Api/SelectMolecule`), Friends API (`/Api/Friends`), TechShift API (`/Api/TechShift`), Signup API (`/Api/Signup`), OnDuty API (page-level at `/Api/OnDuty`). See `ApiAuthenticationMiddleware.IsInternalWebUiEndpoint()` for the full whitelist.
+
 ## Session Management
 
 ### Check Session Status

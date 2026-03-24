@@ -36,8 +36,8 @@ ShiftManager V3 introduces a **grant-based authorization system** that replaces 
 
 | Aspect | V2 (Legacy) | V3 (Current) |
 |--------|-------------|--------------|
-| **Primary mechanism** | UserRole enum (0-5) | Grant-based with scope |
-| **Permission granularity** | 6 fixed roles | 90+ grant types |
+| **Primary mechanism** | UserRole enum (0-6) | Grant-based with scope |
+| **Permission granularity** | 7 fixed roles | 125 grant types |
 | **Scope** | Company-only | Project/Area/Molecule/Company/Department/JobType |
 | **Delegation** | None | CanGive flag on grants |
 | **Role bundling** | Hardcoded | RoleTemplate with auto-grants |
@@ -306,7 +306,7 @@ public enum GrantScopeLevel
 }
 ```
 
-### System Grant Types (90+ Built-in)
+### System Grant Types (125 Built-in)
 
 **File:** `Data/SeedData/GrantTypeSeed.cs`
 
@@ -796,7 +796,7 @@ public async Task<bool> CanUserPerformActionAsync(int userId, string action, int
 
 ## Migration from UserRole
 
-### Legacy UserRole Enum (V2)
+### Legacy UserRole Enum (V2 → V3)
 
 ```csharp
 public enum UserRole
@@ -806,7 +806,8 @@ public enum UserRole
     Employee = 2,
     Director = 3,
     Trainee = 4,
-    Assigner = 5
+    Assigner = 5,
+    AreaAdmin = 6
 }
 ```
 
@@ -821,12 +822,13 @@ public enum UserRole
 
 | UserRole | RoleTemplate | Notes |
 |----------|--------------|-------|
-| Owner | Owner | Project-scoped |
-| Director | AreaAdmin | Area-scoped |
-| Manager | BRDirector | Company-scoped |
-| Assigner | Assigner | Molecule-scoped |
-| Employee | Employee | Implicit |
-| Trainee | Employee | Limited view |
+| Owner (0) | Owner | Project-scoped |
+| Manager (1) | BRDirector | Company-scoped |
+| Employee (2) | Employee | Implicit |
+| Director (3) | AreaAdmin | Area-scoped |
+| Trainee (4) | Employee | Limited view |
+| Assigner (5) | Assigner | Molecule-scoped |
+| AreaAdmin (6) | AreaAdmin | Area-scoped |
 
 ---
 

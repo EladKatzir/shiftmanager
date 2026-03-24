@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const newTheme = current === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', newTheme);
       setStorage('theme', newTheme);
-      console.log('[Shifty] Theme switched to:', newTheme);
+      Logger.log('Site', 'Theme switched to:', newTheme);
     });
   }
 
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
           await new Promise((resolve) => {
             script.onload = resolve;
             script.onerror = () => {
-              console.error('Failed to load Shift Swap game script');
+              Logger.error('Site', 'Failed to load Shift Swap game script');
               resolve();
             };
           });
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (window.ShiftSwapGame) {
         window.ShiftSwapGame.open();
       } else {
-        console.error('ShiftSwapGame not loaded!');
+        Logger.error('Site', 'ShiftSwapGame not loaded!');
       }
     }
     // Normal clicks work as usual (no special handling needed)
@@ -206,7 +206,7 @@ async function adjustStaffing(url, payload, onOk, onError, evt) {
         ? JSON.parse(rawText)
         : { message: rawText };
     } catch (parseError) {
-      console.warn('Failed to parse response, using text:', parseError);
+      Logger.warn('Site', 'Failed to parse response, using text:', parseError);
       data = { message: rawText };
     }
 
@@ -238,7 +238,7 @@ async function adjustStaffing(url, payload, onOk, onError, evt) {
       onError && onError(data);
     }
   } catch (e) {
-    console.error(e);
+    Logger.error('Site', e);
     if (button) {
       button.style.background = '#dc3545';
       button.style.color = 'white';
@@ -282,7 +282,7 @@ function showToast(message, type = 'info') {
   }
 
   // Fallback for edge cases where Toast API isn't loaded yet
-  console.warn('[showToast] Toast API not available, using fallback');
+  Logger.warn('Site', 'Toast API not available, using fallback');
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
@@ -710,7 +710,7 @@ async function createShift() {
         ? JSON.parse(rawText)
         : { message: rawText };
     } catch (parseError) {
-      console.warn('Failed to parse response, using text:', parseError);
+      Logger.warn('Site', 'Failed to parse response, using text:', parseError);
       data = { message: rawText };
     }
 
@@ -732,7 +732,7 @@ async function createShift() {
     window.location.reload();
 
   } catch (error) {
-    console.error('Error creating shift:', error);
+    Logger.error('Site', 'Error creating shift:', error);
     showToast(error.message || window.AppLocalizer.FailedToCreateShift, 'error');
   }
 }
@@ -909,7 +909,7 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
             alert((window.AppLocalizer?.Error_Prefix || 'Error: ') + result.error);
         }
     } catch (error) {
-        console.error('Error deleting shift instance:', error);
+        Logger.error('Site', 'Error deleting shift instance:', error);
         alert(window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
     }
 }
@@ -967,7 +967,7 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       commandPaletteState.recentPages = JSON.parse(stored);
     } catch (e) {
-      console.warn('Failed to parse recent pages:', e);
+      Logger.warn('Site', 'Failed to parse recent pages:', e);
       commandPaletteState.recentPages = [];
     }
   }
@@ -1217,7 +1217,7 @@ function addToRecentPages(url) {
   try {
     localStorage.setItem('commandPaletteRecent', JSON.stringify(commandPaletteState.recentPages));
   } catch (e) {
-    console.warn('Failed to save recent pages:', e);
+    Logger.warn('Site', 'Failed to save recent pages:', e);
   }
 }
 

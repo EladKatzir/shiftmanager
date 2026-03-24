@@ -257,13 +257,13 @@ Manually verify shift durations on the 2 DST transition dates per year (spring-f
 
 ---
 
-## 5. No User Data Export (GDPR-style)
+## 5. ~~No User Data Export (GDPR-style)~~ — RESOLVED
 
-**Status:** Low Priority for Military Use
-**Impact:** No self-service "export my data" feature for individual users.
+**Status:** Resolved (implemented in v3.1.x audit fixes)
+**Impact:** Owner-level user data export with batch support is now available.
 
-### Workaround
-Owner can export user data via Admin > Users CSV export or Owner > Data Lifecycle archive.
+### Resolution
+`Pages/Owner/Hub/ExportUserData` provides single-user and batch multi-user JSON export with selection UI, search/filter, and select-all/deselect-all. Accessible via Owner Hub > Export User Data. Employee self-service export is still not implemented (owner-initiated only).
 
 ---
 
@@ -371,6 +371,6 @@ Do not modify user CompanyId directly. Instead: deactivate user in old company, 
 
 ---
 
-**Document Version:** 3.0
-**Last Updated:** 2026-02-08
-**Related Issues:** TEST-REPORT-ISSUE-005, Pre-Release QA Audit 2026-02
+**Document Version:** 3.1
+**Last Updated:** 2026-03-23
+**Related Issues:** TEST-REPORT-ISSUE-005, Pre-Release QA Audit 2026-02, v3.1.x Audit Fixes 2026-03

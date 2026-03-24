@@ -455,7 +455,7 @@
          */
         async retry() {
             if (this.retryCount >= this.maxRetries) {
-                console.warn(`[PartialData] Section ${this.id} exceeded max retries`);
+                Logger.warn('PartialData', `Section ${this.id} exceeded max retries`);
                 // Still try, but warn
             }
             return this.load();
@@ -658,7 +658,7 @@
         async loadSection(id) {
             const section = this.sections.get(id);
             if (!section) {
-                console.warn(`[PartialData] Section ${id} not found`);
+                Logger.warn('PartialData', `Section ${id} not found`);
                 return { success: false, error: new Error('Section not found') };
             }
             return section.load();
@@ -1198,7 +1198,7 @@
         // Listen for api:retryfailed events from error-states.js
         window.addEventListener('api:retryfailed', (event) => {
             const { failedRequests } = event.detail;
-            console.log('[PartialData] Received retry request for:', failedRequests);
+            Logger.log('PartialData', 'Received retry request for:', failedRequests);
             // Managers will handle their own retries through their registered sections
         });
 

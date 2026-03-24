@@ -100,10 +100,10 @@
                 const data = await response.json();
                 handleAuthenticatedState(data);
             } else {
-                console.error('Session check failed with status:', response.status);
+                Logger.error('Session', 'Session check failed with status:', response.status);
             }
         } catch (error) {
-            console.error('Session check failed:', error);
+            Logger.error('Session', 'Session check failed:', error);
             // Don't show notification for network errors
             // Keep current state and try again on next poll
         }
@@ -116,7 +116,7 @@
         secondsRemaining = data.secondsRemaining;
         const minutesRemaining = data.minutesRemaining;
 
-        console.log(`Session check: ${data.state}, ${minutesRemaining} minutes remaining`);
+        Logger.log('Session', `Session check: ${data.state}, ${minutesRemaining} minutes remaining`);
 
         // Check if we've crossed into critical threshold
         const isCritical = secondsRemaining <= CRITICAL_THRESHOLD;
@@ -133,7 +133,7 @@
             // Check if we need to show critical warning (second warning at 15 minutes)
             if (isCritical && !criticalWarningShown && warningDismissed) {
                 // User dismissed first warning, now show critical warning
-                console.log('Showing critical warning (15 minutes remaining)');
+                Logger.log('Session', 'Showing critical warning (15 minutes remaining)');
                 criticalWarningShown = true;
                 warningDismissed = false; // Reset so notification shows
                 showWarningNotification(minutesRemaining);
@@ -148,7 +148,7 @@
      * Transition to WARNING state
      */
     function transitionToWarning(minutesRemaining) {
-        console.log('Transitioning to WARNING state');
+        Logger.log('Session', 'Transitioning to WARNING state');
         sessionState = 'warning';
         currentPollInterval = POLLING_INTERVALS.WARNING;
 
@@ -164,7 +164,7 @@
      * Transition to OK state
      */
     function transitionToOk() {
-        console.log('Transitioning to OK state (session extended)');
+        Logger.log('Session', 'Transitioning to OK state (session extended)');
         sessionState = 'ok';
         currentPollInterval = POLLING_INTERVALS.OK;
         warningDismissed = false; // Reset dismissal flag
@@ -181,7 +181,7 @@
             return; // Already handled
         }
 
-        console.log('Transitioning to EXPIRED state');
+        Logger.log('Session', 'Transitioning to EXPIRED state');
         sessionState = 'expired';
         stopPolling();
         showExpiredNotification();
@@ -301,7 +301,7 @@
      * Extend session (makes request to trigger sliding expiration)
      */
     async function extendSession() {
-        console.log('Extending session...');
+        Logger.log('Session', 'Extending session...');
 
         // Show loading state
         const notification = document.getElementById('session-warning-notification');
@@ -324,12 +324,12 @@
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Session extended successfully');
+                Logger.log('Session', 'Session extended successfully');
 
                 // Update state based on response
                 handleAuthenticatedState(data);
             } else {
-                console.error('Failed to extend session:', response.status);
+                Logger.error('Session', 'Failed to extend session:', response.status);
                 // If we got 401, transition to expired
                 if (response.status === 401) {
                     handleExpiredState();
@@ -345,7 +345,7 @@
                 }
             }
         } catch (error) {
-            console.error('Error extending session:', error);
+            Logger.error('Session', 'Error extending session:', error);
             // Restore button state
             if (notification) {
                 const button = notification.querySelector('.btn-primary');
@@ -364,7 +364,7 @@
         // Don't redirect if already on login page (prevents infinite loop)
         const currentPath = window.location.pathname.toLowerCase();
         if (currentPath.includes('/auth/login')) {
-            console.warn('Already on login page, skipping redirect to prevent infinite loop');
+            Logger.warn('Session', 'Already on login page, skipping redirect to prevent infinite loop');
             return;
         }
 
@@ -401,7 +401,7 @@
     function restartPolling() {
         stopPolling();
         if (currentPollInterval > 0) {
-            console.log(`Restarting polling with ${currentPollInterval / 1000}s interval`);
+            Logger.log('Session', `Restarting polling with ${currentPollInterval / 1000}s interval`);
             pollTimer = setInterval(checkSession, currentPollInterval);
         }
     }
@@ -571,10 +571,10 @@
      */
     function handleVisibilityChange() {
         if (document.hidden) {
-            console.log('Tab hidden, pausing session checks');
+            Logger.log('Session', 'Tab hidden, pausing session checks');
             stopPolling();
         } else {
-            console.log('Tab visible, resuming session checks');
+            Logger.log('Session', 'Tab visible, resuming session checks');
             checkSession(); // Check immediately
             restartPolling();
         }
@@ -584,14 +584,14 @@
      * Initialize session checking
      */
     function initialize() {
-        console.log('Initializing session management system');
+        Logger.log('Session', 'Initializing session management system');
 
         // Don't run on login/signup pages (defense in depth)
         const currentPath = window.location.pathname.toLowerCase();
         if (currentPath.includes('/auth/login') ||
             currentPath.includes('/auth/signup') ||
             currentPath.includes('/auth/forgotpassword')) {
-            console.log('Skipping session check on auth page:', currentPath);
+            Logger.log('Session', 'Skipping session check on auth page:', currentPath);
             return;
         }
 

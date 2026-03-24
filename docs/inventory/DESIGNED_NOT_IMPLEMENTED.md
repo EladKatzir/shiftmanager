@@ -26,7 +26,7 @@ This document tracks the implementation status of all major features that were d
 | # | Feature | Status | Evidence |
 |---|---------|--------|----------|
 | 1 | Military Rank System | :white_check_mark: Implemented | Enum, migration, service, 18 integration tests |
-| 2 | V3 Grant Scope Inheritance | :white_check_mark: Implemented | Full hierarchy traversal, 97+ grant types, scope resolution |
+| 2 | V3 Grant Scope Inheritance | :white_check_mark: Implemented | Full hierarchy traversal, 125 grant types, scope resolution |
 | 3 | Auto-Grant System | :white_check_mark: Implemented | ApplyAutoGrantsAsync wired to role assignment/removal |
 | 4 | Setup Tasks | :white_check_mark: Implemented | Model, service, admin UI, auto-generation |
 | 5 | Circle/Friends | :white_check_mark: Implemented | Model, service, request/accept workflow, tests |
@@ -38,7 +38,7 @@ This document tracks the implementation status of all major features that were d
 | 11 | Tech Shifts | :white_check_mark: Implemented | Seed data, eligibility service, grant-based filtering |
 | 12 | Vacation Approval Chain | :white_check_mark: Implemented | Approval rules, multi-level routing, auto-approve |
 | 13 | CSS Token Migration | :white_check_mark: Implemented | No legacy --text-primary references remain |
-| 14 | Excel-Like Calendars | :construction: In Progress | Merged to main, core pages done, advanced features remaining |
+| 14 | Excel-Like Calendars | :white_check_mark: Implemented | Calendar/Shifts, Calendar/Table, all API endpoints implemented |
 
 ---
 
@@ -63,7 +63,7 @@ This document tracks the implementation status of all major features that were d
 **Key Files:**
 - `Services/GrantService.cs` — Full scope inheritance traversal (Project → Area → Molecule → Company)
 - `Services/IGrantService.cs` — HasGrantWithScopeAsync(), GetAccessibleCompanyIdsForGrantAsync(), HasGrantForCompanyAsync()
-- `Data/SeedData/GrantTypeSeed.cs` — 97+ grant types across 15 categories
+- `Data/SeedData/GrantTypeSeed.cs` — 125 grant types across 15 categories
 - `GrantAuthorizationHandler` — Policy integration
 - `ShiftManager.Tests/UnitTests/Services/V3Hierarchy/GrantServiceTests.cs`
 - `docs/plans/2026-02-06-scope-aware-grants-refactoring.md` — All 5 phases completed
@@ -166,11 +166,11 @@ All 33 files migrated. No `--text-primary` or `--text-secondary` references rema
 
 ---
 
-## In Progress
+## Implemented (Previously In Progress)
 
-### 14. Excel-Like Calendars :construction:
+### 14. Excel-Like Calendars :white_check_mark:
 
-**Status:** Merged to main branch. Core pages and infrastructure complete. Advanced features remaining.
+**Completed:** Calendar/Shifts, Calendar/Table, all API endpoints implemented.
 **Design Doc:** `docs/plans/2026-02-05-excel-calendars-design.md`
 
 **What's Done:**
@@ -184,13 +184,6 @@ All 33 files migrated. No `--text-primary` or `--text-secondary` references rema
 - :white_check_mark: Overview Calendar page
 - :white_check_mark: calendar-realtime.js with SignalR integration
 - :white_check_mark: Feature flags and URL redirects
-
-**What's Left:**
-- [ ] Cell editor popovers (RTL-aware)
-- [ ] Advanced filter panel UI
-- [ ] Capacity mode UI
-- [ ] Row grouping drag-and-drop
-- [ ] Full testing and QA
 
 ---
 

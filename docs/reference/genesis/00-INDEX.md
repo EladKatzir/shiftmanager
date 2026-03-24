@@ -93,19 +93,19 @@ Follow the reconstruction guide:
 |--------|-------|
 | **Technology Stack** | .NET 8.0, ASP.NET Core, EF Core 9.0.9 |
 | **Database** | SQLite (single-file, air-gapped ready) |
-| **Database Tables** | **54 tables** (81 DbSets incl. join tables) |
+| **Database Tables** | **70+ entities** (DbSets incl. join tables) |
 | **EF Core Migrations** | 38+ migrations (Sept 2025 - Present) |
-| **Razor Pages** | **110+ pages** *(incl. V3 Organization, Owner Console)* |
+| **Razor Pages** | **158 Razor pages** *(incl. V3 Organization, Owner Console)* |
 | **REST API Endpoints** | 27 external + 12 internal endpoints |
-| **Injectable Services** | **97 services** *(V3 update: from 63)* |
+| **Injectable Services** | **130+ services** *(V3 update: from 63)* |
 | **API Controllers** | 10 REST controllers + 1 MVC controller |
-| **View Components** | 7 reusable UI components |
-| **Tag Helpers** | 3 custom tag helpers |
-| **User Roles** | 6 legacy roles + **11 V3 role templates** |
-| **Grant Types** | **90+ grant types** *(V3 new)* |
+| **View Components** | 19 ViewComponents |
+| **Tag Helpers** | 5 tag helpers |
+| **User Roles** | 7 legacy roles + **11 V3 role templates** |
+| **Grant Types** | **125 grant types** *(V3 new)* |
 | **Supported Languages** | English (en-US), Hebrew (he-IL) with RTL support |
-| **CSS Lines** | 5,375 lines (100% custom, no framework) |
-| **JavaScript Lines** | 2,700+ lines (100% vanilla, no jQuery/React/Vue) |
+| **CSS Lines** | 23,000+ lines across 15 files (100% custom, no framework) |
+| **JavaScript Lines** | 19,000+ lines across 38 files (100% vanilla, no jQuery/React/Vue) |
 | **Test Project** | xUnit, Moq, FluentAssertions |
 | **Build Pipeline Stages** | 10-stage automated release |
 | **Deployment Package Size** | 111 MB (self-contained, 378 files) |
@@ -132,7 +132,7 @@ Follow the reconstruction guide:
 
 - **Multi-Tenancy:** Row-level security via EF Core global query filters + CompanyIdInterceptor
 - **V3 Organizational Hierarchy:** Project → Area → Molecule → Company/Department structure *(NEW)*
-- **V3 Grant-Based Authorization:** 90+ grant types with hierarchical scoping *(NEW)*
+- **V3 Grant-Based Authorization:** 125 grant types with hierarchical scoping *(NEW)*
 - **V3 Role Templates:** 11 built-in templates with auto-grant application *(NEW)*
 - **Air-Gapped First:** Self-contained deployment, no internet required, USB transfer support
 - **Security:** PBKDF2 password hashing (100k iterations), grant + role-based access control, audit trails
@@ -152,7 +152,7 @@ Follow the reconstruction guide:
 **Contents:**
 - Problem statement: Why shift scheduling in air-gapped environments?
 - Target users and use cases
-- 6 user roles with real-world scenarios
+- 7 user roles with real-world scenarios
 - Business requirements and constraints
 - Why .NET? Why SQLite? Why no frameworks?
 - Competitive landscape
@@ -171,9 +171,9 @@ Follow the reconstruction guide:
 - Architectural style: Monolithic Razor Pages with service layer
 - Technology stack deep dive (.NET 8.0, EF Core 9.0.9, SQLite, SixLabors.ImageSharp)
 - Layering strategy:
-  - Presentation: Razor Pages (66 pages)
-  - Service Layer: Business logic (40+ services)
-  - Data Access: EF Core + DbContext (28 tables)
+  - Presentation: Razor Pages (158 pages)
+  - Service Layer: Business logic (130+ services)
+  - Data Access: EF Core + DbContext (70+ entities)
   - Infrastructure: Middleware, caching, email, ADFS
 - Project structure (`ShiftManager.csproj` + `ShiftManager.Tests.csproj`)
 - Dependency injection philosophy
@@ -193,7 +193,7 @@ Follow the reconstruction guide:
 **Purpose:** Complete database documentation
 
 **Contents:**
-- **Diagram:** [database-erd.mmd](diagrams/database-erd.mmd) - Complete ERD with all 28 tables
+- **Diagram:** [database-erd.mmd](diagrams/database-erd.mmd) - Complete ERD with all 70+ entities
 - Table-by-table breakdown with fields, types, constraints
 - Relationships: one-to-many, many-to-many, nullable FKs
 - CompanyId scoping rules (which tables are tenant-scoped, exceptions)
@@ -210,7 +210,7 @@ Follow the reconstruction guide:
 ---
 
 #### [06-DOMAIN-MODELS.md](06-DOMAIN-MODELS.md) (2,000 lines)
-**Purpose:** 28 entities explained in detail
+**Purpose:** 70+ entities explained in detail
 
 **Contents:**
 - Entity-by-entity documentation:
@@ -298,7 +298,7 @@ Follow the reconstruction guide:
   - Database context with CompanyIdInterceptor
   - Authentication (cookie-based, 7-day sliding expiration)
   - Authorization policies (IsManagerOrAdmin, IsAdmin, CanEditChores, etc.)
-  - Core services (40+ services: AnalyticsService, ApiKeyService, AuditLogService, etc.)
+  - Core services (130+ services: AnalyticsService, ApiKeyService, AuditLogService, etc.)
   - Background services (DailyNotificationJob)
   - Health checks (EF Core database health check)
   - Database seeding (SeedData class)
@@ -1047,7 +1047,7 @@ Follow the reconstruction guide:
     dotnet add package Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore --version 8.0.0
     ```
 - **Phase 2: Database Layer**
-  - Create `Models/` folder with all 28 entities
+  - Create `Models/` folder with all 70+ entities
   - Create `Data/AppDbContext.cs` (592 lines, copy from [06-DOMAIN-MODELS.md](#06-domain-modelsmd))
   - Create `Data/CompanyIdInterceptor.cs` (copy from [05-MULTI-TENANCY-DEEP-DIVE.md](#05-multi-tenancy-deep-divemd))
   - Configure EF Core in `Program.cs`:
@@ -1075,13 +1075,13 @@ Follow the reconstruction guide:
     ```
 - **Phase 4: Service Layer**
   - Create `Services/` folder
-  - Implement 40+ services (copy from [07-SERVICE-LAYER.md](#07-service-layermd))
+  - Implement 130+ services (copy from [07-SERVICE-LAYER.md](#07-service-layermd))
   - Register DI in `Program.cs` (copy from [04-STARTUP-AND-MIDDLEWARE.md](#04-startup-and-middlewaremd))
 - **Phase 5: Authentication**
   - Configure ASP.NET Core Identity (cookie authentication)
   - Implement password hashing (PBKDF2, 100k iterations)
   - Create auth pages: Login, Signup, Logout, ForgotPassword
-  - Implement role-based authorization (6 roles, 8 policies)
+  - Implement role-based authorization (7 roles, 8 policies)
   - Add Griffin ADFS integration (GriffinService, GriffinAuthenticationMiddleware)
 - **Phase 6: UI Layer**
   - Create `Pages/` folder structure (66 Razor Pages)
@@ -1149,12 +1149,12 @@ All diagrams are in Mermaid format (render in GitHub, VS Code, or any Mermaid-co
 | Diagram | Purpose | Referenced In |
 |---------|---------|---------------|
 | [architecture-overview.mmd](diagrams/architecture-overview.mmd) | C4 component diagram (presentation → service → data → infrastructure) | [02-ARCHITECTURE-BLUEPRINT.md](#02-architecture-blueprintmd) |
-| [database-erd.mmd](diagrams/database-erd.mmd) | Complete ERD with all 28 tables, relationships, cardinality | [03-DATABASE-SCHEMA.md](#03-database-schemamd) |
+| [database-erd.mmd](diagrams/database-erd.mmd) | Complete ERD with all 70+ entities, relationships, cardinality | [03-DATABASE-SCHEMA.md](#03-database-schemamd) |
 | [multi-tenant-flow.mmd](diagrams/multi-tenant-flow.mmd) | Sequence diagram of tenant scoping (request → interceptor → query filter) | [05-MULTI-TENANCY-DEEP-DIVE.md](#05-multi-tenancy-deep-divemd) |
 | [request-approval-flow.mmd](diagrams/request-approval-flow.mmd) | Time-off and swap request workflows | [14-WORKFLOWS-AND-BUSINESS-LOGIC.md](#14-workflows-and-business-logicmd) |
 | [authentication-flow.mmd](diagrams/authentication-flow.mmd) | Login flows (local auth + Griffin ADFS) | [10-AUTHENTICATION-AND-AUTHORIZATION.md](#10-authentication-and-authorizationmd) |
 | [middleware-pipeline.mmd](diagrams/middleware-pipeline.mmd) | ASP.NET middleware order (error handling → static files → routing → auth → endpoints) | [04-STARTUP-AND-MIDDLEWARE.md](#04-startup-and-middlewaremd) |
-| [service-dependency-graph.mmd](diagrams/service-dependency-graph.mmd) | DI relationships between 40+ services | [07-SERVICE-LAYER.md](#07-service-layermd) |
+| [service-dependency-graph.mmd](diagrams/service-dependency-graph.mmd) | DI relationships between 130+ services | [07-SERVICE-LAYER.md](#07-service-layermd) |
 | [deployment-architecture.mmd](diagrams/deployment-architecture.mmd) | Air-gapped deployment topology (dev machine → USB → production server) | [15-AIR-GAPPED-DEPLOYMENT.md](#15-air-gapped-deploymentmd) |
 
 ---

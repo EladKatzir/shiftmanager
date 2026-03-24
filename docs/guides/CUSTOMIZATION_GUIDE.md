@@ -8,21 +8,23 @@ This guide explains how to customize and modify the redesigned UI to match your 
 
 ### Changing Colors
 
-All colors are defined using CSS variables. To change colors, edit `wwwroot/css/site.css` lines 1-75.
+All colors are defined using CSS variables. To change colors, edit `wwwroot/css/tokens.css`.
 
-**Light Theme Colors** (lines 6-28):
+**Light Theme Colors**:
 ```css
 :root {
-  --bg: #f5f7fb;              /* Page background */
-  --surface: #ffffff;          /* Card/container background */
-  --surface-soft: #f0f2f8;     /* Subtle backgrounds */
+  --bg: #F8F9FB;               /* Page background */
+  --surface: #FFFFFF;           /* Card/container background */
+  --surface-soft: #F0F4F8;     /* Subtle backgrounds */
   --text: #111318;             /* Primary text color */
   --muted: #6b7280;            /* Secondary text color */
-  --primary: #2563eb;          /* Primary brand color */
-  --primary-soft: #e0ecff;     /* Primary background tint */
-  --danger: #dc2626;           /* Destructive actions */
-  --success: #16a34a;          /* Success states */
-  --warning: #f59e0b;          /* Warning states */
+  --primary: #1E3A5F;          /* Deep Navy - primary brand color */
+  --primary-hover: #162d4a;    /* Primary hover state */
+  --primary-soft: #e8edf3;     /* Primary background tint */
+  --primary-contrast: #FFFFFF; /* Text on primary backgrounds */
+  --danger: #9B2C2C;           /* Destructive actions */
+  --success: #2D6A4F;          /* Success states */
+  --warning: #D4A017;          /* Warning states */
   --border: #e2e8f0;           /* Borders and dividers */
 }
 ```
@@ -460,7 +462,7 @@ Add all necessary keys to both `.resx` files.
 
 ### Scenario 1: Change Primary Color to Red
 
-**File**: `wwwroot/css/site.css`
+**File**: `wwwroot/css/tokens.css`
 
 ```css
 :root {

@@ -16,7 +16,7 @@
 
     // Check if Localization API is available
     if (!window.Localization) {
-        console.warn('[Localization Attributes] window.Localization API not found. Attributes will not be localized.');
+        Logger.warn('LocAttrs', 'window.Localization API not found. Attributes will not be localized.');
         return;
     }
 
@@ -114,13 +114,13 @@
                     if (value) {
                         element.setAttribute(attr, value);
                     } else {
-                        console.warn(`[Localization Attributes] No value found for key: ${key}`);
+                        Logger.warn('LocAttrs', `No value found for key: ${key}`);
                     }
                 });
             });
 
         }).catch(error => {
-            console.error('[Localization Attributes] Failed to fetch localizations:', error);
+            Logger.error('LocAttrs', 'Failed to fetch localizations:', error);
         });
     }
 
@@ -129,7 +129,7 @@
      * Makes attributes editable when in edit mode
      */
     function initAttributeEditMode() {
-        console.log('[Localization Attributes] Edit mode active - enabling attribute editing');
+        Logger.log('LocAttrs', 'Edit mode active - enabling attribute editing');
 
         // Add click handlers to elements with data-loc-attr-*
         const elements = document.querySelectorAll('[data-loc-attr-title], [data-loc-attr-placeholder], [data-loc-attr-aria-label], [data-loc-attr-aria-description]');
@@ -159,7 +159,7 @@
             }, true);
         });
 
-        console.log(`[Localization Attributes] Attached edit handlers to ${elements.length} elements`);
+        Logger.log('LocAttrs', `Attached edit handlers to ${elements.length} elements`);
     }
 
     /**
@@ -258,7 +258,7 @@
                     // will be added when draft workflow is implemented for attribute editing.
                     element.setAttribute(attr.name, newValue);
 
-                    console.log(`[Localization Attributes] Updated ${attr.name}: ${attr.key} = ${newValue}`);
+                    Logger.log('LocAttrs', `Updated ${attr.name}: ${attr.key} = ${newValue}`);
                 }
             });
 

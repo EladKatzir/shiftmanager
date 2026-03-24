@@ -4,7 +4,7 @@ This document provides guidelines for safely applying and rolling back database 
 
 ## Overview
 
-ShiftManager uses Entity Framework Core migrations to manage database schema changes. As of October 2025, there are **11 migrations** that have been applied to the production database.
+ShiftManager uses Entity Framework Core migrations to manage database schema changes. As of March 2026, there are approximately **70+ migrations** (72 migration files, 141 total including Designer files) that have been applied to the production database.
 
 ## Known Issues
 

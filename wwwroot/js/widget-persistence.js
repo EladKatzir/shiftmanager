@@ -74,7 +74,7 @@
   function toggleWidget(widget, header, force) {
     const widgetId = widget.dataset.widgetId;
     if (!widgetId) {
-      console.warn('Widget missing data-widget-id attribute:', widget);
+      Logger.warn('Widgets', 'Widget missing data-widget-id attribute:', widget);
       return;
     }
 
@@ -109,14 +109,14 @@
   function initWidget(widget) {
     const widgetId = widget.dataset.widgetId;
     if (!widgetId) {
-      console.warn('Widget missing data-widget-id attribute:', widget);
+      Logger.warn('Widgets', 'Widget missing data-widget-id attribute:', widget);
       return;
     }
 
     // Find the direct header (not nested widget headers)
     const header = widget.querySelector(':scope > .widget__header');
     if (!header) {
-      console.warn('Widget missing header:', widget);
+      Logger.warn('Widgets', 'Widget missing header:', widget);
       return;
     }
 

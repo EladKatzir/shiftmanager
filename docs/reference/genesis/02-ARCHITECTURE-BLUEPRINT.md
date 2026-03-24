@@ -203,7 +203,7 @@ ShiftManager follows a **classic layered monolithic architecture** optimized for
 **Definition:** Business logic encapsulated in loosely-coupled, highly-cohesive services.
 
 **Service Categories:**
-1. **Core Business Services:** ConflictChecker, NotificationService, AnalyticsService, etc.
+1. **Core Business Services:** ShiftAssignmentService, NotificationService, AnalyticsService, etc.
 2. **Multi-Tenancy Services:** TenantResolver, CompanyContext, CompanyFilterService
 3. **Infrastructure Services:** MailService, EncryptionService, GriffinService
 4. **API Services:** UserApiService, ShiftApiService, TimeOffApiService, etc.
@@ -218,12 +218,12 @@ ShiftManager follows a **classic layered monolithic architecture** optimized for
 
 **Example Service:**
 ```csharp
-public class ConflictChecker
+public class ShiftAssignmentService
 {
     private readonly AppDbContext _db;
     private readonly IAppConfigCacheService _configCache;
 
-    public ConflictChecker(AppDbContext db, IAppConfigCacheService configCache)
+    public ShiftAssignmentService(AppDbContext db, IAppConfigCacheService configCache)
     {
         _db = db;
         _configCache = configCache;
@@ -400,7 +400,7 @@ public class UsersApiController : ControllerBase
 ```
 Services/
 ├── Business/                          # Core business logic
-│   ├── ConflictChecker.cs
+│   ├── ShiftAssignmentService.cs
 │   ├── NotificationService.cs
 │   ├── AnalyticsService.cs
 │   ├── ChoreService.cs
@@ -451,25 +451,25 @@ Services/
 - **Service Layer Pattern:** Encapsulate business logic in services
 - **Repository Pattern (Implicit):** EF Core DbContext serves as repository
 - **Unit of Work Pattern (Implicit):** EF Core DbContext tracks changes, SaveChanges commits
-- **Strategy Pattern:** ConflictChecker uses different strategies for shift types
+- **Strategy Pattern:** ShiftAssignmentService uses different validation strategies for shift types
 
 **Example Service with Business Logic:**
 ```csharp
 public class TimeOffRequestService
 {
     private readonly AppDbContext _db;
-    private readonly IConflictChecker _conflictChecker;
+    private readonly IShiftAssignmentService _shiftAssignmentService;
     private readonly INotificationService _notificationService;
     private readonly ILogger<TimeOffRequestService> _logger;
 
     public TimeOffRequestService(
         AppDbContext db,
-        IConflictChecker conflictChecker,
+        IShiftAssignmentService shiftAssignmentService,
         INotificationService notificationService,
         ILogger<TimeOffRequestService> logger)
     {
         _db = db;
-        _conflictChecker = conflictChecker;
+        _shiftAssignmentService = shiftAssignmentService;
         _notificationService = notificationService;
         _logger = logger;
     }
@@ -800,7 +800,7 @@ services.AddDbContext<AppDbContext>((serviceProvider, opt) => {
 });
 
 // Business Logic Services (Scoped)
-services.AddScoped<IConflictChecker, ConflictChecker>();
+services.AddScoped<IShiftAssignmentService, ShiftAssignmentService>();
 services.AddScoped<INotificationService, NotificationService>();
 services.AddScoped<IDirectorService, DirectorService>();
 // ... (35+ more scoped services)
@@ -1319,8 +1319,8 @@ User assigns shift →
       Anti-Forgery Validation →
         CompanyContextMiddleware (set tenant context) →
           TableModel.OnPostAssignAsync() →
-            ConflictChecker.HasConflictAsync() → [Validate no overlaps] →
-              ShiftAssignmentService.CreateAssignmentAsync() →
+            ShiftAssignmentService.ValidateShiftAssignmentAsync() → [Validate no overlaps] →
+              ShiftAssignmentService.AssignShiftAsync() →
                 DbContext.ShiftAssignments.Add(assignment) →
                   CompanyIdInterceptor.SavingChangesAsync() → [Auto-set CompanyId] →
                     DbContext.SaveChangesAsync() →
@@ -1362,7 +1362,7 @@ User assigns shift →
 
 ### Behavioral Patterns
 
-11. **Strategy Pattern:** ConflictChecker uses different strategies for shift types (OFFLINE no conflict)
+11. **Strategy Pattern:** ShiftAssignmentService uses different validation strategies for shift types (OFFLINE/HOME exempt from some checks)
 12. **Observer Pattern:** NotificationService notifies users on events
 13. **Template Method Pattern:** LocalizedPageModel base class for Razor Pages
 

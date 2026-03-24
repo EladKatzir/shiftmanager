@@ -670,8 +670,8 @@ module-al-coverage-sweep
 
 | ID | Feature Ref | Test Name | Type | File | Priority |
 |----|------------|-----------|------|------|----------|
-| AF-U01 | 36.1 | ConflictChecker detects overlap within RestHours | Unit | `ConflictCheckerTests.cs` | P0 |
-| AF-U02 | 36.1 | ConflictChecker allows if gap >= RestHours | Unit | `ConflictCheckerTests.cs` | P0 |
+| AF-U01 | 36.1 | ShiftAssignmentService detects overlap within RestHours | Unit | `ShiftAssignmentServiceTests.cs` | P0 |
+| AF-U02 | 36.1 | ShiftAssignmentService allows if gap >= RestHours | Unit | `ShiftAssignmentServiceTests.cs` | P0 |
 | AF-U03 | 36.2 | BusyUserService returns busy for vacation day | Unit | `BusyUserServiceTests.cs` | P1 |
 | AF-U04 | 36.2 | BusyUserService returns busy for assigned shift | Unit | `BusyUserServiceTests.cs` | P1 |
 | AF-U05 | 36.3 | ConcurrencyService detects simultaneous edits | Unit | Existing `ConcurrencyServiceTests.cs` | P0 |
@@ -826,8 +826,8 @@ module-al-coverage-sweep
 
 ## New xUnit Test Specifications
 
-### ConflictCheckerTests.cs (NEW)
-**File**: `ShiftManager.Tests/UnitTests/Services/ConflictCheckerTests.cs`
+### ShiftAssignmentServiceTests.cs (replaces ConflictCheckerTests — ConflictChecker was deleted and unified into ShiftAssignmentService)
+**File**: `ShiftManager.Tests/UnitTests/Services/ShiftAssignmentServiceTests.cs`
 **Covers**: 36.1
 
 | ID | Test Name | Priority |
@@ -1098,7 +1098,7 @@ This matrix maps every FEATURE-INVENTORY section to its test cases.
 | **33. Job Types/Groupings** | 33.1-33.2 | AD | AD-21 to AD-25, AD-28 | — | — | In AD |
 | **34. Team Calendars** | 34.1 | AC | AC-01 to AC-08 | TeamCalendarServiceTests (new) | TC-01 to TC-04 | NEW MODULE AC |
 | **35. Tech Shifts** | 35.1-35.2 | AL | AL-18 | TechShiftServiceTests (new) | TS-01 to TS-03 | NEW (xUnit primary) |
-| **36. Conflict Detection** | 36.1-36.3 | AF | AF-08/09 | ConflictCheckerTests, BusyUserServiceTests (new) | CC/BU tests | NEW (xUnit primary) |
+| **36. Conflict Detection** | 36.1-36.3 | AF | AF-08/09 | ShiftAssignmentServiceTests, BusyUserServiceTests (new) | CC/BU tests | NEW (xUnit primary) |
 | **37. Telemetry** | 37.1 | AK | AK-05 to AK-07 | — | — | NEW MODULE AK |
 | **38. Skeleton Loading** | 38.1 | AJ | AJ-01 | — | — | In AJ |
 | **39. Sidebar/Nav** | 39.1-39.2 | Every-Button, Q | existing 33 + 33 tests | — | — | COMPLETE |
@@ -1125,7 +1125,7 @@ This matrix maps every FEATURE-INVENTORY section to its test cases.
 - Module AE: Security headers (AE-01 to AE-07) — 7 tests
 - Module AA: Grant enforcement (AA-09, AA-10, AA-13, AA-14, AA-22, AA-25) — 6 tests
 - Module AF: SignalR cross-tenant (AF-02, AF-07) — 2 tests
-- xUnit: ConflictCheckerTests (CC-01 to CC-03) — 3 tests
+- xUnit: ShiftAssignmentServiceTests (CC-01 to CC-03) — 3 tests (Note: ConflictChecker was deleted; all validation is now in `ShiftAssignmentService.ValidateShiftAssignmentAsync`)
 - xUnit: GrantAuthorizationTests (AA-U01 to AA-U06) — 6 tests
 - Extend Module B: Auth return URL, cookie security (B-13, B-19) — 2 tests
 - Module AE: CSRF rejection on new handlers (AE-12) — 1 test
@@ -1757,10 +1757,11 @@ Plus: Q-nologin tests for unauthenticated access (6 tests).
 
 This appendix provides implementation-ready specifications for all new xUnit test files.
 
-### ConflictCheckerTests.cs
+### ShiftAssignmentServiceTests.cs (replaces deleted ConflictCheckerTests)
 
 ```csharp
-// File: ShiftManager.Tests/UnitTests/Services/ConflictCheckerTests.cs
+// File: ShiftManager.Tests/UnitTests/Services/ShiftAssignmentServiceTests.cs
+// Note: ConflictChecker was deleted. All shift validation is now unified in ShiftAssignmentService.ValidateShiftAssignmentAsync.
 // Pattern: InMemory DB, Moq, FluentAssertions, IDisposable
 
 [Fact]

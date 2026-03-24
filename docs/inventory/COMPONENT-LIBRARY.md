@@ -27,10 +27,14 @@
    - [LanguageToggle](#languagetoggle)
    - [ShowMyItemsToggle](#showmyitemstoggle)
    - [OwnerCompanySelector](#ownercompanyselector)
-7. [Layout Banners](#layout-banners)
+7. [Admin Components](#admin-components)
+   - [HierarchyTree](#hierarchytree)
+   - [ExcelCalendarTable](#excelcalendartable)
+   - [SystemAlerts](#systemalerts)
+8. [Layout Banners](#layout-banners)
    - [LanguageEditModeBanner](#languageeditmodebanner)
-8. [Accessibility Guidelines](#accessibility-guidelines)
-9. [CSS Class Reference](#css-class-reference)
+9. [Accessibility Guidelines](#accessibility-guidelines)
+10. [CSS Class Reference](#css-class-reference)
 
 ---
 
@@ -922,6 +926,109 @@ None - visible only to Owner role users.
 - Highlights home company
 - Shows current selection
 - Persists selection in session
+
+---
+
+## Admin Components
+
+### HierarchyTree
+
+Interactive tree view displaying the organizational hierarchy (Project > Area > Molecule > Company/Department) with expand/collapse, inline editing, context menu, and drag-drop reordering.
+
+**Location:**
+- `ViewComponents/HierarchyTreeViewComponent.cs`
+- `Pages/Shared/Components/HierarchyTree/Default.cshtml`
+
+#### Usage
+
+```razor
+@await Component.InvokeAsync("HierarchyTree")
+```
+
+#### Parameters
+
+None - automatically loads hierarchy data based on user grants.
+
+#### Features
+
+- **Expand/collapse** tree nodes
+- **Inline editing** of node names
+- **Context menu** for add/edit/delete operations
+- **Drag-drop reordering** of hierarchy nodes
+- **Grant-based visibility** - uses `IGrantService` for access control
+- Cross-company organizational data display (uses `IgnoreQueryFilters()`, security-audited)
+
+#### Accessibility
+
+- Keyboard navigation for tree nodes
+- ARIA tree role attributes
+
+---
+
+### ExcelCalendarTable
+
+Spreadsheet-style calendar table used across Shifts, Chores, On-Call, and Overview calendar pages.
+
+**Location:**
+- `ViewComponents/ExcelCalendarTableViewComponent.cs`
+- `Pages/Shared/Components/ExcelCalendarTable/Default.cshtml`
+
+#### Usage
+
+```razor
+@await Component.InvokeAsync("ExcelCalendarTable", new {
+    startDate = Model.StartDate,
+    endDate = Model.EndDate,
+    viewMode = "week",
+    calendarType = "shifts",
+    isReadOnly = false
+})
+```
+
+#### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `startDate` | `DateOnly` | Required | Start date of the view |
+| `endDate` | `DateOnly` | Required | End date of the view |
+| `viewMode` | `string` | "week" | View mode: "week", "2weeks", "month" |
+| `calendarType` | `string` | "shifts" | Calendar type: "shifts", "chores", "oncall", "overview" |
+| `isReadOnly` | `bool` | `false` | Whether editing is disabled |
+
+#### Features
+
+- Row-based layout with date columns
+- Row grouping support
+- Weekly hours tracking per row
+- Cell-level assignment data
+
+---
+
+### SystemAlerts
+
+Banner component displaying critical system alerts on admin/owner pages. Checks for disk space, backup failures, notification failures, and security warnings. Results are cached for 15 minutes.
+
+**Location:**
+- `ViewComponents/SystemAlertsViewComponent.cs`
+
+#### Usage
+
+```razor
+@await Component.InvokeAsync("SystemAlerts")
+```
+
+#### Parameters
+
+None - automatically checks system health and renders alerts for admin users.
+
+#### Features
+
+- **Disk space monitoring**
+- **Backup failure detection**
+- **Notification system health checks**
+- **Security warnings**
+- **15-minute cache** to avoid per-request overhead
+- Only visible to users with admin grants
 
 ---
 

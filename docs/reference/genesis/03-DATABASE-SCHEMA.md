@@ -4,7 +4,7 @@
 **Document Version:** 2.0 (V3 Update)
 **Last Updated:** 2026-01-29
 **Database Provider:** SQLite (via EF Core 9.0.9)
-**Total Tables:** 54 entities (includes V3 hierarchy, authorization, and localization)
+**Total Tables:** 71 entities (includes V3 hierarchy, authorization, localization, and post-V3 additions)
 
 [⬅️ Back to Index](00-INDEX.md) | [➡️ Next: Startup & Middleware](04-STARTUP-AND-MIDDLEWARE.md)
 
@@ -30,7 +30,8 @@
 16. [V3 Authorization Tables](#v3-authorization-tables)
 17. [V3 Scheduling Tables](#v3-scheduling-tables)
 18. [V3 Setup and Workflow Tables](#v3-setup-and-workflow-tables)
-19. [Indexes & Performance](#indexes--performance)
+19. [Additional Entities (Post-V3)](#additional-entities-post-v3)
+20. [Indexes & Performance](#indexes--performance)
 20. [Foreign Key Relationships](#foreign-key-relationships)
 21. [Value Converters](#value-converters)
 22. [Constraints & Validation](#constraints--validation)
@@ -2300,6 +2301,416 @@ public class SetupTask
 
 ---
 
+## Additional Entities (Post-V3)
+
+The following 16 entities were added after the V3 launch to support home rotation, chore categorization, duty rotation automation, telemetry, announcements, vacation workflow rules, and feature flags.
+
+---
+
+### 56. HomeTypes (Home Rotation Templates)
+
+**Purpose:** Named rotation template defining when users are home. Admin paints home days on a monthly calendar; the system derives a recurrence rule. Users assigned to a HomeType follow its rotation pattern for HOME shift generation.
+
+**File Reference:** `Models/HomeType.cs`
+
+**Schema:**
+```csharp
+public class HomeType : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public int MoleculeId { get; set; }
+    public string Name { get; set; }          // e.g., "סבב א"
+    public string? NameHe { get; set; }
+    public string? PatternJson { get; set; }   // JSON array of painted dates (yyyy-MM-dd)
+    public string? DerivedRule { get; set; }    // JSON: { cycleWeeks, homeDays, weekOffsets }
+    public TimeOnly? DefaultStartTime { get; set; }
+    public TimeOnly? DefaultEndTime { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int CreatedBy { get; set; }
+}
+```
+
+**Relationships:** FK to Molecules (MoleculeId), FK to AppUsers (CreatedBy). Tenant-scoped via IBelongsToCompany.
+
+---
+
+### 57. HomeTypeOverrides (Per-User Pattern Deviations)
+
+**Purpose:** Per-user pattern deviation from a HomeType template. Created when admin explicitly overrides a specific user's home pattern. Most users have no override.
+
+**File Reference:** `Models/HomeTypeOverride.cs`
+
+**Schema:**
+```csharp
+public class HomeTypeOverride : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public int HomeTypeId { get; set; }
+    public int UserId { get; set; }
+    public string OverridePatternJson { get; set; } // JSON array of date strings
+    public DateTime CreatedAt { get; set; }
+    public int CreatedBy { get; set; }
+}
+```
+
+**Relationships:** FK to HomeTypes (HomeTypeId), FK to AppUsers (UserId, CreatedBy). Tenant-scoped via IBelongsToCompany.
+
+---
+
+### 58. ChoreTypes (Chore Category Definitions)
+
+**Purpose:** Categorizes chores by type within a molecule. Each ChoreType has a display name, optional color, and sort order.
+
+**File Reference:** `Models/ChoreType.cs`
+
+**Schema:**
+```csharp
+public class ChoreType
+{
+    public int Id { get; set; }
+    public int MoleculeId { get; set; }
+    public string Name { get; set; }
+    public string DisplayName { get; set; }
+    public string? Color { get; set; }          // Hex color e.g. "#F0C14B"
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int CreatedByUserId { get; set; }
+}
+```
+
+**Relationships:** FK to Molecules (MoleculeId), FK to AppUsers (CreatedByUserId). One-to-many to Chores.
+
+**Note:** Not tenant-scoped (no IBelongsToCompany) -- scoped via Molecule instead.
+
+---
+
+### 59. ShiftCapacityOverrides (Date-Specific Capacity)
+
+**Purpose:** Overrides the default staffing capacity for a specific shift type on a specific date. Allows managers to increase or decrease capacity for holidays, special events, etc.
+
+**File Reference:** `Models/ShiftCapacityOverride.cs`
+
+**Schema:**
+```csharp
+public class ShiftCapacityOverride
+{
+    public int Id { get; set; }
+    public int ShiftTypeId { get; set; }
+    public int MoleculeId { get; set; }
+    public int? JobTypeId { get; set; }
+    public DateOnly Date { get; set; }
+    public int Capacity { get; set; }
+    public int CreatedByUserId { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+```
+
+**Relationships:** FK to ShiftTypes (ShiftTypeId), FK to Molecules (MoleculeId), FK to JobTypes (JobTypeId, nullable), FK to AppUsers (CreatedByUserId).
+
+---
+
+### 60. UserDayNotes (Calendar Day Notes)
+
+**Purpose:** Free-text notes attached to a specific user on a specific date. Displayed as overlays on the calendar grid.
+
+**File Reference:** `Models/UserDayNote.cs`
+
+**Schema:**
+```csharp
+public class UserDayNote : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public DateOnly Date { get; set; }
+    public int CompanyId { get; set; }
+    public string Note { get; set; }
+    public int CreatedByUserId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+}
+```
+
+**Relationships:** FK to AppUsers (UserId, CreatedByUserId), FK to Companies (CompanyId). Tenant-scoped via IBelongsToCompany.
+
+---
+
+### 61. FeatureFlags (Feature Toggle System)
+
+**Purpose:** Controls feature availability with hierarchical scoping: global, per-company, or per-user. Resolution priority: User+Company > Company > Global.
+
+**File Reference:** `Models/FeatureFlag.cs`
+
+**Schema:**
+```csharp
+public class FeatureFlag
+{
+    public int Id { get; set; }
+    public string Name { get; set; }           // e.g., "FF_WIDGETS_ENABLED"
+    public bool IsEnabled { get; set; }
+    public string? Description { get; set; }
+    public int? CompanyId { get; set; }        // null = global flag
+    public int? UserId { get; set; }           // null = all users in scope
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+```
+
+**Relationships:** Optional FK to Companies (CompanyId), optional FK to AppUsers (UserId).
+
+**Note:** Not tenant-scoped (no IBelongsToCompany) -- service uses IgnoreQueryFilters() with explicit userId/companyId params for resolution.
+
+---
+
+### 62-64. Telemetry Tables (Client-Side Observability)
+
+**Purpose:** Air-gapped local observability -- no external analytics dependencies. Three tables capture UI interactions, JavaScript errors, and Core Web Vitals.
+
+**File References:** `Models/Telemetry/ClientAnalyticsEvent.cs`, `Models/Telemetry/ClientError.cs`, `Models/Telemetry/PerformanceMetric.cs`
+
+#### 62. ClientAnalyticsEvents
+
+```csharp
+public class ClientAnalyticsEvent
+{
+    public long Id { get; set; }
+    public string EventType { get; set; }      // e.g., "calendar_view_changed", "scope_changed"
+    public string? EventData { get; set; }     // JSON payload
+    public string UserIdHash { get; set; }     // SHA256 hash -- no PII stored
+    public string? SessionId { get; set; }
+    public string PageUrl { get; set; }        // Path only, no PII in query params
+    public string? UserAgent { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+```
+
+#### 63. ClientErrors
+
+```csharp
+public class ClientError
+{
+    public long Id { get; set; }
+    public string Message { get; set; }        // PII scrubbed
+    public string? StackTrace { get; set; }
+    public string? Source { get; set; }
+    public int? LineNumber { get; set; }
+    public int? ColumnNumber { get; set; }
+    public string? ErrorType { get; set; }     // e.g., "TypeError", "unhandledrejection"
+    public string PageUrl { get; set; }
+    public string? UserAgent { get; set; }
+    public string UserIdHash { get; set; }
+    public DateTime Timestamp { get; set; }
+    public string? BrowserInfo { get; set; }
+}
+```
+
+#### 64. PerformanceMetrics
+
+```csharp
+public class PerformanceMetric
+{
+    public long Id { get; set; }
+    public string MetricName { get; set; }     // LCP, FID, INP, CLS, TTFB
+    public double Value { get; set; }          // ms for timing, unitless for CLS
+    public string? Rating { get; set; }        // "good", "needs-improvement", "poor"
+    public string PageUrl { get; set; }
+    public string? UserAgent { get; set; }
+    public string? ConnectionType { get; set; }
+    public string? EffectiveType { get; set; }
+    public double? DeviceMemory { get; set; }
+    public int? HardwareConcurrency { get; set; }
+    public DateTime Timestamp { get; set; }
+    public string? BrowserInfo { get; set; }
+}
+```
+
+**Note:** All three telemetry tables are global (no CompanyId, no IBelongsToCompany). Primary keys use `long` for high-volume writes.
+
+---
+
+### 65-67. DutyRotation Tables (Automated On-Duty Assignment)
+
+**Purpose:** Automates on-duty shift assignments via configurable rotation queues. Supports daily/weekly/biweekly/monthly frequencies, skip logic for vacations/conflicts, and full audit logging.
+
+**File References:** `Models/DutyRotation.cs`, `Models/DutyRotationEntry.cs`, `Models/DutyRotationLog.cs`
+
+#### 65. DutyRotations
+
+```csharp
+public class DutyRotation : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public OnDutyType DutyType { get; set; }
+    public RotationFrequency Frequency { get; set; }  // Daily=0, Weekly=1, Biweekly=2, Monthly=3
+    public string Name { get; set; }
+    public bool IsActive { get; set; }
+    public bool IncludeWeekends { get; set; }
+    public int MaxConsecutiveDays { get; set; }
+    public int CurrentQueuePosition { get; set; }
+    public DateOnly? LastAssignedDate { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int CreatedBy { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+}
+```
+
+**Relationships:** FK to Companies (CompanyId). One-to-many to DutyRotationEntries and DutyRotationLogs.
+
+#### 66. DutyRotationEntries
+
+```csharp
+public class DutyRotationEntry
+{
+    public int Id { get; set; }
+    public int DutyRotationId { get; set; }
+    public int UserId { get; set; }
+    public int Position { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+```
+
+**Relationships:** FK to DutyRotations (DutyRotationId), FK to AppUsers (UserId).
+
+#### 67. DutyRotationLogs
+
+```csharp
+public class DutyRotationLog
+{
+    public int Id { get; set; }
+    public int DutyRotationId { get; set; }
+    public int? AssignedUserId { get; set; }
+    public int? SkippedUserId { get; set; }
+    public string? SkipReason { get; set; }    // VACATION, CONFLICT, INACTIVE, RANK
+    public DateOnly AssignmentDate { get; set; }
+    public int? OnDutyId { get; set; }         // Links to created OnDuty record
+    public bool WasAutoAssigned { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+```
+
+**Relationships:** FK to DutyRotations (DutyRotationId), FK to AppUsers (AssignedUserId, SkippedUserId), FK to OnDuties (OnDutyId).
+
+---
+
+### 68. Announcements (Company Announcements Feed)
+
+**Purpose:** Company-wide announcements with scoped visibility (all employees, specific department, or specific role). Supports markdown content, pinning, and expiration.
+
+**File Reference:** `Models/Announcement.cs`
+
+**Schema:**
+```csharp
+public class Announcement : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public string Title { get; set; }
+    public string Content { get; set; }        // Supports markdown
+    public int CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }   // null = never expires
+    public AnnouncementScope Scope { get; set; } // All=0, Department=1, Role=2
+    public int? TargetDepartmentId { get; set; }
+    public string? TargetRole { get; set; }
+    public bool IsPinned { get; set; }
+    public bool IsActive { get; set; }
+}
+```
+
+**Enum -- AnnouncementScope:**
+```csharp
+public enum AnnouncementScope
+{
+    All = 0,           // Visible to all employees in company
+    Department = 1,    // Visible to specific department
+    Role = 2           // Visible to specific role
+}
+```
+
+**Relationships:** FK to Companies (CompanyId), FK to AppUsers (CreatedBy), optional FK to Departments (TargetDepartmentId). Tenant-scoped via IBelongsToCompany.
+
+---
+
+### 69. VacationApprovalRules (Vacation Workflow Configuration)
+
+**Purpose:** Configures vacation approval workflows per company and optionally per job type. Supports auto-approval thresholds, two-level approval for extended leave, and specific approver routing.
+
+**File Reference:** `Models/VacationApprovalRule.cs`
+
+**Schema:**
+```csharp
+public class VacationApprovalRule : IBelongsToCompany
+{
+    public int Id { get; set; }
+    public int CompanyId { get; set; }
+    public int? JobTypeId { get; set; }           // null = default rule for company
+    public int? ApproverUserId { get; set; }      // null = any user with grant
+    public string ApproverGrantKey { get; set; }  // Default: "ApproveVacations"
+    public int MaxAutoApproveDays { get; set; }   // 0 = no auto-approve
+    public bool RequiresSecondApproval { get; set; }
+    public int ExtendedLeaveDaysThreshold { get; set; } // Default: 5
+    public string? SecondApproverGrantKey { get; set; }
+    public int Priority { get; set; }             // Higher = checked first
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int CreatedBy { get; set; }
+}
+```
+
+**Relationships:** FK to Companies (CompanyId), optional FK to JobTypes (JobTypeId), optional FK to AppUsers (ApproverUserId). Tenant-scoped via IBelongsToCompany.
+
+---
+
+### 70. RoleTemplateJobTypeLabels (Role Display Name Overrides)
+
+**Purpose:** Optional per-job-type display name overrides for role templates. Allows the same role template to show different labels depending on the job type context (e.g., "Manager" displays as "Mapotz" for Alhut job type).
+
+**File Reference:** `Models/RoleTemplateJobTypeLabel.cs`
+
+**Schema:**
+```csharp
+public class RoleTemplateJobTypeLabel
+{
+    public int Id { get; set; }
+    public int RoleTemplateId { get; set; }
+    public int JobTypeId { get; set; }
+    public string DisplayNameEN { get; set; }
+    public string DisplayNameHE { get; set; }
+}
+```
+
+**Relationships:** FK to RoleTemplates (RoleTemplateId), FK to JobTypes (JobTypeId).
+
+**Note:** Cross-company entity (does NOT implement IBelongsToCompany).
+
+---
+
+### Post-V3 Entity Summary
+
+| Category | Tables Added | Purpose |
+|----------|--------------|---------|
+| **Home Rotation** | HomeTypes, HomeTypeOverrides (2) | HOME shift rotation templates and per-user overrides |
+| **Chore Management** | ChoreTypes (1) | Chore categorization with colors and sort order |
+| **Calendar Enhancements** | ShiftCapacityOverrides, UserDayNotes (2) | Date-specific capacity and per-user day notes |
+| **Feature Flags** | FeatureFlags (1) | Hierarchical feature toggle system |
+| **Telemetry** | ClientAnalyticsEvents, ClientErrors, PerformanceMetrics (3) | Client-side observability (air-gapped) |
+| **Duty Rotation** | DutyRotations, DutyRotationEntries, DutyRotationLogs (3) | Automated on-duty assignment queues |
+| **Announcements** | Announcements (1) | Company-wide announcements feed |
+| **Vacation Workflow** | VacationApprovalRules (1) | Configurable approval routing and auto-approval |
+| **Authorization** | RoleTemplateJobTypeLabels (1) | Per-job-type role display names |
+| **Social** | UserFriendships (1) | Already documented in V3, now with full schema |
+
+**Total Post-V3 Tables Added:** 16 new tables
+
+**Grand Total:** 71 entities (55 V3 + 16 post-V3)
+
+---
+
 ## Summary
 
 This comprehensive database schema supports:
@@ -2310,7 +2721,7 @@ This comprehensive database schema supports:
 - **Cross-Company Coordination:** OnDuty global visibility, Director cross-company access
 - **Gamification:** Easter egg game with leaderboards
 
-**Total Storage:** 54 tables (55 including DbSets with joins), 40+ migrations, ~50-200 MB typical size
+**Total Storage:** 71 tables, 40+ migrations, ~50-200 MB typical size
 
 **Performance:** Optimized indexes for calendar queries (critical path), audit queries, and foreign key joins
 

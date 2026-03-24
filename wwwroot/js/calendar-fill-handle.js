@@ -376,7 +376,7 @@
             }
 
         } catch (error) {
-            console.error('[Fill Handle] Fill operation error:', error);
+            Logger.error('FillHandle', 'Fill operation error:', error);
             showToast(error.message || 'Failed to fill shifts', 'error');
         }
     }
@@ -405,7 +405,7 @@
             return window.showToast(message, type);
         }
 
-        console.log(`[Toast ${type}]`, message);
+        Logger.log('FillHandle', `[Toast ${type}]`, message);
         alert(message);
         return null;
     }

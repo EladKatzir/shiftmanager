@@ -40,9 +40,10 @@ ShiftManager implements **7 major workflows** that power workforce management fo
 
 ### Core Services
 
-**Services/ConflictChecker.cs** (127 lines)
+**Services/ShiftAssignmentService.cs** (`ValidateShiftAssignmentAsync`)
 - Validates all shift assignments against business rules
-- Checks: Time-off, overlaps, rest periods, weekly caps
+- Errors (hard blocks): Overlap, Rest period (8h), User not found, Molecule boundary, Duplicate
+- Warnings (overrideable): Vacation, Chore, On-duty, Weekly cap (56h), Job type mismatch, Past date
 
 **Services/NotificationService.cs** (808 lines)
 - Creates in-app notifications and email alerts
@@ -80,11 +81,11 @@ ShiftManager implements **7 major workflows** that power workforce management fo
 4. System validates:
    a. User belongs to shift's company (multi-tenancy check)
    b. Staffing not exceeded (assigned < required)
-   c. ConflictChecker.CanAssignAsync():
-      - No approved time-off on date
-      - No overlapping shifts
-      - Sufficient rest period (8h default) from previous/next shift
-      - Weekly hours cap not exceeded (40h default)
+   c. ShiftAssignmentService.ValidateShiftAssignmentAsync():
+      - No approved time-off on date (warning, overrideable)
+      - No overlapping shifts (error)
+      - Sufficient rest period (8h default) from previous/next shift (error)
+      - Weekly hours cap not exceeded (56h default) (warning, overrideable)
    ↓
 5. Validation passes → Create ShiftAssignment
    ↓
@@ -211,7 +212,7 @@ public async Task<IActionResult> OnPostRemoveAsync(int assignmentId)
 
 1. **Multi-Tenancy:** Users can only be assigned to shifts in their own company
 2. **Staffing Limits:** Cannot assign more users than `StaffingRequired` count
-3. **Conflict Detection:** Must pass all ConflictChecker validations
+3. **Conflict Detection:** Must pass all `ShiftAssignmentService.ValidateShiftAssignmentAsync` validations
 4. **Notifications:** Always send email/in-app notification on assign/remove
 5. **Shift Naming:** First assignment can set custom shift name (optional)
 
@@ -521,11 +522,11 @@ Manager → /Requests/Index (sees all pending swap requests)
      - ShiftInstance still exists
      - ToUser is valid
      ↓
-     Conflict check: ConflictChecker.CanAssignAsync(ToUserId, ShiftInstance)
-       - No approved time-off
-       - No overlapping shifts
-       - Sufficient rest period
-       - Weekly hours cap not exceeded
+     Conflict check: ShiftAssignmentService.ValidateShiftAssignmentAsync(ToUserId, ShiftInstance)
+       - No approved time-off (warning, overrideable)
+       - No overlapping shifts (error)
+       - Sufficient rest period (error)
+       - Weekly hours cap not exceeded (warning, overrideable)
      ↓
      IF conflict → decline swap, show error
      ↓
@@ -720,7 +721,7 @@ public async Task<IActionResult> OnPostApproveSwapAsync(int id)
    - Target user is active
 
 3. **Validation on Approval:**
-   - Full ConflictChecker validation for target user
+   - Full `ShiftAssignmentService.ValidateShiftAssignmentAsync` validation for target user
    - If conflict detected → decline swap automatically
    - Transaction-based (rollback on error)
 
@@ -1154,12 +1155,12 @@ public async Task<(bool Success, string Message, OnDuty? OnDuty)> CreateOnDutyAs
 
 **Purpose:** Validate all shift assignments against business rules before allowing assignment.
 
-**Service:** `Services/ConflictChecker.cs` (127 lines)
+**Service:** `Services/ShiftAssignmentService.cs` (method: `ValidateShiftAssignmentAsync`)
 
 ### Validation Rules
 
 ```
-ConflictChecker.CanAssignAsync(userId, shiftInstance)
+ShiftAssignmentService.ValidateShiftAssignmentAsync(userId, shiftInstance)
    ↓
    1. User exists and is active
    ↓
@@ -1179,30 +1180,31 @@ ConflictChecker.CanAssignAsync(userId, shiftInstance)
    5. Check rest period:
       - Find nearest shift before (where shift.End <= current.Start)
       - Find nearest shift after (where shift.Start >= current.End)
-      - IF rest < RestHours config (default 8h) → FAIL ("Rest period too short")
+      - IF rest < RestHours config (default 8h) → ERROR ("Rest period too short")
    ↓
    6. Check weekly hours cap:
-      - Load all assignments for user in the same week (Sunday-Saturday)
-      - Sum total hours (handling overnight shifts)
+      - Load all assignments for user in the same week (configurable WeekStartDay)
+      - Sum total hours (using MergeAndSumHours to deduplicate overlapping windows)
       - Add current shift hours
-      - IF total > WeeklyHoursCap config (default 40h) → FAIL ("Weekly hours cap exceeded")
+      - IF total > WeeklyHoursCap config (default 56h) → WARNING ("Weekly hours cap exceeded", overrideable)
    ↓
    ALL CHECKS PASSED → ALLOW assignment
+   Note: Exempt shifts (IsOffline or IsHome) skip overlap, rest, weekly cap, and past-date checks
 ```
 
 ### Implementation
 
-**Services/ConflictChecker.cs:19-118**
+**Services/ShiftAssignmentService.cs (ValidateShiftAssignmentAsync)**
 
 ```csharp
-public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance instance, CancellationToken ct = default)
+public async Task<ValidationResult> ValidateShiftAssignmentAsync(int userId, ShiftInstance instance, CancellationToken ct = default)
 {
     var user = await _db.Users.FindAsync(new object?[] { userId }, ct);
     if (user == null || !user.IsActive)
-        return ConflictResult.Fail("User inactive or not found.");
+        return ValidationResult.Error("User inactive or not found.");
 
     var t = await _db.ShiftTypes.FindAsync(new object?[] { instance.ShiftTypeId }, ct);
-    if (t is null) return ConflictResult.Fail("Shift type missing.");
+    if (t is null) return ValidationResult.Error("Shift type missing.");
 
     // OFFLINE shifts can coexist with other shifts - show warning but allow
     bool isOfflineShift = t.IsOffline;
@@ -1213,7 +1215,7 @@ public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance insta
                     && r.Status == RequestStatus.Approved
                     && instance.WorkDate >= r.StartDate
                     && instance.WorkDate <= r.EndDate, ct);
-    if (hasTimeOff) return ConflictResult.Fail("Approved time-off covers this date.");
+    if (hasTimeOff) return ValidationResult.Warning("VACATION", "Approved time-off covers this date.");
 
     var (start, end) = TimeHelpers.GetShiftWindow(t, instance.WorkDate);
 
@@ -1246,7 +1248,7 @@ public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance insta
             // For Offline shifts, we allow overlaps but track them for warning
             if (!isOfflineShift)
             {
-                return ConflictResult.Fail("Overlap with existing assignment.");
+                return ValidationResult.Error("Overlap with existing assignment.");
             }
         }
     }
@@ -1266,9 +1268,9 @@ public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance insta
 
     int restHours = await GetConfigIntAsync(instance.CompanyId, "RestHours", 8, ct);
     if (before.end != default && (start - before.end).TotalHours < restHours)
-        return ConflictResult.Fail($"Rest period too short (< {restHours}h) from previous shift.");
+        return ValidationResult.Error($"Rest period too short (< {restHours}h) from previous shift.");
     if (after.start != default && (after.start - end).TotalHours < restHours)
-        return ConflictResult.Fail($"Rest period too short (< {restHours}h) before next shift.");
+        return ValidationResult.Error($"Rest period too short (< {restHours}h) before next shift.");
 
     // Weekly cap: hours of existing week + this shift <= cap
     var weekStart2 = TimeHelpers.WeekStart(instance.WorkDate);
@@ -1289,11 +1291,11 @@ public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance insta
 
     totalHoursThisWeek += TimeHelpers.Hours(t);
 
-    int weeklyCap = await GetConfigIntAsync(instance.CompanyId, "WeeklyHoursCap", 40, ct);
+    int weeklyCap = await GetConfigIntAsync(instance.CompanyId, "WeeklyHoursCap", 56, ct);
     if (totalHoursThisWeek > weeklyCap)
-        return ConflictResult.Fail($"Weekly hours cap exceeded (> {weeklyCap}h).");
+        return ValidationResult.Warning("WEEKLY_CAP", $"Weekly hours cap exceeded (> {weeklyCap}h).");
 
-    return ConflictResult.Ok();
+    return ValidationResult.Ok();
 }
 ```
 
@@ -1304,9 +1306,9 @@ public async Task<ConflictResult> CanAssignAsync(int userId, ShiftInstance insta
 | Config Key | Default | Description |
 |------------|---------|-------------|
 | `RestHours` | 8 | Minimum rest period between shifts (hours) |
-| `WeeklyHoursCap` | 40 | Maximum weekly hours per employee |
+| `WeeklyHoursCap` | 56 | Maximum weekly hours per employee |
 
-**Services/ConflictChecker.cs:120-125**
+**Services/ShiftAssignmentService.cs (config helper)**
 
 ```csharp
 // PERFORMANCE FIX: Use config cache to reduce database queries
@@ -1774,10 +1776,10 @@ builder.Services.AddAuthorization(options =>
 |------|-------------|
 | User must be in same company as shift | `Pages/Assignments/Manage.cshtml.cs:190` |
 | Cannot over-assign (assigned < required) | `Pages/Assignments/Manage.cshtml.cs:198` |
-| No approved time-off on date | `ConflictChecker.cs:32` |
-| No overlapping shifts (except OFFLINE) | `ConflictChecker.cs:64` |
-| Rest period ≥ 8h (configurable) | `ConflictChecker.cs:88` |
-| Weekly hours ≤ 40h (configurable) | `ConflictChecker.cs:114` |
+| No approved time-off on date (warning) | `ShiftAssignmentService.ValidateShiftAssignmentAsync` |
+| No overlapping shifts (except OFFLINE/HOME) (error) | `ShiftAssignmentService.ValidateShiftAssignmentAsync` |
+| Rest period ≥ 8h (configurable) (error) | `ShiftAssignmentService.ValidateShiftAssignmentAsync` |
+| Weekly hours ≤ 56h (configurable) (warning) | `ShiftAssignmentService.ValidateShiftAssignmentAsync` |
 
 ### Time-Off Requests
 
@@ -1829,7 +1831,7 @@ builder.Services.AddAuthorization(options =>
 - **[05-MULTI-TENANCY-DEEP-DIVE.md](05-MULTI-TENANCY-DEEP-DIVE.md)** - CompanyId scoping, IgnoreQueryFilters()
 - **[07-SERVICE-LAYER.md](07-SERVICE-LAYER.md)** - Service implementations
 - **[10-AUTHENTICATION-AND-AUTHORIZATION.md](10-AUTHENTICATION-AND-AUTHORIZATION.md)** - Role-based authorization
-- **[13-CACHING-STRATEGY.md](13-CACHING-STRATEGY.md)** - Config cache for ConflictChecker
+- **[13-CACHING-STRATEGY.md](13-CACHING-STRATEGY.md)** - Config cache for ShiftAssignmentService validation
 
 ---
 
