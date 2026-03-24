@@ -19,6 +19,25 @@
 @* Owner Company Selector *@
 @await Component.InvokeAsync("OwnerCompanySelector")
 
+@* Molecule Selector *@
+@if (Model.AvailableMolecules.Any())
+{
+    <div class="card" style="margin-bottom: 1rem; padding: 0.75rem;">
+        <form method="get" style="display: flex; align-items: center; gap: 0.75rem;">
+            <label for="SelectedMoleculeId" style="white-space: nowrap; font-weight: 600;">
+                <loc key="Molecule">Molecule</loc>:
+            </label>
+            <select name="SelectedMoleculeId" id="SelectedMoleculeId" class="form-control" style="max-width: 250px;"
+                    onchange="this.form.submit()">
+                @foreach (var mol in Model.AvailableMolecules)
+                {
+                    <option value="@mol.Id" selected="@(Model.SelectedMoleculeId == mol.Id)">@mol.DisplayName</option>
+                }
+            </select>
+        </form>
+    </div>
+}
+
 <div class="feature-flags-container">
     <div class="page-header">
         <h1>
@@ -83,28 +102,48 @@
                     <input type="time" asp-for="NewShiftEnd" class="form-control" required />
                 </div>
 
+                <div class="form-group">
+                    <label asp-for="NewShiftScope"><loc key="Blueprints_Scope">Scope</loc></label>
+                    <select asp-for="NewShiftScope" class="form-control" id="scopeSelector">
+                        @if (Model.CanCreateMoleculeScope)
+                        {
+                            <option value="1">🟢 Molecule</option>
+                        }
+                        <option value="0">🔵 Company</option>
+                        @if (Model.CanCreateAreaScope)
+                        {
+                            <option value="2">🟠 Area</option>
+                        }
+                    </select>
+                </div>
+
                 @if (Model.AvailableMolecules.Any())
                 {
                     <div class="form-group">
                         <label asp-for="NewShiftMoleculeId"><loc key="Molecule">Molecule</loc></label>
                         <select asp-for="NewShiftMoleculeId" class="form-control">
-                            <option value="">@Localizer["Blueprints_CompanyOnly"]</option>
                             @foreach (var mol in Model.AvailableMolecules)
                             {
-                                <option value="@mol.Id">@mol.DisplayName</option>
+                                <option value="@mol.Id" selected="@(Model.SelectedMoleculeId == mol.Id)">@mol.DisplayName</option>
                             }
                         </select>
-                        <small class="form-text text-muted">@Localizer["Blueprints_MoleculeScopeHint"]</small>
                     </div>
 
                     <div class="form-group">
                         <label asp-for="NewShiftJobTypeId"><loc key="JobType">Job Type</loc></label>
                         <select asp-for="NewShiftJobTypeId" class="form-control">
-                            <option value="">@Localizer["Blueprints_SelectJobType"]</option>
+                            <option value=""><loc key="Blueprints_NoJobType">No Job Type</loc></option>
                             @foreach (var jt in Model.AvailableJobTypes)
                             {
                                 <option value="@jt.Id">@jt.DisplayName</option>
                             }
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="companySelector" style="display: none;">
+                        <label asp-for="NewShiftCompanyId"><loc key="Company">Company</loc></label>
+                        <select asp-for="NewShiftCompanyId" class="form-control" id="companyDropdown">
+                            <option value=""><loc key="Blueprints_SelectCompany">Select Company</loc></option>
                         </select>
                     </div>
                 }
@@ -195,27 +234,24 @@
                                 }
                             </td>
                             <td>
-                                @if (shiftType.MoleculeId.HasValue && shiftType.JobTypeId.HasValue)
+                                @switch (shiftType.Scope)
                                 {
-                                    <span class="badge badge-primary">@shiftType.Molecule?.DisplayName</span>
-                                    @if (Model.AvailableMolecules.Any())
-                                    {
-                                        <button type="button" class="btn btn-sm btn-warning" style="margin-inline-start: 4px;"
-                                                onclick="unpublishFromMolecule(@shiftType.Id)">
-                                            @Localizer["Blueprints_Unpublish"]
-                                        </button>
-                                    }
+                                    case ShiftManager.Models.Support.ShiftScope.Area:
+                                        <span class="badge" style="background: #f97316; color: white;">Area</span>
+                                        @if (shiftType.Area != null) { <small>@shiftType.Area.DisplayName</small> }
+                                        break;
+                                    case ShiftManager.Models.Support.ShiftScope.Molecule:
+                                        <span class="badge" style="background: #22c55e; color: white;">Molecule</span>
+                                        @if (shiftType.Molecule != null) { <small>@shiftType.Molecule.DisplayName</small> }
+                                        break;
+                                    case ShiftManager.Models.Support.ShiftScope.Company:
+                                        <span class="badge" style="background: #3b82f6; color: white;">Company</span>
+                                        @if (shiftType.Company != null) { <small>@shiftType.Company.DisplayName</small> }
+                                        break;
                                 }
-                                else
+                                @if (shiftType.JobType != null)
                                 {
-                                    <span class="badge badge-secondary"><loc key="Blueprints_CompanyOnly" /></span>
-                                    @if (Model.AvailableMolecules.Any())
-                                    {
-                                        <button type="button" class="btn btn-sm btn-primary" style="margin-inline-start: 4px;"
-                                                onclick="showPublishModal(@shiftType.Id)">
-                                            @Localizer["Blueprints_PublishToMolecule"]
-                                        </button>
-                                    }
+                                    <span class="badge badge-secondary" style="margin-inline-start: 4px;">@shiftType.JobType.DisplayName</span>
                                 }
                             </td>
                             <td>
@@ -367,45 +403,7 @@
     </div>
 </div>
 
-@* Publish to Molecule Modal *@
-@if (Model.AvailableMolecules.Any())
-{
-<div id="publishModal" class="modal" style="display: none;">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><loc key="Blueprints_PublishToMolecule">Publish to Molecule</loc></h3>
-                <button type="button" class="close-modal" onclick="closePublishModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="publishShiftId" />
-                <div class="form-group">
-                    <label for="publishMoleculeId"><loc key="Molecule">Molecule</loc></label>
-                    <select id="publishMoleculeId" class="form-control">
-                        @foreach (var mol in Model.AvailableMolecules)
-                        {
-                            <option value="@mol.Id">@mol.DisplayName</option>
-                        }
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="publishJobTypeId"><loc key="JobType">Job Type</loc></label>
-                    <select id="publishJobTypeId" class="form-control">
-                        @foreach (var jt in Model.AvailableJobTypes)
-                        {
-                            <option value="@jt.Id">@jt.DisplayName</option>
-                        }
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closePublishModal()"><loc key="Button_Cancel" /></button>
-                <button type="button" class="btn btn-primary" onclick="publishToMolecule()"><loc key="Blueprints_Publish">Publish</loc></button>
-            </div>
-        </div>
-    </div>
-</div>
-}
+@* Scope selector JS for create form *@
 
 <style>
     @@keyframes spin {
@@ -416,6 +414,36 @@
 
 @section Scripts {
     <script>
+        // Scope selector: show/hide Company dropdown based on selected scope
+        const scopeSelector = document.getElementById('scopeSelector');
+        const companySelector = document.getElementById('companySelector');
+        const companyDropdown = document.getElementById('companyDropdown');
+        if (scopeSelector) {
+            scopeSelector.addEventListener('change', async function() {
+                const scope = parseInt(this.value);
+                if (scope === 0 && companySelector) { // Company scope
+                    companySelector.style.display = '';
+                    // Load companies for selected molecule
+                    const molId = document.querySelector('[name="NewShiftMoleculeId"]')?.value;
+                    if (molId && companyDropdown) {
+                        try {
+                            const resp = await fetch(`/Api/Hierarchy/GetCompanies?moleculeId=${molId}`);
+                            const data = await resp.json();
+                            companyDropdown.innerHTML = '<option value="">Select Company</option>';
+                            (data.companies || []).forEach(c => {
+                                const opt = document.createElement('option');
+                                opt.value = c.id;
+                                opt.textContent = c.name;
+                                companyDropdown.appendChild(opt);
+                            });
+                        } catch(e) { console.error('Failed to load companies', e); }
+                    }
+                } else if (companySelector) {
+                    companySelector.style.display = 'none';
+                }
+            });
+        }
+
         // Edit Name Modal
         document.querySelectorAll('.edit-name-btn').forEach(btn => {
             btn.addEventListener('click', async function() {
@@ -558,92 +586,6 @@
         document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
             if (e.target === this) closeDeleteConfirmModal();
         });
-
-        @if (Model.AvailableMolecules.Any())
-        {
-            <text>
-        document.getElementById('publishModal').addEventListener('click', function(e) {
-            if (e.target === this) closePublishModal();
-        });
-            </text>
-        }
-
-        // Publish to Molecule
-        function showPublishModal(shiftTypeId) {
-            document.getElementById('publishShiftId').value = shiftTypeId;
-            var m = document.getElementById('publishModal');
-            m.style.display = 'flex';
-            m.classList.add('is-open');
-        }
-
-        function closePublishModal() {
-            var m = document.getElementById('publishModal');
-            m.classList.remove('is-open');
-            m.style.display = 'none';
-        }
-
-        async function publishToMolecule() {
-            const shiftTypeId = document.getElementById('publishShiftId').value;
-            const moleculeId = document.getElementById('publishMoleculeId').value;
-            const jobTypeId = document.getElementById('publishJobTypeId').value;
-
-            if (!moleculeId || !jobTypeId) {
-                alert('@Localizer["Blueprints_SelectBothMoleculeAndJobType"].Value.Trim()');
-                return;
-            }
-
-            try {
-                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-                const headers = { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' };
-                if (csrfToken) headers['RequestVerificationToken'] = csrfToken;
-
-                const response = await fetch('/Owner/Blueprints?handler=PublishToMolecule', {
-                    method: 'POST',
-                    headers: headers,
-                    credentials: 'same-origin',
-                    body: `shiftTypeId=${shiftTypeId}&moleculeId=${moleculeId}&jobTypeId=${jobTypeId}`
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    location.reload();
-                } else if (result.isDuplicate) {
-                    alert('@Localizer["Blueprints_DuplicateInMolecule"].Value.Trim()');
-                } else {
-                    alert(result.error || '@Localizer["Blueprints_FailedToPublish"].Value.Trim()');
-                }
-            } catch (error) {
-                console.error('Error publishing to molecule:', error);
-                alert('@Localizer["Blueprints_FailedToPublish"].Value.Trim()');
-            }
-        }
-
-        async function unpublishFromMolecule(shiftTypeId) {
-            if (!confirm('@Localizer["Blueprints_ConfirmUnpublish"].Value.Trim()')) return;
-
-            try {
-                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-                const headers = { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' };
-                if (csrfToken) headers['RequestVerificationToken'] = csrfToken;
-
-                const response = await fetch('/Owner/Blueprints?handler=UnpublishFromMolecule', {
-                    method: 'POST',
-                    headers: headers,
-                    credentials: 'same-origin',
-                    body: `shiftTypeId=${shiftTypeId}`
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    location.reload();
-                } else {
-                    alert(result.error || '@Localizer["Blueprints_FailedToUnpublish"].Value.Trim()');
-                }
-            } catch (error) {
-                console.error('Error unpublishing from molecule:', error);
-                alert('@Localizer["Blueprints_FailedToUnpublish"].Value.Trim()');
-            }
-        }
 
         // ✅ P1-4: Enhanced Delete Confirmation Modal with State Management
 
