@@ -655,9 +655,12 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 return new ShiftAssignmentResult(false, null, "SHIFT_FULLY_STAFFED", _localizer["Error_ShiftFullyStaffed"]);
             }
 
+            // Use the EMPLOYEE's CompanyId (not the instance's or assigner's)
+            // This ensures the employee's manager can see the assignment from their company context
+            var assignedUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
             var assignment = new ShiftAssignment
             {
-                CompanyId = shiftInstance.CompanyId,
+                CompanyId = assignedUser?.CompanyId ?? shiftInstance.CompanyId,
                 ShiftInstanceId = shiftInstanceId,
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
