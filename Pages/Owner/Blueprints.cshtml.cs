@@ -127,9 +127,16 @@ public class BlueprintsModel : PageModel
             .ToList();
 
         // Determine create permissions
+        // Area scope requires ETA-level grant (grant.AreaId or grant.ProjectId must be set)
+        // Molecule scope requires ETM-level grant (standard HasGrantWithScopeAsync check)
         if (userId > 0)
         {
-            CanCreateAreaScope = await _grantService.HasGrantWithScopeAsync(userId, "CreateShiftTypes", areaId: areaId);
+            var userGrants = await _grantService.GetUserGrantsAsync(userId);
+            var createShiftGrants = userGrants
+                .Where(g => g.GrantType?.Key == "CreateShiftTypes")
+                .ToList();
+            // Area scope: user must have a grant with AreaId or ProjectId set (ETA/ETP level)
+            CanCreateAreaScope = createShiftGrants.Any(g => g.AreaId.HasValue || g.ProjectId.HasValue);
             CanCreateMoleculeScope = await _grantService.HasGrantWithScopeAsync(userId, "CreateShiftTypes", moleculeId: SelectedMoleculeId);
         }
     }
@@ -150,13 +157,22 @@ public class BlueprintsModel : PageModel
             var areaId = company?.Molecule?.AreaId;
 
             // Grant check based on scope
-            bool hasGrant = NewShiftScope switch
+            // Area scope requires ETA-level grant (not just molecule-level in the area)
+            bool hasGrant;
+            if (NewShiftScope == ShiftScope.Area)
             {
-                ShiftScope.Area => areaId.HasValue && await _grantService.HasGrantWithScopeAsync(userId, "CreateShiftTypes", areaId: areaId),
-                ShiftScope.Molecule => NewShiftMoleculeId.HasValue && await _grantService.HasGrantWithScopeAsync(userId, "CreateShiftTypes", moleculeId: NewShiftMoleculeId),
-                ShiftScope.Company => await _grantService.HasGrantWithScopeAsync(userId, "CreateShiftTypes", companyId: NewShiftCompanyId ?? companyId),
-                _ => false
-            };
+                var userGrants = await _grantService.GetUserGrantsAsync(userId);
+                hasGrant = userGrants.Any(g => g.GrantType?.Key == "CreateShiftTypes" && (g.AreaId.HasValue || g.ProjectId.HasValue));
+            }
+            else
+            {
+                hasGrant = NewShiftScope switch
+                {
+                    ShiftScope.Molecule => NewShiftMoleculeId.HasValue && await _grantService.HasGrantWithScopeAsync(userId, "CreateShiftTypes", moleculeId: NewShiftMoleculeId),
+                    ShiftScope.Company => await _grantService.HasGrantWithScopeAsync(userId, "CreateShiftTypes", companyId: NewShiftCompanyId ?? companyId),
+                    _ => false
+                };
+            }
 
             if (!hasGrant)
                 return RedirectToPage(new { error = "You don't have permission to create shift types at this scope" });
