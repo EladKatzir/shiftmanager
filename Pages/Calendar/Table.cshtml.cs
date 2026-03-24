@@ -236,10 +236,13 @@ public class TableModel : PageModel
             // MOLECULE MODE: load shifts across all companies in the molecule for this job type
             // SECURITY-AUDITED: SAFE — IgnoreQueryFilters re-scoped by validated MoleculeId + JobTypeId (or Tech molecule null);
             // molecule access validated via AvailableMolecules (grant-derived) above
+            // Resolve areaId for area-scoped shift inclusion
+            var tableAreaId = await _db.Molecules.Where(m => m.Id == molId).Select(m => m.AreaId).FirstOrDefaultAsync();
             var instanceQuery = _db.ShiftInstances
                 .IgnoreQueryFilters()
                 .Include(si => si.ShiftType)
-                .Where(si => si.ShiftType.MoleculeId == molId
+                .Where(si => (si.ShiftType.MoleculeId == molId ||
+                             (si.ShiftType.Scope == Models.Support.ShiftScope.Area && si.ShiftType.AreaId == tableAreaId))
                     && si.WorkDate >= StartDate && si.WorkDate <= EndDate);
 
             if (JobTypeId.HasValue)
@@ -251,8 +254,8 @@ public class TableModel : PageModel
 
             var shiftTypeIdsWithInstances = instances.Select(si => si.ShiftTypeId).Distinct().ToHashSet();
 
-            // Load molecule-scoped shift types
-            var allShiftTypes = await _shiftTypeCache.GetShiftTypesForMoleculeAsync(molId, JobTypeId);
+            // Load molecule-scoped + area overlay shift types
+            var allShiftTypes = await _shiftTypeCache.GetMergedShiftTypesAsync(molId, JobTypeId);
             ShiftTypes = allShiftTypes
                 // Show all molecule shift types (not just those with instances — leads need to see unfilled shifts too)
                 .OrderBy(st => st.IsOffline ? 1 : 0)

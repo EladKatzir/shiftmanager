@@ -286,13 +286,22 @@ public class ShiftsModel : PageModel
 
     private async Task BuildShiftBasedCalendarAsync(int moleculeId, int? jobTypeId)
     {
-        // Get shift types for this molecule/job type
+        // Resolve areaId for area-scoped shift inclusion
+        var areaId = await _db.Molecules
+            .Where(m => m.Id == moleculeId)
+            .Select(m => m.AreaId)
+            .FirstOrDefaultAsync();
+
+        // Get shift types: molecule-scoped + area-scoped overlay
+        // No query filter on ShiftType — scope-based visibility now
         var shiftTypeQuery = _db.ShiftTypes
-            .IgnoreQueryFilters()
-            .Where(st => st.MoleculeId == moleculeId);
+            .Where(st =>
+                st.MoleculeId == moleculeId ||
+                (st.Scope == Models.Support.ShiftScope.Area && st.AreaId == areaId));
 
         if (jobTypeId.HasValue)
-            shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == jobTypeId.Value);
+            // Include shifts matching this JobType OR null JobType (shared/area-generic shifts)
+            shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == jobTypeId.Value || st.JobTypeId == null);
         else
             shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
 
@@ -310,9 +319,13 @@ public class ShiftsModel : PageModel
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);
         var assignments = await _calendarService.GetAssignmentsAsync(moleculeId, jobTypeId, StartDate, EndDate);
 
-        // Look up company names for shift types (molecule mode shows cross-company shifts)
-        var companyIds = shiftTypes.Select(st => st.CompanyId).Distinct().ToList();
-        var companyNames = companyIds.Count > 1
+        // Look up company names for company-scoped shift types (molecule mode shows cross-company shifts)
+        var companyIds = shiftTypes
+            .Where(st => st.CompanyId.HasValue)
+            .Select(st => st.CompanyId!.Value)
+            .Distinct()
+            .ToList();
+        var companyNames = companyIds.Count > 0
             ? (await _db.Companies.IgnoreQueryFilters()
                 .Where(c => companyIds.Contains(c.Id))
                 .ToListAsync())
@@ -357,13 +370,20 @@ public class ShiftsModel : PageModel
 
     private async Task BuildUserBasedCalendarAsync(int moleculeId, int? jobTypeId)
     {
-        // Load shift types for the bottom-sheet dropdown (in user-mode, user picks a shift type)
+        // Resolve areaId for area-scoped shift inclusion
+        var userAreaId = await _db.Molecules
+            .Where(m => m.Id == moleculeId)
+            .Select(m => m.AreaId)
+            .FirstOrDefaultAsync();
+
+        // Load shift types: molecule-scoped + area-scoped overlay
         var shiftTypeQuery = _db.ShiftTypes
-            .IgnoreQueryFilters()
-            .Where(st => st.MoleculeId == moleculeId);
+            .Where(st =>
+                st.MoleculeId == moleculeId ||
+                (st.Scope == Models.Support.ShiftScope.Area && st.AreaId == userAreaId));
 
         if (jobTypeId.HasValue)
-            shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == jobTypeId.Value);
+            shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == jobTypeId.Value || st.JobTypeId == null);
         else
             shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
 
@@ -460,15 +480,14 @@ public class ShiftsModel : PageModel
         var rows = new List<ExcelCalendarRow>();
         var groups = new List<ExcelCalendarGroup>();
 
-        // Batch-load PrimaryShiftTypes for all users (1 query, IgnoreQueryFilters for cross-tenant FK)
-        // SECURITY-AUDITED: SAFE — PrimaryShiftTypeIds derived from molecule-scoped users
+        // Batch-load PrimaryShiftTypes for all users (1 query)
+        // No query filter on ShiftType — scope-based visibility now
         var primaryStIds = users.Where(u => u.PrimaryShiftTypeId.HasValue)
             .Select(u => u.PrimaryShiftTypeId!.Value)
             .Distinct()
             .ToList();
         var primaryShiftTypes = primaryStIds.Count > 0
             ? await _db.ShiftTypes
-                .IgnoreQueryFilters()
                 .Where(st => primaryStIds.Contains(st.Id))
                 .ToDictionaryAsync(st => st.Id)
             : new Dictionary<int, ShiftType>();

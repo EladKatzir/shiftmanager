@@ -13558,4 +13558,32 @@
   <data name="Realtime_Reconnected" xml:space="preserve">
     <value>החיבור חזר.</value>
   </data>
+  <!-- Shift Scope Redesign -->
+  <data name="ShiftScope_Area" xml:space="preserve">
+    <value>אזור</value>
+  </data>
+  <data name="ShiftScope_Molecule" xml:space="preserve">
+    <value>מולקולה</value>
+  </data>
+  <data name="ShiftScope_Company" xml:space="preserve">
+    <value>פלוגה</value>
+  </data>
+  <data name="Blueprints_NoJobType" xml:space="preserve">
+    <value>ללא סוג תפקיד</value>
+  </data>
+  <data name="Blueprints_SelectCompany" xml:space="preserve">
+    <value>בחר פלוגה</value>
+  </data>
+  <data name="Blueprints_ScopeImpactWarning" xml:space="preserve">
+    <value>שינוי זה משפיע על כל הפלוגות במולקולה</value>
+  </data>
+  <data name="Blueprints_AreaScopeHelp" xml:space="preserve">
+    <value>משמרות ברמת אזור מוצגות בכל המולקולות באזור</value>
+  </data>
+  <data name="Blueprints_MoleculeScopeHelp" xml:space="preserve">
+    <value>משמרות ברמת מולקולה משותפות לכל הפלוגות במולקולה</value>
+  </data>
+  <data name="Blueprints_CompanyScopeHelp" xml:space="preserve">
+    <value>משמרות ברמת פלוגה שייכות לפלוגה ספציפית</value>
+  </data>
 </root>
