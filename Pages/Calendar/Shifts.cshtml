@@ -135,6 +135,16 @@
                     @Localizer["JustMine"]
                 </a>
             </div>
+
+            @if (Model.CanEdit)
+            {
+                <button type="button" id="quickEntryToggle" class="btn btn-ghost quick-entry-toggle"
+                        onclick="window.CalendarQuickEntry && window.CalendarQuickEntry.toggle()"
+                        title="@Localizer["QuickEntry_Toggle"]">
+                    <span class="btn-icon">&#9889;</span>
+                    <loc key="QuickEntry_Toggle" />
+                </button>
+            }
         </div>
     </div>
 
@@ -207,7 +217,7 @@
         @foreach (var st in Model.ShiftTypes)
         {
             var stName = Model.LocalizedShiftTypeNames.GetValueOrDefault(st.Id, st.Name);
-            <option value="@st.Id">@stName (@st.Start.ToString("HH:mm")-@st.End.ToString("HH:mm"))</option>
+            <option value="@st.Id" data-key="@st.Key">@stName (@st.Start.ToString("HH:mm")-@st.End.ToString("HH:mm"))</option>
         }
     </select>
 }
@@ -233,10 +243,33 @@ else
     </select>
 }
 
+@* Hidden selects for Quick Entry autocomplete (chore types + duty types) *@
+@if (Model.Mode == "user")
+{
+    <select id="choreTypeSelect-quickentry" style="display:none" data-role="quickentry-choretype">
+        @foreach (var ct in Model.ChoreTypes)
+        {
+            <option value="@ct.Id" data-color="@ct.Color">@ct.DisplayName</option>
+        }
+    </select>
+    <select id="dutyTypeSelect-quickentry" style="display:none" data-role="quickentry-dutytype">
+        @{
+            var isHebrew = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he");
+        }
+        @foreach (var dt in Model.DutyTypes)
+        {
+            var dtName = isHebrew ? dt.NameHe : dt.NameEn;
+            <option value="@dt.TypeValue" data-icon="@dt.Icon" data-color="@dt.Color">@dtName</option>
+        }
+    </select>
+}
+
 @section Scripts {
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
+    <link rel="stylesheet" href="~/css/calendar-quick-entry.css" asp-append-version="true" />
+    <script src="~/js/calendar-quick-entry.js" asp-append-version="true"></script>
     <script src="~/js/excel-calendar-groups.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>

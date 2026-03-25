@@ -32,6 +32,7 @@ public class ShiftsModel : PageModel
     private readonly ILogger<ShiftsModel> _logger;
     private readonly IJobTypeService _jobTypeService;
     private readonly ITraineeService _traineeService;
+    private readonly IChoreTypeService _choreTypeService;
 
     public ShiftsModel(
         AppDbContext db,
@@ -43,7 +44,8 @@ public class ShiftsModel : PageModel
         ITenantResolver tenantResolver,
         ILogger<ShiftsModel> logger,
         IJobTypeService jobTypeService,
-        ITraineeService traineeService)
+        ITraineeService traineeService,
+        IChoreTypeService choreTypeService)
     {
         _db = db;
         _calendarService = calendarService;
@@ -55,6 +57,7 @@ public class ShiftsModel : PageModel
         _logger = logger;
         _jobTypeService = jobTypeService;
         _traineeService = traineeService;
+        _choreTypeService = choreTypeService;
     }
 
     // Query parameters
@@ -91,6 +94,8 @@ public class ShiftsModel : PageModel
     public List<AppUser> Trainees { get; set; } = new();
     public List<ShiftType> ShiftTypes { get; set; } = new();
     public Dictionary<int, string> LocalizedShiftTypeNames { get; set; } = new();
+    public List<ChoreType> ChoreTypes { get; set; } = new();
+    public List<OnDutyTypeConfig> DutyTypes { get; set; } = new();
 
     public bool IsTechMolecule { get; set; }
 
@@ -209,6 +214,16 @@ public class ShiftsModel : PageModel
         {
             Trainees = await _traineeService.GetCompanyTraineesAsync(companyId.Value);
         }
+
+        // Load chore types and duty types for Quick Entry autocomplete
+        if (MoleculeId.HasValue)
+        {
+            ChoreTypes = await _choreTypeService.GetChoreTypesForMoleculeAsync(MoleculeId.Value);
+        }
+        DutyTypes = await _db.OnDutyTypeConfigs
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.TypeValue)
+            .ToListAsync();
 
         _logger.LogInformation(
             "Shifts calendar loaded for User {UserId}, Molecule {MoleculeId}, JobType {JobTypeId}, Mode {Mode}, ViewMode {ViewMode}",

@@ -151,11 +151,11 @@ test.describe('Every-Button Checklist: Global Elements', () => {
     await saveEvidence(page, EVIDENCE, 'global-user-menu.png');
   });
 
-  test('Global: Ctrl+K command palette opens', async ({ page }) => {
+  test('Global: Ctrl+J command palette opens', async ({ page }) => {
     await navigateTo(page, '/');
 
-    // Press Ctrl+K
-    await page.keyboard.press('Control+k');
+    // Press Ctrl+J
+    await page.keyboard.press('Control+j');
     await page.waitForTimeout(500);
 
     // ASSERT: Command palette appeared

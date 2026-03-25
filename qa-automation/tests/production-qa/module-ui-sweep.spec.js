@@ -370,12 +370,12 @@ test.describe('UI/UX Sweep: Accessibility', () => {
     await saveEvidence(page, EVIDENCE, 'tab-focus.png', 'light-theme');
   });
 
-  test('Keyboard shortcut Ctrl+K opens command palette', async ({ page }) => {
+  test('Keyboard shortcut Ctrl+J opens command palette', async ({ page }) => {
     await loginAsOwner(page);
     await navigateTo(page, '/');
 
-    // Press Ctrl+K
-    await page.keyboard.press('Control+k');
+    // Press Ctrl+J
+    await page.keyboard.press('Control+j');
     await page.waitForTimeout(500);
 
     // ASSERT: Command palette appeared

@@ -1,0 +1,209 @@
+/* Quick Entry Toggle Button */
+.quick-entry-toggle {
+    transition: all 0.2s ease;
+}
+
+@media (pointer: coarse) {
+    .quick-entry-toggle {
+        display: none !important;
+    }
+}
+
+@media print {
+    .quick-entry-toggle,
+    .quick-entry-dropdown,
+    .quick-entry-input {
+        display: none !important;
+    }
+}
+
+/* Active cell highlight */
+.quick-entry-active {
+    outline: 2px solid var(--primary) !important;
+    outline-offset: -2px;
+    z-index: 2;
+    position: relative;
+}
+
+/* Hide fill handle when Quick Entry input is active */
+.quick-entry-active .fill-handle {
+    display: none !important;
+}
+
+/* Hide add button when Quick Entry is active on the cell */
+.quick-entry-active .excel-calendar__add-btn {
+    display: none !important;
+}
+
+/* Inline input */
+.quick-entry-input {
+    width: 100%;
+    min-width: 60px;
+    padding: 2px 4px;
+    border: none;
+    border-bottom: 2px solid var(--primary);
+    background: transparent;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    outline: none;
+    color: inherit;
+    box-sizing: border-box;
+    margin-top: 2px;
+}
+
+.quick-entry-input::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Dropdown */
+.quick-entry-dropdown {
+    position: fixed;
+    z-index: 9999;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    max-height: 320px;
+    overflow-y: auto;
+    min-width: 200px;
+    max-width: 320px;
+    padding: var(--space-1) 0;
+}
+
+/* Group header */
+.quick-entry-group-header {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    user-select: none;
+}
+
+/* Result item */
+.quick-entry-item {
+    padding: var(--space-1) var(--space-2);
+    cursor: pointer;
+    font-size: 0.8125rem;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    transition: background 0.1s;
+}
+
+.quick-entry-item:hover,
+.quick-entry-item--active {
+    background: var(--surface-soft, #f0f0f0);
+}
+
+.quick-entry-item--active {
+    font-weight: 600;
+}
+
+/* Overflow indicator */
+.quick-entry-overflow {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Chip (for slash commands and chore type selection) */
+.quick-entry-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    vertical-align: middle;
+    margin-inline-end: 4px;
+}
+
+.quick-entry-chip--shift { background: #e3f2fd; color: #1565c0; }
+.quick-entry-chip--chore { background: #fff3e0; color: #e65100; }
+.quick-entry-chip--duty  { background: #e8f5e9; color: #2e7d32; }
+.quick-entry-chip--home  { background: #f3e5f5; color: #7b1fa2; }
+
+/* No matches message */
+.quick-entry-no-matches {
+    padding: var(--space-2);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-style: italic;
+}
+
+/* Inline prompt toast (for confirmations) */
+.quick-entry-prompt {
+    position: fixed;
+    z-index: 10000;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: var(--radius-sm);
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.75rem;
+    box-shadow: var(--shadow-lg);
+    max-width: 320px;
+    color: #856404;
+}
+
+/* First-use tooltip */
+.quick-entry-tooltip {
+    position: absolute;
+    z-index: 10000;
+    background: var(--primary);
+    color: var(--primary-contrast, #fff) !important;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    max-width: 300px;
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.quick-entry-tooltip::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    inset-inline-start: 20px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--primary);
+}
+
+/* Slash command palette items */
+.quick-entry-item--command {
+    font-weight: 500;
+}
+
+.quick-entry-item--command .quick-entry-item__shortcut {
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.75rem;
+    margin-inline-start: auto;
+}
+
+/* RTL support using logical properties */
+[dir="rtl"] .quick-entry-dropdown,
+.quick-entry-dropdown[dir="rtl"] {
+    text-align: start;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .quick-entry-chip--shift { background: #1a237e; color: #90caf9; }
+    .quick-entry-chip--chore { background: #bf360c; color: #ffcc80; }
+    .quick-entry-chip--duty  { background: #1b5e20; color: #a5d6a7; }
+    .quick-entry-chip--home  { background: #4a148c; color: #ce93d8; }
+    .quick-entry-prompt { background: #3e2e00; border-color: #664d00; color: #ffc107; }
+}

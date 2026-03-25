@@ -365,6 +365,7 @@
 
         // Cell click - refresh to get latest data before editing
         addTrackedListener(document, 'click', (e) => {
+            if (window.quickEntryActive) return;
             const cell = e.target.closest('.excel-cell[data-editable="true"]');
             if (cell) {
                 triggerShadowRefresh();
@@ -433,6 +434,7 @@
 
         // Also trigger on window focus (for tab switching)
         window.addEventListener('focus', () => {
+            if (window.quickEntryActive) return;
             const timeSinceRefresh = Date.now() - lastRefreshTime;
             if (timeSinceRefresh > 15000) { // 15 seconds since last refresh
                 triggerShadowRefresh();

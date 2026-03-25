@@ -387,7 +387,7 @@ th { text-align: left; color: var(--text); }
   border-top: 1px solid var(--border);
 }
 
-/* ✅ PHASE 18: Ctrl+K shortcut tooltip */
+/* ✅ PHASE 18: Ctrl+J shortcut tooltip */
 .sidebar-footer-shortcut {
   margin-top: 0.75rem;
   padding: 0.5rem 0.75rem;

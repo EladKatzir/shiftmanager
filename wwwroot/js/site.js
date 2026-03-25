@@ -972,10 +972,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Keyboard shortcut: Ctrl/Cmd + K
+  // Keyboard shortcut: Ctrl/Cmd + J (changed from K — browser search bar conflicts on air-gapped machines)
   document.addEventListener('keydown', function(e) {
-    // Ctrl/Cmd + K
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    // Ctrl/Cmd + J
+    if ((e.ctrlKey || e.metaKey) && e.key === 'j') {
       e.preventDefault();
       toggleCommandPalette();
     }
@@ -1269,7 +1269,7 @@ function toggleShortcutsHelp() {
     return;
   }
   const shortcuts = [
-    { keys: 'Ctrl+K', desc: window.AppLocalizer?.CommandPalette || 'Command Palette' },
+    { keys: 'Ctrl+J', desc: window.AppLocalizer?.CommandPalette || 'Command Palette' },
     { keys: '?', desc: window.AppLocalizer?.KeyboardShortcuts || 'Keyboard Shortcuts' },
     { keys: 'Esc', desc: window.AppLocalizer?.CloseDialog || 'Close Dialog' },
     { keys: '\u2190 / h', desc: window.AppLocalizer?.PreviousMonth || 'Previous Month (Calendar)' },

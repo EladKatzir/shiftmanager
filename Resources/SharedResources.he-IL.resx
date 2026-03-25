@@ -2490,12 +2490,12 @@
     <comment>Phase 18 - Forgot password security note</comment>
   </data>
   <data name="Sidebar_CtrlKTooltip" xml:space="preserve">
-    <value>לחץ Ctrl+K (או Cmd+K על Mac) לפתיחת ניווט מהיר</value>
-    <comment>Phase 18 - Sidebar Ctrl+K tooltip</comment>
+    <value>לחץ Ctrl+J (או Cmd+K על Mac) לפתיחת ניווט מהיר</value>
+    <comment>Phase 18 - Sidebar Ctrl+J tooltip</comment>
   </data>
   <data name="Sidebar_CtrlKLabel" xml:space="preserve">
-    <value>Ctrl+K</value>
-    <comment>Phase 18 - Sidebar Ctrl+K label</comment>
+    <value>Ctrl+J</value>
+    <comment>Phase 18 - Sidebar Ctrl+J label</comment>
   </data>
   <data name="Sidebar_Toggle" xml:space="preserve">
     <value>החלף מצב סרגל צד (Ctrl+B)</value>
@@ -9096,7 +9096,7 @@
     <value>מהי לוח הפקודות?</value>
   </data>
   <data name="Help_FAQ_CommandPalette_A" xml:space="preserve">
-    <value>לוח הפקודות (Ctrl+K) מספק גישה מהירה לכל הדפים והפעולות. התחל להקליד כדי לחפש כל דף, תכונה או פעולה. לחץ Enter כדי לנווט ישירות לפריט שנבחר.</value>
+    <value>לוח הפקודות (Ctrl+J) מספק גישה מהירה לכל הדפים והפעולות. התחל להקליד כדי לחפש כל דף, תכונה או פעולה. לחץ Enter כדי לנווט ישירות לפריט שנבחר.</value>
   </data>
   <data name="AppName" xml:space="preserve">
     <value>מנהל משמרות</value>
@@ -11483,7 +11483,7 @@
     <value>ניווט מהיר</value>
   </data>
   <data name="Onboarding_Tip_CommandPaletteDesc" xml:space="preserve">
-    <value>לחץ Ctrl+K כדי לפתוח את חלונית הפקודות ולקפוץ לכל עמוד מיד.</value>
+    <value>לחץ Ctrl+J כדי לפתוח את חלונית הפקודות ולקפוץ לכל עמוד מיד.</value>
   </data>
   <data name="Onboarding_Tip_Help" xml:space="preserve">
     <value>מרכז עזרה</value>
@@ -13585,5 +13585,35 @@
   </data>
   <data name="Blueprints_CompanyScopeHelp" xml:space="preserve">
     <value>משמרות ברמת פלוגה שייכות לפלוגה ספציפית</value>
+  </data>
+  <data name="QuickEntry_Toggle" xml:space="preserve">
+    <value>הקצאה מהירה</value>
+  </data>
+  <data name="QuickEntry_ShiftsGroup" xml:space="preserve">
+    <value>משמרות</value>
+  </data>
+  <data name="QuickEntry_ChoresGroup" xml:space="preserve">
+    <value>תורנויות</value>
+  </data>
+  <data name="QuickEntry_DutyGroup" xml:space="preserve">
+    <value>כונניות</value>
+  </data>
+  <data name="QuickEntry_NoMatches" xml:space="preserve">
+    <value>אין תוצאות</value>
+  </data>
+  <data name="QuickEntry_Tooltip" xml:space="preserve">
+    <value>הקלד לשיבוץ, Tab למעבר ימינה, Escape לביטול. הקלד / לתורנויות ועוד.</value>
+  </data>
+  <data name="QuickEntry_PermissionDenied" xml:space="preserve">
+    <value>אין הרשאה</value>
+  </data>
+  <data name="QuickEntry_ShiftFull" xml:space="preserve">
+    <value>המשמרת מלאה. Enter=הרחב, Esc=דלג</value>
+  </data>
+  <data name="QuickEntry_VacationConflict" xml:space="preserve">
+    <value>התנגשות חופשה. Enter=דרוס, Esc=דלג</value>
+  </data>
+  <data name="QuickEntry_DisabledJustMine" xml:space="preserve">
+    <value>בטל "רק שלי" כדי להשתמש בהקצאה מהירה</value>
   </data>
 </root>

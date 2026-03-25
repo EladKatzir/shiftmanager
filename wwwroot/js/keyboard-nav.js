@@ -560,6 +560,8 @@
         grid.addEventListener('keydown', function(e) {
             // Only handle if focus is within the grid
             if (!grid.contains(document.activeElement)) return;
+            // Skip when Quick Entry input is active — it handles its own keyboard nav
+            if (window.quickEntryActive) return;
 
             switch (e.key) {
                 case 'ArrowRight':

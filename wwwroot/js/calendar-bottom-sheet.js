@@ -954,6 +954,7 @@
     // --- Handle add-btn clicks (desktop + touch) ---
     function initAddButtonHandler() {
         document.addEventListener('click', function (e) {
+            if (window.quickEntryActive) return;
             var addBtn = e.target.closest('.excel-calendar__add-btn');
             if (!addBtn) return;
 
@@ -982,7 +983,8 @@
     window.CalendarBottomSheet = {
         open: open,
         close: close,
-        isOpen: function () { return isOpen; }
+        isOpen: function () { return isOpen; },
+        extractCellData: extractCellData
     };
 
 })();

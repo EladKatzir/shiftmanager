@@ -43,6 +43,9 @@ function getCurrentCulture() {
     return htmlLang.startsWith('he') ? 'he-IL' : 'en-US';
 }
 
+// Default confirm handler — backward-compatible (bottom sheet still uses confirm())
+const defaultConfirm = (msg) => Promise.resolve(confirm(msg));
+
 /**
  * Get localized error message
  */
@@ -92,7 +95,7 @@ function handleApiError(response, error = null) {
  * @param {string} title - Chore title
  * @param {boolean} forceAssign - Force assignment despite vacation conflict
  */
-async function quickAddChore(date, assigneeId, title, forceAssign = false, choreTypeId = null) {
+async function quickAddChore(date, assigneeId, title, forceAssign = false, choreTypeId = null, confirmHandler = defaultConfirm) {
     try {
         var requestBody = {
             date: date,
@@ -133,7 +136,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
                         ? 'למשתמש זה חופשה מאושרת בתאריך זה. האם ברצונך להקצות בכל זאת?'
                         : 'This user has an approved vacation on this date. Do you want to assign anyway?';
 
-                    if (confirm(confirmMessage)) {
+                    if (await confirmHandler(confirmMessage)) {
                         // Retry with forceAssign=true
                         var retryBody = {
                             date: date,
@@ -169,7 +172,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
                                 ? 'האם ברצונך לנהל את החופשה המתנגשת?'
                                 : 'Do you want to manage the conflicting vacation?';
 
-                            if (confirm(manageMessage)) {
+                            if (await confirmHandler(manageMessage)) {
                                 window.location.href = '/Requests/Index#approved';
                             } else {
                                 // Refresh calendar to show the new chore
@@ -212,7 +215,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
  * @param {number} onDutyType - OnDutyType enum value (0=Hakam, 1=Lead, 2+=Custom)
  * @param {boolean} forceAssign - Force assignment despite vacation conflict
  */
-async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false) {
+async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false, confirmHandler = defaultConfirm) {
     try {
         const response = await fetch('/Api/Calendar/QuickAddOnDuty', {
             method: 'POST',
@@ -260,7 +263,7 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                         ? 'למשתמש זה חופשה מאושרת בתאריך זה. האם ברצונך להקצות בכל זאת?'
                         : 'This user has an approved vacation on this date. Do you want to assign anyway?';
 
-                    if (confirm(confirmMessage)) {
+                    if (await confirmHandler(confirmMessage)) {
                         // Retry with forceAssign=true
                         const retryResponse = await fetch('/Api/Calendar/QuickAddOnDuty', {
                             method: 'POST',
@@ -292,7 +295,7 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                                 ? 'האם ברצונך לנהל את החופשה המתנגשת?'
                                 : 'Do you want to manage the conflicting vacation?';
 
-                            if (confirm(manageMessage)) {
+                            if (await confirmHandler(manageMessage)) {
                                 window.location.href = '/Requests/Index#approved';
                             } else {
                                 // Refresh calendar to show the new on-duty assignment
@@ -334,7 +337,7 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
  * @param {string} date - Date in yyyy-MM-dd format
  * @param {number} assigneeId - User ID to assign
  */
-async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
+async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = defaultConfirm, _retried) {
     try {
         const response = await fetch('/Calendar/Table?handler=AssignEmployee', {
             method: 'POST',
@@ -371,15 +374,15 @@ async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
             const confirmMsg = culture === 'he-IL'
                 ? 'המשמרת מלאה. להגדיל את התקן ולשבץ?'
                 : 'Shift is fully staffed. Increase capacity and assign?';
-            if (confirm(confirmMsg)) {
-                await expandCapacityAndRetry(shiftTypeId, date, assigneeId);
+            if (await confirmHandler(confirmMsg)) {
+                await expandCapacityAndRetry(shiftTypeId, date, assigneeId, confirmHandler);
             }
         } else if (result.requiresOverride) {
             // Warnings require override — show them and ask to confirm
             const msgs = (result.warnings || []).map(function(w) { return w.message; }).join('\n');
             const culture = getCurrentCulture();
             const confirmLabel = culture === 'he-IL' ? 'אישורים נדרשים:\n' : 'Warnings:\n';
-            if (confirm(confirmLabel + msgs)) {
+            if (await confirmHandler(confirmLabel + msgs)) {
                 // Retry with override token
                 const retryResponse = await fetch('/Calendar/Table?handler=AssignEmployee', {
                     method: 'POST',
@@ -409,7 +412,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
     }
 }
 
-async function expandCapacityAndRetry(shiftTypeId, date, assigneeId) {
+async function expandCapacityAndRetry(shiftTypeId, date, assigneeId, confirmHandler = defaultConfirm) {
     try {
         // First, find or create the shift instance to get its ID and current staffing
         const lookupResponse = await fetch('/Calendar/Table?handler=EnsureShiftInstance', {
@@ -446,7 +449,7 @@ async function expandCapacityAndRetry(shiftTypeId, date, assigneeId) {
         }
 
         // Now retry the assignment
-        await quickAddShift(shiftTypeId, date, assigneeId, true);
+        await quickAddShift(shiftTypeId, date, assigneeId, confirmHandler, true);
     } catch (error) {
         handleApiError(null, error);
     }

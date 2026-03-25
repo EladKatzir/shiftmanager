@@ -2665,12 +2665,12 @@ Are you absolutely sure you want to delete this user?</value>
     <comment>Phase 18 - Forgot password security note</comment>
   </data>
   <data name="Sidebar_CtrlKTooltip" xml:space="preserve">
-    <value>Press Ctrl+K (or Cmd+K on Mac) to open quick navigation</value>
-    <comment>Phase 18 - Sidebar Ctrl+K tooltip</comment>
+    <value>Press Ctrl+J (or Cmd+K on Mac) to open quick navigation</value>
+    <comment>Phase 18 - Sidebar Ctrl+J tooltip</comment>
   </data>
   <data name="Sidebar_CtrlKLabel" xml:space="preserve">
-    <value>Ctrl+K</value>
-    <comment>Phase 18 - Sidebar Ctrl+K label</comment>
+    <value>Ctrl+J</value>
+    <comment>Phase 18 - Sidebar Ctrl+J label</comment>
   </data>
   <data name="Sidebar_Toggle" xml:space="preserve">
     <value>Toggle sidebar (Ctrl+B)</value>
@@ -9130,7 +9130,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>What is the Command Palette?</value>
   </data>
   <data name="Help_FAQ_CommandPalette_A" xml:space="preserve">
-    <value>The Command Palette (Ctrl+K) provides quick access to all pages and actions. Start typing to search for any page, feature, or action. Press Enter to navigate directly to the selected item.</value>
+    <value>The Command Palette (Ctrl+J) provides quick access to all pages and actions. Start typing to search for any page, feature, or action. Press Enter to navigate directly to the selected item.</value>
   </data>
   <data name="FillHandle_DragToCopy" xml:space="preserve">
     <value>Drag to copy across days</value>
@@ -11517,7 +11517,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Quick Navigation</value>
   </data>
   <data name="Onboarding_Tip_CommandPaletteDesc" xml:space="preserve">
-    <value>Press Ctrl+K to open the command palette and jump to any page instantly.</value>
+    <value>Press Ctrl+J to open the command palette and jump to any page instantly.</value>
   </data>
   <data name="Onboarding_Tip_Help" xml:space="preserve">
     <value>Help Center</value>
@@ -13619,5 +13619,35 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Blueprints_CompanyScopeHelp" xml:space="preserve">
     <value>Company-scoped shifts belong to a specific company</value>
+  </data>
+  <data name="QuickEntry_Toggle" xml:space="preserve">
+    <value>Quick Entry</value>
+  </data>
+  <data name="QuickEntry_ShiftsGroup" xml:space="preserve">
+    <value>Shifts</value>
+  </data>
+  <data name="QuickEntry_ChoresGroup" xml:space="preserve">
+    <value>Chores</value>
+  </data>
+  <data name="QuickEntry_DutyGroup" xml:space="preserve">
+    <value>Day Shifts</value>
+  </data>
+  <data name="QuickEntry_NoMatches" xml:space="preserve">
+    <value>No matches</value>
+  </data>
+  <data name="QuickEntry_Tooltip" xml:space="preserve">
+    <value>Type to assign, Tab to move right, Escape to cancel. Use / for chores and more.</value>
+  </data>
+  <data name="QuickEntry_PermissionDenied" xml:space="preserve">
+    <value>Permission denied</value>
+  </data>
+  <data name="QuickEntry_ShiftFull" xml:space="preserve">
+    <value>Shift is full. Enter=expand, Esc=skip</value>
+  </data>
+  <data name="QuickEntry_VacationConflict" xml:space="preserve">
+    <value>Vacation conflict. Enter=override, Esc=skip</value>
+  </data>
+  <data name="QuickEntry_DisabledJustMine" xml:space="preserve">
+    <value>Disable Just Mine to use Quick Entry</value>
   </data>
 </root>
