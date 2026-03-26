@@ -9,28 +9,28 @@
     Checks performed and WHY each matters:
 
     1. Core Application Files
-       ShiftManager.exe, .dll, web.config, appsettings.json — without these the app
+       ShiftManager.exe, .dll, web.config, appsettings.json - without these the app
        simply cannot start. The .exe is the Kestrel host; web.config is required by IIS
        to proxy to Kestrel; appsettings.json holds runtime configuration.
 
     2. .NET Runtime (self-contained)
-       coreclr.dll, hostfxr.dll, hostpolicy.dll, System.Runtime.dll — because the
+       coreclr.dll, hostfxr.dll, hostpolicy.dll, System.Runtime.dll - because the
        target machine is air-gapped, the full runtime must be included. If any of
        these are missing, the publish was NOT self-contained and the app will fail
        to start on machines without the SDK.
 
     3. SQLite Native Library
-       e_sqlite3.dll + Microsoft.Data.Sqlite.dll — the app uses SQLite as its
+       e_sqlite3.dll + Microsoft.Data.Sqlite.dll - the app uses SQLite as its
        database. Without the native interop DLL the app will throw a
        DllNotFoundException at startup.
 
     4. Localization
-       he-IL/ShiftManager.resources.dll — Hebrew satellite assembly. The app is
+       he-IL/ShiftManager.resources.dll - Hebrew satellite assembly. The app is
        used primarily in Hebrew; missing resources cause raw key names in the UI.
 
     5. Static Assets (wwwroot)
        CSS, JS, images, and bundled libraries (SignalR, Lucide icons). Because the
-       deployment is air-gapped, CDN-hosted libraries are NOT available — they must
+       deployment is air-gapped, CDN-hosted libraries are NOT available - they must
        be bundled in wwwroot/lib/.
 
     6. No Dev Artifacts Leaked
@@ -42,7 +42,7 @@
        wwwroot folder or a suspiciously low DLL count).
 
     8. Connection String Validation
-       The app reads ConnectionStrings:Default — if that key is missing or malformed,
+       The app reads ConnectionStrings:Default - if that key is missing or malformed,
        the app will fail to connect to SQLite on first run.
 
 .PARAMETER OutputPath
@@ -138,7 +138,7 @@ try {
         if (Test-Path $rtPath) {
             Write-Pass "$rtFile exists"
         } else {
-            Write-Fail "$rtFile not found — publish may not be self-contained"
+            Write-Fail "$rtFile not found - publish may not be self-contained"
             $failures.Add("$rtFile missing (runtime incomplete)")
         }
     }
@@ -217,7 +217,7 @@ try {
 
     $devSettings = Join-Path $OutputPath "appsettings.Development.json"
     if (Test-Path $devSettings) {
-        Write-Warn "appsettings.Development.json found — should not ship to production"
+        Write-Warn "appsettings.Development.json found - should not ship to production"
     } else {
         Write-Pass "No appsettings.Development.json (correct)"
     }
@@ -227,7 +227,7 @@ try {
 
     $testResultFiles = @(Get-ChildItem -Path $OutputPath -Filter "test-results*.json" -ErrorAction SilentlyContinue)
     if ($testResultFiles.Count -gt 0) {
-        Write-Warn "Found $($testResultFiles.Count) test-results*.json file(s) in root — should not ship"
+        Write-Warn "Found $($testResultFiles.Count) test-results*.json file(s) in root - should not ship"
     } else {
         Write-Pass "No test-results*.json in root (correct)"
     }
@@ -294,7 +294,7 @@ try {
     Write-Host ""
 
     # ---------------------------------------------------------------
-    # DEBUGGING — summary info for operators
+    # DEBUGGING - summary info for operators
     # ---------------------------------------------------------------
     Write-Host "--- DEBUGGING ---" -ForegroundColor Cyan
 
