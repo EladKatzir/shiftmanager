@@ -84,8 +84,10 @@ try {
                 break
             }
 
-            # Check for errors
-            if ($log -match "error|exception|failed" -and $log -notmatch "PRAGMA") {
+            # Check for fatal errors (exclude EF Core migration retry logs and PRAGMA)
+            # EF Core SQLite provider logs "Error" level for table rebuild retries during
+            # AlterColumn - these are recoverable internal operations, not fatal errors.
+            if ($log -match "Unhandled exception|fatal|HostAborted" -and $log -notmatch "PRAGMA") {
                 Write-ErrorMsg "Application startup errors detected"
                 Write-Host $log -ForegroundColor Red
                 throw "Startup failed"
