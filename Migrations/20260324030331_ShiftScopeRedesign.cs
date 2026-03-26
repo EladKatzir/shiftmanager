@@ -18,19 +18,9 @@ namespace ShiftManager.Migrations
                 name: "IX_ShiftTypes_MoleculeId_JobTypeId_Key",
                 table: "ShiftTypes");
 
-            migrationBuilder.RenameColumn(
-                name: "CustomName",
-                table: "ShiftTypes",
-                newName: "NameEn");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "CompanyId",
-                table: "ShiftTypes",
-                type: "INTEGER",
-                nullable: true,
-                oldClrType: typeof(int),
-                oldType: "INTEGER");
-
+            // AddColumn BEFORE AlterColumn/RenameColumn — SQLite rebuilds the table
+            // on ALTER, and the rebuild references all model columns. If these columns
+            // don't exist yet, the INSERT SELECT into ef_temp fails.
             migrationBuilder.AddColumn<int>(
                 name: "AreaId",
                 table: "ShiftTypes",
@@ -49,6 +39,19 @@ namespace ShiftManager.Migrations
                 type: "INTEGER",
                 nullable: false,
                 defaultValue: 1); // Default = Molecule (1), not Company (0)
+
+            migrationBuilder.RenameColumn(
+                name: "CustomName",
+                table: "ShiftTypes",
+                newName: "NameEn");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "CompanyId",
+                table: "ShiftTypes",
+                type: "INTEGER",
+                nullable: true,
+                oldClrType: typeof(int),
+                oldType: "INTEGER");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ShiftTypes_AreaId",
