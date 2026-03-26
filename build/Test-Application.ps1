@@ -44,7 +44,7 @@ try {
     if ($appsettings.Seeding -and $appsettings.Seeding.Owner) {
         $appsettings.Seeding.Owner.Password = "TestPassword2025!"
     } else {
-        Write-WarnMsg "Seeding:Owner:Password path not found in appsettings.json — test may use default password"
+        Write-WarnMsg "Seeding:Owner:Password path not found in appsettings.json - test may use default password"
     }
 
     $appsettings | ConvertTo-Json -Depth 10 | Set-Content $appsettingsPath
