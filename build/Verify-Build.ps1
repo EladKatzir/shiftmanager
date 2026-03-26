@@ -173,7 +173,7 @@ try {
     # ---------------------------------------------------------------
     Write-Host "--- 4. Localization ---" -ForegroundColor Cyan
 
-    $heResourceDll = Join-Path $OutputPath "he-IL" "ShiftManager.resources.dll"
+    $heResourceDll = Join-Path (Join-Path $OutputPath "he-IL") "ShiftManager.resources.dll"
     if (Test-Path $heResourceDll) {
         Write-Pass "he-IL/ShiftManager.resources.dll exists"
     } else {
