@@ -8420,6 +8420,10 @@
     <value>לא נמצאו משמרות</value>
     <comment>Title shown when calendar has no shifts</comment>
   </data>
+  <data name="Calendar_Empty_NoShiftsForSelection" xml:space="preserve">
+    <value>לא נמצאו משמרות עבור בחירה זו</value>
+    <comment>Message when no shifts match the current filter/selection</comment>
+  </data>
   <data name="Calendar_Empty_SelectJobType" xml:space="preserve">
     <value>בחר סוג תפקיד כדי לראות משמרות למולקולה זו.</value>
     <comment>Message when no job type is selected</comment>
@@ -8897,6 +8901,15 @@
   </data>
   <data name="OwnerHub_Languages" xml:space="preserve">
     <value>שפות</value>
+  </data>
+  <data name="OwnerHub_DutyRotations" xml:space="preserve">
+    <value>רוטציות</value>
+  </data>
+  <data name="OwnerHub_SetupTasksPending" xml:space="preserve">
+    <value>משימות ממתינות</value>
+  </data>
+  <data name="OwnerHub_ApprovalRules" xml:space="preserve">
+    <value>כללי אישור</value>
   </data>
   <!-- Grants Page -->
   <data name="Grants_Title" xml:space="preserve">
@@ -13601,6 +13614,15 @@
   <data name="QuickEntry_NoMatches" xml:space="preserve">
     <value>אין תוצאות</value>
   </data>
+  <data name="QuickEntry_SaveAsText" xml:space="preserve">
+    <value>שמור כטקסט</value>
+  </data>
+  <data name="QuickEntry_TextSaved" xml:space="preserve">
+    <value>הטקסט נשמר בהצלחה</value>
+  </data>
+  <data name="QuickEntry_TextDeleted" xml:space="preserve">
+    <value>הטקסט נמחק</value>
+  </data>
   <data name="QuickEntry_Tooltip" xml:space="preserve">
     <value>הקלד לשיבוץ, Tab למעבר ימינה, Escape לביטול. הקלד / לתורנויות ועוד.</value>
   </data>
@@ -13615,5 +13637,110 @@
   </data>
   <data name="QuickEntry_DisabledJustMine" xml:space="preserve">
     <value>בטל "רק שלי" כדי להשתמש בהקצאה מהירה</value>
+  </data>
+  <data name="Widget_OpeningTimes" xml:space="preserve">
+    <value>שעות פתיחה</value>
+  </data>
+  <data name="Widget_StoreOpen" xml:space="preserve">
+    <value>פתוח</value>
+  </data>
+  <data name="Widget_StoreBreak" xml:space="preserve">
+    <value>הפסקה</value>
+  </data>
+  <data name="Widget_StoreClosed" xml:space="preserve">
+    <value>סגור</value>
+  </data>
+  <data name="Widget_OpenUntil" xml:space="preserve">
+    <value>פתוח עד {0}</value>
+  </data>
+  <data name="Widget_BreakReopens" xml:space="preserve">
+    <value>הפסקה — נפתח ב-{0}</value>
+  </data>
+  <data name="Widget_ClosedOpens" xml:space="preserve">
+    <value>סגור — נפתח {0}</value>
+  </data>
+  <data name="Widget_NoHoursSet" xml:space="preserve">
+    <value>לא הוגדרו שעות</value>
+  </data>
+  <data name="Widget_NotAssigned" xml:space="preserve">
+    <value>לא שובץ</value>
+  </data>
+  <data name="Widget_ConfigTitle" xml:space="preserve">
+    <value>הגדרות מידע מהיר</value>
+  </data>
+  <data name="Widget_OnCallRoles" xml:space="preserve">
+    <value>תורנויות</value>
+  </data>
+  <data name="Widget_Stores" xml:space="preserve">
+    <value>חנויות</value>
+  </data>
+  <data name="Widget_SaveConfig" xml:space="preserve">
+    <value>שמור הגדרות</value>
+  </data>
+  <data name="ManageStores" xml:space="preserve">
+    <value>ניהול חנויות</value>
+  </data>
+  <data name="CreateNewStore" xml:space="preserve">
+    <value>הוסף חנות</value>
+  </data>
+  <data name="AllStores" xml:space="preserve">
+    <value>כל החנויות</value>
+  </data>
+  <data name="StoreName" xml:space="preserve">
+    <value>שם החנות</value>
+  </data>
+  <data name="StoreNameEn" xml:space="preserve">
+    <value>שם (אנגלית)</value>
+  </data>
+  <data name="StoreNameHe" xml:space="preserve">
+    <value>שם (עברית)</value>
+  </data>
+  <data name="StoreArea" xml:space="preserve">
+    <value>אזור</value>
+  </data>
+  <data name="StoreHours" xml:space="preserve">
+    <value>שעות פעילות</value>
+  </data>
+  <data name="AddTimeWindow" xml:space="preserve">
+    <value>הוסף חלון זמן</value>
+  </data>
+  <data name="OpenTime" xml:space="preserve">
+    <value>שעת פתיחה</value>
+  </data>
+  <data name="CloseTime" xml:space="preserve">
+    <value>שעת סגירה</value>
+  </data>
+  <data name="StoreActive" xml:space="preserve">
+    <value>פעיל</value>
+  </data>
+  <data name="StoreInactive" xml:space="preserve">
+    <value>לא פעיל</value>
+  </data>
+  <data name="NoStoresFound" xml:space="preserve">
+    <value>לא נמצאו חנויות</value>
+  </data>
+  <data name="Success_StoreCreated" xml:space="preserve">
+    <value>החנות נוצרה בהצלחה</value>
+  </data>
+  <data name="Success_StoreUpdated" xml:space="preserve">
+    <value>החנות עודכנה בהצלחה</value>
+  </data>
+  <data name="Success_StoreDeleted" xml:space="preserve">
+    <value>החנות נמחקה בהצלחה</value>
+  </data>
+  <data name="Success_ConfigSaved" xml:space="preserve">
+    <value>ההגדרות נשמרו</value>
+  </data>
+  <data name="Error_StoreNameRequired" xml:space="preserve">
+    <value>שם החנות נדרש</value>
+  </data>
+  <data name="Error_StoreNotFound" xml:space="preserve">
+    <value>החנות לא נמצאה</value>
+  </data>
+  <data name="Grant_ManageStores" xml:space="preserve">
+    <value>ניהול חנויות</value>
+  </data>
+  <data name="Grant_ManageStores_Desc" xml:space="preserve">
+    <value>יצירה, עריכה וניהול של חנויות ושעות פתיחה</value>
   </data>
 </root>

@@ -8454,6 +8454,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>No Shifts Found</value>
     <comment>Title shown when calendar has no shifts</comment>
   </data>
+  <data name="Calendar_Empty_NoShiftsForSelection" xml:space="preserve">
+    <value>No shifts found for this selection</value>
+    <comment>Message when no shifts match the current filter/selection</comment>
+  </data>
   <data name="Calendar_Empty_SelectJobType" xml:space="preserve">
     <value>Select a job type to see shifts for this molecule.</value>
     <comment>Message when no job type is selected</comment>
@@ -8931,6 +8935,15 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="OwnerHub_Languages" xml:space="preserve">
     <value>Languages</value>
+  </data>
+  <data name="OwnerHub_DutyRotations" xml:space="preserve">
+    <value>rotations</value>
+  </data>
+  <data name="OwnerHub_SetupTasksPending" xml:space="preserve">
+    <value>pending tasks</value>
+  </data>
+  <data name="OwnerHub_ApprovalRules" xml:space="preserve">
+    <value>approval rules</value>
   </data>
   <!-- Grants Page -->
   <data name="Grants_Title" xml:space="preserve">
@@ -13635,6 +13648,15 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="QuickEntry_NoMatches" xml:space="preserve">
     <value>No matches</value>
   </data>
+  <data name="QuickEntry_SaveAsText" xml:space="preserve">
+    <value>Save as text</value>
+  </data>
+  <data name="QuickEntry_TextSaved" xml:space="preserve">
+    <value>Text saved successfully</value>
+  </data>
+  <data name="QuickEntry_TextDeleted" xml:space="preserve">
+    <value>Text entry deleted</value>
+  </data>
   <data name="QuickEntry_Tooltip" xml:space="preserve">
     <value>Type to assign, Tab to move right, Escape to cancel. Use / for chores and more.</value>
   </data>
@@ -13649,5 +13671,110 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="QuickEntry_DisabledJustMine" xml:space="preserve">
     <value>Disable Just Mine to use Quick Entry</value>
+  </data>
+  <data name="Widget_OpeningTimes" xml:space="preserve">
+    <value>Opening Times</value>
+  </data>
+  <data name="Widget_StoreOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Widget_StoreBreak" xml:space="preserve">
+    <value>Break</value>
+  </data>
+  <data name="Widget_StoreClosed" xml:space="preserve">
+    <value>Closed</value>
+  </data>
+  <data name="Widget_OpenUntil" xml:space="preserve">
+    <value>Open until {0}</value>
+  </data>
+  <data name="Widget_BreakReopens" xml:space="preserve">
+    <value>Break — reopens {0}</value>
+  </data>
+  <data name="Widget_ClosedOpens" xml:space="preserve">
+    <value>Closed — opens {0}</value>
+  </data>
+  <data name="Widget_NoHoursSet" xml:space="preserve">
+    <value>No hours set</value>
+  </data>
+  <data name="Widget_NotAssigned" xml:space="preserve">
+    <value>Not assigned</value>
+  </data>
+  <data name="Widget_ConfigTitle" xml:space="preserve">
+    <value>Quick Info Settings</value>
+  </data>
+  <data name="Widget_OnCallRoles" xml:space="preserve">
+    <value>On-Call Roles</value>
+  </data>
+  <data name="Widget_Stores" xml:space="preserve">
+    <value>Stores</value>
+  </data>
+  <data name="Widget_SaveConfig" xml:space="preserve">
+    <value>Save Configuration</value>
+  </data>
+  <data name="ManageStores" xml:space="preserve">
+    <value>Manage Stores</value>
+  </data>
+  <data name="CreateNewStore" xml:space="preserve">
+    <value>Add Store</value>
+  </data>
+  <data name="AllStores" xml:space="preserve">
+    <value>All Stores</value>
+  </data>
+  <data name="StoreName" xml:space="preserve">
+    <value>Store Name</value>
+  </data>
+  <data name="StoreNameEn" xml:space="preserve">
+    <value>Name (English)</value>
+  </data>
+  <data name="StoreNameHe" xml:space="preserve">
+    <value>Name (Hebrew)</value>
+  </data>
+  <data name="StoreArea" xml:space="preserve">
+    <value>Area</value>
+  </data>
+  <data name="StoreHours" xml:space="preserve">
+    <value>Opening Hours</value>
+  </data>
+  <data name="AddTimeWindow" xml:space="preserve">
+    <value>Add Time Window</value>
+  </data>
+  <data name="OpenTime" xml:space="preserve">
+    <value>Open Time</value>
+  </data>
+  <data name="CloseTime" xml:space="preserve">
+    <value>Close Time</value>
+  </data>
+  <data name="StoreActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="StoreInactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="NoStoresFound" xml:space="preserve">
+    <value>No stores found</value>
+  </data>
+  <data name="Success_StoreCreated" xml:space="preserve">
+    <value>Store created successfully</value>
+  </data>
+  <data name="Success_StoreUpdated" xml:space="preserve">
+    <value>Store updated successfully</value>
+  </data>
+  <data name="Success_StoreDeleted" xml:space="preserve">
+    <value>Store deleted successfully</value>
+  </data>
+  <data name="Success_ConfigSaved" xml:space="preserve">
+    <value>Configuration saved</value>
+  </data>
+  <data name="Error_StoreNameRequired" xml:space="preserve">
+    <value>Store name is required</value>
+  </data>
+  <data name="Error_StoreNotFound" xml:space="preserve">
+    <value>Store not found</value>
+  </data>
+  <data name="Grant_ManageStores" xml:space="preserve">
+    <value>Manage Stores</value>
+  </data>
+  <data name="Grant_ManageStores_Desc" xml:space="preserve">
+    <value>Create, edit, and manage store definitions and opening hours</value>
   </data>
 </root>
