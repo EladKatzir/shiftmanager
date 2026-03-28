@@ -208,6 +208,12 @@
             font-size: 1rem;
             flex-shrink: 0;
             box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        .member-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .member-details {
@@ -848,7 +854,7 @@
 <div class="myteam-container">
     <!-- Top Action Bar -->
     <div class="myteam-topbar">
-        <h2 class="calendar-title" id="calendarName"><loc key="Loading" />...</h2>
+        <h2 class="calendar-title" id="calendarName">&nbsp;</h2>
         <div class="topbar-actions">
             <button class="btn" id="btnSwitchCalendar">
                 <span class="icon">⟳</span>
@@ -868,7 +874,7 @@
     <!-- Week Navigation -->
     <div class="week-nav">
         <button class="btn" id="btnPrevWeek">&larr; <loc key="PreviousWeek" /></button>
-        <div class="week-range" id="weekRange"><loc key="Loading" />...</div>
+        <div class="week-range" id="weekRange">&nbsp;</div>
         <button class="btn" id="btnThisWeek"><loc key="ThisWeek" /></button>
         <button class="btn" id="btnNextWeek"><loc key="NextWeek" /> &rarr;</button>
     </div>
