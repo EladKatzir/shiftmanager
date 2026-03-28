@@ -1661,6 +1661,15 @@ public class UsersModel : LocalizedPageModel
 
             return RedirectToPage();
         }
+        catch (DbUpdateException dbEx) when (dbEx.InnerException is Microsoft.Data.Sqlite.SqliteException sqliteEx
+            && sqliteEx.SqliteErrorCode == 19)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(dbEx, "FK constraint prevented deleting user {UserId}", id);
+            Error = _localizer["Admin_UserDeleteBlockedByDependencies"];
+            await OnGetAsync();
+            return Page();
+        }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();

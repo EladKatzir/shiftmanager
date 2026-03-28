@@ -10920,6 +10920,9 @@
   <data name="Error_DeletingUser" xml:space="preserve">
     <value>שגיאה במחיקת משתמש</value>
   </data>
+  <data name="Admin_UserDeleteBlockedByDependencies" xml:space="preserve">
+    <value>לא ניתן למחוק משתמש זה מכיוון שיש לו רשומות שלא ניתן לנקות אוטומטית. אנא פנה למנהל מערכת לסיוע.</value>
+  </data>
   <data name="Error_DepartmentNameRequired" xml:space="preserve">
     <value>שם מחלקה הוא שדה חובה</value>
   </data>
