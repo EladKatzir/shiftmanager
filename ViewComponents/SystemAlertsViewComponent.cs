@@ -19,15 +19,17 @@ public class SystemAlertsViewComponent : ViewComponent
     private readonly IWebHostEnvironment _env;
     private readonly IGrantService _grantService;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly ILogger<SystemAlertsViewComponent> _logger;
     private const string CacheKey = "SystemAlerts";
 
-    public SystemAlertsViewComponent(IMemoryCache cache, IConfiguration configuration, IWebHostEnvironment env, IGrantService grantService, IStringLocalizer<SharedResources> localizer)
+    public SystemAlertsViewComponent(IMemoryCache cache, IConfiguration configuration, IWebHostEnvironment env, IGrantService grantService, IStringLocalizer<SharedResources> localizer, ILogger<SystemAlertsViewComponent> logger)
     {
         _cache = cache;
         _configuration = configuration;
         _env = env;
         _grantService = grantService;
         _localizer = localizer;
+        _logger = logger;
     }
 
     public async Task<IViewComponentResult> InvokeAsync()
@@ -68,7 +70,7 @@ public class SystemAlertsViewComponent : ViewComponent
                     alerts.Add(_localizer["SystemAlert_WalSize", walSizeMb.ToString("F0")]);
             }
         }
-        catch { /* Ignore WAL check errors */ }
+        catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check WAL size"); }
 
         // Check disk space
         try
@@ -80,7 +82,7 @@ public class SystemAlertsViewComponent : ViewComponent
             else if (freePercent < 10)
                 alerts.Add(_localizer["SystemAlert_DiskLow", freePercent.ToString("F1")]);
         }
-        catch { /* Ignore disk check errors */ }
+        catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check disk space"); }
 
         // Check if backups directory exists and has recent backups
         try
@@ -103,7 +105,7 @@ public class SystemAlertsViewComponent : ViewComponent
                 alerts.Add(_localizer["SystemAlert_NoBackupDir"]);
             }
         }
-        catch { /* Ignore backup check errors */ }
+        catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check backup status"); }
 
         // Check DataProtection keys
         try
@@ -112,7 +114,7 @@ public class SystemAlertsViewComponent : ViewComponent
             if (!Directory.Exists(keysDir) || !Directory.GetFiles(keysDir, "*.xml").Any())
                 alerts.Add(_localizer["SystemAlert_NoDataProtectionKeys"]);
         }
-        catch { /* Ignore */ }
+        catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check data protection"); }
 
         // Check HMAC secret (skip in Development — not relevant for local dev)
         var hmacSecret = _configuration.GetValue<string>("Security:ApiKeyHmacSecret");
@@ -130,7 +132,7 @@ public class SystemAlertsViewComponent : ViewComponent
                     alerts.Add(_localizer["SystemAlert_NoHebrewFont"]);
             }
         }
-        catch { /* Ignore font check errors */ }
+        catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check font availability"); }
 
         // F-08: Check notification delivery stats
         try
@@ -149,7 +151,7 @@ public class SystemAlertsViewComponent : ViewComponent
                     alerts.Add(_localizer["SystemAlert_NoNotificationRun", ((DateTime.UtcNow - lastRun).TotalHours).ToString("F0")]);
             }
         }
-        catch { /* Ignore notification stats errors */ }
+        catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check notification stats"); }
 
         return alerts;
     }
