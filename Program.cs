@@ -1268,6 +1268,19 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
+    // ============================================================
+    // SEED ON-DUTY TYPE CONFIGS
+    // ============================================================
+    {
+        var existingDutyTypes = await db.OnDutyTypeConfigs.Select(d => d.TypeValue).ToListAsync();
+        foreach (var dt in ShiftManager.Data.SeedData.OnDutyTypeSeed.GetOnDutyTypes())
+        {
+            if (!existingDutyTypes.Contains(dt.TypeValue))
+                db.OnDutyTypeConfigs.Add(dt);
+        }
+        await db.SaveChangesAsync();
+    }
+
     // Seed test data for QA automation (legacy seeder)
     try
     {
