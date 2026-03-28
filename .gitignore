@@ -162,6 +162,7 @@ qa-automation/tests/visual-regression.spec.js-snapshots/
 
 # Manual test artifacts
 test-screenshots/
+test_screenshots/
 test-scripts/
 test-tmp/
 MANUAL_TESTING_LOG.md
