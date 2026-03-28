@@ -487,4 +487,505 @@ public class RoleServiceTests : IDisposable
 
         result.Should().Be(2);
     }
+
+    // --- GetUserRolesInScopeAsync ---
+
+    [Fact]
+    public async Task GetUserRolesInScopeAsync_FiltersBy_CompanyId()
+    {
+        var (user, template) = await SeedUserAndTemplateAsync();
+
+        _db.UserRoleAssignments.AddRange(
+            new UserRoleAssignment
+            {
+                UserId = user.Id, RoleTemplateId = template.Id,
+                CompanyId = 1, AssignedByUserId = 99, IsActive = true
+            },
+            new UserRoleAssignment
+            {
+                UserId = user.Id, RoleTemplateId = template.Id,
+                CompanyId = 2, AssignedByUserId = 99, IsActive = true
+            }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUserRolesInScopeAsync(user.Id, GrantScope.Company(1));
+
+        result.Should().HaveCount(1);
+        result.First().CompanyId.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetUserRolesInScopeAsync_ExcludesInactiveRoles()
+    {
+        var (user, template) = await SeedUserAndTemplateAsync();
+
+        _db.UserRoleAssignments.AddRange(
+            new UserRoleAssignment
+            {
+                UserId = user.Id, RoleTemplateId = template.Id,
+                CompanyId = 1, AssignedByUserId = 99, IsActive = true
+            },
+            new UserRoleAssignment
+            {
+                UserId = user.Id, RoleTemplateId = template.Id,
+                CompanyId = 1, AssignedByUserId = 99, IsActive = false
+            }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUserRolesInScopeAsync(user.Id, GrantScope.Company(1));
+
+        result.Should().HaveCount(1);
+        result.First().IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetUserRolesInScopeAsync_FiltersBy_MoleculeId()
+    {
+        var (user, template) = await SeedUserAndTemplateAsync();
+
+        _db.UserRoleAssignments.AddRange(
+            new UserRoleAssignment
+            {
+                UserId = user.Id, RoleTemplateId = template.Id,
+                MoleculeId = 10, AssignedByUserId = 99, IsActive = true
+            },
+            new UserRoleAssignment
+            {
+                UserId = user.Id, RoleTemplateId = template.Id,
+                MoleculeId = 20, AssignedByUserId = 99, IsActive = true
+            }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUserRolesInScopeAsync(user.Id, GrantScope.Molecule(10));
+
+        result.Should().HaveCount(1);
+        result.First().MoleculeId.Should().Be(10);
+    }
+
+    [Fact]
+    public async Task GetUserRolesInScopeAsync_ReturnsEmpty_WhenNoMatchingScope()
+    {
+        var (user, template) = await SeedUserAndTemplateAsync();
+
+        _db.UserRoleAssignments.Add(new UserRoleAssignment
+        {
+            UserId = user.Id, RoleTemplateId = template.Id,
+            CompanyId = 1, AssignedByUserId = 99, IsActive = true
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUserRolesInScopeAsync(user.Id, GrantScope.Company(999));
+
+        result.Should().BeEmpty();
+    }
+
+    // --- GetUserRoleAssignmentAsync ---
+
+    [Fact]
+    public async Task GetUserRoleAssignmentAsync_ReturnsAssignment_WhenExists()
+    {
+        var (user, template) = await SeedUserAndTemplateAsync();
+
+        var assignment = new UserRoleAssignment
+        {
+            UserId = user.Id, RoleTemplateId = template.Id,
+            CompanyId = 1, AssignedByUserId = 99, IsActive = true
+        };
+        _db.UserRoleAssignments.Add(assignment);
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUserRoleAssignmentAsync(assignment.Id);
+
+        result.Should().NotBeNull();
+        result!.UserId.Should().Be(user.Id);
+        result.RoleTemplateId.Should().Be(template.Id);
+        result.RoleTemplate.Should().NotBeNull();
+        result.User.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetUserRoleAssignmentAsync_ReturnsNull_WhenNotFound()
+    {
+        var result = await _service.GetUserRoleAssignmentAsync(999);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetUserRoleAssignmentAsync_ReturnsInactiveAssignment_Too()
+    {
+        // This method does NOT filter by IsActive — it returns any assignment by Id
+        var (user, template) = await SeedUserAndTemplateAsync();
+
+        var assignment = new UserRoleAssignment
+        {
+            UserId = user.Id, RoleTemplateId = template.Id,
+            CompanyId = 1, AssignedByUserId = 99, IsActive = false
+        };
+        _db.UserRoleAssignments.Add(assignment);
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUserRoleAssignmentAsync(assignment.Id);
+
+        result.Should().NotBeNull();
+        result!.IsActive.Should().BeFalse();
+    }
+
+    // --- GetUsersWithRoleInScopeAsync ---
+
+    [Fact]
+    public async Task GetUsersWithRoleInScopeAsync_ReturnsUsersWithRoleInCompany()
+    {
+        var (user1, template) = await SeedUserAndTemplateAsync(userId: 1, templateKey: "Lead");
+
+        var user2 = new AppUser
+        {
+            Id = 2, Email = "user2@test.com", DisplayName = "User 2",
+            CompanyId = 1, IsActive = true, Role = UserRole.Employee
+        };
+        _db.Users.Add(user2);
+        await _db.SaveChangesAsync();
+
+        _db.UserRoleAssignments.AddRange(
+            new UserRoleAssignment
+            {
+                UserId = 1, RoleTemplateId = template.Id,
+                CompanyId = 1, AssignedByUserId = 99, IsActive = true
+            },
+            new UserRoleAssignment
+            {
+                UserId = 2, RoleTemplateId = template.Id,
+                CompanyId = 2, AssignedByUserId = 99, IsActive = true
+            }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUsersWithRoleInScopeAsync(template.Id, GrantScope.Company(1));
+
+        result.Should().HaveCount(1);
+        result.First().Id.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetUsersWithRoleInScopeAsync_ExcludesInactiveUsers()
+    {
+        var (user1, template) = await SeedUserAndTemplateAsync(userId: 1, templateKey: "Lead");
+
+        var inactiveUser = new AppUser
+        {
+            Id = 2, Email = "inactive@test.com", DisplayName = "Inactive User",
+            CompanyId = 1, IsActive = false, Role = UserRole.Employee
+        };
+        _db.Users.Add(inactiveUser);
+        await _db.SaveChangesAsync();
+
+        _db.UserRoleAssignments.AddRange(
+            new UserRoleAssignment
+            {
+                UserId = 1, RoleTemplateId = template.Id,
+                CompanyId = 1, AssignedByUserId = 99, IsActive = true
+            },
+            new UserRoleAssignment
+            {
+                UserId = 2, RoleTemplateId = template.Id,
+                CompanyId = 1, AssignedByUserId = 99, IsActive = true
+            }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUsersWithRoleInScopeAsync(template.Id, GrantScope.Company(1));
+
+        result.Should().HaveCount(1);
+        result.First().Id.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetUsersWithRoleInScopeAsync_ExcludesInactiveRoleAssignments()
+    {
+        var (user, template) = await SeedUserAndTemplateAsync();
+
+        _db.UserRoleAssignments.Add(new UserRoleAssignment
+        {
+            UserId = user.Id, RoleTemplateId = template.Id,
+            CompanyId = 1, AssignedByUserId = 99, IsActive = false // Inactive assignment
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUsersWithRoleInScopeAsync(template.Id, GrantScope.Company(1));
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetUsersWithRoleInScopeAsync_ReturnsEmpty_WhenNoMatchingScope()
+    {
+        var (user, template) = await SeedUserAndTemplateAsync();
+
+        _db.UserRoleAssignments.Add(new UserRoleAssignment
+        {
+            UserId = user.Id, RoleTemplateId = template.Id,
+            CompanyId = 1, AssignedByUserId = 99, IsActive = true
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetUsersWithRoleInScopeAsync(template.Id, GrantScope.Company(999));
+
+        result.Should().BeEmpty();
+    }
+
+    // --- GetRoleTemplateWithAutoGrantsAsync ---
+
+    [Fact]
+    public async Task GetRoleTemplateWithAutoGrantsAsync_ReturnsTemplateWithGrants()
+    {
+        var grantType = new GrantType
+        {
+            Id = 1, Key = "TestGrant", NameKey = "N", DescriptionKey = "D", IsSystem = true, IsActive = true
+        };
+        _db.GrantTypes.Add(grantType);
+
+        var template = new RoleTemplate
+        {
+            Id = 1, Key = "TestRole", NameKey = "N", DescriptionKey = "D",
+            IsActive = true, SortOrder = 1
+        };
+        _db.RoleTemplates.Add(template);
+        await _db.SaveChangesAsync();
+
+        _db.RoleTemplateGrants.Add(new RoleTemplateGrant
+        {
+            Id = 1, RoleTemplateId = 1, GrantTypeId = 1, CanOwn = true
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetRoleTemplateWithAutoGrantsAsync(1);
+
+        result.Should().NotBeNull();
+        result!.Key.Should().Be("TestRole");
+        result.AutoGrants.Should().HaveCount(1);
+        result.AutoGrants.First().GrantType.Should().NotBeNull();
+        result.AutoGrants.First().GrantType.Key.Should().Be("TestGrant");
+    }
+
+    [Fact]
+    public async Task GetRoleTemplateWithAutoGrantsAsync_ReturnsNull_WhenNotFound()
+    {
+        var result = await _service.GetRoleTemplateWithAutoGrantsAsync(999);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetRoleTemplateWithAutoGrantsAsync_ReturnsInactiveTemplate_Too()
+    {
+        // This method does NOT filter by IsActive
+        _db.RoleTemplates.Add(new RoleTemplate
+        {
+            Id = 1, Key = "Inactive", NameKey = "N", DescriptionKey = "D",
+            IsActive = false, SortOrder = 1
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetRoleTemplateWithAutoGrantsAsync(1);
+
+        result.Should().NotBeNull();
+        result!.IsActive.Should().BeFalse();
+    }
+
+    // --- GetRoleTemplateWithAutoGrantsByKeyAsync ---
+
+    [Fact]
+    public async Task GetRoleTemplateWithAutoGrantsByKeyAsync_ReturnsTemplate_WhenActiveAndKeyMatches()
+    {
+        var grantType = new GrantType
+        {
+            Id = 1, Key = "SomeGrant", NameKey = "N", DescriptionKey = "D", IsSystem = true, IsActive = true
+        };
+        _db.GrantTypes.Add(grantType);
+
+        var template = new RoleTemplate
+        {
+            Id = 1, Key = "LeadRole", NameKey = "N", DescriptionKey = "D",
+            IsActive = true, SortOrder = 1
+        };
+        _db.RoleTemplates.Add(template);
+        await _db.SaveChangesAsync();
+
+        _db.RoleTemplateGrants.Add(new RoleTemplateGrant
+        {
+            Id = 1, RoleTemplateId = 1, GrantTypeId = 1, CanOwn = true
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetRoleTemplateWithAutoGrantsByKeyAsync("LeadRole");
+
+        result.Should().NotBeNull();
+        result!.Key.Should().Be("LeadRole");
+        result.AutoGrants.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task GetRoleTemplateWithAutoGrantsByKeyAsync_ReturnsNull_WhenInactive()
+    {
+        _db.RoleTemplates.Add(new RoleTemplate
+        {
+            Id = 1, Key = "InactiveRole", NameKey = "N", DescriptionKey = "D",
+            IsActive = false, SortOrder = 1
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetRoleTemplateWithAutoGrantsByKeyAsync("InactiveRole");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetRoleTemplateWithAutoGrantsByKeyAsync_ReturnsNull_WhenKeyNotFound()
+    {
+        var result = await _service.GetRoleTemplateWithAutoGrantsByKeyAsync("NonexistentKey");
+
+        result.Should().BeNull();
+    }
+
+    // --- GetAllRoleTemplatesWithDetailsAsync ---
+
+    [Fact]
+    public async Task GetAllRoleTemplatesWithDetailsAsync_ReturnsAllTemplates_IncludingInactive()
+    {
+        _db.RoleTemplates.AddRange(
+            new RoleTemplate { Id = 1, Key = "Active1", NameKey = "N", DescriptionKey = "D", IsActive = true, SortOrder = 1 },
+            new RoleTemplate { Id = 2, Key = "Inactive1", NameKey = "N", DescriptionKey = "D", IsActive = false, SortOrder = 2 }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetAllRoleTemplatesWithDetailsAsync();
+
+        result.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetAllRoleTemplatesWithDetailsAsync_IsSortedBySortOrderThenKey()
+    {
+        _db.RoleTemplates.AddRange(
+            new RoleTemplate { Id = 1, Key = "Charlie", NameKey = "N", DescriptionKey = "D", IsActive = true, SortOrder = 2 },
+            new RoleTemplate { Id = 2, Key = "Alpha", NameKey = "N", DescriptionKey = "D", IsActive = true, SortOrder = 1 },
+            new RoleTemplate { Id = 3, Key = "Bravo", NameKey = "N", DescriptionKey = "D", IsActive = true, SortOrder = 2 }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetAllRoleTemplatesWithDetailsAsync();
+
+        result.Should().HaveCount(3);
+        result[0].Key.Should().Be("Alpha");   // SortOrder 1
+        result[1].Key.Should().Be("Bravo");   // SortOrder 2, Key "B" < "C"
+        result[2].Key.Should().Be("Charlie");  // SortOrder 2, Key "C"
+    }
+
+    [Fact]
+    public async Task GetAllRoleTemplatesWithDetailsAsync_IncludesAutoGrantsAndUserRoles()
+    {
+        var grantType = new GrantType
+        {
+            Id = 1, Key = "G1", NameKey = "N", DescriptionKey = "D", IsSystem = true, IsActive = true
+        };
+        _db.GrantTypes.Add(grantType);
+
+        var user = new AppUser
+        {
+            Id = 1, Email = "u@t.com", DisplayName = "U",
+            CompanyId = 1, IsActive = true, Role = UserRole.Employee
+        };
+        _db.Users.Add(user);
+
+        var template = new RoleTemplate
+        {
+            Id = 1, Key = "RoleWithDetails", NameKey = "N", DescriptionKey = "D",
+            IsActive = true, SortOrder = 1
+        };
+        _db.RoleTemplates.Add(template);
+        await _db.SaveChangesAsync();
+
+        _db.RoleTemplateGrants.Add(new RoleTemplateGrant
+        {
+            Id = 1, RoleTemplateId = 1, GrantTypeId = 1
+        });
+        _db.UserRoleAssignments.Add(new UserRoleAssignment
+        {
+            UserId = 1, RoleTemplateId = 1, AssignedByUserId = 1, IsActive = true
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetAllRoleTemplatesWithDetailsAsync();
+
+        result.Should().HaveCount(1);
+        result[0].AutoGrants.Should().HaveCount(1);
+        result[0].UserRoles.Should().HaveCount(1);
+    }
+
+    // --- GetActiveRoleTemplatesWithAutoGrantsAsync ---
+
+    [Fact]
+    public async Task GetActiveRoleTemplatesWithAutoGrantsAsync_ReturnsOnlyActiveTemplates()
+    {
+        _db.RoleTemplates.AddRange(
+            new RoleTemplate { Id = 1, Key = "Active", NameKey = "N", DescriptionKey = "D", IsActive = true, SortOrder = 1 },
+            new RoleTemplate { Id = 2, Key = "Inactive", NameKey = "N", DescriptionKey = "D", IsActive = false, SortOrder = 2 }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetActiveRoleTemplatesWithAutoGrantsAsync();
+
+        result.Should().HaveCount(1);
+        result.First().Key.Should().Be("Active");
+    }
+
+    [Fact]
+    public async Task GetActiveRoleTemplatesWithAutoGrantsAsync_IncludesAutoGrantsWithGrantType()
+    {
+        var grantType = new GrantType
+        {
+            Id = 1, Key = "ViewCalendar", NameKey = "N", DescriptionKey = "D", IsSystem = true, IsActive = true
+        };
+        _db.GrantTypes.Add(grantType);
+
+        var template = new RoleTemplate
+        {
+            Id = 1, Key = "CalendarViewer", NameKey = "N", DescriptionKey = "D",
+            IsActive = true, SortOrder = 1
+        };
+        _db.RoleTemplates.Add(template);
+        await _db.SaveChangesAsync();
+
+        _db.RoleTemplateGrants.Add(new RoleTemplateGrant
+        {
+            Id = 1, RoleTemplateId = 1, GrantTypeId = 1, CanOwn = false, CanGive = false
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetActiveRoleTemplatesWithAutoGrantsAsync();
+
+        result.Should().HaveCount(1);
+        result[0].AutoGrants.Should().HaveCount(1);
+        result[0].AutoGrants[0].GrantType.Should().NotBeNull();
+        result[0].AutoGrants[0].GrantType.Key.Should().Be("ViewCalendar");
+    }
+
+    [Fact]
+    public async Task GetActiveRoleTemplatesWithAutoGrantsAsync_IsSortedBySortOrder()
+    {
+        _db.RoleTemplates.AddRange(
+            new RoleTemplate { Id = 1, Key = "Second", NameKey = "N", DescriptionKey = "D", IsActive = true, SortOrder = 2 },
+            new RoleTemplate { Id = 2, Key = "First", NameKey = "N", DescriptionKey = "D", IsActive = true, SortOrder = 1 }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetActiveRoleTemplatesWithAutoGrantsAsync();
+
+        result.Should().HaveCount(2);
+        result[0].Key.Should().Be("First");
+        result[1].Key.Should().Be("Second");
+    }
 }

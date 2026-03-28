@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
@@ -19,6 +20,7 @@ public class ShiftCalendarServiceTests : IDisposable
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         _db = new AppDbContext(options);
@@ -473,5 +475,424 @@ public class ShiftCalendarServiceTests : IDisposable
             start: new DateOnly(2026, 6, 1), end: new DateOnly(2026, 6, 30));
 
         result.Should().BeEmpty();
+    }
+
+    // --- AssignUserAsync ---
+
+    [Fact]
+    public async Task AssignUserAsync_HappyPath_AssignsUserAndReturnsSuccess()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 5);
+
+        _db.ShiftInstances.Add(new ShiftInstance
+        {
+            Id = 1, CompanyId = 1, ShiftTypeId = 1, WorkDate = date, StaffingRequired = 2
+        });
+        await _db.SaveChangesAsync();
+
+        // Mock ICompanyCacheService to return the company (with correct MoleculeId)
+        _companyCacheMock
+            .Setup(c => c.GetCompanyAsync(1))
+            .ReturnsAsync(data.Company);
+
+        var result = await _service.AssignUserAsync(shiftInstanceId: 1, userId: 1, assignedByUserId: 2);
+
+        result.Success.Should().BeTrue();
+        result.ErrorMessage.Should().BeNull();
+
+        var assignment = await _db.ShiftAssignments.FirstOrDefaultAsync();
+        assignment.Should().NotBeNull();
+        assignment!.UserId.Should().Be(1);
+        assignment.ShiftInstanceId.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task AssignUserAsync_ReturnsFalse_WhenShiftInstanceNotFound()
+    {
+        await SetupTestDataAsync();
+
+        var result = await _service.AssignUserAsync(shiftInstanceId: 999, userId: 1, assignedByUserId: 2);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("Shift instance not found");
+    }
+
+    [Fact]
+    public async Task AssignUserAsync_ReturnsFalse_WhenUserNotFound()
+    {
+        await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 5);
+
+        _db.ShiftInstances.Add(new ShiftInstance
+        {
+            Id = 1, CompanyId = 1, ShiftTypeId = 1, WorkDate = date, StaffingRequired = 2
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.AssignUserAsync(shiftInstanceId: 1, userId: 999, assignedByUserId: 2);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("User not found");
+    }
+
+    [Fact]
+    public async Task AssignUserAsync_ReturnsFalse_WhenUserNotInMolecule()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 5);
+
+        _db.ShiftInstances.Add(new ShiftInstance
+        {
+            Id = 1, CompanyId = 1, ShiftTypeId = 1, WorkDate = date, StaffingRequired = 2
+        });
+        await _db.SaveChangesAsync();
+
+        // Return a company with different MoleculeId
+        var otherCompany = new Company { Id = 99, MoleculeId = 99, Name = "Other", DisplayName = "Other" };
+        _companyCacheMock
+            .Setup(c => c.GetCompanyAsync(1))
+            .ReturnsAsync(otherCompany);
+
+        var result = await _service.AssignUserAsync(shiftInstanceId: 1, userId: 1, assignedByUserId: 2);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("molecule");
+    }
+
+    [Fact]
+    public async Task AssignUserAsync_ReturnsFalse_WhenDuplicateAssignment()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 5);
+
+        _db.ShiftInstances.Add(new ShiftInstance
+        {
+            Id = 1, CompanyId = 1, ShiftTypeId = 1, WorkDate = date, StaffingRequired = 2
+        });
+        _db.ShiftAssignments.Add(new ShiftAssignment
+        {
+            Id = 1, CompanyId = 1, ShiftInstanceId = 1, UserId = 1
+        });
+        await _db.SaveChangesAsync();
+
+        _companyCacheMock
+            .Setup(c => c.GetCompanyAsync(1))
+            .ReturnsAsync(data.Company);
+
+        var result = await _service.AssignUserAsync(shiftInstanceId: 1, userId: 1, assignedByUserId: 2);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("already assigned");
+    }
+
+    [Fact]
+    public async Task AssignUserAsync_ReturnsFalse_WhenCompanyCacheReturnsNull()
+    {
+        await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 5);
+
+        _db.ShiftInstances.Add(new ShiftInstance
+        {
+            Id = 1, CompanyId = 1, ShiftTypeId = 1, WorkDate = date, StaffingRequired = 2
+        });
+        await _db.SaveChangesAsync();
+
+        _companyCacheMock
+            .Setup(c => c.GetCompanyAsync(1))
+            .ReturnsAsync((Company?)null);
+
+        var result = await _service.AssignUserAsync(shiftInstanceId: 1, userId: 1, assignedByUserId: 2);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("molecule");
+    }
+
+    // --- GetOverlaysAsync ---
+
+    [Fact]
+    public async Task GetOverlaysAsync_ReturnsEmpty_WhenNoUsersInMolecule()
+    {
+        // No users seeded for molecule 99
+        await SetupTestDataAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 99,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_ReturnsVacationOverlay_WhenApprovedTimeOff()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        _db.TimeOffRequests.Add(new TimeOffRequest
+        {
+            Id = 1, CompanyId = 1, UserId = 1,
+            StartDate = date, EndDate = date,
+            Status = RequestStatus.Approved
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.Should().ContainKey((1, date));
+        result[(1, date)].HasVacation.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_DoesNotInclude_PendingTimeOff()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        _db.TimeOffRequests.Add(new TimeOffRequest
+        {
+            Id = 1, CompanyId = 1, UserId = 1,
+            StartDate = date, EndDate = date,
+            Status = RequestStatus.Pending // Not approved
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        // Should not have an overlay for pending time-off
+        result.ContainsKey((1, date)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_ReturnsChoreOverlay_WhenActiveChoreExists()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        var choreType = new ChoreType
+        {
+            Id = 1, MoleculeId = 1, Name = "Guard", DisplayName = "Guard Duty",
+            Color = "#FF0000", SortOrder = 1, CreatedByUserId = 1
+        };
+        _db.Add(choreType);
+        await _db.SaveChangesAsync();
+
+        _db.Chores.Add(new Chore
+        {
+            Id = 1, CompanyId = 1, MoleculeId = 1, UserId = 1,
+            Date = date, Title = "Guard Duty", ChoreTypeId = 1,
+            CreatedBy = 1, CanceledAt = null // Active
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.Should().ContainKey((1, date));
+        result[(1, date)].HasChore.Should().BeTrue();
+        result[(1, date)].ChoreItems.Should().HaveCount(1);
+        result[(1, date)].ChoreItems[0].Name.Should().Be("Guard Duty");
+        result[(1, date)].ChoreItems[0].Color.Should().Be("#FF0000");
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_DoesNotInclude_CanceledChore()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        _db.Chores.Add(new Chore
+        {
+            Id = 1, CompanyId = 1, MoleculeId = 1, UserId = 1,
+            Date = date, Title = "Canceled Chore",
+            CreatedBy = 1, CanceledAt = DateTime.UtcNow // Canceled
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.ContainsKey((1, date)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_ReturnsOnDutyOverlay_WithBuiltInType()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        _db.OnDuties.Add(new OnDuty
+        {
+            Id = 1, UserId = 1, Date = date,
+            Type = OnDutyType.Hakam, CreatedBy = 1, CanceledAt = null
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.Should().ContainKey((1, date));
+        result[(1, date)].HasOnDuty.Should().BeTrue();
+        result[(1, date)].OnDutyItems.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_DoesNotInclude_CanceledOnDuty()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        _db.OnDuties.Add(new OnDuty
+        {
+            Id = 1, UserId = 1, Date = date,
+            Type = OnDutyType.Hakam, CreatedBy = 1, CanceledAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.ContainsKey((1, date)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_ReturnsOnDutyOverlay_WithCustomDutyTypeConfig()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        // Seed a custom duty type config
+        _db.OnDutyTypeConfigs.Add(new OnDutyTypeConfig
+        {
+            Id = 1, TypeValue = 5, NameEn = "Katzin", NameHe = "קצין",
+            Color = "#8b5cf6", IsActive = true, CreatedBy = 1
+        });
+        await _db.SaveChangesAsync();
+
+        _db.OnDuties.Add(new OnDuty
+        {
+            Id = 1, UserId = 1, Date = date,
+            Type = (OnDutyType)5, CreatedBy = 1, CanceledAt = null
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.Should().ContainKey((1, date));
+        result[(1, date)].OnDutyItems.Should().HaveCount(1);
+        result[(1, date)].OnDutyItems[0].Name.Should().Be("קצין");
+        result[(1, date)].OnDutyItems[0].Color.Should().Be("#8b5cf6");
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_ReturnsShiftOverlay_WhenShiftAssignmentExists()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        _db.ShiftInstances.Add(new ShiftInstance
+        {
+            Id = 1, CompanyId = 1, ShiftTypeId = 1, WorkDate = date, StaffingRequired = 2
+        });
+        await _db.SaveChangesAsync();
+
+        _db.ShiftAssignments.Add(new ShiftAssignment
+        {
+            Id = 1, CompanyId = 1, ShiftInstanceId = 1, UserId = 1
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.Should().ContainKey((1, date));
+        result[(1, date)].OtherShifts.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_ReturnsCompositeOverlay_WhenMultipleTypesOnSameDay()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        // Approved vacation
+        _db.TimeOffRequests.Add(new TimeOffRequest
+        {
+            Id = 1, CompanyId = 1, UserId = 1,
+            StartDate = date, EndDate = date,
+            Status = RequestStatus.Approved
+        });
+
+        // Active chore
+        _db.Chores.Add(new Chore
+        {
+            Id = 1, CompanyId = 1, MoleculeId = 1, UserId = 1,
+            Date = date, Title = "Cleaning", CreatedBy = 1, CanceledAt = null
+        });
+
+        // Active on-duty
+        _db.OnDuties.Add(new OnDuty
+        {
+            Id = 1, UserId = 1, Date = date,
+            Type = OnDutyType.Lead, CreatedBy = 1, CanceledAt = null
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.Should().ContainKey((1, date));
+        var overlay = result[(1, date)];
+        overlay.HasVacation.Should().BeTrue();
+        overlay.HasChore.Should().BeTrue();
+        overlay.HasOnDuty.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetOverlaysAsync_ReturnsChoreWithTimedSuffix()
+    {
+        var data = await SetupTestDataAsync();
+        var date = new DateOnly(2026, 3, 3);
+
+        _db.Chores.Add(new Chore
+        {
+            Id = 1, CompanyId = 1, MoleculeId = 1, UserId = 1,
+            Date = date, Title = "Guard",
+            StartTime = new TimeOnly(10, 0),
+            EndTime = new TimeOnly(14, 0),
+            CreatedBy = 1, CanceledAt = null
+        });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetOverlaysAsync(
+            moleculeId: 1,
+            start: new DateOnly(2026, 3, 1),
+            end: new DateOnly(2026, 3, 7));
+
+        result.Should().ContainKey((1, date));
+        // Chore name should include time suffix
+        result[(1, date)].ChoreItems[0].Name.Should().Contain("10:00-14:00");
     }
 }
