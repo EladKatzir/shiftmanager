@@ -6,8 +6,8 @@ using ShiftManager.Data;
 
 namespace ShiftManager.Pages;
 
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner-only diagnostic page (B-09: restricted from AdminAccess to Owner)
-[Authorize(Roles = nameof(ShiftManager.Models.Support.UserRole.Owner))]
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — AdminAccess-gated diagnostic page
+[Authorize(Policy = "Grant:AdminAccess")]
 public class DiagnosticModel : PageModel
 {
     private readonly AppDbContext _db;
