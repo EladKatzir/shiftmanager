@@ -501,7 +501,7 @@
      */
     async function checkConnection() {
         try {
-            const response = await fetch('/api/health', {
+            const response = await fetch('/health', {
                 method: 'HEAD',
                 cache: 'no-store',
                 credentials: 'same-origin'
