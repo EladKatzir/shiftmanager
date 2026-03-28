@@ -366,8 +366,8 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
-        // TechShift API - used by Calendar/Table for tech shift eligible user lookups
-        if (path.StartsWithSegments("/Api/TechShift", StringComparison.OrdinalIgnoreCase))
+        // Widget API - used by Quick Info widget for config save/load
+        if (path.StartsWithSegments("/Api/Widget", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

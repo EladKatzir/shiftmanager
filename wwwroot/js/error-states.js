@@ -16,7 +16,7 @@
         toastDuration: 5000,          // Default toast auto-dismiss in ms
         toastMaxVisible: 1,           // B-052: Only 1 toast visible at a time (queue others)
         networkCheckInterval: 30000,  // Check network every 30 seconds when offline
-        networkCheckEndpoint: '/api/health' // Endpoint to check connectivity
+        networkCheckEndpoint: '/health' // Endpoint to check connectivity
     };
 
     // Localization messages (fallbacks when server-side localization not available)
