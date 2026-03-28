@@ -13602,6 +13602,9 @@
   <data name="QuickEntry_Toggle" xml:space="preserve">
     <value>הקצאה מהירה</value>
   </data>
+  <data name="QuickEntry_HelpTitle" xml:space="preserve">
+    <value>עזרה להקצאה מהירה</value>
+  </data>
   <data name="QuickEntry_ShiftsGroup" xml:space="preserve">
     <value>משמרות</value>
   </data>
