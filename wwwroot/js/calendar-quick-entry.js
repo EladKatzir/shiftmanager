@@ -60,6 +60,7 @@
             'QuickEntry_ChoresGroup': isHe ? '\u05EA\u05D5\u05E8\u05E0\u05D5\u05D9\u05D5\u05EA' : 'Chores',
             'QuickEntry_DutyGroup': isHe ? '\u05DB\u05D5\u05E0\u05E0\u05D9\u05D5\u05EA' : 'Day Shifts',
             'QuickEntry_NoMatches': isHe ? '\u05D0\u05D9\u05DF \u05EA\u05D5\u05E6\u05D0\u05D5\u05EA' : 'No matches',
+            'QuickEntry_SaveAsText': isHe ? '\u05E9\u05DE\u05D5\u05E8 \u05DB\u05D8\u05E7\u05E1\u05D8' : 'Save as text',
             'QuickEntry_Tooltip': isHe
                 ? '\u05D4\u05E7\u05DC\u05D3 \u05DC\u05E9\u05D9\u05D1\u05D5\u05E5, Tab \u05DC\u05DE\u05E2\u05D1\u05E8 \u05D9\u05DE\u05D9\u05E0\u05D4, Escape \u05DC\u05D1\u05D9\u05D8\u05D5\u05DC. \u05D4\u05E7\u05DC\u05D3 / \u05DC\u05EA\u05D5\u05E8\u05E0\u05D5\u05D9\u05D5\u05EA \u05D5\u05E2\u05D5\u05D3.'
                 : 'Type to assign, Tab to move right, Escape to cancel. Use / for chores and more.',
@@ -138,31 +139,30 @@
             });
         }
 
-        if (itemType === 'shifttype') {
-            var choreOpts = document.querySelectorAll('[data-role="quickentry-choretype"] option');
-            for (var c = 0; c < choreOpts.length; c++) {
-                var co = choreOpts[c];
-                if (!co.value) continue;
-                allItems.push({
-                    id: co.value,
-                    text: co.textContent.trim(),
-                    type: 'chore',
-                    color: co.dataset.color || null
-                });
-            }
+        // Load chore/duty types if their hidden selects exist (enables /chore and /duty slash commands)
+        var choreOpts = document.querySelectorAll('[data-role="quickentry-choretype"] option');
+        for (var c = 0; c < choreOpts.length; c++) {
+            var co = choreOpts[c];
+            if (!co.value) continue;
+            allItems.push({
+                id: co.value,
+                text: co.textContent.trim(),
+                type: 'chore',
+                color: co.dataset.color || null
+            });
+        }
 
-            var dutyOpts = document.querySelectorAll('[data-role="quickentry-dutytype"] option');
-            for (var d = 0; d < dutyOpts.length; d++) {
-                var dopt = dutyOpts[d];
-                if (!dopt.value) continue;
-                allItems.push({
-                    id: dopt.value,
-                    text: dopt.textContent.trim(),
-                    type: 'duty',
-                    icon: dopt.dataset.icon || null,
-                    color: dopt.dataset.color || null
-                });
-            }
+        var dutyOpts = document.querySelectorAll('[data-role="quickentry-dutytype"] option');
+        for (var d = 0; d < dutyOpts.length; d++) {
+            var dopt = dutyOpts[d];
+            if (!dopt.value) continue;
+            allItems.push({
+                id: dopt.value,
+                text: dopt.textContent.trim(),
+                type: 'duty',
+                icon: dopt.dataset.icon || null,
+                color: dopt.dataset.color || null
+            });
         }
     }
 
@@ -351,7 +351,39 @@
             }
         }
 
-        if (totalItems === 0) {
+        if (totalItems === 0 && query.trim().length > 0 && getCurrentMode() === 'user' &&
+            activeInput._cellData && activeInput._cellData.rowId.indexOf('user-') === 0) {
+            // Show "Save as text" option for unmatched text in user-mode
+            var textItem = { type: 'text-entry', text: query.trim() };
+            var textIdx = filteredItems.length;
+            filteredItems.push(textItem);
+
+            var textEl = document.createElement('div');
+            textEl.className = 'quick-entry-item quick-entry-item--text-entry';
+            textEl.setAttribute('role', 'option');
+            textEl.id = dropdown.id + '-item-' + textIdx;
+            textEl.dataset.index = textIdx;
+
+            var icon = document.createElement('span');
+            icon.className = 'quick-entry-text-icon';
+            icon.textContent = '\u270F\uFE0F';
+            textEl.appendChild(icon);
+
+            var label = document.createElement('span');
+            label.textContent = getLocalizedLabel('QuickEntry_SaveAsText') + ': "' + query.trim() + '"';
+            textEl.appendChild(label);
+
+            (function (capturedIdx) {
+                textEl.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    selectedIndex = capturedIdx;
+                    selectItem(filteredItems[capturedIdx]);
+                });
+            })(textIdx);
+
+            dropdown.appendChild(textEl);
+            selectedIndex = textIdx; // Auto-select so Enter commits immediately
+        } else if (totalItems === 0) {
             var noMatch = document.createElement('div');
             noMatch.className = 'quick-entry-no-matches';
             noMatch.textContent = getLocalizedLabel('QuickEntry_NoMatches');
@@ -697,6 +729,28 @@
         if (item.type === 'chore') {
             choreTypeForTitle = item;
             enterChoreTitle();
+            return;
+        }
+
+        if (item.type === 'text-entry') {
+            // Text entry — only supported in user-mode (rowId = "user-{id}")
+            if (rowId.indexOf('user-') === 0) {
+                var textUserId = parseInt(rowId.replace('user-', ''), 10);
+                var currentCellTE = activeCell;
+                var doAdvanceTE = !!advance;
+                var tePromise = window.quickAddTextEntry(date, textUserId, item.text);
+                if (tePromise && typeof tePromise.then === 'function') {
+                    tePromise.then(function () {
+                        closeInput();
+                        if (doAdvanceTE) advanceToNextCell(currentCellTE);
+                    });
+                } else {
+                    closeInput();
+                    if (doAdvanceTE) advanceToNextCell(currentCellTE);
+                }
+            } else {
+                closeInput();
+            }
             return;
         }
 
@@ -1070,11 +1124,215 @@
         }
     }
 
+    // --- Help Modal ---
+
+    var helpModal = null;
+
+    function showHelp() {
+        if (helpModal) return; // already open
+        helpModal = createHelpModal();
+        document.body.appendChild(helpModal);
+        if (window.ModalFocus && window.ModalFocus.open) {
+            window.ModalFocus.open(helpModal, {
+                onClose: function () {
+                    if (helpModal && helpModal.parentNode) {
+                        helpModal.parentNode.removeChild(helpModal);
+                    }
+                    helpModal = null;
+                }
+            });
+        }
+    }
+
+    function closeHelp() {
+        if (!helpModal) return;
+        var modal = helpModal;
+        helpModal = null;
+        if (window.ModalFocus && window.ModalFocus.close) {
+            window.ModalFocus.close(modal);
+        } else {
+            var btn = document.getElementById('quickEntryHelp');
+            if (btn) btn.focus();
+        }
+        if (modal.parentNode) {
+            modal.parentNode.removeChild(modal);
+        }
+    }
+
+    function switchHelpTab(lang) {
+        if (!helpModal) return;
+        var tabs = helpModal.querySelectorAll('[role="tab"]');
+        var panels = helpModal.querySelectorAll('[role="tabpanel"]');
+        for (var i = 0; i < tabs.length; i++) {
+            var isActive = tabs[i].getAttribute('data-lang') === lang;
+            tabs[i].setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tabs[i].setAttribute('tabindex', isActive ? '0' : '-1');
+        }
+        for (var j = 0; j < panels.length; j++) {
+            panels[j].style.display = panels[j].getAttribute('data-lang') === lang ? '' : 'none';
+        }
+    }
+
+    function handleHelpTabKeydown(e) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            var current = e.target.getAttribute('data-lang');
+            var next = current === 'en' ? 'he' : 'en';
+            switchHelpTab(next);
+            var nextTab = helpModal.querySelector('[role="tab"][data-lang="' + next + '"]');
+            if (nextTab) nextTab.focus();
+        }
+    }
+
+    function createHelpModal() {
+        var isHe = getCulture() === 'he-IL';
+        var defaultLang = isHe ? 'he' : 'en';
+
+        var modal = document.createElement('div');
+        modal.className = 'quick-entry-help-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'quickEntryHelpTitle');
+
+        var dialog = document.createElement('div');
+        dialog.className = 'quick-entry-help-dialog modal__content';
+
+        // Header
+        var header = document.createElement('div');
+        header.className = 'quick-entry-help-header';
+        var closeLabel = (window.AppLocalizer && window.AppLocalizer['Aria_CloseDialog']) || (isHe ? '\u05E1\u05D2\u05D9\u05E8\u05D4' : 'Close');
+        header.innerHTML =
+            '<h3 id="quickEntryHelpTitle">' + (isHe ? '\u05DE\u05D3\u05E8\u05D9\u05DA \u05D4\u05E7\u05E6\u05D0\u05D4 \u05DE\u05D4\u05D9\u05E8\u05D4' : 'Quick Entry Guide') + '</h3>' +
+            '<button type="button" class="quick-entry-help-close" aria-label="' + closeLabel + '" onclick="window.CalendarQuickEntry.closeHelp()">&times;</button>';
+        dialog.appendChild(header);
+
+        // Tabs
+        var tablist = document.createElement('div');
+        tablist.className = 'quick-entry-help-tabs';
+        tablist.setAttribute('role', 'tablist');
+        tablist.innerHTML =
+            '<button role="tab" class="quick-entry-help-tab" data-lang="en" id="qeHelpTabEn" ' +
+                'aria-controls="qeHelpPanelEn" aria-selected="' + (defaultLang === 'en' ? 'true' : 'false') + '" ' +
+                'tabindex="' + (defaultLang === 'en' ? '0' : '-1') + '" ' +
+                'onclick="window.CalendarQuickEntry.switchTab(\'en\')" ' +
+                'onkeydown="window.CalendarQuickEntry._tabKeydown(event)">English</button>' +
+            '<button role="tab" class="quick-entry-help-tab" data-lang="he" id="qeHelpTabHe" ' +
+                'aria-controls="qeHelpPanelHe" aria-selected="' + (defaultLang === 'he' ? 'true' : 'false') + '" ' +
+                'tabindex="' + (defaultLang === 'he' ? '0' : '-1') + '" ' +
+                'onclick="window.CalendarQuickEntry.switchTab(\'he\')" ' +
+                'onkeydown="window.CalendarQuickEntry._tabKeydown(event)">\u05E2\u05D1\u05E8\u05D9\u05EA</button>';
+        dialog.appendChild(tablist);
+
+        // English panel
+        var enPanel = document.createElement('div');
+        enPanel.setAttribute('role', 'tabpanel');
+        enPanel.setAttribute('id', 'qeHelpPanelEn');
+        enPanel.setAttribute('aria-labelledby', 'qeHelpTabEn');
+        enPanel.setAttribute('data-lang', 'en');
+        enPanel.className = 'quick-entry-help-panel';
+        enPanel.style.display = defaultLang === 'en' ? '' : 'none';
+        enPanel.innerHTML = buildHelpContentEn();
+        dialog.appendChild(enPanel);
+
+        // Hebrew panel
+        var hePanel = document.createElement('div');
+        hePanel.setAttribute('role', 'tabpanel');
+        hePanel.setAttribute('id', 'qeHelpPanelHe');
+        hePanel.setAttribute('aria-labelledby', 'qeHelpTabHe');
+        hePanel.setAttribute('data-lang', 'he');
+        hePanel.className = 'quick-entry-help-panel';
+        hePanel.dir = 'rtl';
+        hePanel.style.display = defaultLang === 'he' ? '' : 'none';
+        hePanel.innerHTML = buildHelpContentHe();
+        dialog.appendChild(hePanel);
+
+        modal.appendChild(dialog);
+        return modal;
+    }
+
+    function buildHelpContentEn() {
+        return '' +
+            '<div class="quick-entry-help-section-title">Getting Started</div>' +
+            '<p>Click any empty cell to start typing. Your input searches for employees to assign. ' +
+            'Press <kbd>Enter</kbd> to confirm, <kbd>Esc</kbd> to cancel.</p>' +
+
+            '<div class="quick-entry-help-section-title">Commands</div>' +
+            '<div class="quick-entry-help-commands">' +
+                '<div class="quick-entry-help-cmd-row"><span class="quick-entry-help-cmd-icon">\uD83D\uDCC5</span><code>/shift</code><span>Assign shift</span></div>' +
+                '<div class="quick-entry-help-cmd-row"><span class="quick-entry-help-cmd-icon">\uD83E\uDDF9</span><code>/chore</code><span>Assign chore \u2192 select type \u2192 enter title</span></div>' +
+                '<div class="quick-entry-help-cmd-row"><span class="quick-entry-help-cmd-icon">\uD83D\uDEE1\uFE0F</span><code>/duty</code><span>Assign on-call duty</span></div>' +
+                '<div class="quick-entry-help-cmd-row"><span class="quick-entry-help-cmd-icon">\uD83C\uDFE0</span><code>/home</code><span>HOME shift</span></div>' +
+            '</div>' +
+
+            '<div class="quick-entry-help-section-title">Text Notes</div>' +
+            '<p>Type any text without <code>/</code> to save it as a calendar note on that cell. ' +
+            'Notes appear as \uD83D\uDCDD badges on other calendar views.</p>' +
+            '<p style="color:var(--text-muted);font-size:0.75rem;font-style:italic;">Available in user-mode only (Shifts page).</p>' +
+
+            '<div class="quick-entry-help-section-title">Keyboard</div>' +
+            '<div class="quick-entry-help-kbd-grid">' +
+                '<kbd>Tab</kbd><span>Next cell</span>' +
+                '<kbd>Shift+Tab</kbd><span>Previous cell</span>' +
+                '<kbd>Enter</kbd><span>Confirm selection</span>' +
+                '<kbd>Esc</kbd><span>Cancel &amp; close</span>' +
+                '<kbd>/</kbd><span>Open command palette</span>' +
+            '</div>' +
+
+            '<div class="quick-entry-help-section-title">Availability by Page</div>' +
+            '<div class="quick-entry-help-avail">' +
+                '<div class="quick-entry-help-avail-row"><span class="quick-entry-help-avail-check">\u2713</span><strong>Shifts</strong><span>\u2014 all commands + text notes</span></div>' +
+                '<div class="quick-entry-help-avail-row"><span class="quick-entry-help-avail-check">\u2713</span><strong>Chores</strong><span>\u2014 <code>/chore</code> only</span></div>' +
+                '<div class="quick-entry-help-avail-row"><span class="quick-entry-help-avail-check">\u2713</span><strong>On-Call</strong><span>\u2014 <code>/duty</code> only</span></div>' +
+            '</div>';
+    }
+
+    function buildHelpContentHe() {
+        return '' +
+            '<div class="quick-entry-help-section-title">\u05EA\u05D7\u05D9\u05DC\u05EA \u05E2\u05D1\u05D5\u05D3\u05D4</div>' +
+            '<p>\u05DC\u05D7\u05E6\u05D5 \u05E2\u05DC \u05EA\u05D0 \u05E8\u05D9\u05E7 \u05DB\u05D3\u05D9 \u05DC\u05D4\u05EA\u05D7\u05D9\u05DC \u05DC\u05D4\u05E7\u05DC\u05D9\u05D3. ' +
+            '\u05D4\u05D4\u05E7\u05DC\u05D3\u05D4 \u05DE\u05D7\u05E4\u05E9\u05EA \u05E2\u05D5\u05D1\u05D3\u05D9\u05DD \u05DC\u05E9\u05D9\u05D1\u05D5\u05E5. ' +
+            '\u05DC\u05D7\u05E6\u05D5 <kbd dir="ltr">Enter</kbd> \u05DC\u05D0\u05D9\u05E9\u05D5\u05E8, <kbd dir="ltr">Esc</kbd> \u05DC\u05D1\u05D9\u05D8\u05D5\u05DC.</p>' +
+
+            '<div class="quick-entry-help-section-title">\u05E4\u05E7\u05D5\u05D3\u05D5\u05EA</div>' +
+            '<div class="quick-entry-help-commands">' +
+                '<div class="quick-entry-help-cmd-row"><span class="quick-entry-help-cmd-icon">\uD83D\uDCC5</span><code dir="ltr">/shift</code><span>\u05E9\u05D9\u05D1\u05D5\u05E5 \u05DE\u05E9\u05DE\u05E8\u05EA</span></div>' +
+                '<div class="quick-entry-help-cmd-row"><span class="quick-entry-help-cmd-icon">\uD83E\uDDF9</span><code dir="ltr">/chore</code><span>\u05E9\u05D9\u05D1\u05D5\u05E5 \u05EA\u05D5\u05E8\u05E0\u05D5\u05EA \u2192 \u05D1\u05D7\u05D9\u05E8\u05EA \u05E1\u05D5\u05D2 \u2192 \u05D4\u05D6\u05E0\u05EA \u05DB\u05D5\u05EA\u05E8\u05EA</span></div>' +
+                '<div class="quick-entry-help-cmd-row"><span class="quick-entry-help-cmd-icon">\uD83D\uDEE1\uFE0F</span><code dir="ltr">/duty</code><span>\u05E9\u05D9\u05D1\u05D5\u05E5 \u05DB\u05D5\u05E0\u05E0\u05D5\u05EA</span></div>' +
+                '<div class="quick-entry-help-cmd-row"><span class="quick-entry-help-cmd-icon">\uD83C\uDFE0</span><code dir="ltr">/home</code><span>\u05DE\u05E9\u05DE\u05E8\u05EA \u05D1\u05D9\u05EA</span></div>' +
+            '</div>' +
+
+            '<div class="quick-entry-help-section-title">\u05D4\u05E2\u05E8\u05D5\u05EA \u05D8\u05E7\u05E1\u05D8</div>' +
+            '<p>\u05D4\u05E7\u05DC\u05D9\u05D3\u05D5 \u05D8\u05E7\u05E1\u05D8 \u05D7\u05D5\u05E4\u05E9\u05D9 \u05DC\u05DC\u05D0 <code dir="ltr">/</code> ' +
+            '\u05DB\u05D3\u05D9 \u05DC\u05E9\u05DE\u05D5\u05E8 \u05D4\u05E2\u05E8\u05D4 \u05E2\u05DC \u05D4\u05EA\u05D0. ' +
+            '\u05D4\u05E2\u05E8\u05D5\u05EA \u05DE\u05D5\u05E4\u05D9\u05E2\u05D5\u05EA \u05DB\u05E1\u05DE\u05DC \uD83D\uDCDD \u05D1\u05EA\u05E6\u05D5\u05D2\u05D5\u05EA \u05DC\u05D5\u05D7 \u05E9\u05E0\u05D4 \u05D0\u05D7\u05E8\u05D5\u05EA.</p>' +
+            '<p style="color:var(--text-muted);font-size:0.75rem;font-style:italic;">\u05D6\u05DE\u05D9\u05DF \u05E8\u05E7 \u05D1\u05EA\u05E6\u05D5\u05D2\u05EA \u05E2\u05D5\u05D1\u05D3\u05D9\u05DD (\u05D3\u05E3 \u05DE\u05E9\u05DE\u05E8\u05D5\u05EA).</p>' +
+
+            '<div class="quick-entry-help-section-title">\u05DE\u05E7\u05E9\u05D9 \u05E7\u05D9\u05E6\u05D5\u05E8</div>' +
+            '<div class="quick-entry-help-kbd-grid">' +
+                '<kbd dir="ltr">Tab</kbd><span>\u05EA\u05D0 \u05D4\u05D1\u05D0</span>' +
+                '<kbd dir="ltr">Shift+Tab</kbd><span>\u05EA\u05D0 \u05E7\u05D5\u05D3\u05DD</span>' +
+                '<kbd dir="ltr">Enter</kbd><span>\u05D0\u05D9\u05E9\u05D5\u05E8 \u05D1\u05D7\u05D9\u05E8\u05D4</span>' +
+                '<kbd dir="ltr">Esc</kbd><span>\u05D1\u05D9\u05D8\u05D5\u05DC \u05D5\u05E1\u05D2\u05D9\u05E8\u05D4</span>' +
+                '<kbd dir="ltr">/</kbd><span>\u05E4\u05EA\u05D9\u05D7\u05EA \u05EA\u05E4\u05E8\u05D9\u05D8 \u05E4\u05E7\u05D5\u05D3\u05D5\u05EA</span>' +
+            '</div>' +
+
+            '<div class="quick-entry-help-section-title">\u05D6\u05DE\u05D9\u05E0\u05D5\u05EA \u05DC\u05E4\u05D9 \u05D3\u05E3</div>' +
+            '<div class="quick-entry-help-avail">' +
+                '<div class="quick-entry-help-avail-row"><span class="quick-entry-help-avail-check">\u2713</span><strong>\u05DE\u05E9\u05DE\u05E8\u05D5\u05EA</strong><span>\u2014 \u05DB\u05DC \u05D4\u05E4\u05E7\u05D5\u05D3\u05D5\u05EA + \u05D4\u05E2\u05E8\u05D5\u05EA \u05D8\u05E7\u05E1\u05D8</span></div>' +
+                '<div class="quick-entry-help-avail-row"><span class="quick-entry-help-avail-check">\u2713</span><strong>\u05EA\u05D5\u05E8\u05E0\u05D5\u05D9\u05D5\u05EA</strong><span>\u2014 <code dir="ltr">/chore</code> \u05D1\u05DC\u05D1\u05D3</span></div>' +
+                '<div class="quick-entry-help-avail-row"><span class="quick-entry-help-avail-check">\u2713</span><strong>\u05DB\u05D5\u05E0\u05E0\u05D9\u05D5\u05EA</strong><span>\u2014 <code dir="ltr">/duty</code> \u05D1\u05DC\u05D1\u05D3</span></div>' +
+            '</div>';
+    }
+
     // --- Public API ---
 
     window.CalendarQuickEntry = {
         toggle: toggle,
-        isActive: function () { return isActive; }
+        isActive: function () { return isActive; },
+        showHelp: showHelp,
+        closeHelp: closeHelp,
+        switchTab: switchHelpTab,
+        _tabKeydown: handleHelpTabKeydown
     };
 
     if (document.readyState === 'loading') {
