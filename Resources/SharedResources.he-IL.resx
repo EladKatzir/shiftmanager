@@ -13653,6 +13653,18 @@
   <data name="Widget_StoreClosed" xml:space="preserve">
     <value>סגור</value>
   </data>
+  <data name="Widget_StoreClosedOpensAt" xml:space="preserve">
+    <value>סגור — נפתח ב-{0}</value>
+  </data>
+  <data name="Widget_StoreOpenUntil" xml:space="preserve">
+    <value>פתוח עד {0}</value>
+  </data>
+  <data name="Widget_StoreBreakReopens" xml:space="preserve">
+    <value>הפסקה — נפתח מחדש ב-{0}</value>
+  </data>
+  <data name="Widget_StoreClosedOpensDay" xml:space="preserve">
+    <value>סגור — נפתח ב{0} {1}</value>
+  </data>
   <data name="Widget_OpenUntil" xml:space="preserve">
     <value>פתוח עד {0}</value>
   </data>

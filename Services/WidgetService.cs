@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using System.Globalization;
 
 namespace ShiftManager.Services;
 
@@ -15,7 +16,8 @@ public interface IWidgetService
     /// </summary>
     /// <param name="userId">The current user's ID.</param>
     /// <param name="currentCompanyId">The user's current tenant company ID (used for ManagerHomeAccess fallback).</param>
-    Task<OnCallWidgetData> BuildOnCallWidgetAsync(int userId, int currentCompanyId = 0);
+    /// <param name="moleculeId">The user's molecule ID. When &gt; 0, uses QuickInfoConfig-based lookup instead of grant-based.</param>
+    Task<OnCallWidgetData> BuildOnCallWidgetAsync(int userId, int currentCompanyId = 0, int moleculeId = 0);
 
     /// <summary>
     /// Gets the current Hakam (on-call commander) for the given date.
@@ -52,14 +54,144 @@ public class WidgetService : IWidgetService
 {
     private readonly AppDbContext _context;
     private readonly IGrantService _grantService;
+    private readonly IStoreService _storeService;
+    private readonly IQuickInfoConfigService _configService;
 
-    public WidgetService(AppDbContext context, IGrantService grantService)
+    public WidgetService(
+        AppDbContext context,
+        IGrantService grantService,
+        IStoreService storeService,
+        IQuickInfoConfigService configService)
     {
         _context = context;
         _grantService = grantService;
+        _storeService = storeService;
+        _configService = configService;
     }
 
-    public async Task<OnCallWidgetData> BuildOnCallWidgetAsync(int userId, int currentCompanyId = 0)
+    public async Task<OnCallWidgetData> BuildOnCallWidgetAsync(int userId, int currentCompanyId = 0, int moleculeId = 0)
+    {
+        if (moleculeId > 0)
+        {
+            return await BuildMoleculeBasedWidgetAsync(userId, currentCompanyId, moleculeId);
+        }
+
+        // FALLBACK: Old grant-based shift-based lookup (backward compat for users without molecule)
+        return await BuildGrantBasedWidgetAsync(userId, currentCompanyId);
+    }
+
+    /// <summary>
+    /// New molecule-based widget path using QuickInfoConfig + OnDuty table + Store statuses.
+    /// </summary>
+    private async Task<OnCallWidgetData> BuildMoleculeBasedWidgetAsync(int userId, int currentCompanyId, int moleculeId)
+    {
+        var contacts = new List<ContactInfo>();
+        var storeStatuses = new List<StoreStatus>();
+        var targetDate = DateOnly.FromDateTime(DateTime.Today);
+        var isHebrew = CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "he";
+
+        // Load QuickInfoConfig for this molecule (or defaults if none configured)
+        var hasConfig = await _configService.HasConfigAsync(moleculeId);
+        List<QuickInfoConfigItem> configItems;
+        if (hasConfig)
+        {
+            var configs = await _configService.GetConfigForMoleculeAsync(moleculeId);
+            configItems = configs
+                .Where(c => c.IsEnabled)
+                .OrderBy(c => c.DisplayOrder)
+                .Select(c => new QuickInfoConfigItem
+                {
+                    SectionType = c.SectionType,
+                    EntityId = c.EntityId,
+                    DisplayOrder = c.DisplayOrder,
+                    IsEnabled = c.IsEnabled
+                })
+                .ToList();
+        }
+        else
+        {
+            configItems = await _configService.GetDefaultConfigAsync(moleculeId);
+        }
+
+        foreach (var item in configItems)
+        {
+            if (item.SectionType == QuickInfoSectionType.OnCallRole)
+            {
+                // Get duty type display name for the section header
+                var dutyTypeConfig = await _context.OnDutyTypeConfigs
+                    .FirstOrDefaultAsync(dt => dt.TypeValue == item.EntityId);
+                var roleName = dutyTypeConfig != null
+                    ? (isHebrew ? (dutyTypeConfig.NameHe ?? dutyTypeConfig.NameEn) : dutyTypeConfig.NameEn)
+                    : "On-Call";
+
+                // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
+                var onDutyEntry = await _context.OnDuties
+                    .IgnoreQueryFilters()
+                    .Where(od => od.Date == targetDate
+                        && (int)od.Type == item.EntityId
+                        && od.CanceledAt == null)
+                    .Join(
+                        _context.Users.IgnoreQueryFilters().Where(u => u.IsActive),
+                        od => od.UserId,
+                        u => u.Id,
+                        (od, u) => new { u.Id, u.DisplayName, u.Phone, u.Rank, u.AvatarFileName, u.CompanyId })
+                    .FirstOrDefaultAsync();
+
+                if (onDutyEntry != null)
+                {
+                    contacts.Add(new ContactInfo
+                    {
+                        UserId = onDutyEntry.Id,
+                        Name = onDutyEntry.DisplayName,
+                        Role = roleName,
+                        PhoneNumber = onDutyEntry.Phone ?? "",
+                        AvatarInitial = GetInitial(onDutyEntry.DisplayName),
+                        AvatarUrl = GetThumbnailUrl(onDutyEntry.Id, onDutyEntry.CompanyId, onDutyEntry.AvatarFileName),
+                        ContactType = ContactType.Hakam,
+                        Rank = onDutyEntry.Rank
+                    });
+                }
+                else
+                {
+                    // No one assigned for this role today — show placeholder
+                    contacts.Add(new ContactInfo
+                    {
+                        UserId = 0,
+                        Name = roleName,
+                        Role = roleName,
+                        PhoneNumber = "",
+                        AvatarInitial = "?",
+                        AvatarUrl = null,
+                        ContactType = ContactType.Hakam
+                    });
+                }
+            }
+            else if (item.SectionType == QuickInfoSectionType.Store)
+            {
+                var storeStatus = await _storeService.ComputeStoreStatusAsync(item.EntityId, DateTime.Now);
+                if (storeStatus != null)
+                    storeStatuses.Add(storeStatus);
+            }
+        }
+
+        var preferences = await GetUserWidgetPreferencesAsync(userId);
+        var friendsOnCall = await GetFriendsOnCallAsync(userId);
+
+        return new OnCallWidgetData
+        {
+            Contacts = contacts,
+            StoreStatuses = storeStatuses,
+            FriendsOnCall = friendsOnCall,
+            IsCollapsed = preferences.OnCallWidgetCollapsed,
+            ShowOfficeNumbers = preferences.ShowOfficeNumbers,
+            LastUpdated = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Original grant-based widget path — backward compatibility for users without molecule context.
+    /// </summary>
+    private async Task<OnCallWidgetData> BuildGrantBasedWidgetAsync(int userId, int currentCompanyId)
     {
         var contacts = new List<ContactInfo>();
         var date = DateTime.Today;
@@ -155,7 +287,9 @@ public class WidgetService : IWidgetService
                     UserId = u.Id,
                     DisplayName = u.DisplayName,
                     Phone = u.Phone,
-                    Rank = u.Rank
+                    Rank = u.Rank,
+                    u.AvatarFileName,
+                    u.CompanyId
                 }
             )
             .FirstOrDefaultAsync();
@@ -169,6 +303,7 @@ public class WidgetService : IWidgetService
             Role = "Hakam",
             PhoneNumber = hakamData.Phone ?? "",
             AvatarInitial = GetInitial(hakamData.DisplayName),
+            AvatarUrl = GetThumbnailUrl(hakamData.UserId, hakamData.CompanyId, hakamData.AvatarFileName),
             ContactType = ContactType.Hakam,
             Rank = hakamData.Rank
         };
@@ -220,7 +355,9 @@ public class WidgetService : IWidgetService
                     DisplayName = u.DisplayName,
                     Phone = u.Phone,
                     Rank = u.Rank,
-                    x.ShiftTypeId
+                    x.ShiftTypeId,
+                    u.AvatarFileName,
+                    u.CompanyId
                 }
             )
             .ToListAsync();
@@ -235,6 +372,7 @@ public class WidgetService : IWidgetService
                 Role = $"{shiftTypeName} - {companyDisplayName}",
                 PhoneNumber = shift.Phone ?? "",
                 AvatarInitial = GetInitial(shift.DisplayName),
+                AvatarUrl = GetThumbnailUrl(shift.UserId, shift.CompanyId, shift.AvatarFileName),
                 ContactType = ContactType.CompanyOnCall,
                 CompanyName = companyDisplayName,
                 Rank = shift.Rank
@@ -289,7 +427,9 @@ public class WidgetService : IWidgetService
             {
                 u.Id,
                 u.DisplayName,
-                u.Phone
+                u.Phone,
+                u.AvatarFileName,
+                u.CompanyId
             })
             .ToListAsync();
 
@@ -322,6 +462,7 @@ public class WidgetService : IWidgetService
                 UserId = friend.Id,
                 Name = friend.DisplayName,
                 AvatarInitial = GetInitial(friend.DisplayName),
+                AvatarUrl = GetThumbnailUrl(friend.Id, friend.CompanyId, friend.AvatarFileName),
                 IsOnCall = isOnCall,
                 PhoneNumber = friend.Phone ?? ""
             });
@@ -343,6 +484,13 @@ public class WidgetService : IWidgetService
         if (string.IsNullOrWhiteSpace(name)) return "?";
         return name.Trim().Substring(0, 1).ToUpper();
     }
+
+    private static string? GetThumbnailUrl(int userId, int companyId, string? avatarFileName)
+    {
+        return string.IsNullOrWhiteSpace(avatarFileName)
+            ? null
+            : $"/avatars/{companyId}/{userId}_thumb.jpg";
+    }
 }
 
 #region Data Transfer Objects
@@ -350,6 +498,7 @@ public class WidgetService : IWidgetService
 public class OnCallWidgetData
 {
     public List<ContactInfo> Contacts { get; set; } = new();
+    public List<StoreStatus> StoreStatuses { get; set; } = new();
     public List<FriendOnCallInfo> FriendsOnCall { get; set; } = new();
     public List<OfficeNumberInfo> OfficeNumbers { get; set; } = new();
     public bool IsCollapsed { get; set; }
@@ -364,6 +513,7 @@ public class ContactInfo
     public string Role { get; set; } = "";
     public string PhoneNumber { get; set; } = "";
     public string AvatarInitial { get; set; } = "";
+    public string? AvatarUrl { get; set; }
     public ContactType ContactType { get; set; }
     public string? CompanyName { get; set; }
     public MilitaryRank Rank { get; set; } = MilitaryRank.Turai;
@@ -381,6 +531,7 @@ public class FriendOnCallInfo
     public int UserId { get; set; }
     public string Name { get; set; } = "";
     public string AvatarInitial { get; set; } = "";
+    public string? AvatarUrl { get; set; }
     public bool IsOnCall { get; set; }
     public string PhoneNumber { get; set; } = "";
 }

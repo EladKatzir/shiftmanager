@@ -13687,6 +13687,18 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Widget_StoreClosed" xml:space="preserve">
     <value>Closed</value>
   </data>
+  <data name="Widget_StoreClosedOpensAt" xml:space="preserve">
+    <value>Closed — opens {0}</value>
+  </data>
+  <data name="Widget_StoreOpenUntil" xml:space="preserve">
+    <value>Open until {0}</value>
+  </data>
+  <data name="Widget_StoreBreakReopens" xml:space="preserve">
+    <value>Break — reopens {0}</value>
+  </data>
+  <data name="Widget_StoreClosedOpensDay" xml:space="preserve">
+    <value>Closed — opens {0} {1}</value>
+  </data>
   <data name="Widget_OpenUntil" xml:space="preserve">
     <value>Open until {0}</value>
   </data>
