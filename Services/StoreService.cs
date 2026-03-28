@@ -63,14 +63,14 @@ public class StoreService : IStoreService
         {
             if (string.IsNullOrWhiteSpace(nameEn))
             {
-                return (false, "Store name (English) is required.", null);
+                return (false, _localizer["Store_ErrorNameRequired"].Value, null);
             }
 
             // Verify area exists
             var areaExists = await _db.Areas.AnyAsync(a => a.Id == areaId);
             if (!areaExists)
             {
-                return (false, "Area not found.", null);
+                return (false, _localizer["Store_ErrorAreaNotFound"].Value, null);
             }
 
             var store = new Store
@@ -88,12 +88,12 @@ public class StoreService : IStoreService
             _logger.LogInformation("Store {StoreId} '{StoreName}' created in area {AreaId}",
                 store.Id, store.NameEn, areaId);
 
-            return (true, "Store created successfully.", store);
+            return (true, _localizer["Store_SuccessCreated"].Value, store);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error creating store in area {AreaId}", areaId);
-            return (false, "An error occurred while creating the store.", null);
+            return (false, _localizer["Store_ErrorCreateFailed"].Value, null);
         }
     }
 
@@ -107,13 +107,13 @@ public class StoreService : IStoreService
         {
             if (string.IsNullOrWhiteSpace(nameEn))
             {
-                return (false, "Store name (English) is required.");
+                return (false, _localizer["Store_ErrorNameRequired"].Value);
             }
 
             var store = await _db.Stores.FirstOrDefaultAsync(s => s.Id == storeId);
             if (store == null)
             {
-                return (false, "Store not found.");
+                return (false, _localizer["Store_ErrorNotFound"].Value);
             }
 
             store.NameEn = nameEn.Trim();
@@ -126,12 +126,12 @@ public class StoreService : IStoreService
             _logger.LogInformation("Store {StoreId} updated: Name='{StoreName}', IsActive={IsActive}",
                 storeId, store.NameEn, isActive);
 
-            return (true, "Store updated successfully.");
+            return (true, _localizer["Store_SuccessUpdated"].Value);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error updating store {StoreId}", storeId);
-            return (false, "An error occurred while updating the store.");
+            return (false, _localizer["Store_ErrorUpdateFailed"].Value);
         }
     }
 
@@ -148,7 +148,7 @@ public class StoreService : IStoreService
 
             if (store == null)
             {
-                return (false, "Store not found.");
+                return (false, _localizer["Store_ErrorNotFound"].Value);
             }
 
             // Remove orphaned QuickInfoConfig entries (polymorphic FK cleanup)
@@ -176,12 +176,12 @@ public class StoreService : IStoreService
             _logger.LogInformation("Store {StoreId} '{StoreName}' deleted. Cleaned up {OrphanCount} QuickInfoConfig entries",
                 storeId, store.NameEn, orphanedConfigs.Count);
 
-            return (true, "Store deleted successfully.");
+            return (true, _localizer["Store_SuccessDeleted"].Value);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error deleting store {StoreId}", storeId);
-            return (false, "An error occurred while deleting the store.");
+            return (false, _localizer["Store_ErrorDeleteFailed"].Value);
         }
     }
 
@@ -222,7 +222,7 @@ public class StoreService : IStoreService
             var storeExists = await _db.Stores.AnyAsync(s => s.Id == storeId);
             if (!storeExists)
             {
-                return (false, "Store not found.");
+                return (false, _localizer["Store_ErrorNotFound"].Value);
             }
 
             // Remove existing entries
@@ -248,12 +248,12 @@ public class StoreService : IStoreService
             _logger.LogInformation("Store hours set for store {StoreId}: {EntryCount} entries",
                 storeId, entries.Count);
 
-            return (true, "Store hours updated successfully.");
+            return (true, _localizer["Store_SuccessHoursUpdated"].Value);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error setting store hours for store {StoreId}", storeId);
-            return (false, "An error occurred while updating store hours.");
+            return (false, _localizer["Store_ErrorHoursUpdateFailed"].Value);
         }
     }
 
@@ -395,7 +395,7 @@ public class StoreService : IStoreService
     /// </summary>
     private static (string dayName, TimeOnly time)? FindNextOpenTime(IEnumerable<StoreHoursEntry> allHours, int todayDow)
     {
-        var dayNames = new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+        var dayNames = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames;
 
         for (int offset = 1; offset <= 7; offset++)
         {

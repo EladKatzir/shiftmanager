@@ -13761,4 +13761,37 @@
   <data name="Grant_ManageStores_Desc" xml:space="preserve">
     <value>יצירה, עריכה וניהול של חנויות ושעות פתיחה</value>
   </data>
+  <data name="Store_ErrorNameRequired" xml:space="preserve">
+    <value>שם החנות (באנגלית) הוא שדה חובה.</value>
+  </data>
+  <data name="Store_ErrorAreaNotFound" xml:space="preserve">
+    <value>האזור לא נמצא.</value>
+  </data>
+  <data name="Store_ErrorNotFound" xml:space="preserve">
+    <value>החנות לא נמצאה.</value>
+  </data>
+  <data name="Store_ErrorCreateFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת יצירת החנות.</value>
+  </data>
+  <data name="Store_ErrorUpdateFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת עדכון החנות.</value>
+  </data>
+  <data name="Store_ErrorDeleteFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת מחיקת החנות.</value>
+  </data>
+  <data name="Store_ErrorHoursUpdateFailed" xml:space="preserve">
+    <value>אירעה שגיאה בעת עדכון שעות הפתיחה.</value>
+  </data>
+  <data name="Store_SuccessCreated" xml:space="preserve">
+    <value>החנות נוצרה בהצלחה.</value>
+  </data>
+  <data name="Store_SuccessUpdated" xml:space="preserve">
+    <value>החנות עודכנה בהצלחה.</value>
+  </data>
+  <data name="Store_SuccessDeleted" xml:space="preserve">
+    <value>החנות נמחקה בהצלחה.</value>
+  </data>
+  <data name="Store_SuccessHoursUpdated" xml:space="preserve">
+    <value>שעות הפתיחה עודכנו בהצלחה.</value>
+  </data>
 </root>

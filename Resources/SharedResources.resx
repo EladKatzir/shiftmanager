@@ -13795,4 +13795,37 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Grant_ManageStores_Desc" xml:space="preserve">
     <value>Create, edit, and manage store definitions and opening hours</value>
   </data>
+  <data name="Store_ErrorNameRequired" xml:space="preserve">
+    <value>Store name (English) is required.</value>
+  </data>
+  <data name="Store_ErrorAreaNotFound" xml:space="preserve">
+    <value>Area not found.</value>
+  </data>
+  <data name="Store_ErrorNotFound" xml:space="preserve">
+    <value>Store not found.</value>
+  </data>
+  <data name="Store_ErrorCreateFailed" xml:space="preserve">
+    <value>An error occurred while creating the store.</value>
+  </data>
+  <data name="Store_ErrorUpdateFailed" xml:space="preserve">
+    <value>An error occurred while updating the store.</value>
+  </data>
+  <data name="Store_ErrorDeleteFailed" xml:space="preserve">
+    <value>An error occurred while deleting the store.</value>
+  </data>
+  <data name="Store_ErrorHoursUpdateFailed" xml:space="preserve">
+    <value>An error occurred while updating store hours.</value>
+  </data>
+  <data name="Store_SuccessCreated" xml:space="preserve">
+    <value>Store created successfully.</value>
+  </data>
+  <data name="Store_SuccessUpdated" xml:space="preserve">
+    <value>Store updated successfully.</value>
+  </data>
+  <data name="Store_SuccessDeleted" xml:space="preserve">
+    <value>Store deleted successfully.</value>
+  </data>
+  <data name="Store_SuccessHoursUpdated" xml:space="preserve">
+    <value>Store hours updated successfully.</value>
+  </data>
 </root>
