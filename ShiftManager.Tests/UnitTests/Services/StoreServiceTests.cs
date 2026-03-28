@@ -62,7 +62,7 @@ public class StoreServiceTests : IDisposable
         var (success, message, store) = await _service.CreateStoreAsync(TestAreaId, "Main PX", "חנות ראשית", 1);
 
         success.Should().BeTrue();
-        message.Should().Contain("created successfully");
+        message.Should().Contain("Store_SuccessCreated");
         store.Should().NotBeNull();
         store!.NameEn.Should().Be("Main PX");
         store.NameHe.Should().Be("חנות ראשית");
@@ -77,7 +77,7 @@ public class StoreServiceTests : IDisposable
         var (success, message, store) = await _service.CreateStoreAsync(TestAreaId, "  ", null);
 
         success.Should().BeFalse();
-        message.Should().Contain("required");
+        message.Should().Contain("Store_ErrorNameRequired");
         store.Should().BeNull();
     }
 
@@ -87,7 +87,7 @@ public class StoreServiceTests : IDisposable
         var (success, message, store) = await _service.CreateStoreAsync(999, "Store", null);
 
         success.Should().BeFalse();
-        message.Should().Contain("Area not found");
+        message.Should().Contain("Store_ErrorAreaNotFound");
         store.Should().BeNull();
     }
 
@@ -155,7 +155,7 @@ public class StoreServiceTests : IDisposable
         var (success, message) = await _service.UpdateStoreAsync(1, "New Name", "שם חדש", false, 5);
 
         success.Should().BeTrue();
-        message.Should().Contain("updated successfully");
+        message.Should().Contain("Store_SuccessUpdated");
 
         var store = await _db.Stores.FindAsync(1);
         store!.NameEn.Should().Be("New Name");
@@ -170,7 +170,7 @@ public class StoreServiceTests : IDisposable
         var (success, message) = await _service.UpdateStoreAsync(999, "Name", null, true, 0);
 
         success.Should().BeFalse();
-        message.Should().Contain("not found");
+        message.Should().Contain("Store_ErrorNotFound");
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public class StoreServiceTests : IDisposable
         var (success, message) = await _service.UpdateStoreAsync(1, "", null, true, 0);
 
         success.Should().BeFalse();
-        message.Should().Contain("required");
+        message.Should().Contain("Store_ErrorNameRequired");
     }
 
     // --- DeleteStoreAsync ---
@@ -205,7 +205,7 @@ public class StoreServiceTests : IDisposable
         var (success, message) = await _service.DeleteStoreAsync(1);
 
         success.Should().BeTrue();
-        message.Should().Contain("deleted successfully");
+        message.Should().Contain("Store_SuccessDeleted");
         (await _db.Stores.FindAsync(1)).Should().BeNull();
         (await _db.StoreHoursEntries.CountAsync()).Should().Be(0);
         (await _db.QuickInfoConfigs.CountAsync()).Should().Be(0);
@@ -217,7 +217,7 @@ public class StoreServiceTests : IDisposable
         var (success, message) = await _service.DeleteStoreAsync(999);
 
         success.Should().BeFalse();
-        message.Should().Contain("not found");
+        message.Should().Contain("Store_ErrorNotFound");
     }
 
     // --- SetStoreHoursAsync ---
@@ -252,7 +252,7 @@ public class StoreServiceTests : IDisposable
         var (success, message) = await _service.SetStoreHoursAsync(999, new List<StoreHoursEntry>());
 
         success.Should().BeFalse();
-        message.Should().Contain("not found");
+        message.Should().Contain("Store_ErrorNotFound");
     }
 
     // --- GetStoreHoursAsync ---
