@@ -38,6 +38,7 @@ public class AppDbContext : DbContext
     public DbSet<ChoreType> ChoreTypes => Set<ChoreType>();
     public DbSet<ShiftCapacityOverride> ShiftCapacityOverrides => Set<ShiftCapacityOverride>();
     public DbSet<UserDayNote> UserDayNotes => Set<UserDayNote>();
+    public DbSet<CalendarTextEntry> CalendarTextEntries => Set<CalendarTextEntry>();
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
@@ -62,6 +63,11 @@ public class AppDbContext : DbContext
     // Public/Global Tables (no CompanyId, visible across all tenancies)
     public DbSet<OnDuty> OnDuties => Set<OnDuty>();
     public DbSet<OnDutyTypeConfig> OnDutyTypeConfigs => Set<OnDutyTypeConfig>();
+
+    // Store Hours & Quick Info Widget (area-scoped / molecule-scoped, no tenant filter)
+    public DbSet<Store> Stores => Set<Store>();
+    public DbSet<StoreHoursEntry> StoreHoursEntries => Set<StoreHoursEntry>();
+    public DbSet<QuickInfoConfig> QuickInfoConfigs => Set<QuickInfoConfig>();
 
     // API Sidecar Tables (tenant-scoped via query filters + IBelongsToCompany)
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
@@ -496,8 +502,19 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => new { e.UserId, e.Date, e.CompanyId }).IsUnique();
             entity.Property(e => e.Note).HasMaxLength(500);
-            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure CalendarTextEntry (Quick Entry text-only items)
+        modelBuilder.Entity<CalendarTextEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.UserId, e.Date }); // NOT unique — multiple entries per cell
+            entity.Property(e => e.Text).HasMaxLength(200);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -675,6 +692,10 @@ public class AppDbContext : DbContext
 
             // Excel Calendars: Query filter for UserDayNote tenant scoping
             modelBuilder.Entity<UserDayNote>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // Calendar Text Entry: Query filter for tenant scoping
+            modelBuilder.Entity<CalendarTextEntry>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // Vacation Approval Rules: Query filter for tenant scoping
@@ -1648,6 +1669,40 @@ public class AppDbContext : DbContext
         // Composite index for querying rules by company, job type, and priority
         modelBuilder.Entity<VacationApprovalRule>()
             .HasIndex(r => new { r.CompanyId, r.JobTypeId, r.Priority });
+
+        // ========================================
+        // Store Hours & Quick Info Widget
+        // ========================================
+
+        // Store relationships (area-scoped, NO query filter — global table like OnDutyTypeConfig)
+        modelBuilder.Entity<Store>(entity =>
+        {
+            entity.HasOne(s => s.Area)
+                .WithMany()
+                .HasForeignKey(s => s.AreaId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // StoreHoursEntry relationships + TimeOnly converters (reuses existing timeConverter)
+        modelBuilder.Entity<StoreHoursEntry>(entity =>
+        {
+            entity.HasOne(h => h.Store)
+                .WithMany(s => s.StoreHoursEntries)
+                .HasForeignKey(h => h.StoreId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(h => h.OpenTime).HasConversion(timeConverter);
+            entity.Property(h => h.CloseTime).HasConversion(timeConverter);
+        });
+
+        // QuickInfoConfig relationships (molecule-scoped, NO query filter — service scopes by moleculeId)
+        modelBuilder.Entity<QuickInfoConfig>(entity =>
+        {
+            entity.HasOne(q => q.Molecule)
+                .WithMany()
+                .HasForeignKey(q => q.MoleculeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(q => new { q.MoleculeId, q.IsEnabled });
+        });
 
         base.OnModelCreating(modelBuilder);
     }
