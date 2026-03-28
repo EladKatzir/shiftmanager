@@ -301,6 +301,8 @@ builder.Services.AddScoped<IScopeFilterService, ScopeFilterService>(); // A-018:
 // B-018: Concurrent Edit Conflict Detection
 builder.Services.AddScoped<IConcurrencyService, ConcurrencyService>();
 builder.Services.AddScoped<IWidgetService, WidgetService>();
+builder.Services.AddScoped<IStoreService, StoreService>();
+builder.Services.AddScoped<IQuickInfoConfigService, QuickInfoConfigService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IShiftGroupingService, ShiftGroupingService>();
@@ -334,6 +336,9 @@ builder.Services.AddHostedService<DailyNotificationJob>();
 // Data Safety: Automated SQLite backup service (fixes C-02, E-07)
 builder.Services.AddHostedService<DatabaseBackupService>();
 
+// Stale Request Reaper: weekly cleanup of old Pending requests
+builder.Services.AddHostedService<StaleRequestReaperJob>();
+
 // Data Safety: Graceful shutdown handler — WAL checkpoint on IIS app pool recycle (fixes C-08)
 builder.Services.AddSingleton<GracefulShutdownService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<GracefulShutdownService>());
@@ -347,6 +352,7 @@ builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
 builder.Services.AddScoped<IChoreTypeService, ChoreTypeService>();
 builder.Services.AddScoped<IHomeTypeService, HomeTypeService>();
 builder.Services.AddScoped<IUserDayNoteService, UserDayNoteService>();
+builder.Services.AddScoped<ICalendarTextEntryService, CalendarTextEntryService>();
 
 // SignalR for real-time calendar updates
 builder.Services.AddSignalR();
