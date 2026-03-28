@@ -58,10 +58,10 @@ public class HierarchyTreeViewComponent : ViewComponent
             if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out userId))
             {
                 // Check grants for edit capabilities
-                canEdit = await _grantService.HasGrantAsync(userId, "EditHierarchy");
+                canEdit = await _grantService.HasGrantAsync(userId, "ManageHierarchy");
                 canReorder = await _grantService.HasGrantAsync(userId, "ReorderHierarchy");
-                canDelete = await _grantService.HasGrantAsync(userId, "DeleteHierarchy");
-                canAddChild = await _grantService.HasGrantAsync(userId, "CreateHierarchy");
+                canDelete = await _grantService.HasGrantAsync(userId, "ManageHierarchy");
+                canAddChild = await _grantService.HasGrantAsync(userId, "ManageHierarchy");
             }
         }
 

@@ -13,9 +13,9 @@ namespace ShiftManager.Pages.Api.Hierarchy;
 /// API endpoint to delete (soft-delete) hierarchy entities.
 /// POST /Api/Hierarchy/Delete
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:DeleteHierarchy policy;
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — requires Grant:ManageHierarchy policy;
 // hierarchy deletion needs cross-company child existence checks
-[Authorize(Policy = "Grant:DeleteHierarchy")]
+[Authorize(Policy = "Grant:ManageHierarchy")]
 [IgnoreAntiforgeryToken]
 public class DeleteModel : PageModel
 {
