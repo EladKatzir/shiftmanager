@@ -34,6 +34,20 @@
   overflow: hidden;
 }
 
+.app-sidebar.is-collapsed .context-switcher__label,
+.app-sidebar.is-collapsed .context-switcher__name,
+.app-sidebar.is-collapsed .context-switcher__count,
+.app-sidebar.is-collapsed .context-switcher__static {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+.app-sidebar.is-collapsed .context-switcher {
+  justify-content: center;
+  padding: var(--space-2);
+}
+
 /* ========================================
    A-002: Sidebar Collapse State Persistence
    Pre-render collapsed state applied via <html> class
@@ -54,6 +68,21 @@
   width: 0;
   overflow: hidden;
   display: none;
+}
+
+.sidebar-initially-collapsed .app-sidebar .context-switcher__label,
+.sidebar-initially-collapsed .app-sidebar .context-switcher__name,
+.sidebar-initially-collapsed .app-sidebar .context-switcher__count,
+.sidebar-initially-collapsed .app-sidebar .context-switcher__static {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  display: none;
+}
+
+.sidebar-initially-collapsed .app-sidebar .context-switcher {
+  justify-content: center;
+  padding: var(--space-2);
 }
 
 .sidebar-initially-collapsed .app-sidebar .sidebar-toggle__icon {
