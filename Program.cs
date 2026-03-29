@@ -23,6 +23,10 @@ using ShiftManager.Data.SeedData;
 try
 {
 
+// Deployment Export: Phase 1 — restore config + DataProtection keys before builder reads them
+// This must run before WebApplication.CreateBuilder() which freezes IConfiguration and loads DP keys
+DeploymentExportService.RestoreConfigAndKeys();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // B-022: Logging Configuration
@@ -278,6 +282,7 @@ builder.Services.AddScoped<IDutyRotationService, DutyRotationService>();
 builder.Services.AddScoped<IBusyUserService, BusyUserService>();
 builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 builder.Services.AddSingleton<IRateLimitingService, RateLimitingService>();
+builder.Services.AddSingleton<IDeploymentExportService, DeploymentExportService>();
 builder.Services.AddSingleton<IValidationService, ValidationService>();
 builder.Services.AddScoped<ISecurityLogger, SecurityLogger>();
 
@@ -458,6 +463,14 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    // Deployment Export: Phase 2 — restore database + avatars + feedback
+    if (DeploymentExportService.PendingDataRestore)
+    {
+        var exportService = app.Services.GetRequiredService<IDeploymentExportService>();
+        await exportService.RestoreDataAsync(app.Services);
+        logger.LogInformation("Deployment restore Phase 2 completed");
+    }
 
     // ============================================================
     // PRE-MIGRATION BACKUP (fixes H-02, H-03, E-05)
@@ -1215,7 +1228,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Seed Owner user's grants - GODMODE: ALL 107 grants at Project level
+    // Seed Owner user's grants - GODMODE: ALL 130 grants at Project level
     var ownerUserForGrants = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Role == UserRole.Owner);
     if (ownerUserForGrants != null)
     {
