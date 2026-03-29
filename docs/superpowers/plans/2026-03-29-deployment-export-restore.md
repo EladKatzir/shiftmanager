@@ -278,7 +278,7 @@ public class DeploymentExportService : IDeploymentExportService
     private readonly IWebHostEnvironment _env;
     private readonly IConfiguration _configuration;
     private readonly ILogger<DeploymentExportService> _logger;
-    private readonly IAuditLogService _auditLogService;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     // Static flags for two-phase restore
     public static bool PendingDataRestore { get; set; }
@@ -288,12 +288,12 @@ public class DeploymentExportService : IDeploymentExportService
         IWebHostEnvironment env,
         IConfiguration configuration,
         ILogger<DeploymentExportService> logger,
-        IAuditLogService auditLogService)
+        IServiceScopeFactory scopeFactory)
     {
         _env = env;
         _configuration = configuration;
         _logger = logger;
-        _auditLogService = auditLogService;
+        _scopeFactory = scopeFactory;
     }
 
     // ================================================================
@@ -438,6 +438,8 @@ public class DeploymentExportServiceExportTests : IDisposable
 
     public void Dispose()
     {
+        DeploymentExportService.PendingDataRestore = false;
+        DeploymentExportService.RestoreJustCompleted = false;
         try { Directory.Delete(_testDir, recursive: true); }
         catch { /* cleanup best-effort */ }
     }
@@ -449,13 +451,14 @@ public class DeploymentExportServiceExportTests : IDisposable
         envMock.Setup(e => e.ContentRootPath).Returns(_contentRootPath);
 
         var configMock = new Mock<IConfiguration>();
-        configMock.Setup(c => c.GetSection("ConnectionStrings")["Default"])
+        // GetConnectionString() is an extension that reads config["ConnectionStrings:Default"]
+        configMock.Setup(c => c["ConnectionStrings:Default"])
             .Returns($"Data Source={Path.Combine(_testDir, "data", "app.db")}");
 
         var loggerMock = Mock.Of<ILogger<DeploymentExportService>>();
-        var auditMock = new Mock<IAuditLogService>();
+        var scopeFactoryMock = new Mock<IServiceScopeFactory>();
 
-        return new DeploymentExportService(envMock.Object, configMock.Object, loggerMock, auditMock.Object);
+        return new DeploymentExportService(envMock.Object, configMock.Object, loggerMock, scopeFactoryMock.Object);
     }
 
     [Fact]
@@ -551,6 +554,29 @@ public class DeploymentExportServiceExportTests : IDisposable
 
         info.Should().NotBeNull();
         info!.ExportedBy.Should().Be("test@test.com");
+    }
+
+    [Fact]
+    public async Task ExportAsync_ConcurrentCall_ReturnsError()
+    {
+        var service = CreateService();
+        File.WriteAllText(Path.Combine(_contentRootPath, "appsettings.Production.json"), "{}");
+
+        // Acquire the lock to simulate an in-progress export
+        var lockField = typeof(DeploymentExportService)
+            .GetField("_exportLock", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+        var semaphore = (SemaphoreSlim)lockField.GetValue(null)!;
+        await semaphore.WaitAsync();
+        try
+        {
+            var result = await service.ExportAsync(1, "test@test.com", _exportDir);
+            result.Success.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("already in progress");
+        }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 }
 ```
@@ -705,11 +731,15 @@ public async Task<ExportResult> ExportAsync(int userId, string userEmail, string
             // Clean up any orphaned .new-* or .old-* folders
             CleanupOrphanedFolders(exportPath);
 
-            // Audit log
-            await _auditLogService.LogUserActionAsync(
-                userId, "DeploymentExportCreated", "System", null,
-                $"Deployment export created: {manifest.Database.SizeBytes / 1024}KB DB, {manifest.AvatarCount} avatars, {manifest.FeedbackImageCount} feedback images",
-                null);
+            // Audit log (resolve scoped IAuditLogService — cannot inject directly into singleton)
+            using (var auditScope = _scopeFactory.CreateScope())
+            {
+                var auditLogService = auditScope.ServiceProvider.GetRequiredService<IAuditLogService>();
+                await auditLogService.LogUserActionAsync(
+                    userId, "DeploymentExportCreated", "System", null,
+                    $"Deployment export created: {manifest.Database.SizeBytes / 1024}KB DB, {manifest.AvatarCount} avatars, {manifest.FeedbackImageCount} feedback images",
+                    null);
+            }
 
             _logger.LogInformation(
                 "Deployment export completed: {DbSize}KB DB, {AvatarCount} avatars, {FeedbackCount} feedback, {DpCount} DP keys",
@@ -725,7 +755,7 @@ public async Task<ExportResult> ExportAsync(int userId, string userEmail, string
             throw;
         }
     }
-    catch (Exception ex) when (ex is not ExportResult)
+    catch (Exception ex)
     {
         _logger.LogError(ex, "Deployment export failed");
         return new ExportResult(false, $"Export failed: {ex.Message}", null);
@@ -759,13 +789,14 @@ public ExportManifest? GetLastExportInfo(string? exportPath = null)
 private static int CopyDirectoryRecursive(string sourceDir, string destDir)
 {
     var count = 0;
+    Directory.CreateDirectory(destDir);
     foreach (var dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
     {
-        Directory.CreateDirectory(dirPath.Replace(sourceDir, destDir));
+        Directory.CreateDirectory(Path.Combine(destDir, Path.GetRelativePath(sourceDir, dirPath)));
     }
     foreach (var filePath in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
     {
-        var destPath = filePath.Replace(sourceDir, destDir);
+        var destPath = Path.Combine(destDir, Path.GetRelativePath(sourceDir, filePath));
         Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
         File.Copy(filePath, destPath, overwrite: true);
         count++;
@@ -852,6 +883,8 @@ public class DeploymentExportServiceRestoreTests : IDisposable
 
     public void Dispose()
     {
+        DeploymentExportService.PendingDataRestore = false;
+        DeploymentExportService.RestoreJustCompleted = false;
         try { Directory.Delete(_testDir, recursive: true); }
         catch { /* best-effort */ }
     }
@@ -1202,7 +1235,7 @@ builder.Services.AddSingleton<IDeploymentExportService, DeploymentExportService>
 
 - [ ] **Step 3: Add Phase 2 call after builder.Build()**
 
-In `Program.cs`, after `var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();` (line 460) and before the PRE-MIGRATION BACKUP block (line 462), insert:
+In `Program.cs`, search for the comment `// PRE-MIGRATION BACKUP` (originally line 463, but line numbers shift after Step 1). Insert the following block **immediately before** that comment, after the `var logger = ...` line:
 
 ```csharp
     // Deployment Export: Phase 2 — restore database + avatars + feedback
@@ -1244,10 +1277,10 @@ git commit -m "feat: wire DeploymentExportService into Program.cs — Phase 1 pr
 In `Backup.cshtml.cs`, add `IDeploymentExportService` to the constructor and new properties:
 
 ```csharp
-// Add field:
+// Add field alongside existing fields (after line 21):
 private readonly IDeploymentExportService _exportService;
 
-// Update constructor to accept IDeploymentExportService:
+// Replace the constructor (lines 23-36) with the full body — preserve ALL existing assignments:
 public BackupModel(
     IConfiguration configuration,
     IAuditLogService auditLogService,
@@ -1257,7 +1290,11 @@ public BackupModel(
     _auditLogService = auditLogService;
     _logger = logger;
     _exportService = exportService;
-    // ... existing code ...
+
+    // Preserve existing connection string and path setup:
+    _connectionString = configuration.GetConnectionString("Default") ?? "Data Source=app.db";
+    _dbPath = DatabaseBackupService.ExtractDbPath(_connectionString);
+    _backupsFolder = configuration.GetValue<string>("Backup:Directory") ?? "Backups";
 }
 
 // Add properties:
