@@ -41,6 +41,39 @@
         </div>
     }
 
+    @if (Model.ShowRestoreBanner)
+    {
+        <div class="alert alert-success">
+            <strong>&#x2705; Data Restored:</strong>
+            Data was automatically restored from a deployment export. All data is intact.
+        </div>
+    }
+
+    <div class="backup-actions-card" style="border-left: 4px solid var(--primary);">
+        <h2>&#x1F680; <loc key="Owner_Backup_PrepareForUpdate">Prepare for Update</loc></h2>
+        <p class="help-text" style="margin-top: 0;">
+            Export all persistent data (database, avatars, feedback images, config) to a safe location.
+            After replacing the application files, the data will be automatically restored on next startup.
+        </p>
+
+        @if (Model.LastExportInfo != null)
+        {
+            <div class="export-status" style="background: var(--background); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                <strong>Last export:</strong>
+                @Model.LastExportInfo.ExportedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                &mdash; @Model.LastExportInfo.AvatarCount avatars,
+                @($"{Model.LastExportInfo.Database.SizeBytes / 1024}") KB database
+            </div>
+        }
+
+        <form method="post" asp-page-handler="PrepareForUpdate">
+            <button type="submit" class="btn btn-primary"
+                    onclick="return confirm('This will create a deployment export bundle at C:\\ShiftManager\\DeploymentExport. The bundle contains database credentials and should be treated as sensitive material. Proceed?')">
+                &#x1F4E6; Export Now
+            </button>
+        </form>
+    </div>
+
     <div class="backup-actions-card">
         <h2>🔧 <loc key="Owner_Backup_Actions" /></h2>
         <form method="post" asp-page-handler="CreateBackup">

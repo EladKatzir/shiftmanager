@@ -19,20 +19,21 @@ public class BackupModel : PageModel
     private readonly string _dbPath;
     private readonly string _backupsFolder;
     private readonly string _connectionString;
+    private readonly IDeploymentExportService _exportService;
 
     public BackupModel(
         IConfiguration configuration,
         IAuditLogService auditLogService,
-        ILogger<BackupModel> logger)
+        ILogger<BackupModel> logger,
+        IDeploymentExportService exportService)
     {
         _auditLogService = auditLogService;
         _logger = logger;
+        _exportService = exportService;
 
-        // Extract database path from connection string using shared helper
+        // Existing connection string and path setup — DO NOT REMOVE
         _connectionString = configuration.GetConnectionString("Default") ?? "Data Source=app.db";
         _dbPath = DatabaseBackupService.ExtractDbPath(_connectionString);
-
-        // Use configured backup directory, fallback to ./Backups
         _backupsFolder = configuration.GetValue<string>("Backup:Directory") ?? "Backups";
     }
 
@@ -40,6 +41,8 @@ public class BackupModel : PageModel
     public List<BackupFileInfo> SystemBackups { get; set; } = new();
     public string? Success { get; set; }
     public string? Error { get; set; }
+    public ExportManifest? LastExportInfo { get; set; }
+    public bool ShowRestoreBanner { get; set; }
 
     public class BackupFileInfo
     {
@@ -66,6 +69,12 @@ public class BackupModel : PageModel
     public void OnGet()
     {
         LoadBackups();
+        LastExportInfo = _exportService.GetLastExportInfo();
+        if (DeploymentExportService.RestoreJustCompleted)
+        {
+            ShowRestoreBanner = true;
+            DeploymentExportService.RestoreJustCompleted = false;
+        }
     }
 
     public async Task<IActionResult> OnPostCreateBackupAsync()
@@ -119,6 +128,38 @@ public class BackupModel : PageModel
             LoadBackups();
             return Page();
         }
+    }
+
+    public async Task<IActionResult> OnPostPrepareForUpdateAsync()
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "unknown";
+
+            var result = await _exportService.ExportAsync(currentUserId, userEmail);
+
+            if (result.Success)
+            {
+                Success = $"Deployment export created successfully. Database: {result.Manifest!.Database.SizeBytes / 1024}KB, " +
+                          $"Avatars: {result.Manifest.AvatarCount}, Feedback images: {result.Manifest.FeedbackImageCount}, " +
+                          $"DataProtection keys: {result.Manifest.DataProtectionKeyCount}. " +
+                          $"Export saved to {DeploymentExportService.ExportPath}";
+            }
+            else
+            {
+                Error = result.ErrorMessage ?? "Export failed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating deployment export");
+            Error = "An unexpected error occurred during export.";
+        }
+
+        LoadBackups();
+        LastExportInfo = _exportService.GetLastExportInfo();
+        return Page();
     }
 
     public async Task<IActionResult> OnPostRestoreBackupAsync(string backupFileName)
