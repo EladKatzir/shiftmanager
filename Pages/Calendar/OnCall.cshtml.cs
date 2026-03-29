@@ -28,6 +28,7 @@ public class OnCallModel : PageModel
     private readonly ICompanyContext _companyContext;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<OnCallModel> _logger;
+    private readonly ICalendarTextEntryService _textEntryService;
 
     public OnCallModel(
         AppDbContext db,
@@ -35,7 +36,8 @@ public class OnCallModel : PageModel
         IGrantService grantService,
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
-        ILogger<OnCallModel> logger)
+        ILogger<OnCallModel> logger,
+        ICalendarTextEntryService textEntryService)
     {
         _db = db;
         _onDutyService = onDutyService;
@@ -43,6 +45,7 @@ public class OnCallModel : PageModel
         _companyContext = companyContext;
         _localizer = localizer;
         _logger = logger;
+        _textEntryService = textEntryService;
     }
 
     // Query parameters
@@ -361,6 +364,11 @@ public class OnCallModel : PageModel
             onDuties = onDuties.Where(o => (int)o.Type == DutyTypeFilter.Value).ToList();
         }
 
+        // Load text entries for overlay badges (cross-company via IgnoreQueryFilters)
+        var assignedOnDutyUserIds = onDuties.Select(o => o.UserId).Distinct();
+        var textEntries = await _textEntryService.GetForUsersAndDateRangeAsync(
+            assignedOnDutyUserIds, StartDate, EndDate);
+
         // Group duty types by primary/backup relationship
         var primaryTypes = DutyTypes.Where(dt => !dt.IsBackupType).ToList();
         var backupTypes = DutyTypes.Where(dt => dt.IsBackupType).ToList();
@@ -377,7 +385,7 @@ public class OnCallModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForDutyType(dutyType.TypeValue, onDuties);
+            row.Cells = BuildCellsForDutyType(dutyType.TypeValue, onDuties, textEntries);
             rows.Add(row);
         }
 
@@ -395,7 +403,8 @@ public class OnCallModel : PageModel
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForDutyType(
         int dutyTypeValue,
-        List<OnDuty> onDuties)
+        List<OnDuty> onDuties,
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -415,6 +424,20 @@ public class OnCallModel : PageModel
                 Role = o.Notes, // Use notes as additional info
                 UserId = o.UserId
             }).ToList();
+
+            // Text entry overlay badge: show 📝 if any assigned user has text entries
+            var cellTextEntryTexts = new List<string>();
+            foreach (var assignment in assignments)
+            {
+                if (textEntries.TryGetValue((assignment.UserId, date), out var entries))
+                    cellTextEntryTexts.AddRange(entries.Select(e => e.Text));
+            }
+            if (cellTextEntryTexts.Count > 0)
+            {
+                cell.Overlay ??= new ExcelCalendarOverlay();
+                cell.Overlay.HasTextEntry = true;
+                cell.Overlay.TextEntryTexts = cellTextEntryTexts;
+            }
 
             cells[date] = cell;
         }

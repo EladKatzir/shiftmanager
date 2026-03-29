@@ -62,7 +62,9 @@ public class ExcelCalendarOverlay
     public bool HasVacation { get; set; }
     public bool HasChore { get; set; }
     public bool HasOnDuty { get; set; }
+    public bool HasTextEntry { get; set; }
     public List<string> OtherItems { get; set; } = new();
+    public List<string> TextEntryTexts { get; set; } = new();
 }
 
 public class ExcelCalendarTableViewComponent : ViewComponent

@@ -31,6 +31,7 @@ public class TableModel : PageModel
     private readonly ICompanyLocalizationService _companyLocalizationService;
     private readonly ITenantResolver _tenantResolver;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IAuditLogService _auditLogService;
 
     public TableModel(
         AppDbContext db,
@@ -46,7 +47,8 @@ public class TableModel : PageModel
         IJobTypeService jobTypeService,
         ICompanyLocalizationService companyLocalizationService,
         ITenantResolver tenantResolver,
-        IStringLocalizer<SharedResources> localizer)
+        IStringLocalizer<SharedResources> localizer,
+        IAuditLogService auditLogService)
     {
         _db = db;
         _companyContext = companyContext;
@@ -62,6 +64,7 @@ public class TableModel : PageModel
         _companyLocalizationService = companyLocalizationService;
         _tenantResolver = tenantResolver;
         _localizer = localizer;
+        _auditLogService = auditLogService;
     }
 
     /// <summary>
@@ -507,6 +510,12 @@ public class TableModel : PageModel
                 }
             }
 
+            if (isNew)
+            {
+                await _auditLogService.LogAsync("ShiftInstanceCreated", "ShiftInstance", instance.Id,
+                    $"Created shift instance for type {request.ShiftTypeId} on {request.Date:yyyy-MM-dd} with {request.StaffingRequired} slots");
+            }
+
             return new JsonResult(new
             {
                 success = true,
@@ -584,6 +593,9 @@ public class TableModel : PageModel
                     return new JsonResult(new { success = false, error = saveResult2.ErrorMessage }) { StatusCode = 409 };
 
                 await transaction.CommitAsync();
+
+                await _auditLogService.LogAsync("ShiftInstanceCreated", "ShiftInstance", instance.Id,
+                    $"Created shift instance for type {request.ShiftTypeId} on {request.Date:yyyy-MM-dd} with {request.StaffingRequired} slots");
 
                 return new JsonResult(new
                 {
@@ -717,6 +729,9 @@ public class TableModel : PageModel
 
             // SECURITY-AUDITED: SAFE — entity lookup by unique ID
             var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.UserId);
+
+            await _auditLogService.LogAsync("ShiftSlotAssigned", "ShiftAssignment", request.AssignmentId,
+                $"Assigned user {request.UserId} ({user?.DisplayName}) to slot on {shiftDate:yyyy-MM-dd}");
 
             return new JsonResult(new
             {
@@ -863,6 +878,9 @@ public class TableModel : PageModel
                 _logger.LogWarning(notifyEx, "Failed to send calendar notification for AssignEmployee");
             }
 
+            await _auditLogService.LogAsync("ShiftAssigned", "ShiftAssignment", result.AssignmentId,
+                $"Assigned user {request.UserId} ({user?.DisplayName}) to shift type {request.ShiftTypeId} on {instance.WorkDate:yyyy-MM-dd}");
+
             return new JsonResult(new
             {
                 success = true,
@@ -930,6 +948,9 @@ public class TableModel : PageModel
                 _logger.LogWarning(notifyEx, "Failed to send calendar notification for UnassignEmployee");
             }
 
+            await _auditLogService.LogAsync("ShiftUnassigned", "ShiftAssignment", request.AssignmentId,
+                $"Unassigned user {removedUserId} ({removedUserName}) from shift on {workDate:yyyy-MM-dd}");
+
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)
@@ -986,6 +1007,9 @@ public class TableModel : PageModel
             {
                 _logger.LogWarning(notifyEx, "Failed to send calendar notification for ClearAssignment");
             }
+
+            await _auditLogService.LogAsync("ShiftCleared", "ShiftAssignment", request.AssignmentId,
+                $"Cleared assignment on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}");
 
             return new JsonResult(new { success = true });
         }
@@ -1121,6 +1145,9 @@ public class TableModel : PageModel
                 _logger.LogWarning(notifyEx, "Failed to send calendar notification for UpdateShiftStaffing");
             }
 
+            await _auditLogService.LogAsync("StaffingUpdated", "ShiftInstance", instance.Id,
+                $"Updated staffing to {request.StaffingRequired} on {instance.WorkDate:yyyy-MM-dd}");
+
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)
@@ -1187,6 +1214,9 @@ public class TableModel : PageModel
 
             _logger.LogInformation("Deleted shift instance {InstanceId} with {AssignmentCount} assignments",
                 deletedInstanceId, assignments.Count);
+
+            await _auditLogService.LogAsync("ShiftDeleted", "ShiftInstance", deletedInstanceId,
+                $"Deleted shift instance on {deletedWorkDate:yyyy-MM-dd} with {assignments.Count} assignments");
 
             // Send real-time notification (fire-and-forget)
             try
@@ -1304,6 +1334,9 @@ public class TableModel : PageModel
                 _logger.LogWarning(notifyEx, "Failed to send calendar notification for AddTrainee");
             }
 
+            await _auditLogService.LogAsync("TraineeAdded", "ShiftAssignment", request.AssignmentId,
+                $"Added trainee {request.TraineeUserId} ({trainee?.DisplayName}) to assignment on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}");
+
             return new JsonResult(new
             {
                 success = true,
@@ -1366,6 +1399,9 @@ public class TableModel : PageModel
             {
                 _logger.LogWarning(notifyEx, "Failed to send calendar notification for RemoveTrainee");
             }
+
+            await _auditLogService.LogAsync("TraineeRemoved", "ShiftAssignment", request.AssignmentId,
+                $"Removed trainee {removedTraineeId} from assignment on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}");
 
             return new JsonResult(new { success = true });
         }
@@ -1460,6 +1496,9 @@ public class TableModel : PageModel
                 _logger.LogWarning(notifyEx, "Failed to send calendar notification for ChangeUser");
             }
 
+            await _auditLogService.LogAsync("ShiftUserChanged", "ShiftAssignment", request.AssignmentId,
+                $"Changed user to {request.NewUserId} ({user?.DisplayName}) on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}");
+
             return new JsonResult(new
             {
                 success = true,
@@ -1522,6 +1561,9 @@ public class TableModel : PageModel
             if (shiftType.MoleculeId.HasValue)
                 _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
 
+            await _auditLogService.LogAsync("ShiftMetadataUpdated", "ShiftType", request.ShiftTypeId,
+                $"Updated shift type name to '{request.Name}', times {request.StartTime}-{request.EndTime}");
+
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)
@@ -1579,6 +1621,9 @@ public class TableModel : PageModel
 
             _logger.LogInformation("Created custom shift type {ShiftTypeId} with name '{Name}' for company {CompanyId}",
                 shiftType.Id, shiftType.NameEn, companyId);
+
+            await _auditLogService.LogAsync("ShiftTypeCreated", "ShiftType", shiftType.Id,
+                $"Created custom shift type '{shiftType.NameEn}' ({customKey})");
 
             // Invalidate caches so the new shift type appears immediately
             _shiftTypeCache.InvalidateCache(companyId);
@@ -1728,6 +1773,9 @@ public class TableModel : PageModel
             // Call service to detach instance
             await _programService.DetachInstanceAsync(request.ShiftInstanceId, request.Reason);
 
+            await _auditLogService.LogAsync("ShiftDetached", "ShiftInstance", request.ShiftInstanceId,
+                $"Detached from program. Reason: {request.Reason}");
+
             _logger.LogInformation(
                 "Detached ShiftInstance {InstanceId} from Program. Reason: {Reason}",
                 request.ShiftInstanceId, request.Reason);
@@ -1765,6 +1813,9 @@ public class TableModel : PageModel
 
             // Call service to reset instance to Program defaults
             await _programService.ResetInstanceToProgramAsync(request.ShiftInstanceId);
+
+            await _auditLogService.LogAsync("ShiftReset", "ShiftInstance", request.ShiftInstanceId,
+                $"Reset to program {instance.OriginalProgramId} defaults");
 
             _logger.LogInformation(
                 "Reset ShiftInstance {InstanceId} to Program {ProgramId} defaults",
@@ -1946,13 +1997,15 @@ public class TableModel : PageModel
                         && u.JobTypeId == jobTypeIdParam.Value)
                     .OrderBy(u => u.CompanyId)
                     .ThenBy(u => u.DisplayName)
-                    .Select(u => new { u.Id, u.DisplayName, u.CompanyId })
+                    .Select(u => new { u.Id, u.DisplayName, u.CompanyId, u.AvatarFileName })
                     .ToListAsync())
                     .Select(u => new RosterEmployee
                     {
                         Id = u.Id,
                         DisplayName = u.DisplayName,
-                        CompanyName = companyNames.GetValueOrDefault(u.CompanyId, "")
+                        CompanyName = companyNames.GetValueOrDefault(u.CompanyId, ""),
+                        AvatarUrl = !string.IsNullOrWhiteSpace(u.AvatarFileName)
+                            ? $"/avatars/{u.CompanyId}/{u.Id}_thumb.jpg" : null
                     })
                     .ToList();
             }
@@ -1961,9 +2014,16 @@ public class TableModel : PageModel
                 rosterEmployees = (await _db.Users
                     .Where(u => u.CompanyId == companyId && u.IsActive)
                     .OrderBy(u => u.DisplayName)
-                    .Select(u => new { u.Id, u.DisplayName })
+                    .Select(u => new { u.Id, u.DisplayName, u.AvatarFileName })
                     .ToListAsync())
-                    .Select(u => new RosterEmployee { Id = u.Id, DisplayName = u.DisplayName, CompanyName = "" })
+                    .Select(u => new RosterEmployee
+                    {
+                        Id = u.Id,
+                        DisplayName = u.DisplayName,
+                        CompanyName = "",
+                        AvatarUrl = !string.IsNullOrWhiteSpace(u.AvatarFileName)
+                            ? $"/avatars/{companyId}/{u.Id}_thumb.jpg" : null
+                    })
                     .ToList();
             }
 
@@ -2007,6 +2067,7 @@ public class TableModel : PageModel
                 {
                     id = emp.Id,
                     name = emp.DisplayName,
+                    avatarUrl = emp.AvatarUrl,
                     onVacation = status.hasVacation,
                     hasShift = status.hasShift,
                     hasChore = status.hasChore
@@ -2346,6 +2407,9 @@ public class TableModel : PageModel
                 _logger.LogWarning(notifyEx, "Failed to send calendar notification for FillRange");
             }
 
+            await _auditLogService.LogAsync("ShiftRangeFilled", "ShiftInstance", request.SourceInstanceId,
+                $"Filled {createdCount + updatedCount} shifts (created: {createdCount}, updated: {updatedCount}) mode: {request.Mode}");
+
             return new JsonResult(new
             {
                 success = true,
@@ -2511,6 +2575,7 @@ public class TableModel : PageModel
         public int Id { get; set; }
         public string DisplayName { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
+        public string? AvatarUrl { get; set; }
     }
 
     // --- Molecule mode helpers (matching Calendar/Shifts pattern) ---

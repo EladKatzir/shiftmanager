@@ -1,0 +1,119 @@
+<h2>Quick Entry Help — UI Format</h2>
+<p class="subtitle">How should the help reference appear when users click the ? button?</p>
+
+<div class="cards">
+  <div class="card" data-choice="popover" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; position: relative; min-height: 220px;">
+        <!-- Toolbar mockup -->
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+          <span style="font-size: 13px; color: #64748b;">Filter</span>
+          <span style="font-size: 13px; color: #64748b;">Just Mine</span>
+          <span style="background: #3b82f6; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px;">&#9889; Quick Entry</span>
+          <span style="background: #e2e8f0; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #3b82f6; cursor: pointer;">?</span>
+        </div>
+        <!-- Popover card -->
+        <div style="position: relative; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 16px; max-width: 320px; margin-inline-start: auto;">
+          <div style="position: absolute; top: -6px; inset-inline-end: 24px; width: 12px; height: 12px; background: white; border-top: 1px solid #e2e8f0; border-left: 1px solid #e2e8f0; transform: rotate(45deg);"></div>
+          <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Quick Entry Help</div>
+          <div style="font-size: 11px; color: #64748b; line-height: 1.6;">
+            <div style="margin-bottom: 4px;"><code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">/shift</code> — Assign shifts</div>
+            <div style="margin-bottom: 4px;"><code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">/chore</code> — Assign chores</div>
+            <div style="margin-bottom: 4px;"><code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">/duty</code> — Assign day shifts</div>
+            <div>Type text — Save as note</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Popover Card</h3>
+      <p>Small card drops down from the ? button. Stays open until clicked away. Lightweight, doesn't block the calendar.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Non-intrusive</li><li>Quick to scan</li><li>Stays near context</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Limited space for bilingual content</li><li>May overlap calendar cells</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="modal" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; position: relative; min-height: 220px;">
+        <!-- Dimmed background -->
+        <div style="background: rgba(0,0,0,0.3); position: absolute; inset: 0; border-radius: 8px;"></div>
+        <!-- Modal -->
+        <div style="position: relative; background: white; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); padding: 0; max-width: 380px; margin: 12px auto; z-index: 1;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #e2e8f0;">
+            <span style="font-weight: 600; font-size: 14px;">Quick Entry Guide</span>
+            <span style="color: #94a3b8; cursor: pointer; font-size: 18px;">&times;</span>
+          </div>
+          <div style="padding: 16px; font-size: 11px; color: #475569; line-height: 1.7;">
+            <div style="font-weight: 600; margin-bottom: 4px;">Commands:</div>
+            <div><code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">/shift</code> — Assign shifts (משמרות)</div>
+            <div><code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">/chore</code> — Chores (תורנויות)</div>
+            <div style="margin-top: 8px; font-weight: 600;">Keyboard:</div>
+            <div>Tab → next cell &nbsp; Esc → cancel</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Modal Dialog</h3>
+      <p>Centered overlay (like filter modal). Plenty of room for bilingual content, sections, keyboard shortcuts. Follows existing <code>.cal-filter-modal</code> pattern.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Room for thorough bilingual content</li><li>Matches existing pattern</li><li>Accessible (focus trap, ESC)</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Interrupts workflow</li><li>Heavier feel for a help reference</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="modal-compact" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; position: relative; min-height: 220px;">
+        <!-- Dimmed background -->
+        <div style="background: rgba(0,0,0,0.15); position: absolute; inset: 0; border-radius: 8px;"></div>
+        <!-- Compact modal with tabs -->
+        <div style="position: relative; background: white; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); max-width: 400px; margin: 8px auto; z-index: 1;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #e2e8f0;">
+            <span style="font-weight: 600; font-size: 14px;">Quick Entry Guide</span>
+            <span style="color: #94a3b8; cursor: pointer; font-size: 18px;">&times;</span>
+          </div>
+          <!-- Language tabs -->
+          <div style="display: flex; border-bottom: 1px solid #e2e8f0;">
+            <span style="flex:1; text-align:center; padding: 8px; font-size: 12px; font-weight: 600; color: #3b82f6; border-bottom: 2px solid #3b82f6;">English</span>
+            <span style="flex:1; text-align:center; padding: 8px; font-size: 12px; color: #94a3b8;">עברית</span>
+          </div>
+          <div style="padding: 14px 16px; font-size: 11px; color: #475569; line-height: 1.8;">
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:3px;">
+              <span style="font-size:14px">📅</span>
+              <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:11px;">/shift</code>
+              <span>— Assign shifts</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:3px;">
+              <span style="font-size:14px">🧹</span>
+              <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:11px;">/chore</code>
+              <span>— Assign chores</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:3px;">
+              <span style="font-size:14px">🛡️</span>
+              <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:11px;">/duty</code>
+              <span>— Assign day shifts</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span style="font-size:14px">🏠</span>
+              <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:11px;">/home</code>
+              <span>— HOME shifts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Modal with Language Tabs</h3>
+      <p>Compact modal with English/עברית tab switcher. Auto-selects tab based on current locale. Full content in both languages without overwhelming the user. <strong>Recommended.</strong></p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Both languages fully covered</li><li>Clean — one language at a time</li><li>Auto-selects based on locale</li><li>Room for all content</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Slightly heavier than popover</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -769,7 +769,8 @@
     opacity: 0.5;
 }
 
-.roster-employee-avatar {
+.roster-employee-avatar,
+.employee-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -781,6 +782,13 @@
     font-weight: 600;
     font-size: 0.875rem;
     flex-shrink: 0;
+    overflow: hidden;
+}
+.roster-employee-avatar img,
+.employee-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .roster-employee-info {

@@ -826,3 +826,198 @@
 .app-sidebar.is-collapsed .sidebar-widget-container {
   display: none;
 }
+
+/* ========================================
+   16. ON-CALL SECTION LABELS & DOTS
+   ======================================== */
+
+.oncall-section-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  padding: 8px 14px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.oncall-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.oncall-dot--hakam {
+  background: var(--danger);
+}
+
+.oncall-dot--companyoncall {
+  background: var(--warning);
+}
+
+.oncall-dot--friend {
+  background: var(--success);
+}
+
+/* ========================================
+   17. ON-CALL CONTACT ROW (redesigned)
+   ======================================== */
+
+.oncall-contact__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 14px var(--space-3);
+}
+
+.oncall-contact__row--empty {
+  padding: var(--space-2) 14px var(--space-3);
+}
+
+/* Unassigned contact state */
+.oncall-contact--unassigned {
+  opacity: 0.7;
+}
+
+.oncall-contact__placeholder {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-style: italic;
+}
+
+.oncall-contact__not-assigned {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+/* ========================================
+   18. STORE STATUS CARDS
+   ======================================== */
+
+.widget-opening-times {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-2);
+  padding-top: var(--space-1);
+}
+
+.store-icon {
+  font-size: 0.85rem;
+}
+
+.store-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  margin: 0 14px 4px;
+  border-radius: 6px;
+  border-inline-start: 3px solid;
+}
+
+.store-status--open {
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+}
+
+.store-status--break {
+  border-color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+}
+
+.store-status--closed,
+.store-status--nohoursset {
+  border-color: var(--text-muted);
+  background: var(--surface-soft, var(--surface));
+}
+
+.store-status__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.store-status__name {
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.store-status__message {
+  font-size: 0.7rem;
+}
+
+.store-status--open .store-status__message {
+  color: var(--success);
+}
+
+.store-status--break .store-status__message {
+  color: var(--warning);
+}
+
+.store-status--closed .store-status__message,
+.store-status--nohoursset .store-status__message {
+  color: var(--text-muted);
+}
+
+/* Status badges — with !important per MEMORY.md CSS contrast rules */
+.store-status__badge {
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.store-status__badge--open {
+  background: var(--success);
+  color: var(--success-text) !important;
+}
+
+.store-status__badge--break {
+  background: var(--warning);
+  color: var(--warning-text) !important;
+}
+
+.store-status__badge--closed,
+.store-status__badge--nohoursset {
+  background: var(--surface-soft, #64748b);
+  color: var(--text-muted);
+}
+
+/* ========================================
+   19. WIDGET CONFIG GEAR ICON
+   ======================================== */
+
+.widget__config-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.6;
+  transition: opacity 0.15s;
+  text-decoration: none;
+}
+
+.widget__config-btn:hover {
+  opacity: 1;
+}
+
+.widget__config-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* ========================================
+   20. WIDGET HEADER RIGHT SIDE
+   ======================================== */
+
+.widget__header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

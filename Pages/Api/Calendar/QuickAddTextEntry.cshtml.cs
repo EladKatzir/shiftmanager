@@ -1,0 +1,128 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using ShiftManager.Services;
+using System.Security.Claims;
+using System.Text.Json;
+
+namespace ShiftManager.Pages.Api.Calendar;
+
+[Authorize]
+[IgnoreAntiforgeryToken]
+public class QuickAddTextEntryModel : PageModel
+{
+    private readonly ICalendarTextEntryService _textEntryService;
+    private readonly IAuditLogService _auditLogService;
+    private readonly IGrantService _grantService;
+    private readonly ILogger<QuickAddTextEntryModel> _logger;
+
+    public QuickAddTextEntryModel(
+        ICalendarTextEntryService textEntryService,
+        IAuditLogService auditLogService,
+        IGrantService grantService,
+        ILogger<QuickAddTextEntryModel> logger)
+    {
+        _textEntryService = textEntryService;
+        _auditLogService = auditLogService;
+        _grantService = grantService;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        try
+        {
+            using var reader = new StreamReader(Request.Body);
+            var body = await reader.ReadToEndAsync();
+            var data = JsonSerializer.Deserialize<CreateTextEntryRequest>(body, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (data == null)
+            {
+                return new JsonResult(new { success = false, message = "Invalid request data" })
+                    { StatusCode = 400 };
+            }
+
+            if (data.UserId <= 0)
+            {
+                return new JsonResult(new { success = false, message = "Invalid user" })
+                    { StatusCode = 400 };
+            }
+
+            if (string.IsNullOrWhiteSpace(data.Text))
+            {
+                return new JsonResult(new { success = false, message = "Text is required" })
+                    { StatusCode = 400 };
+            }
+
+            if (data.Text.Length > 200)
+            {
+                return new JsonResult(new { success = false, message = "Text must not exceed 200 characters" })
+                    { StatusCode = 400 };
+            }
+
+            if (!DateOnly.TryParse(data.Date, out var entryDate))
+            {
+                return new JsonResult(new { success = false, message = "Invalid date format" })
+                    { StatusCode = 400 };
+            }
+
+            if (entryDate > DateOnly.FromDateTime(DateTime.Today.AddYears(2)))
+            {
+                return new JsonResult(new { success = false, message = "Cannot create entries more than 2 years in the future" })
+                    { StatusCode = 400 };
+            }
+
+            if (entryDate < DateOnly.FromDateTime(DateTime.Today))
+            {
+                return new JsonResult(new { success = false, message = "Cannot create entries in the past" })
+                    { StatusCode = 400 };
+            }
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var currentUserId))
+            {
+                return new JsonResult(new { success = false, message = "User not authenticated" })
+                    { StatusCode = 401 };
+            }
+
+            // SECURITY: Verify caller has calendar editing permissions (shift, chore, or on-duty)
+            if (!await _grantService.HasCalendarEditPermissionAsync(currentUserId))
+            {
+                _logger.LogWarning("SECURITY: User {UserId} attempted to create text entry without calendar edit permissions", currentUserId);
+                return new JsonResult(new { success = false, message = "You do not have permission to create calendar entries" })
+                    { StatusCode = 403 };
+            }
+
+            var entry = await _textEntryService.AddAsync(data.UserId, entryDate, data.Text.Trim(), currentUserId);
+
+            await _auditLogService.LogAsync(
+                action: "TextEntryCreated",
+                entityType: "CalendarTextEntry",
+                entityId: entry.Id,
+                description: $"Created text entry '{data.Text}' for user {data.UserId} on {entryDate:yyyy-MM-dd} via Quick Entry");
+
+            return new JsonResult(new
+            {
+                success = true,
+                textEntryId = entry.Id,
+                message = "Text entry created successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating text entry via Quick Entry");
+            return new JsonResult(new { success = false, message = "An error occurred" })
+                { StatusCode = 500 };
+        }
+    }
+
+    private class CreateTextEntryRequest
+    {
+        public int UserId { get; set; }
+        public string Date { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
+}

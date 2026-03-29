@@ -286,6 +286,25 @@ public static class GrantTypeSeed
         // ============================================
         grants.Add(new GrantType { Id = id++, Key = "ManageHomeTypes", NameKey = "Grant_ManageHomeTypes", DescriptionKey = "Grant_ManageHomeTypes_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
 
+        // ============================================
+        // STORE HOURS & QUICK INFO WIDGET (Category.Hierarchy — area-scoped organization admin)
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ManageStores", NameKey = "Grant_ManageStores", DescriptionKey = "Grant_ManageStores_Desc", Category = GrantCategory.Hierarchy, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+
+        // ============================================
+        // ON-CALL WIDGET GRANTS (Category.Duty) - Controls widget visibility
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ViewHakamOnCall", NameKey = "Grant_ViewHakamOnCall", DescriptionKey = "Grant_ViewHakamOnCall_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewCompanyOnCall", NameKey = "Grant_ViewCompanyOnCall", DescriptionKey = "Grant_ViewCompanyOnCall_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
+
+        // ============================================
+        // SCOPE SWITCHER GRANTS (Category.Shift) - Molecule-level scope access
+        // ============================================
+
+        grants.Add(new GrantType { Id = id++, Key = "ViewShiftsMolecule", NameKey = "Grant_ViewShiftsMolecule", DescriptionKey = "Grant_ViewShiftsMolecule_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+
         return grants;
     }
 }

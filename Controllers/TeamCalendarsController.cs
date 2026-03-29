@@ -316,6 +316,9 @@ public class TeamCalendarsController : ControllerBase
                 {
                     UserId = m.MemberUserId,
                     DisplayName = m.Member.DisplayName,
+                    AvatarUrl = !string.IsNullOrWhiteSpace(m.Member.AvatarFileName)
+                        ? $"/avatars/{m.Member.CompanyId}/{m.MemberUserId}_thumb.jpg"
+                        : (string?)null,
                     Days = days
                 };
             }).ToList();

@@ -778,6 +778,13 @@
 
     // --- Handle remove assignment (called after tap-to-confirm) ---
     function handleRemoveAssignment(cellData, assignment) {
+        // Text entries route to dedicated handler regardless of calendar type
+        if (assignment.entryType === 'text' && typeof window.deleteTextEntry === 'function') {
+            window.deleteTextEntry(assignment.id);
+            close();
+            return;
+        }
+
         var calendarType = detectCalendarType();
 
         if (calendarType === 'chores' && typeof window.deleteItem === 'function') {
@@ -788,12 +795,16 @@
             close();
         } else if (calendarType === 'shifts') {
             // Shift removal via ClearAssignment handler on Calendar/Table
+            var bsHeaders = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            var bsCsrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (bsCsrfToken) bsHeaders['RequestVerificationToken'] = bsCsrfToken;
+
             fetch('/Calendar/Table?handler=ClearAssignment', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
+                headers: bsHeaders,
                 credentials: 'same-origin',
                 body: JSON.stringify({ assignmentId: assignment.id })
             })
@@ -873,12 +884,15 @@
             var traineeId = assignEl.dataset.traineeId || '';
             var traineeName = assignEl.dataset.traineeName || '';
 
+            var entryType = assignEl.dataset.entryType || '';
+
             assignments.push({
                 id: assignmentId ? parseInt(assignmentId, 10) : null,
                 name: nameEl ? nameEl.textContent.trim() : '',
                 isTrainee: isTrainee,
                 traineeId: traineeId ? parseInt(traineeId, 10) : null,
-                traineeName: traineeName || null
+                traineeName: traineeName || null,
+                entryType: entryType
             });
         });
 

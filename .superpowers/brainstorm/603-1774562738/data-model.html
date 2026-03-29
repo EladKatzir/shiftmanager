@@ -1,0 +1,130 @@
+<h2>Data Model & Architecture</h2>
+<p class="subtitle">New entities, relationships, and widget configuration flow</p>
+
+<!-- Data Model Diagram -->
+<div class="mockup">
+  <div class="mockup-header">Entity Relationships</div>
+  <div class="mockup-body" style="background:#0f172a;color:#e2e8f0;padding:20px;font-family:'Cascadia Code',monospace;font-size:12px;line-height:1.6;">
+<pre style="margin:0;white-space:pre;color:#e2e8f0;">
+┌─────────────────────────┐     ┌──────────────────────────────────────┐
+│        <span style="color:#60a5fa;">Area</span>              │     │          <span style="color:#f472b6;">NEW: Store</span>                    │
+│  (existing)             │────▶│  Id, <span style="color:#fbbf24;">AreaId</span> (FK)                     │
+│  Id, NameEn, NameHe     │  1:N│  NameEn, NameHe                      │
+│  ProjectId              │     │  IsActive, SortOrder                 │
+└─────────────────────────┘     │  CompanyId (IBelongsToCompany)       │
+         │                      └──────────────────┬───────────────────┘
+         │ 1:N                                     │ 1:N
+         ▼                                         ▼
+┌─────────────────────────┐     ┌──────────────────────────────────────┐
+│      <span style="color:#60a5fa;">Molecule</span>           │     │       <span style="color:#f472b6;">NEW: StoreHoursEntry</span>             │
+│  (existing)             │     │  Id, <span style="color:#fbbf24;">StoreId</span> (FK)                    │
+│  Id, NameEn, NameHe     │     │  DayOfWeek (0=Sun..6=Sat)            │
+│  AreaId                 │     │  OpenTime (TimeOnly)                 │
+│                         │     │  CloseTime (TimeOnly)                │
+└────────┬────────────────┘     │  IsActive                            │
+         │                      │                                      │
+         │ 1:N                  │  (multiple entries per day = breaks)  │
+         ▼                      │  e.g., Mon: 10:00-12:00, 14:00-16:00 │
+┌─────────────────────────┐     └──────────────────────────────────────┘
+│  <span style="color:#f472b6;">NEW: QuickInfoConfig</span>   │
+│                         │     ┌──────────────────────────────────────┐
+│  Id                     │     │        <span style="color:#60a5fa;">OnDutyTypeConfig</span>               │
+│  <span style="color:#fbbf24;">MoleculeId</span> (FK)        │     │  (existing)                          │
+│  SectionType (enum):    │     │  Id, TypeValue (0=Hakam, 1=Lead...)  │
+│    OnCallRole | Store   │     │  NameEn, NameHe, Icon, Color         │
+│  <span style="color:#fbbf24;">EntityId</span> (polymorphic)  │────▶│  IsActive, RequiresOfficerRank       │
+│  DisplayOrder           │     └──────────────────────────────────────┘
+│  IsEnabled              │
+│  CreatedBy, CreatedAt   │     ┌──────────────────────────────────────┐
+│                         │     │        <span style="color:#60a5fa;">OnDuty</span>                         │
+│  When SectionType =     │     │  (existing, read by widget)          │
+│    OnCallRole →         │     │  Id, UserId, Date, Type              │
+│      EntityId = duty    │     │  Notes, CanceledAt                   │
+│      type config ID     │     │  → Widget queries today's active     │
+│    Store →              │     │    OnDuty records by configured types │
+│      EntityId = store ID│     └──────────────────────────────────────┘
+└─────────────────────────┘
+
+<span style="color:#94a3b8;">Widget Data Flow:</span>
+<span style="color:#22c55e;">①</span> User loads page → OnCallWidgetViewComponent invoked
+<span style="color:#22c55e;">②</span> WidgetService reads <span style="color:#f472b6;">QuickInfoConfig</span> for user's molecule
+<span style="color:#22c55e;">③</span> For each OnCallRole config → query <span style="color:#60a5fa;">OnDuty</span> table for today's date + that duty type
+<span style="color:#22c55e;">④</span> For each Store config → query <span style="color:#f472b6;">Store</span> + <span style="color:#f472b6;">StoreHoursEntry</span> for today's day-of-week
+<span style="color:#22c55e;">⑤</span> Compute status: OPEN (in window), BREAK (between windows), CLOSED (past all windows)
+<span style="color:#22c55e;">⑥</span> Return assembled widget data to view
+</pre>
+  </div>
+</div>
+
+<!-- Architecture overview -->
+<div class="mockup" style="margin-top:16px;">
+  <div class="mockup-header">Page & Service Architecture</div>
+  <div class="mockup-body" style="background:#0f172a;color:#e2e8f0;padding:20px;font-family:'Cascadia Code',monospace;font-size:12px;line-height:1.6;">
+<pre style="margin:0;white-space:pre;color:#e2e8f0;">
+<span style="color:#fbbf24;">NEW PAGES:</span>
+┌──────────────────────────────────────────────────────────┐
+│  <span style="color:#f472b6;">/Admin/Organization/Stores</span>                              │
+│  Grant: MoleculeAdmin+                                   │
+│  • List stores for user's area (grouped by area)         │
+│  • Add/Edit store: name (En+He), area, sort order        │
+│  • Manage hours: select day → add time windows           │
+│  • Toggle active/inactive                                │
+└──────────────────────────────────────────────────────────┘
+
+<span style="color:#fbbf24;">WIDGET CONFIG (gear icon → modal/panel):</span>
+┌──────────────────────────────────────────────────────────┐
+│  Opens as modal overlay when gear ⚙️ clicked             │
+│  Two sections:                                           │
+│                                                          │
+│  <span style="color:#60a5fa;">On-Call Roles</span>                                          │
+│  ☑ Hakam        ☑ Lead        ☐ Medic                    │
+│  (checkboxes from OnDutyTypeConfig, sorted by TypeValue) │
+│                                                          │
+│  <span style="color:#60a5fa;">Stores</span>                                                  │
+│  ☑ Main PX      ☑ Equipment    ☐ Canteen    ☑ Laundry   │
+│  (checkboxes from Store table, filtered by area)         │
+│                                                          │
+│  [Save Configuration]                                    │
+└──────────────────────────────────────────────────────────┘
+
+<span style="color:#fbbf24;">MODIFIED SERVICES:</span>
+┌──────────────────────────────────────────────────────────┐
+│  <span style="color:#f472b6;">WidgetService.BuildOnCallWidgetAsync()</span>                  │
+│  BEFORE: Query ShiftTypes for "Hakam"/"BR"/"Katzin"      │
+│  AFTER:  Read QuickInfoConfig → query OnDuty table       │
+│          + query Store/StoreHoursEntry                   │
+│          + compute real-time open/closed status           │
+└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  <span style="color:#f472b6;">NEW: IStoreService</span>                                      │
+│  • GetStoresForAreaAsync(areaId)                         │
+│  • GetStoreHoursAsync(storeId, dayOfWeek)                │
+│  • ComputeStoreStatus(store, now) → OPEN/BREAK/CLOSED   │
+│  • CRUD methods for admin page                           │
+└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  <span style="color:#f472b6;">NEW: IQuickInfoConfigService</span>                            │
+│  • GetConfigForMoleculeAsync(moleculeId)                 │
+│  • SaveConfigAsync(moleculeId, items[])                  │
+│  • GetDefaultConfig() → all duty types + all stores      │
+└──────────────────────────────────────────────────────────┘
+</pre>
+  </div>
+</div>
+
+<div class="options" style="margin-top:16px;">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Architecture looks good</h3>
+      <p>Data model, services, and page structure are right. Let's finalize the plan.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="changes" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content">
+      <h3>Needs changes</h3>
+      <p>I'll describe what to adjust in the terminal.</p>
+    </div>
+  </div>
+</div>

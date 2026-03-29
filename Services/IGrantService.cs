@@ -11,6 +11,12 @@ public interface IGrantService
         int? moleculeId = null, int? departmentId = null, int? companyId = null, int? jobTypeId = null,
         int? targetUserId = null);
 
+    /// <summary>
+    /// Checks if the user has any calendar editing grant (shift, chore, or on-duty assignment).
+    /// Used by text entry endpoints where multiple grant types authorize the same action.
+    /// </summary>
+    Task<bool> HasCalendarEditPermissionAsync(int userId);
+
     // Grant queries
     Task<List<Grant>> GetUserGrantsAsync(int userId);
     Task<List<Grant>> GetUserGrantsByTypeAsync(int userId, int grantTypeId);

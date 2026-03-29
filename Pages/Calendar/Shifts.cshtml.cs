@@ -33,6 +33,7 @@ public class ShiftsModel : PageModel
     private readonly IJobTypeService _jobTypeService;
     private readonly ITraineeService _traineeService;
     private readonly IChoreTypeService _choreTypeService;
+    private readonly ICalendarTextEntryService _textEntryService;
 
     public ShiftsModel(
         AppDbContext db,
@@ -45,7 +46,8 @@ public class ShiftsModel : PageModel
         ILogger<ShiftsModel> logger,
         IJobTypeService jobTypeService,
         ITraineeService traineeService,
-        IChoreTypeService choreTypeService)
+        IChoreTypeService choreTypeService,
+        ICalendarTextEntryService textEntryService)
     {
         _db = db;
         _calendarService = calendarService;
@@ -58,6 +60,7 @@ public class ShiftsModel : PageModel
         _jobTypeService = jobTypeService;
         _traineeService = traineeService;
         _choreTypeService = choreTypeService;
+        _textEntryService = textEntryService;
     }
 
     // Query parameters
@@ -334,6 +337,10 @@ public class ShiftsModel : PageModel
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);
         var assignments = await _calendarService.GetAssignmentsAsync(moleculeId, jobTypeId, StartDate, EndDate);
 
+        // Get text entries for overlay badges in shift-based view (cross-company via IgnoreQueryFilters)
+        var assignedUserIds = assignments.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value).Distinct();
+        var textEntries = await _textEntryService.GetForUsersAndDateRangeAsync(assignedUserIds, StartDate, EndDate);
+
         // Look up company names for company-scoped shift types (molecule mode shows cross-company shifts)
         var companyIds = shiftTypes
             .Where(st => st.CompanyId.HasValue)
@@ -367,7 +374,7 @@ public class ShiftsModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForShiftType(shiftType.Id, instances, assignments);
+            row.Cells = BuildCellsForShiftType(shiftType.Id, instances, assignments, textEntries);
             rows.Add(row);
         }
         LocalizedShiftTypeNames = localizedNames;
@@ -425,6 +432,10 @@ public class ShiftsModel : PageModel
         // Get overlays (vacation, chores, on-duty)
         var overlays = await _calendarService.GetOverlaysAsync(moleculeId, StartDate, EndDate);
 
+        // Get text entries for user-mode cells (cross-company via IgnoreQueryFilters)
+        var userIds = users.Select(u => u.Id);
+        var textEntries = await _textEntryService.GetForUsersAndDateRangeAsync(userIds, StartDate, EndDate);
+
         // Pre-resolve localized names for all shift types (used in user-mode cells)
         var companyId = _tenantResolver.GetCurrentTenantId();
         var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
@@ -443,7 +454,7 @@ public class ShiftsModel : PageModel
         {
             // SP3: Dynamic grouping for tech molecules — group by PrimaryShiftType or Company
             (rows, groups) = await BuildTechGroupedRowsAsync(
-                users, instances, assignments, overlays, localizedShiftNames, moleculeId);
+                users, instances, assignments, overlays, localizedShiftNames, moleculeId, textEntries);
         }
         else
         {
@@ -455,7 +466,7 @@ public class ShiftsModel : PageModel
                     Id = $"user-{user.Id}",
                     Label = user.DisplayName
                 };
-                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
+                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries);
                 // Compute weekly hours for this user
                 var userShiftWindows = assignments
                     .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
@@ -490,7 +501,8 @@ public class ShiftsModel : PageModel
         List<ShiftAssignment> assignments,
         Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
         Dictionary<int, string> localizedShiftNames,
-        int moleculeId)
+        int moleculeId,
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
     {
         var rows = new List<ExcelCalendarRow>();
         var groups = new List<ExcelCalendarGroup>();
@@ -608,7 +620,7 @@ public class ShiftsModel : PageModel
                         GroupId = groupId,
                         CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
                     };
-                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
+                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries);
                     // Compute weekly hours for this user
                     var userShiftWindows = assignments
                         .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
@@ -634,7 +646,7 @@ public class ShiftsModel : PageModel
                         GroupId = groupId,
                         CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
                     };
-                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
+                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries);
                     // Compute weekly hours for this user
                     var userShiftWindows = assignments
                         .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
@@ -663,7 +675,7 @@ public class ShiftsModel : PageModel
                     SubLabel = user.HomeTypeId.HasValue ? homeTypeNames.GetValueOrDefault(user.HomeTypeId.Value) : null,
                     GroupId = groupId
                 };
-                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames);
+                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries);
                 // Compute weekly hours for this user
                 var userShiftWindows = assignments
                     .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
@@ -681,7 +693,8 @@ public class ShiftsModel : PageModel
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForShiftType(
         int shiftTypeId,
         List<ShiftInstance> instances,
-        List<ShiftAssignment> assignments)
+        List<ShiftAssignment> assignments,
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -713,6 +726,24 @@ public class ShiftsModel : PageModel
                     cell.Capacity = instanceAssignments.Count(a => a.UserId != null);
                     cell.DefaultCapacity = instance.StaffingRequired;
                 }
+
+                // Check if any assigned user has text entries for this date (overlay badge)
+                var assignedUserIds = instanceAssignments
+                    .Where(a => a.UserId != null)
+                    .Select(a => a.UserId!.Value)
+                    .Distinct();
+                var cellTextEntryTexts = new List<string>();
+                foreach (var uid in assignedUserIds)
+                {
+                    if (textEntries.TryGetValue((uid, date), out var entries))
+                        cellTextEntryTexts.AddRange(entries.Select(e => e.Text));
+                }
+                if (cellTextEntryTexts.Count > 0)
+                {
+                    cell.Overlay ??= new ExcelCalendarOverlay();
+                    cell.Overlay.HasTextEntry = true;
+                    cell.Overlay.TextEntryTexts = cellTextEntryTexts;
+                }
             }
 
             cells[date] = cell;
@@ -726,7 +757,8 @@ public class ShiftsModel : PageModel
         List<ShiftInstance> instances,
         List<ShiftAssignment> assignments,
         Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
-        Dictionary<int, string> localizedShiftNames)
+        Dictionary<int, string> localizedShiftNames,
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -785,6 +817,20 @@ public class ShiftsModel : PageModel
                     HasOnDuty = overlay.HasOnDuty,
                     OtherItems = overlay.OtherShifts
                 };
+            }
+
+            // Text entries rendered as visually distinct chips (real Id enables deletion)
+            if (textEntries.TryGetValue((userId, date), out var entries))
+            {
+                foreach (var entry in entries)
+                {
+                    cell.Assignments.Add(new ExcelCalendarAssignment
+                    {
+                        Id = entry.Id,
+                        Name = entry.Text,
+                        Role = "text-entry"
+                    });
+                }
             }
 
             cells[date] = cell;

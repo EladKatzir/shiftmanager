@@ -1,0 +1,212 @@
+<h2>Quick Info Widget v3 — Contrast Fixed + Profile Pics</h2>
+<p class="subtitle">Darker text on light backgrounds · Real profile photos with initial fallback</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;">
+
+  <!-- LIGHT MODE — CONTRAST FIXED -->
+  <div class="mockup">
+    <div class="mockup-header">Light Mode — Improved Contrast</div>
+    <div class="mockup-body" style="background:#ffffff;color:#1e293b;padding:0;font-family:system-ui;font-size:13px;border:1px solid #e2e8f0;">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;background:#f8fafc;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span>📞</span>
+          <span style="font-weight:600;">Quick Info</span>
+          <span style="background:#3b82f6;color:white;font-size:10px;padding:1px 6px;border-radius:10px;">5</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="color:#94a3b8;cursor:pointer;">⚙️</span>
+          <span style="color:#94a3b8;font-size:11px;">▼</span>
+        </div>
+      </div>
+
+      <!-- On-Call Hakam — with profile photo -->
+      <div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;">
+        <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.5px;margin-bottom:6px;">🔴 On-Call Hakam</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="https://i.pravatar.cc/60?img=12" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid #3b82f6;" />
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:12px;color:#0f172a;">David Cohen <span style="font-size:9px;background:#e2e8f0;color:#334155;padding:1px 4px;border-radius:3px;">Sgt</span></div>
+            <div style="color:#475569;font-size:11px;">📞 054-123-4567</div>
+          </div>
+          <div style="background:#22c55e;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">📞</div>
+        </div>
+      </div>
+
+      <!-- On-Call Lead — with profile photo -->
+      <div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;">
+        <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.5px;margin-bottom:6px;">🟡 On-Call Lead</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="https://i.pravatar.cc/60?img=32" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;" />
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:12px;color:#0f172a;">Sarah Levi <span style="font-size:9px;background:#e2e8f0;color:#334155;padding:1px 4px;border-radius:3px;">Lt</span></div>
+            <div style="color:#475569;font-size:11px;">📞 052-987-6543</div>
+          </div>
+          <div style="background:#22c55e;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">📞</div>
+        </div>
+      </div>
+
+      <!-- Medic — initial fallback (no photo) -->
+      <div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;">
+        <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.5px;margin-bottom:6px;">🟢 Medic On-Call</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:30px;height:30px;border-radius:50%;background:#10b981;color:white;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;border:2px solid #059669;">M</div>
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:12px;color:#0f172a;">Moshe Adler <span style="font-size:9px;background:#e2e8f0;color:#334155;padding:1px 4px;border-radius:3px;">Cpl</span></div>
+            <div style="color:#475569;font-size:11px;">📞 050-555-1234</div>
+          </div>
+          <div style="background:#22c55e;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">📞</div>
+        </div>
+      </div>
+
+      <!-- Opening Times — CONTRAST FIXED -->
+      <div style="padding:10px 14px;">
+        <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.5px;margin-bottom:8px;">🏪 Opening Times — Thursday</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <!-- OPEN: darker green text -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f0fdf4;border-radius:6px;border-left:3px solid #16a34a;">
+            <div>
+              <div style="font-weight:600;font-size:11px;color:#0f172a;">Main PX</div>
+              <div style="color:#15803d;font-size:10px;font-weight:500;">Open until 14:00</div>
+            </div>
+            <span style="font-size:9px;background:#16a34a;color:white;padding:2px 6px;border-radius:3px;font-weight:600;">OPEN</span>
+          </div>
+          <!-- BREAK: darker amber text -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#fffbeb;border-radius:6px;border-left:3px solid #d97706;">
+            <div>
+              <div style="font-weight:600;font-size:11px;color:#0f172a;">Equipment Room</div>
+              <div style="color:#92400e;font-size:10px;font-weight:500;">Break — reopens 14:00</div>
+            </div>
+            <span style="font-size:9px;background:#d97706;color:white;padding:2px 6px;border-radius:3px;font-weight:600;">BREAK</span>
+          </div>
+          <!-- CLOSED: darker gray text + stronger background -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f1f5f9;border-radius:6px;border-left:3px solid #94a3b8;">
+            <div>
+              <div style="font-weight:600;font-size:11px;color:#0f172a;">Canteen</div>
+              <div style="color:#475569;font-size:10px;font-weight:500;">Closed — opens tomorrow 08:00</div>
+            </div>
+            <span style="font-size:9px;background:#64748b;color:white;padding:2px 6px;border-radius:3px;font-weight:600;">CLOSED</span>
+          </div>
+          <!-- Another OPEN store -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f0fdf4;border-radius:6px;border-left:3px solid #16a34a;">
+            <div>
+              <div style="font-weight:600;font-size:11px;color:#0f172a;">Laundry</div>
+              <div style="color:#15803d;font-size:10px;font-weight:500;">Open until 17:00</div>
+            </div>
+            <span style="font-size:9px;background:#16a34a;color:white;padding:2px 6px;border-radius:3px;font-weight:600;">OPEN</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DARK MODE — PROFILE PICS -->
+  <div class="mockup">
+    <div class="mockup-header">Dark Mode — Profile Pics</div>
+    <div class="mockup-body" style="background:#1a2332;color:#e2e8f0;padding:0;font-family:system-ui;font-size:13px;">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #2d3748;background:#151d2b;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span>📞</span>
+          <span style="font-weight:600;">Quick Info</span>
+          <span style="background:#3b82f6;color:white;font-size:10px;padding:1px 6px;border-radius:10px;">5</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="color:#64748b;cursor:pointer;">⚙️</span>
+          <span style="color:#64748b;font-size:11px;">▼</span>
+        </div>
+      </div>
+
+      <!-- Hakam — photo -->
+      <div style="padding:10px 14px;border-bottom:1px solid #2d3748;">
+        <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.5px;margin-bottom:6px;">🔴 On-Call Hakam</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="https://i.pravatar.cc/60?img=12" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid #3b82f6;" />
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:12px;">David Cohen <span style="font-size:9px;background:#4a5568;padding:1px 4px;border-radius:3px;">Sgt</span></div>
+            <div style="color:#94a3b8;font-size:11px;">📞 054-123-4567</div>
+          </div>
+          <div style="background:#22c55e;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">📞</div>
+        </div>
+      </div>
+
+      <!-- Lead — photo -->
+      <div style="padding:10px 14px;border-bottom:1px solid #2d3748;">
+        <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.5px;margin-bottom:6px;">🟡 On-Call Lead</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="https://i.pravatar.cc/60?img=32" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;" />
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:12px;">Sarah Levi <span style="font-size:9px;background:#4a5568;padding:1px 4px;border-radius:3px;">Lt</span></div>
+            <div style="color:#94a3b8;font-size:11px;">📞 052-987-6543</div>
+          </div>
+          <div style="background:#22c55e;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">📞</div>
+        </div>
+      </div>
+
+      <!-- Medic — initial fallback -->
+      <div style="padding:10px 14px;border-bottom:1px solid #2d3748;">
+        <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.5px;margin-bottom:6px;">🟢 Medic On-Call</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:30px;height:30px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;border:2px solid #059669;">M</div>
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:12px;">Moshe Adler <span style="font-size:9px;background:#4a5568;padding:1px 4px;border-radius:3px;">Cpl</span></div>
+            <div style="color:#94a3b8;font-size:11px;">📞 050-555-1234</div>
+          </div>
+          <div style="background:#22c55e;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">📞</div>
+        </div>
+      </div>
+
+      <!-- Opening Times -->
+      <div style="padding:10px 14px;">
+        <div style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:0.5px;margin-bottom:8px;">🏪 Opening Times — Thursday</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#1e3a2f;border-radius:6px;border-left:3px solid #22c55e;">
+            <div>
+              <div style="font-weight:600;font-size:11px;">Main PX</div>
+              <div style="color:#86efac;font-size:10px;">Open until 14:00</div>
+            </div>
+            <span style="font-size:9px;background:#22c55e;color:#052e16;padding:2px 5px;border-radius:3px;font-weight:600;">OPEN</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#2d2517;border-radius:6px;border-left:3px solid #f59e0b;">
+            <div>
+              <div style="font-weight:600;font-size:11px;">Equipment Room</div>
+              <div style="color:#fcd34d;font-size:10px;">Break — reopens 14:00</div>
+            </div>
+            <span style="font-size:9px;background:#f59e0b;color:#451a03;padding:2px 5px;border-radius:3px;font-weight:600;">BREAK</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#1e2330;border-radius:6px;border-left:3px solid #64748b;">
+            <div>
+              <div style="font-weight:600;font-size:11px;">Canteen</div>
+              <div style="color:#94a3b8;font-size:10px;">Closed — opens tmrw 08:00</div>
+            </div>
+            <span style="font-size:9px;background:#475569;color:#e2e8f0;padding:2px 5px;border-radius:3px;font-weight:600;">CLOSED</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#1e3a2f;border-radius:6px;border-left:3px solid #22c55e;">
+            <div>
+              <div style="font-weight:600;font-size:11px;">Laundry</div>
+              <div style="color:#86efac;font-size:10px;">Open until 17:00</div>
+            </div>
+            <span style="font-size:9px;background:#22c55e;color:#052e16;padding:2px 5px;border-radius:3px;font-weight:600;">OPEN</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Contrast Changes Made</h3>
+<div style="background:#1e293b;border-radius:8px;padding:16px;margin-bottom:16px;font-size:13px;color:#e2e8f0;">
+  <div style="margin-bottom:8px;"><strong>Light mode fixes:</strong></div>
+  <ul style="margin:0;padding-left:20px;line-height:1.8;">
+    <li>Store names: <span style="color:#64748b;">was #64748b</span> → <span style="color:#0f172a;background:#fff;padding:0 4px;border-radius:2px;">now #0f172a (near-black)</span></li>
+    <li>"Open until" text: <span style="color:#16a34a;">was #16a34a</span> → <span style="color:#15803d;background:#f0fdf4;padding:0 4px;border-radius:2px;">now #15803d (darker green)</span></li>
+    <li>"Closed" text: <span style="color:#94a3b8;">was #94a3b8</span> → <span style="color:#475569;background:#f1f5f9;padding:0 4px;border-radius:2px;">now #475569 (darker slate)</span></li>
+    <li>Status badges: was pastel bg + dark text → <strong>now solid color bg + white text</strong> (much higher contrast)</li>
+    <li>Phone numbers: <span style="color:#64748b;">was #64748b</span> → <span style="color:#475569;background:#fff;padding:0 4px;border-radius:2px;">now #475569</span></li>
+  </ul>
+  <div style="margin-top:12px;"><strong>Profile pics:</strong></div>
+  <ul style="margin:0;padding-left:20px;line-height:1.8;">
+    <li>Hakam & Lead: Show actual profile photo (circular, colored border matching role)</li>
+    <li>Medic (no photo): Falls back to initial letter on colored background</li>
+  </ul>
+</div>

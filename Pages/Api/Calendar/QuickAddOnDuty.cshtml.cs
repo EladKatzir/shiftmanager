@@ -103,13 +103,18 @@ public class QuickAddOnDutyModel : PageModel
                 };
             }
 
-            // Validate and parse on-duty type
+            // Validate on-duty type: accept built-in enum values AND custom types from OnDutyTypeConfig
             if (!Enum.IsDefined(typeof(OnDutyType), data.OnDutyType))
             {
-                return new JsonResult(new { success = false, message = "Invalid on-duty type" })
+                // Check if it's a valid custom duty type
+                var isCustomType = await _onDutyService.IsValidDutyTypeAsync(data.OnDutyType);
+                if (!isCustomType)
                 {
-                    StatusCode = 400
-                };
+                    return new JsonResult(new { success = false, message = "Invalid on-duty type" })
+                    {
+                        StatusCode = 400
+                    };
+                }
             }
 
             var onDutyType = (OnDutyType)data.OnDutyType;

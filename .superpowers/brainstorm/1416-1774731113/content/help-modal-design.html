@@ -1,0 +1,216 @@
+<h2>Quick Entry Help Modal — Full Design</h2>
+<p class="subtitle">Modal with language tabs, all 5 content sections. Click a tab to preview each language.</p>
+
+<div class="split">
+  <!-- English Version -->
+  <div class="mockup">
+    <div class="mockup-header">English Tab (LTR)</div>
+    <div class="mockup-body" style="padding: 0; background: white;">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #e2e8f0;">
+        <span style="font-weight: 700; font-size: 15px; color: #1e293b;">Quick Entry Guide</span>
+        <span style="color: #94a3b8; cursor: pointer; font-size: 20px; line-height: 1;">&times;</span>
+      </div>
+      <!-- Language tabs -->
+      <div style="display: flex; border-bottom: 1px solid #e2e8f0;">
+        <span style="flex:1; text-align:center; padding: 10px; font-size: 13px; font-weight: 600; color: #3b82f6; border-bottom: 2px solid #3b82f6;">English</span>
+        <span style="flex:1; text-align:center; padding: 10px; font-size: 13px; color: #94a3b8;">עברית</span>
+      </div>
+      <!-- Content -->
+      <div style="padding: 16px 20px; font-size: 12.5px; color: #334155; line-height: 1.7; max-height: 420px; overflow-y: auto;">
+
+        <!-- Section 1: Getting Started -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">Getting Started</div>
+          <div style="color: #475569;">Click any empty cell to start typing. Your input searches for employees to assign. Press <kbd style="background:#f1f5f9;padding:1px 5px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;">Enter</kbd> to confirm, <kbd style="background:#f1f5f9;padding:1px 5px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;">Esc</kbd> to cancel.</div>
+        </div>
+
+        <!-- Section 2: Slash Commands -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">Commands</div>
+          <div style="background: #f8fafc; border-radius: 6px; padding: 10px 12px;">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom: 6px;">
+              <span style="font-size:15px; width:20px; text-align:center;">📅</span>
+              <code style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:12px; font-weight:600;">/shift</code>
+              <span style="color:#334155;">Assign shift</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom: 6px;">
+              <span style="font-size:15px; width:20px; text-align:center;">🧹</span>
+              <code style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:12px; font-weight:600;">/chore</code>
+              <span style="color:#334155;">Assign chore &rarr; select type &rarr; enter title</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom: 6px;">
+              <span style="font-size:15px; width:20px; text-align:center;">🛡️</span>
+              <code style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:12px; font-weight:600;">/duty</code>
+              <span style="color:#334155;">Assign day shift</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span style="font-size:15px; width:20px; text-align:center;">🏠</span>
+              <code style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:12px; font-weight:600;">/home</code>
+              <span style="color:#334155;">HOME shift</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Text Notes -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">Text Notes</div>
+          <div style="color:#475569;">Type any text without <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;">/</code> to save it as a calendar note on that cell. Notes appear as 📝 badges on other calendar views.</div>
+          <div style="color:#94a3b8; font-size: 11.5px; margin-top: 4px; font-style: italic;">Available in user-mode only (Shifts page).</div>
+        </div>
+
+        <!-- Section 4: Keyboard Shortcuts -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">Keyboard</div>
+          <div style="display: grid; grid-template-columns: auto 1fr; gap: 4px 12px;">
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;">Tab</kbd>
+            <span>Next cell</span>
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;">Shift+Tab</kbd>
+            <span>Previous cell</span>
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;">Enter</kbd>
+            <span>Confirm selection</span>
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;">Esc</kbd>
+            <span>Cancel &amp; close</span>
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;">/</kbd>
+            <span>Open command palette</span>
+          </div>
+        </div>
+
+        <!-- Section 5: Page Availability -->
+        <div>
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">Availability by Page</div>
+          <div style="background: #f8fafc; border-radius: 6px; padding: 10px 12px; font-size: 12px;">
+            <div style="display:flex; gap:6px; align-items:center; margin-bottom: 4px;">
+              <span style="color: #22c55e; font-size: 13px;">&#10003;</span>
+              <span style="font-weight:600;">Shifts</span>
+              <span style="color:#64748b;">— all commands + text notes</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; margin-bottom: 4px;">
+              <span style="color: #22c55e; font-size: 13px;">&#10003;</span>
+              <span style="font-weight:600;">Chores</span>
+              <span style="color:#64748b;">— <code style="font-size:11px;">/chore</code> only</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span style="color: #22c55e; font-size: 13px;">&#10003;</span>
+              <span style="font-weight:600;">On-Call</span>
+              <span style="color:#64748b;">— <code style="font-size:11px;">/duty</code> only</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Hebrew Version -->
+  <div class="mockup">
+    <div class="mockup-header">Hebrew Tab (RTL)</div>
+    <div class="mockup-body" style="padding: 0; background: white; direction: rtl; text-align: right;">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #e2e8f0;">
+        <span style="font-weight: 700; font-size: 15px; color: #1e293b;">מדריך הקצאה מהירה</span>
+        <span style="color: #94a3b8; cursor: pointer; font-size: 20px; line-height: 1;">&times;</span>
+      </div>
+      <!-- Language tabs -->
+      <div style="display: flex; border-bottom: 1px solid #e2e8f0;">
+        <span style="flex:1; text-align:center; padding: 10px; font-size: 13px; color: #94a3b8;">English</span>
+        <span style="flex:1; text-align:center; padding: 10px; font-size: 13px; font-weight: 600; color: #3b82f6; border-bottom: 2px solid #3b82f6;">עברית</span>
+      </div>
+      <!-- Content -->
+      <div style="padding: 16px 20px; font-size: 12.5px; color: #334155; line-height: 1.9; max-height: 420px; overflow-y: auto;">
+
+        <!-- Section 1: Getting Started -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">תחילת עבודה</div>
+          <div style="color: #475569;">לחצו על תא ריק כדי להתחיל להקליד. ההקלדה מחפשת עובדים לשיבוץ. לחצו <kbd style="background:#f1f5f9;padding:1px 5px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;direction:ltr;">Enter</kbd> לאישור, <kbd style="background:#f1f5f9;padding:1px 5px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;direction:ltr;">Esc</kbd> לביטול.</div>
+        </div>
+
+        <!-- Section 2: Slash Commands -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">פקודות</div>
+          <div style="background: #f8fafc; border-radius: 6px; padding: 10px 12px;">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom: 6px;">
+              <span style="font-size:15px; width:20px; text-align:center;">📅</span>
+              <code style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:12px; font-weight:600; direction:ltr;">/shift</code>
+              <span style="color:#334155;">שיבוץ משמרת</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom: 6px;">
+              <span style="font-size:15px; width:20px; text-align:center;">🧹</span>
+              <code style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:12px; font-weight:600; direction:ltr;">/chore</code>
+              <span style="color:#334155;">שיבוץ תורנות &larr; בחירת סוג &larr; הזנת כותרת</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom: 6px;">
+              <span style="font-size:15px; width:20px; text-align:center;">🛡️</span>
+              <code style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:12px; font-weight:600; direction:ltr;">/duty</code>
+              <span style="color:#334155;">שיבוץ כוננות</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span style="font-size:15px; width:20px; text-align:center;">🏠</span>
+              <code style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:12px; font-weight:600; direction:ltr;">/home</code>
+              <span style="color:#334155;">משמרת בית</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Text Notes -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">הערות טקסט</div>
+          <div style="color:#475569;">הקלידו טקסט חופשי ללא <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;direction:ltr;">/</code> כדי לשמור הערה על התא. הערות מופיעות כסמל 📝 בתצוגות לוח שנה אחרות.</div>
+          <div style="color:#94a3b8; font-size: 11.5px; margin-top: 4px; font-style: italic;">זמין רק בתצוגת עובדים (דף משמרות).</div>
+        </div>
+
+        <!-- Section 4: Keyboard Shortcuts -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">מקשי קיצור</div>
+          <div style="display: grid; grid-template-columns: auto 1fr; gap: 4px 12px;">
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;direction:ltr;">Tab</kbd>
+            <span>תא הבא</span>
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;direction:ltr;">Shift+Tab</kbd>
+            <span>תא קודם</span>
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;direction:ltr;">Enter</kbd>
+            <span>אישור בחירה</span>
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;direction:ltr;">Esc</kbd>
+            <span>ביטול וסגירה</span>
+            <kbd style="background:#f1f5f9;padding:2px 8px;border-radius:3px;border:1px solid #e2e8f0;font-size:11px;text-align:center;direction:ltr;">/</kbd>
+            <span>פתיחת תפריט פקודות</span>
+          </div>
+        </div>
+
+        <!-- Section 5: Page Availability -->
+        <div>
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 6px;">זמינות לפי דף</div>
+          <div style="background: #f8fafc; border-radius: 6px; padding: 10px 12px; font-size: 12px;">
+            <div style="display:flex; gap:6px; align-items:center; margin-bottom: 4px;">
+              <span style="color: #22c55e; font-size: 13px;">&#10003;</span>
+              <span style="font-weight:600;">משמרות</span>
+              <span style="color:#64748b;">— כל הפקודות + הערות טקסט</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; margin-bottom: 4px;">
+              <span style="color: #22c55e; font-size: 13px;">&#10003;</span>
+              <span style="font-weight:600;">תורנויות</span>
+              <span style="color:#64748b;">— <code style="font-size:11px;direction:ltr;">/chore</code> בלבד</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span style="color: #22c55e; font-size: 13px;">&#10003;</span>
+              <span style="font-weight:600;">כוננויות</span>
+              <span style="color:#64748b;">— <code style="font-size:11px;direction:ltr;">/duty</code> בלבד</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 24px;">
+  <h3>Design Decisions</h3>
+  <ul style="font-size: 14px; line-height: 1.8; color: #475569;">
+    <li><strong>Slash commands stay in English</strong> in both tabs — <code>/shift</code> not <code>/משמרת</code> — because that's what the user actually types</li>
+    <li><strong>Keyboard keys stay LTR</strong> (<code>dir="ltr"</code> on <code>&lt;kbd&gt;</code>) even in Hebrew tab</li>
+    <li><strong>Auto-selects tab</strong> based on <code>document.documentElement.lang</code> — Hebrew users see עברית first</li>
+    <li><strong>Page availability is static</strong> — always shows all 3 pages, so users learn what's available elsewhere</li>
+    <li><strong>? button</strong> appears next to the ⚡ Quick Entry toggle, same <code>@if (Model.CanEdit)</code> gate</li>
+    <li><strong>Accessible</strong> — uses existing <code>ModalFocus.open/close()</code> for focus trap, ESC to close</li>
+  </ul>
+</div>

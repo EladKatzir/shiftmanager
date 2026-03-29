@@ -32,7 +32,7 @@
         .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: var(--primary-bg); color: var(--primary); }
         .friend-card { display: flex; align-items: center; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--border); }
         .friend-card:last-child { border-bottom: none; }
-        .friend-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: var(--primary-contrast); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem; }
+        .friend-avatar { flex-shrink: 0; }
         .friend-info { flex: 1; }
         .friend-name { font-weight: 600; color: var(--text); margin: 0; }
         .friend-meta { font-size: 0.8125rem; color: var(--text-muted); margin: 0.25rem 0 0 0; }
@@ -71,7 +71,7 @@
             @foreach (var user in Model.SearchResults)
             {
                 <div class="friend-card">
-                    <div class="friend-avatar">@(user.DisplayName.Length > 0 ? user.DisplayName[0].ToString().ToUpper() : "?")</div>
+                    <avatar src="@user.AvatarUrl" name="@user.DisplayName" size="md" class="friend-avatar" />
                     <div class="friend-info">
                         <p class="friend-name">@user.DisplayName</p>
                         <p class="friend-meta">
@@ -172,7 +172,7 @@
         @foreach (var friend in Model.Friends)
         {
             <div class="friend-card">
-                <div class="friend-avatar">@(friend.DisplayName.Length > 0 ? friend.DisplayName[0].ToString().ToUpper() : "?")</div>
+                <avatar src="@friend.AvatarUrl" name="@friend.DisplayName" size="md" class="friend-avatar" />
                 <div class="friend-info">
                     <p class="friend-name">@friend.DisplayName</p>
                     <p class="friend-meta">

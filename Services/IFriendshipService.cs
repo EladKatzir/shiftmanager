@@ -62,7 +62,8 @@ public record FriendDto(
     string? Email,
     string? CompanyName,
     string? JobTypeName,
-    DateTime FriendsSince
+    DateTime FriendsSince,
+    string? AvatarUrl = null
 );
 
 public record FriendRequestDto(
@@ -81,7 +82,8 @@ public record PotentialFriendDto(
     string? CompanyName,
     string? JobTypeName,
     bool HasPendingRequest,
-    bool IsAlreadyFriend
+    bool IsAlreadyFriend,
+    string? AvatarUrl = null
 );
 
 public record FriendshipResult(

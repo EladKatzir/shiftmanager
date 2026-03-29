@@ -70,6 +70,11 @@ public class IndexModel : PageModel
     public bool SetupTasksEnabled { get; set; }
     public bool VacationApprovalEnabled { get; set; }
 
+    // Company Configuration Stats
+    public int DutyRotationCount { get; set; }
+    public int SetupTaskPendingCount { get; set; }
+    public int ApprovalRuleCount { get; set; }
+
     public async Task OnGetAsync()
     {
         try
@@ -120,6 +125,14 @@ public class IndexModel : PageModel
             DutyRotationEnabled = _featureFlagService.IsEnabled(FeatureFlagSeed.Flags.DutyRotationEnabled);
             SetupTasksEnabled = _featureFlagService.IsEnabled(FeatureFlagSeed.Flags.SetupTasksEnabled);
             VacationApprovalEnabled = _featureFlagService.IsEnabled(FeatureFlagSeed.Flags.VacationApprovalEnabled);
+
+            // Company Configuration stats
+            if (DutyRotationEnabled)
+                DutyRotationCount = await _db.DutyRotations.IgnoreQueryFilters().CountAsync(r => r.IsActive);
+            if (SetupTasksEnabled)
+                SetupTaskPendingCount = await _db.SetupTasks.IgnoreQueryFilters().CountAsync(t => t.Status == SetupTaskStatus.Pending);
+            if (VacationApprovalEnabled)
+                ApprovalRuleCount = await _db.VacationApprovalRules.IgnoreQueryFilters().CountAsync(r => r.IsActive);
         }
         catch (Exception ex)
         {

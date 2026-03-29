@@ -227,23 +227,46 @@
                 <div class="hub-card-icon">&#x2699;</div>
                 <h2><loc key="Owner_Section_CompanyConfig">Company Configuration</loc></h2>
             </div>
+            <div class="hub-card-stats">
+                @if (Model.DutyRotationEnabled)
+                {
+                    <div class="hub-stat">
+                        <span class="hub-stat-value">@Model.DutyRotationCount</span>
+                        <span class="hub-stat-label"><loc key="OwnerHub_DutyRotations">rotations</loc></span>
+                    </div>
+                }
+                @if (Model.SetupTasksEnabled)
+                {
+                    <div class="hub-stat">
+                        <span class="hub-stat-value">@Model.SetupTaskPendingCount</span>
+                        <span class="hub-stat-label"><loc key="OwnerHub_SetupTasksPending">pending tasks</loc></span>
+                    </div>
+                }
+                @if (Model.VacationApprovalEnabled)
+                {
+                    <div class="hub-stat">
+                        <span class="hub-stat-value">@Model.ApprovalRuleCount</span>
+                        <span class="hub-stat-label"><loc key="OwnerHub_ApprovalRules">approval rules</loc></span>
+                    </div>
+                }
+            </div>
             <div class="hub-card-actions">
                 @if (Model.DutyRotationEnabled)
                 {
                     <a href="/Admin/DutyRotation" class="hub-action-link">
-                        <loc key="Section_DutyRotation">Duty Rotations</loc>
+                        <loc key="Section_DutyRotation">Duty Rotations</loc> &rarr;
                     </a>
                 }
                 @if (Model.SetupTasksEnabled)
                 {
                     <a href="/Admin/SetupTasks" class="hub-action-link">
-                        <loc key="Section_SetupTasks">Setup Tasks</loc>
+                        <loc key="Section_SetupTasks">Setup Tasks</loc> &rarr;
                     </a>
                 }
                 @if (Model.VacationApprovalEnabled)
                 {
                     <a href="/Admin/Settings/ApprovalRules" class="hub-action-link">
-                        <loc key="Section_ApprovalRules">Approval Rules</loc>
+                        <loc key="Section_ApprovalRules">Approval Rules</loc> &rarr;
                     </a>
                 }
             </div>

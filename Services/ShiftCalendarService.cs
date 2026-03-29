@@ -52,7 +52,8 @@ public class ShiftCalendarService : IShiftCalendarService
                 && si.WorkDate <= end);
 
         if (jobTypeId.HasValue)
-            query = query.Where(si => si.ShiftType.JobTypeId == jobTypeId.Value);
+            // Include instances for this JobType OR null JobType (shared shifts like Home/Offline)
+            query = query.Where(si => si.ShiftType.JobTypeId == jobTypeId.Value || si.ShiftType.JobTypeId == null);
         else
             query = query.Where(si => si.ShiftType.JobTypeId == null);
 
@@ -74,7 +75,8 @@ public class ShiftCalendarService : IShiftCalendarService
                 && sa.ShiftInstance.WorkDate <= end);
 
         if (jobTypeId.HasValue)
-            query = query.Where(sa => sa.ShiftInstance.ShiftType.JobTypeId == jobTypeId.Value);
+            // Include assignments for this JobType OR null JobType (shared shifts like Home/Offline)
+            query = query.Where(sa => sa.ShiftInstance.ShiftType.JobTypeId == jobTypeId.Value || sa.ShiftInstance.ShiftType.JobTypeId == null);
         else
             query = query.Where(sa => sa.ShiftInstance.ShiftType.JobTypeId == null);
 

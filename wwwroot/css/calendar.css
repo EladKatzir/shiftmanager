@@ -3601,6 +3601,22 @@
     border-inline-start: 3px solid var(--camo-sand);
     font-style: italic;
 }
+.excel-calendar__assignment[data-role-color="text-entry"] {
+    border-inline-start: 3px dotted var(--text-muted, #999);
+    font-style: italic;
+    background: var(--surface-soft, rgba(0, 0, 0, 0.03));
+    opacity: 0.85;
+}
+[data-theme="dark"] .excel-calendar__assignment[data-role-color="text-entry"] {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Text entry overlay badge in shift-based view */
+.excel-calendar__badge--text-entry {
+    font-size: 0.65rem;
+    opacity: 0.7;
+    cursor: default;
+}
 
 /* Row label flex wrapper (SP1b: name + sublabel stacked vertically) */
 .excel-calendar__row-label-content {

@@ -240,15 +240,18 @@ function renderWeekGrid(members) {
     members.forEach(member => {
         Logger.log('MyTeam', 'Rendering member:', member.displayName, 'days:', member.days);
 
-        // Get initials for avatar
+        // Get initials for avatar fallback
         const initials = getInitials(member.displayName);
+        const avatarContent = member.avatarUrl
+            ? `<img src="${escapeHtml(member.avatarUrl)}" alt="${escapeHtml(member.displayName)}" loading="lazy" decoding="async">`
+            : escapeHtml(initials);
 
         html += `
             <div class="member-card">
                 <div class="member-card-content">
                     <!-- Member Info -->
                     <div class="member-info-section">
-                        <div class="member-avatar">${escapeHtml(initials)}</div>
+                        <div class="member-avatar">${avatarContent}</div>
                         <div class="member-details">
                             <div class="member-name">${escapeHtml(member.displayName)}</div>
                         </div>

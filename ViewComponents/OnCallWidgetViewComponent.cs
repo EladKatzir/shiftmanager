@@ -14,15 +14,18 @@ public class OnCallWidgetViewComponent : ViewComponent
 {
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly IWidgetService _widgetService;
+    private readonly IGrantService _grantService;
     private readonly ITenantResolver _tenantResolver;
 
     public OnCallWidgetViewComponent(
         IStringLocalizer<SharedResources> localizer,
         IWidgetService widgetService,
+        IGrantService grantService,
         ITenantResolver tenantResolver)
     {
         _localizer = localizer;
         _widgetService = widgetService;
+        _grantService = grantService;
         _tenantResolver = tenantResolver;
     }
 
@@ -43,8 +46,12 @@ public class OnCallWidgetViewComponent : ViewComponent
         // Get current company context for ManagerHomeAccess fallback
         var companyId = _tenantResolver.GetCurrentTenantId();
 
-        // Delegate all data retrieval to WidgetService
-        var widgetData = await _widgetService.BuildOnCallWidgetAsync(userId, companyId);
+        // Get moleculeId from user claims
+        var moleculeIdClaim = user.FindFirst("MoleculeId")?.Value;
+        int.TryParse(moleculeIdClaim, out var moleculeId);
+
+        // Delegate all data retrieval to WidgetService (pass moleculeId for new path)
+        var widgetData = await _widgetService.BuildOnCallWidgetAsync(userId, companyId, moleculeId);
 
         // Get office numbers for current company
         var officeNumberData = await _widgetService.GetOfficeNumbersAsync(companyId);
@@ -57,6 +64,7 @@ public class OnCallWidgetViewComponent : ViewComponent
             Role = c.Role,
             PhoneNumber = c.PhoneNumber,
             AvatarInitial = c.AvatarInitial,
+            AvatarUrl = c.AvatarUrl,
             ContactType = MapContactType(c.ContactType),
             CompanyName = c.CompanyName,
             Rank = c.Rank
@@ -68,13 +76,28 @@ public class OnCallWidgetViewComponent : ViewComponent
             Number = o.Number
         }).ToList();
 
+        // Map StoreStatus DTOs to StoreStatusViewModel
+        var stores = widgetData.StoreStatuses.Select(s => new StoreStatusViewModel
+        {
+            StoreId = s.StoreId,
+            StoreName = s.StoreName,
+            Status = s.Status.ToString(),
+            Message = s.Message
+        }).ToList();
+
+        // Check if user has ManageStores grant (gear icon visibility)
+        var showGear = await _grantService.HasGrantAsync(userId, "ManageStores");
+
         var model = new OnCallWidgetViewModel
         {
             Contacts = contacts,
             OfficeNumbers = officeNumbers,
+            Stores = stores,
             IsCollapsed = widgetData.IsCollapsed,
             ShowOfficeNumbers = widgetData.ShowOfficeNumbers,
             ShowInSidebar = showInSidebar,
+            ShowGearIcon = showGear,
+            MoleculeId = moleculeId,
             HasContacts = contacts.Any(),
             HasOfficeNumbers = officeNumbers.Any()
         };
@@ -98,11 +121,22 @@ public class OnCallWidgetViewModel
 {
     public List<OnCallContact> Contacts { get; set; } = new();
     public List<OfficeNumber> OfficeNumbers { get; set; } = new();
+    public List<StoreStatusViewModel> Stores { get; set; } = new();
     public bool IsCollapsed { get; set; }
     public bool ShowOfficeNumbers { get; set; }
     public bool ShowInSidebar { get; set; }
+    public bool ShowGearIcon { get; set; }
+    public int MoleculeId { get; set; }
     public bool HasContacts { get; set; }
     public bool HasOfficeNumbers { get; set; }
+}
+
+public class StoreStatusViewModel
+{
+    public int StoreId { get; set; }
+    public string StoreName { get; set; } = "";
+    public string Status { get; set; } = "";  // "Open", "Break", "Closed", "NoHoursSet"
+    public string Message { get; set; } = "";  // e.g., "Open until 14:00"
 }
 
 public class OnCallContact
@@ -112,6 +146,7 @@ public class OnCallContact
     public string Role { get; set; } = "";
     public string PhoneNumber { get; set; } = "";
     public string AvatarInitial { get; set; } = "";
+    public string? AvatarUrl { get; set; }
     public OnCallContactType ContactType { get; set; }
     public string? CompanyName { get; set; }
     public MilitaryRank Rank { get; set; } = MilitaryRank.Turai;

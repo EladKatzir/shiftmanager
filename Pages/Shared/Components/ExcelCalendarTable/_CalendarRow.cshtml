@@ -69,6 +69,7 @@
                              data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
                              data-trainee-name="@(assignment.TraineeName ?? "")"
                              data-role-color="@roleColor"
+                             data-entry-type="@(roleColor == "text-entry" ? "text" : "")"
                              style="@assignStyle">
                             <span class="excel-calendar__assignment-name">@assignment.Name</span>
                             @if (!string.IsNullOrEmpty(assignment.SubLabel))
@@ -108,6 +109,10 @@
                         @if (cell.Overlay.HasVacation)
                         {
                             <span class="excel-calendar__badge excel-calendar__badge--vacation" title="@Localizer["Vacation"]">🏖️</span>
+                        }
+                        @if (cell.Overlay.HasTextEntry)
+                        {
+                            <span class="excel-calendar__badge excel-calendar__badge--text-entry" title="@string.Join(", ", cell.Overlay.TextEntryTexts)">📝</span>
                         }
                     </div>
                 }

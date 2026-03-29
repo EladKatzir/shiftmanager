@@ -5,6 +5,29 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @addTagHelper *, ShiftManager
 
+@{
+    // Total items for badge: contacts with assigned users + stores
+    var assignedContacts = Model.Contacts.Where(c => c.UserId > 0).Count();
+    var totalItems = assignedContacts + Model.Stores.Count;
+
+    // Localized day name for today
+    var dayName = DateTime.Today.ToString("dddd", System.Globalization.CultureInfo.CurrentCulture);
+}
+
+@functions {
+    string GetStatusLabel(string status, IStringLocalizer<SharedResources> localizer)
+    {
+        return status switch
+        {
+            "Open" => localizer["Widget_StoreOpen"],
+            "Break" => localizer["Widget_StoreBreak"],
+            "Closed" => localizer["Widget_StoreClosed"],
+            "NoHoursSet" => localizer["Widget_NoHoursSet"],
+            _ => status
+        };
+    }
+}
+
 <div class="widget oncall-widget @(Model.IsCollapsed ? "is-collapsed" : "") @(Model.ShowInSidebar ? "sidebar-widget" : "")"
      id="onCallWidget"
      data-widget-id="oncall">
@@ -12,51 +35,75 @@
         <div class="widget__header-left">
             <span class="widget__icon"><icon name="phone" size="sm" /></span>
             <span class="widget__title"><loc key="Widget_QuickInfo" /></span>
-            @if (Model.HasContacts)
+            @if (totalItems > 0)
             {
-                <span class="widget__badge">@Model.Contacts.Count</span>
+                <span class="widget__badge">@totalItems</span>
             }
         </div>
-        <span class="widget__toggle"><icon name="chevron-down" size="sm" /></span>
+        <div class="widget__header-right">
+            @if (Model.ShowGearIcon)
+            {
+                <a href="#" class="widget__config-btn" onclick="openQuickInfoConfig(@Model.MoleculeId); return false;"
+                   title="@Localizer["Widget_ConfigTitle"]">
+                    <icon name="settings" size="sm" />
+                </a>
+            }
+            <span class="widget__toggle"><icon name="chevron-down" size="sm" /></span>
+        </div>
     </div>
 
     <div class="widget__body">
-        @if (Model.HasContacts)
+        @if (Model.Contacts.Any())
         {
             @foreach (var contact in Model.Contacts)
             {
                 var rankAbbrev = contact.Rank.GetAbbreviation();
                 var rankClass = contact.Rank.GetBadgeClass();
                 var rankTitle = contact.Rank.GetDisplayName();
-                <div class="oncall-contact" data-user-id="@contact.UserId" data-contact-type="@contact.ContactType">
-                    <div class="oncall-contact__avatar">
-                        @contact.AvatarInitial
+                var isUnassigned = contact.UserId == 0;
+
+                <div class="oncall-contact @(isUnassigned ? "oncall-contact--unassigned" : "")" data-contact-type="@contact.ContactType">
+                    <div class="oncall-section-label">
+                        <span class="oncall-dot oncall-dot--@contact.ContactType.ToString().ToLower()"></span>
+                        @contact.Role
                     </div>
-                    <div class="oncall-contact__info">
-                        <div class="oncall-contact__role">@contact.Role</div>
-                        <div class="oncall-contact__name">
-                            @contact.Name
-                            <span class="rank-badge rank-badge--compact oncall-contact__rank @rankClass" title="@rankTitle">@rankAbbrev</span>
-                        </div>
-                        @if (!string.IsNullOrEmpty(contact.PhoneNumber))
-                        {
-                            <div class="oncall-contact__phone">
-                                <icon name="phone" size="xs" class="icon--muted" />
-                                <span dir="ltr">@contact.PhoneNumber</span>
+                    @if (isUnassigned)
+                    {
+                        <div class="oncall-contact__row oncall-contact__row--empty">
+                            <div class="oncall-contact__placeholder">
+                                <icon name="user-x" size="sm" class="icon--muted" />
+                                <span class="oncall-contact__not-assigned">@Localizer["Widget_NotAssigned"]</span>
                             </div>
-                        }
-                    </div>
-                    <div class="oncall-contact__actions">
-                        @if (!string.IsNullOrEmpty(contact.PhoneNumber))
-                        {
-                            <a href="tel:@contact.PhoneNumber"
-                               class="oncall-contact__call-btn"
-                               loc-aria-label="Widget_OnCallCall"
-                               title="@Localizer["Widget_OnCallCall"]">
-                                <icon name="phone" size="sm" />
-                            </a>
-                        }
-                    </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="oncall-contact__row">
+                            <avatar src="@contact.AvatarUrl" name="@contact.Name" size="sm" />
+                            <div class="oncall-contact__info">
+                                <div class="oncall-contact__name">
+                                    @contact.Name
+                                    <span class="rank-badge rank-badge--compact @rankClass" title="@rankTitle">@rankAbbrev</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(contact.PhoneNumber))
+                                {
+                                    <div class="oncall-contact__phone">
+                                        <icon name="phone" size="xs" />
+                                        <span dir="ltr">@contact.PhoneNumber</span>
+                                    </div>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(contact.PhoneNumber))
+                            {
+                                <a href="tel:@contact.PhoneNumber"
+                                   class="oncall-contact__call-btn"
+                                   loc-aria-label="Widget_OnCallCall"
+                                   title="@Localizer["Widget_OnCallCall"]">
+                                    <icon name="phone" size="sm" />
+                                </a>
+                            }
+                        </div>
+                    }
                 </div>
             }
         }
@@ -70,6 +117,29 @@
                 </div>
                 <p class="widget-empty__text"><loc key="Widget_OnCallEmpty" /></p>
                 <p class="widget-empty__hint"><loc key="Widget_OnCallEmptyHint" /></p>
+            </div>
+        }
+
+        @if (Model.Stores.Any())
+        {
+            <div class="widget-opening-times">
+                <div class="oncall-section-label">
+                    <span class="store-icon">&#x1F3EA;</span>
+                    <loc key="Widget_OpeningTimes" /> &mdash; @dayName
+                </div>
+                @foreach (var store in Model.Stores)
+                {
+                    var statusClass = store.Status.ToLower();
+                    <div class="store-status store-status--@statusClass">
+                        <div class="store-status__info">
+                            <div class="store-status__name">@store.StoreName</div>
+                            <div class="store-status__message">@store.Message</div>
+                        </div>
+                        <span class="store-status__badge store-status__badge--@statusClass">
+                            @GetStatusLabel(store.Status, Localizer)
+                        </span>
+                    </div>
+                }
             </div>
         }
 
@@ -103,3 +173,209 @@
 </div>
 
 @* Widget persistence is handled by widget-persistence.js loaded in _Layout.cshtml *@
+
+@if (Model.ShowGearIcon)
+{
+    <!-- Quick Info Config Modal -->
+    <div class="modal-backdrop" id="quickInfoConfigBackdrop"></div>
+    <div class="modal modal--sm" id="quickInfoConfigModal" role="dialog" aria-modal="true" aria-labelledby="quickInfoConfigTitle">
+        <div class="modal__header">
+            <h3 class="modal__title" id="quickInfoConfigTitle">@Localizer["Widget_ConfigTitle"]</h3>
+            <button type="button" class="modal__close" onclick="closeQuickInfoConfig()" aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal__body" id="quickInfoConfigBody">
+            <div style="text-align: center; padding: var(--space-6);">
+                <div class="spinner spinner--sm"></div>
+            </div>
+        </div>
+        <div class="modal__footer">
+            <button type="button" class="btn btn--ghost btn--sm" onclick="closeQuickInfoConfig()">@Localizer["Cancel"]</button>
+            <button type="button" class="btn btn--primary btn--sm" id="quickInfoConfigSave" onclick="saveQuickInfoConfig()">@Localizer["Widget_SaveConfig"]</button>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        var _moleculeId = 0;
+        var _configData = null;
+
+        window.openQuickInfoConfig = async function (moleculeId) {
+            _moleculeId = moleculeId;
+
+            // Show modal
+            var backdrop = document.getElementById('quickInfoConfigBackdrop');
+            var modal = document.getElementById('quickInfoConfigModal');
+            backdrop.classList.add('is-open');
+            modal.classList.add('is-open');
+
+            // Show loading state
+            var body = document.getElementById('quickInfoConfigBody');
+            body.innerHTML = '<div style="text-align: center; padding: var(--space-6);"><div class="spinner spinner--sm"></div></div>';
+
+            try {
+                var response = await fetch('/Api/Widget/SaveQuickInfoConfig?moleculeId=' + moleculeId, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (!response.ok) {
+                    body.innerHTML = '<p style="color: var(--danger); text-align: center;">@Localizer["Error_Generic"]</p>';
+                    return;
+                }
+
+                var data = await response.json();
+                if (!data.success) {
+                    body.innerHTML = '<p style="color: var(--danger); text-align: center;">' + (data.message || '@Localizer["Error_Generic"]') + '</p>';
+                    return;
+                }
+
+                _configData = data;
+                renderConfigForm(data);
+            } catch (err) {
+                body.innerHTML = '<p style="color: var(--danger); text-align: center;">@Localizer["Error_Generic"]</p>';
+            }
+        };
+
+        window.closeQuickInfoConfig = function () {
+            var backdrop = document.getElementById('quickInfoConfigBackdrop');
+            var modal = document.getElementById('quickInfoConfigModal');
+            backdrop.classList.remove('is-open');
+            modal.classList.remove('is-open');
+            _configData = null;
+        };
+
+        window.saveQuickInfoConfig = async function () {
+            var saveBtn = document.getElementById('quickInfoConfigSave');
+            saveBtn.disabled = true;
+            saveBtn.classList.add('is-loading');
+
+            try {
+                // Gather checked items from checkboxes
+                var items = [];
+                var order = 0;
+                var checkboxes = document.querySelectorAll('#quickInfoConfigBody input[data-section-type]');
+                for (var i = 0; i < checkboxes.length; i++) {
+                    var cb = checkboxes[i];
+                    items.push({
+                        sectionType: parseInt(cb.getAttribute('data-section-type'), 10),
+                        entityId: parseInt(cb.getAttribute('data-entity-id'), 10),
+                        displayOrder: order++,
+                        isEnabled: cb.checked
+                    });
+                }
+
+                var response = await fetch('/Api/Widget/SaveQuickInfoConfig', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ moleculeId: _moleculeId, items: items })
+                });
+
+                var result = await response.json();
+                if (result.success) {
+                    closeQuickInfoConfig();
+                    // Reload page to reflect new config
+                    window.location.reload();
+                } else {
+                    alert(result.message || '@Localizer["Error_Generic"]');
+                }
+            } catch (err) {
+                alert('@Localizer["Error_Generic"]');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('is-loading');
+            }
+        };
+
+        function renderConfigForm(data) {
+            var body = document.getElementById('quickInfoConfigBody');
+            var html = '';
+
+            // Build lookup of enabled items: key = "sectionType-entityId"
+            var enabledMap = {};
+            if (data.items) {
+                for (var i = 0; i < data.items.length; i++) {
+                    var item = data.items[i];
+                    enabledMap[item.sectionType + '-' + item.entityId] = item.isEnabled;
+                }
+            }
+
+            // On-Call Roles section
+            if (data.availableDutyTypes && data.availableDutyTypes.length > 0) {
+                html += '<div style="margin-bottom: var(--space-4);">';
+                html += '<div style="font-weight: var(--font-semibold); margin-bottom: var(--space-2); font-size: var(--text-body);">@Localizer["Widget_OnCallRoles"]</div>';
+                for (var j = 0; j < data.availableDutyTypes.length; j++) {
+                    var dt = data.availableDutyTypes[j];
+                    var dtKey = dt.sectionType + '-' + dt.entityId;
+                    var dtChecked = enabledMap.hasOwnProperty(dtKey) ? enabledMap[dtKey] : true;
+                    var dtId = 'qi-duty-' + dt.entityId;
+                    html += '<label class="form-check" style="margin-bottom: var(--space-2);">';
+                    html += '<input type="checkbox" class="form-check__input" id="' + dtId + '"';
+                    html += ' data-section-type="' + dt.sectionType + '" data-entity-id="' + dt.entityId + '"';
+                    if (dtChecked) html += ' checked';
+                    html += '>';
+                    html += '<span class="form-check__label">';
+                    if (dt.icon) html += dt.icon + ' ';
+                    html += escapeHtml(dt.name);
+                    html += '</span></label>';
+                }
+                html += '</div>';
+            }
+
+            // Stores section
+            if (data.availableStores && data.availableStores.length > 0) {
+                html += '<div>';
+                html += '<div style="font-weight: var(--font-semibold); margin-bottom: var(--space-2); font-size: var(--text-body);">@Localizer["Widget_Stores"]</div>';
+                for (var k = 0; k < data.availableStores.length; k++) {
+                    var store = data.availableStores[k];
+                    var storeKey = store.sectionType + '-' + store.entityId;
+                    var storeChecked = enabledMap.hasOwnProperty(storeKey) ? enabledMap[storeKey] : true;
+                    var storeId = 'qi-store-' + store.entityId;
+                    html += '<label class="form-check" style="margin-bottom: var(--space-2);">';
+                    html += '<input type="checkbox" class="form-check__input" id="' + storeId + '"';
+                    html += ' data-section-type="' + store.sectionType + '" data-entity-id="' + store.entityId + '"';
+                    if (storeChecked) html += ' checked';
+                    html += '>';
+                    html += '<span class="form-check__label">' + escapeHtml(store.name) + '</span>';
+                    html += '</label>';
+                }
+                html += '</div>';
+            }
+
+            // Empty state
+            if ((!data.availableDutyTypes || data.availableDutyTypes.length === 0) &&
+                (!data.availableStores || data.availableStores.length === 0)) {
+                html = '<p style="text-align: center; color: var(--text-muted);">@Localizer["Widget_OnCallEmptyHint"]</p>';
+            }
+
+            body.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
+        }
+
+        // Close on backdrop click
+        document.getElementById('quickInfoConfigBackdrop').addEventListener('click', function () {
+            closeQuickInfoConfig();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                var modal = document.getElementById('quickInfoConfigModal');
+                if (modal && modal.classList.contains('is-open')) {
+                    closeQuickInfoConfig();
+                }
+            }
+        });
+    })();
+    </script>
+}

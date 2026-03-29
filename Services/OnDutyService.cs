@@ -38,6 +38,11 @@ public interface IOnDutyService
     /// Check if a duty type requires officer rank.
     /// </summary>
     Task<bool> RequiresOfficerForDutyTypeAsync(OnDutyType type);
+
+    /// <summary>
+    /// Check if a duty type value is valid (either a built-in enum or a custom OnDutyTypeConfig).
+    /// </summary>
+    Task<bool> IsValidDutyTypeAsync(int typeValue);
 }
 
 /// <summary>
@@ -520,6 +525,16 @@ public class OnDutyService : IOnDutyService
             .FirstOrDefaultAsync(c => c.TypeValue == (int)type && c.IsActive);
 
         return customConfig?.RequiresOfficerRank ?? false;
+    }
+
+    public async Task<bool> IsValidDutyTypeAsync(int typeValue)
+    {
+        // Built-in types are always valid
+        if (Enum.IsDefined(typeof(OnDutyType), typeValue))
+            return true;
+
+        // Check custom types in OnDutyTypeConfig
+        return await _db.OnDutyTypeConfigs.AnyAsync(c => c.TypeValue == typeValue && c.IsActive);
     }
 
     /// <summary>

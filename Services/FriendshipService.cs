@@ -61,7 +61,8 @@ public class FriendshipService : IFriendshipService
                 friend.Email,
                 companies.TryGetValue(friend.CompanyId, out var companyName) ? companyName : null,
                 friend.JobType?.DisplayName,
-                f.AcceptedAt ?? f.RequestedAt
+                f.AcceptedAt ?? f.RequestedAt,
+                AvatarUrl: GetThumbnailUrl(friend.Id, friend.CompanyId, friend.AvatarFileName)
             );
         }).ToList();
     }
@@ -325,7 +326,15 @@ public class FriendshipService : IFriendshipService
             companies.TryGetValue(u.CompanyId, out var companyName) ? companyName : null,
             u.JobType?.DisplayName,
             HasPendingRequest: pendingRequestIds.Contains(u.Id),
-            IsAlreadyFriend: friendIds.Contains(u.Id)
+            IsAlreadyFriend: friendIds.Contains(u.Id),
+            AvatarUrl: GetThumbnailUrl(u.Id, u.CompanyId, u.AvatarFileName)
         )).ToList();
+    }
+
+    private static string? GetThumbnailUrl(int userId, int companyId, string? avatarFileName)
+    {
+        return string.IsNullOrWhiteSpace(avatarFileName)
+            ? null
+            : $"/avatars/{companyId}/{userId}_thumb.jpg";
     }
 }

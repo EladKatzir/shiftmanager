@@ -148,6 +148,9 @@
 
         employeeList.innerHTML = employeesToRender.map(emp => {
             const initials = getInitials(emp.name);
+            const avatarContent = emp.avatarUrl
+                ? `<img src="${escapeHtml(emp.avatarUrl)}" alt="${escapeHtml(emp.name)}" loading="lazy" decoding="async">`
+                : escapeHtml(initials);
 
             // Build availability cubes HTML
             let cubesHtml = '<div class="availability-cubes">';
@@ -168,7 +171,7 @@
                      draggable="true"
                      data-user-id="${emp.id}"
                      data-user-name="${escapeHtml(emp.name)}">
-                    <div class="employee-avatar">${escapeHtml(initials)}</div>
+                    <div class="employee-avatar">${avatarContent}</div>
                     <div class="employee-info">
                         <div class="employee-name">${escapeHtml(emp.name)}</div>
                         ${cubesHtml}

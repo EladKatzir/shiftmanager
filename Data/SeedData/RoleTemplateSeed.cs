@@ -876,6 +876,11 @@ public static class RoleTemplateSeed
         // MoleculeAdmin: ManageHomeTypes (molecule-scoped admin)
         grants.Add(G(7, 125, ETM));  // ManageHomeTypes
 
+        // ManageStores (ID 126) — Store definitions and opening hours
+        grants.Add(G(7, 126, ETM));                     // MoleculeAdmin: ManageStores (molecule → area expansion)
+        grants.Add(G(10, 126, ETA));                    // AreaAdmin: ManageStores (area-scoped)
+        grants.Add(G(11, 126, ETP, canGive: true));     // Owner: ManageStores (project-wide, can delegate)
+
         return grants;
     }
 }

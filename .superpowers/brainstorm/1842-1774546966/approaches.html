@@ -1,0 +1,64 @@
+<h2>Quick Info Widget Redesign — Approach Options</h2>
+<p class="subtitle">3 data sections: On-Call Hakam, On-Call Lead, Store Hours. Configurable per-molecule by admins.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Recommended: Organization Page + Widget Gear</h3>
+      <p><strong>Store management:</strong> New <code>/Admin/Organization/Stores</code> page — consistent with ChoreTypes, DutyTypes, etc. Molecule admins add stores, set hours per day (with break windows).</p>
+      <p><strong>Widget config:</strong> Small gear icon on the Quick Info widget itself (visible only to molecule admins). Opens a compact settings panel/modal where the admin selects which on-call roles and which stores appear for their molecule.</p>
+      <p><strong>Widget display:</strong> Redesigned to show 3 sections — Hakam, Lead (from OnDuty table), and Store Hours (from new Store model).</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Follows existing /Admin/Organization/* pattern</li>
+          <li>Widget config is discoverable right where it's used</li>
+          <li>Minimal navigation for molecule admins</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Gear icon on widget adds a new interaction pattern</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Unified Admin Config Section</h3>
+      <p><strong>Store management + Widget config:</strong> Both as new sections on the existing <code>/Admin/Config</code> page. One section for managing stores & hours, another for widget display preferences.</p>
+      <p><strong>Widget display:</strong> Same redesign — Hakam, Lead, Store Hours.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Everything in one place</li>
+          <li>No new pages needed</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Admin/Config may become bloated</li>
+          <li>Stores are organizational entities, not config settings — conceptual mismatch</li>
+          <li>Widget config buried in settings, less discoverable</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Area Detail Page Extension</h3>
+      <p><strong>Store management:</strong> Add a "Stores" tab to the Area detail/edit page under <code>/Admin/Organization/Areas</code>. Manage stores within the context of their parent area.</p>
+      <p><strong>Widget config:</strong> Separate <code>/Admin/WidgetConfig</code> page — molecule admins pick what to show.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Stores shown in the context of their parent area</li>
+          <li>Natural hierarchy visualization</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Areas page would need major refactoring to support tabs/detail view</li>
+          <li>Two separate pages for related config (stores + widget)</li>
+          <li>More complex navigation for admins</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>

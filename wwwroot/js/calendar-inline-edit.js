@@ -9,12 +9,10 @@
  * Falls back to full page reload if CalendarRealtime is not initialized.
  */
 function triggerCalendarRefresh() {
-    if (window.CalendarRealtime && typeof window.CalendarRealtime.refresh === 'function') {
-        window.CalendarRealtime.refresh();
-    } else {
-        // Fallback for pages that don't have CalendarRealtime initialized
-        location.reload();
-    }
+    // Full page reload after mutations — the shadow refresh (CalendarRealtime.refresh)
+    // only handles partial cell updates via selectors that may not match the current DOM.
+    // A full reload guarantees the user sees the new state after assign/unassign.
+    location.reload();
 }
 
 // Localized error messages
@@ -45,6 +43,20 @@ function getCurrentCulture() {
 
 // Default confirm handler — backward-compatible (bottom sheet still uses confirm())
 const defaultConfirm = (msg) => Promise.resolve(confirm(msg));
+
+/**
+ * Build fetch headers for Calendar/Table POST handlers (includes CSRF anti-forgery token).
+ * Razor Pages auto-validate antiforgery — without this token, POSTs return 400.
+ */
+function getTablePostHeaders() {
+    var headers = {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+    };
+    var csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    if (csrfToken) headers['RequestVerificationToken'] = csrfToken;
+    return headers;
+}
 
 /**
  * Get localized error message
@@ -341,10 +353,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
     try {
         const response = await fetch('/Calendar/Table?handler=AssignEmployee', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: getTablePostHeaders(),
             credentials: 'same-origin',
             body: JSON.stringify({
                 shiftTypeId: parseInt(shiftTypeId),
@@ -386,7 +395,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
                 // Retry with override token
                 const retryResponse = await fetch('/Calendar/Table?handler=AssignEmployee', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    headers: getTablePostHeaders(),
                     credentials: 'same-origin',
                     body: JSON.stringify({
                         shiftTypeId: parseInt(shiftTypeId),
@@ -417,7 +426,7 @@ async function expandCapacityAndRetry(shiftTypeId, date, assigneeId, confirmHand
         // First, find or create the shift instance to get its ID and current staffing
         const lookupResponse = await fetch('/Calendar/Table?handler=EnsureShiftInstance', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: getTablePostHeaders(),
             credentials: 'same-origin',
             body: JSON.stringify({
                 shiftTypeId: parseInt(shiftTypeId),
@@ -435,7 +444,7 @@ async function expandCapacityAndRetry(shiftTypeId, date, assigneeId, confirmHand
         const newCapacity = (lookupResult.staffingRequired || 1) + 1;
         const updateResponse = await fetch('/Calendar/Table?handler=UpdateShiftStaffing', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: getTablePostHeaders(),
             credentials: 'same-origin',
             body: JSON.stringify({
                 shiftInstanceId: lookupResult.instanceId,
@@ -457,6 +466,94 @@ async function expandCapacityAndRetry(shiftTypeId, date, assigneeId, confirmHand
 
 // Expose quickAddShift globally for bottom sheet integration
 window.quickAddShift = quickAddShift;
+
+/**
+ * Quick-add a text entry (free-text calendar annotation)
+ * @param {string} date - Date in yyyy-MM-dd format
+ * @param {number} userId - User ID for the text entry
+ * @param {string} text - Free-text content
+ */
+async function quickAddTextEntry(date, userId, text) {
+    try {
+        const response = await fetch('/Api/Calendar/QuickAddTextEntry', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                date: date,
+                userId: parseInt(userId),
+                text: text.trim()
+            })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                handleApiError(response);
+                return;
+            }
+            showToast(getErrorMessage('serverError'), 'error');
+            return;
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            var culture = getCurrentCulture();
+            var msg = culture === 'he-IL' ? '\u05D4\u05D8\u05E7\u05E1\u05D8 \u05E0\u05E9\u05DE\u05E8 \u05D1\u05D4\u05E6\u05DC\u05D7\u05D4' : 'Text saved successfully';
+            showToast(msg, 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.message || 'Error', 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+window.quickAddTextEntry = quickAddTextEntry;
+
+/**
+ * Delete a text entry
+ * @param {number} id - CalendarTextEntry ID
+ */
+async function deleteTextEntry(id) {
+    try {
+        const response = await fetch('/Api/Calendar/DeleteTextEntry', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ id: parseInt(id) })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                handleApiError(response);
+                return;
+            }
+            showToast(getErrorMessage('serverError'), 'error');
+            return;
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            var culture = getCurrentCulture();
+            var msg = culture === 'he-IL' ? '\u05D4\u05D8\u05E7\u05E1\u05D8 \u05E0\u05DE\u05D7\u05E7' : 'Text entry deleted';
+            showToast(msg, 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.message || 'Error', 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+window.deleteTextEntry = deleteTextEntry;
 
 /**
  * Delete an item (chore or on-duty) with undo toast
@@ -761,6 +858,13 @@ async function submitQuickAdd(date) {
         if (isNaN(assignmentId)) return;
 
         var assignmentEl = btn.closest('.excel-calendar__assignment');
+
+        // Text entries have data-entry-type="text" — route to dedicated handler
+        if (assignmentEl && assignmentEl.dataset.entryType === 'text') {
+            deleteTextEntry(assignmentId);
+            return;
+        }
+
         var calendarType = detectCalendarTypeForRemoval();
 
         if (calendarType === 'chores') {
@@ -776,10 +880,7 @@ async function submitQuickAdd(date) {
 
             fetch('/Calendar/Table?handler=ClearAssignment', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
+                headers: getTablePostHeaders(),
                 credentials: 'same-origin',
                 body: JSON.stringify({ assignmentId: assignmentId })
             })

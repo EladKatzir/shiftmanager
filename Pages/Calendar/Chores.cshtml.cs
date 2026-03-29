@@ -28,6 +28,7 @@ public class ChoresModel : PageModel
     private readonly ICompanyContext _companyContext;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<ChoresModel> _logger;
+    private readonly ICalendarTextEntryService _textEntryService;
 
     public ChoresModel(
         AppDbContext db,
@@ -36,7 +37,8 @@ public class ChoresModel : PageModel
         IGrantService grantService,
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
-        ILogger<ChoresModel> logger)
+        ILogger<ChoresModel> logger,
+        ICalendarTextEntryService textEntryService)
     {
         _db = db;
         _choreService = choreService;
@@ -45,6 +47,7 @@ public class ChoresModel : PageModel
         _companyContext = companyContext;
         _localizer = localizer;
         _logger = logger;
+        _textEntryService = textEntryService;
     }
 
     // Query parameters
@@ -236,6 +239,10 @@ public class ChoresModel : PageModel
             chores = chores.Where(c => c.ChoreTypeId == ChoreTypeFilter.Value).ToList();
         }
 
+        // Load text entries for all users in the molecule (cross-company via IgnoreQueryFilters)
+        var allUserIds = Users.Select(u => u.Id);
+        var textEntries = await _textEntryService.GetForUsersAndDateRangeAsync(allUserIds, StartDate, EndDate);
+
         // Build groups by chore type
         var groups = ChoreTypes.Select(ct => new ExcelCalendarGroup
         {
@@ -255,7 +262,7 @@ public class ChoresModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForUser(user.Id, chores);
+            row.Cells = BuildCellsForUser(user.Id, chores, textEntries);
             rows.Add(row);
         }
 
@@ -295,7 +302,8 @@ public class ChoresModel : PageModel
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
         int userId,
-        List<Chore> chores)
+        List<Chore> chores,
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -315,6 +323,20 @@ public class ChoresModel : PageModel
                 Role = c.ChoreType?.Color, // Use color as role for styling
                 UserId = c.UserId
             }).ToList();
+
+            // Text entries rendered as deletable chips (real Id enables × button)
+            if (textEntries.TryGetValue((userId, date), out var entries))
+            {
+                foreach (var entry in entries)
+                {
+                    cell.Assignments.Add(new ExcelCalendarAssignment
+                    {
+                        Id = entry.Id,
+                        Name = entry.Text,
+                        Role = "text-entry"
+                    });
+                }
+            }
 
             cells[date] = cell;
         }

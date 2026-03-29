@@ -36,6 +36,17 @@ public class GrantService : IGrantService
             .AnyAsync(g => g.UserId == userId && g.GrantTypeId == grantType.Id && g.CanOwn);
     }
 
+    public async Task<bool> HasCalendarEditPermissionAsync(int userId)
+    {
+        return await HasGrantAsync(userId, "AdminAccess")
+            || await HasGrantAsync(userId, "AssignAlhutShifts")
+            || await HasGrantAsync(userId, "AssignTextShifts")
+            || await HasGrantAsync(userId, "AssignBRShifts")
+            || await HasGrantAsync(userId, "AssignTechShifts")
+            || await HasGrantAsync(userId, "AssignChores")
+            || await HasGrantAsync(userId, "ManageOnDuty");
+    }
+
     public async Task<bool> HasGrantAsync(int userId, string grantKey, GrantScope scope)
     {
         return await HasGrantWithScopeAsync(userId, grantKey,
