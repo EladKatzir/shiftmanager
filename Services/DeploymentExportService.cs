@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -348,10 +349,172 @@ public class DeploymentExportService : IDeploymentExportService
     }
 
     // ================================================================
-    // Phase 2 RestoreDataAsync — placeholder, implemented in Task 4
+    // PHASE 2: Restore database and files after WebApplication.Build()
+    // Called from Program.cs BEFORE app.Run() when PendingDataRestore is true
     // ================================================================
-    public Task RestoreDataAsync(IServiceProvider serviceProvider)
-        => throw new NotImplementedException("Implemented in Task 4");
+    public async Task RestoreDataAsync(IServiceProvider serviceProvider)
+    {
+        if (!PendingDataRestore) return;
+
+        var logger = serviceProvider.GetRequiredService<ILogger<DeploymentExportService>>();
+        var env = serviceProvider.GetRequiredService<IWebHostEnvironment>();
+        var config = serviceProvider.GetRequiredService<IConfiguration>();
+
+        var connectionString = config["ConnectionStrings:Default"] ?? "Data Source=app.db";
+        var dbTargetPath = Path.GetFullPath(DatabaseBackupService.ExtractDbPath(connectionString));
+
+        string[] assemblyMigrations;
+        using (var scope = serviceProvider.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            assemblyMigrations = db.Database.GetMigrations().ToArray();
+        }
+
+        await RestoreDataStaticAsync(ExportPath, dbTargetPath, env.WebRootPath, assemblyMigrations, logger);
+    }
+
+    /// <summary>
+    /// Static Phase 2 implementation — testable without DI.
+    /// Validates hash + migration compatibility, then copies DB and files.
+    /// </summary>
+    public static async Task RestoreDataStaticAsync(
+        string exportPath,
+        string dbTargetPath,
+        string webRootPath,
+        string[] assemblyMigrations,
+        ILogger? logger = null)
+    {
+        if (!PendingDataRestore) return;
+
+        try
+        {
+            // 1. Parse manifest
+            var manifestPath = Path.Combine(exportPath, "manifest.json");
+            if (!File.Exists(manifestPath))
+            {
+                logger?.LogWarning("[DeploymentRestore] Phase 2: manifest.json not found at {Path} — skipping restore", manifestPath);
+                return;
+            }
+
+            ExportManifest manifest;
+            try
+            {
+                var json = await File.ReadAllTextAsync(manifestPath);
+                var parsed = JsonSerializer.Deserialize<ExportManifest>(json);
+                if (parsed == null)
+                {
+                    logger?.LogError("[DeploymentRestore] Phase 2: manifest.json parsed as null — skipping restore");
+                    return;
+                }
+                manifest = parsed;
+            }
+            catch (JsonException ex)
+            {
+                logger?.LogError(ex, "[DeploymentRestore] Phase 2: Failed to parse manifest.json — skipping restore");
+                return;
+            }
+
+            var exportedDbPath = Path.Combine(exportPath, "app.db");
+            if (!File.Exists(exportedDbPath))
+            {
+                logger?.LogError("[DeploymentRestore] Phase 2: app.db not found in export — skipping restore");
+                return;
+            }
+
+            // 2. Validate SHA256
+            var actualHash = await ComputeSha256Async(exportedDbPath);
+            if (!string.Equals(actualHash, manifest.Database.Sha256, StringComparison.OrdinalIgnoreCase))
+            {
+                logger?.LogError(
+                    "[DeploymentRestore] Phase 2: SHA256 mismatch — expected {Expected}, got {Actual} — skipping restore",
+                    manifest.Database.Sha256, actualHash);
+                return;
+            }
+
+            // 3. Migration compatibility — prevent downgrade
+            if (!string.IsNullOrEmpty(manifest.LastMigrationId) &&
+                assemblyMigrations.Length > 0 &&
+                !assemblyMigrations.Contains(manifest.LastMigrationId, StringComparer.OrdinalIgnoreCase))
+            {
+                logger?.LogError(
+                    "[DeploymentRestore] Phase 2: Migration '{MigrationId}' in export not found in this assembly — skipping restore to prevent downgrade",
+                    manifest.LastMigrationId);
+                return;
+            }
+
+            // 4. Clear pooled connections so Windows releases all file handles
+            SqliteConnection.ClearAllPools();
+
+            // 5. Copy app.db → target (overwrite)
+            var dbTargetDir = Path.GetDirectoryName(dbTargetPath);
+            if (!string.IsNullOrEmpty(dbTargetDir))
+                Directory.CreateDirectory(dbTargetDir);
+
+            File.Copy(exportedDbPath, dbTargetPath, overwrite: true);
+            logger?.LogInformation("[DeploymentRestore] Phase 2: Restored app.db to {Target}", dbTargetPath);
+
+            // 6. Delete stale WAL and SHM sidecar files at target location
+            var walPath = dbTargetPath + "-wal";
+            var shmPath = dbTargetPath + "-shm";
+            if (File.Exists(walPath)) File.Delete(walPath);
+            if (File.Exists(shmPath)) File.Delete(shmPath);
+
+            // 7. Recursive copy avatars/ → webRootPath/avatars
+            var avatarsSource = Path.Combine(exportPath, "avatars");
+            var avatarsCopied = 0;
+            if (Directory.Exists(avatarsSource))
+            {
+                avatarsCopied = CopyDirectoryRecursive(avatarsSource, Path.Combine(webRootPath, "avatars"));
+                logger?.LogInformation("[DeploymentRestore] Phase 2: Restored {Count} avatar file(s)", avatarsCopied);
+            }
+
+            // 8. Recursive copy feedback/ → webRootPath/feedback
+            var feedbackSource = Path.Combine(exportPath, "feedback");
+            if (Directory.Exists(feedbackSource))
+            {
+                var feedbackCopied = CopyDirectoryRecursive(feedbackSource, Path.Combine(webRootPath, "feedback"));
+                logger?.LogInformation("[DeploymentRestore] Phase 2: Restored {Count} feedback file(s)", feedbackCopied);
+            }
+
+            // 9. Validate avatar count vs manifest
+            if (avatarsCopied != manifest.AvatarCount)
+            {
+                logger?.LogWarning(
+                    "[DeploymentRestore] Phase 2: Avatar count mismatch — manifest says {Expected}, copied {Actual}",
+                    manifest.AvatarCount, avatarsCopied);
+            }
+
+            // 10. Rename export folder → {exportPath}.restored-{timestamp}
+            //     ClearAllPools again to release any connections opened during migration read
+            SqliteConnection.ClearAllPools();
+
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+            var restoredPath = $"{exportPath}.restored-{timestamp}";
+            try
+            {
+                Directory.Move(exportPath, restoredPath);
+                logger?.LogInformation("[DeploymentRestore] Phase 2: Export folder renamed to {Path}", restoredPath);
+            }
+            catch (Exception ex)
+            {
+                logger?.LogWarning(ex, "[DeploymentRestore] Phase 2: Could not rename export folder — non-fatal");
+            }
+
+            // 11. Clean up old .restored-* folders (keep 2 most recent)
+            CleanupRestoredFolders(exportPath, logger);
+
+            // 12. Clean up orphaned .old-* and .new-* folders
+            CleanupOrphanedFoldersStatic(exportPath, logger);
+
+            // 13. Signal Phase 2 complete
+            RestoreJustCompleted = true;
+            logger?.LogInformation("[DeploymentRestore] Phase 2 complete — application is running on restored data");
+        }
+        finally
+        {
+            PendingDataRestore = false;
+        }
+    }
 
     // ================================================================
     // Private helpers
@@ -388,9 +551,15 @@ public class DeploymentExportService : IDeploymentExportService
 
     /// <summary>
     /// Deletes any orphaned .old-* and .new-* sibling directories left by
-    /// interrupted previous export runs.
+    /// interrupted previous export runs. Instance wrapper delegates to static version.
     /// </summary>
     private void CleanupOrphanedFolders(string finalExportPath)
+        => CleanupOrphanedFoldersStatic(finalExportPath, _logger);
+
+    /// <summary>
+    /// Static version of CleanupOrphanedFolders — usable without a service instance.
+    /// </summary>
+    private static void CleanupOrphanedFoldersStatic(string finalExportPath, ILogger? logger = null)
     {
         try
         {
@@ -404,13 +573,45 @@ public class DeploymentExportService : IDeploymentExportService
                 try { Directory.Delete(dir, recursive: true); }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Could not delete orphaned export folder: {Dir}", dir);
+                    logger?.LogWarning(ex, "Could not delete orphaned export folder: {Dir}", dir);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "CleanupOrphanedFolders failed for {Path}", finalExportPath);
+            logger?.LogWarning(ex, "CleanupOrphanedFolders failed for {Path}", finalExportPath);
+        }
+    }
+
+    /// <summary>
+    /// Keeps only the <see cref="MaxRestoredFoldersRetained"/> most recent .restored-* sibling
+    /// folders next to the export path; deletes the rest by LastWriteTime ascending.
+    /// </summary>
+    private static void CleanupRestoredFolders(string exportPath, ILogger? logger = null)
+    {
+        try
+        {
+            var basePath = Path.GetDirectoryName(exportPath);
+            var baseName = Path.GetFileName(exportPath);
+            if (basePath == null) return;
+
+            var restoredDirs = Directory.EnumerateDirectories(basePath, $"{baseName}.restored-*")
+                .Select(d => new DirectoryInfo(d))
+                .OrderByDescending(d => d.LastWriteTimeUtc)
+                .ToList();
+
+            foreach (var dir in restoredDirs.Skip(MaxRestoredFoldersRetained))
+            {
+                try { Directory.Delete(dir.FullName, recursive: true); }
+                catch (Exception ex)
+                {
+                    logger?.LogWarning(ex, "Could not delete old restored folder: {Dir}", dir.FullName);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex, "CleanupRestoredFolders failed for {Path}", exportPath);
         }
     }
 }
