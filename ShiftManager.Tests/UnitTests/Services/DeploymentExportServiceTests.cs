@@ -120,7 +120,9 @@ public class DeploymentExportServiceTests : IDisposable
     public void RestoreConfigAndKeys_NeverThrows_EvenOnIOError()
     {
         WriteManifest();
-        // No appsettings.Production.json — File.Copy will fail internally
+        // No appsettings.Production.json in export — config copy is skipped (File.Exists guard).
+        // Phase 1 still completes successfully. This test verifies the method returns normally
+        // even when optional files are missing (the outer try/catch guarantees no throw).
         var act = () => DeploymentExportService.RestoreConfigAndKeys(_exportDir, _appBaseDir);
         act.Should().NotThrow();
     }

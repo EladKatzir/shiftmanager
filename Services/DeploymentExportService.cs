@@ -454,10 +454,15 @@ public class DeploymentExportService : IDeploymentExportService
             logger?.LogInformation("[DeploymentRestore] Phase 2: Restored app.db to {Target}", dbTargetPath);
 
             // 6. Delete stale WAL and SHM sidecar files at target location
-            var walPath = dbTargetPath + "-wal";
-            var shmPath = dbTargetPath + "-shm";
-            if (File.Exists(walPath)) File.Delete(walPath);
-            if (File.Exists(shmPath)) File.Delete(shmPath);
+            foreach (var suffix in new[] { "-wal", "-shm" })
+            {
+                var sidecarPath = dbTargetPath + suffix;
+                if (File.Exists(sidecarPath))
+                {
+                    try { File.Delete(sidecarPath); }
+                    catch (Exception ex) { logger?.LogWarning(ex, "[DeploymentRestore] Could not delete {Path}", sidecarPath); }
+                }
+            }
 
             // 7. Recursive copy avatars/ → webRootPath/avatars
             var avatarsSource = Path.Combine(exportPath, "avatars");
@@ -498,6 +503,13 @@ public class DeploymentExportService : IDeploymentExportService
             catch (Exception ex)
             {
                 logger?.LogWarning(ex, "[DeploymentRestore] Phase 2: Could not rename export folder — non-fatal");
+                // Delete manifest.json so Phase 1 won't re-trigger on next restart (prevents boot loop)
+                try
+                {
+                    var mfPath = Path.Combine(exportPath, "manifest.json");
+                    if (File.Exists(mfPath)) File.Delete(mfPath);
+                }
+                catch { /* best-effort */ }
             }
 
             // 11. Clean up old .restored-* folders (keep 2 most recent)
@@ -509,6 +521,17 @@ public class DeploymentExportService : IDeploymentExportService
             // 13. Signal Phase 2 complete
             RestoreJustCompleted = true;
             logger?.LogInformation("[DeploymentRestore] Phase 2 complete — application is running on restored data");
+        }
+        catch (Exception ex)
+        {
+            // Phase 2 must NOT crash the application. A failed restore is bad, but an app
+            // that won't start at all is worse — the operator can't even access the Owner page
+            // to diagnose or re-export. Log prominently and let the app start with whatever
+            // DB state exists (possibly empty/seed). The export folder remains for manual recovery.
+            logger?.LogError(ex,
+                "[DeploymentRestore] Phase 2 FAILED — restore did not complete. " +
+                "The application will start but may have missing or stale data. " +
+                "The export folder at {ExportPath} is intact for manual recovery.", exportPath);
         }
         finally
         {
