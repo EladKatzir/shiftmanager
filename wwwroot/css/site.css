@@ -267,8 +267,8 @@ a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border
 }
 
 table { width: 100%; border-collapse: collapse; color: var(--text); }
-th, td { border-bottom: 1px solid var(--border); padding: .5rem; vertical-align: top; color: var(--text); }
-th { text-align: left; color: var(--text); }
+th, td { border-bottom: 1px solid var(--border); padding: .5rem; vertical-align: top; }
+th { text-align: left; }
 
 .btn {
   padding: .35rem .6rem; border-radius: .4rem; border:1px solid var(--border); background: var(--surface); cursor: pointer;
@@ -2525,32 +2525,9 @@ select:focus option:checked {
   color: white;
 }
 
-/* Force text color in all form elements */
-* input, * select, * textarea {
-  color: var(--text) !important;
-}
-
-/* Ensure all text elements use theme color */
-*, *::before, *::after {
-  color: inherit;
-}
-
-/* Apply theme colors to main text elements - reduced specificity */
-body, p, h1, h2, h3, h4, h5, h6, div, span, label {
+/* Force text color in form elements (needed for dark mode input visibility) */
+input, select, textarea {
   color: var(--text);
-}
-
-/* Override for elements that need theme colors */
-.text-themed {
-  color: var(--text) !important;
-}
-
-/* Table header descendants inherit text color from parent.
-   Prevents the global 'span { color: var(--text) }' rule from overriding
-   inherited contrasting colors on dark-background headers (e.g. --primary). */
-th span,
-th a {
-  color: inherit;
 }
 
 /* Warning/highlighting styles for better UX */
@@ -2769,7 +2746,6 @@ thead {
 
 thead th {
   border-bottom: 2px solid var(--border);
-  color: var(--text);
 }
 
 /* ========================================

@@ -1,6 +1,9 @@
 /**
  * Home Type Calendar Painter — interactive monthly calendar for painting home days.
  * Admin clicks/drags dates to mark them as home days. Stores as JSON array in hidden input.
+ *
+ * NOTE: All functions use const arrow expressions (not function declarations) to prevent
+ * NUglify/WebOptimizer from hoisting them out of scope during minification.
  */
 (function () {
     'use strict';
@@ -30,11 +33,30 @@
     // Localized selection count template
     const daysSelectedTemplate = window.AppLocalizer?.HomeType_DaysSelected || '{0} days selected';
 
-    function formatDaysSelected(count) {
+    const formatDaysSelected = (count) => {
         return daysSelectedTemplate.replace('{0}', count);
-    }
+    };
 
-    function render() {
+    const syncHiddenInput = () => {
+        hiddenInput.value = JSON.stringify(Array.from(selectedDates).sort());
+        // Update info
+        const info = container.querySelector('.htc-info');
+        if (info) info.textContent = formatDaysSelected(selectedDates.size);
+    };
+
+    const toggleDate = (cell) => {
+        const date = cell.dataset.date;
+        if (paintMode) {
+            selectedDates.add(date);
+            cell.classList.add('htc-day--selected');
+        } else {
+            selectedDates.delete(date);
+            cell.classList.remove('htc-day--selected');
+        }
+        syncHiddenInput();
+    };
+
+    const render = () => {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
         const firstDay = new Date(year, month, 1);
@@ -94,26 +116,7 @@
                 if (isMouseDown) toggleDate(this);
             });
         });
-    }
-
-    function toggleDate(cell) {
-        const date = cell.dataset.date;
-        if (paintMode) {
-            selectedDates.add(date);
-            cell.classList.add('htc-day--selected');
-        } else {
-            selectedDates.delete(date);
-            cell.classList.remove('htc-day--selected');
-        }
-        syncHiddenInput();
-    }
-
-    function syncHiddenInput() {
-        hiddenInput.value = JSON.stringify(Array.from(selectedDates).sort());
-        // Update info
-        const info = container.querySelector('.htc-info');
-        if (info) info.textContent = formatDaysSelected(selectedDates.size);
-    }
+    };
 
     document.addEventListener('mouseup', () => { isMouseDown = false; });
 
