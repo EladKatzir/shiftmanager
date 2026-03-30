@@ -52,16 +52,16 @@ CREATE TABLE ""ef_temp_ShiftTypes"" (
     CONSTRAINT ""CK_ShiftType_Molecule_Scope"" CHECK (""Scope"" != 1 OR ""MoleculeId"" IS NOT NULL)
 );", suppressTransaction: true);
 
-            // Copy data: CustomName maps to NameEn, Scope defaults to 1, new columns default to NULL.
-            // Only SELECT columns guaranteed to exist from explicit migrations.
-            // NameKey/RowColor may or may not exist (added by table rebuild, not explicit migration).
+            // Copy data: CustomName maps to NameEn, Scope defaults to 1, new columns (AreaId, NameHe) default to NULL.
+            // NameKey added by OpsConsoleScheduler (20260109), RowColor by AddExcelCalendarTables (20260205),
+            // EligibleCompanyIds+RequiresOfficerRank by TechMoleculeConvergence (20260314) — all via explicit AddColumn.
             migrationBuilder.Sql(@"
 INSERT INTO ""ef_temp_ShiftTypes""
-    (""Id"", ""Key"", ""Start"", ""End"", ""CompanyId"", ""NameEn"",
+    (""Id"", ""Key"", ""Start"", ""End"", ""CompanyId"", ""NameEn"", ""NameKey"", ""RowColor"",
      ""Scope"", ""JobTypeId"", ""MoleculeId"", ""ShiftGroupingId"",
      ""TechShiftType"", ""EligibleCompanyIds"", ""RequiresOfficerRank"")
 SELECT
-     ""Id"", ""Key"", ""Start"", ""End"", ""CompanyId"", ""CustomName"",
+     ""Id"", ""Key"", ""Start"", ""End"", ""CompanyId"", ""CustomName"", ""NameKey"", ""RowColor"",
      1, ""JobTypeId"", ""MoleculeId"", ""ShiftGroupingId"",
      ""TechShiftType"", ""EligibleCompanyIds"", ""RequiresOfficerRank""
 FROM ""ShiftTypes"";", suppressTransaction: true);
@@ -118,11 +118,11 @@ CREATE TABLE ""ef_temp_ShiftTypes"" (
 
             migrationBuilder.Sql(@"
 INSERT INTO ""ef_temp_ShiftTypes""
-    (""Id"", ""Key"", ""Start"", ""End"", ""CompanyId"", ""CustomName"",
+    (""Id"", ""Key"", ""Start"", ""End"", ""CompanyId"", ""CustomName"", ""NameKey"", ""RowColor"",
      ""JobTypeId"", ""MoleculeId"", ""ShiftGroupingId"",
      ""TechShiftType"", ""EligibleCompanyIds"", ""RequiresOfficerRank"")
 SELECT
-     ""Id"", ""Key"", ""Start"", ""End"", COALESCE(""CompanyId"", 0), ""NameEn"",
+     ""Id"", ""Key"", ""Start"", ""End"", COALESCE(""CompanyId"", 0), ""NameEn"", ""NameKey"", ""RowColor"",
      ""JobTypeId"", ""MoleculeId"", ""ShiftGroupingId"",
      ""TechShiftType"", ""EligibleCompanyIds"", ""RequiresOfficerRank""
 FROM ""ShiftTypes"";", suppressTransaction: true);

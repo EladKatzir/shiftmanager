@@ -13307,6 +13307,12 @@
   <data name="Confirm_DeleteHomeType" xml:space="preserve">
     <value>האם למחוק את הגדרת סבב-בית הזו?</value>
   </data>
+  <data name="Confirm_UnassignUser" xml:space="preserve">
+    <value>האם להסיר את המשתמש הזה?</value>
+  </data>
+  <data name="NoUsersAssigned" xml:space="preserve">
+    <value>אין משתמשים משויכים לסבב-בית זה</value>
+  </data>
 
   <!-- Fix 31: AuditLog action strings -->
   <data name="AuditAction_UserCreated" xml:space="preserve">

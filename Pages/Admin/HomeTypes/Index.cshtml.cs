@@ -68,15 +68,34 @@ public class IndexModel : PageModel
     // User assignment
     [BindProperty] public int AssignHomeTypeId { get; set; }
     [BindProperty] public string? AssignUserIds { get; set; }
+    [BindProperty] public int UnassignHomeTypeId { get; set; }
+    [BindProperty] public int UnassignUserId { get; set; }
 
     public string? SuccessMessage { get; set; }
     public string? ErrorMessage { get; set; }
     public GenerationResult? LastGenerationResult { get; set; }
 
+    // User assignment data
+    public record AssignedUserInfo(int UserId, string DisplayName);
+    public record AvailableUserInfo(int UserId, string DisplayName, int? CurrentHomeTypeId, string? CurrentHomeTypeName);
+    public Dictionary<int, List<AssignedUserInfo>> AssignedUsersPerHomeType { get; set; } = new();
+    public List<AvailableUserInfo> AvailableUsersInMolecule { get; set; } = new();
+
     public async Task OnGetAsync()
     {
         SuccessMessage = TempData["SuccessMessage"] as string;
         ErrorMessage = TempData["ErrorMessage"] as string;
+
+        // Resolve user's molecule from their company
+        var companyId = _companyContext.CompanyId;
+        int? userMoleculeId = null;
+        if (companyId.HasValue)
+        {
+            var userCompany = await _db.Companies
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == companyId.Value);
+            userMoleculeId = userCompany?.MoleculeId;
+        }
 
         AvailableMolecules = await _db.Molecules
             .IgnoreQueryFilters()
@@ -86,11 +105,57 @@ public class IndexModel : PageModel
             .Select(m => new MoleculeOption(m.Id, $"{m.Area.DisplayName} / {m.DisplayName}"))
             .ToListAsync();
 
-        if (!MoleculeId.HasValue && AvailableMolecules.Count > 0)
+        // Default to user's own molecule
+        if (!MoleculeId.HasValue && userMoleculeId.HasValue)
+            MoleculeId = userMoleculeId.Value;
+        else if (!MoleculeId.HasValue && AvailableMolecules.Count > 0)
             MoleculeId = AvailableMolecules[0].Id;
 
         if (MoleculeId.HasValue)
+        {
             HomeTypes = await _homeTypeService.GetHomeTypesAsync(MoleculeId.Value);
+
+            // Load assigned users per home type
+            var htIds = HomeTypes.Select(ht => ht.Id).ToList();
+            if (htIds.Count > 0)
+            {
+                // SECURITY-AUDITED: SAFE — scoped to home types already loaded for the selected molecule
+                var assignedUsers = await _db.Users
+                    .IgnoreQueryFilters()
+                    .Where(u => u.HomeTypeId.HasValue && htIds.Contains(u.HomeTypeId.Value) && u.IsActive)
+                    .OrderBy(u => u.DisplayName)
+                    .Select(u => new { u.Id, u.DisplayName, u.HomeTypeId })
+                    .ToListAsync();
+
+                AssignedUsersPerHomeType = assignedUsers
+                    .GroupBy(u => u.HomeTypeId!.Value)
+                    .ToDictionary(g => g.Key, g => g.Select(u => new AssignedUserInfo(u.Id, u.DisplayName)).ToList());
+            }
+
+            // Load available users in the molecule (for the assign dropdown)
+            // SECURITY-AUDITED: SAFE — scoped to companies within the selected molecule
+            var moleculeCompanyIds = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => c.MoleculeId == MoleculeId.Value)
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            // Build a lookup of home type names for users already assigned
+            var htNameLookup = HomeTypes.ToDictionary(ht => ht.Id, ht => ht.Name);
+
+            AvailableUsersInMolecule = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => moleculeCompanyIds.Contains(u.CompanyId) && u.IsActive)
+                .OrderBy(u => u.DisplayName)
+                .Select(u => new AvailableUserInfo(u.Id, u.DisplayName, u.HomeTypeId, null))
+                .ToListAsync();
+
+            // Populate the home type name for users already assigned
+            AvailableUsersInMolecule = AvailableUsersInMolecule
+                .Select(u => u with { CurrentHomeTypeName = u.CurrentHomeTypeId.HasValue && htNameLookup.ContainsKey(u.CurrentHomeTypeId.Value)
+                    ? htNameLookup[u.CurrentHomeTypeId.Value] : null })
+                .ToList();
+        }
     }
 
     public async Task<IActionResult> OnPostCreateAsync()
@@ -197,9 +262,18 @@ public class IndexModel : PageModel
             .ToList();
 
         await _homeTypeService.AssignUsersAsync(AssignHomeTypeId, userIds);
-        TempData["SuccessMessage"] = $"Assigned {userIds.Count} users";
+        TempData["SuccessMessage"] = $"Assigned {userIds.Count} user(s)";
 
         var ht = await _homeTypeService.GetHomeTypeAsync(AssignHomeTypeId);
+        return RedirectToPage(new { MoleculeId = ht?.MoleculeId });
+    }
+
+    public async Task<IActionResult> OnPostUnassignUserAsync()
+    {
+        await _homeTypeService.UnassignUserAsync(UnassignHomeTypeId, UnassignUserId);
+        TempData["SuccessMessage"] = "User unassigned";
+
+        var ht = await _homeTypeService.GetHomeTypeAsync(UnassignHomeTypeId);
         return RedirectToPage(new { MoleculeId = ht?.MoleculeId });
     }
 

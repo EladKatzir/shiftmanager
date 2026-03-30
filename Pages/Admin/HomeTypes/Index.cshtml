@@ -53,6 +53,7 @@
         <tbody>
         @foreach (var ht in Model.HomeTypes)
         {
+            var assignedUsers = Model.AssignedUsersPerHomeType.GetValueOrDefault(ht.Id, new());
             <tr>
                 <td>
                     <strong>@ht.Name</strong>
@@ -61,7 +62,12 @@
                         <br/><span style="color: var(--text-muted); font-size: 0.85em;">@ht.NameHe</span>
                     }
                 </td>
-                <td>@ht.UserCount</td>
+                <td>
+                    <button type="button" class="btn btn--sm btn--outline"
+                            onclick="toggleUserSection(@ht.Id)">
+                        @ht.UserCount <loc key="Users" />
+                    </button>
+                </td>
                 <td style="font-size: 0.85em; color: var(--text-muted);">@ht.CycleDescription</td>
                 <td>
                     @if (ht.IsActive)
@@ -91,6 +97,58 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@ht.Id" />
                             <button type="submit" class="btn btn--sm btn--danger"><loc key="Delete" /></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <!-- User assignment expandable row -->
+            <tr id="user-section-@ht.Id" style="display: none;">
+                <td colspan="5">
+                    <div class="card" style="margin: var(--space-2) 0; padding: var(--space-4);">
+                        <h4 style="margin-bottom: var(--space-3);">@Localizer["AssignedUsers"] — @ht.Name</h4>
+
+                        @if (assignedUsers.Any())
+                        {
+                            <ul style="list-style: none; padding: 0; margin: 0 0 var(--space-3) 0;">
+                                @foreach (var user in assignedUsers)
+                                {
+                                    <li style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--border);">
+                                        <span>@user.DisplayName</span>
+                                        <form method="post" asp-page-handler="UnassignUser" style="margin: 0;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="UnassignHomeTypeId" value="@ht.Id" />
+                                            <input type="hidden" name="UnassignUserId" value="@user.UserId" />
+                                            <button type="submit" class="btn btn--sm btn--danger"
+                                                    onclick="return confirm('@Localizer["Confirm_UnassignUser"]')">
+                                                <loc key="Remove" />
+                                            </button>
+                                        </form>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p style="color: var(--text-muted); margin-bottom: var(--space-3);"><loc key="NoUsersAssigned" /></p>
+                        }
+
+                        <!-- Add user form -->
+                        <form method="post" asp-page-handler="AssignUsers" style="display: flex; gap: var(--space-2); align-items: center;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="AssignHomeTypeId" value="@ht.Id" />
+                            <select name="AssignUserIds" class="form-input" style="flex: 1;" required>
+                                <option value="">— @Localizer["SelectUser"] —</option>
+                                @foreach (var user in Model.AvailableUsersInMolecule.Where(u => !assignedUsers.Any(a => a.UserId == u.UserId)))
+                                {
+                                    var label = user.DisplayName;
+                                    if (user.CurrentHomeTypeId.HasValue && user.CurrentHomeTypeName != null)
+                                    {
+                                        label = $"{user.DisplayName} ({user.CurrentHomeTypeName})";
+                                    }
+                                    <option value="@user.UserId">@label</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn--sm btn--success"><loc key="Add" /></button>
                         </form>
                     </div>
                 </td>
@@ -183,6 +241,12 @@ else if (Model.MoleculeId.HasValue)
         }
         function hideGenerateDialog() {
             document.getElementById('generate-dialog').style.display = 'none';
+        }
+        function toggleUserSection(htId) {
+            var section = document.getElementById('user-section-' + htId);
+            if (section) {
+                section.style.display = section.style.display === 'none' ? '' : 'none';
+            }
         }
     </script>
 }

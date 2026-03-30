@@ -13341,6 +13341,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Confirm_DeleteHomeType" xml:space="preserve">
     <value>Are you sure you want to delete this home type?</value>
   </data>
+  <data name="Confirm_UnassignUser" xml:space="preserve">
+    <value>Are you sure you want to remove this user?</value>
+  </data>
+  <data name="NoUsersAssigned" xml:space="preserve">
+    <value>No users assigned to this home type</value>
+  </data>
 
   <!-- Fix 31: AuditLog action strings -->
   <data name="AuditAction_UserCreated" xml:space="preserve">
