@@ -19,17 +19,20 @@ public class IndexModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly IHomeTypeService _homeTypeService;
+    private readonly ICompanyContext _companyContext;
     private readonly ILogger<IndexModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
 
     public IndexModel(
         AppDbContext db,
         IHomeTypeService homeTypeService,
+        ICompanyContext companyContext,
         ILogger<IndexModel> logger,
         IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _homeTypeService = homeTypeService;
+        _companyContext = companyContext;
         _logger = logger;
         _localizer = localizer;
     }
