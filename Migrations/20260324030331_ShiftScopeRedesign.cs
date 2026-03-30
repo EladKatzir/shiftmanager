@@ -15,27 +15,11 @@ namespace ShiftManager.Migrations
             migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_ShiftTypes_CompanyId_Key\";");
             migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_ShiftTypes_MoleculeId_JobTypeId_Key\";");
 
-            // AddColumn BEFORE AlterColumn/RenameColumn — SQLite rebuilds the table
-            // on ALTER, and the rebuild references all model columns. If these columns
-            // don't exist yet, the INSERT SELECT into ef_temp fails.
-            migrationBuilder.AddColumn<int>(
-                name: "AreaId",
-                table: "ShiftTypes",
-                type: "INTEGER",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "NameHe",
-                table: "ShiftTypes",
-                type: "TEXT",
-                nullable: true);
-
-            migrationBuilder.AddColumn<int>(
-                name: "Scope",
-                table: "ShiftTypes",
-                type: "INTEGER",
-                nullable: false,
-                defaultValue: 1); // Default = Molecule (1), not Company (0)
+            // EF Core 9 SQLite provider: RenameColumn/AlterColumn below trigger a table
+            // rebuild that automatically includes new columns (AreaId, NameHe, Scope) from
+            // the model snapshot. Explicit AddColumn calls are NOT needed and would fail
+            // with "duplicate column" because the rebuild already created them.
+            // (Original EF Core 8 design required AddColumn BEFORE rebuild — no longer true.)
 
             migrationBuilder.RenameColumn(
                 name: "CustomName",
