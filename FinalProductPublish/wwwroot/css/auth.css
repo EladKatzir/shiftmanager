@@ -95,7 +95,6 @@
 
 .auth-hero__tagline {
   font-size: 1.125rem;
-  opacity: 0.9;
   line-height: 1.6;
   animation: fadeInUp 0.6s var(--ease-out) 0.5s forwards;
   opacity: 0;
@@ -382,20 +381,25 @@
    ======================================== */
 
 .auth-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   padding: var(--space-3) var(--space-5);
   background: var(--primary);
   color: var(--primary-contrast);
-  border: none;
+  border: 1.5px solid var(--primary);
   border-radius: var(--radius-md);
   font-size: var(--text-base);
   font-weight: 600;
   cursor: pointer;
+  box-sizing: border-box;
   transition: all var(--duration-normal) var(--ease-out);
 }
 
 .auth-submit:hover {
   background: var(--primary-hover);
+  border-color: var(--primary-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -430,8 +434,9 @@
   border: 1.5px solid var(--primary);
   border-radius: var(--radius-md);
   font-size: var(--text-base);
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
+  box-sizing: border-box;
   transition: all var(--duration-normal) var(--ease-out);
 }
 
@@ -679,13 +684,6 @@
 /* Flip form entry animation for RTL */
 [dir="rtl"] .auth-form-container {
   transform: translateX(-20px);
-}
-
-[dir="rtl"] @keyframes formEntry {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 /* Mirror floating element positions */

@@ -384,5 +384,4 @@
     // Expose autoFormatDates for manual calls
     window.DateFormat.autoFormat = autoFormatDates;
 
-    console.log('[DateFormat] Date formatting initialized for locale:', locale);
 })();

@@ -45,7 +45,7 @@
                 }
             })
             .catch(function (err) {
-                console.error('[Friends] Failed to fetch friend IDs:', err);
+                Logger.error('Friends', 'Failed to fetch friend IDs:', err);
                 callback({});
             });
     }

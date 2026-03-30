@@ -105,6 +105,12 @@
   --shift-lead-soft: #FFE6DC;
   --shift-lead-text: #FFFFFF;
 
+  /* Accent Gold (trophy, highlight) */
+  --accent-gold: #FFD700;
+
+  /* Bootstrap-compat Info Teal (badge-info, bg-info, text-info) */
+  --info-teal: #17A2B8;
+
   /* Focus Ring */
   --focus-ring: 0 0 0 3px var(--primary-soft);
   --focus-ring-danger: 0 0 0 3px var(--danger-soft);
@@ -139,7 +145,7 @@
   /* Text Colors */
   --text: #E8EDF5;
   --text-muted: #94A3B8;
-  --text-subtle: #64748B;
+  --text-subtle: #94A3B8; /* A-020: Raised from #64748B (~3.5:1) to match --text-muted (~5.6:1 on #0F1419) for WCAG AA */
   --text-rgb: 232, 237, 245;
 
   /* Borders */
@@ -211,8 +217,14 @@
   --shift-lead-soft: #3D2520;
   --shift-lead-text: #FFB89E;
 
+  /* Accent Gold (trophy, highlight) */
+  --accent-gold: #FFD700;
+
+  /* Bootstrap-compat Info Teal (badge-info, bg-info, text-info) */
+  --info-teal: #45B8CC;
+
   /* Focus Ring */
-  --focus-ring: 0 0 0 3px var(--primary-soft);
+  --focus-ring: 0 0 0 3px rgba(88, 166, 255, 0.5);
   --focus-ring-danger: 0 0 0 3px var(--danger-soft);
 }
 
@@ -496,7 +508,7 @@ Verified Contrast Ratios (Dark Mode):
     /* Text Colors */
     --text: #E8EDF5;
     --text-muted: #94A3B8;
-    --text-subtle: #64748B;
+    --text-subtle: #94A3B8; /* A-020: Raised from #64748B (~3.5:1) to match --text-muted (~5.6:1 on #0F1419) for WCAG AA */
     --text-rgb: 232, 237, 245;
 
     /* Borders */
@@ -568,8 +580,14 @@ Verified Contrast Ratios (Dark Mode):
     --shift-lead-soft: #3D2520;
     --shift-lead-text: #FFB89E;
 
+    /* Accent Gold (trophy, highlight) */
+    --accent-gold: #FFD700;
+
+    /* Bootstrap-compat Info Teal (badge-info, bg-info, text-info) */
+    --info-teal: #45B8CC;
+
     /* Focus Ring */
-    --focus-ring: 0 0 0 3px var(--primary-soft);
+    --focus-ring: 0 0 0 3px rgba(88, 166, 255, 0.5);
     --focus-ring-danger: 0 0 0 3px var(--danger-soft);
 
     /* Shadows - darker for dark mode */

@@ -25,13 +25,27 @@
 
 /* Collapsed State */
 .app-sidebar.is-collapsed {
-  width: var(--sidebar-width-collapsed);
+  width: var(--sidebar-width-collapsed, 64px);
 }
 
 .app-sidebar.is-collapsed .sidebar-text {
   opacity: 0;
   width: 0;
   overflow: hidden;
+}
+
+.app-sidebar.is-collapsed .context-switcher__label,
+.app-sidebar.is-collapsed .context-switcher__name,
+.app-sidebar.is-collapsed .context-switcher__count,
+.app-sidebar.is-collapsed .context-switcher__static {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+.app-sidebar.is-collapsed .context-switcher {
+  justify-content: center;
+  padding: var(--space-2);
 }
 
 /* ========================================
@@ -42,7 +56,7 @@
 
 /* When sidebar-initially-collapsed is set on <html>, apply collapsed styles immediately */
 .sidebar-initially-collapsed .app-sidebar {
-  width: var(--sidebar-width-collapsed);
+  width: var(--sidebar-width-collapsed, 64px);
 }
 
 .sidebar-initially-collapsed .app-sidebar .sidebar-text,
@@ -54,6 +68,21 @@
   width: 0;
   overflow: hidden;
   display: none;
+}
+
+.sidebar-initially-collapsed .app-sidebar .context-switcher__label,
+.sidebar-initially-collapsed .app-sidebar .context-switcher__name,
+.sidebar-initially-collapsed .app-sidebar .context-switcher__count,
+.sidebar-initially-collapsed .app-sidebar .context-switcher__static {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  display: none;
+}
+
+.sidebar-initially-collapsed .app-sidebar .context-switcher {
+  justify-content: center;
+  padding: var(--space-2);
 }
 
 .sidebar-initially-collapsed .app-sidebar .sidebar-toggle__icon {
@@ -853,11 +882,11 @@
 }
 
 .sidebar-user-menu__item--danger {
-  color: var(--error);
+  color: var(--danger);
 }
 
 .sidebar-user-menu__item--danger:hover {
-  background-color: var(--error-soft);
+  background-color: var(--danger-soft);
 }
 
 .sidebar-user-menu__logout-form {

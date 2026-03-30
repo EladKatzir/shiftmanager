@@ -12,7 +12,7 @@
         return;
     }
 
-    console.log('[Language Edit Mode] Active - Click on any text to edit');
+    Logger.log('LangEdit', 'Active - Click on any text to edit');
 
     // Initialize on DOM ready
     if (document.readyState === 'loading') {
@@ -24,7 +24,7 @@
     function init() {
         const editModeData = getEditModeData();
         if (!editModeData) {
-            console.error('[Language Edit Mode] Invalid edit mode data');
+            Logger.error('LangEdit', 'Invalid edit mode data');
             return;
         }
 
@@ -43,7 +43,6 @@
         // Initialize freeze interactions toggle
         initFreezeToggle();
 
-        console.log('[Language Edit Mode] Initialized');
     }
 
     /**
@@ -64,10 +63,10 @@
         toggle.addEventListener('change', function() {
             if (this.checked) {
                 document.body.classList.add('interactions-frozen');
-                console.log('[Language Edit Mode] Interactions frozen');
+                Logger.log('LangEdit', 'Interactions frozen');
             } else {
                 document.body.classList.remove('interactions-frozen');
-                console.log('[Language Edit Mode] Interactions enabled');
+                Logger.log('LangEdit', 'Interactions enabled');
             }
         });
     }
@@ -131,7 +130,7 @@
             const data = JSON.parse(stored);
             return data.drafts || {};
         } catch (e) {
-            console.error('[Language Edit Mode] Failed to parse drafts:', e);
+            Logger.error('LangEdit', 'Failed to parse drafts:', e);
             return {};
         }
     }
@@ -160,7 +159,7 @@
             return;
         }
 
-        console.log(`[Language Edit Mode] Applying ${draftKeys.length} draft(s)`);
+        Logger.log('LangEdit', `Applying ${draftKeys.length} draft(s)`);
 
         draftKeys.forEach(key => {
             const elements = document.querySelectorAll(`[data-loc-key="${key}"]`);
@@ -220,7 +219,7 @@
             }
         }, true); // USE CAPTURE PHASE (true) - fires before bubbling phase
 
-        console.log(`[Language Edit Mode] Attached handlers to ${elements.length} element(s)`);
+        Logger.log('LangEdit', `Attached handlers to ${elements.length} element(s)`);
     }
 
     /**
@@ -297,7 +296,7 @@
             // Update draft count
             updateDraftCount();
 
-            console.log(`[Language Edit Mode] Saved draft for key: ${key}`);
+            Logger.log('LangEdit', `Saved draft for key: ${key}`);
 
             closeModal();
         });
@@ -454,7 +453,7 @@
                 alert(`Error: ${result.message || 'Failed to save translations'}`);
             }
         } catch (error) {
-            console.error('[Language Edit Mode] Save failed:', error);
+            Logger.error('LangEdit', 'Save failed:', error);
             alert(`Failed to save drafts: ${error.message}`);
         }
     }

@@ -20,7 +20,7 @@
         const searchInput = document.getElementById('rosterSearch');
 
         if (!dock || !dockToggle) {
-            console.warn('[Roster Dock] Elements not found, skipping initialization');
+            Logger.warn('RosterDock', 'Elements not found, skipping initialization');
             return;
         }
 
@@ -39,7 +39,6 @@
         // Load employees when dock is opened
         loadEmployees();
 
-        console.log('[Roster Dock] Initialized');
     }
 
     /**
@@ -102,7 +101,7 @@
         const employeeList = document.getElementById('rosterEmployeeList');
 
         if (!employeeList) {
-            console.error('[Roster Dock] Employee list element not found');
+            Logger.error('RosterDock', 'Employee list element not found');
             return;
         }
 
@@ -129,7 +128,7 @@
 
             renderEmployeeList(employees);
         } catch (error) {
-            console.error('[Roster Dock] Error loading employees:', error);
+            Logger.error('RosterDock', 'Error loading employees:', error);
             employeeList.innerHTML = '<p class="error-text">' + (window.AppLocalizer?.Roster_FailedToLoad || 'Failed to load employees. Please try again.') + '</p>';
         }
     }
@@ -149,6 +148,9 @@
 
         employeeList.innerHTML = employeesToRender.map(emp => {
             const initials = getInitials(emp.name);
+            const avatarContent = emp.avatarUrl
+                ? `<img src="${escapeHtml(emp.avatarUrl)}" alt="${escapeHtml(emp.name)}" loading="lazy" decoding="async">`
+                : escapeHtml(initials);
 
             // Build availability cubes HTML
             let cubesHtml = '<div class="availability-cubes">';
@@ -169,7 +171,7 @@
                      draggable="true"
                      data-user-id="${emp.id}"
                      data-user-name="${escapeHtml(emp.name)}">
-                    <div class="employee-avatar">${escapeHtml(initials)}</div>
+                    <div class="employee-avatar">${avatarContent}</div>
                     <div class="employee-info">
                         <div class="employee-name">${escapeHtml(emp.name)}</div>
                         ${cubesHtml}
@@ -343,14 +345,14 @@
             const slot = event.currentTarget.closest('.assignment-slot');
 
             if (!slot) {
-                console.error('[Roster Dock] Could not find assignment slot');
+                Logger.error('RosterDock', 'Could not find assignment slot');
                 return;
             }
 
             const assignmentId = parseInt(slot.dataset.assignmentId, 10);
 
             if (!assignmentId) {
-                console.error('[Roster Dock] Invalid assignment ID');
+                Logger.error('RosterDock', 'Invalid assignment ID');
                 return;
             }
 
@@ -358,7 +360,7 @@
             await assignUserToSlot(assignmentId, userId);
 
         } catch (error) {
-            console.error('[Roster Dock] Error handling drop:', error);
+            Logger.error('RosterDock', 'Error handling drop:', error);
             showToast(window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign employee', 'error');
         }
 
@@ -393,14 +395,14 @@
             if (result.success) {
                 showToast(window.AppLocalizer?.Roster_AssignedSuccess || 'Employee assigned successfully', 'success');
 
-                // Reload the page to show the updated assignment
-                window.location.reload();
+                // Refresh calendar data or reload as fallback
+                if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { window.location.reload(); }
             } else {
                 throw new Error(result.error || (window.AppLocalizer?.Roster_AssignmentFailed || 'Assignment failed'));
             }
 
         } catch (error) {
-            console.error('[Roster Dock] Assignment error:', error);
+            Logger.error('RosterDock', 'Assignment error:', error);
             showToast(error.message || (window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign employee'), 'error');
         }
     }
@@ -431,7 +433,7 @@
         }
 
         // Fallback: console log
-        console.log(`[Toast ${type}]`, message);
+        Logger.log('RosterDock', `[Toast ${type}]`, message);
         alert(message);
     }
 

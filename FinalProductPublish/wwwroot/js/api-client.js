@@ -66,7 +66,7 @@ window.ApiClient = (function() {
 
             // Log when running low on requests
             if (remaining && parseInt(remaining) <= 5) {
-                console.warn(`[ApiClient] Rate limit warning for ${key}: ${remaining} requests remaining`);
+                Logger.warn('ApiClient', `Rate limit warning for ${key}: ${remaining} requests remaining`);
             }
         }
     }
@@ -156,7 +156,7 @@ window.ApiClient = (function() {
                 const errorCode = json?.error?.code || 'CONFLICT';
 
                 if (errorCode === 'CONCURRENCY_CONFLICT') {
-                    console.warn('[ApiClient] Concurrency conflict detected');
+                    Logger.warn('ApiClient', 'Concurrency conflict detected');
                     dispatchConcurrencyConflictEvent(url, json?.error?.details);
                 }
                 // Return the response for caller to handle (don't throw)
@@ -165,14 +165,14 @@ window.ApiClient = (function() {
 
             // Handle access denied (403) - B-017
             if (response.status === 403) {
-                console.warn('[ApiClient] Access denied (403) for:', url);
+                Logger.warn('ApiClient', 'Access denied (403) for:', url);
                 dispatchAccessDeniedEvent(url);
                 throw new AccessDeniedError(url, response);
             }
 
             // Handle server errors (500+) - B-017
             if (response.status >= 500) {
-                console.error(`[ApiClient] Server error (${response.status}) for:`, url);
+                Logger.error('ApiClient', `Server error (${response.status}) for:`, url);
                 dispatchServerErrorEvent(url, response.status);
                 throw new ServerError(url, response.status, response);
             }
@@ -183,7 +183,7 @@ window.ApiClient = (function() {
 
                 if (retryCount < MAX_RETRIES) {
                     const delay = calculateRetryDelay(retryCount, retryAfter);
-                    console.warn(`[ApiClient] Rate limited (429). Retry ${retryCount + 1}/${MAX_RETRIES} in ${Math.round(delay/1000)}s...`);
+                    Logger.warn('ApiClient', `Rate limited (429). Retry ${retryCount + 1}/${MAX_RETRIES} in ${Math.round(delay/1000)}s...`);
 
                     // Dispatch event for UI components to show feedback
                     dispatchRateLimitEvent(url, delay, retryCount + 1);
@@ -193,7 +193,7 @@ window.ApiClient = (function() {
                 }
 
                 // Max retries exceeded
-                console.error('[ApiClient] Rate limit exceeded, max retries reached');
+                Logger.error('ApiClient', 'Rate limit exceeded, max retries reached');
                 dispatchRateLimitEvent(url, 0, -1); // -1 indicates failure
                 throw new ApiError('Rate limit exceeded. Please try again later.', 429, response);
             }
@@ -211,7 +211,7 @@ window.ApiClient = (function() {
                     throw error;
                 }
                 // Our timeout fired
-                console.warn('[ApiClient] Request timed out after 10s:', url);
+                Logger.warn('ApiClient', 'Request timed out after 10s:', url);
                 dispatchTimeoutEvent(url);
                 throw new TimeoutError(url);
             }
@@ -234,14 +234,14 @@ window.ApiClient = (function() {
             // Retry network errors
             if (retryCount < MAX_RETRIES) {
                 const delay = calculateRetryDelay(retryCount, null);
-                console.warn(`[ApiClient] Network error. Retry ${retryCount + 1}/${MAX_RETRIES} in ${Math.round(delay/1000)}s...`, error.message);
+                Logger.warn('ApiClient', `Network error. Retry ${retryCount + 1}/${MAX_RETRIES} in ${Math.round(delay/1000)}s...`, error.message);
 
                 await sleep(delay);
                 return fetchWithRetry(url, options, retryCount + 1);
             }
 
             // Max retries exceeded - B-017
-            console.error('[ApiClient] Network error, max retries reached:', error);
+            Logger.error('ApiClient', 'Network error, max retries reached:', error);
             dispatchNetworkErrorEvent(url);
             throw new NetworkError(url, error);
         }
@@ -524,7 +524,7 @@ window.ApiClient = (function() {
             }
             return null;
         } catch (e) {
-            console.warn('[ApiClient] Failed to parse JSON response:', e);
+            Logger.warn('ApiClient', 'Failed to parse JSON response:', e);
             return null;
         }
     }
@@ -670,5 +670,4 @@ window.ApiClient = (function() {
     };
 })();
 
-// Log initialization
-console.log('[ApiClient] Initialized with rate limit handling (B-027) and error handling (B-017)');
+// ApiClient initialized

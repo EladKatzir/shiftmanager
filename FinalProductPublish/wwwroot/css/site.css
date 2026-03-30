@@ -29,8 +29,7 @@
   --hover-bg: var(--surface-soft);
   --info-bg: var(--info-soft);
   --surface-elevated: var(--surface);
-  --surface-strong: var(--text);
-  
+
   /* Legacy spacing aliases */
   --space-xs: var(--space-2);
   --space-sm: var(--space-3);
@@ -388,7 +387,7 @@ th { text-align: left; }
   border-top: 1px solid var(--border);
 }
 
-/* ✅ PHASE 18: Ctrl+K shortcut tooltip */
+/* ✅ PHASE 18: Ctrl+J shortcut tooltip */
 .sidebar-footer-shortcut {
   margin-top: 0.75rem;
   padding: 0.5rem 0.75rem;
@@ -503,6 +502,15 @@ th { text-align: left; }
   outline-offset: 1px;
 }
 
+/* Mobile: reduce header title font at small viewports to prevent truncation */
+@media (max-width: 576px) {
+  .page-title {
+    font-size: 1.15rem;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+}
+
 /* Mobile: compact header action buttons */
 @media (max-width: 480px) {
   .app-header-right {
@@ -520,10 +528,9 @@ th { text-align: left; }
   }
 
   .page-title {
-    font-size: 1.1rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 1rem;
+    line-height: 1.3;
+    word-break: break-word;
   }
 
   /* Compact decision ribbon: badge-only for pending, "✓" only for all-clear */
@@ -596,25 +603,8 @@ th { text-align: left; }
   line-height: 1;
 }
 
-/* Responsive Layout */
-@media (max-width: 1024px) {
-  .app-sidebar {
-    width: 220px;
-  }
-}
-
+/* Responsive Layout — sidebar positioning handled by navigation.css */
 @media (max-width: 768px) {
-  .app-sidebar {
-    position: fixed;
-    left: -260px;
-    z-index: 1000;
-    transition: left 0.3s ease;
-  }
-
-  .app-sidebar.open {
-    left: 0;
-  }
-
   .app-content {
     padding: 1rem;
   }
@@ -646,7 +636,7 @@ th { text-align: left; }
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary), #58a6ff, var(--focus));
+  background: linear-gradient(90deg, var(--primary), var(--accent), var(--focus));
 }
 
 .calendar-header h2 {
@@ -738,7 +728,7 @@ th { text-align: left; }
 }
 
 .weekday-header {
-  background: linear-gradient(135deg, var(--primary), #58a6ff);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   color: white;
   padding: 1.25rem .75rem;
   text-align: center;
@@ -1082,15 +1072,15 @@ th { text-align: left; }
 }
 
 .staffing-badge.ok {
-  background: #e8f5e8;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid var(--success-soft);
 }
 
 .staffing-badge.warn {
-  background: #ffebee;
+  background: var(--danger-soft);
   color: var(--danger);
-  border: 1px solid #ffcdd2;
+  border: 1px solid var(--danger-soft);
   animation: pulse 2s infinite;
 }
 
@@ -1172,7 +1162,7 @@ th { text-align: left; }
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary), #58a6ff);
+  background: linear-gradient(90deg, var(--primary), var(--accent));
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -1436,7 +1426,7 @@ th { text-align: left; }
 
 /* Modern Scheduled Shift Creation UI */
 .add-shift-btn {
-  background: linear-gradient(135deg, var(--primary), #4f46e5);
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
   border: none;
   border-radius: .75rem;
@@ -1455,7 +1445,7 @@ th { text-align: left; }
 .add-shift-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.4);
-  background: linear-gradient(135deg, #4f46e5, var(--primary));
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary));
 }
 
 .add-shift-btn:active {
@@ -1670,7 +1660,7 @@ th { text-align: left; }
 }
 
 .staffing-btn:hover {
-  background: #4f46e5;
+  background: var(--primary-hover);
   transform: scale(1.05);
 }
 
@@ -1712,7 +1702,7 @@ th { text-align: left; }
 }
 
 .btn-modal.primary {
-  background: linear-gradient(135deg, var(--primary), #4f46e5);
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: white;
   box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
 }
@@ -1819,7 +1809,7 @@ th { text-align: left; }
   padding: 1rem !important;
   border-radius: .75rem !important;
   font-size: .85rem !important;
-  z-index: 999999999 !important;
+  z-index: var(--z-max) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
   transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease !important;
   min-width: 250px !important;
@@ -1848,7 +1838,7 @@ th { text-align: left; }
 /* Ultimate tooltip override */
 .assignment-tooltip .tooltip-content {
   position: fixed !important;
-  z-index: 999999999 !important;
+  z-index: var(--z-max) !important;
   background: rgba(0, 0, 0, 0.9) !important;
   color: white !important;
   border: 2px solid white !important;
@@ -1886,20 +1876,20 @@ th { text-align: left; }
 .tooltip-shift-type {
   font-weight: 700;
   font-size: .9rem;
-  color: #58a6ff;
+  color: var(--accent);
   margin-bottom: .25rem;
 }
 
 .tooltip-shift-name {
   font-size: .8rem;
-  color: #ffd700;
+  color: var(--accent-gold);
   font-style: italic;
   margin-bottom: .25rem;
 }
 
 .tooltip-hours {
   font-size: .75rem;
-  color: #9aa8b4;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: .25rem;
@@ -1920,7 +1910,7 @@ th { text-align: left; }
 
 .tooltip-section-title {
   font-size: .7rem;
-  color: #9aa8b4;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: .5px;
   margin-bottom: .5rem;
@@ -1981,7 +1971,7 @@ th { text-align: left; }
 
 .tooltip-stat-label {
   font-size: .65rem;
-  color: #9aa8b4;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: .5px;
 }
@@ -2020,7 +2010,7 @@ th { text-align: left; }
 
 /* Employee Topbar */
 .employee-topbar {
-  background: linear-gradient(135deg, var(--primary) 0%, #4c9fff 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border-bottom: none;
 }
@@ -2216,7 +2206,7 @@ th { text-align: left; }
 
 /* Employee Welcome Section */
 .employee-welcome {
-  background: linear-gradient(135deg, var(--primary) 0%, #4c9fff 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
   color: white;
   padding: 2rem 0;
   margin-bottom: 2rem;
@@ -2332,11 +2322,11 @@ th { text-align: left; }
 
 .tooltip-empty {
   display: inline-block;
-  color: #f44336;
+  color: var(--danger);
   margin-bottom: .25rem;
   font-style: italic;
   padding: .2rem .4rem;
-  background: #ffebee;
+  background: var(--danger-soft);
   border-radius: .25rem;
   margin-right: .25rem;
 }
@@ -2344,7 +2334,7 @@ th { text-align: left; }
 .tooltip-title {
   font-weight: 700;
   font-size: .9rem;
-  color: #58a6ff;
+  color: var(--accent);
   margin-bottom: .25rem;
 }
 
@@ -2355,13 +2345,13 @@ th { text-align: left; }
 }
 
 .tooltip-status-ok {
-  color: #3fb950;
+  color: var(--success);
   font-weight: 600;
   font-size: .75rem;
 }
 
 .tooltip-status-warn {
-  color: #f85149;
+  color: var(--danger);
   font-weight: 600;
   font-size: .75rem;
 }
@@ -2414,9 +2404,9 @@ th { text-align: left; }
 }
 
 .name-badge.empty {
-  background: #ffebee;
-  color: #f44336;
-  border-color: #ffcdd2;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger-soft);
   font-style: italic;
 }
 
@@ -2482,7 +2472,7 @@ th { text-align: left; }
 .counter { display:flex; align-items:center; gap:.25rem; }
 .counter button { width: 1.6rem; height:1.6rem; display:grid; place-items:center; }
 .badge { padding: .1rem .35rem; border:1px solid var(--border); border-radius:.35rem; font-size:.85rem; }
-.badge.ok { border-color: #2e7d32; color: #2e7d32; }
+.badge.ok { border-color: var(--success); color: var(--success); }
 .badge.warn { border-color: var(--danger); color: var(--danger); }
 .small { color: var(--muted); font-size: .9rem; }
 
@@ -2554,7 +2544,7 @@ input, select, textarea {
    ======================================== */
 
 .breadcrumb-nav {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-2);
   animation: breadcrumb-fade-in 0.3s ease-in-out;
 }
 
@@ -2574,7 +2564,7 @@ input, select, textarea {
   flex-wrap: wrap;
   align-items: center;
   list-style: none;
-  padding: 0.875rem 1.25rem;
+  padding: var(--space-1) 1.25rem;
   margin: 0;
   background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
   border: 1px solid var(--border);
@@ -2662,7 +2652,7 @@ input, select, textarea {
 /* Long label truncation */
 .breadcrumb-item a,
 .breadcrumb-item.active {
-  max-width: 200px;
+  max-width: 250px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2683,11 +2673,29 @@ input, select, textarea {
 
   .breadcrumb-item a,
   .breadcrumb-item.active {
-    max-width: 120px;
+    max-width: 180px;
   }
 
   .breadcrumb-item + .breadcrumb-item::before {
     padding: 0 0.375rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .breadcrumb {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .breadcrumb-item a,
+  .breadcrumb-item.active {
+    max-width: none;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .breadcrumb-item + .breadcrumb-item::before {
+    padding: 0 0.25rem;
   }
 }
 
@@ -2977,7 +2985,7 @@ thead th {
 
 .page-item.active .page-link {
   z-index: 3;
-  color: #fff;
+  color: var(--primary-contrast);
   background-color: var(--primary);
   border-color: var(--primary);
 }
@@ -3089,7 +3097,7 @@ thead th {
 /* Badge variant classes (Bootstrap 4 convention used in 15+ pages) */
 .badge-primary { background-color: var(--primary); }
 .badge-secondary { background-color: var(--text-muted); }
-.badge-info { background-color: #17a2b8; }
+.badge-info { background-color: var(--info-teal); }
 .badge-success { background-color: var(--success); }
 .badge-warning { background-color: var(--warning); color: var(--warning-text); }
 .badge-danger { background-color: var(--danger); }
@@ -3115,7 +3123,7 @@ thead th {
 }
 
 .bg-info {
-  background-color: #17a2b8 !important;
+  background-color: var(--info-teal) !important;
   color: white !important;
 }
 
@@ -3227,7 +3235,7 @@ thead th {
 }
 
 .text-info {
-  color: #17a2b8 !important;
+  color: var(--info-teal) !important;
 }
 
 .text-white {
@@ -3303,8 +3311,8 @@ thead th {
 }
 
 .btn-success:hover {
-  background-color: #218838;
-  border-color: #1e7e34;
+  background-color: var(--success-hover);
+  border-color: var(--success-hover);
 }
 
 .btn-link {
@@ -3378,7 +3386,7 @@ thead th {
 
 /* Pending state with pulse glow animation */
 .decision-ribbon-btn.has-pending {
-  background: linear-gradient(135deg, var(--warning), #fbbf24);
+  background: linear-gradient(135deg, var(--warning), var(--accent-gold));
   color: white;
   animation: pulseGlow 2s infinite;
   border-color: transparent;
@@ -3494,6 +3502,12 @@ thead th {
   animation: slideUp 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+}
+
+a.stat-card {
+  text-decoration: none;
+  color: inherit;
 }
 
 /* Staggered animation delays */
@@ -4710,6 +4724,45 @@ code {
   color: var(--muted);
   margin-top: 1rem;
   border-bottom: 1px solid var(--border);
+  transition: opacity 0.2s ease, max-height 0.2s ease;
+}
+
+/* Collapsed sidebar: hide nav section headers and text labels, show only icons */
+.app-sidebar.is-collapsed .nav-section-header {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+.app-sidebar.is-collapsed .app-sidebar-nav-item {
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.app-sidebar.is-collapsed .app-sidebar-nav-item > span:not(.app-sidebar-nav-icon) {
+  display: none;
+}
+
+/* Also hide for pre-render collapsed state to prevent flash */
+.sidebar-initially-collapsed .app-sidebar .nav-section-header {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+.sidebar-initially-collapsed .app-sidebar .app-sidebar-nav-item {
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.sidebar-initially-collapsed .app-sidebar .app-sidebar-nav-item > span:not(.app-sidebar-nav-icon) {
+  display: none;
 }
 
 /* Item header with action buttons */
@@ -6107,7 +6160,7 @@ code {
 }
 
 [data-ui-version="v2"] .metric-item.metric-pending .metric-value {
-  color: #f59e0b;
+  color: var(--warning);
 }
 
 [data-ui-version="v2"] .metric-item.metric-coverage {
@@ -6116,7 +6169,7 @@ code {
 }
 
 [data-ui-version="v2"] .metric-item.metric-coverage .metric-value {
-  color: #10b981;
+  color: var(--success);
 }
 
 /* Base Metric Item Styles (non-v2) */
@@ -6273,17 +6326,17 @@ code {
 }
 
 .availability-cube.free {
-    background-color: #22c55e;
+    background-color: var(--success);
     color: white;
 }
 
 .availability-cube.busy {
-    background-color: #ef4444;
+    background-color: var(--danger);
     color: white;
 }
 
 .availability-cube.partial {
-    background-color: #f59e0b;
+    background-color: var(--warning);
     color: white;
 }
 
@@ -6390,9 +6443,9 @@ code {
 }
 
 :root[data-theme="dark"] .alert-success {
-  background-color: rgba(82, 183, 136, 0.15);
+  background-color: var(--success);
   border-color: var(--success);
-  color: var(--success);
+  color: var(--success-text) !important;
 }
 
 :root[data-theme="dark"] .alert-info {
@@ -6962,9 +7015,6 @@ code {
    ---------------------------------------- */
 :root[data-theme="dark"] .form-select {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23aab' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 16px 12px;
 }
 
 :root[data-theme="dark"] .btn-close {
@@ -7012,15 +7062,15 @@ code {
 /* Officer ranks get a distinct gold/amber color */
 .rank-badge.officer {
   background-color: rgba(217, 168, 55, 0.15);
-  color: #b38600;
+  color: var(--warning-hover);
   border-color: rgba(217, 168, 55, 0.4);
 }
 
 /* NCO ranks get a subtle blue tint */
 .rank-badge.nco {
-  background-color: rgba(91, 155, 213, 0.1);
-  color: #4a7fa5;
-  border-color: rgba(91, 155, 213, 0.3);
+  background-color: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-hover);
+  border-color: rgba(var(--accent-rgb), 0.3);
 }
 
 /* Enlisted ranks - default muted style */
@@ -7039,14 +7089,14 @@ code {
 
 :root[data-theme="dark"] .rank-badge.officer {
   background-color: rgba(217, 168, 55, 0.25);
-  color: #f0c14b;
+  color: var(--shift-morning);
   border-color: rgba(217, 168, 55, 0.5);
 }
 
 :root[data-theme="dark"] .rank-badge.nco {
-  background-color: rgba(91, 155, 213, 0.2);
-  color: #5b9bd5;
-  border-color: rgba(91, 155, 213, 0.4);
+  background-color: rgba(var(--accent-rgb), 0.2);
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb), 0.4);
 }
 
 :root[data-theme="dark"] .rank-badge.enlisted {
@@ -7088,4 +7138,26 @@ code {
   :root[data-theme="light"] {
     transition: none;
   }
+}
+
+/* Sticky table utilities (tiered — see spec #1) */
+.data-table--sticky-header thead th {
+  position: sticky;
+  top: var(--header-height, 64px);
+  z-index: 2;
+  background: var(--surface);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.data-table--sticky-col td:first-child,
+.data-table--sticky-col th:first-child {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 3;
+  background: var(--surface);
+  box-shadow: 1px 0 0 var(--border);
+}
+
+.data-table--sticky-col thead th:first-child {
+  z-index: 5;
 }

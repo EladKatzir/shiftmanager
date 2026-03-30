@@ -19,7 +19,7 @@
             var rows = tbody.querySelectorAll('tr:not(.excel-calendar__group-header)');
             if (rows.length <= INITIAL_VISIBLE) return; // no need to lazy-load
 
-            console.log('[LazyRows] ' + rows.length + ' rows detected, lazy-loading after ' + INITIAL_VISIBLE);
+            Logger.log('LazyRows', rows.length + ' rows detected, lazy-loading after ' + INITIAL_VISIBLE);
 
             // Hide rows beyond initial visible count
             var hiddenRows = [];
@@ -84,7 +84,7 @@
                             observer.disconnect();
                             sentinel.remove();
                             loadingRow.remove();
-                            console.log('[LazyRows] All rows revealed');
+                            Logger.log('LazyRows', 'All rows revealed');
                         }
                     });
                 }, {

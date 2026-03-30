@@ -44,6 +44,26 @@
         return lang.startsWith('he');
     }
 
+    // --- Error display helpers (uses ErrorStates API when available, falls back to showToast) ---
+    function showErrorMsg(msg) {
+        if (window.ErrorStates) {
+            window.ErrorStates.showError(msg);
+        } else if (window.showToast) {
+            window.showToast(msg, 'error');
+        }
+    }
+
+    function showNetworkError() {
+        if (window.ErrorStates) {
+            window.ErrorStates.showError(
+                window.ErrorStates.getMessage('networkError'),
+                window.ErrorStates.getMessage('networkErrorTitle')
+            );
+        } else if (window.showToast) {
+            window.showToast(isHebrew() ? 'שגיאת רשת' : 'Network error', 'error');
+        }
+    }
+
     // --- Touch detection ---
     function isTouchDevice() {
         return ('ontouchstart' in window) ||
@@ -585,7 +605,7 @@
                 var msg = isHebrew() ? 'מתמחה שובץ בהצלחה' : 'Trainee assigned';
                 if (window.showToast) window.showToast(msg, 'success');
                 close();
-                setTimeout(function () { location.reload(); }, 500);
+                if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
             } else if (result.requiresOverride) {
                 // Show warnings and ask to confirm
                 var msgs = (result.warnings || []).map(function (w) { return w.message; }).join('\n');
@@ -603,18 +623,18 @@
                         if (r2.success) {
                             if (window.showToast) window.showToast(isHebrew() ? 'מתמחה שובץ בהצלחה' : 'Trainee assigned', 'success');
                             close();
-                            setTimeout(function () { location.reload(); }, 500);
+                            if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
                         } else {
-                            if (window.showToast) window.showToast(r2.error || 'Error', 'error');
+                            showErrorMsg(r2.error || 'Error');
                         }
                     });
                 }
             } else {
-                if (window.showToast) window.showToast(result.error || 'Error', 'error');
+                showErrorMsg(result.error || 'Error');
             }
         })
         .catch(function () {
-            if (window.showToast) window.showToast(isHebrew() ? 'שגיאת רשת' : 'Network error', 'error');
+            showNetworkError();
         });
     }
 
@@ -635,13 +655,13 @@
                 var msg = isHebrew() ? 'מתמחה הוסר בהצלחה' : 'Trainee removed';
                 if (window.showToast) window.showToast(msg, 'success');
                 close();
-                setTimeout(function () { location.reload(); }, 500);
+                if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
             } else {
-                if (window.showToast) window.showToast(result.error || 'Error', 'error');
+                showErrorMsg(result.error || 'Error');
             }
         })
         .catch(function () {
-            if (window.showToast) window.showToast(isHebrew() ? 'שגיאת רשת' : 'Network error', 'error');
+            showNetworkError();
         });
     }
 
@@ -649,19 +669,19 @@
     function handleChoreAssign(cellData, userId, titleInput, choreTypeDropdown) {
         if (!userId) {
             var msg = isHebrew() ? 'נא לבחור משתמש' : 'Please select a user';
-            if (window.showToast) window.showToast(msg, 'error');
+            showErrorMsg(msg);
             return;
         }
         var title = titleInput ? titleInput.value.trim() : '';
         if (!title) {
             var titleMsg = isHebrew() ? 'נא להזין כותרת' : 'Please enter a title';
-            if (window.showToast) window.showToast(titleMsg, 'error');
+            showErrorMsg(titleMsg);
             if (titleInput) titleInput.focus();
             return;
         }
         if (title.length > 200) {
             var lenMsg = isHebrew() ? 'הכותרת ארוכה מדי (מקסימום 200 תווים)' : 'Title too long (max 200 characters)';
-            if (window.showToast) window.showToast(lenMsg, 'error');
+            showErrorMsg(lenMsg);
             return;
         }
         var choreTypeId = choreTypeDropdown ? (choreTypeDropdown.value || null) : null;
@@ -716,11 +736,7 @@
     function handleAssign(cellData, userId) {
         if (!userId) {
             var msg = isHebrew() ? 'נא לבחור משתמש' : 'Please select a user';
-            if (window.showToast) {
-                window.showToast(msg, 'error');
-            } else {
-                alert(msg);
-            }
+            showErrorMsg(msg);
             return;
         }
 
@@ -755,7 +771,7 @@
                     close();
                 } else {
                     var noShiftMsg = isHebrew() ? 'נא לבחור משמרת' : 'Please select a shift';
-                    if (window.showToast) window.showToast(noShiftMsg, 'error');
+                    showErrorMsg(noShiftMsg);
                 }
             } else if (cellData.rowId && cellData.rowId.indexOf('shift-') === 0) {
                 // Shift-mode: row is a shift type, dropdown value is the user
@@ -764,20 +780,23 @@
                 close();
             } else {
                 var noActionMsg = isHebrew() ? 'לא ניתן להוסיף שיבוץ כאן' : 'Cannot add assignment here';
-                if (window.showToast) {
-                    window.showToast(noActionMsg, 'error');
-                }
+                showErrorMsg(noActionMsg);
             }
         } else {
-            var noActionMsg = isHebrew() ? 'לא ניתן להוסיף שיבוץ כאן' : 'Cannot add assignment here';
-            if (window.showToast) {
-                window.showToast(noActionMsg, 'error');
-            }
+            var noActionMsg2 = isHebrew() ? 'לא ניתן להוסיף שיבוץ כאן' : 'Cannot add assignment here';
+            showErrorMsg(noActionMsg2);
         }
     }
 
     // --- Handle remove assignment (called after tap-to-confirm) ---
     function handleRemoveAssignment(cellData, assignment) {
+        // Text entries route to dedicated handler regardless of calendar type
+        if (assignment.entryType === 'text' && typeof window.deleteTextEntry === 'function') {
+            window.deleteTextEntry(assignment.id);
+            close();
+            return;
+        }
+
         var calendarType = detectCalendarType();
 
         if (calendarType === 'chores' && typeof window.deleteItem === 'function') {
@@ -788,12 +807,16 @@
             close();
         } else if (calendarType === 'shifts') {
             // Shift removal via ClearAssignment handler on Calendar/Table
+            var bsHeaders = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            var bsCsrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (bsCsrfToken) bsHeaders['RequestVerificationToken'] = bsCsrfToken;
+
             fetch('/Calendar/Table?handler=ClearAssignment', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
+                headers: bsHeaders,
                 credentials: 'same-origin',
                 body: JSON.stringify({ assignmentId: assignment.id })
             })
@@ -803,20 +826,18 @@
                     var msg = isHebrew() ? 'השיבוץ הוסר בהצלחה' : 'Assignment removed';
                     if (window.showToast) window.showToast(msg, 'success');
                     close();
-                    setTimeout(function () { location.reload(); }, 500);
+                    if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
                 } else {
-                    if (window.showToast) window.showToast(result.error || 'Error', 'error');
+                    showErrorMsg(result.error || 'Error');
                 }
             })
             .catch(function () {
-                if (window.showToast) window.showToast(isHebrew() ? 'שגיאת רשת' : 'Network error', 'error');
+                showNetworkError();
             });
         } else {
             // Fallback for unknown calendar types
             var noRemoveMsg = isHebrew() ? 'לא ניתן למחוק שיבוץ כאן' : 'Cannot remove assignment here';
-            if (window.showToast) {
-                window.showToast(noRemoveMsg, 'error');
-            }
+            showErrorMsg(noRemoveMsg);
         }
     }
 
@@ -873,12 +894,15 @@
             var traineeId = assignEl.dataset.traineeId || '';
             var traineeName = assignEl.dataset.traineeName || '';
 
+            var entryType = assignEl.dataset.entryType || '';
+
             assignments.push({
                 id: assignmentId ? parseInt(assignmentId, 10) : null,
                 name: nameEl ? nameEl.textContent.trim() : '',
                 isTrainee: isTrainee,
                 traineeId: traineeId ? parseInt(traineeId, 10) : null,
-                traineeName: traineeName || null
+                traineeName: traineeName || null,
+                entryType: entryType
             });
         });
 
@@ -908,11 +932,8 @@
     function init() {
         // Only activate on touch devices
         if (!isTouchDevice()) {
-            console.log('[BottomSheet] Not a touch device, skipping initialization');
             return;
         }
-
-        console.log('[BottomSheet] Initializing for touch device');
 
         // Listen for taps on calendar cells
         document.addEventListener('click', function (e) {
@@ -952,7 +973,6 @@
             }
         });
 
-        console.log('[BottomSheet] Initialized');
     }
 
     // --- Handle add-btn clicks (desktop + touch) ---
@@ -986,7 +1006,8 @@
     window.CalendarBottomSheet = {
         open: open,
         close: close,
-        isOpen: function () { return isOpen; }
+        isOpen: function () { return isOpen; },
+        extractCellData: extractCellData
     };
 
 })();

@@ -57,7 +57,7 @@
         }
 
         if (!modal) {
-            console.warn('[ModalFocus] Modal element not found');
+            Logger.warn('ModalFocus', 'Modal element not found');
             return;
         }
 
@@ -175,7 +175,7 @@
                     previousActiveElement.focus();
                 } catch (e) {
                     // Element may have been removed from DOM
-                    console.warn('[ModalFocus] Could not return focus to trigger element');
+                    Logger.warn('ModalFocus', 'Could not return focus to trigger element');
                 }
             }, 50);
         }

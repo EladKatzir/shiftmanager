@@ -24,7 +24,7 @@
         // Dispatch event for listeners
         window.dispatchEvent(new CustomEvent('shifty:cache-invalidated'));
 
-        console.log('[CacheManager] Cache invalidated at', new Date(lastModified).toISOString());
+        Logger.log('Cache', 'Cache invalidated at', new Date(lastModified).toISOString());
     }
 
     /**
@@ -70,7 +70,7 @@
             var savedVersion = sessionStorage.getItem('shifty_cache_version');
             if (savedVersion && parseInt(savedVersion, 10) > lastModified) {
                 // Data was modified elsewhere, refresh the page
-                console.log('[CacheManager] Data modified in another tab, refreshing...');
+                Logger.log('Cache', 'Data modified in another tab, refreshing...');
                 window.location.reload();
             }
         }
@@ -86,7 +86,7 @@
             if (savedVersion && parseInt(savedVersion, 10) > lastModified) {
                 // Data was modified in another tab
                 lastModified = parseInt(savedVersion, 10);
-                console.log('[CacheManager] Updated cache version from session storage');
+                Logger.log('Cache', 'Updated cache version from session storage');
                 // Dispatch event so components can refresh their data
                 window.dispatchEvent(new CustomEvent('shifty:cache-updated', {
                     detail: { version: lastModified }
@@ -193,5 +193,4 @@
         }
     };
 
-    console.log('[CacheManager] Initialized with version', lastModified);
 })();

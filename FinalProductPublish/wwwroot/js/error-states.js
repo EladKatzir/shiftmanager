@@ -16,7 +16,7 @@
         toastDuration: 5000,          // Default toast auto-dismiss in ms
         toastMaxVisible: 1,           // B-052: Only 1 toast visible at a time (queue others)
         networkCheckInterval: 30000,  // Check network every 30 seconds when offline
-        networkCheckEndpoint: '/api/health' // Endpoint to check connectivity
+        networkCheckEndpoint: '/health' // Endpoint to check connectivity
     };
 
     // Localization messages (fallbacks when server-side localization not available)
@@ -404,7 +404,7 @@
      * Handle online event
      */
     function handleOnline() {
-        console.log('Browser reports online');
+        Logger.log('ErrorStates', 'Browser reports online');
         checkNetworkStatus();
     }
 
@@ -412,7 +412,7 @@
      * Handle offline event
      */
     function handleOffline() {
-        console.log('Browser reports offline');
+        Logger.log('ErrorStates', 'Browser reports offline');
         isOnline = false;
         showNetworkBanner();
         startNetworkCheck();
@@ -606,12 +606,12 @@
     function handleConcurrencyConflict(event) {
         const { entityType, entityId } = event.detail;
 
-        console.warn(`[ErrorStates] Concurrency conflict for ${entityType}${entityId ? ` (ID: ${entityId})` : ''}`);
+        Logger.warn('ErrorStates', `Concurrency conflict for ${entityType}${entityId ? ` (ID: ${entityId})` : ''}`);
 
         showConcurrencyConflictDialog({
             entityType: entityType,
             onReload: () => window.location.reload(),
-            onCancel: () => console.log('User cancelled conflict resolution')
+            onCancel: () => Logger.log('ErrorStates', 'User cancelled conflict resolution')
         });
     }
 
@@ -622,7 +622,7 @@
     function handleTimeoutEvent(event) {
         const { url, retryable } = event.detail;
 
-        console.warn(`[ErrorStates] Request timeout for: ${url}`);
+        Logger.warn('ErrorStates', `Request timeout for: ${url}`);
 
         showToast({
             level: 'warning',
@@ -646,7 +646,7 @@
     function handleAccessDeniedEvent(event) {
         const { url } = event.detail;
 
-        console.warn(`[ErrorStates] Access denied for: ${url}`);
+        Logger.warn('ErrorStates', `Access denied for: ${url}`);
 
         showToast({
             level: 'error',
@@ -665,7 +665,7 @@
     function handleServerErrorEvent(event) {
         const { url, status, retryable } = event.detail;
 
-        console.error(`[ErrorStates] Server error (${status}) for: ${url}`);
+        Logger.error('ErrorStates', `Server error (${status}) for: ${url}`);
 
         showToast({
             level: 'error',
@@ -688,7 +688,7 @@
     function handleNetworkErrorEvent(event) {
         const { url, retryable } = event.detail;
 
-        console.error(`[ErrorStates] Network error for: ${url}`);
+        Logger.error('ErrorStates', `Network error for: ${url}`);
 
         showToast({
             level: 'error',
@@ -711,7 +711,7 @@
     function handlePartialLoadEvent(event) {
         const { successCount, failedCount, totalCount, failedRequests } = event.detail;
 
-        console.warn(`[ErrorStates] Partial load: ${successCount}/${totalCount} succeeded, ${failedCount} failed`);
+        Logger.warn('ErrorStates', `Partial load: ${successCount}/${totalCount} succeeded, ${failedCount} failed`);
 
         const detailMessage = getMessage('partialLoadDetails', {
             successCount: successCount,
@@ -737,8 +737,6 @@
      * Initialize error states system
      */
     function initialize() {
-        console.log('Initializing error states system (B-004 + B-017)');
-
         // Set up network status listeners
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);

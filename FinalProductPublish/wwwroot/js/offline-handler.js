@@ -120,7 +120,7 @@
             const now = Date.now();
             return queue.filter(item => (now - item.timestamp) < MAX_AGE_MS);
         } catch (e) {
-            console.error('[OfflineHandler] Failed to load queue:', e);
+            Logger.error('Offline', 'Failed to load queue:', e);
             return [];
         }
     }
@@ -138,7 +138,7 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
             updateQueueBadge();
         } catch (e) {
-            console.error('[OfflineHandler] Failed to save queue:', e);
+            Logger.error('Offline', 'Failed to save queue:', e);
         }
     }
 
@@ -164,7 +164,7 @@
         queue.push(queueItem);
         saveQueue(queue);
 
-        console.log('[OfflineHandler] Added to queue:', queueItem.id, queueItem.description);
+        Logger.log('Offline', 'Added to queue:', queueItem.id, queueItem.description);
 
         // Show feedback to user
         if (window.Toast) {
@@ -201,9 +201,9 @@
         try {
             localStorage.removeItem(STORAGE_KEY);
             updateQueueBadge();
-            console.log('[OfflineHandler] Queue cleared');
+            Logger.log('Offline', 'Queue cleared');
         } catch (e) {
-            console.error('[OfflineHandler] Failed to clear queue:', e);
+            Logger.error('Offline', 'Failed to clear queue:', e);
         }
     }
 
@@ -368,7 +368,7 @@
             window.Toast.info(`${queue.length} actions pending sync`);
         }
 
-        console.log('[OfflineHandler] Queue status:', queue);
+        Logger.log('Offline', 'Queue status:', queue);
     }
 
     // ================================
@@ -389,7 +389,7 @@
         }
 
         isSyncing = true;
-        console.log('[OfflineHandler] Starting sync of', queue.length, 'items');
+        Logger.log('Offline', 'Starting sync of', queue.length, 'items');
 
         // Update banner to show syncing state
         const message = offlineBanner?.querySelector('.offline-banner__message');
@@ -420,7 +420,7 @@
                 if (response.ok) {
                     removeFromQueue(item.id);
                     successCount++;
-                    console.log('[OfflineHandler] Synced item:', item.id);
+                    Logger.log('Offline', 'Synced item:', item.id);
                 } else if (response.status === 409) {
                     // Conflict - server version is newer
                     removeFromQueue(item.id);
@@ -439,20 +439,20 @@
                     // Client error - don't retry
                     removeFromQueue(item.id);
                     failCount++;
-                    console.warn('[OfflineHandler] Client error for item:', item.id, response.status);
+                    Logger.warn('Offline', 'Client error for item:', item.id, response.status);
                 } else {
                     // Server error - retry later
                     item.retryCount++;
                     if (item.retryCount >= MAX_SYNC_RETRIES) {
                         removeFromQueue(item.id);
                         failCount++;
-                        console.error('[OfflineHandler] Max retries exceeded for item:', item.id);
+                        Logger.error('Offline', 'Max retries exceeded for item:', item.id);
                     } else {
                         failedItems.push(item);
                     }
                 }
             } catch (error) {
-                console.error('[OfflineHandler] Sync error for item:', item.id, error);
+                Logger.error('Offline', 'Sync error for item:', item.id, error);
                 item.retryCount++;
                 if (item.retryCount >= MAX_SYNC_RETRIES) {
                     removeFromQueue(item.id);
@@ -489,7 +489,7 @@
 
         updateQueueBadge();
 
-        console.log('[OfflineHandler] Sync complete:', successCount, 'success,', failCount, 'failed');
+        Logger.log('Offline', 'Sync complete:', successCount, 'success,', failCount, 'failed');
     }
 
     // ================================
@@ -501,7 +501,7 @@
      */
     async function checkConnection() {
         try {
-            const response = await fetch('/api/health', {
+            const response = await fetch('/health', {
                 method: 'HEAD',
                 cache: 'no-store',
                 credentials: 'same-origin'
@@ -522,7 +522,7 @@
      */
     function handleOnline() {
         if (!isOnline) {
-            console.log('[OfflineHandler] Connection restored');
+            Logger.log('Offline', 'Connection restored');
             isOnline = true;
 
             // Show connection restored message
@@ -546,7 +546,7 @@
      */
     function handleOffline() {
         if (isOnline) {
-            console.log('[OfflineHandler] Connection lost');
+            Logger.log('Offline', 'Connection lost');
             isOnline = false;
 
             // Show offline banner
@@ -695,16 +695,12 @@
      * Initialize the offline handler
      */
     function initialize() {
-        console.log('[OfflineHandler] Initializing (B-050)');
-
         // Set up event listeners for browser online/offline events
         window.addEventListener('online', function() {
-            console.log('[OfflineHandler] Browser reports online');
             checkConnection(); // Verify with actual request
         });
 
         window.addEventListener('offline', function() {
-            console.log('[OfflineHandler] Browser reports offline');
             handleOffline();
         });
 

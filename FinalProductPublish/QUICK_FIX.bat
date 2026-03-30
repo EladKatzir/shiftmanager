@@ -38,7 +38,7 @@ echo.
 
 REM Check if ShiftManager is already running
 tasklist /FI "IMAGENAME eq ShiftManager.exe" 2>NUL | find /I /N "ShiftManager.exe">NUL
-if "%ERRORLEVEL%"=="0" (
+if not errorlevel 1 (
     echo [WARNING] ShiftManager.exe is already running!
     echo.
     echo Options:
@@ -126,7 +126,7 @@ REM Try PowerShell unblock (most reliable method)
 echo Attempting to unblock all files using PowerShell...
 powershell.exe -ExecutionPolicy Bypass -Command "Get-ChildItem -Path . -Recurse -File | ForEach-Object { try { Unblock-File -Path $_.FullName -ErrorAction SilentlyContinue } catch {} }" 2>nul
 
-if %ERRORLEVEL% EQU 0 (
+if not errorlevel 1 (
     echo [OK] Files unblocked successfully
 ) else (
     echo [WARNING] PowerShell unblock method failed
@@ -142,7 +142,7 @@ if %ERRORLEVEL% EQU 0 (
 
 REM Verify critical DLL is unblocked
 powershell.exe -ExecutionPolicy Bypass -Command "if (Test-Path 'SixLabors.ImageSharp.dll:Zone.Identifier') { exit 1 } else { exit 0 }" 2>nul
-if %ERRORLEVEL% EQU 1 (
+if errorlevel 1 (
     echo.
     echo [WARNING] SixLabors.ImageSharp.dll is still BLOCKED!
     echo This may cause "Could not load file or assembly" errors.
@@ -159,17 +159,18 @@ echo [STEP 4/5] Validating configuration...
 echo ================================================================================
 echo.
 
-REM Check if SEED_ADMIN_PASSWORD is set
-findstr /C:"\"SEED_ADMIN_PASSWORD\": \"\"" appsettings.json >nul 2>&1
-if %errorlevel% equ 0 (
-    echo [ERROR] SEED_ADMIN_PASSWORD is NOT configured!
+REM Check if admin password is still the default
+findstr /C:"\"Password\": \"admin123\"" appsettings.json >nul 2>&1
+if not errorlevel 1 (
+    echo [WARNING] Default admin password detected!
     echo.
-    echo You MUST set an admin password before running.
+    echo Change the password in appsettings.json under Seeding ^> Owner ^> Password
+    echo before deploying to production.
     echo.
     echo Quick fix:
     echo   1. The next screen will open appsettings.json
-    echo   2. Find: "SEED_ADMIN_PASSWORD": "",
-    echo   3. Change to: "SEED_ADMIN_PASSWORD": "YourPassword123!",
+    echo   2. Find the "Seeding" section, then "Owner", then "Password"
+    echo   3. Change "admin123" to a strong password
     echo   4. Save and close Notepad
     echo.
     pause
@@ -177,23 +178,22 @@ if %errorlevel% equ 0 (
     notepad appsettings.json
 
     echo.
-    echo Checking if you set the password...
-    findstr /C:"\"SEED_ADMIN_PASSWORD\": \"\"" appsettings.json >nul 2>&1
-    if %errorlevel% equ 0 (
-        echo [ERROR] Password still empty! Cannot continue.
-        pause
-        exit /b 1
+    echo Checking if you changed the password...
+    findstr /C:"\"Password\": \"admin123\"" appsettings.json >nul 2>&1
+    if not errorlevel 1 (
+        echo [WARNING] Password still set to default. Continuing anyway...
+    ) else (
+        echo [OK] Password changed
     )
-    echo [OK] Password configured
 ) else (
-    echo [OK] Admin password is configured
+    echo [OK] Admin password has been changed from default
 )
 
 REM Check if port 5000 is available
 echo.
 echo Checking port availability...
 netstat -ano | findstr ":5000" >nul 2>&1
-if %errorlevel% equ 0 (
+if not errorlevel 1 (
     echo [WARNING] Port 5000 is currently in use
     echo.
     echo The application may fail to start.

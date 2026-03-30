@@ -28,10 +28,18 @@
 
     // Configuration
     const CONFIG = {
-        autoDismissMs: 5000,      // 5 seconds auto-dismiss
+        autoDismissMs: 5000,      // Default fallback (5 seconds)
         maxVisible: 1,            // Only 1 toast visible at a time
         animationDurationMs: 300, // Animation duration
         position: 'top-right'     // Toast position
+    };
+
+    // Severity-based auto-dismiss timing
+    const AUTO_DISMISS_BY_TYPE = {
+        success: 4000,   // Quick confirmation — user expects it
+        info:    6000,   // Informational — slightly longer to read
+        warning: 10000,  // Needs attention — give time to process
+        error:   0       // Manual dismiss only — user must acknowledge
     };
 
     // Toast queue - only show one at a time
@@ -178,10 +186,14 @@
             closeBtn.addEventListener('click', () => dismissToast(toast));
         }
 
-        // Auto-dismiss after configured time
-        const autoDismissTimer = setTimeout(() => {
-            dismissToast(toast);
-        }, CONFIG.autoDismissMs);
+        // Auto-dismiss based on severity (0 = manual dismiss only)
+        const dismissMs = AUTO_DISMISS_BY_TYPE[options.type] ?? CONFIG.autoDismissMs;
+        let autoDismissTimer = null;
+        if (dismissMs > 0) {
+            autoDismissTimer = setTimeout(() => {
+                dismissToast(toast);
+            }, dismissMs);
+        }
 
         // Store timer reference for manual dismiss
         toast._autoDismissTimer = autoDismissTimer;

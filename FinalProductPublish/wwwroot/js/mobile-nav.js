@@ -69,8 +69,6 @@
             }, 100);
         });
 
-        // Mark initialization complete
-        console.log('[MobileNav] Initialized');
     }
 
     /**
@@ -134,7 +132,6 @@
             }
         }, 50);
 
-        console.log('[MobileNav] Opened');
     }
 
     /**
@@ -165,7 +162,6 @@
             toggle.focus();
         }
 
-        console.log('[MobileNav] Closed');
     }
 
     /**

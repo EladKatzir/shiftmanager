@@ -653,7 +653,8 @@
         </member>
         <member name="M:ShiftManager.Data.SeedData.DataMigrationHelper.UpdateShiftTypesAsync">
             <summary>
-            Updates ShiftType records to link to molecules, job types, and shift groupings.
+            Updates ShiftType records to link to molecules and set scope.
+            For legacy company-scoped shifts without MoleculeId, derives from company.
             </summary>
         </member>
         <member name="M:ShiftManager.Data.SeedData.DataMigrationHelper.BuildCompanyMoleculeMap(System.Collections.Generic.List{ShiftManager.Models.Molecule})">
@@ -726,13 +727,25 @@
         <member name="T:ShiftManager.Data.SeedData.TechShiftTypeSeed">
             <summary>
             Seed data for tech shift types (Hanava, Delta, Yekev, Moviltech).
+            All seeded as molecule-scoped (Scope = Molecule, CompanyId = null).
             Eligibility is company-based (via EligibleCompanyIds) and rank-based (via RequiresOfficerRank).
             </summary>
         </member>
-        <member name="M:ShiftManager.Data.SeedData.TechShiftTypeSeed.GetTechShiftTypes(System.Int32,System.Int32)">
+        <member name="M:ShiftManager.Data.SeedData.TechShiftTypeSeed.GetTechShiftTypes(System.Int32)">
             <summary>
             Gets the tech shift types to be seeded for a given molecule.
             Eligibility rules (EligibleCompanyIds) are set post-save in ShiftyOrganizationSeed.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Data.SeedData.TechShiftTypeSeed.GetWorkforceShiftTypes(System.Int32,System.Int32)">
+            <summary>
+            Gets standard workforce shift types (MORNING, AFTERNOON, NIGHT, HOME, OFFLINE)
+            to be seeded for a workforce molecule per JobType.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Data.SeedData.TechShiftTypeSeed.GetWorkforceSharedShiftTypes(System.Int32)">
+            <summary>
+            Gets shared (no JobType) shift types for a workforce molecule: HOME and OFFLINE.
             </summary>
         </member>
         <member name="F:ShiftManager.Data.SeedData.TechShiftTypeSeed.AllTechShiftTypeKeys">
@@ -1312,6 +1325,18 @@
             Checks if the given area is associated with the user's company (via molecule).
             </summary>
         </member>
+        <member name="M:ShiftManager.Hubs.CalendarHub.DirectorHasMoleculeAccessAsync(System.Int32)">
+            <summary>
+            Fallback: checks if the current user has DirectorHubAccess grant for any company in the given molecule.
+            Only called when the direct company check fails (most users pass the direct check).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarHub.DirectorHasAreaAccessAsync(System.Int32)">
+            <summary>
+            Fallback: checks if the current user has DirectorHubAccess grant for any company in the given area.
+            Only called when the direct company check fails.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Hubs.CalendarAssignmentChangedEvent">
             <summary>
             DTOs for calendar events sent via SignalR.
@@ -1331,6 +1356,12 @@
         <member name="T:ShiftManager.Hubs.CalendarGroups">
             <summary>
             Helper class for building calendar group names.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarGroups.ShiftsForArea(System.Collections.Generic.IEnumerable{System.Int32},System.Nullable{System.Int32})">
+            <summary>
+            Get all shift group names for molecules in an area (for area-scoped shift notifications).
+            Caller must resolve moleculeIds from the area.
             </summary>
         </member>
         <member name="T:ShiftManager.Middleware.ApiAuthenticationMiddleware">
@@ -2400,6 +2431,90 @@
         <member name="M:ShiftManager.Migrations.AddJobTypeIsWorkforceOnly.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddShikmaPhase1Fields">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShikmaPhase1Fields.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShikmaPhase1Fields.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShikmaPhase1Fields.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddHomeRotationSystem">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddHomeRotationSystem.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddHomeRotationSystem.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddHomeRotationSystem.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.ShiftScopeRedesign">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ShiftScopeRedesign.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ShiftScopeRedesign.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ShiftScopeRedesign.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddCalendarTextEntry">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCalendarTextEntry.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCalendarTextEntry.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCalendarTextEntry.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddStoresAndQuickInfoConfig">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddStoresAndQuickInfoConfig.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddStoresAndQuickInfoConfig.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddStoresAndQuickInfoConfig.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.FixUserDayNoteCascadeToRestrict">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.FixUserDayNoteCascadeToRestrict.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.FixUserDayNoteCascadeToRestrict.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.FixUserDayNoteCascadeToRestrict.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.UnifyNoteSystems">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.UnifyNoteSystems.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.UnifyNoteSystems.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.UnifyNoteSystems.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -3134,6 +3249,25 @@
             User's primary role template. When set, AppUser.Role is auto-derived from RoleTemplate.DerivedUserRole.
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.AppUser.PrimaryShiftTypeId">
+            <summary>
+            Which shift type this user primarily operates (for calendar grouping).
+            NULL = user doesn't do shifts → appears in company group.
+            Points to a ShiftType which may belong to a different company (cross-tenant FK via IgnoreQueryFilters).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.AppUser.HomeTypeId">
+            <summary>
+            User's assigned home rotation type. Single source of truth for home type assignment.
+            NULL = no rotation assigned.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.AppUser.PrimaryShiftType">
+            <summary>
+            SECURITY-AUDITED: Cross-tenant FK — PrimaryShiftType may belong to a different company.
+            Load via IgnoreQueryFilters() when needed.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.AuditLog">
             <summary>
             Audit log entry for tracking all significant actions in the system.
@@ -3235,6 +3369,17 @@
         <member name="P:ShiftManager.Models.Chore.Title">
             <summary>
             Short title/description of the chore (required)
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Chore.StartTime">
+            <summary>
+            Optional start time for timed chores (e.g., guard duty 10:00-14:00).
+            Stored as "HH:mm" string in SQLite.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Chore.EndTime">
+            <summary>
+            Optional end time for timed chores.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.Chore.Notes">
@@ -3813,6 +3958,69 @@
             User who last modified this config
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.HomeType">
+            <summary>
+            A named rotation template defining WHEN users are home.
+            Admin paints home days on a monthly calendar; system derives a recurrence rule.
+            Users assigned to a HomeType follow its rotation pattern for HOME shift generation.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.CompanyId">
+            <summary>Tenant scoping (IBelongsToCompany).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.MoleculeId">
+            <summary>Molecule scope for this rotation template.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.Name">
+            <summary>Display name, e.g., "סבב א", "סבב ב", "רבעונים".</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.NameHe">
+            <summary>Optional Hebrew name override.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.PatternJson">
+            <summary>
+            Serialized painted dates within the reference month.
+            JSON array of date strings (yyyy-MM-dd) that the admin painted as home days.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.DerivedRule">
+            <summary>
+            System-derived recurrence rule from the painted pattern.
+            JSON: { "cycleWeeks": 2, "homeDays": [4,5,6,0], "weekOffsets": [0] }
+            null = custom (non-repeating) pattern.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.DefaultStartTime">
+            <summary>Default home block start time (e.g., Thursday 06:00).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.DefaultEndTime">
+            <summary>Default home block end time (e.g., Sunday 13:00).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.IsActive">
+            <summary>Whether this home type is active and available for assignment.</summary>
+        </member>
+        <member name="T:ShiftManager.Models.HomeTypeOverride">
+            <summary>
+            Per-user pattern deviation from a HomeType template.
+            Created when admin explicitly overrides a specific user's home pattern.
+            Most users have no override — they follow the template directly.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeTypeOverride.CompanyId">
+            <summary>Tenant scoping (IBelongsToCompany).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeTypeOverride.HomeTypeId">
+            <summary>The HomeType template being overridden.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeTypeOverride.UserId">
+            <summary>The user whose pattern differs from the template.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeTypeOverride.OverridePatternJson">
+            <summary>
+            User-specific painted pattern (different from template).
+            JSON array of date strings (yyyy-MM-dd).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.IBelongsToCompany">
             <summary>
             Marker interface for entities that belong to a specific company/tenant.
@@ -4051,6 +4259,13 @@
             Per-day staffing override. Null means use Program's DefaultStaffingRequired.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.QuickInfoConfig">
+            <summary>
+            Configuration for which items appear in the Quick Info widget for a given molecule.
+            SECURITY-AUDITED: No query filter needed — molecule-global table (like ChoreType).
+            Service MUST always scope queries by moleculeId explicitly.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.RoleTemplate.DerivedUserRole">
             <summary>
             Maps template to business tier (Employee, Manager, Director, Trainee, Owner, Assigner, AreaAdmin).
@@ -4074,6 +4289,17 @@
             Optional per-job-type display name overrides for role templates.
             Example: Manager template shows as "Mapotz" for Alhut job type.
             Cross-company — does NOT implement IBelongsToCompany.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftAssignment.IsTraineeShift">
+            <summary>
+            Per-assignment trainee flag (Shikma model: trainees take shifts directly, not shadowing).
+            Mutually exclusive with TraineeUserId — set one or the other, not both.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftAssignment.Note">
+            <summary>
+            Cell-level annotation for display in calendar (e.g., "עולה ב13", "רחב").
             </summary>
         </member>
         <member name="P:ShiftManager.Models.ShiftAssignment.RowVersion">
@@ -4122,6 +4348,22 @@
             A Program defines WHEN a specific shift type runs (weekly mask) and DEFAULT staffing.
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.ShiftType.CompanyId">
+            <summary>
+            Owning company for company-scoped shifts. Null for molecule/area-scoped shifts.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftType.Scope">
+            <summary>
+            The organizational scope at which this shift type is defined.
+            Company = per-company, Molecule = shared across molecule, Area = cross-molecule.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftType.AreaId">
+            <summary>
+            Area ID for area-scoped shifts. Required when Scope = Area.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.ShiftType.EligibleCompanyIds">
             <summary>
             JSON array of CompanyIds whose users can be assigned this shift type.
@@ -4134,10 +4376,15 @@
             Follows existing pattern from OnDutyTypeConfig.RequiresOfficerRank.
             </summary>
         </member>
-        <member name="P:ShiftManager.Models.ShiftType.CustomName">
+        <member name="P:ShiftManager.Models.ShiftType.NameEn">
             <summary>
-            Custom display name for this shift type (company-specific).
+            English display name for this shift type (molecule/area-scoped custom names).
             If null/empty, falls back to predefined names based on Key.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftType.NameHe">
+            <summary>
+            Hebrew display name for this shift type (molecule/area-scoped custom names).
             </summary>
         </member>
         <member name="P:ShiftManager.Models.ShiftType.NameKey">
@@ -4151,9 +4398,21 @@
             Formats a raw key like "CUSTOM_NORTH_SHIFT" into "North Shift" for display.
             </summary>
         </member>
+        <member name="M:ShiftManager.Models.ShiftType.GetEffectiveCompanyId(System.Int32)">
+            <summary>
+            Returns CompanyId for company-scoped shifts, or resolves from context for molecule/area-scoped.
+            Used when creating ShiftInstances that need a non-nullable CompanyId.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.ShiftType.IsOffline">
             <summary>
             Returns true if this is the special "Offline" shift type that can overlap with other shifts.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftType.IsHome">
+            <summary>
+            Returns true if this is the special "Home" shift type (rotation day off).
+            HOME shifts are exempt from overlap, rest period, and weekly cap checks.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.ShiftType.SortOrder">
@@ -4168,6 +4427,23 @@
             Returns null if no restriction (all companies eligible).
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.Store">
+            <summary>
+            Store entity — area-scoped, NO IBelongsToCompany (global table like OnDutyTypeConfig).
+            Access control via ManageStores grant (area-scoped).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Store.Name">
+            <summary>
+            Returns the culture-appropriate display name: NameHe when Hebrew, otherwise NameEn.
+            Follows the same pattern as Company.LocalizedName.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.StoreHoursEntry">
+            <summary>
+            Store opening hours entry — one per day-of-week per store.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.Support.OnDutyType">
              <summary>
              "Day Shift" types (user-facing term: "סוגי משמרות יומיות" / "Day Shift Types").
@@ -4176,6 +4452,12 @@
              In the UI, these appear as types of "Day Shifts".
              See TERMINOLOGY.md for complete terminology mapping.
              </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.ShiftScope">
+            <summary>
+            Defines the organizational scope at which a ShiftType is defined and managed.
+            Ordered narrowest→broadest to enable safe comparison (scope >= ShiftScope.Molecule = "at least molecule-wide").
+            </summary>
         </member>
         <member name="T:ShiftManager.Models.Support.GriffinConnectionTestResult">
             <summary>
@@ -4830,8 +5112,28 @@
         <member name="M:ShiftManager.Pages.Admin.Organization.IndexModel.CurrentUserCanManageMoleculeAsync(System.Int32)">
             <summary>Scoped check — used by POST handlers. Verifies the grant covers the target molecule.</summary>
         </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.Stores.IndexModel.GetAccessibleAreaIdsAsync(System.Int32)">
+            <summary>
+            Gets the set of area IDs the current user can access for the ManageStores grant.
+            Derives areas from accessible molecules (molecules have AreaId).
+            Also includes the user's own area as fallback.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Admin.Organization.Stores.IndexModel.HoursJsonEntry">
+            <summary>
+            JSON deserialization model for hours entries posted from the client.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.Stores.IndexModel.HoursJsonEntry.#ctor(System.Int32,System.String,System.String,System.Boolean)">
+            <summary>
+            JSON deserialization model for hours entries posted from the client.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Pages.Admin.UsersModel.DirectorCompanyNames">
             <summary>Tooltip data: director user ID → list of managed company names</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.UsersModel.JobTypesByCompany">
+            <summary>Maps companyId → list of valid jobTypeIds, for client-side filtering in the add-user form.</summary>
         </member>
         <member name="M:ShiftManager.Pages.Admin.UsersModel.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole,System.String)">
             <summary>
@@ -5118,13 +5420,6 @@
         <member name="P:ShiftManager.Pages.Api.Signup.RoleTemplateOption.ScopeLevel">
             <summary>RoleScopeLevel enum value — used by client to filter templates by molecule type.</summary>
         </member>
-        <member name="T:ShiftManager.Pages.Api.TechShift.EligibleModel">
-            <summary>
-            DEPRECATED: TechShift eligibility is now driven by ShiftType.EligibleCompanyIds
-            and ShiftType.RequiresOfficerRank fields. This endpoint returns an empty result
-            with a deprecation flag.
-            </summary>
-        </member>
         <member name="T:ShiftManager.Pages.Api.TelemetryModel">
             <summary>
             API endpoint for client-side telemetry collection.
@@ -5187,6 +5482,13 @@
         <member name="M:ShiftManager.Pages.Api.TelemetryModel.ParseBrowserInfo(System.String)">
             <summary>
             Parses browser information from user agent string.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Widget.SaveQuickInfoConfigModel">
+            <summary>
+            API endpoint for saving/loading Quick Info widget configuration.
+            GET: returns current config + available items for the config modal.
+            POST: saves the config (delete-and-reinsert pattern via IQuickInfoConfigService).
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Auth.ForgotPasswordModel.RedactEmail(System.String)">
@@ -5317,6 +5619,13 @@
             <summary>
             Excel-style Shifts Calendar page - Primary deliverable for Excel Calendars feature.
             Supports shift-based and user-based view modes with molecule/job type filtering.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.BuildTechGroupedRowsAsync(System.Collections.Generic.List{ShiftManager.Models.AppUser},System.Collections.Generic.List{ShiftManager.Models.ShiftInstance},System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},ShiftManager.Services.FyiOverlayData},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Int32,System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}}},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.String})">
+            <summary>
+            SP3: Build grouped rows for tech molecule user-mode calendar.
+            Groups users by PrimaryShiftType (shift-type sections) or by Company (for non-shift users).
+            Within shift-type groups, splits into regulars and trainees (localized via _localizer).
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.TableModel.LocalizeShiftTypeName(ShiftManager.Models.ShiftType)">
@@ -5461,53 +5770,9 @@
         </member>
         <member name="T:ShiftManager.Pages.Owner.BlueprintsModel">
             <summary>
-            Blueprints - Manage ShiftTypes (shift definitions) with bilingual names.
-            "Blueprints" are the foundational templates that Programs reference.
-            ✅ P1-1: Expanded access from Owner-only to Manager+Director+Owner
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostCreateShiftTypeAsync">
-            <summary>
-            Creates a new ShiftType with localized name.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostUpdateShiftNameAsync(System.Int32,System.String,System.String)">
-            <summary>
-            Updates localized names for an existing ShiftType.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostUpdateShiftTimesAsync(System.Int32,System.String,System.String)">
-            <summary>
-            Updates time range for a ShiftType.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnGetCheckShiftTypeUsageAsync(System.Int32)">
-            <summary>
-            ✅ P1-4: Check ShiftType usage count (for deletion warning modal)
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostDeleteShiftTypeAsync(System.Int32,System.Boolean)">
-            <summary>
-            ✅ P1-4: Deletes a ShiftType with confirmation (allows deletion even if in use)
-            Deletes a ShiftType if not referenced by Programs.
-            Allows deletion of ShiftTypes used by ShiftInstances after explicit confirmation.
-            Historical shifts remain stable (ShiftInstance records are NOT deleted).
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostPublishToMoleculeAsync(System.Int32,System.Int32,System.Int32)">
-            <summary>
-            Publishes an existing ShiftType to a molecule scope by setting MoleculeId and JobTypeId.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostUnpublishFromMoleculeAsync(System.Int32)">
-            <summary>
-            Unpublishes a ShiftType from molecule scope (reverts to company-only).
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostPopulateNameKeysAsync">
-            <summary>
-            MIGRATION HELPER: Populates NameKey for existing ShiftTypes that don't have one.
-            This is a one-time operation after the OpsConsoleScheduler migration.
+            Blueprints - Manage ShiftTypes (shift definitions) with scope-aware permissions.
+            Supports Company, Molecule, and Area scoped shift types.
+            Grant-based authorization: EditShiftTypes for edit/delete, CreateShiftTypes for create.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Owner.ClearCompanySelectionModel">
@@ -5530,6 +5795,12 @@
         <member name="T:ShiftManager.Pages.Owner.EmailConfigModel">
             <summary>
             Email Configuration - Configure email notifications for the system
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.EmailTemplatesModel.OnPostApplyToAllCompaniesAsync">
+            <summary>
+            Apply a template to ALL companies at once (global base template).
+            Creates or updates the template for each company with the same content.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Owner.FeatureFlagsModel">
@@ -5574,6 +5845,8 @@
         <member name="T:ShiftManager.Pages.Owner.Hub.ExportUserDataModel">
             <summary>
             Exports all user data as JSON (GDPR-style data portability).
+            Without a userId: renders a selection UI listing all users.
+            With a userId: immediately downloads single-user JSON export (existing behaviour).
             QA Item 65 / E-06.
             </summary>
         </member>
@@ -5693,6 +5966,11 @@
             Language Management - Configure company languages and manage translation overrides
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Owner.LanguageManagementModel.OnPostApplyOverrideToAllCompaniesAsync">
+            <summary>
+            Apply a localization override to ALL companies at once (global base override).
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Owner.LanguageManagementModel.OnPostApiSaveDraftsAsync(ShiftManager.Pages.Owner.SaveDraftsRequest)">
             <summary>
             API handler for saving draft translations from edit mode.
@@ -5808,6 +6086,17 @@
             <summary>
             Handles the data-cleanup POST. Deletes telemetry older than
             <paramref name="retentionDays"/> days and reports what was removed.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Requests.IndexModel.IsManager">
+            <summary>
+            True if the user has ManagerHomeAccess grant (can approve/decline/delete requests).
+            False for employees who can only view their own requests.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Requests.IndexModel.RequireManagerAccessAsync">
+            <summary>
+            Checks if the current user has ManagerHomeAccess grant (required for approve/decline/delete actions).
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Requests.IndexModel.ValidateAccessToRequestAsync(ShiftManager.Models.AppUser,System.Int32)">
@@ -6223,6 +6512,33 @@
             User-friendly display text like "Busy: vacation" or "Busy: shift and chore".
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.CalendarTextEntryService.GetByIdAsync(System.Int32)">
+            <summary>
+            Loads a single text entry by ID. Uses IgnoreQueryFilters because the entry's
+            CompanyId may differ from the caller's tenant (cross-company within molecule).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.CalendarTextEntryService.SetOverviewNoteAsync(System.Int32,System.DateOnly,System.Int32,System.String,System.Int32)">
+            <summary>
+            Upsert an overview note for a specific user/date/company. Only one OverviewNote
+            entry is allowed per (UserId, Date, CompanyId) — enforced here at service level.
+            This is the ONLY code path that creates OverviewNote entries.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.CalendarTextEntryService.GetOverviewNotesForCompanyAsync(System.Int32,System.DateOnly,System.DateOnly)">
+            <summary>
+            Bulk load overview notes for a company within a date range.
+            Returns same shape as the former IUserDayNoteService.GetNotesForCompanyAsync.
+            Uses standard query filter (company-scoped) — no IgnoreQueryFilters needed.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.CalendarTextEntryService.GetForUsersAndDateRangeWithTypeAsync(System.Collections.Generic.IEnumerable{System.Int32},System.DateOnly,System.DateOnly)">
+            <summary>
+            Same as GetForUsersAndDateRangeAsync but includes EntryType in results
+            so callers can distinguish QuickEntry items from OverviewNotes.
+            SECURITY-AUDITED: Same IgnoreQueryFilters rationale as GetForUsersAndDateRangeAsync.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.ChoreService.CanUserManageChoresAsync(System.Int32)">
             <summary>
             Check if current user can manage chores.
@@ -6408,7 +6724,7 @@
             Background service that automatically backs up the SQLite database.
             - Runs backup on startup
             - Daily scheduled backups (configurable time)
-            - 7-day rotation (configurable retention)
+            - Retains 2 most recent backups
             - Logs every backup with file size and SHA256 checksum
             Fixes: C-02 (no automated backup), E-07 (backup Owner-only dependency)
             </summary>
@@ -6430,6 +6746,39 @@
             <summary>
             D-10: Encrypt a file with AES-256-CBC using PBKDF2-derived key.
             File format: [16-byte salt][16-byte IV][encrypted data]
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DeploymentExportService.RestoreDataStaticAsync(System.String,System.String,System.String,System.String[],Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            Static Phase 2 implementation — testable without DI.
+            Validates hash + migration compatibility, then copies DB and files.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DeploymentExportService.CopyDirectoryRecursive(System.String,System.String)">
+            <summary>
+            Recursively copies all files from sourceDir to destDir.
+            Uses Path.GetRelativePath for correct cross-platform path mapping.
+            Returns the number of files copied.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DeploymentExportService.ComputeSha256Async(System.String)">
+            <summary>Computes a lowercase SHA256 hex string for the given file.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.DeploymentExportService.CleanupOrphanedFolders(System.String)">
+            <summary>
+            Deletes any orphaned .old-* and .new-* sibling directories left by
+            interrupted previous export runs. Instance wrapper delegates to static version.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DeploymentExportService.CleanupOrphanedFoldersStatic(System.String,Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            Static version of CleanupOrphanedFolders — usable without a service instance.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DeploymentExportService.CleanupRestoredFolders(System.String,Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            Keeps only the <see cref="F:ShiftManager.Services.DeploymentExportService.MaxRestoredFoldersRetained"/> most recent .restored-* sibling
+            folders next to the export path; deletes the rest by LastWriteTime ascending.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.DirectorService.CanAssignRole(ShiftManager.Models.Support.UserRole)">
@@ -6733,6 +7082,18 @@
             Checks application memory usage.
             Reports Degraded if working set exceeds 600MB (early warning).
             Reports Unhealthy if working set exceeds 800MB (hard limit).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.HomeTypeService.DeriveRuleFromPattern(System.Collections.Generic.List{System.DateOnly})">
+            <summary>
+            Derives a recurrence rule from an array of painted dates.
+            Detects weekly pattern (which days of the week) and cycle length.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.HomeTypeService.GenerateHomeShiftsAsync(System.Int32,System.DateOnly,System.DateOnly,System.Collections.Generic.List{System.Int32},System.Int32,ShiftManager.Services.RegenerationMode)">
+            <summary>
+            Generates HOME ShiftAssignments for users based on the HomeType pattern.
+            Uses AddRange + single SaveChangesAsync inside a transaction for bulk performance.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IApiKeyService">
@@ -7088,7 +7449,7 @@
             3. .resx for NameKey
             4. .resx for "ShiftType_{Key}" pattern
             5. .resx for raw Key (e.g., "MORNING" → "בוקר")
-            6. CustomName (non-localized single-language fallback)
+            6. NameHe/NameEn (direct bilingual name on ShiftType for molecule/area-scoped shifts)
             7. Computed Name from ShiftType model
             </summary>
         </member>
@@ -7449,6 +7810,12 @@
         <member name="M:ShiftManager.Services.IFriendshipService.SearchUsersAsync(System.Int32,System.String,System.Int32)">
             <summary>
             Searches for users that can be added as friends.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGrantService.HasCalendarEditPermissionAsync(System.Int32)">
+            <summary>
+            Checks if the user has any calendar editing grant (shift, chore, or on-duty assignment).
+            Used by text entry endpoints where multiple grant types authorize the same action.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.GrantVerificationResult">
@@ -7994,6 +8361,11 @@
             Result of purge operation
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.QuickInfoConfigItem">
+            <summary>
+            DTO for save operations on QuickInfoConfig.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.RateLimitInfo">
             <summary>
             Information about a rate-limited entry for admin display.
@@ -8286,6 +8658,22 @@
             in 3-4 queries instead of N individual lookups.
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.FyiOverlayItem">
+            <summary>
+            A named+colored overlay item (chore or on-duty) for rich calendar display.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.FyiOverlayItem.#ctor(System.String,System.String)">
+            <summary>
+            A named+colored overlay item (chore or on-duty) for rich calendar display.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Services.FyiOverlayData.HasChore">
+            <summary>Backward-compatible: true if any chore items exist.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.FyiOverlayData.HasOnDuty">
+            <summary>Backward-compatible: true if any on-duty items exist.</summary>
+        </member>
         <member name="M:ShiftManager.Services.IShiftCalendarService.GetCapacitiesBatchAsync(System.Int32,System.Nullable{System.Int32},System.DateOnly,System.DateOnly)">
             <summary>
             Batch load capacity overrides for all shift types within a molecule/jobType/date range.
@@ -8382,6 +8770,25 @@
             <summary>
             Gets all ShiftInstances that were generated from a specific Program.
             Used for "Show all Operations from this Program" view.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IShiftTypeSeedService">
+            <summary>
+            Seeds standard shift types when a new molecule is created.
+            Workforce: HOME + OFFLINE immediately. Per-JobType shifts when JobTypes are configured.
+            Tech: HOME + OFFLINE immediately. Tech shifts created manually via Blueprints.
+            Helper/System: nothing auto-seeded.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTypeSeedService.SeedForMoleculeAsync(System.Int32)">
+            <summary>
+            Seed standard shift types for a newly created molecule based on its type.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTypeSeedService.SeedForJobTypeAsync(System.Int32,System.Int32)">
+            <summary>
+            Seed per-JobType shifts (MORNING/AFTERNOON/NIGHT) when a JobType is assigned to a molecule.
+            Only applies to Workforce molecules.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ITenantResolver">
@@ -8717,6 +9124,11 @@
             Check if a duty type requires officer rank.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IOnDutyService.IsValidDutyTypeAsync(System.Int32)">
+            <summary>
+            Check if a duty type value is valid (either a built-in enum or a custom OnDutyTypeConfig).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.OnDutyService">
              <summary>
              Service for managing "Day Shifts" (user-facing term: "משמרות יומיות" / "Day Shifts").
@@ -8875,6 +9287,27 @@
             Get current user ID from HTTP context
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.QuickInfoConfigService.GetConfigForMoleculeAsync(System.Int32)">
+            <summary>
+            Get all enabled QuickInfoConfig entries for a molecule, ordered by DisplayOrder.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.QuickInfoConfigService.SaveConfigAsync(System.Int32,System.Int32,System.Collections.Generic.List{ShiftManager.Services.QuickInfoConfigItem})">
+            <summary>
+            Save QuickInfoConfig for a molecule using delete-and-reinsert pattern.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.QuickInfoConfigService.GetDefaultConfigAsync(System.Int32)">
+            <summary>
+            Compute default config on-the-fly (NOT persisted).
+            Returns OnCallRoles first (from OnDutyTypeConfigs), then Stores for the molecule's area.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.QuickInfoConfigService.HasConfigAsync(System.Int32)">
+            <summary>
+            Check whether any QuickInfoConfig entries exist for a molecule.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.RateLimitingService">
             <summary>
             In-memory rate limiting service to prevent brute force attacks.
@@ -8956,8 +9389,7 @@
         <member name="M:ShiftManager.Services.ShiftAssignmentService.MergeAndSumHours(System.Collections.Generic.List{System.ValueTuple{System.DateTime,System.DateTime}})">
             <summary>
             Merges overlapping time windows and sums total unique hours.
-            Prevents double-counting when shifts overlap (e.g., two overlapping 8hr offline shifts
-            should count as 8hr, not 16hr). Ported from ConflictChecker.
+            Delegates to shared TimeHelpers implementation.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ShiftAssignmentService.IsUserInMoleculeAsync(System.Int32,System.Int32)">
@@ -8974,38 +9406,130 @@
         </member>
         <member name="T:ShiftManager.Services.IShiftTypeCacheService">
             <summary>
-            Service interface for caching shift types per company
+            Service interface for caching shift types by molecule and area scope.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTypeCacheService.GetShiftTypesForMoleculeAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Get all shift types visible for a given molecule+jobType: molecule-scoped + company-scoped shifts.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTypeCacheService.GetAreaShiftTypesAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Get area-scoped shift types overlaid on top of molecule shifts.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTypeCacheService.GetMergedShiftTypesAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Get merged list: molecule + area shifts for a given molecule (auto-resolves areaId).
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ShiftTypeCacheService">
             <summary>
-            Service for caching frequently-accessed shift types to reduce database queries
-            Caches shift types per company for 10 minutes
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.ShiftTypeCacheService.GetShiftTypesAsync(System.Int32)">
-            <summary>
-            Get shift types for a company, using cache when available
+            Caches shift types in two layers:
+            - Molecule cache: molecule-scoped + company-scoped shifts for a molecule+jobType
+            - Area overlay cache: area-scoped shifts only
+            At query time, merge both lists for the full picture.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ShiftTypeCacheService.GetShiftTypesForMoleculeAsync(System.Int32,System.Nullable{System.Int32})">
             <summary>
-            Get shift types for a molecule+jobtype combination, using cache when available.
-            Uses IgnoreQueryFilters to load across company boundaries within the molecule.
-            When jobTypeId is null, loads Tech shift types (JobTypeId == null) for the molecule.
+            Get shift types for a molecule+jobtype: molecule-scoped + company-scoped within this molecule.
+            No query filter needed — ShiftType no longer implements IBelongsToCompany.
+            When jobTypeId is null, loads shared shifts (HOME, OFFLINE) and tech shifts with JobTypeId == null.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ShiftTypeCacheService.GetAreaShiftTypesAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Get area-scoped shift types for an area+jobType combination.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ShiftTypeCacheService.GetMergedShiftTypesAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Get merged shift types: molecule-scoped + company-scoped + area overlay.
+            Resolves areaId from the molecule automatically.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ShiftTypeCacheService.InvalidateCache(System.Int32)">
             <summary>
-            Invalidate the shift types cache for a company
-            Call this when shift types are created, updated, or deleted
+            Invalidate cache for a specific company (legacy — invalidates molecule caches that may contain company-scoped shifts).
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ShiftTypeCacheService.InvalidateMoleculeCache(System.Int32,System.Nullable{System.Int32})">
             <summary>
             Invalidate the molecule-scoped shift types cache.
-            Call this when shift types are created, updated, or deleted for a molecule+jobtype combination.
-            When jobTypeId is null, invalidates the Tech shift types cache entry for the molecule.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ShiftTypeCacheService.InvalidateAreaCache(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Invalidate the area-scoped shift types cache.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ShiftTypeCacheService.InvalidateAllCaches">
+            <summary>
+            Nuclear option: invalidate all shift type caches.
+            Used during migration/seed operations.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.StaleRequestReaperJob">
+            <summary>
+            Background service that runs weekly to clean up stale Pending requests
+            older than a configurable threshold (default 30 days).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.GetStoresForAreaAsync(System.Int32)">
+            <summary>
+            Get all stores for a given area, including their hours entries.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.GetStoreByIdAsync(System.Int32)">
+            <summary>
+            Get a single store by ID.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.CreateStoreAsync(System.Int32,System.String,System.String,System.Int32)">
+            <summary>
+            Create a new store within an area.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.UpdateStoreAsync(System.Int32,System.String,System.String,System.Boolean,System.Int32)">
+            <summary>
+            Update an existing store.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.DeleteStoreAsync(System.Int32)">
+            <summary>
+            Delete a store and clean up orphaned QuickInfoConfig entries.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.GetStoreHoursAsync(System.Int32)">
+            <summary>
+            Get store hours entries, using cache when available.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.SetStoreHoursAsync(System.Int32,System.Collections.Generic.List{ShiftManager.Models.StoreHoursEntry})">
+            <summary>
+            Replace all store hours entries for a store (delete-and-reinsert pattern).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.ComputeStoreStatusAsync(System.Int32,System.DateTime)">
+            <summary>
+            Compute current open/closed/break status for a single store.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.ComputeAllStoreStatusesAsync(System.Collections.Generic.List{System.Int32},System.DateTime)">
+            <summary>
+            Batch version — load all store hours in one query, compute status for each.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.ComputeStatusFromHours(System.Int32,System.String,System.Collections.Generic.IEnumerable{ShiftManager.Models.StoreHoursEntry},System.DateTime)">
+            <summary>
+            Core status computation logic shared by single and batch methods.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.StoreService.FindNextOpenTime(System.Collections.Generic.IEnumerable{ShiftManager.Models.StoreHoursEntry},System.Int32)">
+            <summary>
+            Scan forward up to 7 days from the given day-of-week to find the next open time.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.TeamCalendarEventAggregator">
@@ -9106,6 +9630,13 @@
         <member name="M:ShiftManager.Services.TimeHelpers.WeekStart(System.DateOnly,System.DayOfWeek)">
             <summary>
             A-05: Configurable week start day. IDF units may use Sunday as week start.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.TimeHelpers.MergeAndSumHours(System.Collections.Generic.List{System.ValueTuple{System.DateTime,System.DateTime}})">
+            <summary>
+            Merges overlapping time windows and sums total unique hours.
+            Prevents double-counting when shifts overlap (e.g., two overlapping 8hr offline shifts
+            should count as 8hr, not 16hr). Ported from ConflictChecker.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.UserDataExportService">
@@ -9234,12 +9765,13 @@
             Service for building grant-based widgets with additive content merging.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IWidgetService.BuildOnCallWidgetAsync(System.Int32,System.Int32)">
+        <member name="M:ShiftManager.Services.IWidgetService.BuildOnCallWidgetAsync(System.Int32,System.Int32,System.Int32)">
             <summary>
             Builds the on-call widget data for a user, merging contacts from all granted contexts.
             </summary>
             <param name="userId">The current user's ID.</param>
             <param name="currentCompanyId">The user's current tenant company ID (used for ManagerHomeAccess fallback).</param>
+            <param name="moleculeId">The user's molecule ID. When &gt; 0, uses QuickInfoConfig-based lookup instead of grant-based.</param>
         </member>
         <member name="M:ShiftManager.Services.IWidgetService.GetCurrentHakamAsync(System.Nullable{System.DateTime})">
             <summary>
@@ -9269,6 +9801,16 @@
         <member name="M:ShiftManager.Services.IWidgetService.GetOfficeNumbersAsync(System.Int32)">
             <summary>
             Gets office numbers for a company.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.WidgetService.BuildMoleculeBasedWidgetAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            New molecule-based widget path using QuickInfoConfig + OnDuty table + Store statuses.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.WidgetService.BuildGrantBasedWidgetAsync(System.Int32,System.Int32)">
+            <summary>
+            Original grant-based widget path — backward compatibility for users without molecule context.
             </summary>
         </member>
         <member name="T:ShiftManager.TagHelpers.IconTagHelper">

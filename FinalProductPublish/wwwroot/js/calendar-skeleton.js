@@ -157,7 +157,7 @@
             setTimeout(function() {
                 // Force transition if content hasn't signaled ready
                 if (!contentEl.classList.contains(CONFIG.classes.loaded)) {
-                    console.warn('Calendar content took too long to load, forcing display');
+                    Logger.warn('Skeleton', 'Calendar content took too long to load, forcing display');
                     transitionToContent(skeletonEl, contentEl);
                 }
             }, CONFIG.maxSkeletonTime);

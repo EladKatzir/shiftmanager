@@ -13,6 +13,9 @@
 
   if (!isCalendarPage) return;
 
+  // Skip if toolbar already has a print button (avoids duplicate)
+  if (document.querySelector('.cal-toolbar__print, .cal-toolbar [onclick*="print"]')) return;
+
   /**
    * Create and inject the print button
    */
@@ -28,7 +31,6 @@
     button.addEventListener('click', handlePrint);
 
     document.body.appendChild(button);
-    console.log('[B-006] Print button added to calendar page');
   }
 
   /**
@@ -121,7 +123,7 @@
       window.matchMedia('print').addEventListener('change', function(e) {
         if (!e.matches) {
           // Print dialog closed - could restore state here if needed
-          console.log('[B-006] Print completed or cancelled');
+          // Print completed or cancelled
         }
       });
     }

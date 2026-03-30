@@ -21,13 +21,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Apply saved theme or detect system preference
   if (saved) {
     root.setAttribute('data-theme', saved);
-    console.log('Using saved theme:', saved);
   } else {
     // Detect system preference
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const systemTheme = prefersDark ? 'dark' : 'light';
     root.setAttribute('data-theme', systemTheme);
-    console.log('No saved theme, using system preference:', systemTheme);
   }
 
   // Listen for system theme changes
@@ -37,7 +35,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!getStorage('theme')) {
         const newTheme = e.matches ? 'dark' : 'light';
         root.setAttribute('data-theme', newTheme);
-        console.log('System theme changed to:', newTheme);
       }
     });
   }
@@ -51,11 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
       const newTheme = current === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', newTheme);
       setStorage('theme', newTheme);
-      console.log('Theme manually switched to:', newTheme);
+      Logger.log('Site', 'Theme switched to:', newTheme);
     });
-    console.log('Dark mode toggle initialized');
-  } else {
-    console.warn('Theme toggle button not found');
   }
 
   // Sidebar User Menu
@@ -116,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
-    console.log('Sidebar user menu initialized');
   }
 
   // Easter egg: Shift Swap game (Ctrl+Click on .brand)
@@ -128,18 +121,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // If not clicking within .brand area, ignore
     if (!brandElement) return;
 
-    console.log('Brand area clicked! Ctrl:', e.ctrlKey, 'Meta:', e.metaKey, 'Clicked element:', e.target.tagName, e.target.className);
+    // Brand area clicked
 
     // Only trigger game if Ctrl/Cmd key is pressed
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       e.stopPropagation();
 
-      console.log('Ctrl+click detected on .brand! ShiftSwapGame available:', !!window.ShiftSwapGame);
-
       // Dynamically load game assets if not already loaded
       if (!window.ShiftSwapGame) {
-        console.log('Loading Shift Swap game assets...');
 
         // Load CSS
         if (!document.querySelector('link[href*="shift-swap-game.css"]')) {
@@ -159,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
           await new Promise((resolve) => {
             script.onload = resolve;
             script.onerror = () => {
-              console.error('Failed to load Shift Swap game script');
+              Logger.error('Site', 'Failed to load Shift Swap game script');
               resolve();
             };
           });
@@ -168,16 +158,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Open the Shift Swap game
       if (window.ShiftSwapGame) {
-        console.log('Opening Shift Swap game...');
         window.ShiftSwapGame.open();
       } else {
-        console.error('ShiftSwapGame not loaded!');
+        Logger.error('Site', 'ShiftSwapGame not loaded!');
       }
     }
     // Normal clicks work as usual (no special handling needed)
   });
 
-  console.log('Easter egg Ctrl+click handler initialized for .brand');
+  // Easter egg handler ready
 
 });
 
@@ -217,7 +206,7 @@ async function adjustStaffing(url, payload, onOk, onError, evt) {
         ? JSON.parse(rawText)
         : { message: rawText };
     } catch (parseError) {
-      console.warn('Failed to parse response, using text:', parseError);
+      Logger.warn('Site', 'Failed to parse response, using text:', parseError);
       data = { message: rawText };
     }
 
@@ -249,7 +238,7 @@ async function adjustStaffing(url, payload, onOk, onError, evt) {
       onError && onError(data);
     }
   } catch (e) {
-    console.error(e);
+    Logger.error('Site', e);
     if (button) {
       button.style.background = '#dc3545';
       button.style.color = 'white';
@@ -293,7 +282,7 @@ function showToast(message, type = 'info') {
   }
 
   // Fallback for edge cases where Toast API isn't loaded yet
-  console.warn('[showToast] Toast API not available, using fallback');
+  Logger.warn('Site', 'Toast API not available, using fallback');
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
@@ -459,9 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentModalData = null;
 
 function openShiftModal(date) {
-  console.log('Opening shift modal for date:', date);
   const availableTypes = window.shiftTypes || [];
-  console.log('Available shift types:', availableTypes);
   currentModalData = { date, availableTypes };
 
   const modal = document.getElementById('shiftModal');
@@ -723,7 +710,7 @@ async function createShift() {
         ? JSON.parse(rawText)
         : { message: rawText };
     } catch (parseError) {
-      console.warn('Failed to parse response, using text:', parseError);
+      Logger.warn('Site', 'Failed to parse response, using text:', parseError);
       data = { message: rawText };
     }
 
@@ -745,7 +732,7 @@ async function createShift() {
     window.location.reload();
 
   } catch (error) {
-    console.error('Error creating shift:', error);
+    Logger.error('Site', 'Error creating shift:', error);
     showToast(error.message || window.AppLocalizer.FailedToCreateShift, 'error');
   }
 }
@@ -922,7 +909,7 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
             alert((window.AppLocalizer?.Error_Prefix || 'Error: ') + result.error);
         }
     } catch (error) {
-        console.error('Error deleting shift instance:', error);
+        Logger.error('Site', 'Error deleting shift instance:', error);
         alert(window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
     }
 }
@@ -980,15 +967,15 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       commandPaletteState.recentPages = JSON.parse(stored);
     } catch (e) {
-      console.warn('Failed to parse recent pages:', e);
+      Logger.warn('Site', 'Failed to parse recent pages:', e);
       commandPaletteState.recentPages = [];
     }
   }
 
-  // Keyboard shortcut: Ctrl/Cmd + K
+  // Keyboard shortcut: Ctrl/Cmd + J (changed from K — browser search bar conflicts on air-gapped machines)
   document.addEventListener('keydown', function(e) {
-    // Ctrl/Cmd + K
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    // Ctrl/Cmd + J
+    if ((e.ctrlKey || e.metaKey) && e.key === 'j') {
       e.preventDefault();
       toggleCommandPalette();
     }
@@ -1230,7 +1217,7 @@ function addToRecentPages(url) {
   try {
     localStorage.setItem('commandPaletteRecent', JSON.stringify(commandPaletteState.recentPages));
   } catch (e) {
-    console.warn('Failed to save recent pages:', e);
+    Logger.warn('Site', 'Failed to save recent pages:', e);
   }
 }
 
@@ -1282,7 +1269,7 @@ function toggleShortcutsHelp() {
     return;
   }
   const shortcuts = [
-    { keys: 'Ctrl+K', desc: window.AppLocalizer?.CommandPalette || 'Command Palette' },
+    { keys: 'Ctrl+J', desc: window.AppLocalizer?.CommandPalette || 'Command Palette' },
     { keys: '?', desc: window.AppLocalizer?.KeyboardShortcuts || 'Keyboard Shortcuts' },
     { keys: 'Esc', desc: window.AppLocalizer?.CloseDialog || 'Close Dialog' },
     { keys: '\u2190 / h', desc: window.AppLocalizer?.PreviousMonth || 'Previous Month (Calendar)' },

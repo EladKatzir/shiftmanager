@@ -59,6 +59,8 @@ function setupEventListeners() {
 
 function initializeWeek() {
     currentWeekStart = getThisWeeksSunday();
+    const weekRangeEl = document.getElementById('weekRange');
+    if (weekRangeEl) weekRangeEl.textContent = formatWeekRange(currentWeekStart);
 }
 
 function getThisWeeksSunday() {
@@ -106,7 +108,7 @@ function formatWeekRange(startDateStr) {
 
 async function apiCall(url, options = {}) {
     try {
-        console.log('API Call:', url, options);
+        Logger.log('MyTeam', 'API Call:', url, options);
 
         const headers = {
             'Content-Type': 'application/json',
@@ -129,7 +131,7 @@ async function apiCall(url, options = {}) {
             credentials: 'same-origin'
         });
 
-        console.log('API Response:', response.status, response.statusText);
+        Logger.log('MyTeam', 'API Response:', response.status, response.statusText);
 
         if (!response.ok) {
             let errorMessage = 'Request failed';
@@ -149,7 +151,7 @@ async function apiCall(url, options = {}) {
 
         return await response.json();
     } catch (error) {
-        console.error('API Error:', error);
+        Logger.error('MyTeam', 'API Error:', error);
         alert(error.message || window.AppLocalizer.AnErrorOccurred);
         throw error;
     }
@@ -185,7 +187,7 @@ async function loadCalendars() {
         if (calNameDisplay) calNameDisplay.textContent = calendars[0].name;
         loadWeekView();
     } catch (error) {
-        console.error('Failed to load calendars:', error);
+        Logger.error('MyTeam', 'Failed to load calendars:', error);
     }
 }
 
@@ -199,7 +201,7 @@ async function loadWeekView() {
     try {
         const data = await apiCall(`/api/team-calendars/${currentCalendarId}/week?date=${currentWeekStart}`);
 
-        console.log('Week view data:', data);
+        Logger.log('MyTeam', 'Week view data:', data);
 
         // Update week range display
         const weekRangeEl = document.getElementById('weekRange');
@@ -216,7 +218,7 @@ async function loadWeekView() {
         if (emptyStateEl) emptyStateEl.style.display = 'none';
         renderWeekGrid(data.members);
     } catch (error) {
-        console.error('Failed to load week view:', error);
+        Logger.error('MyTeam', 'Failed to load week view:', error);
         container.innerHTML = `<div class="empty-state"><h3>${window.MyTeamLocalization.failedToLoadWeekView}</h3></div>`;
     }
 }
@@ -225,7 +227,7 @@ function renderWeekGrid(members) {
     const dayNames = window.MyTeamLocalization.dayNames;
     const dayNamesShort = window.MyTeamLocalization.dayNamesShort;
 
-    console.log('Rendering week grid with members:', members);
+    Logger.log('MyTeam', 'Rendering week grid with members:', members);
 
     // Start with day headers (desktop only)
     let html = `
@@ -238,17 +240,20 @@ function renderWeekGrid(members) {
 
     // Render member cards
     members.forEach(member => {
-        console.log('Rendering member:', member.displayName, 'days:', member.days);
+        Logger.log('MyTeam', 'Rendering member:', member.displayName, 'days:', member.days);
 
-        // Get initials for avatar
+        // Get initials for avatar fallback
         const initials = getInitials(member.displayName);
+        const avatarContent = member.avatarUrl
+            ? `<img src="${escapeHtml(member.avatarUrl)}" alt="${escapeHtml(member.displayName)}" loading="lazy" decoding="async">`
+            : escapeHtml(initials);
 
         html += `
             <div class="member-card">
                 <div class="member-card-content">
                     <!-- Member Info -->
                     <div class="member-info-section">
-                        <div class="member-avatar">${escapeHtml(initials)}</div>
+                        <div class="member-avatar">${avatarContent}</div>
                         <div class="member-details">
                             <div class="member-name">${escapeHtml(member.displayName)}</div>
                         </div>
@@ -289,7 +294,7 @@ function renderWeekGrid(members) {
 
     html += `</div>`;
 
-    console.log('Generated HTML:', html.substring(0, 500));
+    Logger.log('MyTeam', 'Generated HTML:', html.substring(0, 500));
     const gridContainer = document.getElementById('weekGridContainer');
     if (gridContainer) gridContainer.innerHTML = html;
 }

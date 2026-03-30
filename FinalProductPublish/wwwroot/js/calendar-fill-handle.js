@@ -18,19 +18,14 @@
     function initFillHandle() {
         // Disable fill handle on touch devices — touch targets too small, drag not reliable
         if (isTouchDevice()) {
-            console.log('[Fill Handle] Disabled on touch device');
             return;
         }
-
-        console.log('[Fill Handle] Initializing...');
 
         // Attach fill handles to cells with assignments
         attachFillHandles();
 
         // Re-attach on dynamic content updates
         observeCellUpdates();
-
-        console.log('[Fill Handle] Initialized');
     }
 
     /**
@@ -106,7 +101,6 @@
         // Highlight potential target cells
         highlightFillTargets(true);
 
-        console.log('[Fill Handle] Drag started from', cell.dataset.date);
     }
 
     /**
@@ -153,8 +147,6 @@
         // If we have target cells, show the fill options modal
         if (targetCells.length > 0) {
             await showFillOptionsModal();
-        } else {
-            console.log('[Fill Handle] No target cells selected');
         }
 
         // Reset state
@@ -347,8 +339,6 @@
             return;
         }
 
-        console.log(`[Fill Handle] Performing ${mode} fill from ${sourceCell.dataset.date} to ${targetDates.length} targets`);
-
         // Show loading indicator
         const loadingToast = showToast(window.AppLocalizer?.FillHandle_Applying || 'Applying fill operation...', 'info');
 
@@ -377,16 +367,16 @@
             if (result.success) {
                 showToast(`Successfully filled ${result.createdCount || targetDates.length} shifts`, 'success');
 
-                // Reload the page to show updated assignments
+                // Refresh calendar data or reload as fallback
                 setTimeout(() => {
-                    window.location.reload();
+                    if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { window.location.reload(); }
                 }, 1000);
             } else {
                 throw new Error(result.error || 'Fill operation failed');
             }
 
         } catch (error) {
-            console.error('[Fill Handle] Fill operation error:', error);
+            Logger.error('FillHandle', 'Fill operation error:', error);
             showToast(error.message || 'Failed to fill shifts', 'error');
         }
     }
@@ -415,7 +405,7 @@
             return window.showToast(message, type);
         }
 
-        console.log(`[Toast ${type}]`, message);
+        Logger.log('FillHandle', `[Toast ${type}]`, message);
         alert(message);
         return null;
     }

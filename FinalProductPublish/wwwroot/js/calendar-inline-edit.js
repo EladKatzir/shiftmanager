@@ -2,6 +2,19 @@
 // This file provides client-side functionality for creating and deleting chores and on-duty assignments
 // directly from the calendar views (Month, Week, Day)
 
+/**
+ * Trigger an in-place calendar refresh instead of a full page reload.
+ * Uses the CalendarRealtime shadow refresh mechanism when available,
+ * which fetches fresh data via AJAX and updates the DOM in place.
+ * Falls back to full page reload if CalendarRealtime is not initialized.
+ */
+function triggerCalendarRefresh() {
+    // Full page reload after mutations — the shadow refresh (CalendarRealtime.refresh)
+    // only handles partial cell updates via selectors that may not match the current DOM.
+    // A full reload guarantees the user sees the new state after assign/unassign.
+    location.reload();
+}
+
 // Localized error messages
 const ERROR_MESSAGES = {
     'he-IL': {
@@ -26,6 +39,23 @@ const ERROR_MESSAGES = {
 function getCurrentCulture() {
     const htmlLang = document.documentElement.lang || 'en-US';
     return htmlLang.startsWith('he') ? 'he-IL' : 'en-US';
+}
+
+// Default confirm handler — backward-compatible (bottom sheet still uses confirm())
+const defaultConfirm = (msg) => Promise.resolve(confirm(msg));
+
+/**
+ * Build fetch headers for Calendar/Table POST handlers (includes CSRF anti-forgery token).
+ * Razor Pages auto-validate antiforgery — without this token, POSTs return 400.
+ */
+function getTablePostHeaders() {
+    var headers = {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+    };
+    var csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    if (csrfToken) headers['RequestVerificationToken'] = csrfToken;
+    return headers;
 }
 
 /**
@@ -65,7 +95,7 @@ function handleApiError(response, error = null) {
 
     if (error) {
         // Network error
-        console.error('API Error:', error);
+        Logger.error('InlineEdit', 'API Error:', error);
         showToast(getErrorMessage('networkError'), 'error');
     }
 }
@@ -77,7 +107,7 @@ function handleApiError(response, error = null) {
  * @param {string} title - Chore title
  * @param {boolean} forceAssign - Force assignment despite vacation conflict
  */
-async function quickAddChore(date, assigneeId, title, forceAssign = false, choreTypeId = null) {
+async function quickAddChore(date, assigneeId, title, forceAssign = false, choreTypeId = null, confirmHandler = defaultConfirm) {
     try {
         var requestBody = {
             date: date,
@@ -118,7 +148,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
                         ? 'למשתמש זה חופשה מאושרת בתאריך זה. האם ברצונך להקצות בכל זאת?'
                         : 'This user has an approved vacation on this date. Do you want to assign anyway?';
 
-                    if (confirm(confirmMessage)) {
+                    if (await confirmHandler(confirmMessage)) {
                         // Retry with forceAssign=true
                         var retryBody = {
                             date: date,
@@ -154,11 +184,11 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
                                 ? 'האם ברצונך לנהל את החופשה המתנגשת?'
                                 : 'Do you want to manage the conflicting vacation?';
 
-                            if (confirm(manageMessage)) {
+                            if (await confirmHandler(manageMessage)) {
                                 window.location.href = '/Requests/Index#approved';
                             } else {
-                                // Just reload to show the new chore
-                                setTimeout(() => location.reload(), 500);
+                                // Refresh calendar to show the new chore
+                                triggerCalendarRefresh();
                             }
                         } else {
                             showToast(retryResult.message || window.AppLocalizer.ErrorCreatingChore, 'error');
@@ -180,8 +210,8 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
 
         if (result.success) {
             showToast(result.message || window.AppLocalizer.ChoreCreatedSuccessfully, 'success');
-            // Reload the page to show the new chore
-            setTimeout(() => location.reload(), 500);
+            // Refresh calendar in-place to show the new chore
+            triggerCalendarRefresh();
         } else {
             showToast(result.message || window.AppLocalizer.ErrorCreatingChore, 'error');
         }
@@ -197,7 +227,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
  * @param {number} onDutyType - OnDutyType enum value (0=Hakam, 1=Lead, 2+=Custom)
  * @param {boolean} forceAssign - Force assignment despite vacation conflict
  */
-async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false) {
+async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false, confirmHandler = defaultConfirm) {
     try {
         const response = await fetch('/Api/Calendar/QuickAddOnDuty', {
             method: 'POST',
@@ -245,7 +275,7 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                         ? 'למשתמש זה חופשה מאושרת בתאריך זה. האם ברצונך להקצות בכל זאת?'
                         : 'This user has an approved vacation on this date. Do you want to assign anyway?';
 
-                    if (confirm(confirmMessage)) {
+                    if (await confirmHandler(confirmMessage)) {
                         // Retry with forceAssign=true
                         const retryResponse = await fetch('/Api/Calendar/QuickAddOnDuty', {
                             method: 'POST',
@@ -277,11 +307,11 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
                                 ? 'האם ברצונך לנהל את החופשה המתנגשת?'
                                 : 'Do you want to manage the conflicting vacation?';
 
-                            if (confirm(manageMessage)) {
+                            if (await confirmHandler(manageMessage)) {
                                 window.location.href = '/Requests/Index#approved';
                             } else {
-                                // Just reload to show the new on-duty assignment
-                                setTimeout(() => location.reload(), 500);
+                                // Refresh calendar to show the new on-duty assignment
+                                triggerCalendarRefresh();
                             }
                         } else {
                             showToast(retryResult.message || window.AppLocalizer.ErrorCreatingOnDuty, 'error');
@@ -303,8 +333,8 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
 
         if (result.success) {
             showToast(result.message || window.AppLocalizer.OnDutyCreatedSuccessfully, 'success');
-            // Reload the page to show the new on-duty assignment
-            setTimeout(() => location.reload(), 500);
+            // Refresh calendar in-place to show the new on-duty assignment
+            triggerCalendarRefresh();
         } else {
             showToast(result.message || window.AppLocalizer.ErrorCreatingOnDuty, 'error');
         }
@@ -319,14 +349,11 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false)
  * @param {string} date - Date in yyyy-MM-dd format
  * @param {number} assigneeId - User ID to assign
  */
-async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
+async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = defaultConfirm, _retried) {
     try {
         const response = await fetch('/Calendar/Table?handler=AssignEmployee', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: getTablePostHeaders(),
             credentials: 'same-origin',
             body: JSON.stringify({
                 shiftTypeId: parseInt(shiftTypeId),
@@ -348,7 +375,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
             const culture = getCurrentCulture();
             const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
             showToast(result.message || successMsg, 'success');
-            setTimeout(() => location.reload(), 500);
+            triggerCalendarRefresh();
         } else if (result.error && result.error.indexOf('SHIFT_FULLY_STAFFED') !== -1 ||
                    (result.errorKey === 'SHIFT_FULLY_STAFFED' && !_retried)) {
             // Shift is at capacity — ask the user if they want to expand it
@@ -356,19 +383,19 @@ async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
             const confirmMsg = culture === 'he-IL'
                 ? 'המשמרת מלאה. להגדיל את התקן ולשבץ?'
                 : 'Shift is fully staffed. Increase capacity and assign?';
-            if (confirm(confirmMsg)) {
-                await expandCapacityAndRetry(shiftTypeId, date, assigneeId);
+            if (await confirmHandler(confirmMsg)) {
+                await expandCapacityAndRetry(shiftTypeId, date, assigneeId, confirmHandler);
             }
         } else if (result.requiresOverride) {
             // Warnings require override — show them and ask to confirm
             const msgs = (result.warnings || []).map(function(w) { return w.message; }).join('\n');
             const culture = getCurrentCulture();
             const confirmLabel = culture === 'he-IL' ? 'אישורים נדרשים:\n' : 'Warnings:\n';
-            if (confirm(confirmLabel + msgs)) {
+            if (await confirmHandler(confirmLabel + msgs)) {
                 // Retry with override token
                 const retryResponse = await fetch('/Calendar/Table?handler=AssignEmployee', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    headers: getTablePostHeaders(),
                     credentials: 'same-origin',
                     body: JSON.stringify({
                         shiftTypeId: parseInt(shiftTypeId),
@@ -381,7 +408,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
                 if (retryResult.success) {
                     const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
                     showToast(retryResult.message || successMsg, 'success');
-                    setTimeout(() => location.reload(), 500);
+                    triggerCalendarRefresh();
                 } else {
                     showToast(retryResult.message || retryResult.error || 'Error', 'error');
                 }
@@ -394,12 +421,12 @@ async function quickAddShift(shiftTypeId, date, assigneeId, _retried) {
     }
 }
 
-async function expandCapacityAndRetry(shiftTypeId, date, assigneeId) {
+async function expandCapacityAndRetry(shiftTypeId, date, assigneeId, confirmHandler = defaultConfirm) {
     try {
         // First, find or create the shift instance to get its ID and current staffing
         const lookupResponse = await fetch('/Calendar/Table?handler=EnsureShiftInstance', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: getTablePostHeaders(),
             credentials: 'same-origin',
             body: JSON.stringify({
                 shiftTypeId: parseInt(shiftTypeId),
@@ -417,7 +444,7 @@ async function expandCapacityAndRetry(shiftTypeId, date, assigneeId) {
         const newCapacity = (lookupResult.staffingRequired || 1) + 1;
         const updateResponse = await fetch('/Calendar/Table?handler=UpdateShiftStaffing', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: getTablePostHeaders(),
             credentials: 'same-origin',
             body: JSON.stringify({
                 shiftInstanceId: lookupResult.instanceId,
@@ -431,7 +458,7 @@ async function expandCapacityAndRetry(shiftTypeId, date, assigneeId) {
         }
 
         // Now retry the assignment
-        await quickAddShift(shiftTypeId, date, assigneeId, true);
+        await quickAddShift(shiftTypeId, date, assigneeId, confirmHandler, true);
     } catch (error) {
         handleApiError(null, error);
     }
@@ -439,6 +466,92 @@ async function expandCapacityAndRetry(shiftTypeId, date, assigneeId) {
 
 // Expose quickAddShift globally for bottom sheet integration
 window.quickAddShift = quickAddShift;
+
+/**
+ * Quick-add a text entry (free-text calendar annotation)
+ * @param {string} date - Date in yyyy-MM-dd format
+ * @param {number} userId - User ID for the text entry
+ * @param {string} text - Free-text content
+ */
+async function quickAddTextEntry(date, userId, text) {
+    try {
+        const response = await fetch('/Api/Calendar/QuickAddTextEntry', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                date: date,
+                userId: parseInt(userId),
+                text: text.trim()
+            })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                handleApiError(response);
+                return;
+            }
+            showToast(getErrorMessage('serverError'), 'error');
+            return;
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            var msg = window.AppLocalizer?.QuickEntry_TextSaved || 'Text saved successfully';
+            showToast(msg, 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.message || 'Error', 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+window.quickAddTextEntry = quickAddTextEntry;
+
+/**
+ * Delete a text entry
+ * @param {number} id - CalendarTextEntry ID
+ */
+async function deleteTextEntry(id) {
+    try {
+        const response = await fetch('/Api/Calendar/DeleteTextEntry', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ id: parseInt(id) })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                handleApiError(response);
+                return;
+            }
+            showToast(getErrorMessage('serverError'), 'error');
+            return;
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            var msg = window.AppLocalizer?.QuickEntry_TextDeleted || 'Text entry deleted';
+            showToast(msg, 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.message || 'Error', 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+window.deleteTextEntry = deleteTextEntry;
 
 /**
  * Delete an item (chore or on-duty) with undo toast
@@ -488,7 +601,7 @@ async function deleteItem(itemType, itemId) {
                 showUndoToast(itemId, 'onduty');
             } else {
                 showToast(result.message || window.AppLocalizer?.ItemDeletedSuccessfully || 'Deleted', 'success');
-                setTimeout(() => location.reload(), 1500);
+                triggerCalendarRefresh();
             }
         } else {
             showToast(result.message || window.AppLocalizer?.ErrorDeletingItem || 'Error', 'error');
@@ -539,7 +652,7 @@ function showUndoToast(itemId, itemType) {
             clearInterval(countdown);
             if (!undone) {
                 toast.classList.remove('show');
-                setTimeout(function() { toast.remove(); location.reload(); }, 300);
+                setTimeout(function() { toast.remove(); triggerCalendarRefresh(); }, 300);
             }
         }
     }, 1000);
@@ -567,7 +680,7 @@ function showUndoToast(itemId, itemType) {
                 var data = await response.json();
                 if (data.success) {
                     toast.remove();
-                    location.reload();
+                    triggerCalendarRefresh();
                 } else {
                     showToast(data.message || window.AppLocalizer?.InlineEdit_CouldNotUndo || 'Could not undo', 'error');
                     toast.remove();
@@ -743,6 +856,13 @@ async function submitQuickAdd(date) {
         if (isNaN(assignmentId)) return;
 
         var assignmentEl = btn.closest('.excel-calendar__assignment');
+
+        // Text entries have data-entry-type="text" — route to dedicated handler
+        if (assignmentEl && assignmentEl.dataset.entryType === 'text') {
+            deleteTextEntry(assignmentId);
+            return;
+        }
+
         var calendarType = detectCalendarTypeForRemoval();
 
         if (calendarType === 'chores') {
@@ -758,10 +878,7 @@ async function submitQuickAdd(date) {
 
             fetch('/Calendar/Table?handler=ClearAssignment', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
+                headers: getTablePostHeaders(),
                 credentials: 'same-origin',
                 body: JSON.stringify({ assignmentId: assignmentId })
             })

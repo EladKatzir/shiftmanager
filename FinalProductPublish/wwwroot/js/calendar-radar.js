@@ -18,12 +18,10 @@
         const radarToggle = document.getElementById('radarToggle');
 
         if (!radarToggle) {
-            console.warn('[Radar Mode] Toggle button not found, skipping initialization');
+            Logger.warn('Radar', 'Toggle button not found, skipping initialization');
             return;
         }
 
-        // Already has onclick="toggleRadarMode()" in HTML, so we just need to define the function
-        console.log('[Radar Mode] Initialized');
     }
 
     /**
@@ -50,7 +48,7 @@
                 applyConflictHighlights();
             }, 30000);
 
-            console.log('[Radar Mode] Activated');
+            // Radar mode activated
         } else {
             // Disable Radar Mode
             if (radarBtn) {
@@ -65,7 +63,7 @@
                 refreshInterval = null;
             }
 
-            console.log('[Radar Mode] Deactivated');
+            // Radar mode deactivated
         }
     };
 
@@ -98,10 +96,10 @@
             const data = await response.json();
             conflicts = data.conflicts || [];
 
-            console.log(`[Radar Mode] Loaded ${conflicts.length} conflicts`);
+            // Conflicts loaded
 
         } catch (error) {
-            console.error('[Radar Mode] Error loading conflicts:', error);
+            Logger.error('Radar', 'Error loading conflicts:', error);
             showToast(window.AppLocalizer?.Radar_FailedToLoad || 'Failed to load conflict data', 'error');
         }
     }
@@ -114,7 +112,7 @@
         clearConflictHighlights();
 
         if (conflicts.length === 0) {
-            console.log('[Radar Mode] No conflicts to display');
+            // No conflicts to display
             return;
         }
 
@@ -122,14 +120,14 @@
             const cell = findCellByConflict(conflict);
 
             if (!cell) {
-                console.warn('[Radar Mode] Could not find cell for conflict:', conflict);
+                Logger.warn('Radar', 'Could not find cell for conflict:', conflict);
                 return;
             }
 
             applyConflictStyle(cell, conflict);
         });
 
-        console.log(`[Radar Mode] Applied highlights to ${conflicts.length} cells`);
+        // Highlights applied
     }
 
     /**
@@ -320,7 +318,7 @@
             return;
         }
 
-        console.log(`[Toast ${type}]`, message);
+        Logger.log('Radar', `[Toast ${type}]`, message);
     }
 
     // Initialize when DOM is ready

@@ -519,11 +519,11 @@ try {
     }
     $excludedFileCount = 0
     foreach ($d in $excludedDirs) {
-        $excludedFileCount += (Get-ChildItem -LiteralPath $d.FullName -File -Recurse -Force -ErrorAction SilentlyContinue).Count
+        $excludedFileCount += @(Get-ChildItem -LiteralPath $d.FullName -File -Recurse -Force -ErrorAction SilentlyContinue).Count
     }
     $adjustedSrcCount = $srcStats.FileCount - $excludedFileCount
     if ($excludedFileCount -gt 0) {
-        Write-Log -Level INFO -Message ("Excluded {0} files in {1} dirs from source count (ExcludeDirs filter). Adjusted: {2} -> {3}" -f $excludedFileCount, $excludedDirs.Count, $srcStats.FileCount, $adjustedSrcCount)
+        Write-Log -Level INFO -Message ("Excluded {0} files in {1} dirs from source count (ExcludeDirs filter). Adjusted: {2} -> {3}" -f $excludedFileCount, @($excludedDirs).Count, $srcStats.FileCount, $adjustedSrcCount)
     }
 
     # File-count check WITH tolerance (10 files), using the adjusted source count
