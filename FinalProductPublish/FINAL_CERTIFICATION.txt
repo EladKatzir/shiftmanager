@@ -3,9 +3,9 @@
                     ShiftManager Version 3.6.0
 ================================================================================
 
-CERTIFICATION DATE: 2026-03-30 07:17:32 UTC
+CERTIFICATION DATE: 2026-03-30 07:21:12 UTC
 PACKAGE VERSION:    v3.6.0
-GIT COMMIT:         69c1079
+GIT COMMIT:         dbff805
 BUILD SYSTEM:       Automated Release Builder v1.0.0
 
 ================================================================================
@@ -73,7 +73,7 @@ The following criteria have been met for production certification:
 6. VERSION CONTROL
    âœ… Git working tree clean at build time
    âœ… Version tagged: v3.6.0
-   âœ… Commit documented: 69c1079
+   âœ… Commit documented: dbff805
    âœ… Build reproducible from tag
 
 ================================================================================
@@ -297,13 +297,13 @@ BUILD INFORMATION
 ================================================================================
 
 Build System:       Automated Release Builder v1.0.0
-Build Date:         2026-03-30 07:17:32 UTC
+Build Date:         2026-03-30 07:21:12 UTC
 Build Host:         Automated
 Build Type:         Release (optimized)
 Build Config:       Self-Contained
 Git Repository:     ShiftManager
 Git Branch:         update
-Git Commit:         69c1079
+Git Commit:         dbff805
 Git Tag:            v3.6.0
 
 Pipeline Stages:    10 (all passed)
@@ -321,13 +321,13 @@ by the ShiftManager Automated Release Builder system.
 Certification Authority:
   System:    ShiftManager Automated Release Builder
   Version:   1.0.0
-  Date:      2026-03-30 07:17:32 UTC
-  Signature: Git Tag v3.6.0 (69c1079)
+  Date:      2026-03-30 07:21:12 UTC
+  Signature: Git Tag v3.6.0 (dbff805)
 
 Digital Verification:
   Package Checksum:  See SHA256 checksum file
   Git Tag:          v3.6.0
-  Git Commit:       69c1079
+  Git Commit:       dbff805
 
 This certification is valid and the package is approved for production
 deployment in air-gapped Windows Server 2022 environments.

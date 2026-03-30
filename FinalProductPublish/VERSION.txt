@@ -5,8 +5,8 @@
 
 VERSION: 3.6.0
 RELEASE DATE: 2026-03-30
-BUILD DATE: 2026-03-30 07:17:32 UTC
-GIT COMMIT: 69c1079
+BUILD DATE: 2026-03-30 07:21:12 UTC
+GIT COMMIT: dbff805
 GIT BRANCH: update
 
 PACKAGE INFORMATION:
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-03-30 07:17:32 UTC
+Build Date:     2026-03-30 07:21:12 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -266,8 +266,8 @@ This package has been:
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-03-30 07:17:32 UTC
-Git Commit: 69c1079
+Date: 2026-03-30 07:21:12 UTC
+Git Commit: dbff805
 
 ================================================================================
 LICENSE

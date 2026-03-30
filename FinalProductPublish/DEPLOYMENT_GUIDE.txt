@@ -649,7 +649,7 @@ VERSION INFORMATION
 Guide Version:    3.6.0
 Release Date:     2026-03-30
 Package Size:     157 MB
-Git Commit:       69c1079
+Git Commit:       dbff805
 
 This guide covers deployment for ShiftManager v3.6.0.
 

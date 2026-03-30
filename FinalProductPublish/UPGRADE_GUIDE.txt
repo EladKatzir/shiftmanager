@@ -321,8 +321,8 @@ VERSION-SPECIFIC NOTES
 ================================================================================
 
 Version 3.6.0:
-  - Built: 2026-03-30 07:17:32 UTC
-  - Git Commit: 69c1079
+  - Built: 2026-03-30 07:21:12 UTC
+  - Git Commit: dbff805
   - Changes: See VERSION.txt for full changelog
 
 Breaking Changes: None
