@@ -20,13 +20,25 @@
     <Content Remove="Backups/**" />
     <Content Remove="FinalProductPublish/**" />
     <Content Remove="ProjectPublish/**" />
+    <Content Remove="ProjectPublish_BACKUP_*/**" />
+    <Content Remove="ProductionReady/**" />
+    <Content Remove="TestPublish*/**" />
+    <Content Remove="TestPub*/**" />
     <Content Remove="packages/**" />
     <Content Remove=".claude/**" />
+    <Content Remove="docs/**" />
+    <Content Remove="logs/**" />
     <None Remove="Backups/**" />
     <None Remove="FinalProductPublish/**" />
     <None Remove="ProjectPublish/**" />
+    <None Remove="ProjectPublish_BACKUP_*/**" />
+    <None Remove="ProductionReady/**" />
+    <None Remove="TestPublish*/**" />
+    <None Remove="TestPub*/**" />
     <None Remove="packages/**" />
     <None Remove=".claude/**" />
+    <None Remove="docs/**" />
+    <None Remove="logs/**" />
   </ItemGroup>
 
   <ItemGroup>
