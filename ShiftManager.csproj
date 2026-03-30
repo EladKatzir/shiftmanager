@@ -17,6 +17,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Exclude ALL item types from output/build/temp directories to prevent
+         .cs files in publish output (e.g. Data/SeedData/) from being compiled -->
+    <Compile Remove="Backups/**" />
+    <Compile Remove="FinalProductPublish/**" />
+    <Compile Remove="ProjectPublish/**" />
+    <Compile Remove="ProjectPublish_BACKUP_*/**" />
+    <Compile Remove="ProductionReady/**" />
+    <Compile Remove="TestPublish*/**" />
+    <Compile Remove="TestPub*/**" />
+    <Compile Remove="packages/**" />
+    <Compile Remove=".claude/**" />
+    <Compile Remove="docs/**" />
+    <Compile Remove="logs/**" />
     <Content Remove="Backups/**" />
     <Content Remove="FinalProductPublish/**" />
     <Content Remove="ProjectPublish/**" />
@@ -28,6 +41,17 @@
     <Content Remove=".claude/**" />
     <Content Remove="docs/**" />
     <Content Remove="logs/**" />
+    <EmbeddedResource Remove="Backups/**" />
+    <EmbeddedResource Remove="FinalProductPublish/**" />
+    <EmbeddedResource Remove="ProjectPublish/**" />
+    <EmbeddedResource Remove="ProjectPublish_BACKUP_*/**" />
+    <EmbeddedResource Remove="ProductionReady/**" />
+    <EmbeddedResource Remove="TestPublish*/**" />
+    <EmbeddedResource Remove="TestPub*/**" />
+    <EmbeddedResource Remove="packages/**" />
+    <EmbeddedResource Remove=".claude/**" />
+    <EmbeddedResource Remove="docs/**" />
+    <EmbeddedResource Remove="logs/**" />
     <None Remove="Backups/**" />
     <None Remove="FinalProductPublish/**" />
     <None Remove="ProjectPublish/**" />
