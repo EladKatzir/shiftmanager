@@ -10,13 +10,10 @@ namespace ShiftManager.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_ShiftTypes_CompanyId_Key",
-                table: "ShiftTypes");
-
-            migrationBuilder.DropIndex(
-                name: "IX_ShiftTypes_MoleculeId_JobTypeId_Key",
-                table: "ShiftTypes");
+            // EF Core 9 SQLite provider may drop indexes during table rebuilds in prior
+            // migrations (e.g. AddForeignKey triggers rebuild). Use IF EXISTS to be safe.
+            migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_ShiftTypes_CompanyId_Key\";");
+            migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_ShiftTypes_MoleculeId_JobTypeId_Key\";");
 
             // AddColumn BEFORE AlterColumn/RenameColumn — SQLite rebuilds the table
             // on ALTER, and the rebuild references all model columns. If these columns
