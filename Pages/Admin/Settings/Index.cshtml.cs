@@ -18,16 +18,19 @@ public class IndexModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly IHierarchySettingsService _settingsService;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         IHierarchySettingsService settingsService,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _settingsService = settingsService;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     public record AreaOption(int Id, string Name);
@@ -131,6 +134,11 @@ public class IndexModel : LocalizedPageModel
 
         if (result)
         {
+            await _auditLogService.LogAsync(
+                "SettingsUpdated",
+                Level == "area" ? "AreaSettings" : Level == "molecule" ? "MoleculeSettings" : "CompanySettings",
+                SelectedId,
+                $"{Level} settings updated: RestHours={EditRestHours}, WeeklyCap={EditWeeklyCap}");
             TempData["SuccessMessage"] = _localizer["Success_SettingsSaved"].Value;
         }
         else

@@ -23,13 +23,15 @@ public class SettingsModel : PageModel
     private readonly ITenantResolver _tenantResolver;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<SettingsModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
-    public SettingsModel(AppDbContext db, ITenantResolver tenantResolver, IStringLocalizer<SharedResources> localizer, ILogger<SettingsModel> logger)
+    public SettingsModel(AppDbContext db, ITenantResolver tenantResolver, IStringLocalizer<SharedResources> localizer, ILogger<SettingsModel> logger, IAuditLogService auditLogService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _localizer = localizer;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     // Daily Notification Preferences
@@ -268,6 +270,10 @@ public class SettingsModel : PageModel
             user.ProfileLastUpdatedBy = userId;
 
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogAsync("SettingsUpdated", "User", userId,
+                $"Updated notification settings and preferences",
+                $"DailyDigest={ReceiveDailyDigest}, Rank={Rank}");
 
             SuccessMessage = _localizer["SettingsSavedSuccess"];
             HasExistingPreference = true;

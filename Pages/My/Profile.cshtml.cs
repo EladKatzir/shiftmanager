@@ -21,6 +21,7 @@ public class ProfileModel : LocalizedPageModel
     private readonly IAvatarService _avatarService;
     private readonly ITenantResolver _tenantResolver;
     private readonly IGrantService _grantService;
+    private readonly IAuditLogService _auditLogService;
 
     public ProfileModel(
         AppDbContext db,
@@ -28,6 +29,7 @@ public class ProfileModel : LocalizedPageModel
         IAvatarService avatarService,
         ITenantResolver tenantResolver,
         IGrantService grantService,
+        IAuditLogService auditLogService,
         IStringLocalizer<SharedResources> localizer) : base(localizer)
     {
         _db = db;
@@ -35,6 +37,7 @@ public class ProfileModel : LocalizedPageModel
         _avatarService = avatarService;
         _tenantResolver = tenantResolver;
         _grantService = grantService;
+        _auditLogService = auditLogService;
     }
 
     [BindProperty]
@@ -251,6 +254,9 @@ public class ProfileModel : LocalizedPageModel
             await LoadUserDataAsync(user);
             return Page();
         }
+
+        await _auditLogService.LogAsync("ProfileUpdated", "User", userId,
+            $"Updated profile for user '{DisplayName}'");
 
         SuccessMessage = isOwner && HireDate != user.HireDate
             ? _localizer["Profile_Success_UpdatedWithProfessionalInfo"]

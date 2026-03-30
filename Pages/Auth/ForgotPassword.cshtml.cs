@@ -22,6 +22,7 @@ public class ForgotPasswordModel : LocalizedPageModel
     private readonly ILogger<ForgotPasswordModel> _logger;
     private readonly IRateLimitingService _rateLimiting;
     private readonly IValidationService _validation;
+    private readonly IAuditLogService _auditLogService;
 
     public ForgotPasswordModel(
         IStringLocalizer<SharedResources> localizer,
@@ -29,13 +30,15 @@ public class ForgotPasswordModel : LocalizedPageModel
         IMailService mailService,
         ILogger<ForgotPasswordModel> logger,
         IRateLimitingService rateLimiting,
-        IValidationService validation) : base(localizer)
+        IValidationService validation,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _mailService = mailService;
         _logger = logger;
         _rateLimiting = rateLimiting;
         _validation = validation;
+        _auditLogService = auditLogService;
     }
 
     [BindProperty]
@@ -149,6 +152,8 @@ public class ForgotPasswordModel : LocalizedPageModel
             // A-07: Force user to change password on next login
             user.MustChangePassword = true;
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogUserActionAsync(user.Id, "PasswordReset", "User", user.Id, $"Password reset for user '{user.Email}'");
 
             // Send temporary password via email
             var emailSubject = _localizer["Email_PasswordRecoverySubject"];
@@ -280,6 +285,8 @@ public class ForgotPasswordModel : LocalizedPageModel
             // A-07: Clear forced password change flag after successful change
             user.MustChangePassword = false;
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogUserActionAsync(user.Id, "PasswordChanged", "User", user.Id, $"Password changed for user '{user.Email}'");
 
             PasswordChangeSuccess = _localizer["Success_PasswordChangedSuccessfully"];
             _logger.LogInformation("Password changed successfully for user: {Email}", RedactEmail(user.Email));

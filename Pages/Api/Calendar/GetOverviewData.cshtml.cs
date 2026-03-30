@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
 using System.Security.Claims;
@@ -16,20 +17,20 @@ namespace ShiftManager.Pages.Api.Calendar;
 [IgnoreAntiforgeryToken]
 public class GetOverviewDataModel : PageModel
 {
-    private readonly IUserDayNoteService _noteService;
+    private readonly ICalendarTextEntryService _textEntryService;
     private readonly ICompanyContext _companyContext;
     private readonly IScopeFilterService _scopeFilterService;
     private readonly AppDbContext _db;
     private readonly ILogger<GetOverviewDataModel> _logger;
 
     public GetOverviewDataModel(
-        IUserDayNoteService noteService,
+        ICalendarTextEntryService textEntryService,
         ICompanyContext companyContext,
         IScopeFilterService scopeFilterService,
         AppDbContext db,
         ILogger<GetOverviewDataModel> logger)
     {
-        _noteService = noteService;
+        _textEntryService = textEntryService;
         _companyContext = companyContext;
         _scopeFilterService = scopeFilterService;
         _db = db;
@@ -102,8 +103,8 @@ public class GetOverviewDataModel : PageModel
                 .Select(u => new { id = u.Id, name = u.DisplayName })
                 .ToListAsync();
 
-            // Get notes for date range
-            var notesDict = await _noteService.GetNotesForCompanyAsync(effectiveCompanyId, start, end);
+            // Get overview notes for date range (unified from CalendarTextEntry)
+            var notesDict = await _textEntryService.GetOverviewNotesForCompanyAsync(effectiveCompanyId, start, end);
             var notes = notesDict.Select(kvp => new
             {
                 userId = kvp.Key.UserId,
@@ -144,6 +145,21 @@ public class GetOverviewDataModel : PageModel
 
             // Get on-duties (active only, filter by company users)
             var userIds = users.Select(u => u.id).ToList();
+
+            // Get quick-entry text entries for cross-visibility (📝 badge on Overview)
+            var textEntriesWithType = await _textEntryService.GetForUsersAndDateRangeWithTypeAsync(
+                userIds, start, end);
+            var textEntries = textEntriesWithType
+                .SelectMany(kvp => kvp.Value
+                    .Where(e => e.EntryType == CalendarTextEntryType.QuickEntry)
+                    .Select(e => new
+                    {
+                        userId = kvp.Key.UserId,
+                        date = kvp.Key.Date.ToString("yyyy-MM-dd"),
+                        text = e.Text
+                    }))
+                .ToList();
+
             var onDuties = await _db.OnDuties
                 .Where(o => o.Date >= start && o.Date <= end && o.CanceledAt == null && userIds.Contains(o.UserId))
                 .Select(o => new
@@ -181,6 +197,7 @@ public class GetOverviewDataModel : PageModel
                 {
                     users,
                     notes,
+                    textEntries,
                     vacations,
                     chores,
                     onDuties,

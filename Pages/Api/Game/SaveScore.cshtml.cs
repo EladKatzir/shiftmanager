@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -20,11 +21,13 @@ public class SaveScoreModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<SaveScoreModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
-    public SaveScoreModel(AppDbContext db, ILogger<SaveScoreModel> logger)
+    public SaveScoreModel(AppDbContext db, ILogger<SaveScoreModel> logger, IAuditLogService auditLogService)
     {
         _db = db;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -79,6 +82,8 @@ public class SaveScoreModel : PageModel
 
             _db.GameScores.Add(gameScore);
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogAsync("GameScoreSaved", "GameScore", gameScore.Id, $"Score {data.Score} saved");
 
             // Calculate user's rank (all-time, public leaderboard)
             var rank = await _db.GameScores

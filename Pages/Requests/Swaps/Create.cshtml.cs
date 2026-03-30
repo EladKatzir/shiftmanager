@@ -18,13 +18,15 @@ public class CreateModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ICompanyContext _companyContext;
     private readonly IGrantService _grantService;
+    private readonly IAuditLogService _auditLogService;
 
-    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ICompanyContext companyContext, IGrantService grantService)
+    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ICompanyContext companyContext, IGrantService grantService, IAuditLogService auditLogService)
         : base(localizer)
     {
         _db = db;
         _companyContext = companyContext;
         _grantService = grantService;
+        _auditLogService = auditLogService;
     }
 
     public record AssignmentVM(int AssignmentId, string Label);
@@ -132,8 +134,13 @@ public class CreateModel : LocalizedPageModel
             return Page();
         }
 
-        _db.SwapRequests.Add(new SwapRequest { FromAssignmentId = SelectedAssignmentId.Value, FromUserId = userId, ToUserId = ToUserId.Value });
+        var swapRequest = new SwapRequest { FromAssignmentId = SelectedAssignmentId.Value, FromUserId = userId, ToUserId = ToUserId.Value };
+        _db.SwapRequests.Add(swapRequest);
         await _db.SaveChangesAsync();
+
+        await _auditLogService.LogAsync("SwapRequestCreated", "SwapRequest", swapRequest.Id,
+            $"Created swap request for assignment {SelectedAssignmentId.Value} to user {ToUserId.Value}");
+
         return RedirectToPage("/Requests/Index");
     }
 }

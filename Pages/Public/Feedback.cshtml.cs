@@ -22,6 +22,7 @@ public class FeedbackModel : LocalizedPageModel
     private readonly IGrantService _grantService;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<FeedbackModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
     public FeedbackModel(
         AppDbContext db,
@@ -30,6 +31,7 @@ public class FeedbackModel : LocalizedPageModel
         IGrantService grantService,
         IWebHostEnvironment env,
         ILogger<FeedbackModel> logger,
+        IAuditLogService auditLogService,
         IStringLocalizer<SharedResources> localizer) : base(localizer)
     {
         _db = db;
@@ -38,6 +40,7 @@ public class FeedbackModel : LocalizedPageModel
         _grantService = grantService;
         _env = env;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     [BindProperty]
@@ -122,6 +125,10 @@ public class FeedbackModel : LocalizedPageModel
             _db.Feedbacks.Add(feedback);
             await _db.SaveChangesAsync();
 
+            await _auditLogService.LogAsync("FeedbackCreated", "Feedback", feedback.Id,
+                $"Submitted {feedback.Type} feedback",
+                feedback.Content.Length > 200 ? feedback.Content.Substring(0, 200) + "..." : feedback.Content);
+
             // Send notification to owner
             await NotifyOwnerAsync(feedback);
 
@@ -167,6 +174,9 @@ public class FeedbackModel : LocalizedPageModel
 
             await _db.SaveChangesAsync();
 
+            await _auditLogService.LogAsync("FeedbackStatusUpdated", "Feedback", feedbackId,
+                $"Marked feedback #{feedbackId} as 'To Work On'");
+
             Message = _localizer["Feedback_Success_MarkedToWorkOn"];
             await OnGetAsync();
             return Page();
@@ -206,6 +216,9 @@ public class FeedbackModel : LocalizedPageModel
 
             _db.Feedbacks.Remove(feedback);
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogAsync("FeedbackDeleted", "Feedback", feedbackId,
+                $"Deleted {feedback.Type} feedback #{feedbackId}");
 
             Message = _localizer["Feedback_Success_Deleted"];
             await OnGetAsync();

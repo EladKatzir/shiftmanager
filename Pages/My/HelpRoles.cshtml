@@ -1,0 +1,87 @@
+@page
+@model ShiftManager.Pages.My.HelpRolesModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Help_Roles_Title"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Help_PageTitle"], Url = "/My/Help" },
+    new BreadcrumbItem { Label = Localizer["Help_Roles_Title"], IsActive = true }
+})
+
+<div class="help-page">
+    <a href="/My/Help" class="help-back-link">&#x2190; <loc key="Help_BackToHub" /></a>
+
+    <div class="help-header">
+        <h1>&#x1F511; <loc key="Help_Roles_Title" /></h1>
+        <p class="help-subtitle"><loc key="Help_Roles_Subtitle" /></p>
+    </div>
+
+    <div class="help-sections">
+        <div class="help-section">
+            <div class="help-faq-list">
+                <details class="help-faq" open>
+                    <summary class="help-faq__question"><loc key="Help_Roles_Overview_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_Roles_Overview_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_Roles_Employee_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_Roles_Employee_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_Roles_Manager_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_Roles_Manager_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_Roles_Lead_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_Roles_Lead_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_Roles_Director_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_Roles_Director_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_Roles_AreaAdmin_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_Roles_AreaAdmin_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_Roles_Owner_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_Roles_Owner_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_Roles_Grants_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_Roles_Grants_A" /></div>
+                </details>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .help-page { max-width: 800px; margin: 0 auto; padding: 1rem; }
+        .help-header { margin-bottom: 2rem; }
+        .help-header h1 { font-size: 1.75rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
+        .help-subtitle { color: var(--muted); font-size: 1rem; margin: 0; }
+        .help-back-link { display: inline-block; margin-bottom: 1rem; font-size: 0.875rem; color: var(--primary); text-decoration: none; font-weight: 500; }
+        .help-back-link:hover { text-decoration: underline; }
+        .help-sections { display: flex; flex-direction: column; gap: 2rem; }
+        .help-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+        .help-faq-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .help-faq { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .help-faq[open] { border-color: var(--primary, #3B82F6); }
+        .help-faq__question { padding: 0.875rem 1rem; font-weight: 500; cursor: pointer; color: var(--text); background: var(--surface-soft, var(--bg)); list-style: none; display: flex; align-items: center; gap: 0.5rem; }
+        .help-faq__question::-webkit-details-marker { display: none; }
+        .help-faq__question::before { content: "\25B8"; font-size: 0.85rem; color: var(--muted); transition: transform 0.2s; }
+        .help-faq[open] .help-faq__question::before { transform: rotate(90deg); }
+        .help-faq__question:hover { background: var(--hover, rgba(0,0,0,0.03)); }
+        .help-faq__answer { padding: 1rem; color: var(--muted); line-height: 1.6; font-size: 0.95rem; border-top: 1px solid var(--border); }
+        @@media (max-width: 768px) { .help-page { padding: 0.5rem; } .help-section { padding: 1rem; } }
+    </style>
+}

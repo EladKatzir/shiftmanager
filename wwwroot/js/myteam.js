@@ -59,6 +59,8 @@ function setupEventListeners() {
 
 function initializeWeek() {
     currentWeekStart = getThisWeeksSunday();
+    const weekRangeEl = document.getElementById('weekRange');
+    if (weekRangeEl) weekRangeEl.textContent = formatWeekRange(currentWeekStart);
 }
 
 function getThisWeeksSunday() {

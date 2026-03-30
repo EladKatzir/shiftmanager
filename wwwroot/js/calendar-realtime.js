@@ -179,6 +179,15 @@
             }
         });
 
+        connection.on('TextEntryChanged', (evt) => {
+            Logger.log('CalendarRT', 'TextEntryChanged:', evt);
+            if (eventHandlers.onTextEntryChanged) {
+                eventHandlers.onTextEntryChanged(evt);
+            } else {
+                triggerShadowRefresh();
+            }
+        });
+
         connection.on('ChoreChanged', (evt) => {
             Logger.log('CalendarRT', 'ChoreChanged:', evt);
             if (eventHandlers.onChoreChanged) {

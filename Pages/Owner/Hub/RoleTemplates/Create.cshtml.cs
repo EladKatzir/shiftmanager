@@ -19,16 +19,19 @@ public class CreateModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ILogger<CreateModel> _logger;
     private readonly IJobTypeService _jobTypeService;
+    private readonly IAuditLogService _auditLogService;
 
     public CreateModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<CreateModel> logger,
-        IJobTypeService jobTypeService) : base(localizer)
+        IJobTypeService jobTypeService,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _jobTypeService = jobTypeService;
+        _auditLogService = auditLogService;
     }
 
     [BindProperty] public string Key { get; set; } = string.Empty;
@@ -127,6 +130,9 @@ public class CreateModel : LocalizedPageModel
             await transaction.CommitAsync();
 
             _logger.LogInformation("Custom role template created: {Key} (Id={Id})", template.Key, template.Id);
+
+            await _auditLogService.LogAsync("RoleTemplateCreated", "RoleTemplate", template.Id,
+                $"Created role template '{template.Key}' with scope {template.ScopeLevel} and role {template.DerivedUserRole}");
 
             return RedirectToPage("Edit", new { id = template.Id });
         }

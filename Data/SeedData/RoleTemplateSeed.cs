@@ -206,7 +206,7 @@ public static class RoleTemplateSeed
         const GrantScopeMode ETP = GrantScopeMode.ExpandToProject;
 
         // ============================================
-        // EMPLOYEE (Template 1) — 19 grants
+        // EMPLOYEE (Template 1) — 21 grants
         // All SAR (company-scoped). Base for all workforce roles.
         // ============================================
         grants.Add(G(1, 1, SAR));    // ViewShifts
@@ -230,7 +230,7 @@ public static class RoleTemplateSeed
         grants.Add(G(1, 68, SAR, useOwnJobType: true));   // CanBeAssignedHakamShifts (OWN)
 
         // ============================================
-        // TRAINEE (Template 12) — 18 grants
+        // TRAINEE (Template 12) — 20 grants
         // Same as Employee minus RequestSwap
         // ============================================
         grants.Add(G(12, 1, SAR));    // ViewShifts
@@ -254,7 +254,7 @@ public static class RoleTemplateSeed
         grants.Add(G(12, 68, SAR, useOwnJobType: true));   // CanBeAssignedHakamShifts (OWN)
 
         // ============================================
-        // ASSIGNER (Template 8) — 20 grants
+        // ASSIGNER (Template 8) — 22 grants
         // All Employee grants at SAR + AssignChores at ETM
         // ============================================
         grants.Add(G(8, 1, SAR));    // ViewShifts
@@ -280,7 +280,7 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 17, ETM));   // AssignChores (ETM — only this grant is molecule-scoped)
 
         // ============================================
-        // LEAD (Template 3) — 46 grants
+        // LEAD (Template 3) — 48 grants
         // Employee base (SAR) + lead-specific grants. Assign shifts at ETM.
         // ============================================
         grants.Add(G(3, 1, SAR));    // ViewShifts
@@ -333,7 +333,7 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 59, ETM, useOwnJobType: true));   // ViewAuditLog
 
         // ============================================
-        // BR DIRECTOR (Template 2) — 54 grants
+        // BR DIRECTOR (Template 2) — 56 grants
         // Employee base (SAR) + BR management. AssignBRShifts + ViewAllShifts at ETM.
         // Dual ApproveVacations: BR + Hakam via TargetJobTypeId sentinels (resolved in Program.cs).
         // ============================================
@@ -395,7 +395,7 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 59, SAR));   // ViewAuditLog
 
         // ============================================
-        // DIRECTOR (Template 5) — 55 grants
+        // DIRECTOR (Template 5) — 58 grants
         // All Lead grants widened to ETM + director extras. Self-scoped stay SAR.
         // ============================================
         // Self-scoped (stay SAR)
@@ -459,7 +459,7 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 59, ETM, useOwnJobType: true));   // ViewAuditLog
 
         // ============================================
-        // MOLECULE ADMIN (Template 7) — 90 grants
+        // MOLECULE ADMIN (Template 7) — 94 grants
         // All BRDirector grants widened to ETM + admin extras.
         // ApproveVacations ALL (supersedes BR+HAKAM). Added AssignAlhut+Text.
         // ============================================
@@ -557,7 +557,7 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 122, ETM));  // ManageOnDuty
 
         // ============================================
-        // DEPARTMENT LEAD (Template 9) — 44 grants
+        // DEPARTMENT LEAD (Template 9) — 48 grants
         // Employee base (SAR) + department management grants
         // ============================================
         grants.Add(G(9, 1, SAR));
@@ -606,9 +606,12 @@ public static class RoleTemplateSeed
         grants.Add(G(9, 90, SAR));   // ManageYekevPrograms
         grants.Add(G(9, 91, SAR));   // ManageMoviltechBlueprints
         grants.Add(G(9, 92, SAR));   // ManageMoviltechPrograms
+        // Monitoring grants (GAP fix: Lead has these, DepartmentLead should too)
+        grants.Add(G(9, 59, SAR));   // ViewAuditLog
+        grants.Add(G(9, 120, SAR));  // ViewSystemAlerts
 
         // ============================================
-        // AREA ADMIN (Template 10) — 102 grants
+        // AREA ADMIN (Template 10) — 119 grants
         // Merges Directors + MoleculeAdmin at ETA. ALL jobtype wins.
         // ============================================
         grants.Add(G(10, 21, SAR));
@@ -716,9 +719,21 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 90, ETA));   // ManageYekevPrograms
         grants.Add(G(10, 91, ETA));   // ManageMoviltechBlueprints
         grants.Add(G(10, 92, ETA));   // ManageMoviltechPrograms
+        // Helper molecule — Shiklut (GAP fix: AreaAdmin manages all molecules in area)
+        grants.Add(G(10, 97, ETA));   // ViewShiklutCalendar
+        grants.Add(G(10, 98, ETA));   // AssignShiklutChores
+        grants.Add(G(10, 99, ETA));   // ManageShiklutBlueprints
+        grants.Add(G(10, 100, ETA));  // ManageShiklutPrograms
+        grants.Add(G(10, 101, ETA));  // CanBeAssignedShiklut
+        // Helper molecule — NOC (GAP fix: AreaAdmin manages all molecules in area)
+        grants.Add(G(10, 102, ETA));  // ViewNOCCalendar
+        grants.Add(G(10, 103, ETA));  // AssignNOCChores
+        grants.Add(G(10, 104, ETA));  // ManageNOCBlueprints
+        grants.Add(G(10, 105, ETA));  // ManageNOCPrograms
+        grants.Add(G(10, 106, ETA));  // CanBeAssignedNOC
 
         // ============================================
-        // OWNER (Template 11) — 123 grants at ETP (ALL grant types, ALL canGive)
+        // OWNER (Template 11) — 130 grants at ETP (ALL grant types, ALL canGive)
         // Self-scoped grants stay SAR. Every other grant at ETP with canGive:true.
         // ============================================
         // Self-scoped grants (SAR)
@@ -873,13 +888,57 @@ public static class RoleTemplateSeed
         // LATE ADDITIONS (appended to preserve sequential IDs)
         // ============================================
 
-        // MoleculeAdmin: ManageHomeTypes (molecule-scoped admin)
-        grants.Add(G(7, 125, ETM));  // ManageHomeTypes
+        // ManageHomeTypes (ID 125) — Home rotation type management
+        grants.Add(G(7, 125, ETM));                     // MoleculeAdmin: ManageHomeTypes (molecule-scoped)
+        grants.Add(G(10, 125, ETA));                    // AreaAdmin: ManageHomeTypes (GAP fix: was missing despite being above MoleculeAdmin)
 
         // ManageStores (ID 126) — Store definitions and opening hours
         grants.Add(G(7, 126, ETM));                     // MoleculeAdmin: ManageStores (molecule → area expansion)
         grants.Add(G(10, 126, ETA));                    // AreaAdmin: ManageStores (area-scoped)
         grants.Add(G(11, 126, ETP, canGive: true));     // Owner: ManageStores (project-wide, can delegate)
+
+        // ViewHakamOnCall (ID 127) — On-Call Widget: Hakam visibility
+        // Matches ViewDuties (12) distribution — anyone who can view duties should see widget Hakam data
+        grants.Add(G(1, 127, SAR));                      // Employee
+        grants.Add(G(12, 127, SAR));                     // Trainee
+        grants.Add(G(8, 127, SAR));                      // Assigner
+        grants.Add(G(3, 127, SAR));                      // Lead
+        grants.Add(G(2, 127, SAR));                      // BRDirector
+        grants.Add(G(9, 127, SAR));                      // DepartmentLead
+        grants.Add(G(5, 127, ETM));                      // Director
+        grants.Add(G(7, 127, ETM));                      // MoleculeAdmin
+        grants.Add(G(10, 127, ETA));                     // AreaAdmin
+        grants.Add(G(11, 127, ETP, canGive: true));      // Owner
+
+        // ViewCompanyOnCall (ID 128) — On-Call Widget: company-specific on-call contacts
+        // Matches ViewDuties (12) distribution — company-scoped on-call data
+        grants.Add(G(1, 128, SAR));                      // Employee
+        grants.Add(G(12, 128, SAR));                     // Trainee
+        grants.Add(G(8, 128, SAR));                      // Assigner
+        grants.Add(G(3, 128, SAR));                      // Lead
+        grants.Add(G(2, 128, SAR));                      // BRDirector
+        grants.Add(G(9, 128, SAR));                      // DepartmentLead
+        grants.Add(G(5, 128, ETM));                      // Director
+        grants.Add(G(7, 128, ETM));                      // MoleculeAdmin
+        grants.Add(G(10, 128, ETA));                     // AreaAdmin
+        grants.Add(G(11, 128, ETP, canGive: true));      // Owner
+
+        // ViewShiftsMolecule (ID 129) — Scope Switcher: molecule-level access
+        // Molecule-level+ roles only (Director/Owner already bypass via code, but included for consistency)
+        grants.Add(G(5, 129, ETM));                      // Director
+        grants.Add(G(7, 129, ETM));                      // MoleculeAdmin
+        grants.Add(G(10, 129, ETA));                     // AreaAdmin
+        grants.Add(G(11, 129, ETP, canGive: true));      // Owner
+
+        // ViewShiftsArea (ID 130) — Scope Switcher: area-level access
+        // Area-level+ roles only (Owner already bypasses via code, but included for consistency)
+        grants.Add(G(10, 130, ETA));                     // AreaAdmin
+        grants.Add(G(11, 130, ETP, canGive: true));      // Owner
+
+        // EditChoreTypes (ID 18) — grant to Lead, BRDirector, MoleculeAdmin
+        grants.Add(G(3, 18, SAR));    // Lead — EditChoreTypes at SameAsRole (company+jobtype)
+        grants.Add(G(2, 18, SAR));    // BRDirector — EditChoreTypes at SameAsRole (company)
+        grants.Add(G(7, 18, ETM));    // MoleculeAdmin — EditChoreTypes at ExpandToMolecule
 
         return grants;
     }

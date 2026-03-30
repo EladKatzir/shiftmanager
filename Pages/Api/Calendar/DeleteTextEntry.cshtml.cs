@@ -69,6 +69,16 @@ public class DeleteTextEntryModel : PageModel
                     { StatusCode = 404 };
             }
 
+            // SECURITY: OverviewNote entries must be deleted via the Overview page handler
+            // which enforces the WriteOverviewNotes grant — not via this endpoint
+            if (entry.EntryType == Models.CalendarTextEntryType.OverviewNote)
+            {
+                _logger.LogWarning("SECURITY: User {UserId} attempted to delete OverviewNote {EntryId} via DeleteTextEntry endpoint",
+                    currentUserId, data.Id);
+                return new JsonResult(new { success = false, message = "Cannot delete overview notes via this endpoint" })
+                    { StatusCode = 403 };
+            }
+
             var deleted = await _textEntryService.DeleteAsync(data.Id);
             if (!deleted)
             {

@@ -29,6 +29,7 @@ public class ChoresModel : PageModel
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<ChoresModel> _logger;
     private readonly ICalendarTextEntryService _textEntryService;
+    private readonly IShiftCalendarService _calendarService;
 
     public ChoresModel(
         AppDbContext db,
@@ -38,7 +39,8 @@ public class ChoresModel : PageModel
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
         ILogger<ChoresModel> logger,
-        ICalendarTextEntryService textEntryService)
+        ICalendarTextEntryService textEntryService,
+        IShiftCalendarService calendarService)
     {
         _db = db;
         _choreService = choreService;
@@ -48,6 +50,7 @@ public class ChoresModel : PageModel
         _localizer = localizer;
         _logger = logger;
         _textEntryService = textEntryService;
+        _calendarService = calendarService;
     }
 
     // Query parameters
@@ -239,9 +242,30 @@ public class ChoresModel : PageModel
             chores = chores.Where(c => c.ChoreTypeId == ChoreTypeFilter.Value).ToList();
         }
 
-        // Load text entries for all users in the molecule (cross-company via IgnoreQueryFilters)
+        // Get overlays (vacation, on-duty, other shifts) — same pattern as Calendar/Shifts
+        var overlays = await _calendarService.GetOverlaysAsync(moleculeId, StartDate, EndDate);
+
+        // Load text entries + overview notes for all users (cross-company via IgnoreQueryFilters)
         var allUserIds = Users.Select(u => u.Id);
-        var textEntries = await _textEntryService.GetForUsersAndDateRangeAsync(allUserIds, StartDate, EndDate);
+        var allEntriesWithType = await _textEntryService.GetForUsersAndDateRangeWithTypeAsync(allUserIds, StartDate, EndDate);
+        var textEntries = allEntriesWithType.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value
+                .Where(e => e.EntryType == CalendarTextEntryType.QuickEntry)
+                .Select(e => (e.Id, e.Text))
+                .ToList())
+            .Where(kvp => kvp.Value.Count > 0)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        // SECURITY: Only show overview notes from the viewer's own company (notes are company-scoped)
+        var viewerCompanyId = _companyContext.CompanyId ?? 0;
+        var overviewNotes = allEntriesWithType.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value
+                .Where(e => e.EntryType == CalendarTextEntryType.OverviewNote && e.CompanyId == viewerCompanyId)
+                .Select(e => e.Text)
+                .FirstOrDefault())
+            .Where(kvp => kvp.Value != null)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
 
         // Build groups by chore type
         var groups = ChoreTypes.Select(ct => new ExcelCalendarGroup
@@ -262,7 +286,7 @@ public class ChoresModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForUser(user.Id, chores, textEntries);
+            row.Cells = BuildCellsForUser(user.Id, chores, overlays, textEntries, overviewNotes);
             rows.Add(row);
         }
 
@@ -303,7 +327,9 @@ public class ChoresModel : PageModel
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
         int userId,
         List<Chore> chores,
-        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
+        Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
+        Dictionary<(int UserId, DateOnly Date), string> overviewNotes)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -324,6 +350,29 @@ public class ChoresModel : PageModel
                 UserId = c.UserId
             }).ToList();
 
+            // Add overlay data: vacation, on-duty, and other shifts as badges
+            // NOTE: Chore overlay items are intentionally skipped — chores are the primary content on this page
+            if (overlays.TryGetValue((userId, date), out var overlay))
+            {
+                // On-duty items rendered as colored assignment chips (Id=0 → non-removable)
+                foreach (var duty in overlay.OnDutyItems)
+                {
+                    cell.Assignments.Add(new ExcelCalendarAssignment
+                    {
+                        Id = 0,
+                        Name = duty.Name,
+                        Role = duty.Color ?? "duty"
+                    });
+                }
+
+                cell.Overlay = new ExcelCalendarOverlay
+                {
+                    HasVacation = overlay.HasVacation,
+                    HasOnDuty = overlay.HasOnDuty,
+                    OtherItems = overlay.OtherShifts
+                };
+            }
+
             // Text entries rendered as deletable chips (real Id enables × button)
             if (textEntries.TryGetValue((userId, date), out var entries))
             {
@@ -336,6 +385,17 @@ public class ChoresModel : PageModel
                         Role = "text-entry"
                     });
                 }
+            }
+
+            // Overview note rendered as read-only 📋 chip (Id=0 → non-removable)
+            if (overviewNotes.TryGetValue((userId, date), out var noteText))
+            {
+                cell.Assignments.Add(new ExcelCalendarAssignment
+                {
+                    Id = 0,
+                    Name = noteText,
+                    Role = "overview-note"
+                });
             }
 
             cells[date] = cell;

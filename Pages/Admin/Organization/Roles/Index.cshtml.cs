@@ -18,16 +18,19 @@ public class IndexModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
     private readonly IRoleService _roleService;
+    private readonly IAuditLogService _auditLogService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<IndexModel> logger,
-        IRoleService roleService) : base(localizer)
+        IRoleService roleService,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _roleService = roleService;
+        _auditLogService = auditLogService;
     }
 
     public record RoleTemplateVM(
@@ -156,6 +159,9 @@ public class IndexModel : LocalizedPageModel
 
         _logger.LogInformation("Revoked role assignment {AssignmentId} ({Role}) from user {UserId}",
             id, roleKey, userId);
+
+        await _auditLogService.LogAsync("RoleRevoked", "UserRoleAssignment", id,
+            $"Revoked role '{roleKey}' from user '{userName}' (UserId={userId})");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_RoleRevoked"],
             _localizer[roleNameKey], userName);

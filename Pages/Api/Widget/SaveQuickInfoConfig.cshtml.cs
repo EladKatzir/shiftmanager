@@ -23,15 +23,18 @@ public class SaveQuickInfoConfigModel : PageModel
     private readonly IQuickInfoConfigService _configService;
     private readonly AppDbContext _db;
     private readonly ILogger<SaveQuickInfoConfigModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
     public SaveQuickInfoConfigModel(
         IQuickInfoConfigService configService,
         AppDbContext db,
-        ILogger<SaveQuickInfoConfigModel> logger)
+        ILogger<SaveQuickInfoConfigModel> logger,
+        IAuditLogService auditLogService)
     {
         _configService = configService;
         _db = db;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     public async Task<IActionResult> OnGetAsync(int moleculeId)
@@ -188,6 +191,15 @@ public class SaveQuickInfoConfigModel : PageModel
             _logger.LogInformation(
                 "QuickInfoConfig save attempt for molecule {MoleculeId} by user {UserId}: success={Success}",
                 request.MoleculeId, userId, success);
+
+            if (success)
+            {
+                await _auditLogService.LogAsync(
+                    "QuickInfoConfigUpdated",
+                    "QuickInfoConfig",
+                    request.MoleculeId,
+                    $"Quick info widget config updated for molecule {request.MoleculeId} ({items.Count} items)");
+            }
 
             return new JsonResult(new { success, message })
             {

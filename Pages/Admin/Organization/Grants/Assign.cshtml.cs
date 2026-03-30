@@ -18,16 +18,19 @@ public class AssignModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ILogger<AssignModel> _logger;
     private readonly IJobTypeService _jobTypeService;
+    private readonly IAuditLogService _auditLogService;
 
     public AssignModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<AssignModel> logger,
-        IJobTypeService jobTypeService) : base(localizer)
+        IJobTypeService jobTypeService,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _jobTypeService = jobTypeService;
+        _auditLogService = auditLogService;
     }
 
     public record UserOption(int Id, string DisplayName, string Email);
@@ -180,6 +183,9 @@ public class AssignModel : LocalizedPageModel
 
         _logger.LogInformation("Assigned grant {GrantType} to user {UserId} by {GrantedBy}",
             grantType.Key, SelectedUserId, currentUserId);
+
+        await _auditLogService.LogAsync("GrantAssigned", "Grant", grant.Id,
+            $"Assigned grant '{grantType.Key}' to user '{user.DisplayName}' (UserId={SelectedUserId})");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_GrantAssigned"],
             _localizer[grantType.NameKey], user.DisplayName);

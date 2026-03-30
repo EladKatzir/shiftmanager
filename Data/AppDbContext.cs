@@ -507,12 +507,14 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Configure CalendarTextEntry (Quick Entry text-only items)
+        // Configure CalendarTextEntry (unified: Quick Entry text items + Overview notes)
         modelBuilder.Entity<CalendarTextEntry>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.UserId, e.Date }); // NOT unique — multiple entries per cell
-            entity.Property(e => e.Text).HasMaxLength(200);
+            entity.HasIndex(e => new { e.UserId, e.Date }); // NOT unique — multiple entries per cell (QuickEntry allows multiples; OverviewNote uniqueness enforced at service level)
+            entity.HasIndex(e => e.CompanyId); // Query filter performance
+            entity.Property(e => e.Text).HasMaxLength(500);
+            entity.Property(e => e.EntryType).HasDefaultValue(CalendarTextEntryType.QuickEntry);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);

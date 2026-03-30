@@ -276,6 +276,14 @@ public record CalendarNoteChangedEvent(
     string ChangeType // "created" | "updated" | "deleted"
 );
 
+public record CalendarTextEntryChangedEvent(
+    int TextEntryId,
+    int UserId,
+    DateOnly Date,
+    string? Text,
+    string ChangeType // "created" | "deleted"
+);
+
 public record CalendarChoreChangedEvent(
     int ChoreId,
     int? UserId,
@@ -304,6 +312,7 @@ public interface ICalendarNotificationService
     Task NotifyAssignmentChangedAsync(string groupName, CalendarAssignmentChangedEvent evt);
     Task NotifyCapacityChangedAsync(string groupName, CalendarCapacityChangedEvent evt);
     Task NotifyNoteChangedAsync(string groupName, CalendarNoteChangedEvent evt);
+    Task NotifyTextEntryChangedAsync(string groupName, CalendarTextEntryChangedEvent evt);
     Task NotifyChoreChangedAsync(string groupName, CalendarChoreChangedEvent evt);
     Task NotifyOnCallChangedAsync(string groupName, CalendarOnCallChangedEvent evt);
 }
@@ -337,6 +346,12 @@ public class CalendarNotificationService : ICalendarNotificationService
     {
         _logger.LogDebug("Notifying group {GroupName} of note change: {Event}", groupName, evt);
         await _hubContext.Clients.Group(groupName).SendAsync("NoteChanged", evt);
+    }
+
+    public async Task NotifyTextEntryChangedAsync(string groupName, CalendarTextEntryChangedEvent evt)
+    {
+        _logger.LogDebug("Notifying group {GroupName} of text entry change: {Event}", groupName, evt);
+        await _hubContext.Clients.Group(groupName).SendAsync("TextEntryChanged", evt);
     }
 
     public async Task NotifyChoreChangedAsync(string groupName, CalendarChoreChangedEvent evt)

@@ -112,7 +112,11 @@
                         }
                         @if (cell.Overlay.HasTextEntry)
                         {
-                            <span class="excel-calendar__badge excel-calendar__badge--text-entry" title="@string.Join(", ", cell.Overlay.TextEntryTexts)">📝</span>
+                            <span class="excel-calendar__badge excel-calendar__badge--text-entry" title="@string.Join("\n", cell.Overlay.TextEntryTexts)">📝</span>
+                        }
+                        @if (cell.Overlay.HasOverviewNote)
+                        {
+                            <span class="excel-calendar__badge excel-calendar__badge--note" title="@cell.Overlay.OverviewNoteText">📋</span>
                         }
                     </div>
                 }

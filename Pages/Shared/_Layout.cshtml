@@ -645,7 +645,7 @@
                     @* === MY SHIFTY === *@
                     <div class="nav-section-header"><loc key="Calendar_MyCalendar" /></div>
 
-                    <a href="/" class="app-sidebar-nav-item @(currentPath == "/" ? "active" : "")">
+                    <a href="/Home" class="app-sidebar-nav-item @(currentPath == "/" || currentPath == "/Home" || currentPath == "/Home/Index" ? "active" : "")">
                         <span class="app-sidebar-nav-icon"><i data-lucide="home"></i></span>
                         <span><loc key="Home" /></span>
                     </a>

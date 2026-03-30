@@ -17,16 +17,57 @@
 <div class="help-page">
     <div class="help-header">
         <h1><loc key="Help_PageTitle" /></h1>
-        <p class="help-subtitle"><loc key="Help_Subtitle" /></p>
+        <p class="help-subtitle"><loc key="Help_Hub_Subtitle" /></p>
     </div>
 
-    @* FAQ Sections *@
-    <div class="help-sections">
+    <div class="help-hub-grid">
+        <a href="/My/HelpGettingStarted" class="help-hub-card">
+            <span class="help-hub-card__icon">&#x1F680;</span>
+            <div class="help-hub-card__content">
+                <h2><loc key="Help_Hub_GettingStarted" /></h2>
+                <p><loc key="Help_Hub_GettingStarted_Desc" /></p>
+            </div>
+            <span class="help-hub-card__arrow">&#x203A;</span>
+        </a>
+        <a href="/My/HelpRoles" class="help-hub-card">
+            <span class="help-hub-card__icon">&#x1F511;</span>
+            <div class="help-hub-card__content">
+                <h2><loc key="Help_Hub_RolesPermissions" /></h2>
+                <p><loc key="Help_Hub_RolesPermissions_Desc" /></p>
+            </div>
+            <span class="help-hub-card__arrow">&#x203A;</span>
+        </a>
+        <a href="/My/HelpCalendar" class="help-hub-card">
+            <span class="help-hub-card__icon">&#x1F4C5;</span>
+            <div class="help-hub-card__content">
+                <h2><loc key="Help_Hub_Calendar" /></h2>
+                <p><loc key="Help_Hub_Calendar_Desc" /></p>
+            </div>
+            <span class="help-hub-card__arrow">&#x203A;</span>
+        </a>
+        @if (User.IsInRole("Manager") || User.IsInRole("Owner") || User.IsInRole("Director") || User.IsInRole("AreaAdmin"))
+        {
+        <a href="/My/HelpAdmin" class="help-hub-card">
+            <span class="help-hub-card__icon">&#x2699;&#xFE0F;</span>
+            <div class="help-hub-card__content">
+                <h2><loc key="Help_Hub_Admin" /></h2>
+                <p><loc key="Help_Hub_Admin_Desc" /></p>
+            </div>
+            <span class="help-hub-card__arrow">&#x203A;</span>
+        </a>
+        }
+    </div>
+
+    @* Inline FAQ Section (kept from original for quick answers) *@
+    <div class="help-sections" style="margin-top: 2rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 600; color: var(--text); margin-bottom: 1rem;">
+            <loc key="Help_Hub_FAQ" />
+        </h2>
 
         @* Calendar & Shifts *@
         <div class="help-section">
             <h2 class="help-section__title">
-                <span class="help-section__icon">📅</span>
+                <span class="help-section__icon">&#x1F4C5;</span>
                 <loc key="Help_Section_Calendar" />
             </h2>
             <div class="help-faq-list">
@@ -48,7 +89,7 @@
         @* Requests *@
         <div class="help-section">
             <h2 class="help-section__title">
-                <span class="help-section__icon">📝</span>
+                <span class="help-section__icon">&#x1F4DD;</span>
                 <loc key="Help_Section_Requests" />
             </h2>
             <div class="help-faq-list">
@@ -70,7 +111,7 @@
         @* Account & Settings *@
         <div class="help-section">
             <h2 class="help-section__title">
-                <span class="help-section__icon">👤</span>
+                <span class="help-section__icon">&#x1F464;</span>
                 <loc key="Help_Section_Account" />
             </h2>
             <div class="help-faq-list">
@@ -92,7 +133,7 @@
         @* Troubleshooting *@
         <div class="help-section">
             <h2 class="help-section__title">
-                <span class="help-section__icon">🔧</span>
+                <span class="help-section__icon">&#x1F527;</span>
                 <loc key="Help_Section_Troubleshooting" />
             </h2>
             <div class="help-faq-list">
@@ -110,7 +151,7 @@
         @* Chores & On-Duty *@
         <div class="help-section">
             <h2 class="help-section__title">
-                <span class="help-section__icon">🗂️</span>
+                <span class="help-section__icon">&#x1F5C2;&#xFE0F;</span>
                 <loc key="Help_Section_Chores" />
             </h2>
             <div class="help-faq-list">
@@ -125,12 +166,30 @@
             </div>
         </div>
 
+        @* Keyboard Shortcuts *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">&#x2328;&#xFE0F;</span>
+                <loc key="Help_Section_Shortcuts" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_KeyboardShortcuts_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_KeyboardShortcuts_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_CommandPalette_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_CommandPalette_A" /></div>
+                </details>
+            </div>
+        </div>
+
         @* Management (Managers/Directors/AreaAdmins/Owners) *@
         @if (User.IsInRole("Manager") || User.IsInRole("Owner") || User.IsInRole("Director") || User.IsInRole("AreaAdmin"))
         {
         <div class="help-section">
             <h2 class="help-section__title">
-                <span class="help-section__icon">⚙️</span>
+                <span class="help-section__icon">&#x2699;&#xFE0F;</span>
                 <loc key="Help_Section_Management" />
             </h2>
             <div class="help-faq-list">
@@ -161,30 +220,12 @@
             </div>
         </div>
         }
+    </div>
 
-        @* Keyboard Shortcuts *@
-        <div class="help-section">
-            <h2 class="help-section__title">
-                <span class="help-section__icon">⌨️</span>
-                <loc key="Help_Section_Shortcuts" />
-            </h2>
-            <div class="help-faq-list">
-                <details class="help-faq">
-                    <summary class="help-faq__question"><loc key="Help_FAQ_KeyboardShortcuts_Q" /></summary>
-                    <div class="help-faq__answer"><loc key="Help_FAQ_KeyboardShortcuts_A" /></div>
-                </details>
-                <details class="help-faq">
-                    <summary class="help-faq__question"><loc key="Help_FAQ_CommandPalette_Q" /></summary>
-                    <div class="help-faq__answer"><loc key="Help_FAQ_CommandPalette_A" /></div>
-                </details>
-            </div>
-        </div>
-
-        @* Support Contact *@
-        <div class="help-contact">
-            <h2 class="help-contact__title"><loc key="Help_NeedMoreHelp" /></h2>
-            <p class="help-contact__text"><loc key="Help_ContactSupport" /></p>
-        </div>
+    @* Support Contact *@
+    <div class="help-contact">
+        <h2 class="help-contact__title"><loc key="Help_NeedMoreHelp" /></h2>
+        <p class="help-contact__text"><loc key="Help_ContactSupport" /></p>
     </div>
 </div>
 
@@ -213,6 +254,67 @@
             margin: 0;
         }
 
+        /* Hub Card Grid */
+        .help-hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        .help-hub-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .help-hub-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .help-hub-card__icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .help-hub-card__content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .help-hub-card__content h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+            color: var(--text);
+        }
+
+        .help-hub-card__content p {
+            font-size: 0.875rem;
+            color: var(--muted);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .help-hub-card__arrow {
+            font-size: 1.5rem;
+            color: var(--muted);
+            flex-shrink: 0;
+            transition: color 0.15s ease;
+        }
+
+        .help-hub-card:hover .help-hub-card__arrow {
+            color: var(--primary);
+        }
+
+        /* FAQ Sections */
         .help-sections {
             display: flex;
             flex-direction: column;
@@ -275,7 +377,7 @@
         }
 
         .help-faq__question::before {
-            content: "▸";
+            content: "\25B8";
             font-size: 0.85rem;
             color: var(--muted);
             transition: transform 0.2s;
@@ -303,6 +405,7 @@
             border-radius: 12px;
             padding: 2rem;
             text-align: center;
+            margin-top: 2rem;
         }
 
         .help-contact__title {
@@ -321,6 +424,10 @@
         @@media (max-width: 768px) {
             .help-page {
                 padding: 0.5rem;
+            }
+
+            .help-hub-grid {
+                grid-template-columns: 1fr;
             }
 
             .help-section {

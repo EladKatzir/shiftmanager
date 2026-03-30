@@ -641,7 +641,11 @@
                 dismissPrompt(false);
                 return;
             }
-            e.preventDefault();
+            // Allow typing (space, letters, etc.) to pass through to the input;
+            // only block navigation keys that could cause unintended side effects
+            if (e.key === 'Tab') {
+                e.preventDefault();
+            }
             return;
         }
 

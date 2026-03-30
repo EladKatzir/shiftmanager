@@ -27,8 +27,9 @@ public class ManageModel : LocalizedPageModel
     private readonly IBusyUserService _busyUserService;
     private readonly IGrantService _grantService;
     private readonly IConcurrencyService _concurrencyService;
+    private readonly IAuditLogService _auditLogService;
 
-    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IShiftAssignmentService assignmentService, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService, IGrantService grantService, IConcurrencyService concurrencyService)
+    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IShiftAssignmentService assignmentService, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService, IGrantService grantService, IConcurrencyService concurrencyService, IAuditLogService auditLogService)
         : base(localizer)
     {
         _db = db;
@@ -41,6 +42,7 @@ public class ManageModel : LocalizedPageModel
         _busyUserService = busyUserService;
         _grantService = grantService;
         _concurrencyService = concurrencyService;
+        _auditLogService = auditLogService;
     }
 
 
@@ -259,6 +261,9 @@ public class ManageModel : LocalizedPageModel
             Type.Start,
             Type.End
         );
+
+        await _auditLogService.LogAsync("ShiftAssignmentManaged", "ShiftAssignment", Instance.Id,
+            $"Assigned user {SelectedUserId.Value} to shift '{Type.Name}' on {Date:yyyy-MM-dd}");
 
         return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
     }

@@ -55,7 +55,15 @@
 
 <div class="page-header">
     <h1 class="page-title"><loc key="ManageRoles" /></h1>
-    <p class="page-subtitle"><loc key="ViewAndManageRoleAssignments" /></p>
+    <p class="page-subtitle"><loc key="Roles_ScopeDescription" /></p>
+    <require-grant key="AdminAccess">
+        <p class="page-crosslink" style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+            <loc key="Roles_CrossLinkToTemplates" />
+            <a href="/Owner/Hub/RoleTemplates" style="color: var(--primary); font-weight: 500;">
+                <loc key="Roles_CrossLinkTemplatesLabel" />
+            </a>
+        </p>
+    </require-grant>
 </div>
 
 @if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div> }

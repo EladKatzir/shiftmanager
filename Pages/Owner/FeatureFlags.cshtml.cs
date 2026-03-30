@@ -18,15 +18,18 @@ public class FeatureFlagsModel : LocalizedPageModel
 {
     private readonly IFeatureFlagService _featureFlagService;
     private readonly ILogger<FeatureFlagsModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
     public FeatureFlagsModel(
         IStringLocalizer<SharedResources> localizer,
         IFeatureFlagService featureFlagService,
-        ILogger<FeatureFlagsModel> logger)
+        ILogger<FeatureFlagsModel> logger,
+        IAuditLogService auditLogService)
         : base(localizer)
     {
         _featureFlagService = featureFlagService;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     /// <summary>
@@ -56,6 +59,7 @@ public class FeatureFlagsModel : LocalizedPageModel
                 .ToHashSet();
 
             int changed = 0;
+            var changedFlags = new List<string>();
             foreach (var flag in allFlags)
             {
                 var shouldBeEnabled = enabledFlags.Contains(flag.Name);
@@ -63,12 +67,17 @@ public class FeatureFlagsModel : LocalizedPageModel
                 {
                     await _featureFlagService.SetFlagAsync(flag.Name, shouldBeEnabled);
                     _logger.LogInformation("Feature flag {FlagName} changed to {IsEnabled}", flag.Name, shouldBeEnabled);
+                    changedFlags.Add($"{flag.Name}={shouldBeEnabled}");
                     changed++;
                 }
             }
 
             if (changed > 0)
             {
+                await _auditLogService.LogAsync("FeatureFlagToggled", "FeatureFlag", null,
+                    $"Toggled {changed} feature flag(s)",
+                    string.Join(", ", changedFlags));
+
                 Message = $"{changed} flag(s) updated. Changes take effect immediately.";
             }
             else

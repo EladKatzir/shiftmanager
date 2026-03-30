@@ -8,6 +8,7 @@ using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Pages;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Requests.TimeOff;
 
@@ -15,10 +16,12 @@ namespace ShiftManager.Pages.Requests.TimeOff;
 public class CreateModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
+    private readonly IAuditLogService _auditLogService;
 
-    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db) : base(localizer)
+    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
+        _auditLogService = auditLogService;
     }
 
     [BindProperty] public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
@@ -98,15 +101,20 @@ public class CreateModel : LocalizedPageModel
             return Page();
         }
 
-        _db.TimeOffRequests.Add(new TimeOffRequest
+        var request = new TimeOffRequest
         {
             UserId = userId,
             StartDate = StartDate,
             EndDate = EndDate,
             Type = Type,
             Reason = Reason
-        });
+        };
+        _db.TimeOffRequests.Add(request);
         await _db.SaveChangesAsync();
+
+        await _auditLogService.LogAsync("TimeOffRequestCreated", "TimeOffRequest", request.Id,
+            $"Created {Type} time-off request from {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}");
+
         return RedirectToPage("/Requests/Index");
     }
 }

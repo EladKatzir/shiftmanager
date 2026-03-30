@@ -146,7 +146,7 @@ public class IndexModel : LocalizedPageModel
         _logger.LogInformation("Created OnDutyTypeConfig {Id}: {NameEn} (TypeValue={TypeValue}) by User {UserId}",
             config.Id, config.NameEn, config.TypeValue, userId);
 
-        await _auditLogService.LogUserActionAsync(userId, "Create", "OnDutyTypeConfig", config.Id,
+        await _auditLogService.LogAsync("DutyTypeCreated", "DutyType", config.Id,
             $"Created duty type '{config.NameEn}' (TypeValue={config.TypeValue})");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_DutyTypeCreated"].Value, config.NameEn);
@@ -208,7 +208,7 @@ public class IndexModel : LocalizedPageModel
         _logger.LogInformation("Updated OnDutyTypeConfig {Id}: {OldName} -> {NewName} by User {UserId}",
             config.Id, oldName, config.NameEn, userId);
 
-        await _auditLogService.LogUserActionAsync(userId, "Update", "OnDutyTypeConfig", config.Id,
+        await _auditLogService.LogAsync("DutyTypeUpdated", "DutyType", config.Id,
             $"Updated duty type '{config.NameEn}' (TypeValue={config.TypeValue})");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_DutyTypeUpdated"].Value, config.NameEn);
@@ -245,7 +245,7 @@ public class IndexModel : LocalizedPageModel
         _logger.LogInformation("OnDutyTypeConfig {Id} ({Name}) active status changed to {IsActive} by User {UserId}",
             id, config.NameEn, config.IsActive, userId);
 
-        await _auditLogService.LogUserActionAsync(userId, "ToggleActive", "OnDutyTypeConfig", config.Id,
+        await _auditLogService.LogAsync("DutyTypeUpdated", "DutyType", config.Id,
             $"Duty type '{config.NameEn}' {(config.IsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = config.IsActive

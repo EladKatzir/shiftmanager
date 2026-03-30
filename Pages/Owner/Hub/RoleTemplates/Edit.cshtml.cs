@@ -21,13 +21,15 @@ public class EditModel : PageModel
     private readonly IGrantService _grantService;
     private readonly ILogger<EditModel> _logger;
     private readonly IJobTypeService _jobTypeService;
+    private readonly IAuditLogService _auditLogService;
 
-    public EditModel(AppDbContext db, IGrantService grantService, ILogger<EditModel> logger, IJobTypeService jobTypeService)
+    public EditModel(AppDbContext db, IGrantService grantService, ILogger<EditModel> logger, IJobTypeService jobTypeService, IAuditLogService auditLogService)
     {
         _db = db;
         _grantService = grantService;
         _logger = logger;
         _jobTypeService = jobTypeService;
+        _auditLogService = auditLogService;
     }
 
     [BindProperty(SupportsGet = true)] public int Id { get; set; }
@@ -86,6 +88,11 @@ public class EditModel : PageModel
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Role template metadata updated: {Key} (Id={Id})", template.Key, template.Id);
+
+            await _auditLogService.LogAsync("RoleTemplateMetadataUpdated", "RoleTemplate", template.Id,
+                $"Updated metadata for role template '{template.Key}'",
+                $"IsActive={template.IsActive}, ScopeLevel={template.ScopeLevel}, SortOrder={template.SortOrder}");
+
             SuccessMessage = "Template metadata updated successfully.";
         }
         catch (Exception ex)
@@ -132,6 +139,11 @@ public class EditModel : PageModel
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Role template labels updated: {Key} (Id={Id})", template.Key, template.Id);
+
+            await _auditLogService.LogAsync("RoleTemplateLabelsUpdated", "RoleTemplate", template.Id,
+                $"Updated job type labels for role template '{template.Key}'",
+                $"LabelCount={LabelJobTypeIds.Count}");
+
             SuccessMessage = "Job type labels updated successfully.";
         }
         catch (Exception ex)
@@ -189,6 +201,11 @@ public class EditModel : PageModel
 
             _logger.LogInformation("Grant added to template {TemplateId}: GrantTypeId={GrantTypeId}, CanOwn={CanOwn}, CanGive={CanGive}, Scope={Scope}",
                 Id, request.GrantTypeId, request.CanOwn, request.CanGive, request.ScopeMode);
+
+            await _auditLogService.LogAsync("RoleTemplateGrantAdded", "RoleTemplate", Id,
+                $"Added grant (GrantTypeId={request.GrantTypeId}) to role template Id={Id}",
+                $"CanOwn={request.CanOwn}, CanGive={request.CanGive}, ScopeMode={request.ScopeMode}");
+
             return new JsonResult(new { success = true, grantId = grant.Id });
         }
         catch (Exception ex)
@@ -224,6 +241,11 @@ public class EditModel : PageModel
 
             _logger.LogInformation("Grant updated on template {TemplateId}: GrantId={GrantId}, CanOwn={CanOwn}, CanGive={CanGive}, Scope={Scope}",
                 Id, request.GrantId, request.CanOwn, request.CanGive, request.ScopeMode);
+
+            await _auditLogService.LogAsync("RoleTemplateGrantUpdated", "RoleTemplate", Id,
+                $"Updated grant (GrantId={request.GrantId}) on role template Id={Id}",
+                $"CanOwn={request.CanOwn}, CanGive={request.CanGive}, ScopeMode={request.ScopeMode}");
+
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)
@@ -248,6 +270,10 @@ public class EditModel : PageModel
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Grant removed from template {TemplateId}: GrantId={GrantId}", Id, request.GrantId);
+
+            await _auditLogService.LogAsync("RoleTemplateGrantRemoved", "RoleTemplate", Id,
+                $"Removed grant (GrantId={request.GrantId}) from role template Id={Id}");
+
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)

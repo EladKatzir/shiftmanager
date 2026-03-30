@@ -6,6 +6,7 @@ using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Resources;
+using ShiftManager.Hubs;
 using ShiftManager.Services;
 using ShiftManager.ViewComponents;
 using ShiftManager.Models.Support;
@@ -24,31 +25,37 @@ namespace ShiftManager.Pages.Calendar;
 public class OverviewModel : PageModel
 {
     private readonly AppDbContext _db;
-    private readonly IUserDayNoteService _noteService;
+    private readonly ICalendarTextEntryService _textEntryService;
     private readonly IGrantService _grantService;
     private readonly ICompanyContext _companyContext;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ICompanyLocalizationService _companyLocalizationService;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IAuditLogService _auditLogService;
+    private readonly ICalendarNotificationService _notificationService;
     private readonly ILogger<OverviewModel> _logger;
 
     public OverviewModel(
         AppDbContext db,
-        IUserDayNoteService noteService,
+        ICalendarTextEntryService textEntryService,
         IGrantService grantService,
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
         ICompanyLocalizationService companyLocalizationService,
         ITenantResolver tenantResolver,
+        IAuditLogService auditLogService,
+        ICalendarNotificationService notificationService,
         ILogger<OverviewModel> logger)
     {
         _db = db;
-        _noteService = noteService;
+        _textEntryService = textEntryService;
         _grantService = grantService;
         _companyContext = companyContext;
         _localizer = localizer;
         _companyLocalizationService = companyLocalizationService;
         _tenantResolver = tenantResolver;
+        _auditLogService = auditLogService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -201,7 +208,20 @@ public class OverviewModel : PageModel
         var shifts = await LoadShiftsAsync();
         var chores = await LoadChoresAsync();
         var onDuties = await LoadOnDutiesAsync();
-        var notes = await _noteService.GetNotesForCompanyAsync(CompanyId, StartDate, EndDate);
+        var notes = await _textEntryService.GetOverviewNotesForCompanyAsync(CompanyId, StartDate, EndDate);
+
+        // Load quick-entry text entries for cross-visibility (📝 badge on Overview)
+        var userIds = Users.Select(u => u.Id);
+        var textEntriesWithType = await _textEntryService.GetForUsersAndDateRangeWithTypeAsync(userIds, StartDate, EndDate);
+        // Filter to QuickEntry only (OverviewNotes are already in 'notes' dict)
+        var quickEntries = textEntriesWithType.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value
+                .Where(e => e.EntryType == CalendarTextEntryType.QuickEntry)
+                .Select(e => e.Text)
+                .ToList())
+            .Where(kvp => kvp.Value.Count > 0)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         // Build rows - one per user
         var rows = new List<ExcelCalendarRow>();
@@ -214,7 +234,7 @@ public class OverviewModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForUser(user.Id, vacations, shifts, chores, onDuties, notes);
+            row.Cells = BuildCellsForUser(user.Id, vacations, shifts, chores, onDuties, notes, quickEntries);
             rows.Add(row);
         }
 
@@ -365,7 +385,8 @@ public class OverviewModel : PageModel
         Dictionary<(int UserId, DateOnly Date), List<string>> shifts,
         Dictionary<(int UserId, DateOnly Date), List<string>> chores,
         Dictionary<(int UserId, DateOnly Date), List<string>> onDuties,
-        Dictionary<(int UserId, DateOnly Date), string> notes)
+        Dictionary<(int UserId, DateOnly Date), string> notes,
+        Dictionary<(int UserId, DateOnly Date), List<string>> quickEntries)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -422,16 +443,26 @@ public class OverviewModel : PageModel
 
             cell.Assignments = assignments;
 
-            // Add overlay data (vacation indicator)
-            if (vacations.TryGetValue(key, out var hasVacation) && hasVacation)
+            // Add overlay data
+            var hasVacationFlag = vacations.TryGetValue(key, out var hasVacation) && hasVacation;
+            var hasTextEntries = quickEntries.TryGetValue(key, out var entryTexts) && entryTexts.Count > 0;
+
+            if (hasVacationFlag || hasTextEntries)
             {
                 cell.Overlay = new ExcelCalendarOverlay
                 {
-                    HasVacation = true
+                    HasVacation = hasVacationFlag
                 };
+
+                // Cross-visibility: show QuickEntry text entries from Shifts/Chores/OnCall as 📝 badge
+                if (hasTextEntries)
+                {
+                    cell.Overlay.HasTextEntry = true;
+                    cell.Overlay.TextEntryTexts = entryTexts!;
+                }
             }
 
-            // Add note
+            // Add overview note (renders as plain text in cell)
             if (notes.TryGetValue(key, out var note))
             {
                 cell.Note = note;
@@ -478,12 +509,40 @@ public class OverviewModel : PageModel
             if (string.IsNullOrWhiteSpace(request.Note))
             {
                 // Delete note if empty
-                await _noteService.DeleteNoteAsync(request.UserId, request.Date, companyId.Value);
+                await _textEntryService.DeleteOverviewNoteAsync(request.UserId, request.Date, companyId.Value);
+
+                await _auditLogService.LogAsync(
+                    action: "OverviewNoteDeleted",
+                    entityType: "CalendarTextEntry",
+                    entityId: 0,
+                    description: $"Deleted overview note for user {request.UserId} on {request.Date:yyyy-MM-dd}");
+
+                // Notify connected clients
+                await _notificationService.NotifyNoteChangedAsync(
+                    CalendarGroups.Overview(companyId.Value),
+                    new CalendarNoteChangedEvent(request.UserId, request.Date, null, "deleted"));
             }
             else
             {
-                // Save note
-                await _noteService.SetNoteAsync(request.UserId, request.Date, companyId.Value, request.Note, currentUserId);
+                if (request.Note.Length > 500)
+                {
+                    return new JsonResult(new { success = false, error = "Note must not exceed 500 characters" }) { StatusCode = 400 };
+                }
+
+                // Save note (upsert — creates or updates the single OverviewNote for this user/date/company)
+                var saved = await _textEntryService.SetOverviewNoteAsync(request.UserId, request.Date, companyId.Value, request.Note.Trim(), currentUserId);
+
+                var changeType = saved.UpdatedAt.HasValue ? "updated" : "created";
+                await _auditLogService.LogAsync(
+                    action: $"OverviewNote{(changeType == "created" ? "Created" : "Updated")}",
+                    entityType: "CalendarTextEntry",
+                    entityId: saved.Id,
+                    description: $"{changeType} overview note for user {request.UserId} on {request.Date:yyyy-MM-dd}: '{request.Note.Trim()}'");
+
+                // Notify connected clients
+                await _notificationService.NotifyNoteChangedAsync(
+                    CalendarGroups.Overview(companyId.Value),
+                    new CalendarNoteChangedEvent(request.UserId, request.Date, request.Note.Trim(), changeType));
             }
 
             return new JsonResult(new { success = true });

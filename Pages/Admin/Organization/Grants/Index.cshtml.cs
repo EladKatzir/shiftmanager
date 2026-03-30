@@ -5,6 +5,7 @@ using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization.Grants;
 
@@ -15,14 +16,17 @@ public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     public record GrantVM(
@@ -148,6 +152,9 @@ public class IndexModel : LocalizedPageModel
 
         _logger.LogInformation("Revoked grant {GrantId} ({GrantType}) from user {UserId}",
             id, grant.GrantType.Key, grant.UserId);
+
+        await _auditLogService.LogAsync("GrantRevoked", "Grant", id,
+            $"Revoked grant '{grant.GrantType.Key}' from user '{grant.User.DisplayName}' (UserId={grant.UserId})");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_GrantRevoked"],
             _localizer[grant.GrantType.NameKey], grant.User.DisplayName);

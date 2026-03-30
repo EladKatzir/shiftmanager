@@ -67,7 +67,8 @@ public class CalendarTextEntryService : ICalendarTextEntryService
     public async Task<Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>>> GetForDateRangeAsync(DateOnly start, DateOnly end)
     {
         var entries = await _db.CalendarTextEntries
-            .Where(e => e.Date >= start && e.Date <= end)
+            .Where(e => e.EntryType == CalendarTextEntryType.QuickEntry
+                && e.Date >= start && e.Date <= end)
             .Select(e => new { e.Id, e.UserId, e.Date, e.Text })
             .ToListAsync();
 
@@ -90,7 +91,8 @@ public class CalendarTextEntryService : ICalendarTextEntryService
         var userIdList = userIds.ToList();
         var entries = await _db.CalendarTextEntries
             .IgnoreQueryFilters()
-            .Where(e => userIdList.Contains(e.UserId) && e.Date >= start && e.Date <= end)
+            .Where(e => e.EntryType == CalendarTextEntryType.QuickEntry
+                && userIdList.Contains(e.UserId) && e.Date >= start && e.Date <= end)
             .Select(e => new { e.Id, e.UserId, e.Date, e.Text })
             .ToListAsync();
 
@@ -115,5 +117,103 @@ public class CalendarTextEntryService : ICalendarTextEntryService
         _db.CalendarTextEntries.Remove(entry);
         await _db.SaveChangesAsync();
         return true;
+    }
+
+    // --- Overview Notes (unified from UserDayNote) ---
+
+    /// <summary>
+    /// Upsert an overview note for a specific user/date/company. Only one OverviewNote
+    /// entry is allowed per (UserId, Date, CompanyId) — enforced here at service level.
+    /// This is the ONLY code path that creates OverviewNote entries.
+    /// </summary>
+    public async Task<CalendarTextEntry> SetOverviewNoteAsync(int userId, DateOnly date, int companyId, string text, int createdByUserId)
+    {
+        var existing = await _db.CalendarTextEntries
+            .FirstOrDefaultAsync(e => e.UserId == userId
+                && e.Date == date
+                && e.CompanyId == companyId
+                && e.EntryType == CalendarTextEntryType.OverviewNote);
+
+        if (existing != null)
+        {
+            existing.Text = text;
+            existing.UpdatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            existing = new CalendarTextEntry
+            {
+                UserId = userId,
+                Date = date,
+                Text = text,
+                CompanyId = companyId,
+                CreatedByUserId = createdByUserId,
+                EntryType = CalendarTextEntryType.OverviewNote
+            };
+            _db.CalendarTextEntries.Add(existing);
+        }
+
+        await _db.SaveChangesAsync();
+        return existing;
+    }
+
+    public async Task<bool> DeleteOverviewNoteAsync(int userId, DateOnly date, int companyId)
+    {
+        var entry = await _db.CalendarTextEntries
+            .FirstOrDefaultAsync(e => e.UserId == userId
+                && e.Date == date
+                && e.CompanyId == companyId
+                && e.EntryType == CalendarTextEntryType.OverviewNote);
+
+        if (entry == null)
+            return false;
+
+        _db.CalendarTextEntries.Remove(entry);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    /// <summary>
+    /// Bulk load overview notes for a company within a date range.
+    /// Returns same shape as the former IUserDayNoteService.GetNotesForCompanyAsync.
+    /// Uses standard query filter (company-scoped) — no IgnoreQueryFilters needed.
+    /// </summary>
+    public async Task<Dictionary<(int UserId, DateOnly Date), string>> GetOverviewNotesForCompanyAsync(
+        int companyId, DateOnly start, DateOnly end)
+    {
+        var notes = await _db.CalendarTextEntries
+            .Where(e => e.CompanyId == companyId
+                && e.EntryType == CalendarTextEntryType.OverviewNote
+                && e.Date >= start && e.Date <= end)
+            .Select(e => new { e.UserId, e.Date, e.Text })
+            .ToListAsync();
+
+        // Defensive: use GroupBy to handle any duplicate OverviewNote rows (should not exist,
+        // but concurrent upserts without a DB-level unique constraint could create them)
+        return notes
+            .GroupBy(n => (n.UserId, n.Date))
+            .ToDictionary(g => g.Key, g => g.First().Text);
+    }
+
+    /// <summary>
+    /// Same as GetForUsersAndDateRangeAsync but includes EntryType in results
+    /// so callers can distinguish QuickEntry items from OverviewNotes.
+    /// SECURITY-AUDITED: Same IgnoreQueryFilters rationale as GetForUsersAndDateRangeAsync.
+    /// </summary>
+    public async Task<Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text, CalendarTextEntryType EntryType, int CompanyId)>>>
+        GetForUsersAndDateRangeWithTypeAsync(IEnumerable<int> userIds, DateOnly start, DateOnly end)
+    {
+        var userIdList = userIds.ToList();
+        var entries = await _db.CalendarTextEntries
+            .IgnoreQueryFilters()
+            .Where(e => userIdList.Contains(e.UserId) && e.Date >= start && e.Date <= end)
+            .Select(e => new { e.Id, e.UserId, e.Date, e.Text, e.EntryType, e.CompanyId })
+            .ToListAsync();
+
+        return entries
+            .GroupBy(e => (e.UserId, e.Date))
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(e => (e.Id, e.Text, e.EntryType, e.CompanyId)).ToList());
     }
 }

@@ -4851,6 +4851,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Dashboard_ViewTeam" xml:space="preserve">
     <value>View Team</value>
   </data>
+  <data name="Dashboard_ManageUsers" xml:space="preserve">
+    <value>Manage Users</value>
+  </data>
   <data name="Dashboard_ViewAnalytics" xml:space="preserve">
     <value>View Analytics</value>
   </data>
@@ -6847,6 +6850,15 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Role_Owner_Desc" xml:space="preserve">
     <value>System owner with full administrative access</value>
+  </data>
+  <data name="Role_Trainee_Desc" xml:space="preserve">
+    <value>Trainee paired with a mentor for supervised shift experience</value>
+  </data>
+  <data name="Role_Manager_Desc" xml:space="preserve">
+    <value>Manager with team oversight and scheduling permissions</value>
+  </data>
+  <data name="Role_Director_Desc" xml:space="preserve">
+    <value>Director with molecule-level operational authority</value>
   </data>
 
   <!-- A-015: Button Text -->
@@ -13598,6 +13610,97 @@ Are you absolutely sure you want to delete this user?</value>
     <value>API Key Request</value>
   </data>
 
+  <!-- Missing audit action keys (identified during audit localization review) -->
+  <data name="AuditAction_ShiftInstanceCreated" xml:space="preserve">
+    <value>Shift Instance Created</value>
+  </data>
+  <data name="AuditAction_ShiftSlotAssigned" xml:space="preserve">
+    <value>Shift Slot Assigned</value>
+  </data>
+  <data name="AuditAction_ShiftCleared" xml:space="preserve">
+    <value>Shift Cleared</value>
+  </data>
+  <data name="AuditAction_StaffingUpdated" xml:space="preserve">
+    <value>Staffing Updated</value>
+  </data>
+  <data name="AuditAction_ShiftDeleted" xml:space="preserve">
+    <value>Shift Deleted</value>
+  </data>
+  <data name="AuditAction_TraineeAdded" xml:space="preserve">
+    <value>Trainee Added</value>
+  </data>
+  <data name="AuditAction_TraineeRemoved" xml:space="preserve">
+    <value>Trainee Removed</value>
+  </data>
+  <data name="AuditAction_ShiftUserChanged" xml:space="preserve">
+    <value>Shift User Changed</value>
+  </data>
+  <data name="AuditAction_ShiftMetadataUpdated" xml:space="preserve">
+    <value>Shift Metadata Updated</value>
+  </data>
+  <data name="AuditAction_ShiftTypeCreated" xml:space="preserve">
+    <value>Shift Type Created</value>
+  </data>
+  <data name="AuditAction_ShiftDetached" xml:space="preserve">
+    <value>Shift Detached</value>
+  </data>
+  <data name="AuditAction_ShiftReset" xml:space="preserve">
+    <value>Shift Reset</value>
+  </data>
+  <data name="AuditAction_ShiftRangeFilled" xml:space="preserve">
+    <value>Shift Range Filled</value>
+  </data>
+  <data name="AuditAction_AccountUnlock" xml:space="preserve">
+    <value>Account Unlocked</value>
+  </data>
+  <data name="AuditAction_OverviewNoteCreated" xml:space="preserve">
+    <value>Overview Note Created</value>
+  </data>
+  <data name="AuditAction_OverviewNoteUpdated" xml:space="preserve">
+    <value>Overview Note Updated</value>
+  </data>
+  <data name="AuditAction_OverviewNoteDeleted" xml:space="preserve">
+    <value>Overview Note Deleted</value>
+  </data>
+  <data name="AuditAction_TextEntryCreated" xml:space="preserve">
+    <value>Text Entry Created</value>
+  </data>
+  <data name="AuditAction_TextEntryDeleted" xml:space="preserve">
+    <value>Text Entry Deleted</value>
+  </data>
+  <data name="AuditAction_DeploymentExport" xml:space="preserve">
+    <value>Deployment Export</value>
+  </data>
+  <data name="AuditAction_UserDeleted" xml:space="preserve">
+    <value>User Deleted</value>
+  </data>
+
+  <!-- Missing audit entity keys -->
+  <data name="AuditEntity_CalendarTextEntry" xml:space="preserve">
+    <value>Calendar Text Entry</value>
+  </data>
+  <data name="AuditEntity_ApiKey" xml:space="preserve">
+    <value>API Key</value>
+  </data>
+  <data name="AuditEntity_System" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="AuditEntity_project" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="AuditEntity_area" xml:space="preserve">
+    <value>Area</value>
+  </data>
+  <data name="AuditEntity_molecule" xml:space="preserve">
+    <value>Molecule</value>
+  </data>
+  <data name="AuditEntity_company" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="AuditEntity_department" xml:space="preserve">
+    <value>Department</value>
+  </data>
+
   <!-- Cross-agent .resx keys -->
   <data name="HomeType_DaysSelected" xml:space="preserve">
     <value>{0} days selected</value>
@@ -13795,6 +13898,30 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Grant_ManageStores_Desc" xml:space="preserve">
     <value>Create, edit, and manage store definitions and opening hours</value>
   </data>
+  <data name="Grant_ViewHakamOnCall" xml:space="preserve">
+    <value>View Hakam On-Call</value>
+  </data>
+  <data name="Grant_ViewHakamOnCall_Desc" xml:space="preserve">
+    <value>View Hakam on-call assignments in the On-Call Widget</value>
+  </data>
+  <data name="Grant_ViewCompanyOnCall" xml:space="preserve">
+    <value>View Company On-Call</value>
+  </data>
+  <data name="Grant_ViewCompanyOnCall_Desc" xml:space="preserve">
+    <value>View company-specific on-call contacts in the On-Call Widget</value>
+  </data>
+  <data name="Grant_ViewShiftsMolecule" xml:space="preserve">
+    <value>View Shifts (Molecule)</value>
+  </data>
+  <data name="Grant_ViewShiftsMolecule_Desc" xml:space="preserve">
+    <value>Access molecule-level scope in the scope switcher for shift calendars</value>
+  </data>
+  <data name="Grant_ViewShiftsArea" xml:space="preserve">
+    <value>View Shifts (Area)</value>
+  </data>
+  <data name="Grant_ViewShiftsArea_Desc" xml:space="preserve">
+    <value>Access area-level scope in the scope switcher for shift calendars</value>
+  </data>
   <data name="Store_ErrorNameRequired" xml:space="preserve">
     <value>Store name (English) is required.</value>
   </data>
@@ -13827,5 +13954,234 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Store_SuccessHoursUpdated" xml:space="preserve">
     <value>Store hours updated successfully.</value>
+  </data>
+  <!-- Notes Unification (cross-visibility badges) -->
+  <data name="OverviewNote" xml:space="preserve">
+    <value>Overview Note</value>
+  </data>
+  <data name="OverviewNoteTooltip" xml:space="preserve">
+    <value>Overview note for this user</value>
+  </data>
+  <data name="TextEntries" xml:space="preserve">
+    <value>Text Entries</value>
+  </data>
+  <data name="TextEntryCount" xml:space="preserve">
+    <value>{0} text entries</value>
+  </data>
+  <data name="Roles_ScopeDescription" xml:space="preserve">
+    <value>View and manage role assignments for users in your company or molecule. Assign roles or revoke existing ones.</value>
+  </data>
+  <data name="Roles_CrossLinkToTemplates" xml:space="preserve">
+    <value>To manage role templates and grants project-wide, go to</value>
+  </data>
+  <data name="Roles_CrossLinkTemplatesLabel" xml:space="preserve">
+    <value>Role Templates (Owner Hub)</value>
+  </data>
+  <data name="RoleTemplates_ScopeDescription" xml:space="preserve">
+    <value>Define and manage role templates and their associated grants across the entire project. Templates created here are available for assignment in all companies.</value>
+  </data>
+  <data name="RoleTemplates_CrossLinkToRoles" xml:space="preserve">
+    <value>To assign roles to specific users, go to</value>
+  </data>
+  <data name="RoleTemplates_CrossLinkRolesLabel" xml:space="preserve">
+    <value>Role Assignments (Admin)</value>
+  </data>
+  <data name="Help_Hub_Subtitle" xml:space="preserve">
+    <value>Find answers and learn how to use ShiftManager</value>
+  </data>
+  <data name="Help_Hub_GettingStarted" xml:space="preserve">
+    <value>Getting Started</value>
+  </data>
+  <data name="Help_Hub_GettingStarted_Desc" xml:space="preserve">
+    <value>New to ShiftManager? Learn the basics of signing up, logging in, and navigating the system.</value>
+  </data>
+  <data name="Help_Hub_RolesPermissions" xml:space="preserve">
+    <value>Roles &amp; Permissions</value>
+  </data>
+  <data name="Help_Hub_RolesPermissions_Desc" xml:space="preserve">
+    <value>Understand the different roles in the system and what each one can do.</value>
+  </data>
+  <data name="Help_Hub_Calendar" xml:space="preserve">
+    <value>Calendar Guide</value>
+  </data>
+  <data name="Help_Hub_Calendar_Desc" xml:space="preserve">
+    <value>Learn how to use Shifts, Chores, On-Call, and Overview calendars.</value>
+  </data>
+  <data name="Help_Hub_Admin" xml:space="preserve">
+    <value>Admin Guide</value>
+  </data>
+  <data name="Help_Hub_Admin_Desc" xml:space="preserve">
+    <value>User management, organization setup, audit logs, and system configuration.</value>
+  </data>
+  <data name="Help_Hub_FAQ" xml:space="preserve">
+    <value>FAQ</value>
+  </data>
+  <data name="Help_Hub_FAQ_Desc" xml:space="preserve">
+    <value>Quick answers to frequently asked questions.</value>
+  </data>
+  <data name="Help_GettingStarted_Title" xml:space="preserve">
+    <value>Getting Started</value>
+  </data>
+  <data name="Help_GettingStarted_Subtitle" xml:space="preserve">
+    <value>Everything you need to know to get up and running with ShiftManager</value>
+  </data>
+  <data name="Help_GS_WhatIs_Q" xml:space="preserve">
+    <value>What is ShiftManager?</value>
+  </data>
+  <data name="Help_GS_WhatIs_A" xml:space="preserve">
+    <value>ShiftManager is a shift scheduling and management system designed for organizations with multiple teams, roles, and shift types. It handles shift assignments, chore scheduling, on-call rotations, vacation requests, and more.</value>
+  </data>
+  <data name="Help_GS_Signup_Q" xml:space="preserve">
+    <value>How do I sign up?</value>
+  </data>
+  <data name="Help_GS_Signup_A" xml:space="preserve">
+    <value>Click the "Join" button on the login page. Fill in your details, select your company and role, and submit the request. A manager will review and approve your request. Once approved, you can log in with your credentials.</value>
+  </data>
+  <data name="Help_GS_FirstLogin_Q" xml:space="preserve">
+    <value>What should I do after my first login?</value>
+  </data>
+  <data name="Help_GS_FirstLogin_A" xml:space="preserve">
+    <value>After logging in: 1) Check your profile and update your display name if needed. 2) Review your assigned role and company. 3) Navigate to the Calendar to see your shifts. 4) Set up notifications in your profile settings.</value>
+  </data>
+  <data name="Help_GS_Navigation_Q" xml:space="preserve">
+    <value>How do I navigate the system?</value>
+  </data>
+  <data name="Help_GS_Navigation_A" xml:space="preserve">
+    <value>Use the sidebar menu to access different sections: Calendar (Shifts, Chores, On-Call, Overview), My section (Profile, Requests, Help), and Admin section (if you have management permissions). You can collapse the sidebar for more screen space.</value>
+  </data>
+  <data name="Help_GS_RequestAccess_Q" xml:space="preserve">
+    <value>What if I need access to additional features?</value>
+  </data>
+  <data name="Help_GS_RequestAccess_A" xml:space="preserve">
+    <value>Contact your manager or system administrator. They can assign you additional roles or grants that unlock more features. You can see your current permissions in your profile page.</value>
+  </data>
+  <data name="Help_Roles_Title" xml:space="preserve">
+    <value>Roles &amp; Permissions</value>
+  </data>
+  <data name="Help_Roles_Subtitle" xml:space="preserve">
+    <value>Understanding roles, permissions, and what each role can do</value>
+  </data>
+  <data name="Help_Roles_Overview_Q" xml:space="preserve">
+    <value>What roles exist in the system?</value>
+  </data>
+  <data name="Help_Roles_Overview_A" xml:space="preserve">
+    <value>ShiftManager has the following roles: Employee (basic user), Manager (manages a company), Lead (team lead with extended permissions), BR Director (battalion-level director), Director (molecule-level director), Area Admin (area-level administrator), Assigner (shift assignment specialist), Trainee (supervised employee), and Owner (full system access).</value>
+  </data>
+  <data name="Help_Roles_Employee_Q" xml:space="preserve">
+    <value>What can an Employee do?</value>
+  </data>
+  <data name="Help_Roles_Employee_A" xml:space="preserve">
+    <value>Employees can view their own shifts and schedules, submit vacation and swap requests, view chore assignments, update their profile, and see the team overview calendar.</value>
+  </data>
+  <data name="Help_Roles_Manager_Q" xml:space="preserve">
+    <value>What can a Manager do?</value>
+  </data>
+  <data name="Help_Roles_Manager_A" xml:space="preserve">
+    <value>Managers can do everything an Employee can, plus: assign and unassign shifts, approve or reject vacation and swap requests, manage users in their company, view audit logs, and configure shift types and chore types.</value>
+  </data>
+  <data name="Help_Roles_Lead_Q" xml:space="preserve">
+    <value>What can a Lead do?</value>
+  </data>
+  <data name="Help_Roles_Lead_A" xml:space="preserve">
+    <value>Leads have similar permissions to Managers but are specifically designated as team leaders. They can manage shifts, approve requests, and handle chore assignments for their team.</value>
+  </data>
+  <data name="Help_Roles_Director_Q" xml:space="preserve">
+    <value>What can a Director do?</value>
+  </data>
+  <data name="Help_Roles_Director_A" xml:space="preserve">
+    <value>Directors have oversight over an entire molecule (group of companies). They can view and manage operations across all companies in their molecule, access the Director Hub for cross-company analytics, and approve requests at a higher level.</value>
+  </data>
+  <data name="Help_Roles_AreaAdmin_Q" xml:space="preserve">
+    <value>What can an Area Admin do?</value>
+  </data>
+  <data name="Help_Roles_AreaAdmin_A" xml:space="preserve">
+    <value>Area Admins manage an entire area (group of molecules). They have broad administrative access across multiple molecules and can configure organization-level settings.</value>
+  </data>
+  <data name="Help_Roles_Owner_Q" xml:space="preserve">
+    <value>What can an Owner do?</value>
+  </data>
+  <data name="Help_Roles_Owner_A" xml:space="preserve">
+    <value>Owners have full system access. They can manage all users, configure role templates and grants, access the Owner Hub with system-wide settings, manage all companies and molecules, and view comprehensive audit logs.</value>
+  </data>
+  <data name="Help_Roles_Grants_Q" xml:space="preserve">
+    <value>What are grants?</value>
+  </data>
+  <data name="Help_Roles_Grants_A" xml:space="preserve">
+    <value>Grants are fine-grained permissions that control exactly what actions a user can perform. Each role template bundles a set of grants. For example, the "ApproveVacations" grant allows approving vacation requests. Administrators can customize which grants each role includes.</value>
+  </data>
+  <data name="Help_Calendar_Title" xml:space="preserve">
+    <value>Calendar Guide</value>
+  </data>
+  <data name="Help_Calendar_Subtitle" xml:space="preserve">
+    <value>How to use the shift calendar, chores, on-call, and overview pages</value>
+  </data>
+  <data name="Help_Cal_Shifts_Q" xml:space="preserve">
+    <value>How does the Shifts calendar work?</value>
+  </data>
+  <data name="Help_Cal_Shifts_A" xml:space="preserve">
+    <value>The Shifts calendar shows all shift assignments for your molecule and job type. Navigate between months using the arrows. Click on a cell to see assignment details. Managers can click empty cells to assign shifts or click assigned cells to modify them.</value>
+  </data>
+  <data name="Help_Cal_Chores_Q" xml:space="preserve">
+    <value>How do Chores work?</value>
+  </data>
+  <data name="Help_Cal_Chores_A" xml:space="preserve">
+    <value>Chores are recurring or one-time tasks assigned to users on specific dates. The Chores calendar shows all chore assignments for your molecule. Managers can create chore types in Admin and assign them to users through the calendar.</value>
+  </data>
+  <data name="Help_Cal_OnCall_Q" xml:space="preserve">
+    <value>How does the On-Call calendar work?</value>
+  </data>
+  <data name="Help_Cal_OnCall_A" xml:space="preserve">
+    <value>The On-Call calendar tracks duty assignments (Hakam, Lead, etc.) across your area. It shows who is on duty for each date and duty type. Managers with the ManageOnDuty grant can assign and modify on-call rotations.</value>
+  </data>
+  <data name="Help_Cal_Overview_Q" xml:space="preserve">
+    <value>What is the Overview page?</value>
+  </data>
+  <data name="Help_Cal_Overview_A" xml:space="preserve">
+    <value>The Overview page provides a consolidated view of all users in your company with their shifts, chores, and on-call assignments for the month. It includes text entries (notes) and key metrics. This is ideal for getting a high-level picture of team scheduling.</value>
+  </data>
+  <data name="Help_Cal_QuickEntry_Q" xml:space="preserve">
+    <value>How do I quickly assign shifts?</value>
+  </data>
+  <data name="Help_Cal_QuickEntry_A" xml:space="preserve">
+    <value>Click on any empty cell in the calendar to open the quick-entry panel. Select the user (or shift type in user-mode) and confirm. You can also use the bottom sheet for more detailed assignment options including trainee assignment.</value>
+  </data>
+  <data name="Help_Cal_Print_Q" xml:space="preserve">
+    <value>Can I print or export the calendar?</value>
+  </data>
+  <data name="Help_Cal_Print_A" xml:space="preserve">
+    <value>Yes. Use the print button in the calendar toolbar to generate a print-friendly version. Managers can also export user data to CSV from the Admin/Users page.</value>
+  </data>
+  <data name="Help_Admin_Title" xml:space="preserve">
+    <value>Admin Guide</value>
+  </data>
+  <data name="Help_Admin_Subtitle" xml:space="preserve">
+    <value>Managing users, organization, and system settings</value>
+  </data>
+  <data name="Help_Admin_Users_Q" xml:space="preserve">
+    <value>How do I manage users?</value>
+  </data>
+  <data name="Help_Admin_Users_A" xml:space="preserve">
+    <value>Go to Admin &gt; Users to manage users. You can add new users, approve join requests, edit user details (role, company, job type), lock/unlock accounts, and deactivate users. Use the filters to narrow down the user list.</value>
+  </data>
+  <data name="Help_Admin_JoinRequests_Q" xml:space="preserve">
+    <value>How do join requests work?</value>
+  </data>
+  <data name="Help_Admin_JoinRequests_A" xml:space="preserve">
+    <value>When new users sign up, they create a join request. Managers see pending requests at the top of the Admin/Users page. You can approve (assigns the requested role and company) or reject each request. Batch approval is also available for multiple requests.</value>
+  </data>
+  <data name="Help_Admin_Organization_Q" xml:space="preserve">
+    <value>How do I configure the organization?</value>
+  </data>
+  <data name="Help_Admin_Organization_A" xml:space="preserve">
+    <value>The Admin &gt; Organization section lets you manage: Shift Types (work schedules), Chore Types (recurring tasks), Duty Types (on-call categories), and Roles (role assignments). Each has its own management page accessible from the Organization menu.</value>
+  </data>
+  <data name="Help_Admin_Audit_Q" xml:space="preserve">
+    <value>How do I view audit logs?</value>
+  </data>
+  <data name="Help_Admin_Audit_A" xml:space="preserve">
+    <value>Go to Admin &gt; Audit Log to view a chronological record of all system actions. You can filter by user, action type, and date range. Audit logs track user management actions, shift assignments, approvals, and configuration changes.</value>
+  </data>
+  <data name="Help_BackToHub" xml:space="preserve">
+    <value>Back to Help Center</value>
   </data>
 </root>

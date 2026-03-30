@@ -577,7 +577,14 @@
                             <td>@request.DisplayName</td>
                             <td>@request.Email</td>
                             <td>@request.CompanyName</td>
-                            <td style="color: var(--text-muted);">@RoleDisplayHelper.GetRoleDisplayName(Localizer, request.RequestedRole, request.JobTypeKey)</td>
+                            @{
+                                var reqTemplate = request.RequestedRoleTemplateId.HasValue
+                                    ? Model.AssignableRoleTemplates.FirstOrDefault(rt => rt.Id == request.RequestedRoleTemplateId.Value)
+                                    : null;
+                            }
+                            <td style="color: var(--text-muted);">@(reqTemplate != null
+                                ? RoleDisplayHelper.GetRoleDisplayName(Localizer, reqTemplate, request.JobTypeKey)
+                                : RoleDisplayHelper.GetRoleDisplayName(Localizer, request.RequestedRole, request.JobTypeKey))</td>
                             <td>@(request.JobTypeName ?? "-")</td>
                             <td>
                                 <select name="RequestTemplateIds[@request.Id]" class="form-input" style="min-width: 120px;">
@@ -636,7 +643,14 @@
                         <td>@request.DisplayName</td>
                         <td>@request.Email</td>
                         <td>@request.CompanyName</td>
-                        <td>@RoleDisplayHelper.GetRoleDisplayName(Localizer, request.RequestedRole, request.JobTypeKey)</td>
+                        @{
+                            var histTemplate = request.RequestedRoleTemplateId.HasValue
+                                ? Model.AssignableRoleTemplates.FirstOrDefault(rt => rt.Id == request.RequestedRoleTemplateId.Value)
+                                : null;
+                        }
+                        <td>@(histTemplate != null
+                            ? RoleDisplayHelper.GetRoleDisplayName(Localizer, histTemplate, request.JobTypeKey)
+                            : RoleDisplayHelper.GetRoleDisplayName(Localizer, request.RequestedRole, request.JobTypeKey))</td>
                         <td>@(request.JobTypeName ?? "-")</td>
                         <td>
                             @if (request.Status == JoinRequestStatus.Approved)
@@ -787,14 +801,6 @@
         {
             <input type="hidden" name="FilterRole" value="@((int)Model.FilterRole.Value)" />
         }
-        @if (Model.UserFilterMoleculeId.HasValue)
-        {
-            <input type="hidden" name="UserFilterMoleculeId" value="@Model.UserFilterMoleculeId" />
-        }
-        @if (Model.UserFilterJobTypeId.HasValue)
-        {
-            <input type="hidden" name="UserFilterJobTypeId" value="@Model.UserFilterJobTypeId" />
-        }
 
         <div class="filters-grid">
             <div class="filter-group">
@@ -941,7 +947,14 @@
                 </td>
                 <td class="editable-cell" data-cell-type="role" data-user-id="@u.Id">
                     <div class="cell-display">
-                        <span class="cell-display__value">@RoleDisplayHelper.GetRoleDisplayName(Localizer, u.Role, u.JobTypeKey)</span>
+                        @{
+                            var userRoleTemplate = u.RoleTemplateId.HasValue
+                                ? Model.AssignableRoleTemplates.FirstOrDefault(rt => rt.Id == u.RoleTemplateId.Value)
+                                : null;
+                        }
+                        <span class="cell-display__value">@(userRoleTemplate != null
+                            ? RoleDisplayHelper.GetRoleDisplayName(Localizer, userRoleTemplate, u.JobTypeKey)
+                            : RoleDisplayHelper.GetRoleDisplayName(Localizer, u.Role, u.JobTypeKey))</span>
                         <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["EditRole"]" aria-label="@Localizer["EditRole"]">
                             ⚙️
                         </button>
@@ -1270,6 +1283,52 @@
                 // Sync initial state on page load (handles post-back after validation error)
                 updateFieldVisibility();
             }
+        })();
+
+        // Dynamic job type filtering based on selected company's molecule
+        (function() {
+            var jobTypeMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.JobTypesByCompany));
+            var companySelect = document.querySelector('[name="NewUserCompanyId"]');
+            var jobTypeSelect = document.getElementById('addUserJobType');
+            if (!companySelect || !jobTypeSelect || !Object.keys(jobTypeMap).length) return;
+
+            // Cache original options (excluding the placeholder)
+            var allOptions = [];
+            for (var i = 0; i < jobTypeSelect.options.length; i++) {
+                var opt = jobTypeSelect.options[i];
+                if (opt.value) allOptions.push({ value: opt.value, text: opt.text, key: opt.dataset.key });
+            }
+            var placeholder = jobTypeSelect.options[0]; // "-- Select Job Type --"
+
+            function filterJobTypes() {
+                var companyId = companySelect.value;
+                var validIds = companyId && jobTypeMap[companyId] ? jobTypeMap[companyId] : null;
+                var currentValue = jobTypeSelect.value;
+
+                // Clear all options except placeholder
+                jobTypeSelect.length = 1;
+
+                // Re-add valid options
+                allOptions.forEach(function(opt) {
+                    if (!validIds || validIds.indexOf(parseInt(opt.value, 10)) !== -1) {
+                        var newOpt = document.createElement('option');
+                        newOpt.value = opt.value;
+                        newOpt.textContent = opt.text;
+                        if (opt.key) newOpt.dataset.key = opt.key;
+                        if (opt.value === currentValue) newOpt.selected = true;
+                        jobTypeSelect.appendChild(newOpt);
+                    }
+                });
+
+                // If previously selected value is no longer valid, reset to placeholder
+                if (currentValue && !jobTypeSelect.querySelector('option[value="' + currentValue + '"]')) {
+                    jobTypeSelect.value = '';
+                }
+            }
+
+            companySelect.addEventListener('change', filterJobTypes);
+            // Apply initial filtering on page load
+            filterJobTypes();
         })();
     </script>
 }

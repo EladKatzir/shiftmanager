@@ -109,7 +109,9 @@
                     <option value="">@Localizer["AllActions"]</option>
                     @foreach (var action in Model.Actions)
                     {
-                        <option value="@action" selected="@(Model.Action == action)">@action</option>
+                        var ddActionKey = $"AuditAction_{action}";
+                        var ddActionLoc = Localizer[ddActionKey];
+                        <option value="@action" selected="@(Model.Action == action)">@(ddActionLoc.ResourceNotFound ? action : ddActionLoc.Value)</option>
                     }
                 </select>
             </div>
@@ -119,7 +121,9 @@
                     <option value="">@Localizer["AllEntityTypes"]</option>
                     @foreach (var entityType in Model.EntityTypes)
                     {
-                        <option value="@entityType" selected="@(Model.EntityType == entityType)">@entityType</option>
+                        var ddEntityKey = $"AuditEntity_{entityType}";
+                        var ddEntityLoc = Localizer[ddEntityKey];
+                        <option value="@entityType" selected="@(Model.EntityType == entityType)">@(ddEntityLoc.ResourceNotFound ? entityType : ddEntityLoc.Value)</option>
                     }
                 </select>
             </div>

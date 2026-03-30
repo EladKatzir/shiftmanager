@@ -6,6 +6,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization.Departments;
 
@@ -16,14 +17,17 @@ public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     // View Models
@@ -131,6 +135,9 @@ public class IndexModel : LocalizedPageModel
         _logger.LogInformation("Created department {DepartmentId}: {DepartmentName} in Molecule {MoleculeId}",
             department.Id, department.Name, department.MoleculeId);
 
+        await _auditLogService.LogAsync("DepartmentCreated", "Department", department.Id,
+            $"Created department '{department.DisplayName}' in molecule (MoleculeId={department.MoleculeId})");
+
         TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentCreated"], department.DisplayName);
         return RedirectToPage();
     }
@@ -150,6 +157,9 @@ public class IndexModel : LocalizedPageModel
 
         _logger.LogInformation("Department {DepartmentId} ({DepartmentName}) active status changed to {IsActive}",
             id, department.Name, department.IsActive);
+
+        await _auditLogService.LogAsync("DepartmentUpdated", "Department", id,
+            $"Department '{department.DisplayName}' {(department.IsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = department.IsActive
             ? string.Format(_localizer["Success_DepartmentActivated"], department.DisplayName)
@@ -182,6 +192,9 @@ public class IndexModel : LocalizedPageModel
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Deleted department {DepartmentId}: {DepartmentName}", id, department.Name);
+
+        await _auditLogService.LogAsync("DepartmentDeleted", "Department", id,
+            $"Deleted department '{department.DisplayName}'");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentDeleted"], department.DisplayName);
         return RedirectToPage();

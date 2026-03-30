@@ -12,11 +12,13 @@ public class RestoreChoreModel : PageModel
 {
     private readonly IChoreService _choreService;
     private readonly ILogger<RestoreChoreModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
-    public RestoreChoreModel(IChoreService choreService, ILogger<RestoreChoreModel> logger)
+    public RestoreChoreModel(IChoreService choreService, ILogger<RestoreChoreModel> logger, IAuditLogService auditLogService)
     {
         _choreService = choreService;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -45,6 +47,11 @@ public class RestoreChoreModel : PageModel
             }
 
             var result = await _choreService.RestoreChoreAsync(data.Id);
+
+            if (result.Success)
+            {
+                await _auditLogService.LogAsync("ChoreRestored", "Chore", data.Id, $"Chore {data.Id} restored via undo");
+            }
 
             return new JsonResult(new { success = result.Success, message = result.Message })
                 { StatusCode = result.Success ? 200 : 400 };

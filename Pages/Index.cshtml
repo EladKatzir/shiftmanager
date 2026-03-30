@@ -15,80 +15,80 @@
         @if (Model.IsAdmin)
         {
             @* Admin View: Team-wide metrics *@
-            <div class="stat-card stat-card-1">
+            <a href="/Calendar/Shifts" class="stat-card stat-card-1">
                 <div class="stat-icon"><i data-lucide="calendar"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UpcomingShiftsCount</div>
                     <div class="stat-label"><loc key="Dashboard_UpcomingShifts" /></div>
                     <div class="stat-desc"><loc key="Dashboard_UpcomingShifts_Desc" /></div>
                 </div>
-            </div>
+            </a>
 
-            <div class="stat-card stat-card-2">
+            <a href="/Requests/Index#timeoff" class="stat-card stat-card-2">
                 <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.PendingRequestsCount</div>
                     <div class="stat-label"><loc key="Dashboard_PendingRequests" /></div>
                     <div class="stat-desc"><loc key="Dashboard_PendingRequests_Desc" /></div>
                 </div>
-            </div>
+            </a>
 
-            <div class="stat-card stat-card-3">
+            <a href="/Admin/Users" class="stat-card stat-card-3">
                 <div class="stat-icon"><i data-lucide="users"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.TeamMembersCount</div>
                     <div class="stat-label"><loc key="Dashboard_TeamMembers" /></div>
                     <div class="stat-desc"><loc key="Dashboard_TeamMembers_Desc" /></div>
                 </div>
-            </div>
+            </a>
 
-            <div class="stat-card stat-card-4">
+            <a href="/My/Notifications" class="stat-card stat-card-4">
                 <div class="stat-icon"><i data-lucide="bell"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UnreadNotificationsCount</div>
                     <div class="stat-label"><loc key="Dashboard_Notifications" /></div>
                     <div class="stat-desc"><loc key="Dashboard_Notifications_Desc" /></div>
                 </div>
-            </div>
+            </a>
         }
         else
         {
             @* Employee View: Personal metrics *@
-            <div class="stat-card stat-card-1">
+            <a href="/Calendar/Shifts" class="stat-card stat-card-1">
                 <div class="stat-icon"><i data-lucide="calendar"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UpcomingShiftsCount</div>
                     <div class="stat-label"><loc key="Dashboard_UpcomingShifts" /></div>
                     <div class="stat-desc"><loc key="Dashboard_UpcomingShifts_Desc" /></div>
                 </div>
-            </div>
+            </a>
 
-            <div class="stat-card stat-card-2">
+            <a href="/Requests/Index#timeoff" class="stat-card stat-card-2">
                 <div class="stat-icon"><i data-lucide="clipboard-list"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.PendingRequestsCount</div>
                     <div class="stat-label"><loc key="Dashboard_MyPendingRequests" /></div>
                     <div class="stat-desc"><loc key="Dashboard_MyPendingRequests_Desc" /></div>
                 </div>
-            </div>
+            </a>
 
-            <div class="stat-card stat-card-3">
+            <a href="/MyTeam/Index" class="stat-card stat-card-3">
                 <div class="stat-icon"><i data-lucide="users"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.TeamMembersCount</div>
                     <div class="stat-label"><loc key="Dashboard_TeamMembers" /></div>
                     <div class="stat-desc"><loc key="Dashboard_TeamMembers_Desc" /></div>
                 </div>
-            </div>
+            </a>
 
-            <div class="stat-card stat-card-4">
+            <a href="/My/Notifications" class="stat-card stat-card-4">
                 <div class="stat-icon"><i data-lucide="bell"></i></div>
                 <div class="stat-content">
                     <div class="stat-value">@Model.UnreadNotificationsCount</div>
                     <div class="stat-label"><loc key="Dashboard_Notifications" /></div>
                     <div class="stat-desc"><loc key="Dashboard_Notifications_Desc" /></div>
                 </div>
-            </div>
+            </a>
         }
     </div>
 
@@ -168,10 +168,20 @@
                     <div class="quick-action-label"><loc key="Dashboard_ManageRequests" /></div>
                 </a>
 
-                <a href="@(Model.UserRole == ShiftManager.Models.Support.UserRole.Manager ? "/MyTeam/Index" : "/Admin/Users")" class="quick-action-card">
-                    <div class="quick-action-icon"><i data-lucide="users"></i></div>
-                    <div class="quick-action-label"><loc key="Dashboard_ViewTeam" /></div>
-                </a>
+                @if (Model.UserRole == ShiftManager.Models.Support.UserRole.Manager)
+                {
+                    <a href="/MyTeam/Index" class="quick-action-card">
+                        <div class="quick-action-icon"><i data-lucide="users"></i></div>
+                        <div class="quick-action-label"><loc key="Dashboard_ViewGroups" /></div>
+                    </a>
+                }
+                else
+                {
+                    <a href="/Admin/Users" class="quick-action-card">
+                        <div class="quick-action-icon"><i data-lucide="users"></i></div>
+                        <div class="quick-action-label"><loc key="Dashboard_ManageUsers" /></div>
+                    </a>
+                }
 
                 <a href="/Admin/Analytics" class="quick-action-card">
                     <div class="quick-action-icon"><i data-lucide="bar-chart-3"></i></div>

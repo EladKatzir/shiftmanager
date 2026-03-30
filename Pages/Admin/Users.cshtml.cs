@@ -92,6 +92,9 @@ public class UsersModel : LocalizedPageModel
     public List<JobTypeOption> AvailableJobTypes { get; set; } = new();
     public List<ShiftType> AvailableShiftTypes { get; set; } = new();
 
+    /// <summary>Maps companyId → list of valid jobTypeIds, for client-side filtering in the add-user form.</summary>
+    public Dictionary<int, List<int>> JobTypesByCompany { get; set; } = new();
+
     // Pagination properties
     [BindProperty(SupportsGet = true)]
     public int CurrentPage { get; set; } = 1;
@@ -373,6 +376,40 @@ public class UsersModel : LocalizedPageModel
             .OrderBy(jt => jt.Area?.Name).ThenBy(jt => jt.Name)
             .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area?.DisplayName ?? "", jt.Name))
             .ToList();
+
+        // Build companyId→validJobTypeIds mapping for add-user form dynamic filtering.
+        // Uses same logic as JobTypeService.GetJobTypesForMoleculeAsync but computed in bulk.
+        if (Companies.Any())
+        {
+            var moleculeIds = Companies.Where(c => c.MoleculeId.HasValue).Select(c => c.MoleculeId!.Value).Distinct().ToList();
+            var molecules = await _db.Molecules
+                .IgnoreQueryFilters()
+                .Where(m => moleculeIds.Contains(m.Id))
+                .Select(m => new { m.Id, m.AreaId, m.Type })
+                .ToListAsync();
+            var moleculeLookup = molecules.ToDictionary(m => m.Id);
+            var activeJobTypes = allJobTypesWithArea.Where(jt => jt.IsActive).ToList();
+
+            foreach (var company in Companies)
+            {
+                if (!company.MoleculeId.HasValue || !moleculeLookup.TryGetValue(company.MoleculeId.Value, out var mol))
+                {
+                    // No molecule → show all job types
+                    JobTypesByCompany[company.Id] = activeJobTypes.Select(jt => jt.Id).ToList();
+                    continue;
+                }
+
+                var isWorkforce = mol.Type == Models.Support.MoleculeType.Workforce
+                                || mol.Type == Models.Support.MoleculeType.Helper;
+
+                JobTypesByCompany[company.Id] = activeJobTypes
+                    .Where(jt => jt.AreaId == mol.AreaId
+                        && (jt.MoleculeId == null || jt.MoleculeId == mol.Id)
+                        && (isWorkforce || !jt.IsWorkforceOnly))
+                    .Select(jt => jt.Id)
+                    .ToList();
+            }
+        }
 
         // Load available shift types for PrimaryShiftType dropdown
         // No query filter on ShiftType — scope-based visibility now
@@ -1524,6 +1561,15 @@ public class UsersModel : LocalizedPageModel
 
             _logger.LogInformation("Starting deletion of user {UserId} ({UserName}) by admin {CurrentUserId}", id, user.DisplayName, currentUserId);
 
+            // Audit log BEFORE deletion so we have a record even if the delete fails
+            await _auditLogService.LogUserActionAsync(
+                userId: currentUserId,
+                action: "UserDeleted",
+                entityType: "User",
+                entityId: user.Id,
+                description: $"Permanently deleted user {user.DisplayName} (Email: {user.Email}, UserId: {user.Id}, CompanyId: {user.CompanyId})"
+            );
+
             // IgnoreQueryFilters: target user's related data may be in a different company
             // Get count of shift assignments for logging before deletion
             var shiftAssignmentCount = await _db.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId == id).CountAsync();
@@ -1594,6 +1640,11 @@ public class UsersModel : LocalizedPageModel
             await _db.Chores.IgnoreQueryFilters().Where(c => c.UserId == id).ExecuteDeleteAsync();
             await _db.OnDuties.IgnoreQueryFilters().Where(o => o.UserId == id).ExecuteDeleteAsync();
             await _db.UserDayNotes.IgnoreQueryFilters().Where(n => n.UserId == id).ExecuteDeleteAsync();
+            // Delete entries ABOUT the deleted user; reassign authorship of entries they created for others
+            await _db.CalendarTextEntries.IgnoreQueryFilters().Where(e => e.UserId == id).ExecuteDeleteAsync();
+            await _db.CalendarTextEntries.IgnoreQueryFilters()
+                .Where(e => e.CreatedByUserId == id && e.UserId != id)
+                .ExecuteUpdateAsync(e => e.SetProperty(x => x.CreatedByUserId, currentUserId));
             await _db.UserFriendships.IgnoreQueryFilters().Where(f => f.UserId == id || f.FriendId == id).ExecuteDeleteAsync();
             await _db.GameScores.IgnoreQueryFilters().Where(g => g.UserId == id).ExecuteDeleteAsync();
             await _db.OnDutyRoleSubscriptions.IgnoreQueryFilters().Where(s => s.UserId == id).ExecuteDeleteAsync();

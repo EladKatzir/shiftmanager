@@ -500,8 +500,7 @@ async function quickAddTextEntry(date, userId, text) {
 
         const result = await response.json();
         if (result.success) {
-            var culture = getCurrentCulture();
-            var msg = culture === 'he-IL' ? '\u05D4\u05D8\u05E7\u05E1\u05D8 \u05E0\u05E9\u05DE\u05E8 \u05D1\u05D4\u05E6\u05DC\u05D7\u05D4' : 'Text saved successfully';
+            var msg = window.AppLocalizer?.QuickEntry_TextSaved || 'Text saved successfully';
             showToast(msg, 'success');
             triggerCalendarRefresh();
         } else {
@@ -541,8 +540,7 @@ async function deleteTextEntry(id) {
 
         const result = await response.json();
         if (result.success) {
-            var culture = getCurrentCulture();
-            var msg = culture === 'he-IL' ? '\u05D4\u05D8\u05E7\u05E1\u05D8 \u05E0\u05DE\u05D7\u05E7' : 'Text entry deleted';
+            var msg = window.AppLocalizer?.QuickEntry_TextDeleted || 'Text entry deleted';
             showToast(msg, 'success');
             triggerCalendarRefresh();
         } else {

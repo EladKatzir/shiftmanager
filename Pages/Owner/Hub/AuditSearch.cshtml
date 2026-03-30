@@ -494,7 +494,9 @@
                         <option value="">@Localizer["AllActions"]</option>
                         @foreach (var action in Model.Actions)
                         {
-                            <option value="@action" selected="@(Model.Action == action)">@action</option>
+                            var actionLocKey = $"AuditAction_{action}";
+                            var actionLocalized = Localizer[actionLocKey];
+                            <option value="@action" selected="@(Model.Action == action)">@(actionLocalized.ResourceNotFound ? action : actionLocalized.Value)</option>
                         }
                     </select>
                 </div>
@@ -504,7 +506,9 @@
                         <option value="">@Localizer["AllEntityTypes"]</option>
                         @foreach (var entityType in Model.EntityTypes)
                         {
-                            <option value="@entityType" selected="@(Model.EntityType == entityType)">@entityType</option>
+                            var entityLocKey = $"AuditEntity_{entityType}";
+                            var entityLocalized = Localizer[entityLocKey];
+                            <option value="@entityType" selected="@(Model.EntityType == entityType)">@(entityLocalized.ResourceNotFound ? entityType : entityLocalized.Value)</option>
                         }
                     </select>
                 </div>
@@ -565,11 +569,17 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="action-badge">@log.Action</span>
+                                    @{
+                                        var logActionKey = $"AuditAction_{log.Action}";
+                                        var logActionLocalized = Localizer[logActionKey];
+                                        var logEntityKey = $"AuditEntity_{log.EntityType}";
+                                        var logEntityLocalized = Localizer[logEntityKey];
+                                    }
+                                    <span class="action-badge">@(logActionLocalized.ResourceNotFound ? log.Action : logActionLocalized.Value)</span>
                                 </td>
                                 <td>
                                     <div class="entity-cell">
-                                        <span class="entity-type">@log.EntityType</span>
+                                        <span class="entity-type">@(logEntityLocalized.ResourceNotFound ? log.EntityType : logEntityLocalized.Value)</span>
                                     </div>
                                 </td>
                                 <td>

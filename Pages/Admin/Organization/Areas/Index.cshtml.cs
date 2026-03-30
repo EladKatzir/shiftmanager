@@ -5,6 +5,7 @@ using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Resources;
+using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization.Areas;
 
@@ -15,14 +16,17 @@ public class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IAuditLogService _auditLogService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
-        ILogger<IndexModel> logger) : base(localizer)
+        ILogger<IndexModel> logger,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     public record AreaVM(int Id, string Name, string DisplayName, string ProjectName, bool IsActive, int MoleculeCount, int JobTypeCount);
@@ -81,6 +85,10 @@ public class IndexModel : LocalizedPageModel
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Created Area {AreaId}: {AreaName} in Project {ProjectId}", area.Id, area.Name, area.ProjectId);
+
+        await _auditLogService.LogAsync("AreaCreated", "Area", area.Id,
+            $"Created area '{area.DisplayName}' in project (ProjectId={area.ProjectId})");
+
         TempData["SuccessMessage"] = string.Format(_localizer["Success_AreaCreated"], area.DisplayName);
         return RedirectToPage();
     }
@@ -99,6 +107,10 @@ public class IndexModel : LocalizedPageModel
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Area {AreaId} active status changed to {IsActive}", id, area.IsActive);
+
+        await _auditLogService.LogAsync("AreaUpdated", "Area", id,
+            $"Area '{area.DisplayName}' {(area.IsActive ? "activated" : "deactivated")}");
+
         TempData["SuccessMessage"] = area.IsActive
             ? string.Format(_localizer["Success_AreaActivated"], area.DisplayName)
             : string.Format(_localizer["Success_AreaDeactivated"], area.DisplayName);
@@ -125,6 +137,10 @@ public class IndexModel : LocalizedPageModel
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Deleted Area {AreaId}: {AreaName}", id, area.Name);
+
+        await _auditLogService.LogAsync("AreaDeleted", "Area", id,
+            $"Deleted area '{area.DisplayName}'");
+
         TempData["SuccessMessage"] = string.Format(_localizer["Success_AreaDeleted"], area.DisplayName);
         return RedirectToPage();
     }

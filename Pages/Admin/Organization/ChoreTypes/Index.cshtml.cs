@@ -19,6 +19,7 @@ public class IndexModel : LocalizedPageModel
     private readonly IChoreTypeService _choreTypeService;
     private readonly IGrantService _grantService;
     private readonly ICompanyContext _companyContext;
+    private readonly IAuditLogService _auditLogService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
@@ -26,13 +27,15 @@ public class IndexModel : LocalizedPageModel
         ILogger<IndexModel> logger,
         IChoreTypeService choreTypeService,
         IGrantService grantService,
-        ICompanyContext companyContext) : base(localizer)
+        ICompanyContext companyContext,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _choreTypeService = choreTypeService;
         _grantService = grantService;
         _companyContext = companyContext;
+        _auditLogService = auditLogService;
     }
 
     // View Models
@@ -196,6 +199,9 @@ public class IndexModel : LocalizedPageModel
         _logger.LogInformation("Created ChoreType {ChoreTypeId}: {ChoreTypeName} in Molecule {MoleculeId}",
             choreType.Id, choreType.Name, MoleculeId.Value);
 
+        await _auditLogService.LogAsync("ChoreTypeCreated", "ChoreType", choreType.Id,
+            $"Created chore type '{choreType.DisplayName}' in molecule (MoleculeId={MoleculeId.Value})");
+
         TempData["SuccessMessage"] = string.Format(_localizer["Success_ChoreTypeCreated"], choreType.DisplayName);
         return RedirectToPage(new { MoleculeId });
     }
@@ -233,6 +239,9 @@ public class IndexModel : LocalizedPageModel
             _logger.LogInformation("Updated ChoreType {ChoreTypeId}: {ChoreTypeName}",
                 choreType.Id, choreType.DisplayName);
 
+            await _auditLogService.LogAsync("ChoreTypeUpdated", "ChoreType", choreType.Id,
+                $"Updated chore type '{choreType.DisplayName}'");
+
             TempData["SuccessMessage"] = string.Format(_localizer["Success_ChoreTypeUpdated"], choreType.DisplayName);
         }
         catch (ArgumentException)
@@ -269,6 +278,9 @@ public class IndexModel : LocalizedPageModel
         _logger.LogInformation("Deactivated ChoreType {ChoreTypeId}: {ChoreTypeName}",
             id, choreType.DisplayName);
 
+        await _auditLogService.LogAsync("ChoreTypeDeleted", "ChoreType", id,
+            $"Deactivated chore type '{choreType.DisplayName}'");
+
         TempData["SuccessMessage"] = string.Format(_localizer["Success_ChoreTypeDeactivated"], choreType.DisplayName);
         return RedirectToPage(new { MoleculeId });
     }
@@ -298,6 +310,9 @@ public class IndexModel : LocalizedPageModel
 
         _logger.LogInformation("Activated ChoreType {ChoreTypeId}: {ChoreTypeName}",
             id, choreType.DisplayName);
+
+        await _auditLogService.LogAsync("ChoreTypeUpdated", "ChoreType", id,
+            $"Activated chore type '{choreType.DisplayName}'");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_ChoreTypeActivated"], choreType.DisplayName);
         return RedirectToPage(new { MoleculeId });

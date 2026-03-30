@@ -2799,10 +2799,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: var(--radius-full);
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .excel-calendar__badge--vacation {
@@ -2843,6 +2843,11 @@
 .excel-calendar__capacity-badge--full {
     background: var(--success-soft);
     color: var(--success);
+}
+
+/* Prevent assignment text from hiding behind the capacity badge */
+.excel-calendar__cell:has(.excel-calendar__capacity-badge) .excel-calendar__assignment {
+    padding-inline-end: 28px;
 }
 
 /* Empty state */
@@ -3611,11 +3616,33 @@
     background: rgba(255, 255, 255, 0.05);
 }
 
+/* Overview note chip: read-only annotation from Overview calendar (📋 prefix) */
+.excel-calendar__assignment[data-role-color="overview-note"] {
+    border-inline-start: 3px solid var(--info, #3B82F6);
+    font-style: italic;
+    font-size: 0.7rem;
+    opacity: 0.85;
+}
+[data-theme="dark"] .excel-calendar__assignment[data-role-color="overview-note"] {
+    background: rgba(59, 130, 246, 0.1);
+}
+
 /* Text entry overlay badge in shift-based view */
 .excel-calendar__badge--text-entry {
     font-size: 0.65rem;
-    opacity: 0.7;
+    opacity: 0.9;
     cursor: default;
+    unicode-bidi: isolate;
+    direction: ltr;
+}
+
+/* Overview note overlay badge (📋) */
+.excel-calendar__badge--note {
+    font-size: 0.65rem;
+    opacity: 0.9;
+    cursor: default;
+    unicode-bidi: isolate;
+    direction: ltr;
 }
 
 /* Row label flex wrapper (SP1b: name + sublabel stacked vertically) */

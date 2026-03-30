@@ -24,6 +24,7 @@ public class SignupModel : LocalizedPageModel
     private readonly IValidationService _validation;
     private readonly INotificationService _notificationService;
     private readonly IRateLimitingService _rateLimiting;
+    private readonly IAuditLogService _auditLogService;
 
     private readonly ICompanyCacheService _companyCacheService;
     private readonly IRoleService _roleService;
@@ -37,6 +38,7 @@ public class SignupModel : LocalizedPageModel
         IValidationService validation,
         INotificationService notificationService,
         IRateLimitingService rateLimiting,
+        IAuditLogService auditLogService,
         ICompanyCacheService companyCacheService,
         IRoleService roleService,
         IServiceScopeFactory serviceScopeFactory)
@@ -48,6 +50,7 @@ public class SignupModel : LocalizedPageModel
         _validation = validation;
         _notificationService = notificationService;
         _rateLimiting = rateLimiting;
+        _auditLogService = auditLogService;
         _companyCacheService = companyCacheService;
         _roleService = roleService;
         _serviceScopeFactory = serviceScopeFactory;
@@ -299,6 +302,8 @@ public class SignupModel : LocalizedPageModel
         {
             _db.UserJoinRequests.Add(joinRequest);
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogUserActionAsync(0, "JoinRequestCreated", "UserJoinRequest", joinRequest.Id, $"Join request created by '{joinRequest.Email}' for role {joinRequest.RequestedRole}");
         }
         catch (Exception ex)
         {

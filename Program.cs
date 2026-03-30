@@ -594,6 +594,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     var seedDirectorPassword = Environment.GetEnvironmentVariable("SEED_DIRECTOR_PASSWORD") ?? "director123";
+    var hasNewGrantMappings = false; // Set true when new RoleTemplateGrant mappings are seeded — triggers user grant re-provisioning
 
     // ============================================================
     // SEED V3 HIERARCHY FIRST (before creating users)
@@ -735,7 +736,8 @@ using (var scope = app.Services.CreateScope())
         var newMappings = roleTemplateGrants
             .Where(g => !existingSet.Contains($"{g.RoleTemplateId}:{g.GrantTypeId}:{g.TargetJobTypeId?.ToString() ?? "null"}"))
             .ToList();
-        if (newMappings.Any())
+        hasNewGrantMappings = newMappings.Any();
+        if (hasNewGrantMappings)
         {
             // Clear hardcoded Ids so SQLite auto-generates them (avoids UNIQUE constraint on Id)
             foreach (var m in newMappings) m.Id = 0;
@@ -1351,6 +1353,39 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         logger.LogError(ex, "An error occurred while repairing test user grants");
+    }
+
+    // Re-provision grants for existing users whose role templates gained new grants (e.g., EditChoreTypes for Lead/BRDirector/MoleculeAdmin).
+    // Idempotent: RepairUserGrantsAsync only adds missing grants, skips already-provisioned ones.
+    // Early-exit: only queries users if the seed just added new grant mappings.
+    if (hasNewGrantMappings)
+    {
+        try
+        {
+            var grantService = scope.ServiceProvider.GetRequiredService<IGrantService>();
+            var templateIdsToRepair = new[] { 2, 3, 7 }; // BRDirector, Lead, MoleculeAdmin
+            var usersToRepair = await db.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.IsActive && u.RoleTemplateId.HasValue && templateIdsToRepair.Contains(u.RoleTemplateId.Value))
+                .Where(u => !u.Email.EndsWith("@test") && !u.Email.EndsWith("@shifty.test")) // Skip test users (already handled above)
+                .ToListAsync();
+            var totalRepaired = 0;
+            foreach (var user in usersToRepair)
+            {
+                var repaired = await grantService.RepairUserGrantsAsync(user.Id);
+                if (repaired > 0)
+                {
+                    totalRepaired += repaired;
+                    logger.LogInformation("Re-provisioned {Count} grants for user {Email} (template {TemplateId})", repaired, user.Email, user.RoleTemplateId);
+                }
+            }
+            if (totalRepaired > 0)
+                logger.LogInformation("Grant re-provisioning complete: {Total} grants added for {UserCount} users with templates [2,3,7]", totalRepaired, usersToRepair.Count);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while re-provisioning grants for existing users");
+        }
     }
 }
 

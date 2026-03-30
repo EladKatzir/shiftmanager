@@ -17,16 +17,19 @@ public class IndexModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
     private readonly IJobTypeService _jobTypeService;
+    private readonly IAuditLogService _auditLogService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<IndexModel> logger,
-        IJobTypeService jobTypeService) : base(localizer)
+        IJobTypeService jobTypeService,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _jobTypeService = jobTypeService;
+        _auditLogService = auditLogService;
     }
 
     // View Models
@@ -158,6 +161,9 @@ public class IndexModel : LocalizedPageModel
         _logger.LogInformation("Created JobType {JobTypeId}: {JobTypeName} in Area {AreaId}",
             jobType.Id, jobType.Name, jobType.AreaId);
 
+        await _auditLogService.LogAsync("JobTypeCreated", "JobType", jobType.Id,
+            $"Created job type '{jobType.DisplayName}' in area (AreaId={jobType.AreaId})");
+
         TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeCreated"], jobType.DisplayName);
         return RedirectToPage();
     }
@@ -184,6 +190,9 @@ public class IndexModel : LocalizedPageModel
         var newIsActive = !jobTypeInfo.IsActive; // toggled state
         _logger.LogInformation("JobType {JobTypeId} ({JobTypeName}) active status changed to {IsActive}",
             id, jobTypeInfo.Name, newIsActive);
+
+        await _auditLogService.LogAsync("JobTypeUpdated", "JobType", id,
+            $"Job type '{jobTypeInfo.DisplayName}' {(newIsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = newIsActive
             ? string.Format(_localizer["Success_JobTypeActivated"], jobTypeInfo.DisplayName)
@@ -216,6 +225,9 @@ public class IndexModel : LocalizedPageModel
         }
 
         _logger.LogInformation("Deleted JobType {JobTypeId}: {JobTypeName}", id, jobTypeInfo?.Name ?? "Unknown");
+
+        await _auditLogService.LogAsync("JobTypeDeleted", "JobType", id,
+            $"Deleted job type '{jobTypeInfo?.DisplayName ?? "Unknown"}'");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeDeleted"], jobTypeInfo?.DisplayName ?? "Unknown");
         return RedirectToPage();

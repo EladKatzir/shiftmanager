@@ -366,8 +366,26 @@ public class OnCallModel : PageModel
 
         // Load text entries for overlay badges (cross-company via IgnoreQueryFilters)
         var assignedOnDutyUserIds = onDuties.Select(o => o.UserId).Distinct();
-        var textEntries = await _textEntryService.GetForUsersAndDateRangeAsync(
+        var allEntriesWithType = await _textEntryService.GetForUsersAndDateRangeWithTypeAsync(
             assignedOnDutyUserIds, StartDate, EndDate);
+        var textEntries = allEntriesWithType.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value
+                .Where(e => e.EntryType == CalendarTextEntryType.QuickEntry)
+                .Select(e => (e.Id, e.Text))
+                .ToList())
+            .Where(kvp => kvp.Value.Count > 0)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        // SECURITY: Only show overview notes from the viewer's own company (notes are company-scoped)
+        var viewerCompanyId = _companyContext.CompanyId ?? 0;
+        var overviewNotes = allEntriesWithType.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value
+                .Where(e => e.EntryType == CalendarTextEntryType.OverviewNote && e.CompanyId == viewerCompanyId)
+                .Select(e => e.Text)
+                .FirstOrDefault())
+            .Where(kvp => kvp.Value != null)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
 
         // Group duty types by primary/backup relationship
         var primaryTypes = DutyTypes.Where(dt => !dt.IsBackupType).ToList();
@@ -385,7 +403,7 @@ public class OnCallModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForDutyType(dutyType.TypeValue, onDuties, textEntries);
+            row.Cells = BuildCellsForDutyType(dutyType.TypeValue, onDuties, textEntries, overviewNotes);
             rows.Add(row);
         }
 
@@ -404,7 +422,8 @@ public class OnCallModel : PageModel
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForDutyType(
         int dutyTypeValue,
         List<OnDuty> onDuties,
-        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
+        Dictionary<(int UserId, DateOnly Date), string> overviewNotes)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -437,6 +456,20 @@ public class OnCallModel : PageModel
                 cell.Overlay ??= new ExcelCalendarOverlay();
                 cell.Overlay.HasTextEntry = true;
                 cell.Overlay.TextEntryTexts = cellTextEntryTexts;
+            }
+
+            // Overview note overlay badge: show 📋 with aggregated tooltip for all assigned users
+            var cellNoteTexts = new List<string>();
+            foreach (var assignment in assignments)
+            {
+                if (overviewNotes.TryGetValue((assignment.UserId, date), out var noteText))
+                    cellNoteTexts.Add(noteText);
+            }
+            if (cellNoteTexts.Count > 0)
+            {
+                cell.Overlay ??= new ExcelCalendarOverlay();
+                cell.Overlay.HasOverviewNote = true;
+                cell.Overlay.OverviewNoteText = string.Join("\n", cellNoteTexts);
             }
 
             cells[date] = cell;

@@ -37,6 +37,7 @@ public class SignupFlowTests : IDisposable
     private readonly Mock<IValidationService> _validation;
     private readonly Mock<INotificationService> _notifications;
     private readonly Mock<IRateLimitingService> _rateLimiting;
+    private readonly Mock<IAuditLogService> _auditLogService;
     private readonly Mock<ICompanyCacheService> _companyCache;
     private readonly Mock<IRoleService> _roleService;
     private readonly Mock<IStringLocalizer<SharedResources>> _localizer;
@@ -70,6 +71,7 @@ public class SignupFlowTests : IDisposable
 
         _notifications = new Mock<INotificationService>();
         _rateLimiting = new Mock<IRateLimitingService>();
+        _auditLogService = new Mock<IAuditLogService>();
         _rateLimiting.Setup(r => r.IsAllowed(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(true);
 
         _companyCache = new Mock<ICompanyCacheService>();
@@ -146,6 +148,7 @@ public class SignupFlowTests : IDisposable
             _db, _logger.Object, _localizer.Object,
             _featureFlags.Object, _validation.Object,
             _notifications.Object, _rateLimiting.Object,
+            _auditLogService.Object,
             _companyCache.Object, _roleService.Object,
             scopeFactory.Object);
 

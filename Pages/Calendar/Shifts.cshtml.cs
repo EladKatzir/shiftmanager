@@ -337,9 +337,28 @@ public class ShiftsModel : PageModel
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);
         var assignments = await _calendarService.GetAssignmentsAsync(moleculeId, jobTypeId, StartDate, EndDate);
 
-        // Get text entries for overlay badges in shift-based view (cross-company via IgnoreQueryFilters)
+        // Get text entries + overview notes for overlay badges in shift-based view (cross-company via IgnoreQueryFilters)
         var assignedUserIds = assignments.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value).Distinct();
-        var textEntries = await _textEntryService.GetForUsersAndDateRangeAsync(assignedUserIds, StartDate, EndDate);
+        var allEntriesWithType = await _textEntryService.GetForUsersAndDateRangeWithTypeAsync(assignedUserIds, StartDate, EndDate);
+        // Split into text entries (for existing 📝 badge) and overview notes (for new 📋 badge)
+        var textEntries = allEntriesWithType.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value
+                .Where(e => e.EntryType == CalendarTextEntryType.QuickEntry)
+                .Select(e => (e.Id, e.Text))
+                .ToList())
+            .Where(kvp => kvp.Value.Count > 0)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        // SECURITY: Only show overview notes from the viewer's own company (notes are company-scoped)
+        var viewerCompanyId = _tenantResolver.GetCurrentTenantId();
+        var overviewNotes = allEntriesWithType.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value
+                .Where(e => e.EntryType == CalendarTextEntryType.OverviewNote && e.CompanyId == viewerCompanyId)
+                .Select(e => e.Text)
+                .FirstOrDefault())
+            .Where(kvp => kvp.Value != null)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
 
         // Look up company names for company-scoped shift types (molecule mode shows cross-company shifts)
         var companyIds = shiftTypes
@@ -374,7 +393,7 @@ public class ShiftsModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForShiftType(shiftType.Id, instances, assignments, textEntries);
+            row.Cells = BuildCellsForShiftType(shiftType.Id, instances, assignments, textEntries, overviewNotes);
             rows.Add(row);
         }
         LocalizedShiftTypeNames = localizedNames;
@@ -432,12 +451,30 @@ public class ShiftsModel : PageModel
         // Get overlays (vacation, chores, on-duty)
         var overlays = await _calendarService.GetOverlaysAsync(moleculeId, StartDate, EndDate);
 
-        // Get text entries for user-mode cells (cross-company via IgnoreQueryFilters)
+        // Get text entries + overview notes for user-mode cells (cross-company via IgnoreQueryFilters)
         var userIds = users.Select(u => u.Id);
-        var textEntries = await _textEntryService.GetForUsersAndDateRangeAsync(userIds, StartDate, EndDate);
+        var allUserEntriesWithType = await _textEntryService.GetForUsersAndDateRangeWithTypeAsync(userIds, StartDate, EndDate);
+        // Split into text entries (chips with ×) and overview notes (read-only 📋 chips)
+        var textEntries = allUserEntriesWithType.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value
+                .Where(e => e.EntryType == CalendarTextEntryType.QuickEntry)
+                .Select(e => (e.Id, e.Text))
+                .ToList())
+            .Where(kvp => kvp.Value.Count > 0)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        // SECURITY: Only show overview notes from the viewer's own company (notes are company-scoped)
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var overviewNotes = allUserEntriesWithType.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value
+                .Where(e => e.EntryType == CalendarTextEntryType.OverviewNote && e.CompanyId == companyId)
+                .Select(e => e.Text)
+                .FirstOrDefault())
+            .Where(kvp => kvp.Value != null)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
 
         // Pre-resolve localized names for all shift types (used in user-mode cells)
-        var companyId = _tenantResolver.GetCurrentTenantId();
         var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
         var localizedShiftNames = new Dictionary<int, string>();
         foreach (var st in ShiftTypes)
@@ -454,7 +491,7 @@ public class ShiftsModel : PageModel
         {
             // SP3: Dynamic grouping for tech molecules — group by PrimaryShiftType or Company
             (rows, groups) = await BuildTechGroupedRowsAsync(
-                users, instances, assignments, overlays, localizedShiftNames, moleculeId, textEntries);
+                users, instances, assignments, overlays, localizedShiftNames, moleculeId, textEntries, overviewNotes);
         }
         else
         {
@@ -466,7 +503,7 @@ public class ShiftsModel : PageModel
                     Id = $"user-{user.Id}",
                     Label = user.DisplayName
                 };
-                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries);
+                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
                 // Compute weekly hours for this user
                 var userShiftWindows = assignments
                     .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
@@ -502,7 +539,8 @@ public class ShiftsModel : PageModel
         Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
         Dictionary<int, string> localizedShiftNames,
         int moleculeId,
-        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
+        Dictionary<(int UserId, DateOnly Date), string> overviewNotes)
     {
         var rows = new List<ExcelCalendarRow>();
         var groups = new List<ExcelCalendarGroup>();
@@ -620,7 +658,7 @@ public class ShiftsModel : PageModel
                         GroupId = groupId,
                         CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
                     };
-                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries);
+                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
                     // Compute weekly hours for this user
                     var userShiftWindows = assignments
                         .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
@@ -646,7 +684,7 @@ public class ShiftsModel : PageModel
                         GroupId = groupId,
                         CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
                     };
-                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries);
+                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
                     // Compute weekly hours for this user
                     var userShiftWindows = assignments
                         .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
@@ -675,7 +713,7 @@ public class ShiftsModel : PageModel
                     SubLabel = user.HomeTypeId.HasValue ? homeTypeNames.GetValueOrDefault(user.HomeTypeId.Value) : null,
                     GroupId = groupId
                 };
-                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries);
+                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
                 // Compute weekly hours for this user
                 var userShiftWindows = assignments
                     .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
@@ -694,7 +732,8 @@ public class ShiftsModel : PageModel
         int shiftTypeId,
         List<ShiftInstance> instances,
         List<ShiftAssignment> assignments,
-        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
+        Dictionary<(int UserId, DateOnly Date), string> overviewNotes)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -744,6 +783,20 @@ public class ShiftsModel : PageModel
                     cell.Overlay.HasTextEntry = true;
                     cell.Overlay.TextEntryTexts = cellTextEntryTexts;
                 }
+
+                // Check if any assigned user has overview notes (📋 badge with aggregated tooltip)
+                var cellNoteTexts = new List<string>();
+                foreach (var uid in assignedUserIds)
+                {
+                    if (overviewNotes.TryGetValue((uid, date), out var noteText))
+                        cellNoteTexts.Add(noteText);
+                }
+                if (cellNoteTexts.Count > 0)
+                {
+                    cell.Overlay ??= new ExcelCalendarOverlay();
+                    cell.Overlay.HasOverviewNote = true;
+                    cell.Overlay.OverviewNoteText = string.Join("\n", cellNoteTexts);
+                }
             }
 
             cells[date] = cell;
@@ -758,7 +811,8 @@ public class ShiftsModel : PageModel
         List<ShiftAssignment> assignments,
         Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
         Dictionary<int, string> localizedShiftNames,
-        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries)
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
+        Dictionary<(int UserId, DateOnly Date), string> overviewNotes)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -831,6 +885,17 @@ public class ShiftsModel : PageModel
                         Role = "text-entry"
                     });
                 }
+            }
+
+            // Overview note rendered as read-only 📋 chip (Id=0 → non-removable)
+            if (overviewNotes.TryGetValue((userId, date), out var noteText))
+            {
+                cell.Assignments.Add(new ExcelCalendarAssignment
+                {
+                    Id = 0,
+                    Name = noteText,
+                    Role = "overview-note"
+                });
             }
 
             cells[date] = cell;

@@ -888,8 +888,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 126 grants (updated 2026-03-27: +ManageHomeTypes, +ManageStores)
-        grantTypes.Should().HaveCount(126, "Should have exactly 126 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, and store grants");
+        // Assert - 130 grants
+        grantTypes.Should().HaveCount(130, "Should have exactly 130 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, and store grants");
     }
 
     [Fact]

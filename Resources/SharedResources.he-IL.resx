@@ -4676,6 +4676,9 @@
   <data name="Dashboard_ViewTeam" xml:space="preserve">
     <value>צפה בצוות</value>
   </data>
+  <data name="Dashboard_ManageUsers" xml:space="preserve">
+    <value>ניהול משתמשים</value>
+  </data>
   <data name="Dashboard_ViewAnalytics" xml:space="preserve">
     <value>צפה בניתוח נתונים</value>
   </data>
@@ -6335,6 +6338,15 @@
   </data>
   <data name="Role_Owner_Desc" xml:space="preserve">
     <value>בעלי המערכת עם גישה מנהלתית מלאה</value>
+  </data>
+  <data name="Role_Trainee_Desc" xml:space="preserve">
+    <value>חניך המשובץ עם חונך לליווי במשמרות</value>
+  </data>
+  <data name="Role_Manager_Desc" xml:space="preserve">
+    <value>מנהל עם הרשאות פיקוח על צוות ושיבוץ</value>
+  </data>
+  <data name="Role_Director_Desc" xml:space="preserve">
+    <value>מפקד עם סמכות תפעולית ברמת הזרוע</value>
   </data>
 
   <!-- A-015: Button Text -->
@@ -13564,6 +13576,97 @@
     <value>בקשת מפתח API</value>
   </data>
 
+  <!-- Missing audit action keys (identified during audit localization review) -->
+  <data name="AuditAction_ShiftInstanceCreated" xml:space="preserve">
+    <value>יצירת משמרת</value>
+  </data>
+  <data name="AuditAction_ShiftSlotAssigned" xml:space="preserve">
+    <value>הקצאת משבצת</value>
+  </data>
+  <data name="AuditAction_ShiftCleared" xml:space="preserve">
+    <value>ניקוי משמרת</value>
+  </data>
+  <data name="AuditAction_StaffingUpdated" xml:space="preserve">
+    <value>עדכון תקינה</value>
+  </data>
+  <data name="AuditAction_ShiftDeleted" xml:space="preserve">
+    <value>מחיקת משמרת</value>
+  </data>
+  <data name="AuditAction_TraineeAdded" xml:space="preserve">
+    <value>הוספת חניך</value>
+  </data>
+  <data name="AuditAction_TraineeRemoved" xml:space="preserve">
+    <value>הסרת חניך</value>
+  </data>
+  <data name="AuditAction_ShiftUserChanged" xml:space="preserve">
+    <value>החלפת משובץ</value>
+  </data>
+  <data name="AuditAction_ShiftMetadataUpdated" xml:space="preserve">
+    <value>עדכון פרטי משמרת</value>
+  </data>
+  <data name="AuditAction_ShiftTypeCreated" xml:space="preserve">
+    <value>יצירת סוג משמרת</value>
+  </data>
+  <data name="AuditAction_ShiftDetached" xml:space="preserve">
+    <value>ניתוק משמרת</value>
+  </data>
+  <data name="AuditAction_ShiftReset" xml:space="preserve">
+    <value>איפוס משמרת</value>
+  </data>
+  <data name="AuditAction_ShiftRangeFilled" xml:space="preserve">
+    <value>מילוי טווח משמרות</value>
+  </data>
+  <data name="AuditAction_AccountUnlock" xml:space="preserve">
+    <value>שחרור נעילת חשבון</value>
+  </data>
+  <data name="AuditAction_OverviewNoteCreated" xml:space="preserve">
+    <value>יצירת הערת סקירה</value>
+  </data>
+  <data name="AuditAction_OverviewNoteUpdated" xml:space="preserve">
+    <value>עדכון הערת סקירה</value>
+  </data>
+  <data name="AuditAction_OverviewNoteDeleted" xml:space="preserve">
+    <value>מחיקת הערת סקירה</value>
+  </data>
+  <data name="AuditAction_TextEntryCreated" xml:space="preserve">
+    <value>יצירת רשומת טקסט</value>
+  </data>
+  <data name="AuditAction_TextEntryDeleted" xml:space="preserve">
+    <value>מחיקת רשומת טקסט</value>
+  </data>
+  <data name="AuditAction_DeploymentExport" xml:space="preserve">
+    <value>ייצוא גיבוי</value>
+  </data>
+  <data name="AuditAction_UserDeleted" xml:space="preserve">
+    <value>מחיקת משתמש</value>
+  </data>
+
+  <!-- Missing audit entity keys -->
+  <data name="AuditEntity_CalendarTextEntry" xml:space="preserve">
+    <value>רשומת טקסט ביומן</value>
+  </data>
+  <data name="AuditEntity_ApiKey" xml:space="preserve">
+    <value>מפתח API</value>
+  </data>
+  <data name="AuditEntity_System" xml:space="preserve">
+    <value>מערכת</value>
+  </data>
+  <data name="AuditEntity_project" xml:space="preserve">
+    <value>פרויקט</value>
+  </data>
+  <data name="AuditEntity_area" xml:space="preserve">
+    <value>אזור</value>
+  </data>
+  <data name="AuditEntity_molecule" xml:space="preserve">
+    <value>זרוע</value>
+  </data>
+  <data name="AuditEntity_company" xml:space="preserve">
+    <value>פלוגה</value>
+  </data>
+  <data name="AuditEntity_department" xml:space="preserve">
+    <value>מחלקה</value>
+  </data>
+
   <!-- Cross-agent .resx keys -->
   <data name="HomeType_DaysSelected" xml:space="preserve">
     <value>{0} ימים נבחרו</value>
@@ -13761,6 +13864,30 @@
   <data name="Grant_ManageStores_Desc" xml:space="preserve">
     <value>יצירה, עריכה וניהול של חנויות ושעות פתיחה</value>
   </data>
+  <data name="Grant_ViewHakamOnCall" xml:space="preserve">
+    <value>צפייה בחק״מ תורן</value>
+  </data>
+  <data name="Grant_ViewHakamOnCall_Desc" xml:space="preserve">
+    <value>צפייה בשיבוצי חק״מ תורן בווידג׳ט התורנויות</value>
+  </data>
+  <data name="Grant_ViewCompanyOnCall" xml:space="preserve">
+    <value>צפייה בתורן פלוגתי</value>
+  </data>
+  <data name="Grant_ViewCompanyOnCall_Desc" xml:space="preserve">
+    <value>צפייה באנשי קשר תורנים ברמת הפלוגה בווידג׳ט התורנויות</value>
+  </data>
+  <data name="Grant_ViewShiftsMolecule" xml:space="preserve">
+    <value>צפייה במשמרות (גדוד)</value>
+  </data>
+  <data name="Grant_ViewShiftsMolecule_Desc" xml:space="preserve">
+    <value>גישה לרמת גדוד בבורר ההיקף ללוחות משמרות</value>
+  </data>
+  <data name="Grant_ViewShiftsArea" xml:space="preserve">
+    <value>צפייה במשמרות (אוגדה)</value>
+  </data>
+  <data name="Grant_ViewShiftsArea_Desc" xml:space="preserve">
+    <value>גישה לרמת אוגדה בבורר ההיקף ללוחות משמרות</value>
+  </data>
   <data name="Store_ErrorNameRequired" xml:space="preserve">
     <value>שם החנות (באנגלית) הוא שדה חובה.</value>
   </data>
@@ -13793,5 +13920,234 @@
   </data>
   <data name="Store_SuccessHoursUpdated" xml:space="preserve">
     <value>שעות הפתיחה עודכנו בהצלחה.</value>
+  </data>
+  <!-- Notes Unification (cross-visibility badges) -->
+  <data name="OverviewNote" xml:space="preserve">
+    <value>הערת תקציר</value>
+  </data>
+  <data name="OverviewNoteTooltip" xml:space="preserve">
+    <value>הערת תקציר עבור משתמש זה</value>
+  </data>
+  <data name="TextEntries" xml:space="preserve">
+    <value>רשומות טקסט</value>
+  </data>
+  <data name="TextEntryCount" xml:space="preserve">
+    <value>{0} רשומות טקסט</value>
+  </data>
+  <data name="Roles_ScopeDescription" xml:space="preserve">
+    <value>צפייה וניהול שיוכי תפקידים למשתמשים בפלוגה או במולקולה שלך. שייך תפקידים או בטל שיוכים קיימים.</value>
+  </data>
+  <data name="Roles_CrossLinkToTemplates" xml:space="preserve">
+    <value>לניהול תבניות תפקידים והרשאות ברמת הפרויקט, עבור אל</value>
+  </data>
+  <data name="Roles_CrossLinkTemplatesLabel" xml:space="preserve">
+    <value>תבניות תפקידים (מרכז בעלים)</value>
+  </data>
+  <data name="RoleTemplates_ScopeDescription" xml:space="preserve">
+    <value>הגדרה וניהול תבניות תפקידים וההרשאות המשויכות אליהן בכל הפרויקט. תבניות שנוצרות כאן זמינות לשיוך בכל הפלוגות.</value>
+  </data>
+  <data name="RoleTemplates_CrossLinkToRoles" xml:space="preserve">
+    <value>לשיוך תפקידים למשתמשים ספציפיים, עבור אל</value>
+  </data>
+  <data name="RoleTemplates_CrossLinkRolesLabel" xml:space="preserve">
+    <value>שיוכי תפקידים (ניהול)</value>
+  </data>
+  <data name="Help_Hub_Subtitle" xml:space="preserve">
+    <value>מצאו תשובות ולמדו כיצד להשתמש במערכת ShiftManager</value>
+  </data>
+  <data name="Help_Hub_GettingStarted" xml:space="preserve">
+    <value>תחילת עבודה</value>
+  </data>
+  <data name="Help_Hub_GettingStarted_Desc" xml:space="preserve">
+    <value>חדשים ב-ShiftManager? למדו את הבסיס של הרשמה, כניסה וניווט במערכת.</value>
+  </data>
+  <data name="Help_Hub_RolesPermissions" xml:space="preserve">
+    <value>תפקידים והרשאות</value>
+  </data>
+  <data name="Help_Hub_RolesPermissions_Desc" xml:space="preserve">
+    <value>הבינו את התפקידים השונים במערכת ומה כל אחד מהם יכול לעשות.</value>
+  </data>
+  <data name="Help_Hub_Calendar" xml:space="preserve">
+    <value>מדריך לוח שנה</value>
+  </data>
+  <data name="Help_Hub_Calendar_Desc" xml:space="preserve">
+    <value>למדו כיצד להשתמש בלוחות משמרות, תורנויות, כוננויות וסקירה כללית.</value>
+  </data>
+  <data name="Help_Hub_Admin" xml:space="preserve">
+    <value>מדריך ניהול</value>
+  </data>
+  <data name="Help_Hub_Admin_Desc" xml:space="preserve">
+    <value>ניהול משתמשים, הגדרת ארגון, יומני ביקורת והגדרות מערכת.</value>
+  </data>
+  <data name="Help_Hub_FAQ" xml:space="preserve">
+    <value>שאלות נפוצות</value>
+  </data>
+  <data name="Help_Hub_FAQ_Desc" xml:space="preserve">
+    <value>תשובות מהירות לשאלות נפוצות.</value>
+  </data>
+  <data name="Help_GettingStarted_Title" xml:space="preserve">
+    <value>תחילת עבודה</value>
+  </data>
+  <data name="Help_GettingStarted_Subtitle" xml:space="preserve">
+    <value>כל מה שצריך לדעת כדי להתחיל לעבוד עם ShiftManager</value>
+  </data>
+  <data name="Help_GS_WhatIs_Q" xml:space="preserve">
+    <value>מה זה ShiftManager?</value>
+  </data>
+  <data name="Help_GS_WhatIs_A" xml:space="preserve">
+    <value>ShiftManager היא מערכת לניהול משמרות ולוחות זמנים, מותאמת לארגונים עם צוותים, תפקידים וסוגי משמרות מרובים. המערכת מטפלת בשיבוצי משמרות, תורנויות, כוננויות, בקשות חופשה ועוד.</value>
+  </data>
+  <data name="Help_GS_Signup_Q" xml:space="preserve">
+    <value>כיצד נרשמים?</value>
+  </data>
+  <data name="Help_GS_Signup_A" xml:space="preserve">
+    <value>לחצו על כפתור "הצטרפות" בדף הכניסה. מלאו את הפרטים, בחרו פלוגה ותפקיד, ושלחו את הבקשה. מנהל יבדוק ויאשר את הבקשה. לאחר האישור, תוכלו להיכנס עם הפרטים שלכם.</value>
+  </data>
+  <data name="Help_GS_FirstLogin_Q" xml:space="preserve">
+    <value>מה לעשות אחרי הכניסה הראשונה?</value>
+  </data>
+  <data name="Help_GS_FirstLogin_A" xml:space="preserve">
+    <value>אחרי הכניסה: 1) בדקו את הפרופיל ועדכנו את שם התצוגה במידת הצורך. 2) ודאו את התפקיד והפלוגה המשויכים. 3) נווטו ללוח השנה כדי לראות את המשמרות שלכם. 4) הגדירו התראות בהגדרות הפרופיל.</value>
+  </data>
+  <data name="Help_GS_Navigation_Q" xml:space="preserve">
+    <value>כיצד מנווטים במערכת?</value>
+  </data>
+  <data name="Help_GS_Navigation_A" xml:space="preserve">
+    <value>השתמשו בתפריט הצד כדי לגשת למקטעים השונים: לוח שנה (משמרות, תורנויות, כוננויות, סקירה), האזור האישי (פרופיל, בקשות, עזרה), ואזור הניהול (אם יש לכם הרשאות ניהול). ניתן לכווץ את תפריט הצד ליותר מקום.</value>
+  </data>
+  <data name="Help_GS_RequestAccess_Q" xml:space="preserve">
+    <value>מה אם אני צריך גישה לתכונות נוספות?</value>
+  </data>
+  <data name="Help_GS_RequestAccess_A" xml:space="preserve">
+    <value>פנו למנהל או למנהל המערכת. הם יכולים לשייך לכם תפקידים או הרשאות נוספות שפותחות תכונות נוספות. תוכלו לראות את ההרשאות הנוכחיות שלכם בדף הפרופיל.</value>
+  </data>
+  <data name="Help_Roles_Title" xml:space="preserve">
+    <value>תפקידים והרשאות</value>
+  </data>
+  <data name="Help_Roles_Subtitle" xml:space="preserve">
+    <value>הבנת תפקידים, הרשאות ומה כל תפקיד יכול לעשות</value>
+  </data>
+  <data name="Help_Roles_Overview_Q" xml:space="preserve">
+    <value>אילו תפקידים קיימים במערכת?</value>
+  </data>
+  <data name="Help_Roles_Overview_A" xml:space="preserve">
+    <value>ב-ShiftManager קיימים התפקידים הבאים: חייל (משתמש בסיסי), מ"מ (מנהל פלוגה), קב"ב (מוביל צוות עם הרשאות מורחבות), מפ"צ (מפקד ברמת גדוד), קצ"פ (מנהל ברמת מולקולה), מנהל אזור (מנהל ברמת אזור), משבצ (מתמחה בשיבוצים), מתמחה (חייל בהכשרה), ובעלים (גישה מלאה למערכת).</value>
+  </data>
+  <data name="Help_Roles_Employee_Q" xml:space="preserve">
+    <value>מה חייל יכול לעשות?</value>
+  </data>
+  <data name="Help_Roles_Employee_A" xml:space="preserve">
+    <value>חיילים יכולים לצפות במשמרות ובלוחות הזמנים שלהם, לשלוח בקשות חופשה והחלפה, לצפות בשיוכי תורנויות, לעדכן את הפרופיל שלהם, ולראות את לוח הסקירה של הצוות.</value>
+  </data>
+  <data name="Help_Roles_Manager_Q" xml:space="preserve">
+    <value>מה מ"מ יכול לעשות?</value>
+  </data>
+  <data name="Help_Roles_Manager_A" xml:space="preserve">
+    <value>מנהלים יכולים לעשות את כל מה שחייל יכול, בנוסף: לשבץ ולהסיר שיבוצי משמרות, לאשר או לדחות בקשות חופשה והחלפה, לנהל משתמשים בפלוגה שלהם, לצפות ביומני ביקורת, ולהגדיר סוגי משמרות ותורנויות.</value>
+  </data>
+  <data name="Help_Roles_Lead_Q" xml:space="preserve">
+    <value>מה קב"ב יכול לעשות?</value>
+  </data>
+  <data name="Help_Roles_Lead_A" xml:space="preserve">
+    <value>לקב"בים יש הרשאות דומות למנהלים אך הם מוגדרים ספציפית כמובילי צוות. הם יכולים לנהל משמרות, לאשר בקשות, ולטפל בשיוכי תורנויות לצוות שלהם.</value>
+  </data>
+  <data name="Help_Roles_Director_Q" xml:space="preserve">
+    <value>מה קצ"פ יכול לעשות?</value>
+  </data>
+  <data name="Help_Roles_Director_A" xml:space="preserve">
+    <value>לקצ"פים יש פיקוח על מולקולה שלמה (קבוצת פלוגות). הם יכולים לצפות ולנהל פעולות בכל הפלוגות במולקולה שלהם, לגשת למרכז הקצ"פ לניתוח חוצה-פלוגות, ולאשר בקשות ברמה גבוהה יותר.</value>
+  </data>
+  <data name="Help_Roles_AreaAdmin_Q" xml:space="preserve">
+    <value>מה מנהל אזור יכול לעשות?</value>
+  </data>
+  <data name="Help_Roles_AreaAdmin_A" xml:space="preserve">
+    <value>מנהלי אזור מנהלים אזור שלם (קבוצת מולקולות). יש להם גישה ניהולית רחבה על מספר מולקולות ויכולים להגדיר הגדרות ברמת הארגון.</value>
+  </data>
+  <data name="Help_Roles_Owner_Q" xml:space="preserve">
+    <value>מה בעלים יכול לעשות?</value>
+  </data>
+  <data name="Help_Roles_Owner_A" xml:space="preserve">
+    <value>לבעלים יש גישה מלאה למערכת. הם יכולים לנהל את כל המשתמשים, להגדיר תבניות תפקידים והרשאות, לגשת למרכז הבעלים עם הגדרות מערכת כלליות, לנהל את כל הפלוגות והמולקולות, ולצפות ביומני ביקורת מקיפים.</value>
+  </data>
+  <data name="Help_Roles_Grants_Q" xml:space="preserve">
+    <value>מה זה הרשאות (גרנטים)?</value>
+  </data>
+  <data name="Help_Roles_Grants_A" xml:space="preserve">
+    <value>הרשאות הן בקרות גישה מדויקות השולטות בדיוק באילו פעולות משתמש יכול לבצע. כל תבנית תפקיד מאגדת סט של הרשאות. לדוגמה, ההרשאה "אישור חופשות" מאפשרת אישור בקשות חופשה. מנהלי מערכת יכולים להתאים אישית אילו הרשאות כל תפקיד כולל.</value>
+  </data>
+  <data name="Help_Calendar_Title" xml:space="preserve">
+    <value>מדריך לוח שנה</value>
+  </data>
+  <data name="Help_Calendar_Subtitle" xml:space="preserve">
+    <value>כיצד להשתמש בלוח המשמרות, תורנויות, כוננויות ודף הסקירה</value>
+  </data>
+  <data name="Help_Cal_Shifts_Q" xml:space="preserve">
+    <value>כיצד לוח המשמרות עובד?</value>
+  </data>
+  <data name="Help_Cal_Shifts_A" xml:space="preserve">
+    <value>לוח המשמרות מציג את כל שיבוצי המשמרות עבור המולקולה וסוג התפקיד שלך. נווטו בין חודשים באמצעות החצים. לחצו על תא כדי לראות פרטי שיבוץ. מנהלים יכולים ללחוץ על תאים ריקים לשיבוץ משמרות או על תאים משובצים לשינויים.</value>
+  </data>
+  <data name="Help_Cal_Chores_Q" xml:space="preserve">
+    <value>כיצד תורנויות עובדות?</value>
+  </data>
+  <data name="Help_Cal_Chores_A" xml:space="preserve">
+    <value>תורנויות הן משימות חוזרות או חד-פעמיות המשויכות למשתמשים בתאריכים ספציפיים. לוח התורנויות מציג את כל שיוכי התורנויות למולקולה שלך. מנהלים יכולים ליצור סוגי תורנויות בניהול ולשייך אותם למשתמשים דרך הלוח.</value>
+  </data>
+  <data name="Help_Cal_OnCall_Q" xml:space="preserve">
+    <value>כיצד לוח הכוננויות עובד?</value>
+  </data>
+  <data name="Help_Cal_OnCall_A" xml:space="preserve">
+    <value>לוח הכוננויות עוקב אחר שיוכי תורנות (חק"ם, מוביל וכו') באזור שלך. הוא מציג מי בתורנות לכל תאריך וסוג תורנות. מנהלים עם הרשאת ManageOnDuty יכולים לשבץ ולשנות סבבי כוננויות.</value>
+  </data>
+  <data name="Help_Cal_Overview_Q" xml:space="preserve">
+    <value>מה זה דף הסקירה?</value>
+  </data>
+  <data name="Help_Cal_Overview_A" xml:space="preserve">
+    <value>דף הסקירה מספק תצוגה מאוחדת של כל המשתמשים בפלוגה שלך עם המשמרות, התורנויות והכוננויות שלהם לחודש. הוא כולל רשומות טקסט (הערות) ומדדים מרכזיים. זה אידיאלי לקבלת תמונה כללית של לוח השיבוצים.</value>
+  </data>
+  <data name="Help_Cal_QuickEntry_Q" xml:space="preserve">
+    <value>כיצד לשבץ משמרות במהירות?</value>
+  </data>
+  <data name="Help_Cal_QuickEntry_A" xml:space="preserve">
+    <value>לחצו על תא ריק בלוח כדי לפתוח את לוח השיבוץ המהיר. בחרו את המשתמש (או סוג משמרת במצב משתמש) ואשרו. ניתן גם להשתמש בלוח התחתון לאפשרויות שיבוץ מפורטות יותר כולל שיבוץ מתמחה.</value>
+  </data>
+  <data name="Help_Cal_Print_Q" xml:space="preserve">
+    <value>אפשר להדפיס או לייצא את הלוח?</value>
+  </data>
+  <data name="Help_Cal_Print_A" xml:space="preserve">
+    <value>כן. השתמשו בכפתור ההדפסה בסרגל הכלים של הלוח ליצירת גרסה מותאמת להדפסה. מנהלים יכולים גם לייצא נתוני משתמשים ל-CSV מדף ניהול המשתמשים.</value>
+  </data>
+  <data name="Help_Admin_Title" xml:space="preserve">
+    <value>מדריך ניהול</value>
+  </data>
+  <data name="Help_Admin_Subtitle" xml:space="preserve">
+    <value>ניהול משתמשים, ארגון והגדרות מערכת</value>
+  </data>
+  <data name="Help_Admin_Users_Q" xml:space="preserve">
+    <value>כיצד לנהל משתמשים?</value>
+  </data>
+  <data name="Help_Admin_Users_A" xml:space="preserve">
+    <value>עברו אל ניהול &gt; משתמשים לניהול משתמשים. ניתן להוסיף משתמשים חדשים, לאשר בקשות הצטרפות, לערוך פרטי משתמש (תפקיד, פלוגה, סוג תפקיד), לנעול/לפתוח חשבונות, ולהשבית משתמשים. השתמשו במסננים לצמצום רשימת המשתמשים.</value>
+  </data>
+  <data name="Help_Admin_JoinRequests_Q" xml:space="preserve">
+    <value>כיצד בקשות הצטרפות עובדות?</value>
+  </data>
+  <data name="Help_Admin_JoinRequests_A" xml:space="preserve">
+    <value>כשמשתמשים חדשים נרשמים, הם יוצרים בקשת הצטרפות. מנהלים רואים בקשות ממתינות בראש דף ניהול המשתמשים. ניתן לאשר (משייך את התפקיד והפלוגה המבוקשים) או לדחות כל בקשה. אישור קבוצתי זמין גם עבור מספר בקשות.</value>
+  </data>
+  <data name="Help_Admin_Organization_Q" xml:space="preserve">
+    <value>כיצד להגדיר את הארגון?</value>
+  </data>
+  <data name="Help_Admin_Organization_A" xml:space="preserve">
+    <value>מקטע ניהול &gt; ארגון מאפשר לנהל: סוגי משמרות (לוחות עבודה), סוגי תורנויות (משימות חוזרות), סוגי כוננויות (קטגוריות תורנות), ותפקידים (שיוכי תפקידים). לכל אחד יש דף ניהול נפרד הנגיש מתפריט הארגון.</value>
+  </data>
+  <data name="Help_Admin_Audit_Q" xml:space="preserve">
+    <value>כיצד לצפות ביומני ביקורת?</value>
+  </data>
+  <data name="Help_Admin_Audit_A" xml:space="preserve">
+    <value>עברו אל ניהול &gt; יומן ביקורת לצפייה ברשומה כרונולוגית של כל פעולות המערכת. ניתן לסנן לפי משתמש, סוג פעולה וטווח תאריכים. יומני ביקורת עוקבים אחר פעולות ניהול משתמשים, שיבוצי משמרות, אישורים ושינויי הגדרות.</value>
+  </data>
+  <data name="Help_BackToHub" xml:space="preserve">
+    <value>חזרה למרכז העזרה</value>
   </data>
 </root>

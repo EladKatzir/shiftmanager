@@ -20,18 +20,21 @@ public class AssignModel : LocalizedPageModel
     private readonly ILogger<AssignModel> _logger;
     private readonly IRoleService _roleService;
     private readonly IJobTypeService _jobTypeService;
+    private readonly IAuditLogService _auditLogService;
 
     public AssignModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<AssignModel> logger,
         IRoleService roleService,
-        IJobTypeService jobTypeService) : base(localizer)
+        IJobTypeService jobTypeService,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _roleService = roleService;
         _jobTypeService = jobTypeService;
+        _auditLogService = auditLogService;
     }
 
     public record UserOption(int Id, string DisplayName, string Email);
@@ -162,6 +165,9 @@ public class AssignModel : LocalizedPageModel
 
         _logger.LogInformation("Assigned role {Role} to user {UserId} by {AssignedBy}",
             roleTemplate.Key, SelectedUserId, currentUserId);
+
+        await _auditLogService.LogAsync("RoleAssigned", "UserRoleAssignment", assignment.Id,
+            $"Assigned role '{roleTemplate.Key}' to user '{user.DisplayName}' (UserId={SelectedUserId})");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_RoleAssigned"],
             _localizer[roleTemplate.NameKey], user.DisplayName);

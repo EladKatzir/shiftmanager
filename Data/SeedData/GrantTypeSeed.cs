@@ -300,10 +300,13 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "ViewCompanyOnCall", NameKey = "Grant_ViewCompanyOnCall", DescriptionKey = "Grant_ViewCompanyOnCall_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Company, IsSystem = true });
 
         // ============================================
-        // SCOPE SWITCHER GRANTS (Category.Shift) - Molecule-level scope access
+        // SCOPE SWITCHER GRANTS - Molecule and Area level scope access
+        // Used by ScopeSwitcherViewComponent and /Api/ScopeSwitcher endpoint.
+        // Dynamic pattern: View{CalendarType}Molecule, View{CalendarType}Area
         // ============================================
 
         grants.Add(new GrantType { Id = id++, Key = "ViewShiftsMolecule", NameKey = "Grant_ViewShiftsMolecule", DescriptionKey = "Grant_ViewShiftsMolecule_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "ViewShiftsArea", NameKey = "Grant_ViewShiftsArea", DescriptionKey = "Grant_ViewShiftsArea_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 
         return grants;
     }
