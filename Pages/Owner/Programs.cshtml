@@ -16,6 +16,15 @@
     new BreadcrumbItem { Label = Localizer["Programs_Title"], IsActive = true }
 })
 
+<div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+    <a href="/Owner/Blueprints" class="btn btn-sm btn-secondary">
+        <loc key="Nav_Blueprints" />
+    </a>
+    <a href="/Owner/MasterPrograms" class="btn btn-sm btn-secondary">
+        <loc key="Nav_MasterPrograms" />
+    </a>
+</div>
+
 @* Owner Company Selector *@
 @await Component.InvokeAsync("OwnerCompanySelector")
 

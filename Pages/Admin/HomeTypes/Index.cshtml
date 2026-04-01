@@ -3,10 +3,17 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
+@using ShiftManager.ViewComponents
 @{
-    ViewData["Title"] = "Home Types";
+    ViewData["Title"] = Localizer["HomeTypes"];
     Layout = "~/Pages/Shared/_Layout.cshtml";
 }
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["HomeTypes"], IsActive = true }
+})
 
 @section Styles {
     <link rel="stylesheet" href="~/css/home-types.css" asp-append-version="true" />
@@ -175,11 +182,11 @@ else if (Model.MoleculeId.HasValue)
 
             <div class="form-group">
                 <label><loc key="Name" /></label>
-                <input type="text" name="Name" class="form-input" required placeholder="e.g., סבב א" />
+                <input type="text" name="Name" class="form-input" required placeholder="@Localizer["HomeType_NamePlaceholder"]" />
             </div>
             <div class="form-group">
                 <label><loc key="HebrewName" /></label>
-                <input type="text" name="NameHe" class="form-input" placeholder="Optional Hebrew name" />
+                <input type="text" name="NameHe" class="form-input" placeholder="@Localizer["HomeType_HeNamePlaceholder"]" />
             </div>
             <div class="form-group">
                 <label><loc key="DefaultStartTime" /></label>
@@ -221,8 +228,8 @@ else if (Model.MoleculeId.HasValue)
         <div class="form-group">
             <label><loc key="Mode" /></label>
             <select name="GenerateMode" class="form-input">
-                <option value="keep">Keep manual changes</option>
-                <option value="overwrite">Overwrite all</option>
+                <option value="keep">@Localizer["HomeType_ModeKeep"]</option>
+                <option value="overwrite">@Localizer["HomeType_ModeOverwrite"]</option>
             </select>
         </div>
         <button type="submit" class="btn btn--primary"><loc key="Generate" /></button>

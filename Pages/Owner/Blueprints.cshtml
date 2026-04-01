@@ -16,6 +16,15 @@
     new BreadcrumbItem { Label = Localizer["Section_Blueprints"], IsActive = true }
 })
 
+<div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+    <a href="/Owner/Programs" class="btn btn-sm btn-secondary">
+        <loc key="Nav_ShiftPlans" />
+    </a>
+    <a href="/Owner/MasterPrograms" class="btn btn-sm btn-secondary">
+        <loc key="Nav_MasterPrograms" />
+    </a>
+</div>
+
 @* Owner Company Selector *@
 @await Component.InvokeAsync("OwnerCompanySelector")
 
@@ -107,12 +116,12 @@
                     <select asp-for="NewShiftScope" class="form-control" id="scopeSelector">
                         @if (Model.CanCreateMoleculeScope)
                         {
-                            <option value="1">🟢 Molecule</option>
+                            <option value="1">🟢 @Localizer["ShiftScope_Molecule"]</option>
                         }
-                        <option value="0">🔵 Company</option>
+                        <option value="0">🔵 @Localizer["ShiftScope_Company"]</option>
                         @if (Model.CanCreateAreaScope)
                         {
-                            <option value="2">🟠 Area</option>
+                            <option value="2">🟠 @Localizer["ShiftScope_Area"]</option>
                         }
                     </select>
                 </div>
@@ -191,7 +200,7 @@
                                 }
                             </td>
                             <td>
-                                @if (!string.IsNullOrWhiteSpace(shiftType.NameKey))
+                                @if (shiftType.Scope == ShiftManager.Models.Support.ShiftScope.Company && !string.IsNullOrWhiteSpace(shiftType.NameKey))
                                 {
                                     <span class="editable-name"
                                           data-shift-id="@shiftType.Id"
@@ -201,11 +210,15 @@
                                 }
                                 else
                                 {
-                                    <span class="text-muted">@shiftType.NameEn</span>
+                                    <span class="editable-name"
+                                          data-shift-id="@shiftType.Id"
+                                          data-lang="en">
+                                        @(shiftType.NameEn ?? shiftType.Key)
+                                    </span>
                                 }
                             </td>
                             <td dir="rtl">
-                                @if (!string.IsNullOrWhiteSpace(shiftType.NameKey))
+                                @if (shiftType.Scope == ShiftManager.Models.Support.ShiftScope.Company && !string.IsNullOrWhiteSpace(shiftType.NameKey))
                                 {
                                     <span class="editable-name"
                                           data-shift-id="@shiftType.Id"
@@ -215,7 +228,11 @@
                                 }
                                 else
                                 {
-                                    <span class="text-muted">@shiftType.NameEn</span>
+                                    <span class="editable-name"
+                                          data-shift-id="@shiftType.Id"
+                                          data-lang="he">
+                                        @(shiftType.NameHe ?? shiftType.NameEn ?? shiftType.Key)
+                                    </span>
                                 }
                             </td>
                             <td>
@@ -237,15 +254,15 @@
                                 @switch (shiftType.Scope)
                                 {
                                     case ShiftManager.Models.Support.ShiftScope.Area:
-                                        <span class="badge" style="background: #f97316; color: white;">Area</span>
+                                        <span class="badge badge--scope-area">@Localizer["ShiftScope_Area"]</span>
                                         @if (shiftType.Area != null) { <small>@shiftType.Area.DisplayName</small> }
                                         break;
                                     case ShiftManager.Models.Support.ShiftScope.Molecule:
-                                        <span class="badge" style="background: #22c55e; color: white;">Molecule</span>
+                                        <span class="badge badge--scope-molecule">@Localizer["ShiftScope_Molecule"]</span>
                                         @if (shiftType.Molecule != null) { <small>@shiftType.Molecule.DisplayName</small> }
                                         break;
                                     case ShiftManager.Models.Support.ShiftScope.Company:
-                                        <span class="badge" style="background: #3b82f6; color: white;">Company</span>
+                                        <span class="badge badge--scope-company">@Localizer["ShiftScope_Company"]</span>
                                         @if (shiftType.Company != null) { <small>@shiftType.Company.DisplayName</small> }
                                         break;
                                 }

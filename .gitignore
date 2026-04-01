@@ -166,3 +166,10 @@ test_screenshots/
 test-scripts/
 test-tmp/
 MANUAL_TESTING_LOG.md
+
+# Navigation audit test artifacts (screenshots + reports)
+nav_test_results/
+
+# Claude Code internal directories
+.claude/agent-memory/
+.superpowers/

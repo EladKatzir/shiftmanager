@@ -61,7 +61,8 @@ public class RequireGrantTagHelper : TagHelper
             ProjectId: _currentUserService.ProjectId,
             AreaId: _currentUserService.AreaId,
             MoleculeId: _currentUserService.MoleculeId,
-            CompanyId: _currentUserService.CompanyId
+            CompanyId: _currentUserService.CompanyId,
+            JobTypeId: _currentUserService.JobTypeId
         );
 
         // Parse grant keys

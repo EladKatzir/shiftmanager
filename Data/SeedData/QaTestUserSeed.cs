@@ -169,7 +169,7 @@ public static class QaTestUserSeed
         AddUser(defs, "areaadmin@test", "Area Admin", UserRole.Manager, "Tzafona", null, "AreaAdmin", companies, templates, alhut, br, text, hakam);
 
         // Tech/Shikma lead (company-scoped, no longer department-based)
-        AddShikmaUser(defs, "deptlead.pie@test", "DeptLead Pie", UserRole.Manager, "Pie", "BRDirector", companies, templates, shikmaProjectManager);
+        AddShikmaUser(defs, "deptlead.pie@test", "DeptLead Pie", UserRole.Manager, "Pie", "DepartmentLead", companies, templates, shikmaProjectManager);
 
         // --- Employees (Tzafona - all 4 job types) ---
         AddUser(defs, "emp.tz.alhut@test", "Emp TZ Alhut", UserRole.Employee, "Tzafona", "Alhut", "Employee", companies, templates, alhut, br, text, hakam);

@@ -2153,7 +2153,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Assigner</value>
   </data>
   <data name="OnDuty" xml:space="preserve">
-    <value>Day Shift</value>
+    <value>On-Duty</value>
   </data>
   <data name="OnDutyCalendar" xml:space="preserve">
     <value>On-Call Calendar</value>
@@ -2665,7 +2665,7 @@ Are you absolutely sure you want to delete this user?</value>
     <comment>Phase 18 - Forgot password security note</comment>
   </data>
   <data name="Sidebar_CtrlKTooltip" xml:space="preserve">
-    <value>Press Ctrl+J (or Cmd+K on Mac) to open quick navigation</value>
+    <value>Press Ctrl+J (or Cmd+J on Mac) to open quick navigation</value>
     <comment>Phase 18 - Sidebar Ctrl+J tooltip</comment>
   </data>
   <data name="Sidebar_CtrlKLabel" xml:space="preserve">
@@ -6022,6 +6022,36 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Owner_EmailConfig_ServiceConfig" xml:space="preserve">
     <value>Email Service Configuration</value>
   </data>
+  <data name="Owner_EmailConfig_GlobalConfig" xml:space="preserve">
+    <value>Global Email Configuration</value>
+  </data>
+  <data name="Owner_EmailConfig_GlobalBadge" xml:space="preserve">
+    <value>Applies to all companies</value>
+  </data>
+  <data name="Owner_EmailConfig_GlobalDesc" xml:space="preserve">
+    <value>These settings apply to all companies by default. Individual companies can override them below.</value>
+  </data>
+  <data name="Owner_EmailConfig_SaveGlobal" xml:space="preserve">
+    <value>Save Global Configuration</value>
+  </data>
+  <data name="Owner_EmailConfig_UsingGlobal" xml:space="preserve">
+    <value>This company is using the global email configuration. Save settings below to create a company-specific override.</value>
+  </data>
+  <data name="Owner_EmailConfig_KeyConfigured" xml:space="preserve">
+    <value>API key is configured</value>
+  </data>
+  <data name="Owner_EmailConfig_OverrideActive" xml:space="preserve">
+    <value>Company Override Active</value>
+  </data>
+  <data name="Owner_EmailConfig_OverrideDesc" xml:space="preserve">
+    <value>This company has custom email settings that override the global configuration.</value>
+  </data>
+  <data name="Owner_EmailConfig_UseGlobal" xml:space="preserve">
+    <value>Use Global Settings</value>
+  </data>
+  <data name="Owner_EmailConfig_RemoveOverrideConfirm" xml:space="preserve">
+    <value>Remove company override and use global settings?</value>
+  </data>
   <data name="Owner_EmailConfig_ApiUrl" xml:space="preserve">
     <value>API URL</value>
   </data>
@@ -8412,6 +8442,24 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Error_GriffinNotEnabled" xml:space="preserve">
     <value>Griffin ADFS authentication is not enabled.</value>
+  </data>
+  <data name="Error_GriffinTokenExchangeFailed" xml:space="preserve">
+    <value>ADFS authentication failed. Could not exchange authentication token.</value>
+  </data>
+  <data name="Error_GriffinTokenExpired" xml:space="preserve">
+    <value>Your ADFS session has expired. Please log in again.</value>
+  </data>
+  <data name="Error_AccountDeactivated" xml:space="preserve">
+    <value>Your account has been deactivated. Please contact your administrator.</value>
+  </data>
+  <data name="Auth_GriffinSignupTitle" xml:space="preserve">
+    <value>Complete Registration</value>
+  </data>
+  <data name="Auth_GriffinSignupSubtitle" xml:space="preserve">
+    <value>Your identity has been verified. Please select your unit and role.</value>
+  </data>
+  <data name="Error_Login_SSOUserUseADFS" xml:space="preserve">
+    <value>This account uses ADFS authentication. Please use the "Login with ADFS" button instead.</value>
   </data>
   <data name="Error_AuthenticationFailed" xml:space="preserve">
     <value>Authentication failed. Please try again.</value>
@@ -12896,6 +12944,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Personal</value>
     <comment>Sidebar section header for personal features</comment>
   </data>
+  <data name="Nav_FeatureFlags" xml:space="preserve">
+    <value>Feature Flags</value>
+    <comment>Sidebar navigation - link to /Owner/FeatureFlags</comment>
+  </data>
   <data name="Section_DirectorTools" xml:space="preserve">
     <value>Director Tools</value>
     <comment>Admin Hub section header for director utilities</comment>
@@ -13758,7 +13810,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Chores</value>
   </data>
   <data name="QuickEntry_DutyGroup" xml:space="preserve">
-    <value>Day Shifts</value>
+    <value>On-Duty</value>
   </data>
   <data name="QuickEntry_NoMatches" xml:space="preserve">
     <value>No matches</value>
@@ -14025,6 +14077,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Help_Hub_FAQ_Desc" xml:space="preserve">
     <value>Quick answers to frequently asked questions.</value>
   </data>
+  <data name="Help_Hub_Feedback_Desc" xml:space="preserve">
+    <value>Share your thoughts, report issues, or suggest improvements.</value>
+  </data>
   <data name="Help_GettingStarted_Title" xml:space="preserve">
     <value>Getting Started</value>
   </data>
@@ -14071,7 +14126,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>What roles exist in the system?</value>
   </data>
   <data name="Help_Roles_Overview_A" xml:space="preserve">
-    <value>ShiftManager has the following roles: Employee (basic user), Manager (manages a company), Lead (team lead with extended permissions), BR Director (battalion-level director), Director (molecule-level director), Area Admin (area-level administrator), Assigner (shift assignment specialist), Trainee (supervised employee), and Owner (full system access).</value>
+    <value>ShiftManager has the following roles: Employee (basic user), Manager (manages a company), Lead (team lead with extended permissions), BR Director (battalion-level commander), Molecule Admin (molecule-level director), Area Admin (area-level administrator), Assigner (shift assignment specialist), Trainee (supervised employee), and Owner (full system access).</value>
   </data>
   <data name="Help_Roles_Employee_Q" xml:space="preserve">
     <value>What can an Employee do?</value>
@@ -14092,10 +14147,16 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Leads have similar permissions to Managers but are specifically designated as team leaders. They can manage shifts, approve requests, and handle chore assignments for their team.</value>
   </data>
   <data name="Help_Roles_Director_Q" xml:space="preserve">
-    <value>What can a Director do?</value>
+    <value>What can a BR Director do?</value>
   </data>
   <data name="Help_Roles_Director_A" xml:space="preserve">
-    <value>Directors have oversight over an entire molecule (group of companies). They can view and manage operations across all companies in their molecule, access the Director Hub for cross-company analytics, and approve requests at a higher level.</value>
+    <value>BR Directors operate at the battalion level with extended management permissions over their company. They can assign shifts, manage users, and approve requests at the company level.</value>
+  </data>
+  <data name="Help_Roles_MoleculeAdmin_Q" xml:space="preserve">
+    <value>What can a Molecule Admin do?</value>
+  </data>
+  <data name="Help_Roles_MoleculeAdmin_A" xml:space="preserve">
+    <value>Molecule Admins have oversight over an entire molecule (group of companies). They can view and manage operations across all companies in their molecule, access cross-company analytics, and approve requests at a higher level.</value>
   </data>
   <data name="Help_Roles_AreaAdmin_Q" xml:space="preserve">
     <value>What can an Area Admin do?</value>
@@ -14189,5 +14250,308 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Help_BackToHub" xml:space="preserve">
     <value>Back to Help Center</value>
+  </data>
+  <data name="QuickAddChore_InvalidRequestData" xml:space="preserve">
+    <value>Invalid request data</value>
+  </data>
+  <data name="QuickAddChore_InvalidAssignee" xml:space="preserve">
+    <value>Invalid assignee</value>
+  </data>
+  <data name="QuickAddChore_TitleRequired" xml:space="preserve">
+    <value>Chore title is required</value>
+  </data>
+  <data name="QuickAddChore_TitleTooLong" xml:space="preserve">
+    <value>Chore title must not exceed 200 characters</value>
+  </data>
+  <data name="QuickAddChore_NotesTooLong" xml:space="preserve">
+    <value>Chore notes must not exceed 1000 characters</value>
+  </data>
+  <data name="QuickAddChore_InvalidDateFormat" xml:space="preserve">
+    <value>Invalid date format</value>
+  </data>
+  <data name="QuickAddChore_DateTooFarFuture" xml:space="preserve">
+    <value>Cannot create chores more than 2 years in the future</value>
+  </data>
+  <data name="QuickAddChore_DateInPast" xml:space="preserve">
+    <value>Cannot create chores in the past</value>
+  </data>
+  <data name="QuickAddChore_UserNotAuthenticated" xml:space="preserve">
+    <value>User not authenticated</value>
+  </data>
+  <data name="QuickAddChore_NoPermissionCreate" xml:space="preserve">
+    <value>You do not have permission to create chores</value>
+  </data>
+  <data name="QuickAddChore_CannotAssignToUser" xml:space="preserve">
+    <value>You cannot assign chores to this user</value>
+  </data>
+  <data name="QuickAddChore_ShiftConflict" xml:space="preserve">
+    <value>This user has a shift on this date. Please use the Chores page to replace the shift.</value>
+  </data>
+  <data name="QuickAddChore_VacationConflict" xml:space="preserve">
+    <value>This user has an approved vacation on this date.</value>
+  </data>
+  <data name="QuickAddChore_Success" xml:space="preserve">
+    <value>Chore created successfully</value>
+  </data>
+  <data name="QuickAddChore_Error" xml:space="preserve">
+    <value>An error occurred while creating the chore</value>
+  </data>
+  <data name="QuickAddOnDuty_InvalidRequestData" xml:space="preserve">
+    <value>Invalid request data</value>
+  </data>
+  <data name="QuickAddOnDuty_InvalidAssignee" xml:space="preserve">
+    <value>Invalid assignee</value>
+  </data>
+  <data name="QuickAddOnDuty_NotesTooLong" xml:space="preserve">
+    <value>Notes must not exceed 1000 characters</value>
+  </data>
+  <data name="QuickAddOnDuty_InvalidDateFormat" xml:space="preserve">
+    <value>Invalid date format</value>
+  </data>
+  <data name="QuickAddOnDuty_DateTooFarFuture" xml:space="preserve">
+    <value>Cannot create on-duty assignments more than 2 years in the future</value>
+  </data>
+  <data name="QuickAddOnDuty_DateInPast" xml:space="preserve">
+    <value>Cannot create on-duty assignments in the past</value>
+  </data>
+  <data name="QuickAddOnDuty_InvalidType" xml:space="preserve">
+    <value>Invalid on-duty type</value>
+  </data>
+  <data name="QuickAddOnDuty_UserNotAuthenticated" xml:space="preserve">
+    <value>User not authenticated</value>
+  </data>
+  <data name="QuickAddOnDuty_NoPermissionCreate" xml:space="preserve">
+    <value>You do not have permission to create on-duty assignments</value>
+  </data>
+  <data name="QuickAddOnDuty_VacationConflict" xml:space="preserve">
+    <value>This user has an approved vacation on this date.</value>
+  </data>
+  <data name="QuickAddOnDuty_OfficerRankRequired" xml:space="preserve">
+    <value>This duty type requires an officer rank. The selected user does not have the required rank.</value>
+  </data>
+  <data name="QuickAddOnDuty_Success" xml:space="preserve">
+    <value>On-duty assignment created successfully</value>
+  </data>
+  <data name="QuickAddOnDuty_Error" xml:space="preserve">
+    <value>An error occurred while creating the on-duty assignment</value>
+  </data>
+  <data name="DeleteChore_InvalidChoreId" xml:space="preserve">
+    <value>Invalid chore ID</value>
+  </data>
+  <data name="DeleteChore_UserNotAuthenticated" xml:space="preserve">
+    <value>User not authenticated</value>
+  </data>
+  <data name="DeleteChore_NoPermissionDelete" xml:space="preserve">
+    <value>You do not have permission to delete chores</value>
+  </data>
+  <data name="DeleteChore_NotFound" xml:space="preserve">
+    <value>Chore not found</value>
+  </data>
+  <data name="DeleteChore_Success" xml:space="preserve">
+    <value>Chore deleted successfully</value>
+  </data>
+  <data name="DeleteChore_Error" xml:space="preserve">
+    <value>An error occurred while deleting the chore</value>
+  </data>
+  <data name="DeleteTextEntry_InvalidRequest" xml:space="preserve">
+    <value>Invalid request</value>
+  </data>
+  <data name="DeleteTextEntry_UserNotAuthenticated" xml:space="preserve">
+    <value>User not authenticated</value>
+  </data>
+  <data name="DeleteTextEntry_NoPermissionDelete" xml:space="preserve">
+    <value>You do not have permission to delete calendar entries</value>
+  </data>
+  <data name="DeleteTextEntry_NotFound" xml:space="preserve">
+    <value>Text entry not found</value>
+  </data>
+  <data name="DeleteTextEntry_CannotDeleteOverviewNotes" xml:space="preserve">
+    <value>Cannot delete overview notes via this endpoint</value>
+  </data>
+  <data name="DeleteTextEntry_Success" xml:space="preserve">
+    <value>Text entry deleted</value>
+  </data>
+  <data name="DeleteTextEntry_Error" xml:space="preserve">
+    <value>An error occurred</value>
+  </data>
+  <data name="FillHandle_Success" xml:space="preserve">
+    <value>Successfully filled {0} shifts</value>
+  </data>
+  <data name="FillHandle_Error" xml:space="preserve">
+    <value>Failed to fill shifts</value>
+  </data>
+  <data name="FillRange_Success" xml:space="preserve">
+    <value>Successfully filled {0} shifts</value>
+  </data>
+  <data name="FillRange_Understaffed" xml:space="preserve">
+    <value>Understaffed: {0}/{1} filled</value>
+  </data>
+  <data name="FillRange_Overstaffed" xml:space="preserve">
+    <value>Overstaffed: {0}/{1} filled</value>
+  </data>
+  <data name="Roster_TimeOff" xml:space="preserve">
+    <value>Time Off</value>
+  </data>
+  <data name="Roster_HasShift" xml:space="preserve">
+    <value>Has Shift</value>
+  </data>
+  <data name="ScopeMode_SameAsRole" xml:space="preserve">
+    <value>Same as Role</value>
+  </data>
+  <data name="ScopeMode_ExpandToMolecule" xml:space="preserve">
+    <value>Expand to Molecule</value>
+  </data>
+  <data name="ScopeMode_ExpandToArea" xml:space="preserve">
+    <value>Expand to Area</value>
+  </data>
+  <data name="ScopeMode_Custom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="SkipToMainContent" xml:space="preserve">
+    <value>Skip to main content</value>
+  </data>
+  <data name="HierarchyTree_DragToReorder" xml:space="preserve">
+    <value>Drag to reorder</value>
+  </data>
+  <data name="HierarchyTree_Toggle" xml:space="preserve">
+    <value>Toggle</value>
+  </data>
+  <data name="HierarchyTree_Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="HomeType_NamePlaceholder" xml:space="preserve">
+    <value>e.g., Round A</value>
+  </data>
+  <data name="HomeType_HeNamePlaceholder" xml:space="preserve">
+    <value>Optional Hebrew name</value>
+  </data>
+  <data name="HomeType_ModeKeep" xml:space="preserve">
+    <value>Keep manual changes</value>
+  </data>
+  <data name="HomeType_ModeOverwrite" xml:space="preserve">
+    <value>Overwrite all</value>
+  </data>
+  <data name="MyTeam_SearchCurrentMembers" xml:space="preserve">
+    <value>Search current members...</value>
+  </data>
+  <data name="MyTeam_SearchAvailableUsers" xml:space="preserve">
+    <value>Search available users...</value>
+  </data>
+  <data name="QuickEntry_MoreItems" xml:space="preserve">
+    <value>+{0} more...</value>
+  </data>
+  <data name="Placeholder_ManagerName" xml:space="preserve">
+    <value>John Doe</value>
+  </data>
+  <data name="Diagnostic_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Diagnostic_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Diagnostic_Path" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="Diagnostic_Method" xml:space="preserve">
+    <value>Method</value>
+  </data>
+  <data name="Diagnostic_User" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="BottomSheet_NetworkError" xml:space="preserve">
+    <value>Network error</value>
+  </data>
+  <data name="BottomSheet_CurrentAssignments" xml:space="preserve">
+    <value>Current Assignments</value>
+  </data>
+  <data name="BottomSheet_RemoveButton" xml:space="preserve">
+    <value>Remove </value>
+  </data>
+  <data name="BottomSheet_Trainee" xml:space="preserve">
+    <value>Trainee</value>
+  </data>
+  <data name="BottomSheet_AddAssignment" xml:space="preserve">
+    <value>Add Assignment</value>
+  </data>
+  <data name="BottomSheet_ChoreTitle" xml:space="preserve">
+    <value>Chore Title</value>
+  </data>
+  <data name="BottomSheet_EnterTitle" xml:space="preserve">
+    <value>Enter title...</value>
+  </data>
+  <data name="BottomSheet_ChoreType" xml:space="preserve">
+    <value>Chore Type</value>
+  </data>
+  <data name="BottomSheet_SelectShift" xml:space="preserve">
+    <value>Select Shift</value>
+  </data>
+  <data name="BottomSheet_SelectUser" xml:space="preserve">
+    <value>Select User</value>
+  </data>
+  <data name="BottomSheet_DefaultOption" xml:space="preserve">
+    <value>-- Select --</value>
+  </data>
+  <data name="BottomSheet_Assign" xml:space="preserve">
+    <value>Assign</value>
+  </data>
+  <data name="BottomSheet_ShiftsFor" xml:space="preserve">
+    <value>Shifts for: </value>
+  </data>
+  <data name="BottomSheet_AssigningTo" xml:space="preserve">
+    <value>Assigning to: </value>
+  </data>
+  <data name="BottomSheet_ChoresFor" xml:space="preserve">
+    <value>Chores for: </value>
+  </data>
+  <data name="BottomSheet_NoAssignments" xml:space="preserve">
+    <value>No assignments yet</value>
+  </data>
+  <data name="BottomSheet_TapToConfirm" xml:space="preserve">
+    <value>Tap again to confirm</value>
+  </data>
+  <data name="BottomSheet_AddTrainee" xml:space="preserve">
+    <value>Add trainee...</value>
+  </data>
+  <data name="BottomSheet_TraineeAssigned" xml:space="preserve">
+    <value>Trainee assigned</value>
+  </data>
+  <data name="BottomSheet_Warnings" xml:space="preserve">
+    <value>Warnings:</value>
+  </data>
+  <data name="BottomSheet_TraineeRemoved" xml:space="preserve">
+    <value>Trainee removed</value>
+  </data>
+  <data name="BottomSheet_SelectUserRequired" xml:space="preserve">
+    <value>Please select a user</value>
+  </data>
+  <data name="BottomSheet_TitleRequired" xml:space="preserve">
+    <value>Please enter a title</value>
+  </data>
+  <data name="BottomSheet_TitleTooLong" xml:space="preserve">
+    <value>Title too long (max 200 characters)</value>
+  </data>
+  <data name="BottomSheet_Chore" xml:space="preserve">
+    <value>Chore</value>
+  </data>
+  <data name="BottomSheet_SelectShiftRequired" xml:space="preserve">
+    <value>Please select a shift</value>
+  </data>
+  <data name="BottomSheet_CannotAddAssignment" xml:space="preserve">
+    <value>Cannot add assignment here</value>
+  </data>
+  <data name="BottomSheet_AssignmentRemoved" xml:space="preserve">
+    <value>Assignment removed</value>
+  </data>
+  <data name="BottomSheet_CannotRemoveAssignment" xml:space="preserve">
+    <value>Cannot remove assignment here</value>
+  </data>
+  <data name="BottomSheet_NoShiftsFor" xml:space="preserve">
+    <value>No one assigned to {0} on {1}</value>
+  </data>
+  <data name="BottomSheet_NoChoresFor" xml:space="preserve">
+    <value>No chores for {0} on {1}</value>
+  </data>
+  <data name="BottomSheet_NoOnCallFor" xml:space="preserve">
+    <value>No {0} assigned on {1}</value>
   </data>
 </root>

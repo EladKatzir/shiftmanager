@@ -137,7 +137,8 @@ public class BlueprintsModel : PageModel
                 .ToList();
             // Area scope: user must have a grant with AreaId or ProjectId set (ETA/ETP level)
             CanCreateAreaScope = createShiftGrants.Any(g => g.AreaId.HasValue || g.ProjectId.HasValue);
-            CanCreateMoleculeScope = await _grantService.HasGrantWithScopeAsync(userId, "CreateShiftTypes", moleculeId: SelectedMoleculeId);
+            // Molecule scope: any CreateShiftTypes grant is sufficient — the specific molecule is validated during creation
+            CanCreateMoleculeScope = createShiftGrants.Any();
         }
     }
 
@@ -235,12 +236,12 @@ public class BlueprintsModel : PageModel
         }
     }
 
-    public async Task<IActionResult> OnPostUpdateShiftNameAsync(int shiftTypeId, string nameEn, string nameHe)
+    public async Task<IActionResult> OnPostUpdateShiftNameAsync([FromBody] UpdateShiftNameRequest request)
     {
         try
         {
             var userId = GetCurrentUserId();
-            var shiftType = await _db.ShiftTypes.FindAsync(shiftTypeId);
+            var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
             if (shiftType == null)
                 return new JsonResult(new { success = false, error = "Shift type not found" });
 
@@ -248,18 +249,18 @@ public class BlueprintsModel : PageModel
                 return new JsonResult(new { success = false, error = "Insufficient permissions" }) { StatusCode = 403 };
 
             // Update names directly on ShiftType
-            shiftType.NameEn = nameEn?.Trim();
-            shiftType.NameHe = nameHe?.Trim();
+            shiftType.NameEn = request.NameEn?.Trim();
+            shiftType.NameHe = request.NameHe?.Trim();
 
             // Also update localization overrides if company-scoped
             if (shiftType.Scope == ShiftScope.Company && shiftType.CompanyId.HasValue && !string.IsNullOrWhiteSpace(shiftType.NameKey))
             {
-                await _localizationService.UpsertOverrideAsync(shiftType.CompanyId.Value, "en-US", shiftType.NameKey, nameEn ?? "", userId);
-                await _localizationService.UpsertOverrideAsync(shiftType.CompanyId.Value, "he-IL", shiftType.NameKey, nameHe ?? "", userId);
+                await _localizationService.UpsertOverrideAsync(shiftType.CompanyId.Value, "en-US", shiftType.NameKey, request.NameEn ?? "", userId);
+                await _localizationService.UpsertOverrideAsync(shiftType.CompanyId.Value, "he-IL", shiftType.NameKey, request.NameHe ?? "", userId);
             }
 
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
-                () => _db.SaveChangesAsync(), "ShiftType", shiftTypeId);
+                () => _db.SaveChangesAsync(), "ShiftType", request.ShiftTypeId);
             if (!saveResult.Success)
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
@@ -273,26 +274,26 @@ public class BlueprintsModel : PageModel
         }
     }
 
-    public async Task<IActionResult> OnPostUpdateShiftTimesAsync(int shiftTypeId, string startTime, string endTime)
+    public async Task<IActionResult> OnPostUpdateShiftTimesAsync([FromBody] UpdateShiftTimesRequest request)
     {
         try
         {
             var userId = GetCurrentUserId();
-            var shiftType = await _db.ShiftTypes.FindAsync(shiftTypeId);
+            var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
             if (shiftType == null)
                 return new JsonResult(new { success = false, error = "Shift type not found" });
 
             if (!await HasEditGrantForShiftType(userId, shiftType))
                 return new JsonResult(new { success = false, error = "Insufficient permissions" }) { StatusCode = 403 };
 
-            if (!TimeOnly.TryParse(startTime, out var start) || !TimeOnly.TryParse(endTime, out var end))
+            if (!TimeOnly.TryParse(request.StartTime, out var start) || !TimeOnly.TryParse(request.EndTime, out var end))
                 return new JsonResult(new { success = false, error = "Invalid time format" });
 
             shiftType.Start = start;
             shiftType.End = end;
 
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
-                () => _db.SaveChangesAsync(), "ShiftType", shiftTypeId);
+                () => _db.SaveChangesAsync(), "ShiftType", request.ShiftTypeId);
             if (!saveResult.Success)
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
@@ -392,5 +393,21 @@ public class BlueprintsModel : PageModel
             _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
         if (shiftType.AreaId.HasValue)
             _shiftTypeCache.InvalidateAreaCache(shiftType.AreaId.Value, shiftType.JobTypeId);
+    }
+
+    // --- Request DTOs for JSON-body binding ---
+
+    public class UpdateShiftNameRequest
+    {
+        public int ShiftTypeId { get; set; }
+        public string NameEn { get; set; } = string.Empty;
+        public string NameHe { get; set; } = string.Empty;
+    }
+
+    public class UpdateShiftTimesRequest
+    {
+        public int ShiftTypeId { get; set; }
+        public string StartTime { get; set; } = string.Empty;
+        public string EndTime { get; set; } = string.Empty;
     }
 }

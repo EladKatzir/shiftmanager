@@ -387,7 +387,7 @@
     <value>שפה</value>
   </data>
   <data name="English" xml:space="preserve">
-    <value>English</value>
+    <value>אנגלית</value>
   </data>
   <data name="Hebrew" xml:space="preserve">
     <value>עברית</value>
@@ -1978,7 +1978,7 @@
     <value>פקשיסט</value>
   </data>
   <data name="OnDuty" xml:space="preserve">
-    <value>משמרת יומית</value>
+    <value>כוננות</value>
   </data>
   <data name="OnDutyCalendar" xml:space="preserve">
     <value>לוח משמרות רוחב</value>
@@ -2490,7 +2490,7 @@
     <comment>Phase 18 - Forgot password security note</comment>
   </data>
   <data name="Sidebar_CtrlKTooltip" xml:space="preserve">
-    <value>לחץ Ctrl+J (או Cmd+K על Mac) לפתיחת ניווט מהיר</value>
+    <value>לחץ Ctrl+J (או Cmd+J על Mac) לפתיחת ניווט מהיר</value>
     <comment>Phase 18 - Sidebar Ctrl+J tooltip</comment>
   </data>
   <data name="Sidebar_CtrlKLabel" xml:space="preserve">
@@ -5522,6 +5522,36 @@
   <data name="Owner_EmailConfig_ServiceConfig" xml:space="preserve">
     <value>הגדרות שירות דוא"ל</value>
   </data>
+  <data name="Owner_EmailConfig_GlobalConfig" xml:space="preserve">
+    <value>הגדרות דוא"ל גלובליות</value>
+  </data>
+  <data name="Owner_EmailConfig_GlobalBadge" xml:space="preserve">
+    <value>חל על כל הפלוגות</value>
+  </data>
+  <data name="Owner_EmailConfig_GlobalDesc" xml:space="preserve">
+    <value>הגדרות אלו חלות על כל הפלוגות כברירת מחדל. פלוגות בודדות יכולות לדרוס אותן למטה.</value>
+  </data>
+  <data name="Owner_EmailConfig_SaveGlobal" xml:space="preserve">
+    <value>שמור הגדרות גלובליות</value>
+  </data>
+  <data name="Owner_EmailConfig_UsingGlobal" xml:space="preserve">
+    <value>פלוגה זו משתמשת בהגדרות הדוא"ל הגלובליות. שמור הגדרות למטה כדי ליצור דריסה ייחודית לפלוגה.</value>
+  </data>
+  <data name="Owner_EmailConfig_KeyConfigured" xml:space="preserve">
+    <value>מפתח API מוגדר</value>
+  </data>
+  <data name="Owner_EmailConfig_OverrideActive" xml:space="preserve">
+    <value>דריסה ייחודית לפלוגה פעילה</value>
+  </data>
+  <data name="Owner_EmailConfig_OverrideDesc" xml:space="preserve">
+    <value>לפלוגה זו הגדרות דוא"ל מותאמות אישית שדורסות את ההגדרות הגלובליות.</value>
+  </data>
+  <data name="Owner_EmailConfig_UseGlobal" xml:space="preserve">
+    <value>השתמש בהגדרות גלובליות</value>
+  </data>
+  <data name="Owner_EmailConfig_RemoveOverrideConfirm" xml:space="preserve">
+    <value>להסיר את הדריסה ולהשתמש בהגדרות הגלובליות?</value>
+  </data>
   <data name="Owner_EmailConfig_ApiUrl" xml:space="preserve">
     <value>כתובת API</value>
   </data>
@@ -7900,6 +7930,24 @@
   </data>
   <data name="Error_GriffinNotEnabled" xml:space="preserve">
     <value>אימות Griffin ADFS אינו מופעל.</value>
+  </data>
+  <data name="Error_GriffinTokenExchangeFailed" xml:space="preserve">
+    <value>אימות ADFS נכשל. לא ניתן להמיר את אסימון האימות.</value>
+  </data>
+  <data name="Error_GriffinTokenExpired" xml:space="preserve">
+    <value>פג תוקף חיבור ה-ADFS שלך. אנא התחבר מחדש.</value>
+  </data>
+  <data name="Error_AccountDeactivated" xml:space="preserve">
+    <value>החשבון שלך הושבת. אנא פנה למנהל המערכת.</value>
+  </data>
+  <data name="Auth_GriffinSignupTitle" xml:space="preserve">
+    <value>השלם הרשמה</value>
+  </data>
+  <data name="Auth_GriffinSignupSubtitle" xml:space="preserve">
+    <value>זהותך אומתה. אנא בחר את היחידה והתפקיד שלך.</value>
+  </data>
+  <data name="Error_Login_SSOUserUseADFS" xml:space="preserve">
+    <value>חשבון זה משתמש באימות ADFS. אנא השתמש בכפתור "התחבר עם ADFS" במקום.</value>
   </data>
   <data name="Error_AuthenticationFailed" xml:space="preserve">
     <value>האימות נכשל. נסה שנית.</value>
@@ -12521,7 +12569,7 @@
     <value>לדוגמה: רוטציית חק"ם שבועית</value>
   </data>
   <data name="DutyType" xml:space="preserve">
-    <value>סוג תורנות</value>
+    <value>סוג כוננות</value>
   </data>
   <data name="Frequency" xml:space="preserve">
     <value>תדירות</value>
@@ -12861,6 +12909,10 @@
   <data name="Nav_Personal" xml:space="preserve">
     <value>אישי</value>
     <comment>Sidebar section header for personal features</comment>
+  </data>
+  <data name="Nav_FeatureFlags" xml:space="preserve">
+    <value>דגלי תכונות</value>
+    <comment>Sidebar navigation - link to /Owner/FeatureFlags</comment>
   </data>
   <data name="Section_DirectorTools" xml:space="preserve">
     <value>כלי מפקד</value>
@@ -13724,7 +13776,7 @@
     <value>תורנויות</value>
   </data>
   <data name="QuickEntry_DutyGroup" xml:space="preserve">
-    <value>כונניות</value>
+    <value>כוננויות</value>
   </data>
   <data name="QuickEntry_NoMatches" xml:space="preserve">
     <value>אין תוצאות</value>
@@ -13991,6 +14043,9 @@
   <data name="Help_Hub_FAQ_Desc" xml:space="preserve">
     <value>תשובות מהירות לשאלות נפוצות.</value>
   </data>
+  <data name="Help_Hub_Feedback_Desc" xml:space="preserve">
+    <value>שתפו מחשבות, דווחו על בעיות, או הציעו שיפורים.</value>
+  </data>
   <data name="Help_GettingStarted_Title" xml:space="preserve">
     <value>תחילת עבודה</value>
   </data>
@@ -14037,7 +14092,7 @@
     <value>אילו תפקידים קיימים במערכת?</value>
   </data>
   <data name="Help_Roles_Overview_A" xml:space="preserve">
-    <value>ב-ShiftManager קיימים התפקידים הבאים: חייל (משתמש בסיסי), מ"מ (מנהל פלוגה), קב"ב (מוביל צוות עם הרשאות מורחבות), מפ"צ (מפקד ברמת גדוד), קצ"פ (מנהל ברמת מולקולה), מנהל אזור (מנהל ברמת אזור), משבצ (מתמחה בשיבוצים), מתמחה (חייל בהכשרה), ובעלים (גישה מלאה למערכת).</value>
+    <value>ב-ShiftManager קיימים התפקידים הבאים: חייל (משתמש בסיסי), מ"מ (מנהל פלוגה), קב"ר (מנהל ברמת גדוד), מפ"צ (מוביל צוות עם הרשאות מורחבות), מפק"מ (מנהל ברמת מולקולה), קב"ב (מנהל ברמת אזור), משבץ (מתמחה בשיבוצים), חניך (חייל בהכשרה), ובעלים (גישה מלאה למערכת).</value>
   </data>
   <data name="Help_Roles_Employee_Q" xml:space="preserve">
     <value>מה חייל יכול לעשות?</value>
@@ -14052,16 +14107,22 @@
     <value>מנהלים יכולים לעשות את כל מה שחייל יכול, בנוסף: לשבץ ולהסיר שיבוצי משמרות, לאשר או לדחות בקשות חופשה והחלפה, לנהל משתמשים בפלוגה שלהם, לצפות ביומני ביקורת, ולהגדיר סוגי משמרות ותורנויות.</value>
   </data>
   <data name="Help_Roles_Lead_Q" xml:space="preserve">
-    <value>מה קב"ב יכול לעשות?</value>
+    <value>מה מפ"צ יכול לעשות?</value>
   </data>
   <data name="Help_Roles_Lead_A" xml:space="preserve">
-    <value>לקב"בים יש הרשאות דומות למנהלים אך הם מוגדרים ספציפית כמובילי צוות. הם יכולים לנהל משמרות, לאשר בקשות, ולטפל בשיוכי תורנויות לצוות שלהם.</value>
+    <value>למפ"צים יש הרשאות דומות למנהלים אך הם מוגדרים ספציפית כמובילי צוות. הם יכולים לנהל משמרות, לאשר בקשות, ולטפל בשיוכי תורנויות לצוות שלהם.</value>
   </data>
   <data name="Help_Roles_Director_Q" xml:space="preserve">
-    <value>מה קצ"פ יכול לעשות?</value>
+    <value>מה קב"ר יכול לעשות?</value>
   </data>
   <data name="Help_Roles_Director_A" xml:space="preserve">
-    <value>לקצ"פים יש פיקוח על מולקולה שלמה (קבוצת פלוגות). הם יכולים לצפות ולנהל פעולות בכל הפלוגות במולקולה שלהם, לגשת למרכז הקצ"פ לניתוח חוצה-פלוגות, ולאשר בקשות ברמה גבוהה יותר.</value>
+    <value>קב"רים פועלים ברמת הגדוד ויש להם הרשאות ניהול מורחבות על פני הפלוגה שלהם. הם יכולים לשבץ משמרות, לנהל משתמשים, ולאשר בקשות ברמת הפלוגה.</value>
+  </data>
+  <data name="Help_Roles_MoleculeAdmin_Q" xml:space="preserve">
+    <value>מה מפק"מ יכול לעשות?</value>
+  </data>
+  <data name="Help_Roles_MoleculeAdmin_A" xml:space="preserve">
+    <value>למפק"מים יש פיקוח על מולקולה שלמה (קבוצת פלוגות). הם יכולים לצפות ולנהל פעולות בכל הפלוגות במולקולה שלהם, לגשת לניתוח חוצה-פלוגות, ולאשר בקשות ברמה גבוהה יותר.</value>
   </data>
   <data name="Help_Roles_AreaAdmin_Q" xml:space="preserve">
     <value>מה מנהל אזור יכול לעשות?</value>
@@ -14155,5 +14216,308 @@
   </data>
   <data name="Help_BackToHub" xml:space="preserve">
     <value>חזרה למרכז העזרה</value>
+  </data>
+  <data name="QuickAddChore_InvalidRequestData" xml:space="preserve">
+    <value>נתוני בקשה לא חוקיים</value>
+  </data>
+  <data name="QuickAddChore_InvalidAssignee" xml:space="preserve">
+    <value>מנוי לא חוקי</value>
+  </data>
+  <data name="QuickAddChore_TitleRequired" xml:space="preserve">
+    <value>כותרת המטלה נדרשת</value>
+  </data>
+  <data name="QuickAddChore_TitleTooLong" xml:space="preserve">
+    <value>כותרת המטלה לא יכולה לחרוג מ-200 תווים</value>
+  </data>
+  <data name="QuickAddChore_NotesTooLong" xml:space="preserve">
+    <value>הערות המטלה לא יכולות לחרוג מ-1000 תווים</value>
+  </data>
+  <data name="QuickAddChore_InvalidDateFormat" xml:space="preserve">
+    <value>פורמט תאריך לא חוקי</value>
+  </data>
+  <data name="QuickAddChore_DateTooFarFuture" xml:space="preserve">
+    <value>לא ניתן ליצור מטלות יותר מ-2 שנים בעתיד</value>
+  </data>
+  <data name="QuickAddChore_DateInPast" xml:space="preserve">
+    <value>לא ניתן ליצור מטלות בעבר</value>
+  </data>
+  <data name="QuickAddChore_UserNotAuthenticated" xml:space="preserve">
+    <value>משתמש לא מאומת</value>
+  </data>
+  <data name="QuickAddChore_NoPermissionCreate" xml:space="preserve">
+    <value>אין לך הרשאה ליצור מטלות</value>
+  </data>
+  <data name="QuickAddChore_CannotAssignToUser" xml:space="preserve">
+    <value>לא ניתן להקצות מטלות למשתמש זה</value>
+  </data>
+  <data name="QuickAddChore_ShiftConflict" xml:space="preserve">
+    <value>למשתמש זה יש משמרת בתאריך זה. אנא השתמש בעמוד המטלות כדי להחליף את המשמרת.</value>
+  </data>
+  <data name="QuickAddChore_VacationConflict" xml:space="preserve">
+    <value>למשתמש זה יש חופשה מאושרת בתאריך זה.</value>
+  </data>
+  <data name="QuickAddChore_Success" xml:space="preserve">
+    <value>המטלה נוצרה בהצלחה</value>
+  </data>
+  <data name="QuickAddChore_Error" xml:space="preserve">
+    <value>שגיאה בעת יצירת המטלה</value>
+  </data>
+  <data name="QuickAddOnDuty_InvalidRequestData" xml:space="preserve">
+    <value>נתוני בקשה לא חוקיים</value>
+  </data>
+  <data name="QuickAddOnDuty_InvalidAssignee" xml:space="preserve">
+    <value>מנוי לא חוקי</value>
+  </data>
+  <data name="QuickAddOnDuty_NotesTooLong" xml:space="preserve">
+    <value>הערות לא יכולות לחרוג מ-1000 תווים</value>
+  </data>
+  <data name="QuickAddOnDuty_InvalidDateFormat" xml:space="preserve">
+    <value>פורמט תאריך לא חוקי</value>
+  </data>
+  <data name="QuickAddOnDuty_DateTooFarFuture" xml:space="preserve">
+    <value>לא ניתן ליצור הקצאות כוננות יותר מ-2 שנים בעתיד</value>
+  </data>
+  <data name="QuickAddOnDuty_DateInPast" xml:space="preserve">
+    <value>לא ניתן ליצור הקצאות כוננות בעבר</value>
+  </data>
+  <data name="QuickAddOnDuty_InvalidType" xml:space="preserve">
+    <value>סוג כוננות לא חוקי</value>
+  </data>
+  <data name="QuickAddOnDuty_UserNotAuthenticated" xml:space="preserve">
+    <value>משתמש לא מאומת</value>
+  </data>
+  <data name="QuickAddOnDuty_NoPermissionCreate" xml:space="preserve">
+    <value>אין לך הרשאה ליצור הקצאות כוננות</value>
+  </data>
+  <data name="QuickAddOnDuty_VacationConflict" xml:space="preserve">
+    <value>למשתמש זה יש חופשה מאושרת בתאריך זה.</value>
+  </data>
+  <data name="QuickAddOnDuty_OfficerRankRequired" xml:space="preserve">
+    <value>סוג כוננות זה דורש דרגת קצין. למשתמש שנבחר אין את הדרגה הנדרשת.</value>
+  </data>
+  <data name="QuickAddOnDuty_Success" xml:space="preserve">
+    <value>הקצאת הכוננות נוצרה בהצלחה</value>
+  </data>
+  <data name="QuickAddOnDuty_Error" xml:space="preserve">
+    <value>שגיאה בעת יצירת הקצאת הכוננות</value>
+  </data>
+  <data name="DeleteChore_InvalidChoreId" xml:space="preserve">
+    <value>מזהה מטלה לא חוקי</value>
+  </data>
+  <data name="DeleteChore_UserNotAuthenticated" xml:space="preserve">
+    <value>משתמש לא מאומת</value>
+  </data>
+  <data name="DeleteChore_NoPermissionDelete" xml:space="preserve">
+    <value>אין לך הרשאה למחוק מטלות</value>
+  </data>
+  <data name="DeleteChore_NotFound" xml:space="preserve">
+    <value>מטלה לא נמצאה</value>
+  </data>
+  <data name="DeleteChore_Success" xml:space="preserve">
+    <value>המטלה נמחקה בהצלחה</value>
+  </data>
+  <data name="DeleteChore_Error" xml:space="preserve">
+    <value>שגיאה בעת מחיקת המטלה</value>
+  </data>
+  <data name="DeleteTextEntry_InvalidRequest" xml:space="preserve">
+    <value>בקשה לא חוקית</value>
+  </data>
+  <data name="DeleteTextEntry_UserNotAuthenticated" xml:space="preserve">
+    <value>משתמש לא מאומת</value>
+  </data>
+  <data name="DeleteTextEntry_NoPermissionDelete" xml:space="preserve">
+    <value>אין לך הרשאה למחוק ערכים בלוח שנה</value>
+  </data>
+  <data name="DeleteTextEntry_NotFound" xml:space="preserve">
+    <value>ערך טקסט לא נמצא</value>
+  </data>
+  <data name="DeleteTextEntry_CannotDeleteOverviewNotes" xml:space="preserve">
+    <value>לא ניתן למחוק הערות סקירה דרך נקודת קצה זו</value>
+  </data>
+  <data name="DeleteTextEntry_Success" xml:space="preserve">
+    <value>ערך הטקסט נמחק</value>
+  </data>
+  <data name="DeleteTextEntry_Error" xml:space="preserve">
+    <value>שגיאה</value>
+  </data>
+  <data name="FillHandle_Success" xml:space="preserve">
+    <value>מולאו {0} משמרות בהצלחה</value>
+  </data>
+  <data name="FillHandle_Error" xml:space="preserve">
+    <value>מילוי המשמרות נכשל</value>
+  </data>
+  <data name="FillRange_Success" xml:space="preserve">
+    <value>מולאו {0} משמרות בהצלחה</value>
+  </data>
+  <data name="FillRange_Understaffed" xml:space="preserve">
+    <value>חסר כוח אדם: {0}/{1} מולאו</value>
+  </data>
+  <data name="FillRange_Overstaffed" xml:space="preserve">
+    <value>עודף כוח אדם: {0}/{1} מולאו</value>
+  </data>
+  <data name="Roster_TimeOff" xml:space="preserve">
+    <value>חופשה</value>
+  </data>
+  <data name="Roster_HasShift" xml:space="preserve">
+    <value>יש משמרת</value>
+  </data>
+  <data name="ScopeMode_SameAsRole" xml:space="preserve">
+    <value>כמו התפקיד</value>
+  </data>
+  <data name="ScopeMode_ExpandToMolecule" xml:space="preserve">
+    <value>הרחב למולקולה</value>
+  </data>
+  <data name="ScopeMode_ExpandToArea" xml:space="preserve">
+    <value>הרחב לאזור</value>
+  </data>
+  <data name="ScopeMode_Custom" xml:space="preserve">
+    <value>מותאם אישית</value>
+  </data>
+  <data name="SkipToMainContent" xml:space="preserve">
+    <value>דלג לתוכן הראשי</value>
+  </data>
+  <data name="HierarchyTree_DragToReorder" xml:space="preserve">
+    <value>גרור לסידור מחדש</value>
+  </data>
+  <data name="HierarchyTree_Toggle" xml:space="preserve">
+    <value>הרחב/כווץ</value>
+  </data>
+  <data name="HierarchyTree_Actions" xml:space="preserve">
+    <value>פעולות</value>
+  </data>
+  <data name="HomeType_NamePlaceholder" xml:space="preserve">
+    <value>לדוגמה, סבב א</value>
+  </data>
+  <data name="HomeType_HeNamePlaceholder" xml:space="preserve">
+    <value>שם בעברית (לא חובה)</value>
+  </data>
+  <data name="HomeType_ModeKeep" xml:space="preserve">
+    <value>שמור שינויים ידניים</value>
+  </data>
+  <data name="HomeType_ModeOverwrite" xml:space="preserve">
+    <value>דרוס הכול</value>
+  </data>
+  <data name="MyTeam_SearchCurrentMembers" xml:space="preserve">
+    <value>חפש חברים נוכחיים...</value>
+  </data>
+  <data name="MyTeam_SearchAvailableUsers" xml:space="preserve">
+    <value>חפש משתמשים זמינים...</value>
+  </data>
+  <data name="QuickEntry_MoreItems" xml:space="preserve">
+    <value>+{0} עוד...</value>
+  </data>
+  <data name="Placeholder_ManagerName" xml:space="preserve">
+    <value>ישראל ישראלי</value>
+  </data>
+  <data name="Diagnostic_Status" xml:space="preserve">
+    <value>סטטוס</value>
+  </data>
+  <data name="Diagnostic_Time" xml:space="preserve">
+    <value>זמן</value>
+  </data>
+  <data name="Diagnostic_Path" xml:space="preserve">
+    <value>נתיב</value>
+  </data>
+  <data name="Diagnostic_Method" xml:space="preserve">
+    <value>שיטה</value>
+  </data>
+  <data name="Diagnostic_User" xml:space="preserve">
+    <value>משתמש</value>
+  </data>
+  <data name="BottomSheet_NetworkError" xml:space="preserve">
+    <value>שגיאת רשת</value>
+  </data>
+  <data name="BottomSheet_CurrentAssignments" xml:space="preserve">
+    <value>שיבוצים נוכחיים</value>
+  </data>
+  <data name="BottomSheet_RemoveButton" xml:space="preserve">
+    <value>הסר </value>
+  </data>
+  <data name="BottomSheet_Trainee" xml:space="preserve">
+    <value>מתמחה</value>
+  </data>
+  <data name="BottomSheet_AddAssignment" xml:space="preserve">
+    <value>הוסף שיבוץ</value>
+  </data>
+  <data name="BottomSheet_ChoreTitle" xml:space="preserve">
+    <value>כותרת התורנות</value>
+  </data>
+  <data name="BottomSheet_EnterTitle" xml:space="preserve">
+    <value>הזן כותרת...</value>
+  </data>
+  <data name="BottomSheet_ChoreType" xml:space="preserve">
+    <value>סוג תורנות</value>
+  </data>
+  <data name="BottomSheet_SelectShift" xml:space="preserve">
+    <value>בחר משמרת</value>
+  </data>
+  <data name="BottomSheet_SelectUser" xml:space="preserve">
+    <value>בחר משתמש</value>
+  </data>
+  <data name="BottomSheet_DefaultOption" xml:space="preserve">
+    <value>-- בחר --</value>
+  </data>
+  <data name="BottomSheet_Assign" xml:space="preserve">
+    <value>שבץ</value>
+  </data>
+  <data name="BottomSheet_ShiftsFor" xml:space="preserve">
+    <value>משמרות של: </value>
+  </data>
+  <data name="BottomSheet_AssigningTo" xml:space="preserve">
+    <value>שיבוץ ל: </value>
+  </data>
+  <data name="BottomSheet_ChoresFor" xml:space="preserve">
+    <value>תורנויות של: </value>
+  </data>
+  <data name="BottomSheet_NoAssignments" xml:space="preserve">
+    <value>אין שיבוצים עדיין</value>
+  </data>
+  <data name="BottomSheet_TapToConfirm" xml:space="preserve">
+    <value>לחץ שוב לאישור</value>
+  </data>
+  <data name="BottomSheet_AddTrainee" xml:space="preserve">
+    <value>הוסף מתמחה...</value>
+  </data>
+  <data name="BottomSheet_TraineeAssigned" xml:space="preserve">
+    <value>מתמחה שובץ בהצלחה</value>
+  </data>
+  <data name="BottomSheet_Warnings" xml:space="preserve">
+    <value>אזהרות:</value>
+  </data>
+  <data name="BottomSheet_TraineeRemoved" xml:space="preserve">
+    <value>מתמחה הוסר בהצלחה</value>
+  </data>
+  <data name="BottomSheet_SelectUserRequired" xml:space="preserve">
+    <value>נא לבחור משתמש</value>
+  </data>
+  <data name="BottomSheet_TitleRequired" xml:space="preserve">
+    <value>נא להזין כותרת</value>
+  </data>
+  <data name="BottomSheet_TitleTooLong" xml:space="preserve">
+    <value>הכותרת ארוכה מדי (מקסימום 200 תווים)</value>
+  </data>
+  <data name="BottomSheet_Chore" xml:space="preserve">
+    <value>תורנות</value>
+  </data>
+  <data name="BottomSheet_SelectShiftRequired" xml:space="preserve">
+    <value>נא לבחור משמרת</value>
+  </data>
+  <data name="BottomSheet_CannotAddAssignment" xml:space="preserve">
+    <value>לא ניתן להוסיף שיבוץ כאן</value>
+  </data>
+  <data name="BottomSheet_AssignmentRemoved" xml:space="preserve">
+    <value>השיבוץ הוסר בהצלחה</value>
+  </data>
+  <data name="BottomSheet_CannotRemoveAssignment" xml:space="preserve">
+    <value>לא ניתן למחוק שיבוץ כאן</value>
+  </data>
+  <data name="BottomSheet_NoShiftsFor" xml:space="preserve">
+    <value>אין שיבוצים ל{0} ב-{1}</value>
+  </data>
+  <data name="BottomSheet_NoChoresFor" xml:space="preserve">
+    <value>אין תורנויות ל{0} ב-{1}</value>
+  </data>
+  <data name="BottomSheet_NoOnCallFor" xml:space="preserve">
+    <value>אין תורנים ב-{1}</value>
   </data>
 </root>
