@@ -167,12 +167,11 @@ public class GriffinServiceTests : IDisposable
     {
         var claimsJson = """
         {
-            "sAMAccountName": "jdoe",
-            "UPN": "jdoe@test.local",
+            "UniqueID": "jdoe@8200",
+            "EmailAddress": "jdoe@test.local",
             "DisplayName": "John Doe",
             "GivenName": "John",
-            "Surname": "Doe",
-            "auth_time": "2026-03-15T10:00:00Z"
+            "iat": "2026-03-15T10:00:00Z"
         }
         """;
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK, claimsJson);
@@ -181,11 +180,10 @@ public class GriffinServiceTests : IDisposable
         var result = await _service.GetClaimsAsync("valid-token", GriffinBaseUrl, 10);
 
         result.Should().NotBeNull();
-        result!.sAMAccountName.Should().Be("jdoe");
-        result.UPN.Should().Be("jdoe@test.local");
+        result!.UniqueID.Should().Be("jdoe@8200");
+        result.EmailAddress.Should().Be("jdoe@test.local");
         result.DisplayName.Should().Be("John Doe");
         result.GivenName.Should().Be("John");
-        result.Surname.Should().Be("Doe");
     }
 
     [Fact]
@@ -227,7 +225,7 @@ public class GriffinServiceTests : IDisposable
                 // GetClaims call
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Content = new StringContent("""{"sAMAccountName":"jdoe","UPN":"jdoe@test.local","DisplayName":"John","GivenName":"John","Surname":"Doe","auth_time":"now"}""")
+                    Content = new StringContent("""{"UniqueID":"jdoe@8200","EmailAddress":"jdoe@test.local","DisplayName":"John","GivenName":"John","iat":"now"}""")
                 };
             });
 
@@ -238,12 +236,12 @@ public class GriffinServiceTests : IDisposable
         // First call — cache miss, hits API
         var result1 = await _service.ValidateAndGetClaimsAsync("token123", GriffinBaseUrl, 10);
         result1.Should().NotBeNull();
-        result1!.UPN.Should().Be("jdoe@test.local");
+        result1!.EmailAddress.Should().Be("jdoe@test.local");
 
         // Second call with same token — should hit cache
         var result2 = await _service.ValidateAndGetClaimsAsync("token123", GriffinBaseUrl, 10);
         result2.Should().NotBeNull();
-        result2!.UPN.Should().Be("jdoe@test.local");
+        result2!.EmailAddress.Should().Be("jdoe@test.local");
 
         // API should only have been called twice (validate + getClaims), not four times
         callCount.Should().Be(2);
@@ -263,9 +261,9 @@ public class GriffinServiceTests : IDisposable
     // --- AuthenticateUserAsync ---
 
     [Fact]
-    public async Task AuthenticateUserAsync_MissingUPN_ReturnsNull()
+    public async Task AuthenticateUserAsync_MissingEmailAddress_ReturnsNull()
     {
-        // Setup: validate succeeds, claims missing UPN
+        // Setup: validate succeeds, claims missing EmailAddress
         var callCount = 0;
         var handler = new Mock<HttpMessageHandler>();
         handler.Protected()
@@ -280,7 +278,7 @@ public class GriffinServiceTests : IDisposable
                     return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("\"true\"") };
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Content = new StringContent("""{"sAMAccountName":"jdoe","UPN":"","DisplayName":"John","GivenName":"John","Surname":"Doe","auth_time":"now"}""")
+                    Content = new StringContent("""{"UniqueID":"jdoe@8200","EmailAddress":"","DisplayName":"John","GivenName":"John","iat":"now"}""")
                 };
             });
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(handler.Object));
@@ -302,7 +300,7 @@ public class GriffinServiceTests : IDisposable
     [Fact]
     public async Task AuthenticateUserAsync_UserNotFound_AutoProvisionDisabled_ReturnsNull()
     {
-        // Setup: validate succeeds, claims with valid UPN but no user in DB
+        // Setup: validate succeeds, claims with valid EmailAddress but no user in DB
         var callCount = 0;
         var handler = new Mock<HttpMessageHandler>();
         handler.Protected()
@@ -317,7 +315,7 @@ public class GriffinServiceTests : IDisposable
                     return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("\"true\"") };
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Content = new StringContent("""{"sAMAccountName":"jdoe","UPN":"jdoe@test.local","DisplayName":"John","GivenName":"John","Surname":"Doe","auth_time":"now"}""")
+                    Content = new StringContent("""{"UniqueID":"jdoe@8200","EmailAddress":"jdoe@test.local","DisplayName":"John","GivenName":"John","iat":"now"}""")
                 };
             });
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(handler.Object));
@@ -366,7 +364,7 @@ public class GriffinServiceTests : IDisposable
                     return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("\"true\"") };
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Content = new StringContent("""{"sAMAccountName":"jdoe","UPN":"jdoe@test.local","DisplayName":"John Doe","GivenName":"John","Surname":"Doe","auth_time":"now"}""")
+                    Content = new StringContent("""{"UniqueID":"jdoe@8200","EmailAddress":"jdoe@test.local","DisplayName":"John Doe","GivenName":"John","iat":"now"}""")
                 };
             });
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
@@ -422,7 +420,7 @@ public class GriffinServiceTests : IDisposable
                     return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("\"true\"") };
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Content = new StringContent("""{"sAMAccountName":"jdoe","UPN":"jdoe@test.local","DisplayName":"John","GivenName":"John","Surname":"Doe","auth_time":"now"}""")
+                    Content = new StringContent("""{"UniqueID":"jdoe@8200","EmailAddress":"jdoe@test.local","DisplayName":"John","GivenName":"John","iat":"now"}""")
                 };
             });
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(handler.Object));
@@ -438,6 +436,54 @@ public class GriffinServiceTests : IDisposable
         var result = await _service.AuthenticateUserAsync("token", config, "127.0.0.1");
 
         // Inactive user should NOT be found by the query (u.IsActive filter)
+        result.Should().BeNull();
+    }
+
+    // --- ExchangeTokenAsync ---
+
+    [Fact]
+    public async Task ExchangeTokenAsync_Success_ReturnsToken()
+    {
+        var httpClient = CreateMockHttpClient(HttpStatusCode.OK, "\"real-token-B-value\"");
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var result = await _service.ExchangeTokenAsync("hashed-token-A", GriffinBaseUrl, 10);
+
+        result.Should().Be("real-token-B-value");
+    }
+
+    [Fact]
+    public async Task ExchangeTokenAsync_UnquotedResponse_ReturnsToken()
+    {
+        var httpClient = CreateMockHttpClient(HttpStatusCode.OK, "real-token-B-value");
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var result = await _service.ExchangeTokenAsync("hashed-token-A", GriffinBaseUrl, 10);
+
+        result.Should().Be("real-token-B-value");
+    }
+
+    [Fact]
+    public async Task ExchangeTokenAsync_HttpError_ReturnsNull()
+    {
+        var httpClient = CreateMockHttpClient(HttpStatusCode.InternalServerError, "error");
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var result = await _service.ExchangeTokenAsync("hashed-token-A", GriffinBaseUrl, 10);
+
+        result.Should().BeNull();
+        _securityLoggerMock.Verify(l => l.LogAuthenticationFailure(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExchangeTokenAsync_EmptyResponse_ReturnsNull()
+    {
+        var httpClient = CreateMockHttpClient(HttpStatusCode.OK, "   ");
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+
+        var result = await _service.ExchangeTokenAsync("hashed-token-A", GriffinBaseUrl, 10);
+
         result.Should().BeNull();
     }
 }

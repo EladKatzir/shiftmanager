@@ -260,6 +260,25 @@ public class GetSignupOptionsModel : PageModel
 
     private async Task<bool> IsPublicSignupEnabledAsync()
     {
+        // Allow access for Griffin signup flow (even when public signup is disabled).
+        // Validate the actual token to prevent forgery — checking cookie existence alone is insufficient.
+        var griffinToken = HttpContext.Request.Cookies["griffin.token"];
+        if (!string.IsNullOrEmpty(griffinToken))
+        {
+            var griffinConfigService = HttpContext.RequestServices.GetService<IGriffinConfigService>();
+            var griffinService = HttpContext.RequestServices.GetService<IGriffinService>();
+            if (griffinConfigService != null && griffinService != null)
+            {
+                var config = await griffinConfigService.GetGriffinConfigAsync();
+                if (config?.Enabled == true && !string.IsNullOrEmpty(config.BaseUrl))
+                {
+                    // Use ValidateAndGetClaimsAsync (has 2h cache) instead of ValidateTokenAsync (no cache)
+                    // to avoid live Griffin API calls on every cascading dropdown request
+                    var claims = await griffinService.ValidateAndGetClaimsAsync(griffinToken, config.BaseUrl, config.TimeoutSeconds);
+                    if (claims != null) return true;
+                }
+            }
+        }
         return await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.AllowPublicSignup);
     }
 }

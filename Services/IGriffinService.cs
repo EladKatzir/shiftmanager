@@ -15,6 +15,11 @@ public interface IGriffinService
     string BuildAuthenticationUrl(string griffinBaseUrl, string tokenConsumerUrl);
 
     /// <summary>
+    /// Exchanges a hashed token (A) for a real token (B) by calling /authentication/claimToken
+    /// </summary>
+    Task<string?> ExchangeTokenAsync(string hashedToken, string griffinBaseUrl, int timeoutSeconds);
+
+    /// <summary>
     /// Validates a Griffin token by calling /authorization/validate
     /// </summary>
     Task<bool> ValidateTokenAsync(string token, string griffinBaseUrl, int timeoutSeconds);

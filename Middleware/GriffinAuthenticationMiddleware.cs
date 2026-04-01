@@ -94,6 +94,7 @@ public class GriffinAuthenticationMiddleware
         return path.StartsWithSegments("/Auth/Login") ||
                path.StartsWithSegments("/Auth/Signup") ||
                path.StartsWithSegments("/Auth/GriffinCallback") ||
+               path.StartsWithSegments("/Auth/GriffinSignup") ||
                path.StartsWithSegments("/health") ||
                path.StartsWithSegments("/ready") ||
                path.StartsWithSegments("/AccessDenied");

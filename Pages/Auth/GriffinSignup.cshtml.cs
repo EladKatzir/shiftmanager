@@ -9,32 +9,32 @@ using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
-using System.ComponentModel.DataAnnotations;
 
 namespace ShiftManager.Pages.Auth;
 
 // SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — anonymous auth flow before tenant context established;
 // scoped by explicit email/companyId parameters; email uniqueness check and company lookup only
 [AllowAnonymous]
-public class SignupModel : LocalizedPageModel
+public class GriffinSignupModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
-    private readonly ILogger<SignupModel> _logger;
-    private readonly IFeatureFlagService _featureFlagService;
+    private readonly ILogger<GriffinSignupModel> _logger;
+    private readonly IGriffinService _griffinService;
+    private readonly IGriffinConfigService _griffinConfigService;
     private readonly IValidationService _validation;
     private readonly INotificationService _notificationService;
     private readonly IRateLimitingService _rateLimiting;
     private readonly IAuditLogService _auditLogService;
-
     private readonly ICompanyCacheService _companyCacheService;
     private readonly IRoleService _roleService;
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    public SignupModel(
+    public GriffinSignupModel(
         AppDbContext db,
-        ILogger<SignupModel> logger,
+        ILogger<GriffinSignupModel> logger,
         IStringLocalizer<SharedResources> localizer,
-        IFeatureFlagService featureFlagService,
+        IGriffinService griffinService,
+        IGriffinConfigService griffinConfigService,
         IValidationService validation,
         INotificationService notificationService,
         IRateLimitingService rateLimiting,
@@ -46,7 +46,8 @@ public class SignupModel : LocalizedPageModel
     {
         _db = db;
         _logger = logger;
-        _featureFlagService = featureFlagService;
+        _griffinService = griffinService;
+        _griffinConfigService = griffinConfigService;
         _validation = validation;
         _notificationService = notificationService;
         _rateLimiting = rateLimiting;
@@ -56,14 +57,16 @@ public class SignupModel : LocalizedPageModel
         _serviceScopeFactory = serviceScopeFactory;
     }
 
-    [BindProperty, Required, EmailAddress]
+    // Griffin-provided fields (hidden fields for round-trip)
+    [BindProperty]
     public string Email { get; set; } = string.Empty;
 
-    [BindProperty, Required]
-    public string DisplayName { get; set; } = string.Empty;
+    [BindProperty]
+    public string GriffinUniqueID { get; set; } = string.Empty;
 
-    [BindProperty, Required, MinLength(6)]
-    public string Password { get; set; } = string.Empty;
+    // User-editable fields
+    [BindProperty]
+    public string DisplayName { get; set; } = string.Empty;
 
     [BindProperty]
     public int? MoleculeId { get; set; }
@@ -77,87 +80,94 @@ public class SignupModel : LocalizedPageModel
     [BindProperty]
     public int JobTypeId { get; set; }
 
-    [BindProperty, Required]
+    [BindProperty]
     public UserRole RequestedRole { get; set; } = UserRole.Employee;
 
     [BindProperty]
     public int? RequestedRoleTemplateId { get; set; }
 
-    public List<Company> AvailableCompanies { get; set; } = new();
+    // Page-level properties (not bound)
     public List<Molecule> AvailableMolecules { get; set; } = new();
+    public List<Company> AvailableCompanies { get; set; } = new();
     public string? PendingRequestMessage { get; set; }
-    public bool IsPublicSignupEnabled { get; set; }
+    public bool IsGriffinAuthenticated { get; set; }
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
-        // SECURITY FIX: Only load data if public signup is explicitly enabled
-        IsPublicSignupEnabled = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.AllowPublicSignup);
-        if (IsPublicSignupEnabled)
-        {
-            _logger.LogWarning("Public signup is enabled - this exposes organizational structure");
-            // Load molecules (with Area for AreaAdmin area selector) - companies will be loaded via API
-            AvailableMolecules = await _db.Molecules
-                .Include(m => m.Area)
-                .Where(m => m.IsActive)
-                .OrderBy(m => m.DisplayName ?? m.Name)
-                .ToListAsync();
+        // Read claims from TempData (set by GriffinCallback)
+        var email = TempData["GriffinEmail"] as string;
+        var displayName = TempData["GriffinDisplayName"] as string;
+        var uniqueId = TempData["GriffinUniqueID"] as string;
 
-            // Also load companies for backward compatibility / server-side fallback (exclude HQ)
-            AvailableCompanies = await _db.Companies
-                .Where(c => !c.IsHeadquarters)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
-        }
-        else
+        if (string.IsNullOrEmpty(email))
         {
-            // Production: signup disabled or requires invite code
-            AvailableCompanies = new List<Company>();
-            AvailableMolecules = new List<Molecule>();
+            // No TempData — direct navigation or page refresh
+            _logger.LogWarning("GriffinSignup accessed without TempData, redirecting to Login");
+            return RedirectToPage("/Auth/Login");
         }
+
+        Email = email;
+        DisplayName = displayName ?? string.Empty;
+        GriffinUniqueID = uniqueId ?? string.Empty;
+        IsGriffinAuthenticated = true;
+
+        // Load signup options server-side (no dependency on GetSignupOptions API gate)
+        await LoadPageDataAsync();
+
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // Load page state BEFORE rate limit check so the form re-renders properly when rate-limited (Bug 4 fix)
-        IsPublicSignupEnabled = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.AllowPublicSignup);
-        if (IsPublicSignupEnabled)
-        {
-            AvailableMolecules = await _db.Molecules
-                .Include(m => m.Area)
-                .Where(m => m.IsActive)
-                .OrderBy(m => m.DisplayName ?? m.Name)
-                .ToListAsync();
+        // Load page state for form re-render
+        await LoadPageDataAsync();
+        IsGriffinAuthenticated = true;
 
-            AvailableCompanies = await _db.Companies
-                .Where(c => !c.IsHeadquarters)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
-        }
-        else
-        {
-            Error = _localizer["Error_Signup_PublicDisabled"];
-            return Page();
-        }
-
-        // Rate limiting — per-IP, 50 attempts per 10 minutes (Bug 3 fix: relaxed from 5/15min)
+        // Rate limiting — per-IP, 50 attempts per 10 minutes
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var ipRateLimitKey = $"signup:ip:{ipAddress}";
-
+        var ipRateLimitKey = $"griffinsignup:ip:{ipAddress}";
         if (!_rateLimiting.IsAllowed(ipRateLimitKey, 50, 10))
         {
-            _logger.LogWarning("Signup rate limit exceeded for IP: {IP}", ipAddress);
+            _logger.LogWarning("Griffin signup rate limit exceeded for IP: {IP}", ipAddress);
             Error = _localizer["Error_Login_RateLimitExceeded"];
             return Page();
         }
 
-        if (!ModelState.IsValid)
+        // Re-validate Griffin token (bypass cache to catch expired tokens)
+        var griffinToken = Request.Cookies["griffin.token"];
+        if (string.IsNullOrEmpty(griffinToken))
         {
-            Error = _localizer["Error_Signup_RequiredFields"];
+            Error = _localizer["Error_GriffinTokenExpired"].Value;
             return Page();
         }
 
-        // ✅ SECURITY FIX: Additional input validation beyond data annotations
-        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(DisplayName) || string.IsNullOrWhiteSpace(Password))
+        var griffinConfig = await _griffinConfigService.GetGriffinConfigAsync();
+        if (griffinConfig?.Enabled != true || string.IsNullOrEmpty(griffinConfig.BaseUrl))
+        {
+            Error = _localizer["Error_GriffinNotEnabled"].Value;
+            return Page();
+        }
+
+        // Validate token AND get claims — needed to cross-check submitted email against token identity.
+        // Hidden form fields are client-side and trivially editable; we must verify the email matches the token.
+        var griffinClaims = await _griffinService.ValidateAndGetClaimsAsync(griffinToken, griffinConfig.BaseUrl, griffinConfig.TimeoutSeconds);
+        if (griffinClaims == null)
+        {
+            Error = _localizer["Error_GriffinTokenExpired"].Value;
+            Response.Cookies.Delete("griffin.token");
+            return Page();
+        }
+
+        // Cross-check submitted email against token claims to prevent hidden field tampering
+        if (!string.Equals(Email, griffinClaims.EmailAddress, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("Griffin signup email mismatch: submitted={Submitted}, token={Token}",
+                Email, griffinClaims.EmailAddress);
+            Email = griffinClaims.EmailAddress; // Force correct email
+        }
+
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(DisplayName))
         {
             Error = _localizer["Error_Signup_AllFieldsRequired"];
             return Page();
@@ -172,12 +182,6 @@ public class SignupModel : LocalizedPageModel
         if (DisplayName.Length > 200)
         {
             Error = _localizer["Error_Signup_DisplayNameTooLong"];
-            return Page();
-        }
-
-        if (Password.Length > 128)
-        {
-            Error = _localizer["Error_Signup_PasswordTooLong"];
             return Page();
         }
 
@@ -200,8 +204,7 @@ public class SignupModel : LocalizedPageModel
             moleculeType = molecule?.Type;
         }
 
-        // Director/AreaAdmin/MoleculeAdmin HQ auto-resolve: get assigned to the molecule's HQ company
-        // MoleculeAdmin (מפק"מ) and AreaAdmin (קב"ב) manage beyond job-type level — no job type needed
+        // Director/AreaAdmin/MoleculeAdmin HQ auto-resolve
         var isJobTypeFreeScope = signupTemplate?.ScopeLevel == RoleScopeLevel.Molecule
                               || signupTemplate?.ScopeLevel == RoleScopeLevel.Area;
         if (RequestedRole == UserRole.Director || RequestedRole == UserRole.AreaAdmin || isJobTypeFreeScope)
@@ -224,36 +227,34 @@ public class SignupModel : LocalizedPageModel
 
             CompanyId = hqCompany.Id;
 
-            // MoleculeAdmin/AreaAdmin: clear JobTypeId (scope beyond job-type level)
             if (isJobTypeFreeScope)
             {
-                JobTypeId = 0; // Will be stored as null in the join request
+                JobTypeId = 0;
             }
         }
+
         if (CompanyId <= 0)
         {
             Error = _localizer["Error_Signup_SelectValidCompany"];
             return Page();
         }
 
-        // ✅ SECURITY FIX: Proper email format validation with regex
         if (!_validation.IsValidEmail(Email))
         {
             Error = _localizer["Error_InvalidEmailFormat"];
             return Page();
         }
 
-        // Check if user already exists
-        // IgnoreQueryFilters: anonymous user has no tenant context (CompanyId=0),
-        // so the query filter would skip all real users — check across all companies
-        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == Email))
+        // Check if user already exists (case-insensitive, consistent with GriffinCallback)
+        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLower() == Email.ToLower()))
         {
             Error = _localizer["Error_Signup_EmailExists"];
             return Page();
         }
 
-        // Check for existing pending request with same email, company, and role
-        // IgnoreQueryFilters: same reason — anonymous user has no tenant context
+        // Check for existing pending request
+        var selectedCompany = await _companyCacheService.GetCompanyAsync(CompanyId);
+
         var existingPendingRequest = await _db.UserJoinRequests
             .IgnoreQueryFilters()
             .Include(jr => jr.Company)
@@ -263,32 +264,25 @@ public class SignupModel : LocalizedPageModel
                 jr.RequestedRole == RequestedRole &&
                 jr.Status == JoinRequestStatus.Pending);
 
-        // Pre-fetch company from cache (used for both pending-request message and existence validation)
-        var selectedCompany = await _companyCacheService.GetCompanyAsync(CompanyId);
-
         if (existingPendingRequest != null)
         {
             PendingRequestMessage = _localizer["SignupPendingMessage", selectedCompany?.LocalizedName ?? "", _localizer[RequestedRole.ToString()].Value];
             return Page();
         }
 
-        // Validate company exists
         if (selectedCompany == null)
         {
             Error = _localizer["Error_Signup_CompanyNotFound"];
             return Page();
         }
 
-        // Create password hash
-        var (hash, salt) = PasswordHasher.CreateHash(Password);
-
-        // Create join request
+        // Create join request — no password for Griffin SSO users
         var joinRequest = new UserJoinRequest
         {
             Email = Email,
             DisplayName = DisplayName,
-            PasswordHash = hash,
-            PasswordSalt = salt,
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>(),
             CompanyId = CompanyId,
             JobTypeId = JobTypeId > 0 ? JobTypeId : null,
             DepartmentId = DepartmentId > 0 ? DepartmentId : null,
@@ -296,7 +290,7 @@ public class SignupModel : LocalizedPageModel
             RequestedRoleTemplateId = signupTemplate?.Id ?? RequestedRoleTemplateId,
             Status = JoinRequestStatus.Pending,
             CreatedAt = DateTime.UtcNow,
-            AuthMethod = "Local"
+            AuthMethod = "Griffin"
         };
 
         try
@@ -304,16 +298,17 @@ public class SignupModel : LocalizedPageModel
             _db.UserJoinRequests.Add(joinRequest);
             await _db.SaveChangesAsync();
 
-            await _auditLogService.LogUserActionAsync(0, "JoinRequestCreated", "UserJoinRequest", joinRequest.Id, $"Join request created by '{joinRequest.Email}' for role {joinRequest.RequestedRole}");
+            await _auditLogService.LogUserActionAsync(0, "GriffinJoinRequestCreated", "UserJoinRequest", joinRequest.Id,
+                $"Griffin join request created by '{joinRequest.Email}' (UniqueID: {GriffinUniqueID}) for role {joinRequest.RequestedRole}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save join request for {Email}", Email);
+            _logger.LogError(ex, "Failed to save Griffin join request for {Email}", Email);
             Error = _localizer["Error_AnErrorOccurred"];
             return Page();
         }
 
-        _logger.LogInformation("New join request created: {Email} requesting {Role} at {Company}",
+        _logger.LogInformation("Griffin join request created: {Email} requesting {Role} at {Company}",
             Email, RequestedRole, selectedCompany.Name);
 
         // Notify all owners about the new access request (fire-and-forget with scoped service)
@@ -337,20 +332,30 @@ public class SignupModel : LocalizedPageModel
             }
             catch (Exception ex)
             {
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<SignupModel>>();
-                logger.LogError(ex, "Failed to notify owners about join request {RequestId}", capturedRequestId);
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<GriffinSignupModel>>();
+                logger.LogError(ex, "Failed to notify owners about Griffin join request {RequestId}", capturedRequestId);
             }
         });
 
+        // Clean up Griffin token cookie
+        Response.Cookies.Delete("griffin.token");
+
         PendingRequestMessage = _localizer["SignupSubmittedMessage", selectedCompany.LocalizedName, _localizer[RequestedRole.ToString()].Value];
 
-        // Clear form fields
-        Email = string.Empty;
-        DisplayName = string.Empty;
-        Password = string.Empty;
-        CompanyId = 0;
-        RequestedRole = UserRole.Employee;
-
         return Page();
+    }
+
+    private async Task LoadPageDataAsync()
+    {
+        AvailableMolecules = await _db.Molecules
+            .Include(m => m.Area)
+            .Where(m => m.IsActive)
+            .OrderBy(m => m.DisplayName ?? m.Name)
+            .ToListAsync();
+
+        AvailableCompanies = await _db.Companies
+            .Where(c => !c.IsHeadquarters)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
     }
 }

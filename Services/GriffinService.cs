@@ -60,6 +60,46 @@ public class GriffinService : IGriffinService
         return finalUrl;
     }
 
+    public async Task<string?> ExchangeTokenAsync(string hashedToken, string griffinBaseUrl, int timeoutSeconds)
+    {
+        try
+        {
+            using var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+
+            var url = $"{griffinBaseUrl.TrimEnd('/')}/authentication/claimToken?hash={Uri.EscapeDataString(hashedToken)}";
+
+            _logger.LogDebug("Exchanging Griffin hashed token for real token");
+
+            var response = await client.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Griffin token exchange failed with status {StatusCode}", response.StatusCode);
+                _securityLogger.LogAuthenticationFailure("Griffin SSO", "unknown", $"Token exchange HTTP {response.StatusCode}");
+                return null;
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var realToken = content.Trim().Trim('"');
+
+            if (string.IsNullOrWhiteSpace(realToken))
+            {
+                _logger.LogWarning("Griffin token exchange returned empty response");
+                return null;
+            }
+
+            _logger.LogDebug("Griffin token exchange successful, received real token");
+            return realToken;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exchanging Griffin hashed token");
+            _securityLogger.LogSecurityThreat("TokenExchangeError", $"Griffin token exchange threw: {ex.Message}", "unknown");
+            return null;
+        }
+    }
+
     public async Task<bool> ValidateTokenAsync(string token, string griffinBaseUrl, int timeoutSeconds)
     {
         try
@@ -128,7 +168,7 @@ public class GriffinService : IGriffinService
 
             if (claims != null)
             {
-                _logger.LogDebug("Griffin claims retrieved for UPN: {UPN}", claims.UPN);
+                _logger.LogDebug("Griffin claims retrieved for EmailAddress: {EmailAddress}", claims.EmailAddress);
             }
 
             return claims;
@@ -191,20 +231,20 @@ public class GriffinService : IGriffinService
         }
 
         // Validate required claims
-        if (string.IsNullOrWhiteSpace(griffinClaims.UPN) || string.IsNullOrWhiteSpace(griffinClaims.sAMAccountName))
+        if (string.IsNullOrWhiteSpace(griffinClaims.EmailAddress) || string.IsNullOrWhiteSpace(griffinClaims.UniqueID))
         {
-            _logger.LogError("Griffin claims missing required fields (UPN or sAMAccountName)");
-            _securityLogger.LogSecurityThreat("MissingClaims", "Griffin token claims missing UPN or sAMAccountName — possible token tampering", ipAddress);
+            _logger.LogError("Griffin claims missing required fields (EmailAddress or UniqueID)");
+            _securityLogger.LogSecurityThreat("MissingClaims", "Griffin token claims missing EmailAddress or UniqueID — possible token tampering", ipAddress);
             return null;
         }
 
-        // Lookup user by UPN (email)
-        // SECURITY-AUDITED: SAFE — authentication must search across all companies to find user by email/UPN
+        // Lookup user by EmailAddress
+        // SECURITY-AUDITED: SAFE — authentication must search across all companies to find user by email
         var user = await _dbContext.Users
             .IgnoreQueryFilters() // Search across all companies
             .Include(u => u.RoleTemplate)
             .Include(u => u.JobType)
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == griffinClaims.UPN.ToLower() && u.IsActive);
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == griffinClaims.EmailAddress.ToLower() && u.IsActive);
 
         // Handle user provisioning
         if (user == null)
@@ -214,15 +254,15 @@ public class GriffinService : IGriffinService
                 user = await AutoProvisionUserAsync(griffinClaims, config);
                 if (user == null)
                 {
-                    _logger.LogError("Failed to auto-provision user for UPN: {UPN}", griffinClaims.UPN);
-                    _securityLogger.LogAuthenticationFailure(griffinClaims.UPN, ipAddress, "Auto-provisioning failed");
+                    _logger.LogError("Failed to auto-provision user for {EmailAddress}", griffinClaims.EmailAddress);
+                    _securityLogger.LogAuthenticationFailure(griffinClaims.EmailAddress, ipAddress, "Auto-provisioning failed");
                     return null;
                 }
             }
             else
             {
-                _logger.LogInformation("User {UPN} not found and auto-provisioning disabled", griffinClaims.UPN);
-                _securityLogger.LogAuthenticationFailure(griffinClaims.UPN, ipAddress, "User not found and auto-provisioning disabled");
+                _logger.LogInformation("User {EmailAddress} not found and auto-provisioning disabled", griffinClaims.EmailAddress);
+                _securityLogger.LogAuthenticationFailure(griffinClaims.EmailAddress, ipAddress, "User not found and auto-provisioning disabled");
                 return null; // Will show pending approval message in callback
             }
         }
@@ -266,16 +306,15 @@ public class GriffinService : IGriffinService
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, griffinClaims.DisplayName),
-            new Claim(ClaimTypes.Email, griffinClaims.UPN),
+            new Claim(ClaimTypes.Email, griffinClaims.EmailAddress),
             new Claim(ClaimTypes.GivenName, griffinClaims.GivenName),
-            new Claim(ClaimTypes.Surname, griffinClaims.Surname),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
             new Claim("CompanyId", user.CompanyId.ToString()),
             new Claim("AuthMethod", "Griffin"),
-            new Claim("Griffin:sAMAccountName", griffinClaims.sAMAccountName),
+            new Claim("Griffin:UniqueID", griffinClaims.UniqueID),
             // HIGH-007 FIX: Store hashed token reference instead of raw token to prevent cookie theft
             new Claim("Griffin:TokenHash", ComputeSHA256Hash(token)),
-            new Claim("Griffin:AuthTime", griffinClaims.auth_time),
+            new Claim("Griffin:AuthTime", griffinClaims.IssuedAt),
             new Claim("AuthTimestamp", DateTime.UtcNow.ToString("o"))
         };
 
@@ -324,7 +363,7 @@ public class GriffinService : IGriffinService
             var user = new AppUser
             {
                 CompanyId = config.CompanyId,
-                Email = griffinClaims.UPN,
+                Email = griffinClaims.EmailAddress,
                 DisplayName = griffinClaims.DisplayName,
                 Role = config.DefaultProvisionedRole,
                 RoleTemplateId = config.DefaultProvisionedRoleTemplateId,
@@ -358,14 +397,14 @@ public class GriffinService : IGriffinService
                 "AppUser",
                 user.Id,
                 $"Auto-provisioned Griffin user: {user.Email} — PENDING PLACEMENT (no molecule/hierarchy assigned)",
-                $"Role={user.Role}, CompanyId={user.CompanyId}, UPN={griffinClaims.UPN}");
+                $"Role={user.Role}, CompanyId={user.CompanyId}, EmailAddress={griffinClaims.EmailAddress}");
 
             return user;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to auto-provision user for UPN: {UPN}", griffinClaims.UPN);
-            _securityLogger.LogSecurityThreat("AutoProvisionError", $"Failed to auto-provision Griffin user {griffinClaims.UPN}: {ex.Message}", null);
+            _logger.LogError(ex, "Failed to auto-provision user for {EmailAddress}", griffinClaims.EmailAddress);
+            _securityLogger.LogSecurityThreat("AutoProvisionError", $"Failed to auto-provision Griffin user {griffinClaims.EmailAddress}: {ex.Message}", null);
             return null;
         }
     }

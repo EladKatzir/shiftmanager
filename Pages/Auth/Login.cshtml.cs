@@ -197,6 +197,14 @@ public class LoginModel : LocalizedPageModel
                 user.LastLoginAttempt = DateTime.UtcNow;
             }
 
+            // SSO users have no local password — redirect them to ADFS login
+            if (user != null && user.PasswordHash.Length == 0)
+            {
+                _logger.LogInformation("SSO user {Email} attempted local login, redirecting to ADFS", ShiftManager.Services.PiiMasker.MaskEmail(Email));
+                Error = _localizer["Error_Login_SSOUserUseADFS"];
+                return Page();
+            }
+
             // Verify password
             if (user == null || !PasswordHasher.Verify(Password, user.PasswordHash, user.PasswordSalt))
             {

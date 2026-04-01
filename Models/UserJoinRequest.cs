@@ -87,6 +87,12 @@ public class UserJoinRequest : IBelongsToCompany
     /// </summary>
     public int? RequestedRoleTemplateId { get; set; }
 
+    /// <summary>
+    /// Authentication method used to create this request: "Local" (password signup) or "Griffin" (ADFS SSO).
+    /// Null for requests created before this field was added.
+    /// </summary>
+    public string? AuthMethod { get; set; }
+
     // Navigation properties
     public Company? Company { get; set; }
     public JobType? JobType { get; set; }

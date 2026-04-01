@@ -1,0 +1,496 @@
+@page
+@model ShiftManager.Pages.Auth.GriffinSignupModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.Models.Support
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName" dir="@(System.Globalization.CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@Localizer["Auth_GriffinSignupTitle"] - @Localizer["AppName"]</title>
+    <link rel="stylesheet" href="~/css/tokens.css" />
+    <link rel="stylesheet" href="~/css/auth.css" />
+    <link rel="icon" type="image/svg+xml" href="~/images/shifty-logo.svg" />
+</head>
+<body>
+    <div class="auth-layout">
+        <!-- Hero Panel -->
+        <div class="auth-hero">
+            <span class="auth-hero__float" aria-hidden="true">🔐</span>
+            <span class="auth-hero__float" aria-hidden="true">🗓️</span>
+            <span class="auth-hero__float" aria-hidden="true">👥</span>
+            <span class="auth-hero__float" aria-hidden="true">✓</span>
+
+            <div class="auth-hero__content">
+                <img src="~/images/shifty-logo.svg" alt="Shifty Logo" class="auth-hero__logo" />
+                <h1 class="auth-hero__title"><loc key="AppName" /></h1>
+                <p class="auth-hero__tagline"><loc key="Auth_GriffinSignupSubtitle" /></p>
+            </div>
+        </div>
+
+        <!-- Form Panel -->
+        <main class="auth-form-panel" role="main">
+            <div class="auth-form-container">
+                <div class="auth-form-header">
+                    <h1><loc key="Auth_GriffinSignupTitle" /></h1>
+                    <p><loc key="Auth_GriffinSignupSubtitle" /></p>
+                </div>
+
+                @* Success message for pending request *@
+                @if (!string.IsNullOrEmpty(Model.PendingRequestMessage))
+                {
+                    <div class="auth-alert auth-alert--info" style="background: var(--success-soft); border-color: var(--success); color: var(--success);">
+                        <span class="auth-alert__icon">✓</span>
+                        <div class="auth-alert__content">
+                            <div class="auth-alert__title">@Localizer["RequestSubmitted"]</div>
+                            <div>@Model.PendingRequestMessage</div>
+                        </div>
+                    </div>
+                }
+
+                @* Error message *@
+                @if (!string.IsNullOrEmpty(Model.Error))
+                {
+                    <div class="auth-alert auth-alert--error">
+                        <span class="auth-alert__icon">❌</span>
+                        <div class="auth-alert__content">@Model.Error</div>
+                    </div>
+                }
+
+                @if (Model.IsGriffinAuthenticated && string.IsNullOrEmpty(Model.PendingRequestMessage))
+                {
+                    <!-- Progress Steps (2 steps: Unit + Role/Placement) -->
+                    <div class="auth-steps">
+                        <div class="auth-step is-active" data-step="1">
+                            <span class="auth-step__number">1</span>
+                            <span><loc key="Auth_StepUnit" /></span>
+                        </div>
+                        <div class="auth-step" data-step="2">
+                            <span class="auth-step__number">2</span>
+                            <span><loc key="Auth_StepRole" /></span>
+                        </div>
+                    </div>
+
+                    <!-- Griffin Signup Form -->
+                    <form method="post" asp-page="./GriffinSignup" class="auth-form" id="griffinSignupForm">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Hidden fields for Griffin identity (round-trip safe via BindProperty) -->
+                        <input type="hidden" name="Email" value="@Model.Email" />
+                        <input type="hidden" name="GriffinUniqueID" value="@Model.GriffinUniqueID" />
+
+                        <!-- Authenticated identity display (read-only) -->
+                        <div class="auth-field">
+                            <label class="auth-field__label"><loc key="Email" /></label>
+                            <div class="auth-field__input" style="background: var(--bg-muted); cursor: default; opacity: 0.8;">
+                                @Model.Email
+                            </div>
+                        </div>
+
+                        <!-- DisplayName (editable — Griffin may provide OU path format) -->
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="DisplayName"><loc key="DisplayName" /></label>
+                            <input type="text"
+                                   id="DisplayName"
+                                   name="DisplayName"
+                                   class="auth-field__input"
+                                   value="@Model.DisplayName"
+                                   placeholder="@Localizer["Auth_NamePlaceholder"]"
+                                   autocomplete="name"
+                                   required />
+                        </div>
+
+                        <!-- Molecule selection -->
+                        <div class="auth-field" id="moleculeField">
+                            <label class="auth-field__label" for="MoleculeId"><loc key="Auth_SelectMolecule" /></label>
+                            <select id="MoleculeId"
+                                    name="MoleculeId"
+                                    class="auth-field__select"
+                                    required>
+                                <option value="">@Localizer["Auth_ChooseMolecule"]</option>
+                                @foreach (var molecule in Model.AvailableMolecules)
+                                {
+                                    <option value="@molecule.Id" data-area-id="@molecule.AreaId"
+                                            data-area-name="@(molecule.Area?.DisplayName ?? molecule.Area?.Name ?? "")"
+                                            data-type="@((int)molecule.Type)"
+                                            selected="@(Model.MoleculeId == molecule.Id)">
+                                        @(molecule.DisplayName ?? molecule.Name)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Role selection -->
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="RequestedRole"><loc key="RequestedRole" /></label>
+                            <select id="RequestedRole"
+                                    name="RequestedRole"
+                                    class="auth-field__select"
+                                    disabled
+                                    required>
+                                <option value="">@Localizer["Auth_ChooseMoleculeFirst"]</option>
+                            </select>
+                            <input type="hidden" id="RequestedRoleTemplateId" name="RequestedRoleTemplateId" value="@Model.RequestedRoleTemplateId" />
+                            <small style="color: var(--text-muted); font-size: var(--text-tiny); display: block; margin-top: var(--space-1);">
+                                <loc key="RequestNeedsApproval" />
+                            </small>
+                        </div>
+
+                        <div id="roleHintBanner" class="auth-alert auth-alert--info" style="display: none; margin-top: var(--space-2);">
+                            <span class="auth-alert__icon">ℹ️</span>
+                            <div class="auth-alert__content" id="roleHintText"></div>
+                        </div>
+
+                        <!-- Placement fields (dynamic) -->
+                        <div class="auth-field" id="jobTypeField" style="display: none;">
+                            <label class="auth-field__label" for="JobTypeId"><loc key="Auth_SelectJobType" /></label>
+                            <select id="JobTypeId"
+                                    name="JobTypeId"
+                                    class="auth-field__select"
+                                    disabled>
+                                <option value="">@Localizer["Auth_SelectJobType"]</option>
+                            </select>
+                            <span asp-validation-for="JobTypeId" style="color: var(--danger); font-size: var(--text-tiny);"></span>
+                            <div id="jobTypeLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
+                                <loc key="Loading" />...
+                            </div>
+                        </div>
+
+                        <div class="auth-field" id="companyField" style="display: none;">
+                            <label class="auth-field__label" id="companyLabel" for="CompanyId"><loc key="Company" /></label>
+                            <select id="CompanyId"
+                                    name="CompanyId"
+                                    class="auth-field__select"
+                                    disabled>
+                                <option value="">@Localizer["SelectCompany"]</option>
+                            </select>
+                            <div id="companyLoading" style="display: none; margin-top: 0.5rem; color: var(--text-muted); font-size: var(--text-small);">
+                                <loc key="Loading" />...
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="DepartmentId" name="DepartmentId" value="@(Model.DepartmentId > 0 ? Model.DepartmentId.ToString() : "")" />
+
+                        <button type="submit" class="auth-submit">
+                            <loc key="SubmitRequest" />
+                        </button>
+                    </form>
+                }
+
+                <!-- Login Link -->
+                <div class="auth-secondary" style="margin-top: var(--space-6); text-align: center;">
+                    <a href="/Auth/Login" style="color: var(--primary); text-decoration: none; font-weight: 500;">
+                        <loc key="Button_ReturnToLogin" />
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Apply saved theme
+        (function() {
+            var saved = localStorage.getItem('theme');
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+
+        // Cascading dropdowns: Molecule -> Role -> JobType/Company
+        // (Same logic as Signup.cshtml, minus password/email step tracking)
+        (function() {
+            var roleSelect = document.getElementById('RequestedRole');
+            var templateIdInput = document.getElementById('RequestedRoleTemplateId');
+            var moleculeSelect = document.getElementById('MoleculeId');
+            var companySelect = document.getElementById('CompanyId');
+            var companyField = document.getElementById('companyField');
+            var companyLabel = document.getElementById('companyLabel');
+            var jobTypeSelect = document.getElementById('JobTypeId');
+            var jobTypeField = document.getElementById('jobTypeField');
+            var departmentIdInput = document.getElementById('DepartmentId');
+            var companyLoading = document.getElementById('companyLoading');
+            var jobTypeLoading = document.getElementById('jobTypeLoading');
+            var roleHintBanner = document.getElementById('roleHintBanner');
+            var roleHintText = document.getElementById('roleHintText');
+
+            var roleHints = {
+                moleculeAdmin: @Html.Raw(Json.Serialize(Localizer["Auth_RoleHint_MoleculeAdmin"].Value)),
+                areaAdmin: @Html.Raw(Json.Serialize(Localizer["Auth_RoleHint_AreaAdmin"].Value)),
+                director: @Html.Raw(Json.Serialize(Localizer["Auth_RoleHint_Director"].Value))
+            };
+            var steps = document.querySelectorAll('.auth-step');
+
+            if (!moleculeSelect || !companySelect || !roleSelect) return;
+
+            var DIRECTOR_VALUE = '@((int)UserRole.Director)';
+            var AREAADMIN_VALUE = '@((int)UserRole.AreaAdmin)';
+            var MOLECULE_TYPE_TECH = '1';
+            var SCOPE_MOLECULE = 4;
+            var SCOPE_AREA = 6;
+            var SCOPE_COMPANY_JOBTYPE = 2;
+            var SCOPE_DEPARTMENT = 3;
+            var SCOPE_MOLECULE_JOBTYPE = 5;
+            var isHebrew = document.documentElement.lang === 'he';
+            var savedRole = '@((int)Model.RequestedRole)';
+            var savedTemplateId = '@(Model.RequestedRoleTemplateId?.ToString() ?? "")';
+            var savedCompanyId = '@(Model.CompanyId > 0 ? Model.CompanyId.ToString() : "")';
+            var savedJobTypeId = '@(Model.JobTypeId > 0 ? Model.JobTypeId.ToString() : "")';
+            var savedDepartmentId = '@(Model.DepartmentId > 0 ? Model.DepartmentId.ToString() : "")';
+            var currentMoleculeIsTech = false;
+            var allRoleTemplates = [];
+            var savedCompanyValue = '';
+            var loadedMoleculeId = '';
+
+            function getSelectedScopeLevel() {
+                var s = roleSelect.options[roleSelect.selectedIndex];
+                return s ? parseInt(s.getAttribute('data-scope-level') || '0') : 0;
+            }
+
+            function isJobTypeFreeScope() {
+                var sl = getSelectedScopeLevel();
+                return sl === SCOPE_MOLECULE || sl >= SCOPE_AREA;
+            }
+
+            function isHqAutoResolved() {
+                var v = roleSelect.value;
+                return v === DIRECTOR_VALUE || v === AREAADMIN_VALUE || isJobTypeFreeScope();
+            }
+
+            function needsJobType() { return roleSelect.value !== '' && !isJobTypeFreeScope(); }
+            function needsCompany() { return roleSelect.value !== '' && !isHqAutoResolved(); }
+
+            // Role Templates: load once, filter per molecule
+            fetch('/Api/Signup/GetSignupOptions?handler=RoleTemplates', { credentials: 'same-origin' })
+                .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+                .then(function(data) {
+                    if (!data.roleTemplates || data.roleTemplates.length === 0) return;
+                    allRoleTemplates = data.roleTemplates;
+                    if (moleculeSelect.value) {
+                        filterRoleTemplatesForMoleculeType(isMoleculeTech());
+                    }
+                })
+                .catch(function() {});
+
+            function populateRoleDropdown(templates) {
+                var previousTemplateId = templateIdInput ? templateIdInput.value : '';
+                roleSelect.innerHTML = '';
+                var placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = @Html.Raw(Json.Serialize(Localizer["Auth_SelectRole"].Value));
+                roleSelect.appendChild(placeholder);
+
+                templates.forEach(function(rt) {
+                    var opt = document.createElement('option');
+                    opt.value = rt.derivedUserRole != null ? rt.derivedUserRole.toString() : '';
+                    opt.setAttribute('data-template-id', rt.id);
+                    opt.setAttribute('data-scope-level', rt.scopeLevel != null ? rt.scopeLevel.toString() : '0');
+                    var name = isHebrew ? (rt.displayNameHE || rt.displayNameEN) : (rt.displayNameEN || rt.displayNameHE);
+                    opt.textContent = name || rt.displayName || rt.key;
+                    var matchId = previousTemplateId || savedTemplateId;
+                    if (matchId && rt.id.toString() === matchId) {
+                        opt.selected = true;
+                    } else if (!matchId && rt.derivedUserRole != null && rt.derivedUserRole.toString() === savedRole) {
+                        opt.selected = true;
+                    }
+                    roleSelect.appendChild(opt);
+                });
+                roleSelect.disabled = false;
+                syncTemplateId();
+                roleSelect.dispatchEvent(new Event('change'));
+            }
+
+            function filterRoleTemplatesForMoleculeType(isTech) {
+                if (allRoleTemplates.length === 0) return;
+                var filtered = allRoleTemplates.filter(function(rt) {
+                    if (isTech) {
+                        return rt.scopeLevel !== SCOPE_COMPANY_JOBTYPE && rt.scopeLevel !== SCOPE_MOLECULE_JOBTYPE;
+                    } else {
+                        return rt.scopeLevel !== SCOPE_DEPARTMENT;
+                    }
+                });
+                populateRoleDropdown(filtered);
+            }
+
+            function syncTemplateId() {
+                var s = roleSelect.options[roleSelect.selectedIndex];
+                if (s && templateIdInput) templateIdInput.value = s.getAttribute('data-template-id') || '';
+            }
+            roleSelect.addEventListener('change', function() { syncTemplateId(); });
+
+            function isMoleculeTech() {
+                var s = moleculeSelect.options[moleculeSelect.selectedIndex];
+                return s && s.getAttribute('data-type') === MOLECULE_TYPE_TECH;
+            }
+
+            // Step indicators (2 steps for Griffin signup)
+            function updateSteps(currentStep) {
+                steps.forEach(function(step, i) {
+                    var n = i + 1;
+                    step.classList.remove('is-active', 'is-complete');
+                    if (n < currentStep) step.classList.add('is-complete');
+                    else if (n === currentStep) step.classList.add('is-active');
+                });
+            }
+
+            function checkProgress() {
+                if (!moleculeSelect.value || !roleSelect.value) { updateSteps(1); return; }
+                var hasJobType = !needsJobType() || (jobTypeSelect && jobTypeSelect.value !== '');
+                var hasCompany = !needsCompany() || (companySelect && companySelect.value !== '');
+                if (!hasJobType || !hasCompany) { updateSteps(2); return; }
+                updateSteps(3); // All complete
+            }
+
+            // Data loading helpers
+            async function loadJobTypesForMolecule(moleculeId) {
+                if (!jobTypeSelect) return;
+                jobTypeSelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Auth_SelectJobType"].Value)) + '</option>';
+                jobTypeSelect.disabled = true;
+                if (!moleculeId) return;
+                jobTypeLoading.style.display = 'block';
+                try {
+                    var response = await fetch('/Api/Signup/GetSignupOptions?handler=JobTypes&moleculeId=' + moleculeId, { credentials: 'same-origin' });
+                    if (!response.ok) throw new Error(response.status);
+                    var data = await response.json();
+                    if (data.jobTypes && data.jobTypes.length > 0) {
+                        jobTypeSelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Auth_SelectJobType"].Value)) + '</option>';
+                        data.jobTypes.forEach(function(jt) {
+                            var o = document.createElement('option');
+                            o.value = jt.id;
+                            o.textContent = jt.name;
+                            if (jt.key) o.dataset.key = jt.key;
+                            if (jt.color) o.style.color = jt.color;
+                            if (savedJobTypeId && jt.id.toString() === savedJobTypeId) o.selected = true;
+                            jobTypeSelect.appendChild(o);
+                        });
+                        jobTypeSelect.disabled = false;
+                    } else {
+                        jobTypeSelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Auth_NoJobTypesAvailable"].Value)) + '</option>';
+                    }
+                } catch (e) {
+                    jobTypeSelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Error_LoadingData"].Value)) + '</option>';
+                } finally {
+                    jobTypeLoading.style.display = 'none';
+                }
+            }
+
+            async function loadCompaniesForMolecule(moleculeId) {
+                if (!moleculeId) return;
+                companySelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Loading"].Value)) + '...</option>';
+                companySelect.disabled = true;
+                if (departmentIdInput) departmentIdInput.value = '';
+                companyLoading.style.display = 'block';
+                try {
+                    var response = await fetch('/Api/Signup/GetSignupOptions?handler=Companies&moleculeId=' + moleculeId, { credentials: 'same-origin' });
+                    if (!response.ok) throw new Error(response.status);
+                    var data = await response.json();
+                    if (data.companies && data.companies.length > 0) {
+                        companySelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["SelectCompany"].Value)) + '</option>';
+                        data.companies.forEach(function(c) {
+                            var o = document.createElement('option');
+                            o.value = c.id;
+                            o.textContent = c.name;
+                            if (savedCompanyId && c.id.toString() === savedCompanyId) o.selected = true;
+                            companySelect.appendChild(o);
+                        });
+                        companySelect.disabled = false;
+                    } else {
+                        companySelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Auth_NoCompaniesAvailable"].Value)) + '</option>';
+                    }
+                } catch (e) {
+                    companySelect.innerHTML = '<option value="">' + @Html.Raw(Json.Serialize(Localizer["Error_LoadingData"].Value)) + '</option>';
+                } finally {
+                    companyLoading.style.display = 'none';
+                }
+            }
+
+            function showJobType() {
+                if (jobTypeField) jobTypeField.style.display = '';
+                if (jobTypeSelect) jobTypeSelect.required = true;
+                if (moleculeSelect.value && loadedMoleculeId !== moleculeSelect.value) {
+                    loadedMoleculeId = moleculeSelect.value;
+                    loadJobTypesForMolecule(moleculeSelect.value);
+                }
+            }
+            function hideJobType() {
+                if (jobTypeField) jobTypeField.style.display = 'none';
+                if (jobTypeSelect) { jobTypeSelect.required = false; jobTypeSelect.value = ''; }
+            }
+            function showCompany() {
+                if (companyField) companyField.style.display = '';
+                if (companySelect) companySelect.required = true;
+                if (moleculeSelect.value) {
+                    if (savedCompanyValue && companySelect.options.length > 1 &&
+                        companySelect.querySelector('option[value="' + savedCompanyValue + '"]')) {
+                        companySelect.disabled = false;
+                        companySelect.value = savedCompanyValue;
+                    } else if (companySelect.options.length <= 1) {
+                        loadCompaniesForMolecule(moleculeSelect.value);
+                    }
+                }
+            }
+            function hideCompany() {
+                if (companySelect && companySelect.value) savedCompanyValue = companySelect.value;
+                if (companyField) companyField.style.display = 'none';
+                if (companySelect) { companySelect.required = false; companySelect.disabled = true; companySelect.value = ''; }
+            }
+
+            function showRoleHint(hintKey) {
+                if (roleHintBanner && roleHintText && roleHints[hintKey]) {
+                    roleHintText.textContent = roleHints[hintKey];
+                    roleHintBanner.style.display = '';
+                }
+            }
+            function hideRoleHint() {
+                if (roleHintBanner) roleHintBanner.style.display = 'none';
+            }
+
+            // Molecule change
+            moleculeSelect.addEventListener('change', function() {
+                currentMoleculeIsTech = isMoleculeTech();
+                loadedMoleculeId = '';
+                filterRoleTemplatesForMoleculeType(currentMoleculeIsTech);
+                if (departmentIdInput) departmentIdInput.value = '';
+                checkProgress();
+            });
+
+            // Role change
+            roleSelect.addEventListener('change', function() {
+                var scopeLevel = getSelectedScopeLevel();
+                if (roleSelect.value === '') {
+                    hideJobType(); hideCompany(); hideRoleHint();
+                } else if (isJobTypeFreeScope()) {
+                    hideJobType(); hideCompany();
+                    showRoleHint(scopeLevel >= SCOPE_AREA ? 'areaAdmin' : 'moleculeAdmin');
+                } else if (isHqAutoResolved()) {
+                    showJobType(); hideCompany();
+                    showRoleHint('director');
+                } else {
+                    showJobType(); showCompany(); hideRoleHint();
+                }
+                checkProgress();
+            });
+
+            companySelect.addEventListener('change', function() {
+                if (departmentIdInput) departmentIdInput.value = '';
+                checkProgress();
+            });
+            if (jobTypeSelect) {
+                jobTypeSelect.addEventListener('change', function() { checkProgress(); });
+            }
+
+            // Post-back restoration
+            if (moleculeSelect.value) {
+                currentMoleculeIsTech = isMoleculeTech();
+            }
+        })();
+    </script>
+</body>
+</html>
