@@ -575,7 +575,13 @@
                             </td>
                             <td>@request.CreatedAt.ToLocalTime().ToString("MM/dd/yy HH:mm")</td>
                             <td>@request.DisplayName</td>
-                            <td>@request.Email</td>
+                            <td>
+                                @request.Email
+                                @if (request.AuthMethod == "Griffin")
+                                {
+                                    <span class="badge badge--info" style="font-size: var(--text-tiny); margin-inline-start: var(--space-1);" title="ADFS SSO">ADFS</span>
+                                }
+                            </td>
                             <td>@request.CompanyName</td>
                             @{
                                 var reqTemplate = request.RequestedRoleTemplateId.HasValue
@@ -641,7 +647,13 @@
                     <tr>
                         <td>@request.CreatedAt.ToLocalTime().ToString("MM/dd/yy HH:mm")</td>
                         <td>@request.DisplayName</td>
-                        <td>@request.Email</td>
+                        <td>
+                            @request.Email
+                            @if (request.AuthMethod == "Griffin")
+                            {
+                                <span class="badge badge--info" style="font-size: var(--text-tiny); margin-inline-start: var(--space-1);" title="ADFS SSO">ADFS</span>
+                            }
+                        </td>
                         <td>@request.CompanyName</td>
                         @{
                             var histTemplate = request.RequestedRoleTemplateId.HasValue
@@ -925,7 +937,7 @@
                 <td class="editable-cell" data-cell-type="primaryshifttype" data-user-id="@u.Id">
                     <div class="cell-display">
                         <span class="cell-display__value">@(u.PrimaryShiftTypeName ?? "-")</span>
-                        <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="Edit" aria-label="Edit">
+                        <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["Edit"]" aria-label="@Localizer["Edit"]">
                             ⚙️
                         </button>
                     </div>

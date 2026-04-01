@@ -124,19 +124,23 @@
         var assigneeSelect = document.querySelector('[data-role="assignee-select"]');
         if (!assigneeSelect) return;
 
-        var itemType = assigneeSelect.dataset.itemType;
+        // Skip loading assignee items if the page marks them as Quick Entry-excluded
+        // (e.g., Chores page — rows are users, only chore types should appear in dropdown)
+        if (assigneeSelect.dataset.quickentrySkip !== 'true') {
+            var itemType = assigneeSelect.dataset.itemType;
 
-        var options = assigneeSelect.querySelectorAll('option');
-        for (var i = 0; i < options.length; i++) {
-            var opt = options[i];
-            if (!opt.value) continue;
-            allItems.push({
-                id: opt.value,
-                text: opt.textContent.trim(),
-                type: itemType === 'user' ? 'user' : 'shift',
-                key: opt.dataset.key || null,
-                color: null
-            });
+            var options = assigneeSelect.querySelectorAll('option');
+            for (var i = 0; i < options.length; i++) {
+                var opt = options[i];
+                if (!opt.value) continue;
+                allItems.push({
+                    id: opt.value,
+                    text: opt.textContent.trim(),
+                    type: itemType === 'user' ? 'user' : 'shift',
+                    key: opt.dataset.key || null,
+                    color: null
+                });
+            }
         }
 
         // Load chore/duty types if their hidden selects exist (enables /chore and /duty slash commands)
@@ -346,7 +350,7 @@
             if (overflow[groupKey] > 0) {
                 var more = document.createElement('div');
                 more.className = 'quick-entry-overflow';
-                more.textContent = '+' + overflow[groupKey] + ' more...';
+                more.textContent = (window.AppLocalizer?.QuickEntry_MoreItems || '+{0} more...').replace('{0}', overflow[groupKey]);
                 dropdown.appendChild(more);
             }
         }
@@ -486,10 +490,12 @@
         if (selectedIndex < 0) selectedIndex = items.length - 1;
         if (selectedIndex >= items.length) selectedIndex = 0;
 
-        items[selectedIndex].classList.add('quick-entry-item--active');
-        items[selectedIndex].scrollIntoView({ block: 'nearest' });
+        var selectedItem = items[selectedIndex];
+        if (!selectedItem) return;
+        selectedItem.classList.add('quick-entry-item--active');
+        selectedItem.scrollIntoView({ block: 'nearest' });
 
-        activeInput.setAttribute('aria-activedescendant', items[selectedIndex].id);
+        activeInput.setAttribute('aria-activedescendant', selectedItem.id || '');
     }
 
     // --- Cell click handler ---
@@ -548,6 +554,7 @@
         cell.appendChild(input);
         input.focus();
         activeInput = input;
+        input._keyboardNavInitialized = true; // Prevent keyboard-nav.js from hijacking space key
 
         input._cellData = cellData;
 

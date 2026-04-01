@@ -53,6 +53,8 @@ public static class RoleDisplayHelper
 
     /// <summary>
     /// String-based overload (backward compatible). Used by ~20 business identity sites.
+    /// Accepts either a RoleTemplate key (e.g., "BRDirector") or a UserRole enum name (e.g., "Manager").
+    /// Resolution order: job-type-specific → Role_{name} (template resx) → direct key (legacy resx).
     /// </summary>
     public static string GetRoleDisplayName(
         IStringLocalizer<SharedResources> localizer,
@@ -67,6 +69,14 @@ public static class RoleDisplayHelper
             if (!specificValue.ResourceNotFound)
                 return specificValue.Value;
         }
+
+        // Try template-style resx key first (e.g., "BRDirector" → "Role_BRDirector" → "קב"ר")
+        var templateResxKey = $"Role_{roleName}";
+        var templateValue = localizer[templateResxKey];
+        if (!templateValue.ResourceNotFound)
+            return templateValue.Value;
+
+        // Fall back to direct key (legacy: "Manager" → "מנהל", "Employee" → "חייל")
         return localizer[roleName].Value;
     }
 }

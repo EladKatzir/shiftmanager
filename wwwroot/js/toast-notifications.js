@@ -36,9 +36,9 @@
 
     // Severity-based auto-dismiss timing
     const AUTO_DISMISS_BY_TYPE = {
-        success: 4000,   // Quick confirmation — user expects it
-        info:    6000,   // Informational — slightly longer to read
-        warning: 10000,  // Needs attention — give time to process
+        success: 5000,   // Brief confirmation (was 4s)
+        info:    10000,  // Allow time to read details (was 6s)
+        warning: 15000,  // Important, needs attention (was 10s)
         error:   0       // Manual dismiss only — user must acknowledge
     };
 

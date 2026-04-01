@@ -181,7 +181,7 @@
     <div class="modal modal--sm" id="quickInfoConfigModal" role="dialog" aria-modal="true" aria-labelledby="quickInfoConfigTitle">
         <div class="modal__header">
             <h3 class="modal__title" id="quickInfoConfigTitle">@Localizer["Widget_ConfigTitle"]</h3>
-            <button type="button" class="modal__close" onclick="closeQuickInfoConfig()" aria-label="Close">
+            <button type="button" class="modal__close" onclick="closeQuickInfoConfig()" aria-label="@Localizer["Close"]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
@@ -206,9 +206,12 @@
         window.openQuickInfoConfig = async function (moleculeId) {
             _moleculeId = moleculeId;
 
-            // Show modal
+            // Portal modal + backdrop to body root so position:fixed works relative to viewport
+            // (not relative to the bottom-dock's stacking context)
             var backdrop = document.getElementById('quickInfoConfigBackdrop');
             var modal = document.getElementById('quickInfoConfigModal');
+            document.body.appendChild(backdrop);
+            document.body.appendChild(modal);
             backdrop.classList.add('is-open');
             modal.classList.add('is-open');
 

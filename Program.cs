@@ -135,6 +135,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/");
     options.Conventions.AllowAnonymousToPage("/Auth/Login");
     options.Conventions.AllowAnonymousToPage("/Auth/Signup");
+    options.Conventions.AllowAnonymousToPage("/Auth/GriffinSignup");
     options.Conventions.AllowAnonymousToPage("/Api/Signup/GetSignupOptions");
     options.Conventions.AllowAnonymousToPage("/Public/Chores");
     options.Conventions.AllowAnonymousToPage("/Public/OnDuty");

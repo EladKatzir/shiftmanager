@@ -158,7 +158,8 @@
     }
 
     @* Hidden select for bottom-sheet user dropdown (Strategy 1 in getAvailableUsers) *@
-    <select id="assigneeSelect-chores" data-role="assignee-select" style="display:none">
+    @* data-quickentry-skip: Quick Entry should NOT load users as suggestions on Chores — only chore types *@
+    <select id="assigneeSelect-chores" data-role="assignee-select" data-item-type="user" data-quickentry-skip="true" style="display:none">
         @foreach (var user in Model.Users)
         {
             <option value="@user.Id">@user.DisplayName</option>

@@ -365,7 +365,7 @@
             const result = await response.json();
 
             if (result.success) {
-                showToast(`Successfully filled ${result.createdCount || targetDates.length} shifts`, 'success');
+                showToast((window.AppLocalizer?.FillHandle_Success || 'Successfully filled {0} shifts').replace('{0}', result.createdCount || targetDates.length), 'success');
 
                 // Refresh calendar data or reload as fallback
                 setTimeout(() => {
@@ -377,7 +377,7 @@
 
         } catch (error) {
             Logger.error('FillHandle', 'Fill operation error:', error);
-            showToast(error.message || 'Failed to fill shifts', 'error');
+            showToast(error.message || (window.AppLocalizer?.FillHandle_Error || 'Failed to fill shifts'), 'error');
         }
     }
 

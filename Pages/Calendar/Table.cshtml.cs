@@ -1920,17 +1920,17 @@ public class TableModel : PageModel
                 var hasTimeOff = timeOffByUserDate.Any(tor => tor.UserId == emp.Id && tor.StartDate <= date && tor.EndDate >= date);
 
                 var status = "free";
-                var tooltip = "Available";
+                var tooltip = _localizer["Roster_Available"].Value;
 
                 if (hasTimeOff)
                 {
                     status = "busy";
-                    tooltip = "Time Off";
+                    tooltip = _localizer["Roster_TimeOff"].Value;
                 }
                 else if (hasShift)
                 {
                     status = "partial";
-                    tooltip = "Has Shift";
+                    tooltip = _localizer["Roster_HasShift"].Value;
                 }
 
                 availability.Add(new {
@@ -2415,7 +2415,7 @@ public class TableModel : PageModel
                 success = true,
                 created = createdCount,
                 updated = updatedCount,
-                message = $"Successfully filled {createdCount + updatedCount} shifts"
+                message = string.Format(_localizer["FillRange_Success"].Value, createdCount + updatedCount)
             });
         }
         catch (Exception ex)
@@ -2529,7 +2529,7 @@ public class TableModel : PageModel
                         date = instance.WorkDate.ToString("yyyy-MM-dd"),
                         type = "underfilled",
                         severity = "warning",
-                        message = $"Understaffed: {filledCount}/{instance.StaffingRequired} filled",
+                        message = string.Format(_localizer["FillRange_Understaffed"].Value, filledCount, instance.StaffingRequired),
                         filled = filledCount,
                         required = instance.StaffingRequired
                     });
@@ -2546,7 +2546,7 @@ public class TableModel : PageModel
                         date = instance.WorkDate.ToString("yyyy-MM-dd"),
                         type = "overfilled",
                         severity = "error",
-                        message = $"Overstaffed: {filledCount}/{instance.StaffingRequired} filled",
+                        message = string.Format(_localizer["FillRange_Overstaffed"].Value, filledCount, instance.StaffingRequired),
                         filled = filledCount,
                         required = instance.StaffingRequired
                     });

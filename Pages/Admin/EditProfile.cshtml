@@ -269,7 +269,7 @@
                                 <td><strong>@change.FieldName</strong></td>
                                 <td class="history-table__old">@(change.OldValue ?? "(empty)")</td>
                                 <td class="history-table__new">@(change.NewValue ?? "(empty)")</td>
-                                <td>@(change.ChangedByUser?.DisplayName ?? "Unknown")</td>
+                                <td>@(change.ChangedByUser?.DisplayName ?? Localizer["Unknown"].Value)</td>
                             </tr>
                         }
                     </tbody>

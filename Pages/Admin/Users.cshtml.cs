@@ -71,7 +71,7 @@ public class UsersModel : LocalizedPageModel
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, int? PrimaryShiftTypeId, string? PrimaryShiftTypeName);
-    public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId);
+    public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId, string? AuthMethod);
     public record MoleculeOption(int Id, string Name, string AreaName);
     public record JobTypeOption(int Id, string Name, string AreaName, string? Key);
 
@@ -336,7 +336,8 @@ public class UsersModel : LocalizedPageModel
                 jr.JobType?.Name,
                 jr.CreatedAt,
                 jr.Status,
-                jr.RequestedRoleTemplateId
+                jr.RequestedRoleTemplateId,
+                jr.AuthMethod
             ))
             .ToList();
 
@@ -412,9 +413,16 @@ public class UsersModel : LocalizedPageModel
         }
 
         // Load available shift types for PrimaryShiftType dropdown
-        // No query filter on ShiftType — scope-based visibility now
+        // Scoped to molecules the admin manages to prevent cross-molecule assignment
+        var accessibleMoleculeIds = Companies
+            .Where(c => c.MoleculeId.HasValue)
+            .Select(c => c.MoleculeId!.Value)
+            .Distinct()
+            .ToList();
         AvailableShiftTypes = await _db.ShiftTypes
-            .Where(st => st.MoleculeId != null && st.Key != ShiftType.KEY_OFFLINE && st.Key != ShiftType.KEY_HOME)
+            .Where(st => st.MoleculeId != null
+                && accessibleMoleculeIds.Contains(st.MoleculeId.Value)
+                && st.Key != ShiftType.KEY_OFFLINE && st.Key != ShiftType.KEY_HOME)
             .OrderBy(st => st.MoleculeId).ThenBy(st => st.Start)
             .ToListAsync();
 
@@ -1329,7 +1337,7 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // Validate shift type exists (if provided)
+        // Validate shift type exists and belongs to the user's molecule (if provided)
         string? stName = null;
         if (primaryShiftTypeId.HasValue)
         {
@@ -1341,6 +1349,21 @@ public class UsersModel : LocalizedPageModel
                 TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
                 return RedirectToPage();
             }
+
+            // Validate molecule match: PrimaryShiftType must be in the same molecule as the user's company
+            if (st.MoleculeId.HasValue)
+            {
+                var userCompany = await _db.Companies.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(c => c.Id == u.CompanyId);
+                if (userCompany?.MoleculeId != st.MoleculeId)
+                {
+                    _logger.LogWarning("Rejected cross-molecule PrimaryShiftType assignment: User {UserId} (Molecule {UserMolecule}) → ShiftType {StId} (Molecule {StMolecule})",
+                        id, userCompany?.MoleculeId, st.Id, st.MoleculeId);
+                    TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
+                    return RedirectToPage();
+                }
+            }
+
             stName = st.NameEn ?? st.Name;
         }
 
@@ -2337,20 +2360,39 @@ public class UsersModel : LocalizedPageModel
             }
 
             var users = await usersQuery
+                .Include(u => u.JobType)
+                .Include(u => u.Department)
+                .Include(u => u.RoleTemplate)
                 .OrderBy(u => u.CompanyId)
                 .ThenBy(u => u.DisplayName)
                 .ToListAsync();
 
-            // Build CSV
+            // Batch-load company names for CSV (AppUser has no Company nav property)
+            var companyIds = users.Select(u => u.CompanyId).Distinct().ToList();
+            var companyNames = await _db.Companies.IgnoreQueryFilters()
+                .Where(c => companyIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.Name);
+
+            // Build CSV with comprehensive columns for re-import support
             var csv = new StringBuilder();
-            csv.AppendLine("display_name,email");
+            csv.AppendLine("display_name,email,role,role_template,company,job_type,department,is_active,phone,job_title,rank,hire_date");
 
             foreach (var user in users)
             {
-                // Proper CSV escaping: quote fields if they contain commas, quotes, or newlines
-                var displayName = EscapeCsvField(user.DisplayName);
-                var email = EscapeCsvField(user.Email);
-                csv.AppendLine($"{displayName},{email}");
+                csv.AppendLine(string.Join(",",
+                    EscapeCsvField(user.DisplayName),
+                    EscapeCsvField(user.Email),
+                    EscapeCsvField(user.Role.ToString()),
+                    EscapeCsvField(user.RoleTemplate?.Key ?? ""),
+                    EscapeCsvField(companyNames.GetValueOrDefault(user.CompanyId, "")),
+                    EscapeCsvField(user.JobType?.DisplayName ?? ""),
+                    EscapeCsvField(user.Department?.Name ?? ""),
+                    user.IsActive ? "true" : "false",
+                    EscapeCsvField(user.Phone ?? ""),
+                    EscapeCsvField(user.JobTitle ?? ""),
+                    EscapeCsvField(user.Rank.ToString()),
+                    user.HireDate.HasValue ? user.HireDate.Value.ToString("yyyy-MM-dd") : ""
+                ));
             }
 
             var fileName = $"Users_Export_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";

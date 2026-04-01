@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -20,17 +22,20 @@ public class QuickAddOnDutyModel : PageModel
     private readonly INotificationService _notificationService;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<QuickAddOnDutyModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public QuickAddOnDutyModel(
         IOnDutyService onDutyService,
         INotificationService notificationService,
         IAuditLogService auditLogService,
-        ILogger<QuickAddOnDutyModel> logger)
+        ILogger<QuickAddOnDutyModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _onDutyService = onDutyService;
         _notificationService = notificationService;
         _auditLogService = auditLogService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -53,7 +58,7 @@ public class QuickAddOnDutyModel : PageModel
             // Validate input
             if (data == null)
             {
-                return new JsonResult(new { success = false, message = "Invalid request data" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_InvalidRequestData"].Value })
                 {
                     StatusCode = 400
                 };
@@ -61,7 +66,7 @@ public class QuickAddOnDutyModel : PageModel
 
             if (data.AssigneeId <= 0)
             {
-                return new JsonResult(new { success = false, message = "Invalid assignee" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_InvalidAssignee"].Value })
                 {
                     StatusCode = 400
                 };
@@ -70,7 +75,7 @@ public class QuickAddOnDutyModel : PageModel
             // Validate notes length
             if (!string.IsNullOrWhiteSpace(data.Notes) && data.Notes.Length > 1000)
             {
-                return new JsonResult(new { success = false, message = "Notes must not exceed 1000 characters" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_NotesTooLong"].Value })
                 {
                     StatusCode = 400
                 };
@@ -79,7 +84,7 @@ public class QuickAddOnDutyModel : PageModel
             // Parse and validate date
             if (!DateOnly.TryParse(data.Date, out var onDutyDate))
             {
-                return new JsonResult(new { success = false, message = "Invalid date format" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_InvalidDateFormat"].Value })
                 {
                     StatusCode = 400
                 };
@@ -88,7 +93,7 @@ public class QuickAddOnDutyModel : PageModel
             // Validate date (prevent far future dates)
             if (onDutyDate > DateOnly.FromDateTime(DateTime.Today.AddYears(2)))
             {
-                return new JsonResult(new { success = false, message = "Cannot create on-duty assignments more than 2 years in the future" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_DateTooFarFuture"].Value })
                 {
                     StatusCode = 400
                 };
@@ -97,7 +102,7 @@ public class QuickAddOnDutyModel : PageModel
             // Validate date (prevent past dates)
             if (onDutyDate < DateOnly.FromDateTime(DateTime.Today))
             {
-                return new JsonResult(new { success = false, message = "Cannot create on-duty assignments in the past" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_DateInPast"].Value })
                 {
                     StatusCode = 400
                 };
@@ -110,7 +115,7 @@ public class QuickAddOnDutyModel : PageModel
                 var isCustomType = await _onDutyService.IsValidDutyTypeAsync(data.OnDutyType);
                 if (!isCustomType)
                 {
-                    return new JsonResult(new { success = false, message = "Invalid on-duty type" })
+                    return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_InvalidType"].Value })
                     {
                         StatusCode = 400
                     };
@@ -126,7 +131,7 @@ public class QuickAddOnDutyModel : PageModel
                 _logger.LogWarning("QuickAddOnDuty: User not authenticated - IsAuth={IsAuth}, NameId={NameId}",
                     User.Identity?.IsAuthenticated ?? false,
                     userIdClaim ?? "null");
-                return new JsonResult(new { success = false, message = "User not authenticated" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_UserNotAuthenticated"].Value })
                 {
                     StatusCode = 401
                 };
@@ -136,7 +141,7 @@ public class QuickAddOnDutyModel : PageModel
             if (!await _onDutyService.CanUserManageOnDutyAsync(currentUserId))
             {
                 _logger.LogWarning("SECURITY: User {UserId} attempted to create on-duty without permission", currentUserId);
-                return new JsonResult(new { success = false, message = "You do not have permission to create on-duty assignments" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_NoPermissionCreate"].Value })
                 {
                     StatusCode = 403
                 };
@@ -163,7 +168,7 @@ public class QuickAddOnDutyModel : PageModel
                         {
                             success = false,
                             conflictType = "vacation",
-                            message = "This user has an approved vacation on this date.",
+                            message = _localizer["QuickAddOnDuty_VacationConflict"].Value,
                             vacationStart = parts[1],
                             vacationEnd = parts[2],
                             vacationType = parts[3]
@@ -178,7 +183,7 @@ public class QuickAddOnDutyModel : PageModel
                         {
                             success = false,
                             conflictType = "vacation",
-                            message = "This user has an approved vacation on this date."
+                            message = _localizer["QuickAddOnDuty_VacationConflict"].Value
                         })
                         {
                             StatusCode = 409 // Conflict
@@ -192,7 +197,7 @@ public class QuickAddOnDutyModel : PageModel
                     {
                         success = false,
                         error = "OFFICER_RANK_REQUIRED",
-                        message = "This duty type requires an officer rank. The selected user does not have the required rank."
+                        message = _localizer["QuickAddOnDuty_OfficerRankRequired"].Value
                     })
                     {
                         StatusCode = 403 // Forbidden
@@ -236,13 +241,13 @@ public class QuickAddOnDutyModel : PageModel
             {
                 success = true,
                 onDutyId = result.OnDuty.Id,
-                message = "On-duty assignment created successfully"
+                message = _localizer["QuickAddOnDuty_Success"].Value
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating on-duty via quick-add");
-            return new JsonResult(new { success = false, message = "An error occurred while creating the on-duty assignment" })
+            return new JsonResult(new { success = false, message = _localizer["QuickAddOnDuty_Error"].Value })
             {
                 StatusCode = 500
             };

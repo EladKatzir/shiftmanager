@@ -45,13 +45,13 @@
         <details style="margin-top: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted);">
             <summary style="cursor: pointer; margin-bottom: 0.5rem;"><loc key="Error_DiagnosticInfo">Diagnostic Info</loc></summary>
             <div style="background: var(--surface-soft); padding: 0.75rem; border-radius: 0.5rem; font-family: monospace; word-break: break-all;">
-                <div><strong>Status:</strong> @Model.Code</div>
-                <div><strong>Time:</strong> @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") UTC</div>
-                <div><strong>Path:</strong> @HttpContext.Request.Headers["Referer"].ToString()</div>
-                <div><strong>Method:</strong> @HttpContext.Request.Method</div>
+                <div><strong>@Localizer["Diagnostic_Status"]:</strong> @Model.Code</div>
+                <div><strong>@Localizer["Diagnostic_Time"]:</strong> @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") UTC</div>
+                <div><strong>@Localizer["Diagnostic_Path"]:</strong> @HttpContext.Request.Headers["Referer"].ToString()</div>
+                <div><strong>@Localizer["Diagnostic_Method"]:</strong> @HttpContext.Request.Method</div>
                 @if (User?.Identity?.IsAuthenticated == true)
                 {
-                    <div><strong>User:</strong> @User.Identity.Name</div>
+                    <div><strong>@Localizer["Diagnostic_User"]:</strong> @User.Identity.Name</div>
                 }
             </div>
         </details>

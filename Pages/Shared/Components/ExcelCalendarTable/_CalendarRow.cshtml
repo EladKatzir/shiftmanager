@@ -112,7 +112,10 @@
                         }
                         @if (cell.Overlay.HasTextEntry)
                         {
-                            <span class="excel-calendar__badge excel-calendar__badge--text-entry" title="@string.Join("\n", cell.Overlay.TextEntryTexts)">📝</span>
+                            @foreach (var txt in cell.Overlay.TextEntryTexts)
+                            {
+                                <span class="excel-calendar__text-entry" title="@txt">@txt</span>
+                            }
                         }
                         @if (cell.Overlay.HasOverviewNote)
                         {

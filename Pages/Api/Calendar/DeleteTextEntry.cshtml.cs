@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -15,17 +17,20 @@ public class DeleteTextEntryModel : PageModel
     private readonly IAuditLogService _auditLogService;
     private readonly IGrantService _grantService;
     private readonly ILogger<DeleteTextEntryModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public DeleteTextEntryModel(
         ICalendarTextEntryService textEntryService,
         IAuditLogService auditLogService,
         IGrantService grantService,
-        ILogger<DeleteTextEntryModel> logger)
+        ILogger<DeleteTextEntryModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _textEntryService = textEntryService;
         _auditLogService = auditLogService;
         _grantService = grantService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -41,14 +46,14 @@ public class DeleteTextEntryModel : PageModel
 
             if (data == null || data.Id <= 0)
             {
-                return new JsonResult(new { success = false, message = "Invalid request" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_InvalidRequest"].Value })
                     { StatusCode = 400 };
             }
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var currentUserId))
             {
-                return new JsonResult(new { success = false, message = "User not authenticated" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_UserNotAuthenticated"].Value })
                     { StatusCode = 401 };
             }
 
@@ -57,7 +62,7 @@ public class DeleteTextEntryModel : PageModel
             {
                 _logger.LogWarning("SECURITY: User {UserId} attempted to delete text entry {EntryId} without calendar edit permissions",
                     currentUserId, data.Id);
-                return new JsonResult(new { success = false, message = "You do not have permission to delete calendar entries" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_NoPermissionDelete"].Value })
                     { StatusCode = 403 };
             }
 
@@ -65,7 +70,7 @@ public class DeleteTextEntryModel : PageModel
             var entry = await _textEntryService.GetByIdAsync(data.Id);
             if (entry == null)
             {
-                return new JsonResult(new { success = false, message = "Text entry not found" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_NotFound"].Value })
                     { StatusCode = 404 };
             }
 
@@ -75,14 +80,14 @@ public class DeleteTextEntryModel : PageModel
             {
                 _logger.LogWarning("SECURITY: User {UserId} attempted to delete OverviewNote {EntryId} via DeleteTextEntry endpoint",
                     currentUserId, data.Id);
-                return new JsonResult(new { success = false, message = "Cannot delete overview notes via this endpoint" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_CannotDeleteOverviewNotes"].Value })
                     { StatusCode = 403 };
             }
 
             var deleted = await _textEntryService.DeleteAsync(data.Id);
             if (!deleted)
             {
-                return new JsonResult(new { success = false, message = "Text entry not found" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_NotFound"].Value })
                     { StatusCode = 404 };
             }
 
@@ -92,12 +97,12 @@ public class DeleteTextEntryModel : PageModel
                 entityId: data.Id,
                 description: $"Deleted text entry '{entry.Text}' for user {entry.UserId} on {entry.Date:yyyy-MM-dd}");
 
-            return new JsonResult(new { success = true, message = "Text entry deleted" });
+            return new JsonResult(new { success = true, message = _localizer["DeleteTextEntry_Success"].Value });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting text entry");
-            return new JsonResult(new { success = false, message = "An error occurred" })
+            return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_Error"].Value })
                 { StatusCode = 500 };
         }
     }

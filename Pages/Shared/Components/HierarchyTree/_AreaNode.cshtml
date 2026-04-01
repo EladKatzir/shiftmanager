@@ -17,11 +17,11 @@
     <div class="htree-node__content">
         @if (Model.CanReorder)
         {
-            <span class="htree-node__drag-handle" title="Drag to reorder"></span>
+            <span class="htree-node__drag-handle" title="@Localizer["HierarchyTree_DragToReorder"]"></span>
         }
         @if (area.Molecules.Any())
         {
-            <button type="button" class="htree-node__toggle" aria-label="Toggle">
+            <button type="button" class="htree-node__toggle" aria-label="@Localizer["HierarchyTree_Toggle"]">
                 <span class="htree-node__toggle-icon">&#9654;</span>
             </button>
         }
@@ -38,7 +38,7 @@
         }
         @if (Model.CanEdit || Model.CanDelete || Model.CanAddChild)
         {
-            <button type="button" class="htree-node__menu" title="Actions">&#8942;</button>
+            <button type="button" class="htree-node__menu" title="@Localizer["HierarchyTree_Actions"]">&#8942;</button>
         }
     </div>
 

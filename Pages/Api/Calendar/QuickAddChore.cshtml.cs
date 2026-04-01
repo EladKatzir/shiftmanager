@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -18,17 +20,20 @@ public class QuickAddChoreModel : PageModel
     private readonly INotificationService _notificationService;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<QuickAddChoreModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public QuickAddChoreModel(
         IChoreService choreService,
         INotificationService notificationService,
         IAuditLogService auditLogService,
-        ILogger<QuickAddChoreModel> logger)
+        ILogger<QuickAddChoreModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _choreService = choreService;
         _notificationService = notificationService;
         _auditLogService = auditLogService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -51,7 +56,7 @@ public class QuickAddChoreModel : PageModel
             // Validate input
             if (data == null)
             {
-                return new JsonResult(new { success = false, message = "Invalid request data" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_InvalidRequestData"].Value })
                 {
                     StatusCode = 400
                 };
@@ -59,7 +64,7 @@ public class QuickAddChoreModel : PageModel
 
             if (data.AssigneeId <= 0)
             {
-                return new JsonResult(new { success = false, message = "Invalid assignee" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_InvalidAssignee"].Value })
                 {
                     StatusCode = 400
                 };
@@ -67,7 +72,7 @@ public class QuickAddChoreModel : PageModel
 
             if (string.IsNullOrWhiteSpace(data.Title))
             {
-                return new JsonResult(new { success = false, message = "Chore title is required" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_TitleRequired"].Value })
                 {
                     StatusCode = 400
                 };
@@ -76,7 +81,7 @@ public class QuickAddChoreModel : PageModel
             // Validate title length (prevent DoS and database errors)
             if (data.Title.Length > 200)
             {
-                return new JsonResult(new { success = false, message = "Chore title must not exceed 200 characters" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_TitleTooLong"].Value })
                 {
                     StatusCode = 400
                 };
@@ -85,7 +90,7 @@ public class QuickAddChoreModel : PageModel
             // Validate notes length
             if (!string.IsNullOrWhiteSpace(data.Notes) && data.Notes.Length > 1000)
             {
-                return new JsonResult(new { success = false, message = "Chore notes must not exceed 1000 characters" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_NotesTooLong"].Value })
                 {
                     StatusCode = 400
                 };
@@ -94,7 +99,7 @@ public class QuickAddChoreModel : PageModel
             // Parse and validate date
             if (!DateOnly.TryParse(data.Date, out var choreDate))
             {
-                return new JsonResult(new { success = false, message = "Invalid date format" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_InvalidDateFormat"].Value })
                 {
                     StatusCode = 400
                 };
@@ -103,7 +108,7 @@ public class QuickAddChoreModel : PageModel
             // Validate date (prevent far future dates)
             if (choreDate > DateOnly.FromDateTime(DateTime.Today.AddYears(2)))
             {
-                return new JsonResult(new { success = false, message = "Cannot create chores more than 2 years in the future" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_DateTooFarFuture"].Value })
                 {
                     StatusCode = 400
                 };
@@ -112,7 +117,7 @@ public class QuickAddChoreModel : PageModel
             // Validate date (prevent past dates)
             if (choreDate < DateOnly.FromDateTime(DateTime.Today))
             {
-                return new JsonResult(new { success = false, message = "Cannot create chores in the past" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_DateInPast"].Value })
                 {
                     StatusCode = 400
                 };
@@ -125,7 +130,7 @@ public class QuickAddChoreModel : PageModel
                 _logger.LogWarning("QuickAddChore: User not authenticated - IsAuth={IsAuth}, NameId={NameId}",
                     User.Identity?.IsAuthenticated ?? false,
                     userIdClaim ?? "null");
-                return new JsonResult(new { success = false, message = "User not authenticated" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_UserNotAuthenticated"].Value })
                 {
                     StatusCode = 401
                 };
@@ -135,7 +140,7 @@ public class QuickAddChoreModel : PageModel
             if (!await _choreService.CanUserManageChoresAsync(currentUserId))
             {
                 _logger.LogWarning("SECURITY: User {UserId} attempted to create chore without permission", currentUserId);
-                return new JsonResult(new { success = false, message = "You do not have permission to create chores" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_NoPermissionCreate"].Value })
                 {
                     StatusCode = 403
                 };
@@ -146,7 +151,7 @@ public class QuickAddChoreModel : PageModel
             {
                 _logger.LogWarning("SECURITY: User {UserId} attempted to assign chore to unauthorized user {AssigneeId}",
                     currentUserId, data.AssigneeId);
-                return new JsonResult(new { success = false, message = "You cannot assign chores to this user" })
+                return new JsonResult(new { success = false, message = _localizer["QuickAddChore_CannotAssignToUser"].Value })
                 {
                     StatusCode = 403
                 };
@@ -170,7 +175,7 @@ public class QuickAddChoreModel : PageModel
                     return new JsonResult(new
                     {
                         success = false,
-                        message = "This user has a shift on this date. Please use the Chores page to replace the shift."
+                        message = _localizer["QuickAddChore_ShiftConflict"].Value
                     })
                     {
                         StatusCode = 409 // Conflict
@@ -187,7 +192,7 @@ public class QuickAddChoreModel : PageModel
                         {
                             success = false,
                             conflictType = "vacation",
-                            message = "This user has an approved vacation on this date.",
+                            message = _localizer["QuickAddChore_VacationConflict"].Value,
                             vacationStart = parts[1],
                             vacationEnd = parts[2],
                             vacationType = parts[3]
@@ -202,7 +207,7 @@ public class QuickAddChoreModel : PageModel
                         {
                             success = false,
                             conflictType = "vacation",
-                            message = "This user has an approved vacation on this date."
+                            message = _localizer["QuickAddChore_VacationConflict"].Value
                         })
                         {
                             StatusCode = 409 // Conflict
@@ -247,13 +252,13 @@ public class QuickAddChoreModel : PageModel
             {
                 success = true,
                 choreId = result.Chore.Id,
-                message = "Chore created successfully"
+                message = _localizer["QuickAddChore_Success"].Value
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating chore via quick-add");
-            return new JsonResult(new { success = false, message = "An error occurred while creating the chore" })
+            return new JsonResult(new { success = false, message = _localizer["QuickAddChore_Error"].Value })
             {
                 StatusCode = 500
             };

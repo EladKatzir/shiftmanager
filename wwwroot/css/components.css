@@ -772,6 +772,12 @@ select.form-field__input {
 .modal--lg { max-width: var(--modal-lg); }
 .modal--full { max-width: 90vw; width: 90vw; }
 
+/* Responsive modal for small screens / zoomed viewports */
+@media (max-width: 480px) {
+  .modal { width: 95%; max-height: 95vh; }
+  .modal--sm { max-width: none; }
+}
+
 .modal__header {
   display: flex;
   align-items: center;

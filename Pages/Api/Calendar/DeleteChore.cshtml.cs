@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -18,17 +20,20 @@ public class DeleteChoreModel : PageModel
     private readonly INotificationService _notificationService;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<DeleteChoreModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public DeleteChoreModel(
         IChoreService choreService,
         INotificationService notificationService,
         IAuditLogService auditLogService,
-        ILogger<DeleteChoreModel> logger)
+        ILogger<DeleteChoreModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _choreService = choreService;
         _notificationService = notificationService;
         _auditLogService = auditLogService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -51,7 +56,7 @@ public class DeleteChoreModel : PageModel
             // Validate input
             if (data == null || data.Id <= 0)
             {
-                return new JsonResult(new { success = false, message = "Invalid chore ID" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteChore_InvalidChoreId"].Value })
                 {
                     StatusCode = 400
                 };
@@ -64,7 +69,7 @@ public class DeleteChoreModel : PageModel
                 _logger.LogWarning("DeleteChore: User not authenticated - IsAuth={IsAuth}, NameId={NameId}",
                     User.Identity?.IsAuthenticated ?? false,
                     userIdClaim ?? "null");
-                return new JsonResult(new { success = false, message = "User not authenticated" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteChore_UserNotAuthenticated"].Value })
                 {
                     StatusCode = 401
                 };
@@ -75,7 +80,7 @@ public class DeleteChoreModel : PageModel
             {
                 _logger.LogWarning("SECURITY: User {UserId} attempted to delete chore {ChoreId} without permission",
                     currentUserId, data.Id);
-                return new JsonResult(new { success = false, message = "You do not have permission to delete chores" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteChore_NoPermissionDelete"].Value })
                 {
                     StatusCode = 403
                 };
@@ -85,7 +90,7 @@ public class DeleteChoreModel : PageModel
             var chore = await _choreService.GetChoreByIdAsync(data.Id);
             if (chore == null)
             {
-                return new JsonResult(new { success = false, message = "Chore not found" })
+                return new JsonResult(new { success = false, message = _localizer["DeleteChore_NotFound"].Value })
                 {
                     StatusCode = 404
                 };
@@ -129,13 +134,13 @@ public class DeleteChoreModel : PageModel
             return new JsonResult(new
             {
                 success = true,
-                message = "Chore deleted successfully"
+                message = _localizer["DeleteChore_Success"].Value
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting chore via quick-delete");
-            return new JsonResult(new { success = false, message = "An error occurred while deleting the chore" })
+            return new JsonResult(new { success = false, message = _localizer["DeleteChore_Error"].Value })
             {
                 StatusCode = 500
             };

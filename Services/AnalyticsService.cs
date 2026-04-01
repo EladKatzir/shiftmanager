@@ -400,9 +400,13 @@ public class AnalyticsService : IAnalyticsService
     {
         try
         {
+            // Exclude HOME/OFFLINE shifts from coverage — they're not real operational shifts
+            var exemptKeys = new[] { ShiftManager.Models.ShiftType.KEY_HOME, ShiftManager.Models.ShiftType.KEY_OFFLINE };
             var instances = await _db.ShiftInstances
                 .AsNoTracking()
-                .Where(si => si.WorkDate >= startDate && si.WorkDate <= endDate)
+                .Include(si => si.ShiftType)
+                .Where(si => si.WorkDate >= startDate && si.WorkDate <= endDate
+                    && !exemptKeys.Contains(si.ShiftType.Key))
                 .ToListAsync();
 
             if (!instances.Any())
@@ -411,10 +415,12 @@ public class AnalyticsService : IAnalyticsService
             }
 
             var totalRequired = instances.Sum(si => si.StaffingRequired);
+            var instanceIds = instances.Select(si => si.Id).ToHashSet();
 
             var totalAssigned = await _db.ShiftAssignments
                 .AsNoTracking()
-                .Where(a => a.ShiftInstance.WorkDate >= startDate && a.ShiftInstance.WorkDate <= endDate)
+                .Where(a => instanceIds.Contains(a.ShiftInstanceId)
+                    && a.UserId != null)
                 .CountAsync();
 
             if (totalRequired == 0)

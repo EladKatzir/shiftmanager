@@ -118,6 +118,7 @@ public static class FeatureFlagSeed
             F(Flags.SetupTasksEnabled, "Enables the Setup Tasks feature including auto-generation hooks on molecule/company creation.", now),
             F(Flags.VacationApprovalEnabled, "Enables the vacation approval workflow including rule-based routing, auto-approve, and multi-level approval.", now),
             F(Flags.StoreHoursEnabled, "Enables the Store Hours feature including store management, opening hours, and Quick Info widget integration.", now),
+            F(Flags.EmailServiceEnabled, "Global kill switch for email notifications. When disabled, no emails are sent regardless of per-company settings.", now),
         };
     }
 
@@ -226,5 +227,6 @@ public static class FeatureFlagSeed
         public const string SetupTasksEnabled = "FF_SETUP_TASKS_ENABLED";
         public const string VacationApprovalEnabled = "FF_VACATION_APPROVAL_ENABLED";
         public const string StoreHoursEnabled = "FF_STORE_HOURS_ENABLED";
+        public const string EmailServiceEnabled = "FF_EMAIL_SERVICE_ENABLED";
     }
 }

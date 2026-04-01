@@ -622,6 +622,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
         // molecule boundary already validated by ValidateShiftAssignmentAsync above
         var shiftInstance = await _db.ShiftInstances
             .IgnoreQueryFilters()
+            .Include(si => si.ShiftType)
             .FirstOrDefaultAsync(si => si.Id == shiftInstanceId);
         if (shiftInstance == null)
         {
@@ -644,15 +645,19 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 return new ShiftAssignmentResult(false, existingAssignment.Id, "ALREADY_ASSIGNED", _localizer["Error_AlreadyAssigned"]);
             }
 
-            // Check capacity
-            // SECURITY-AUDITED: SAFE — scoped by explicit shiftInstanceId
-            var currentAssignedCount = await _db.ShiftAssignments
-                .IgnoreQueryFilters()
-                .CountAsync(sa => sa.ShiftInstanceId == shiftInstanceId && sa.UserId != null);
-            if (currentAssignedCount >= shiftInstance.StaffingRequired)
+            // Check capacity — exempt HOME/OFFLINE shifts (they allow unlimited assignments)
+            var isExemptShift = shiftInstance.ShiftType.IsHome || shiftInstance.ShiftType.IsOffline;
+            if (!isExemptShift)
             {
-                await transaction.RollbackAsync();
-                return new ShiftAssignmentResult(false, null, "SHIFT_FULLY_STAFFED", _localizer["Error_ShiftFullyStaffed"]);
+                // SECURITY-AUDITED: SAFE — scoped by explicit shiftInstanceId
+                var currentAssignedCount = await _db.ShiftAssignments
+                    .IgnoreQueryFilters()
+                    .CountAsync(sa => sa.ShiftInstanceId == shiftInstanceId && sa.UserId != null);
+                if (currentAssignedCount >= shiftInstance.StaffingRequired)
+                {
+                    await transaction.RollbackAsync();
+                    return new ShiftAssignmentResult(false, null, "SHIFT_FULLY_STAFFED", _localizer["Error_ShiftFullyStaffed"]);
+                }
             }
 
             // Use the EMPLOYEE's CompanyId (not the instance's or assigner's)
