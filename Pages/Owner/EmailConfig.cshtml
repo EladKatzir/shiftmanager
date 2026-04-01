@@ -90,6 +90,73 @@
         </div>
     }
 
+    @* Global Email Config — Owner only *@
+    @if (Model.IsOwner)
+    {
+        <div class="config-card" style="border-inline-start: 4px solid var(--primary); margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <h2>🌐 <loc key="Owner_EmailConfig_GlobalConfig">Global Email Configuration</loc></h2>
+                <div class="form-group-inline">
+                    <span class="badge badge-primary" style="font-size: 0.75rem;"><loc key="Owner_EmailConfig_GlobalBadge">Applies to all companies</loc></span>
+                </div>
+            </div>
+            <div class="card-body">
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                    <loc key="Owner_EmailConfig_GlobalDesc">These settings apply to all companies by default. Individual companies can override them below.</loc>
+                </p>
+                <form method="post" asp-page-handler="SaveGlobal">
+                    <div class="form-group-inline" style="margin-bottom: 1rem;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" asp-for="GlobalEmailEnabled" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-status-text">@(Model.GlobalEmailEnabled ? Localizer["Enabled"] : Localizer["Disabled"])</span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="GlobalEmailApiUrl"><loc key="Owner_EmailConfig_ApiUrl" /></label>
+                        <input asp-for="GlobalEmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="GlobalEmailApiKey"><loc key="Owner_EmailConfig_ApiKey" /></label>
+                        <input asp-for="GlobalEmailApiKey" type="password" class="form-control" placeholder="@(Model.GlobalHasExistingKey ? "••••••••••••" : Localizer["Owner_EmailConfig_ApiKey_Placeholder"])" />
+                        @if (Model.GlobalHasExistingKey)
+                        {
+                            <small class="form-text" style="color: var(--success);">✓ <loc key="Owner_EmailConfig_KeyConfigured">API key is configured</loc></small>
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="GlobalEmailFromAddress"><loc key="Owner_EmailConfig_FromAddress" /></label>
+                        <input asp-for="GlobalEmailFromAddress" class="form-control" placeholder="noreply@example.com" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <loc key="Owner_EmailConfig_SaveGlobal">Save Global Configuration</loc>
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+
+    @* Company Override Section *@
+    @if (Model.HasCompanyOverride)
+    {
+        <div class="alert alert-info" style="margin-bottom: 1rem;">
+            <strong><loc key="Owner_EmailConfig_OverrideActive">Company Override Active</loc></strong> —
+            <loc key="Owner_EmailConfig_OverrideDesc">This company has custom email settings that override the global configuration.</loc>
+            <form method="post" asp-page-handler="RemoveOverride" style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-ghost" style="margin-inline-start: 0.5rem;"
+                        onclick="return confirm('@Localizer["Owner_EmailConfig_RemoveOverrideConfirm", "Remove company override and use global settings?"]')">
+                    <loc key="Owner_EmailConfig_UseGlobal">Use Global Settings</loc>
+                </button>
+            </form>
+        </div>
+    }
+    else if (Model.IsOwner)
+    {
+        <div class="alert alert-success" style="margin-bottom: 1rem;">
+            <loc key="Owner_EmailConfig_UsingGlobal">This company is using the global email configuration. Save settings below to create a company-specific override.</loc>
+        </div>
+    }
+
     <form method="post">
         <div class="config-card">
             <div class="card-header">

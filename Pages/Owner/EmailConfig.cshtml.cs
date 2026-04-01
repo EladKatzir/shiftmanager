@@ -44,6 +44,15 @@ public class EmailConfigModel : LocalizedPageModel
     [BindProperty] public string EmailApiUrl { get; set; } = string.Empty;
     [BindProperty] public string EmailFromAddress { get; set; } = string.Empty;
 
+    // Global config properties
+    [BindProperty] public bool GlobalEmailEnabled { get; set; }
+    [BindProperty] public string GlobalEmailApiKey { get; set; } = string.Empty;
+    [BindProperty] public string GlobalEmailApiUrl { get; set; } = string.Empty;
+    [BindProperty] public string GlobalEmailFromAddress { get; set; } = string.Empty;
+    public bool GlobalHasExistingKey { get; set; }
+    public bool HasCompanyOverride { get; set; }
+    public bool IsOwner { get; set; }
+
     public bool HasExistingKey { get; set; }
 
     // Statistics
@@ -67,6 +76,25 @@ public class EmailConfigModel : LocalizedPageModel
     {
         try
         {
+            // Check Owner status for showing global config section
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var uid))
+            {
+                var grantService = HttpContext.RequestServices.GetService<IGrantService>();
+                IsOwner = grantService != null && await grantService.HasGrantAsync(uid, "AdminAccess");
+            }
+
+            // Load global config
+            var globalConfig = await _emailConfigService.GetGlobalEmailConfigAsync();
+            GlobalEmailEnabled = globalConfig?.Enabled ?? false;
+            GlobalEmailApiUrl = globalConfig?.ApiUrl ?? string.Empty;
+            GlobalEmailFromAddress = globalConfig?.FromAddress ?? string.Empty;
+            GlobalHasExistingKey = !string.IsNullOrWhiteSpace(globalConfig?.EncryptedApiKey);
+
+            // Load company-specific override (if any)
+            HasCompanyOverride = await _emailConfigService.HasCompanyOverrideAsync();
+
+            // Load effective config for current company (company override or global fallback)
             var emailConfig = await _emailConfigService.GetEmailConfigAsync();
 
             EmailEnabled = emailConfig?.Enabled ?? false;
@@ -135,6 +163,74 @@ public class EmailConfigModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving email configuration");
+            Error = _localizer["Error_SavingEmailConfigFailed"];
+            await OnGetAsync();
+            return Page();
+        }
+    }
+
+    public async Task<IActionResult> OnPostSaveGlobalAsync()
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+
+            // SECURITY: Global config affects ALL companies — require Owner (AdminAccess) grant
+            var grantService = HttpContext.RequestServices.GetRequiredService<IGrantService>();
+            if (!await grantService.HasGrantAsync(currentUserId, "AdminAccess"))
+            {
+                _logger.LogWarning("User {UserId} attempted to save global email config without AdminAccess grant", currentUserId);
+                return Forbid();
+            }
+
+            var userName = User.Identity?.Name ?? "Unknown";
+
+            await _emailConfigService.SaveGlobalEmailConfigAsync(
+                GlobalEmailEnabled,
+                string.IsNullOrWhiteSpace(GlobalEmailApiKey) ? null : GlobalEmailApiKey,
+                GlobalEmailApiUrl,
+                GlobalEmailFromAddress,
+                userName);
+
+            await _auditLogService.LogUserActionAsync(
+                currentUserId, "GlobalEmailConfigUpdated", "EmailConfig", null,
+                "Global email configuration updated",
+                $"Enabled={GlobalEmailEnabled}, Url={GlobalEmailApiUrl}, From={GlobalEmailFromAddress}");
+
+            Success = _localizer["Success_EmailConfigSaved"];
+            await OnGetAsync();
+            return Page();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving global email configuration");
+            Error = _localizer["Error_SavingEmailConfigFailed"];
+            await OnGetAsync();
+            return Page();
+        }
+    }
+
+    public async Task<IActionResult> OnPostRemoveOverrideAsync()
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            var deleted = await _emailConfigService.DeleteCompanyOverrideAsync();
+            if (deleted)
+            {
+                await _auditLogService.LogUserActionAsync(
+                    currentUserId, "CompanyEmailOverrideRemoved", "EmailConfig", null,
+                    "Company email config override removed — now using global config");
+
+                Success = _localizer["Success_EmailConfigSaved"];
+            }
+
+            await OnGetAsync();
+            return Page();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing company email override");
             Error = _localizer["Error_SavingEmailConfigFailed"];
             await OnGetAsync();
             return Page();

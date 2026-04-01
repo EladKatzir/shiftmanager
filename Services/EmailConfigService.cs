@@ -31,8 +31,23 @@ public class EmailConfigService : IEmailConfigService
     public async Task<EmailConfig?> GetEmailConfigAsync()
     {
         var companyId = _tenantResolver.GetCurrentTenantId();
-        return await _context.EmailConfigs
+
+        // Try company-specific config first (query filter already includes both global + tenant)
+        var companyConfig = await _context.EmailConfigs
             .FirstOrDefaultAsync(ec => ec.CompanyId == companyId);
+        if (companyConfig != null) return companyConfig;
+
+        // Fall back to global config (CompanyId = null)
+        return await _context.EmailConfigs
+            .FirstOrDefaultAsync(ec => ec.CompanyId == null);
+    }
+
+    public async Task<EmailConfig?> GetGlobalEmailConfigAsync()
+    {
+        // SECURITY-AUDITED: SAFE — global config is intentionally shared, no tenant scoping
+        return await _context.EmailConfigs
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(ec => ec.CompanyId == null);
     }
 
     public async Task<EmailConfig?> GetEmailConfigByCompanyIdAsync(int companyId)
@@ -43,6 +58,26 @@ public class EmailConfigService : IEmailConfigService
             .FirstOrDefaultAsync(ec => ec.CompanyId == companyId);
     }
 
+    public async Task<bool> HasCompanyOverrideAsync()
+    {
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        return await _context.EmailConfigs
+            .AnyAsync(ec => ec.CompanyId == companyId);
+    }
+
+    public async Task<bool> DeleteCompanyOverrideAsync()
+    {
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var config = await _context.EmailConfigs
+            .FirstOrDefaultAsync(ec => ec.CompanyId == companyId);
+        if (config == null) return false;
+
+        _context.EmailConfigs.Remove(config);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Deleted company email config override for company {CompanyId}", companyId);
+        return true;
+    }
+
     public async Task<EmailConfig> SaveEmailConfigAsync(
         bool enabled,
         string? apiKey,
@@ -51,11 +86,12 @@ public class EmailConfigService : IEmailConfigService
         string updatedBy)
     {
         var companyId = _tenantResolver.GetCurrentTenantId();
-        var config = await GetEmailConfigAsync();
+        // Only look for company-specific config (not global fallback)
+        var config = await _context.EmailConfigs
+            .FirstOrDefaultAsync(ec => ec.CompanyId == companyId);
 
         if (config == null)
         {
-            // Create new configuration
             config = new EmailConfig
             {
                 CompanyId = companyId,
@@ -66,32 +102,73 @@ public class EmailConfigService : IEmailConfigService
                 LastUpdatedBy = updatedBy
             };
 
-            // Encrypt API key if provided
             if (!string.IsNullOrWhiteSpace(apiKey))
-            {
                 config.EncryptedApiKey = _encryptionService.Encrypt(apiKey);
-            }
 
             _context.EmailConfigs.Add(config);
-            _logger.LogInformation("Creating new email configuration for company {CompanyId}", companyId);
+            _logger.LogInformation("Creating company email config override for company {CompanyId}", companyId);
         }
         else
         {
-            // Update existing configuration
             config.Enabled = enabled;
             config.ApiUrl = apiUrl;
             config.FromAddress = fromAddress;
             config.LastUpdated = DateTime.UtcNow;
             config.LastUpdatedBy = updatedBy;
 
-            // Update API key only if a new one is provided
             if (!string.IsNullOrWhiteSpace(apiKey))
             {
                 config.EncryptedApiKey = _encryptionService.Encrypt(apiKey);
-                _logger.LogInformation("Updating API key for company {CompanyId}", companyId);
             }
 
-            _logger.LogInformation("Updating email configuration for company {CompanyId}", companyId);
+            _logger.LogInformation("Updating company email config for company {CompanyId}", companyId);
+        }
+
+        await _context.SaveChangesAsync();
+        return config;
+    }
+
+    public async Task<EmailConfig> SaveGlobalEmailConfigAsync(
+        bool enabled,
+        string? apiKey,
+        string? apiUrl,
+        string? fromAddress,
+        string updatedBy)
+    {
+        var config = await GetGlobalEmailConfigAsync();
+
+        if (config == null)
+        {
+            config = new EmailConfig
+            {
+                CompanyId = null, // Global
+                Enabled = enabled,
+                ApiUrl = apiUrl,
+                FromAddress = fromAddress,
+                LastUpdated = DateTime.UtcNow,
+                LastUpdatedBy = updatedBy
+            };
+
+            if (!string.IsNullOrWhiteSpace(apiKey))
+                config.EncryptedApiKey = _encryptionService.Encrypt(apiKey);
+
+            _context.EmailConfigs.Add(config);
+            _logger.LogInformation("Creating global email configuration");
+        }
+        else
+        {
+            config.Enabled = enabled;
+            config.ApiUrl = apiUrl;
+            config.FromAddress = fromAddress;
+            config.LastUpdated = DateTime.UtcNow;
+            config.LastUpdatedBy = updatedBy;
+
+            if (!string.IsNullOrWhiteSpace(apiKey))
+            {
+                config.EncryptedApiKey = _encryptionService.Encrypt(apiKey);
+            }
+
+            _logger.LogInformation("Updating global email configuration");
         }
 
         await _context.SaveChangesAsync();
@@ -102,9 +179,7 @@ public class EmailConfigService : IEmailConfigService
     {
         var config = await GetEmailConfigAsync();
         if (config?.EncryptedApiKey == null)
-        {
             return null;
-        }
 
         try
         {
@@ -112,7 +187,8 @@ public class EmailConfigService : IEmailConfigService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to decrypt API key for company {CompanyId}", config.CompanyId);
+            _logger.LogError(ex, "Failed to decrypt API key for config {ConfigId} (CompanyId={CompanyId})",
+                config.Id, config.CompanyId);
             throw;
         }
     }

@@ -1,13 +1,22 @@
 namespace ShiftManager.Models;
 
 /// <summary>
-/// Stores email configuration settings for each company.
+/// Stores email configuration settings. Supports global config (CompanyId = null)
+/// and per-company overrides (CompanyId = specific company).
 /// The ApiKey field is encrypted at rest using Data Protection API.
+/// Fallback chain: company-specific → global → appsettings.json.
+/// NOTE: Does NOT implement IBelongsToCompany — global config has no company.
+/// Query filter includes both global (CompanyId = null) and tenant-scoped configs.
 /// </summary>
-public class EmailConfig : IBelongsToCompany
+public class EmailConfig
 {
     public int Id { get; set; }
-    public int CompanyId { get; set; }
+
+    /// <summary>
+    /// Null = global config (applies to all companies by default).
+    /// Non-null = per-company override for a specific company.
+    /// </summary>
+    public int? CompanyId { get; set; }
 
     /// <summary>
     /// Whether email notifications are enabled for this company

@@ -31,10 +31,11 @@ public class MailService : IMailService
     private readonly EmailBackgroundQueue _emailQueue;
     private readonly ILocalizationService _localization;
     private readonly ITenantResolver? _tenantResolver;
+    private readonly IFeatureFlagService? _featureFlagService;
 
     /// <summary>
     /// Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
-    /// ITenantResolver is optional — it's available during HTTP requests (for enqueue) but not in background processor scope.
+    /// ITenantResolver and IFeatureFlagService are optional — available during HTTP requests but not in background processor scope.
     /// </summary>
     public MailService(
         IHttpClientFactory httpClientFactory,
@@ -46,7 +47,8 @@ public class MailService : IMailService
         IEmailTemplateService emailTemplateService,
         EmailBackgroundQueue emailQueue,
         ILocalizationService localization,
-        ITenantResolver? tenantResolver = null)
+        ITenantResolver? tenantResolver = null,
+        IFeatureFlagService? featureFlagService = null)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -58,6 +60,7 @@ public class MailService : IMailService
         _emailQueue = emailQueue ?? throw new ArgumentNullException(nameof(emailQueue));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _tenantResolver = tenantResolver;
+        _featureFlagService = featureFlagService;
     }
 
     /// <summary>
@@ -65,15 +68,41 @@ public class MailService : IMailService
     /// </summary>
     private async Task<(bool enabled, string? apiKey, string? apiUrl, string? fromAddress, string source)> LoadConfigurationAsync()
     {
+        // Feature flag kill switch: Owner can disable via FeatureFlags UI
+        if (_featureFlagService != null)
+        {
+            try
+            {
+                if (!await _featureFlagService.IsEnabledAsync(Data.SeedData.FeatureFlagSeed.Flags.EmailServiceEnabled))
+                {
+                    _logger.LogInformation("Email service disabled via FF_EMAIL_SERVICE_ENABLED feature flag");
+                    return (false, null, null, null, "feature-flag-disabled");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to check email feature flag, continuing with other checks");
+            }
+        }
+
+        // Secondary kill switch: Email:GlobalEnabled in appsettings.json (works even when DB is down)
+        var globalEnabled = _configuration.GetValue<bool>("Email:GlobalEnabled", true);
+        if (!globalEnabled)
+        {
+            _logger.LogInformation("Email service globally disabled via Email:GlobalEnabled=false");
+            return (false, null, null, null, "global-disabled");
+        }
+
         try
         {
-            // Try to load from database first (company-specific configuration)
+            // Try database: company-specific → global fallback (handled by GetEmailConfigAsync)
             var dbConfig = await _emailConfigService.GetEmailConfigAsync();
             if (dbConfig != null)
             {
                 var decryptedApiKey = await _emailConfigService.GetDecryptedApiKeyAsync();
-                _logger.LogDebug("Loaded email configuration from database for company {CompanyId}", dbConfig.CompanyId);
-                return (dbConfig.Enabled, decryptedApiKey, dbConfig.ApiUrl, dbConfig.FromAddress, "database");
+                var source = dbConfig.CompanyId.HasValue ? $"company-{dbConfig.CompanyId}" : "global";
+                _logger.LogDebug("Loaded email configuration from {Source}", source);
+                return (dbConfig.Enabled, decryptedApiKey, dbConfig.ApiUrl, dbConfig.FromAddress, source);
             }
         }
         catch (Exception ex)

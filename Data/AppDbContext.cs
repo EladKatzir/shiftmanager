@@ -661,8 +661,9 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<TeamCalendar>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            // EmailConfig: custom filter includes BOTH global (CompanyId = null) AND tenant-scoped configs
             modelBuilder.Entity<EmailConfig>()
-                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+                .HasQueryFilter(e => e.CompanyId == null || e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             modelBuilder.Entity<Feedback>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
@@ -752,16 +753,18 @@ public class AppDbContext : DbContext
             .HasIndex(c => new { c.TypeValue, c.IsActive });
 
         // Configure EmailConfig
-        // Unique constraint: Only one email configuration per company
+        // Unique constraint: Only one config per company (null CompanyId = global, also unique)
         modelBuilder.Entity<EmailConfig>()
             .HasIndex(ec => ec.CompanyId)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter(null); // SQLite: allows one NULL row for global config
 
         modelBuilder.Entity<EmailConfig>()
             .HasOne<Company>()
             .WithMany()
             .HasForeignKey(ec => ec.CompanyId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         // Configure EmailApiLog
         modelBuilder.Entity<EmailApiLog>()
