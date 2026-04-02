@@ -157,7 +157,7 @@
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
-            <div class="toast__progress" style="animation-duration: ${CONFIG.autoDismissMs}ms;"></div>
+            <div class="toast__progress" style="animation-duration: ${AUTO_DISMISS_BY_TYPE[type] ?? CONFIG.autoDismissMs}ms;${(AUTO_DISMISS_BY_TYPE[type] === 0) ? ' display: none;' : ''}"></div>
         `;
 
         return toast;
@@ -197,6 +197,33 @@
 
         // Store timer reference for manual dismiss
         toast._autoDismissTimer = autoDismissTimer;
+
+        // Pause auto-dismiss on hover (with elapsed time tracking)
+        if (dismissMs > 0) {
+            let startTime = Date.now();
+            let elapsedMs = 0;
+
+            toast.addEventListener('mouseenter', function() {
+                elapsedMs += Date.now() - startTime;
+                if (toast._autoDismissTimer) {
+                    clearTimeout(toast._autoDismissTimer);
+                    toast._autoDismissTimer = null;
+                }
+            });
+
+            toast.addEventListener('mouseleave', function() {
+                if (toast.classList.contains('toast--dismissing')) return;
+                var remainingMs = dismissMs - elapsedMs;
+                if (remainingMs > 0) {
+                    startTime = Date.now();
+                    toast._autoDismissTimer = setTimeout(function() {
+                        dismissToast(toast);
+                    }, remainingMs);
+                } else {
+                    dismissToast(toast);
+                }
+            });
+        }
 
         // Announce to screen readers
         announceToScreenReader(options.message, options.title);

@@ -25,22 +25,6 @@
         <p class="page-subtitle"><loc key="Owner_AreaConfig_Desc" /></p>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.Success))
-    {
-        <div class="alert alert-success">
-            <span>✓</span>
-            <span>@Model.Success</span>
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-error">
-            <span>✗</span>
-            <span>@Model.Error</span>
-        </div>
-    }
-
     @if (Model.Areas.Any())
     {
         <div class="areas-grid">
@@ -212,16 +196,6 @@ document.addEventListener('keydown', function(e) {
     border-radius: 10px;
     margin-bottom: 1.5rem;
     font-weight: 500;
-}
-
-.alert-success {
-    background: var(--success-soft);
-    color: var(--success);
-}
-
-.alert-error {
-    background: var(--danger-soft);
-    color: var(--danger);
 }
 
 .areas-grid {

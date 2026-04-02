@@ -135,7 +135,7 @@
     font-size: 0.875rem;
     display: inline-block;
 }
-.modal {
+#createModal, #deleteModal, #detailsModal, #infoModal, #conflictModal {
     display: none;
     position: fixed;
     top: 0;
@@ -147,7 +147,7 @@
     align-items: center;
     justify-content: center;
 }
-.modal.active {
+#createModal.active, #deleteModal.active, #detailsModal.active, #infoModal.active, #conflictModal.active {
     display: flex;
 }
 .modal-content {

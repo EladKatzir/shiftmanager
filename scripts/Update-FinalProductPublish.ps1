@@ -498,6 +498,40 @@ try {
     Copy-Folder -From $SourceDir -To $DestDir
     Write-Log -Level OK -Message "Copy completed."
 
+    # Patch ApiKeyHmacSecret in FinalProductPublish to ensure the placeholder is never shipped.
+    # The script is idempotent: it only replaces the literal placeholder string
+    # "CHANGE-THIS-TO-A-RANDOM-SECRET" and skips files that already have a real secret.
+    $hmacScript = Join-Path $PSScriptRoot 'set_hmac_secret.py'
+    $python = Get-Tool -Name 'python'
+    if (-not $python) {
+        $python = Get-Tool -Name 'python3'
+    }
+
+    if ($python -and (Test-Path -LiteralPath $hmacScript)) {
+        Write-Log -Level INFO -Message "Running set_hmac_secret.py to ensure ApiKeyHmacSecret is not a placeholder..."
+        Push-Location $RepoRoot
+        try {
+            $hmacOutput = & $python $hmacScript 2>&1
+            $hmacExit   = $LASTEXITCODE
+            foreach ($line in $hmacOutput) {
+                Write-Log -Level INFO -Message ("  [set_hmac_secret] {0}" -f $line)
+            }
+            if ($hmacExit -ne 0) {
+                Write-Log -Level WARN -Message ("set_hmac_secret.py exited with code {0}; review output above." -f $hmacExit)
+            } else {
+                Write-Log -Level OK -Message "ApiKeyHmacSecret patch step complete."
+            }
+        } catch {
+            Write-Log -Level WARN -Message ("set_hmac_secret.py threw an exception (non-fatal): {0}" -f $_.Exception.Message)
+        } finally {
+            Pop-Location
+        }
+    } elseif (-not $python) {
+        Write-Log -Level WARN -Message "Python not found on PATH. ApiKeyHmacSecret was NOT verified. Run 'python scripts/set_hmac_secret.py' manually before deploying."
+    } else {
+        Write-Log -Level WARN -Message ("set_hmac_secret.py not found at: {0}. ApiKeyHmacSecret was NOT verified." -f $hmacScript)
+    }
+
     # STEP 6: Verify FinalProductPublish
     Write-Step -Step 6 -Total 6 -Title 'Verifying FinalProductPublish'
     $dstStats = Get-FolderStats -Path $DestDir

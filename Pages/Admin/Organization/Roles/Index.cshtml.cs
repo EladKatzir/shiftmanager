@@ -71,8 +71,6 @@ public class IndexModel : LocalizedPageModel
 
     public async Task OnGetAsync()
     {
-        if (TempData["SuccessMessage"] is string successMsg) Success = successMsg;
-        if (TempData["ErrorMessage"] is string errorMsg) Error = errorMsg;
 
         // Load role templates for filter
         var activeTemplates = await _roleService.GetRoleTemplatesAsync();

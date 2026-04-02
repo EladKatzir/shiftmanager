@@ -436,14 +436,33 @@
             defaultOpt.textContent = (window.AppLocalizer?.BottomSheet_DefaultOption || '-- Select --');
             userSelect.appendChild(defaultOpt);
 
-            // Populate from available users (read from page data or cell context)
-            var availableUsers = getAvailableUsers(cellData);
-            availableUsers.forEach(function (user) {
-                var opt = document.createElement('option');
-                opt.value = user.id;
-                opt.textContent = user.name;
-                userSelect.appendChild(opt);
-            });
+            // For Tech molecules in shift-mode, fetch eligible users per shift type dynamically
+            var calPageConfig = window.CalendarPageConfig;
+            if (calPageConfig && calPageConfig.isTechMolecule && calPageConfig.moleculeId > 0 &&
+                    itemType === 'user' && cellData.rowId && cellData.rowId.startsWith('shift-')) {
+                var shiftTypeId = parseInt(cellData.rowId.replace('shift-', ''), 10);
+                if (!isNaN(shiftTypeId) && shiftTypeId > 0) {
+                    populateEligibleUsersAsync(userSelect, calPageConfig.moleculeId, shiftTypeId);
+                } else {
+                    // Malformed rowId — fall back to full molecule user list
+                    var fallbackUsers = getAvailableUsers(cellData);
+                    fallbackUsers.forEach(function (user) {
+                        var opt = document.createElement('option');
+                        opt.value = user.id;
+                        opt.textContent = user.name;
+                        userSelect.appendChild(opt);
+                    });
+                }
+            } else {
+                // Populate from available users (read from page data or cell context)
+                var availableUsers = getAvailableUsers(cellData);
+                availableUsers.forEach(function (user) {
+                    var opt = document.createElement('option');
+                    opt.value = user.id;
+                    opt.textContent = user.name;
+                    userSelect.appendChild(opt);
+                });
+            }
 
             fieldGroup.appendChild(userSelect);
             addSection.appendChild(fieldGroup);
@@ -683,6 +702,40 @@
             // Close after initiating — quickAddChore handles its own toasts/confirms
             close();
             window.quickAddChore(cellData.date, userId, title, false, choreTypeId);
+        }
+    }
+
+    // --- Fetch eligible users for a Tech molecule shift type and populate a <select> ---
+    async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId) {
+        var loadingOpt = document.createElement('option');
+        loadingOpt.value = '';
+        loadingOpt.disabled = true;
+        loadingOpt.textContent = '...';
+        selectEl.appendChild(loadingOpt);
+        try {
+            var response = await fetch(
+                '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + moleculeId + '&shiftTypeId=' + shiftTypeId,
+                { credentials: 'same-origin' }
+            );
+            if (!response.ok) throw new Error('Server returned ' + response.status);
+            var data = await response.json();
+            if (loadingOpt.parentNode === selectEl) selectEl.removeChild(loadingOpt);
+            if (data.success && Array.isArray(data.users)) {
+                data.users.forEach(function (user) {
+                    var opt = document.createElement('option');
+                    opt.value = user.id;
+                    opt.textContent = user.name;
+                    selectEl.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            if (loadingOpt.parentNode === selectEl) selectEl.removeChild(loadingOpt);
+            console.error('Failed to load eligible users:', e);
+            var errOpt = document.createElement('option');
+            errOpt.value = '';
+            errOpt.disabled = true;
+            errOpt.textContent = (window.AppLocalizer?.BottomSheet_LoadError || 'Failed to load users');
+            selectEl.appendChild(errOpt);
         }
     }
 

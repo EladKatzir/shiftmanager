@@ -100,7 +100,11 @@
                             <loc key="Generate" />
                         </button>
                         <form method="post" asp-page-handler="Delete" style="display: inline;"
-                              onsubmit="return confirm(@Html.Raw(Json.Serialize(Localizer["Confirm_DeleteHomeType"].Value)))">
+                              data-confirm-modal
+                              data-confirm-title="@Localizer["Confirm_DeleteHomeType_Title"]"
+                              data-confirm-message="@Localizer["Confirm_DeleteHomeType"]"
+                              data-confirm-action="@Localizer["Delete"]"
+                              data-confirm-level="danger">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@ht.Id" />
                             <button type="submit" class="btn btn--sm btn--danger"><loc key="Delete" /></button>
@@ -121,12 +125,16 @@
                                 {
                                     <li style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--border);">
                                         <span>@user.DisplayName</span>
-                                        <form method="post" asp-page-handler="UnassignUser" style="margin: 0;">
+                                        <form method="post" asp-page-handler="UnassignUser" style="margin: 0;"
+                                              data-confirm-modal
+                                              data-confirm-title="@Localizer["Confirm_UnassignUser_Title"]"
+                                              data-confirm-message="@Localizer["Confirm_UnassignUser"]"
+                                              data-confirm-action="@Localizer["Remove"]"
+                                              data-confirm-level="danger">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="UnassignHomeTypeId" value="@ht.Id" />
                                             <input type="hidden" name="UnassignUserId" value="@user.UserId" />
-                                            <button type="submit" class="btn btn--sm btn--danger"
-                                                    onclick="return confirm('@Localizer["Confirm_UnassignUser"]')">
+                                            <button type="submit" class="btn btn--sm btn--danger">
                                                 <loc key="Remove" />
                                             </button>
                                         </form>

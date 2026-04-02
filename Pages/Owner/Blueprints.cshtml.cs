@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -6,7 +8,6 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
-using System.Security.Claims;
 
 namespace ShiftManager.Pages.Owner;
 
@@ -316,7 +317,9 @@ public class BlueprintsModel : PageModel
         var programCount = await _db.ShiftPrograms.Where(p => p.ShiftTypeId == shiftTypeId).CountAsync();
         var instanceCount = await _db.ShiftInstances.Where(si => si.ShiftTypeId == shiftTypeId).CountAsync();
 
-        return new JsonResult(new { shiftTypeName = shiftType.Name, programCount, instanceCount, canDelete = true });
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var localizedName = await _localizationService.ResolveShiftTypeNameAsync(shiftType, companyId, CultureInfo.CurrentUICulture.Name);
+        return new JsonResult(new { shiftTypeName = localizedName, programCount, instanceCount, canDelete = true });
     }
 
     public async Task<IActionResult> OnPostDeleteShiftTypeAsync(int shiftTypeId, bool confirmed = false)
@@ -331,13 +334,16 @@ public class BlueprintsModel : PageModel
             if (!await HasEditGrantForShiftType(userId, shiftType))
                 return RedirectToPage(new { error = "Insufficient permissions" });
 
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            var localizedName = await _localizationService.ResolveShiftTypeNameAsync(shiftType, companyId, CultureInfo.CurrentUICulture.Name);
+
             // Check if used by Programs
             if (await _db.ShiftPrograms.AnyAsync(p => p.ShiftTypeId == shiftTypeId))
-                return RedirectToPage(new { error = $"Cannot delete '{shiftType.Name}' - it is used by Programs. Remove from Programs first." });
+                return RedirectToPage(new { error = $"Cannot delete '{localizedName}' - it is used by Programs. Remove from Programs first." });
 
             var instanceCount = await _db.ShiftInstances.Where(si => si.ShiftTypeId == shiftTypeId).CountAsync();
             if (instanceCount > 0 && !confirmed)
-                return RedirectToPage(new { error = $"Please confirm deletion of '{shiftType.Name}' ({instanceCount} shift instances)" });
+                return RedirectToPage(new { error = $"Please confirm deletion of '{localizedName}' ({instanceCount} shift instances)" });
 
             // Capture for cache invalidation
             var mol = shiftType.MoleculeId;
@@ -354,10 +360,10 @@ public class BlueprintsModel : PageModel
             if (area.HasValue) _shiftTypeCache.InvalidateAreaCache(area.Value, jt);
 
             await _auditLogService.LogAsync("ShiftTypeDeleted", "ShiftType", shiftTypeId,
-                $"Deleted ShiftType '{shiftType.Name}' (Key: {shiftType.Key}, Scope: {shiftType.Scope}).");
+                $"Deleted ShiftType '{shiftType.Key}' (Scope: {shiftType.Scope}).");
 
             _logger.LogInformation("Deleted ShiftType {Key} (Scope={Scope}) by User {UserId}", shiftType.Key, shiftType.Scope, userId);
-            return RedirectToPage(new { success = $"Shift type '{shiftType.Name}' deleted", selectedMoleculeId = mol });
+            return RedirectToPage(new { success = $"Shift type '{localizedName}' deleted", selectedMoleculeId = mol });
         }
         catch (Exception ex)
         {

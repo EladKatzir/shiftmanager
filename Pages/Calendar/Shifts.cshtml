@@ -252,16 +252,15 @@ else
 @* Hidden selects for Quick Entry autocomplete (chore types + duty types) *@
 @if (Model.Mode == "user")
 {
+    var isHebrew = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he");
     <select id="choreTypeSelect-quickentry" style="display:none" data-role="quickentry-choretype">
         @foreach (var ct in Model.ChoreTypes)
         {
-            <option value="@ct.Id" data-color="@ct.Color">@ct.DisplayName</option>
+            var ctName = isHebrew && !string.IsNullOrWhiteSpace(ct.NameHe) ? ct.NameHe : ct.NameEn ?? ct.DisplayName;
+            <option value="@ct.Id" data-color="@ct.Color">@ctName</option>
         }
     </select>
     <select id="dutyTypeSelect-quickentry" style="display:none" data-role="quickentry-dutytype">
-        @{
-            var isHebrew = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he");
-        }
         @foreach (var dt in Model.DutyTypes)
         {
             var dtName = isHebrew ? dt.NameHe : dt.NameEn;
@@ -271,6 +270,12 @@ else
 }
 
 @section Scripts {
+    <script>
+        window.CalendarPageConfig = {
+            isTechMolecule: @(Model.IsTechMolecule ? "true" : "false"),
+            moleculeId: @(Model.MoleculeId ?? 0)
+        };
+    </script>
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>

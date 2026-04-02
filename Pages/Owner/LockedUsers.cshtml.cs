@@ -35,9 +35,6 @@ public class LockedUsersModel : PageModel
 
     public async Task OnGetAsync()
     {
-        if (TempData["SuccessMessage"] is string success) SuccessMessage = success;
-        if (TempData["ErrorMessage"] is string error) ErrorMessage = error;
-
         await LoadLockedUsersAsync();
         RateLimitedSignups = _rateLimiting.GetActiveEntries("signup:ip:", 50, 10).ToList();
     }

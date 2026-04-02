@@ -64,10 +64,6 @@ public class IndexModel : LocalizedPageModel
         if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.StoreHoursEnabled))
             return RedirectToPage("/Admin/Organization/Index");
 
-        if (TempData["SuccessMessage"] is string successMsg)
-            Success = successMsg;
-        if (TempData["ErrorMessage"] is string errorMsg)
-            Error = errorMsg;
 
         await LoadDataAsync();
         return Page();

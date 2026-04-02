@@ -244,22 +244,22 @@
 
         .badge-workforce {
             background: var(--primary-soft);
-            color: var(--primary);
+            color: var(--primary) !important;
         }
 
         .badge-tech {
             background: var(--accent-soft);
-            color: var(--accent);
+            color: var(--accent) !important;
         }
 
         .badge-helper {
             background: var(--warning-soft);
-            color: var(--warning);
+            color: var(--warning) !important;
         }
 
         .badge-inactive {
             background: var(--surface-soft);
-            color: var(--text-muted);
+            color: var(--text-muted) !important;
         }
 
         /* Buttons */
@@ -622,22 +622,6 @@
     <h1 class="page-title"><loc key="OrganizationStructure" /></h1>
     <p class="page-subtitle"><loc key="ManageHierarchyProjectsAreasMolecules" /></p>
 </div>
-
-<!-- Success/Error Messages -->
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="message-banner message-banner--success">
-        <span>@TempData["SuccessMessage"]</span>
-        <button class="message-banner__close" onclick="this.parentElement.remove()" loc-aria-label="Close">&times;</button>
-    </div>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="message-banner message-banner--error">
-        <span>@TempData["ErrorMessage"]</span>
-        <button class="message-banner__close" onclick="this.parentElement.remove()" loc-aria-label="Close">&times;</button>
-    </div>
-}
 
 <!-- Stats Grid -->
 <div class="stats-grid">

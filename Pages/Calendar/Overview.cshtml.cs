@@ -340,6 +340,7 @@ public class OverviewModel : PageModel
                         c.CanceledAt == null)
             .ToListAsync();
 
+        var isHebrew = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he");
         var result = new Dictionary<(int UserId, DateOnly Date), List<string>>();
         foreach (var chore in chores)
         {
@@ -348,7 +349,10 @@ public class OverviewModel : PageModel
             {
                 result[key] = new List<string>();
             }
-            result[key].Add(chore.ChoreType?.DisplayName ?? chore.Title);
+            var choreName = chore.ChoreType != null
+                ? (isHebrew && !string.IsNullOrWhiteSpace(chore.ChoreType.NameHe) ? chore.ChoreType.NameHe : chore.ChoreType.NameEn ?? chore.ChoreType.DisplayName)
+                : chore.Title;
+            result[key].Add(choreName);
         }
 
         return result;

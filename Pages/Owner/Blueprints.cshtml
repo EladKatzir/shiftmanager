@@ -305,7 +305,7 @@
 </div>
 
 @* Edit Name Modal *@
-<div id="editNameModal" class="modal" style="display: none;">
+<div id="editNameModal" class="blueprint-modal" style="display: none;">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -334,7 +334,7 @@
 </div>
 
 @* Edit Time Modal *@
-<div id="editTimeModal" class="modal" style="display: none;">
+<div id="editTimeModal" class="blueprint-modal" style="display: none;">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -363,7 +363,7 @@
 </div>
 
 @* ✅ P1-4: Delete Confirmation Modal with Enhanced Testability *@
-<div id="deleteConfirmModal" class="modal" style="display: none;"
+<div id="deleteConfirmModal" class="blueprint-modal" style="display: none;"
      data-modal-state="hidden"
      role="dialog"
      aria-labelledby="deleteModalTitle"
@@ -836,7 +836,7 @@
         background-color: var(--surface-soft);
     }
 
-    .modal {
+    .blueprint-modal {
         position: fixed;
         top: 0;
         left: 0;
@@ -857,25 +857,25 @@
         border-radius: 0;
     }
 
-    .modal.is-open {
+    .blueprint-modal.is-open {
         opacity: 1;
         visibility: visible;
         transform: none;
     }
 
-    .modal-dialog {
+    .blueprint-modal .modal-dialog {
         position: relative;
         max-width: 600px;
         margin: 100px auto;
     }
 
-    .modal-content {
+    .blueprint-modal .modal-content {
         background: var(--surface);
         border-radius: 8px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
-    .modal-header {
+    .blueprint-modal .modal-header {
         padding: 20px;
         border-bottom: 1px solid var(--border);
         display: flex;
@@ -883,11 +883,11 @@
         align-items: center;
     }
 
-    .modal-body {
+    .blueprint-modal .modal-body {
         padding: 20px;
     }
 
-    .modal-footer {
+    .blueprint-modal .modal-footer {
         padding: 20px;
         border-top: 1px solid var(--border);
         text-align: right;

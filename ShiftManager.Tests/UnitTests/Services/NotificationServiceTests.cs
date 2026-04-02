@@ -32,6 +32,7 @@ public class NotificationServiceTests : IDisposable
     private readonly Mock<IStringLocalizer<SharedResources>> _localizerMock;
     private readonly Mock<IConfiguration> _configMock;
     private readonly Mock<ILocalizationService> _localizationMock;
+    private readonly Mock<ICompanyLocalizationService> _companyLocalizationMock;
     private readonly NotificationService _service;
 
     private const int TestCompanyId = 1;
@@ -63,6 +64,10 @@ public class NotificationServiceTests : IDisposable
 
         _localizationMock = new Mock<ILocalizationService>();
 
+        _companyLocalizationMock = new Mock<ICompanyLocalizationService>();
+        _companyLocalizationMock.Setup(l => l.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync((ShiftType st, int _, string _) => st.Name);
+
         _service = new NotificationService(
             _db,
             _loggerMock.Object,
@@ -70,7 +75,8 @@ public class NotificationServiceTests : IDisposable
             _mailServiceMock.Object,
             _localizerMock.Object,
             _configMock.Object,
-            _localizationMock.Object);
+            _localizationMock.Object,
+            _companyLocalizationMock.Object);
     }
 
     public void Dispose()
@@ -197,7 +203,8 @@ public class NotificationServiceTests : IDisposable
             _mailServiceMock.Object,
             _localizerMock.Object,
             _configMock.Object,
-            _localizationMock.Object);
+            _localizationMock.Object,
+            _companyLocalizationMock.Object);
 
         // Act
         var result = await service.CreateNotificationAsync(

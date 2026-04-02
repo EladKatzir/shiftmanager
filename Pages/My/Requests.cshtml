@@ -184,10 +184,15 @@
                                                 </span>
                                                 @if (request.Status == "Pending")
                                                 {
-                                                    <form method="post" asp-page-handler="CancelRequest" style="display: inline; margin: 0;">
+                                                    <form method="post" asp-page-handler="CancelRequest" style="display: inline; margin: 0;"
+                                                          data-confirm-modal
+                                                          data-confirm-title="@Localizer["ConfirmCancelRequest_Title"]"
+                                                          data-confirm-message="@Localizer["ConfirmCancelRequest"]"
+                                                          data-confirm-action="@Localizer["Cancel"]"
+                                                          data-confirm-level="danger">
                                                         @Html.AntiForgeryToken()
                                                         <input type="hidden" name="requestId" value="@request.Id" />
-                                                        <button type="submit" class="btn-cancel" onclick="return confirm('@Localizer["ConfirmCancelRequest"]')">
+                                                        <button type="submit" class="btn-cancel">
                                                             <loc key="CancelRequest" />
                                                         </button>
                                                     </form>
@@ -616,7 +621,7 @@
 
         .badge-primary {
             background: var(--primary-soft);
-            color: var(--primary);
+            color: var(--primary) !important;
         }
 
         /* Empty State */

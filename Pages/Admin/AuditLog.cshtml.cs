@@ -141,7 +141,7 @@ public class AuditLogModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading audit logs");
-            TempData["Error"] = _localizer["Error_LoadingAuditLogs"].Value;
+            TempData["ErrorMessage"] = _localizer["Error_LoadingAuditLogs"].Value;
         }
     }
 
@@ -214,7 +214,7 @@ public class AuditLogModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting audit logs to CSV");
-            TempData["Error"] = _localizer["Error_ExportingAuditLogs"].Value;
+            TempData["ErrorMessage"] = _localizer["Error_ExportingAuditLogs"].Value;
             return RedirectToPage();
         }
     }

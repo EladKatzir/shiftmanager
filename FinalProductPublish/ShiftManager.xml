@@ -1257,6 +1257,8 @@
         <member name="M:ShiftManager.Helpers.RoleDisplayHelper.GetRoleDisplayName(Microsoft.Extensions.Localization.IStringLocalizer{ShiftManager.Resources.SharedResources},System.String,System.String)">
             <summary>
             String-based overload (backward compatible). Used by ~20 business identity sites.
+            Accepts either a RoleTemplate key (e.g., "BRDirector") or a UserRole enum name (e.g., "Manager").
+            Resolution order: job-type-specific → Role_{name} (template resx) → direct key (legacy resx).
             </summary>
         </member>
         <member name="T:ShiftManager.Helpers.RoleTemplateMapper">
@@ -2515,6 +2517,42 @@
         <member name="M:ShiftManager.Migrations.UnifyNoteSystems.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddAuthMethodToUserJoinRequest">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAuthMethodToUserJoinRequest.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAuthMethodToUserJoinRequest.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAuthMethodToUserJoinRequest.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.GlobalEmailConfig">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.GlobalEmailConfig.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.GlobalEmailConfig.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.GlobalEmailConfig.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.ChoreTypeBilingualNames">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ChoreTypeBilingualNames.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ChoreTypeBilingualNames.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ChoreTypeBilingualNames.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -3610,37 +3648,53 @@
         </member>
         <member name="T:ShiftManager.Models.DTOs.GriffinClaimsDto">
             <summary>
-            Represents user claims returned from Griffin ADFS /authorization/getClaims endpoint
+            Represents user claims returned from Griffin ADFS /authorization/getClaims endpoint.
+            Field names match the actual Griffin API response (not standard ADFS claim names).
             </summary>
         </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.sAMAccountName">
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.UniqueID">
             <summary>
-            Windows/AD username (short form, no domain)
+            Unique identifier for the user (e.g., "7108user@8200")
             </summary>
         </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.UPN">
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.EmailAddress">
             <summary>
-            User Principal Name (email-like identifier)
+            User's email address (used for user lookup in ShiftManager)
             </summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.DisplayName">
             <summary>
-            Full display name
+            Full display name (may be OU path format, e.g., "blah/blah/user")
             </summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.GivenName">
             <summary>
-            First name
+            First name / given name
             </summary>
         </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Surname">
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Audience">
             <summary>
-            Last name
+            Audience
             </summary>
         </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.auth_time">
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Issuer">
             <summary>
-            Timestamp when user authenticated with ADFS
+            Issuer (Griffin uses "iis" instead of standard "iss")
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.IssuedAt">
+            <summary>
+            Issued at timestamp
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.NotBefore">
+            <summary>
+            Not before timestamp
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Expiration">
+            <summary>
+            Expiration timestamp
             </summary>
         </member>
         <member name="T:ShiftManager.Models.Dto.ProfileUpdateDto">
@@ -3656,8 +3710,18 @@
         </member>
         <member name="T:ShiftManager.Models.EmailConfig">
             <summary>
-            Stores email configuration settings for each company.
+            Stores email configuration settings. Supports global config (CompanyId = null)
+            and per-company overrides (CompanyId = specific company).
             The ApiKey field is encrypted at rest using Data Protection API.
+            Fallback chain: company-specific → global → appsettings.json.
+            NOTE: Does NOT implement IBelongsToCompany — global config has no company.
+            Query filter includes both global (CompanyId = null) and tenant-scoped configs.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.EmailConfig.CompanyId">
+            <summary>
+            Null = global config (applies to all companies by default).
+            Non-null = per-company override for a specific company.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.EmailConfig.Enabled">
@@ -4943,6 +5007,12 @@
             The role template the applicant selected during signup.
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.UserJoinRequest.AuthMethod">
+            <summary>
+            Authentication method used to create this request: "Local" (password signup) or "Griffin" (ADFS SSO).
+            Null for requests created before this field was added.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.ViewModels.CalendarItemViewModel">
             <summary>
             ✅ PHASE 20: Unified calendar item representing shifts, chores, or on-duty assignments
@@ -5167,6 +5237,13 @@
         <member name="T:ShiftManager.Pages.Api.Calendar.GetChoresDataModel">
             <summary>
             API endpoint for shadow refresh of Chores calendar data.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.GetEligibleUsersForShiftModel">
+            <summary>
+            API endpoint for fetching eligible users for a Tech molecule shift type.
+            Filters by EligibleCompanyIds and RequiresOfficerRank from the ShiftType.
+            Used by calendar-bottom-sheet.js to populate the user picker in Tech shift-mode.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.GetOnCallDataModel">
@@ -7605,33 +7682,44 @@
         </member>
         <member name="M:ShiftManager.Services.IEmailConfigService.GetEmailConfigAsync">
             <summary>
-            Gets the email configuration for the current company
+            Gets the effective email configuration for the current company.
+            Fallback: company-specific → global → null.
             </summary>
-            <returns>The email configuration, or null if not configured</returns>
+        </member>
+        <member name="M:ShiftManager.Services.IEmailConfigService.GetGlobalEmailConfigAsync">
+            <summary>
+            Gets the global email configuration (CompanyId = null).
+            </summary>
         </member>
         <member name="M:ShiftManager.Services.IEmailConfigService.GetEmailConfigByCompanyIdAsync(System.Int32)">
             <summary>
             Gets the email configuration for a specific company (requires ignoring query filters)
             </summary>
-            <param name="companyId">The company ID</param>
-            <returns>The email configuration, or null if not configured</returns>
         </member>
         <member name="M:ShiftManager.Services.IEmailConfigService.SaveEmailConfigAsync(System.Boolean,System.String,System.String,System.String,System.String)">
             <summary>
             Saves or updates email configuration for the current company
             </summary>
-            <param name="enabled">Whether email is enabled</param>
-            <param name="apiKey">The API key (will be encrypted)</param>
-            <param name="apiUrl">The API URL</param>
-            <param name="fromAddress">The from email address</param>
-            <param name="updatedBy">User who made the update</param>
-            <returns>The saved configuration</returns>
+        </member>
+        <member name="M:ShiftManager.Services.IEmailConfigService.SaveGlobalEmailConfigAsync(System.Boolean,System.String,System.String,System.String,System.String)">
+            <summary>
+            Saves or updates the global email configuration (CompanyId = null).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IEmailConfigService.DeleteCompanyOverrideAsync">
+            <summary>
+            Deletes the company-specific override, causing it to fall back to global config.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IEmailConfigService.HasCompanyOverrideAsync">
+            <summary>
+            Checks whether the current company has a company-specific override (vs using global).
+            </summary>
         </member>
         <member name="M:ShiftManager.Services.IEmailConfigService.GetDecryptedApiKeyAsync">
             <summary>
-            Gets the decrypted API key for the current company
+            Gets the decrypted API key for the effective config (company-specific or global).
             </summary>
-            <returns>The decrypted API key, or null if not set</returns>
         </member>
         <member name="M:ShiftManager.Services.IEmailTemplateService.GetAllTemplatesAsync">
             <summary>
@@ -7923,6 +8011,11 @@
         <member name="M:ShiftManager.Services.IGriffinService.BuildAuthenticationUrl(System.String,System.String)">
             <summary>
             Builds the redirect URL for initiating Griffin ADFS authentication
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGriffinService.ExchangeTokenAsync(System.String,System.String,System.Int32)">
+            <summary>
+            Exchanges a hashed token (A) for a real token (B) by calling /authentication/claimToken
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGriffinService.ValidateTokenAsync(System.String,System.String,System.Int32)">
@@ -8965,10 +9058,10 @@
             Follows ShiftManager architecture patterns with dependency injection and structured logging.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.MailService.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{ShiftManager.Services.MailService},Microsoft.Extensions.Configuration.IConfiguration,ShiftManager.Services.IEmailConfigService,ShiftManager.Services.IEmailApiLogService,Microsoft.Extensions.Localization.IStringLocalizer{ShiftManager.Resources.SharedResources},ShiftManager.Services.IEmailTemplateService,ShiftManager.Services.EmailBackgroundQueue,ShiftManager.Services.ILocalizationService,ShiftManager.Services.ITenantResolver)">
+        <member name="M:ShiftManager.Services.MailService.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{ShiftManager.Services.MailService},Microsoft.Extensions.Configuration.IConfiguration,ShiftManager.Services.IEmailConfigService,ShiftManager.Services.IEmailApiLogService,Microsoft.Extensions.Localization.IStringLocalizer{ShiftManager.Resources.SharedResources},ShiftManager.Services.IEmailTemplateService,ShiftManager.Services.EmailBackgroundQueue,ShiftManager.Services.ILocalizationService,ShiftManager.Services.ITenantResolver,ShiftManager.Services.IFeatureFlagService)">
             <summary>
             Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
-            ITenantResolver is optional — it's available during HTTP requests (for enqueue) but not in background processor scope.
+            ITenantResolver and IFeatureFlagService are optional — available during HTTP requests but not in background processor scope.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.MailService.LoadConfigurationAsync">
@@ -10191,47 +10284,6 @@
         <member name="P:ShiftManager.ViewComponents.ErrorBannerModel.FallbackTitle">
             <summary>
             Optional fallback title
-            </summary>
-        </member>
-        <member name="T:ShiftManager.ViewComponents.ErrorToastViewComponent">
-            <summary>
-            ViewComponent for displaying transient toast notifications.
-            Supports error, warning, info, and success levels with auto-dismiss.
-            </summary>
-        </member>
-        <member name="P:ShiftManager.ViewComponents.ErrorToastModel.Level">
-            <summary>
-            Severity level: "error", "warning", "info", or "success"
-            </summary>
-        </member>
-        <member name="P:ShiftManager.ViewComponents.ErrorToastModel.MessageKey">
-            <summary>
-            Localization key for the message
-            </summary>
-        </member>
-        <member name="P:ShiftManager.ViewComponents.ErrorToastModel.FallbackMessage">
-            <summary>
-            Fallback message if localization key is not found
-            </summary>
-        </member>
-        <member name="P:ShiftManager.ViewComponents.ErrorToastModel.TitleKey">
-            <summary>
-            Optional localization key for title
-            </summary>
-        </member>
-        <member name="P:ShiftManager.ViewComponents.ErrorToastModel.FallbackTitle">
-            <summary>
-            Optional fallback title
-            </summary>
-        </member>
-        <member name="P:ShiftManager.ViewComponents.ErrorToastModel.AutoDismissMs">
-            <summary>
-            Auto-dismiss time in milliseconds (0 = never auto-dismiss)
-            </summary>
-        </member>
-        <member name="P:ShiftManager.ViewComponents.ErrorToastModel.ShowCloseButton">
-            <summary>
-            Whether to show the close button
             </summary>
         </member>
         <member name="T:ShiftManager.ViewComponents.HierarchyTreeViewComponent">

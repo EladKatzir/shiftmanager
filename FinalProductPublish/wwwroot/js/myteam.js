@@ -601,7 +601,7 @@ function renderMemberSelector() {
         <div class="member-selector">
             <div class="member-pane">
                 <div class="pane-header">Current Members (${currentMembers.length})</div>
-                <input type="text" class="pane-search" placeholder="Search current members..."
+                <input type="text" class="pane-search" placeholder="${window.AppLocalizer?.MyTeam_SearchCurrentMembers || 'Search current members...'}"
                        oninput="filterMembers('current', this.value)">
                 <div class="member-list" id="currentMembersList">
                     ${renderMemberList(currentMembers, true)}
@@ -609,7 +609,7 @@ function renderMemberSelector() {
             </div>
             <div class="member-pane">
                 <div class="pane-header">Available Users (${availableUsers.length})</div>
-                <input type="text" class="pane-search" placeholder="Search available users..."
+                <input type="text" class="pane-search" placeholder="${window.AppLocalizer?.MyTeam_SearchAvailableUsers || 'Search available users...'}"
                        oninput="filterMembers('available', this.value)">
                 <div class="member-list" id="availableMembersList">
                     ${renderMemberList(availableUsers, false)}

@@ -81,7 +81,11 @@ public class GetChoresDataModel : PageModel
             var choreTypes = await _choreTypeService.GetChoreTypesForMoleculeAsync(moleculeId);
 
             // Get chores for the date range (only active chores)
-            var chores = await _db.Chores
+            // Materialize first so we can call LocalizeChoreTypeName in-memory (EF can't translate it)
+            // Culture is set by request localization middleware from the .AspNetCore.Culture cookie —
+            // same session that rendered the calling page, so this reliably matches the page locale.
+            var isHebrew = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he");
+            var choresRaw = await _db.Chores
                 .IgnoreQueryFilters()
                 .Include(c => c.User)
                 .Include(c => c.ChoreType)
@@ -89,20 +93,20 @@ public class GetChoresDataModel : PageModel
                     && c.Date >= start
                     && c.Date <= end
                     && c.CanceledAt == null) // Only active chores
-                .Select(c => new
-                {
-                    c.Id,
-                    c.UserId,
-                    userName = c.User != null ? c.User.DisplayName : null,
-                    date = c.Date.ToString("yyyy-MM-dd"),
-                    c.Title,
-                    c.Notes,
-                    c.ChoreTypeId,
-                    choreTypeName = c.ChoreType != null ? c.ChoreType.DisplayName : null,
-                    choreTypeColor = c.ChoreType != null ? c.ChoreType.Color : null,
-                    isActive = c.CanceledAt == null
-                })
                 .ToListAsync();
+            var chores = choresRaw.Select(c => new
+            {
+                c.Id,
+                c.UserId,
+                userName = c.User != null ? c.User.DisplayName : null,
+                date = c.Date.ToString("yyyy-MM-dd"),
+                c.Title,
+                c.Notes,
+                c.ChoreTypeId,
+                choreTypeName = c.ChoreType != null ? LocalizeChoreTypeName(c.ChoreType, isHebrew) : null,
+                choreTypeColor = c.ChoreType != null ? c.ChoreType.Color : null,
+                isActive = c.CanceledAt == null
+            }).ToList();
 
             // Get users in molecule
             var users = await _db.Users
@@ -125,7 +129,7 @@ public class GetChoresDataModel : PageModel
                         .Select(ct => new
                         {
                             id = ct.Id,
-                            name = ct.DisplayName,
+                            name = LocalizeChoreTypeName(ct, isHebrew),
                             color = ct.Color
                         }).ToList(),
                     users,
@@ -139,4 +143,7 @@ public class GetChoresDataModel : PageModel
             return new JsonResult(new { success = false, message = "An error occurred" }) { StatusCode = 500 };
         }
     }
+
+    private static string LocalizeChoreTypeName(ShiftManager.Models.ChoreType ct, bool isHebrew) =>
+        isHebrew && !string.IsNullOrWhiteSpace(ct.NameHe) ? ct.NameHe : ct.NameEn ?? ct.DisplayName;
 }

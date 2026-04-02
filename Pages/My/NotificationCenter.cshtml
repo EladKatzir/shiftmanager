@@ -104,7 +104,11 @@
                                 }
 
                                 <form method="post" asp-page-handler="Delete" style="display: inline;"
-                                      onsubmit="return confirm('@Localizer["DeleteConfirm"].Value.Trim()');">
+                                      data-confirm-modal
+                                      data-confirm-title="@Localizer["DeleteConfirm_Title"]"
+                                      data-confirm-message="@Localizer["DeleteConfirm"]"
+                                      data-confirm-action="@Localizer["Delete"]"
+                                      data-confirm-level="danger">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@notification.Id" />
                                     <button type="submit" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.8rem; cursor: pointer;">

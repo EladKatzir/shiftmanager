@@ -1111,7 +1111,7 @@ using (var scope = app.Services.CreateScope())
     if (company == null)
     {
         // Fallback: get first company if SystemAdmins doesn't exist
-        company = db.Companies.First();
+        company = db.Companies.OrderBy(c => c.Id).First();
     }
 
     // SECURITY-AUDITED: All IgnoreQueryFilters() in this startup seeding block are SAFE — runs at app startup only, not user-facing

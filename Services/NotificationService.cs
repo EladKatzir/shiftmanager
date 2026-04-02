@@ -57,8 +57,9 @@ public class NotificationService : INotificationService
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly IConfiguration _configuration;
     private readonly ILocalizationService _localization;
+    private readonly ICompanyLocalizationService _companyLocalizationService;
 
-    public NotificationService(AppDbContext db, ILogger<NotificationService> logger, ITenantResolver tenantResolver, IMailService mailService, IStringLocalizer<SharedResources> localizer, IConfiguration configuration, ILocalizationService localization)
+    public NotificationService(AppDbContext db, ILogger<NotificationService> logger, ITenantResolver tenantResolver, IMailService mailService, IStringLocalizer<SharedResources> localizer, IConfiguration configuration, ILocalizationService localization, ICompanyLocalizationService companyLocalizationService)
     {
         _db = db;
         _logger = logger;
@@ -67,6 +68,7 @@ public class NotificationService : INotificationService
         _localizer = localizer;
         _configuration = configuration;
         _localization = localization;
+        _companyLocalizationService = companyLocalizationService;
     }
 
     public async Task<bool> CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null)
@@ -668,8 +670,9 @@ public class NotificationService : INotificationService
                     var shiftsHtml = $"<h3>{_localizer["Email_UpcomingShifts"]}</h3><ul>";
                     foreach (var shift in upcomingShifts)
                     {
+                        var shiftTypeName = await _companyLocalizationService.ResolveShiftTypeNameAsync(shift.ShiftInstance.ShiftType, companyId, "he-IL");
                         shiftsHtml += $"<li><strong>{_localization.FormatMediumDate(shift.ShiftInstance.WorkDate)}</strong> - " +
-                                    $"{WebUtility.HtmlEncode(shift.ShiftInstance.ShiftType.Name)} " +
+                                    $"{WebUtility.HtmlEncode(shiftTypeName)} " +
                                     $"({_localization.FormatTime(shift.ShiftInstance.ShiftType.Start)} - {_localization.FormatTime(shift.ShiftInstance.ShiftType.End)})</li>";
                     }
                     shiftsHtml += "</ul>";
@@ -705,9 +708,18 @@ public class NotificationService : INotificationService
                         foreach (var swap in pendingSwapsList)
                         {
                             var shiftInstance = swap.FromAssignment?.ShiftInstance;
-                            var shiftInfo = shiftInstance != null
-                                ? $"{_localization.FormatMediumDate(shiftInstance.WorkDate)} - {WebUtility.HtmlEncode(shiftInstance.ShiftType?.Name ?? "Unknown")}"
-                                : "Unknown shift";
+                            string shiftInfo;
+                            if (shiftInstance != null)
+                            {
+                                var swapShiftTypeName = shiftInstance.ShiftType != null
+                                    ? await _companyLocalizationService.ResolveShiftTypeNameAsync(shiftInstance.ShiftType, companyId, "he-IL")
+                                    : _localizer["Email_Shift"].Value;
+                                shiftInfo = $"{_localization.FormatMediumDate(shiftInstance.WorkDate)} - {WebUtility.HtmlEncode(swapShiftTypeName)}";
+                            }
+                            else
+                            {
+                                shiftInfo = "Unknown shift";
+                            }
                             requestsHtml += $"<li>{shiftInfo} - <em>{_localizer["Email_PendingApproval"]}</em></li>";
                         }
                         requestsHtml += "</ul>";
@@ -903,7 +915,9 @@ public class NotificationService : INotificationService
                     foreach (var sa in tomorrowShifts)
                     {
                         var shiftType = sa.ShiftInstance?.ShiftType;
-                        var shiftTypeName = shiftType?.Name ?? _localizer["Email_Shift"];
+                        var shiftTypeName = shiftType != null
+                            ? await _companyLocalizationService.ResolveShiftTypeNameAsync(shiftType, companyId, "he-IL")
+                            : _localizer["Email_Shift"].Value;
                         var startTime = shiftType != null ? _localization.FormatTime(shiftType.Start) : "--:--";
                         var endTime = shiftType != null ? _localization.FormatTime(shiftType.End) : "--:--";
                         shiftsHtml += $"<li><strong>{WebUtility.HtmlEncode(shiftTypeName)}</strong> - {startTime} to {endTime}</li>";

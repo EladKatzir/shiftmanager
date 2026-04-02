@@ -50,7 +50,7 @@ public class SelectCompanyModel : PageModel
         if (!_rateLimiting.IsAllowed(rateLimitKey, 10, 15))
         {
             _logger.LogWarning("Rate limit exceeded for company switch by user {UserId}", userId);
-            TempData["Error"] = "Too many company switches. Please wait before trying again.";
+            TempData["ErrorMessage"] = "Too many company switches. Please wait before trying again.";
             return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToPage("/Owner/Index");
         }
 

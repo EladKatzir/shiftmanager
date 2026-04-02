@@ -67,6 +67,7 @@
             'QuickEntry_DisabledJustMine': isHe
                 ? '\u05D1\u05D8\u05DC "\u05E8\u05E7 \u05E9\u05DC\u05D9" \u05DB\u05D3\u05D9 \u05DC\u05D4\u05E9\u05EA\u05DE\u05E9 \u05D1\u05D4\u05E7\u05E6\u05D0\u05D4 \u05DE\u05D4\u05D9\u05E8\u05D4'
                 : 'Disable Just Mine to use Quick Entry',
+            'QuickEntry_CreateChore': isHe ? '\u05E6\u05D5\u05E8 \u05EA\u05D5\u05E8\u05E0\u05D5\u05EA' : 'Create chore',
             'QuickEntry_TitlePlaceholder': isHe ? '\u05DB\u05D5\u05EA\u05E8\u05EA...' : 'Title...',
             'QuickEntry_EnterYesEscNo': isHe ? 'Enter=\u05DB\u05DF, Esc=\u05DC\u05D0' : 'Enter=yes, Esc=no'
         };
@@ -77,6 +78,10 @@
         var sel = document.querySelector('[data-role="assignee-select"]');
         if (!sel) return null;
         return sel.dataset.itemType === 'user' ? 'shift' : 'user';
+    }
+
+    function isChoresCalendar() {
+        return !!document.querySelector('.excel-calendar[data-calendar-type="chores"]');
     }
 
     function isJustMineActive() {
@@ -124,19 +129,23 @@
         var assigneeSelect = document.querySelector('[data-role="assignee-select"]');
         if (!assigneeSelect) return;
 
-        var itemType = assigneeSelect.dataset.itemType;
+        // Skip loading assignee items if the page marks them as Quick Entry-excluded
+        // (e.g., Chores page — rows are users, only chore types should appear in dropdown)
+        if (assigneeSelect.dataset.quickentrySkip !== 'true') {
+            var itemType = assigneeSelect.dataset.itemType;
 
-        var options = assigneeSelect.querySelectorAll('option');
-        for (var i = 0; i < options.length; i++) {
-            var opt = options[i];
-            if (!opt.value) continue;
-            allItems.push({
-                id: opt.value,
-                text: opt.textContent.trim(),
-                type: itemType === 'user' ? 'user' : 'shift',
-                key: opt.dataset.key || null,
-                color: null
-            });
+            var options = assigneeSelect.querySelectorAll('option');
+            for (var i = 0; i < options.length; i++) {
+                var opt = options[i];
+                if (!opt.value) continue;
+                allItems.push({
+                    id: opt.value,
+                    text: opt.textContent.trim(),
+                    type: itemType === 'user' ? 'user' : 'shift',
+                    key: opt.dataset.key || null,
+                    color: null
+                });
+            }
         }
 
         // Load chore/duty types if their hidden selects exist (enables /chore and /duty slash commands)
@@ -184,8 +193,12 @@
                     continue;
                 }
             } else if (mode === 'shift') {
-                // Shift mode: only show users
-                if (item.type !== 'user') continue;
+                // Shift mode: only show users — except on Chores calendar where chore types are shown
+                if (isChoresCalendar()) {
+                    if (item.type !== 'chore') continue;
+                } else {
+                    if (item.type !== 'user') continue;
+                }
             }
 
             var result = fuzzyMatch(query, item.text);
@@ -275,7 +288,9 @@
         var overflow = result.overflow;
         var mode = getCurrentMode();
 
-        var groupOrder = mode === 'shift' ? ['user'] : ['shift', 'chore', 'duty'];
+        var groupOrder = mode === 'shift'
+            ? (isChoresCalendar() ? ['chore'] : ['user'])
+            : ['shift', 'chore', 'duty'];
         if (slashCommand) {
             if (slashCommand === 'home') groupOrder = ['shift'];
             else groupOrder = [slashCommand];
@@ -346,14 +361,47 @@
             if (overflow[groupKey] > 0) {
                 var more = document.createElement('div');
                 more.className = 'quick-entry-overflow';
-                more.textContent = '+' + overflow[groupKey] + ' more...';
+                more.textContent = (window.AppLocalizer?.QuickEntry_MoreItems || '+{0} more...').replace('{0}', overflow[groupKey]);
                 dropdown.appendChild(more);
             }
         }
 
-        if (totalItems === 0 && query.trim().length > 0 && getCurrentMode() === 'user' &&
+        if (query.trim().length > 0 && isChoresCalendar() &&
             activeInput._cellData && activeInput._cellData.rowId.indexOf('user-') === 0) {
-            // Show "Save as text" option for unmatched text in user-mode
+            // On Chores calendar: always offer creating a chore with typed text as title
+            var choreItem = { type: 'direct-chore', text: query.trim() };
+            var choreIdx = filteredItems.length;
+            filteredItems.push(choreItem);
+
+            var choreEl = document.createElement('div');
+            choreEl.className = 'quick-entry-item quick-entry-item--text-entry';
+            choreEl.setAttribute('role', 'option');
+            choreEl.id = dropdown.id + '-item-' + choreIdx;
+            choreEl.dataset.index = choreIdx;
+
+            var choreIcon = document.createElement('span');
+            choreIcon.className = 'quick-entry-text-icon';
+            choreIcon.textContent = '\uD83E\uDDF9';
+            choreEl.appendChild(choreIcon);
+
+            var choreLabel = document.createElement('span');
+            choreLabel.textContent = (getLocalizedLabel('QuickEntry_CreateChore') || 'Create chore') + ': "' + query.trim() + '"';
+            choreEl.appendChild(choreLabel);
+
+            (function (capturedIdx) {
+                choreEl.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    selectedIndex = capturedIdx;
+                    selectItem(filteredItems[capturedIdx]);
+                });
+            })(choreIdx);
+
+            dropdown.appendChild(choreEl);
+            if (totalItems === 0) selectedIndex = choreIdx; // Auto-select when no chore type matches
+            totalItems++;
+        } else if (totalItems === 0 && query.trim().length > 0 && getCurrentMode() === 'user' &&
+            activeInput._cellData && activeInput._cellData.rowId.indexOf('user-') === 0) {
+            // Show "Save as text" option for unmatched text in user-mode (Shifts)
             var textItem = { type: 'text-entry', text: query.trim() };
             var textIdx = filteredItems.length;
             filteredItems.push(textItem);
@@ -486,10 +534,12 @@
         if (selectedIndex < 0) selectedIndex = items.length - 1;
         if (selectedIndex >= items.length) selectedIndex = 0;
 
-        items[selectedIndex].classList.add('quick-entry-item--active');
-        items[selectedIndex].scrollIntoView({ block: 'nearest' });
+        var selectedItem = items[selectedIndex];
+        if (!selectedItem) return;
+        selectedItem.classList.add('quick-entry-item--active');
+        selectedItem.scrollIntoView({ block: 'nearest' });
 
-        activeInput.setAttribute('aria-activedescendant', items[selectedIndex].id);
+        activeInput.setAttribute('aria-activedescendant', selectedItem.id || '');
     }
 
     // --- Cell click handler ---
@@ -548,6 +598,7 @@
         cell.appendChild(input);
         input.focus();
         activeInput = input;
+        input._keyboardNavInitialized = true; // Prevent keyboard-nav.js from hijacking space key
 
         input._cellData = cellData;
 
@@ -733,6 +784,30 @@
         if (item.type === 'chore') {
             choreTypeForTitle = item;
             enterChoreTitle();
+            return;
+        }
+
+        if (item.type === 'direct-chore') {
+            // Direct chore creation — typed text becomes the chore title
+            if (rowId.indexOf('user-') === 0) {
+                var dcUserId = parseInt(rowId.replace('user-', ''), 10);
+                var currentCellDC = activeCell;
+                var doAdvanceDC = !!advance;
+                // Use the page's chore type filter if one is selected
+                var ctFilter = document.getElementById('choreTypeSelect');
+                var dcChoreTypeId = (ctFilter && ctFilter.value) ? parseInt(ctFilter.value, 10) : null;
+                closeInput();
+                var dcPromise = window.quickAddChore(date, dcUserId, item.text, false, dcChoreTypeId, qeConfirm);
+                if (dcPromise && typeof dcPromise.then === 'function') {
+                    dcPromise.then(function () {
+                        if (doAdvanceDC) advanceToNextCell(currentCellDC);
+                    });
+                } else {
+                    if (doAdvanceDC) advanceToNextCell(currentCellDC);
+                }
+            } else {
+                closeInput();
+            }
             return;
         }
 

@@ -35,6 +35,7 @@
 }
 
 /* Support both old .scope-btn and new BEM .scope-switcher__btn class */
+/* NOTE: No color on base class — each state must be explicit with !important to prevent cascade conflicts */
 .scope-btn,
 .scope-switcher__btn {
   display: flex;
@@ -43,7 +44,6 @@
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-small);
   font-weight: var(--font-medium);
-  color: var(--text-muted);
   background-color: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -51,11 +51,12 @@
   transition: var(--transition-colors), var(--transition-transform);
   position: relative;
   white-space: nowrap;
+  color: var(--text-muted) !important;
 }
 
 .scope-btn:hover,
 .scope-switcher__btn:hover {
-  color: var(--text);
+  color: var(--text) !important;
   background-color: var(--surface);
 }
 
@@ -68,7 +69,7 @@
 
 .scope-btn.is-active,
 .scope-switcher__btn--active {
-  color: var(--primary);
+  color: var(--primary) !important;
   background-color: var(--surface);
   box-shadow: var(--shadow-sm);
   font-weight: var(--font-semibold);
@@ -140,11 +141,11 @@
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-small);
   font-weight: var(--font-medium);
-  color: var(--text-muted);
   background-color: transparent;
   border: 1px solid var(--border);
   cursor: pointer;
   transition: var(--transition-colors);
+  color: var(--text-muted) !important;
 }
 
 .view-btn:first-child {
@@ -160,7 +161,7 @@
 }
 
 .view-btn:hover {
-  color: var(--text);
+  color: var(--text) !important;
   background-color: var(--surface-soft);
   z-index: 1;
 }
@@ -172,7 +173,7 @@
 }
 
 .view-btn.is-active {
-  color: var(--primary);
+  color: var(--primary) !important;
   background-color: var(--primary-soft);
   border-color: var(--primary);
   z-index: 1;
@@ -225,14 +226,14 @@
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
   cursor: pointer;
   transition: var(--transition-colors);
+  color: var(--text-muted) !important;
 }
 
 .calendar-nav-btn:hover {
   background-color: var(--surface-soft);
-  color: var(--text);
+  color: var(--text) !important;
   border-color: var(--border-strong);
 }
 
@@ -3634,6 +3635,19 @@
     cursor: default;
     unicode-bidi: isolate;
     direction: ltr;
+}
+
+/* Text entry displayed as plain text (Overview page) */
+.excel-calendar__text-entry {
+    display: block;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    unicode-bidi: isolate;
 }
 
 /* Overview note overlay badge (📋) */

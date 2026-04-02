@@ -32,7 +32,7 @@ public class ChoreTypeService : IChoreTypeService
             .FirstOrDefaultAsync(ct => ct.Id == id);
     }
 
-    public async Task<ChoreType> CreateAsync(int moleculeId, string name, string displayName, string? color, int userId)
+    public async Task<ChoreType> CreateAsync(int moleculeId, string name, string displayName, string? color, int userId, string? nameEn = null, string? nameHe = null)
     {
         var maxSortOrder = await _db.ChoreTypes
             .Where(ct => ct.MoleculeId == moleculeId)
@@ -43,6 +43,8 @@ public class ChoreTypeService : IChoreTypeService
             MoleculeId = moleculeId,
             Name = name,
             DisplayName = displayName,
+            NameEn = nameEn,
+            NameHe = nameHe,
             Color = color,
             SortOrder = maxSortOrder + 1,
             CreatedByUserId = userId
@@ -53,7 +55,7 @@ public class ChoreTypeService : IChoreTypeService
         return choreType;
     }
 
-    public async Task<ChoreType> UpdateAsync(int id, string displayName, string? color, int sortOrder)
+    public async Task<ChoreType> UpdateAsync(int id, string displayName, string? color, int sortOrder, string? nameEn = null, string? nameHe = null)
     {
         // SECURITY-AUDITED: SAFE — scoped by specific ChoreType id; admin-only update operation
         var choreType = await _db.ChoreTypes
@@ -63,6 +65,8 @@ public class ChoreTypeService : IChoreTypeService
             throw new ArgumentException("ChoreType not found", nameof(id));
 
         choreType.DisplayName = displayName;
+        choreType.NameEn = nameEn;
+        choreType.NameHe = nameHe;
         choreType.Color = color;
         choreType.SortOrder = sortOrder;
 

@@ -22,13 +22,6 @@
         .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
         .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
 
-        .alert-success, .alert-error {
-            padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem;
-            display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500;
-        }
-        .alert-success { background: var(--success); color: var(--success-text); border: 1px solid rgba(16, 185, 129, 0.3); }
-        .alert-error { background: var(--danger); color: var(--danger-text); border: 1px solid rgba(244, 67, 54, 0.3); }
-
         .section-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
             padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem;
@@ -76,10 +69,10 @@
             display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px;
             font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em;
         }
-        .badge-active { background: var(--success-soft); color: var(--success); }
-        .badge-inactive { background: var(--surface-soft); color: var(--text-muted); }
-        .badge-hakam { background: var(--primary-soft); color: var(--primary); }
-        .badge-lead { background: var(--accent-soft); color: var(--accent); }
+        .badge-active { background: var(--success-soft); color: var(--success) !important; }
+        .badge-inactive { background: var(--surface-soft); color: var(--text-muted) !important; }
+        .badge-hakam { background: var(--primary-soft); color: var(--primary) !important; }
+        .badge-lead { background: var(--accent-soft); color: var(--accent) !important; }
 
         .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-muted); }
 
@@ -124,15 +117,6 @@
     <h1 class="page-title"><loc key="ManageDutyRotations" /></h1>
     <p class="page-subtitle"><loc key="ManageDutyRotationsDescription" /></p>
 </div>
-
-@if (!string.IsNullOrEmpty(Model.Success))
-{
-    <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div>
-}
-@if (!string.IsNullOrEmpty(Model.Error))
-{
-    <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div>
-}
 
 <!-- Create New Rotation -->
 <div class="section-card">
@@ -233,7 +217,11 @@
                                     <a href="/Admin/DutyRotation?rotationId=@r.Id" class="btn btn-ghost btn-sm">@Localizer["ManageQueue"]</a>
                                 }
                                 <form method="post" asp-page-handler="Delete" style="display:inline"
-                                      onsubmit="return confirm('@Localizer["ConfirmDeleteRotation"].Value.Replace("'", "\\'").Trim()');">
+                                      data-confirm-modal
+                                      data-confirm-title="@Localizer["ConfirmDeleteRotation_Title"]"
+                                      data-confirm-message="@Localizer["ConfirmDeleteRotation"]"
+                                      data-confirm-action="@Localizer["Delete"]"
+                                      data-confirm-level="danger">
                                     <input type="hidden" name="id" value="@r.Id" />
                                     <button type="submit" class="btn btn-danger btn-sm"><loc key="Delete" /></button>
                                 </form>

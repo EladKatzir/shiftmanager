@@ -312,7 +312,7 @@
         }
 
         /* Modal */
-        .modal {
+        #addTypeModal {
             display: none;
             position: fixed;
             top: 0;
@@ -327,7 +327,7 @@
             animation: fadeIn 0.2s ease;
         }
 
-        .modal.active {
+        #addTypeModal.active {
             display: flex;
         }
 
@@ -570,8 +570,12 @@
                             <span class="type-badge type-badge-custom" style="background: @type.Color; color: var(--primary-contrast);">
                                 @Localizer["Custom"]
                             </span>
-                            <form method="post" asp-page-handler="DeleteOnDutyType" style="display: inline;" data-type-name="@type.NameEn" data-confirm-msg="@Localizer["ConfirmDeleteOnDutyType"].Value.Trim()"
-                                  onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.typeName));">
+                            <form method="post" asp-page-handler="DeleteOnDutyType" style="display: inline;"
+                                  data-confirm-modal
+                                  data-confirm-title="@Localizer["ConfirmDeleteOnDutyType_Title"]"
+                                  data-confirm-message="@string.Format(Localizer["ConfirmDeleteOnDutyType"].Value, type.NameEn)"
+                                  data-confirm-action="@Localizer["Delete"]"
+                                  data-confirm-level="danger">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="typeId" value="@type.Id" />
                                 <button type="submit" class="btn btn-danger">
@@ -594,7 +598,7 @@
 </div>
 
 <!-- Add OnDuty Type Modal -->
-<div id="addTypeModal" class="modal">
+<div id="addTypeModal">
     <div class="modal-content">
         <h3 class="modal-header"><loc key="AddNewOnDutyType" /></h3>
         <form method="post" asp-page-handler="AddOnDutyType">

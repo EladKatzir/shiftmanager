@@ -136,7 +136,7 @@ public class AnalyticsModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading analytics data");
-            TempData["Error"] = _localizer["Error_LoadingAnalyticsData"].Value;
+            TempData["ErrorMessage"] = _localizer["Error_LoadingAnalyticsData"].Value;
         }
     }
 
@@ -223,7 +223,7 @@ public class AnalyticsModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting analytics report");
-            TempData["Error"] = _localizer["Error_ExportingReport"].Value;
+            TempData["ErrorMessage"] = _localizer["Error_ExportingReport"].Value;
             return RedirectToPage();
         }
     }

@@ -36,14 +36,6 @@
         </div>
     }
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" onclick="this.parentElement.remove()" loc-aria-label="Aria_CloseButton"></button>
-        </div>
-    }
-
     <div class="info-box mb-4">
         <div class="info-icon">ℹ️</div>
         <div class="info-content">
@@ -109,7 +101,12 @@
                     </button>
                     @if (template.IsEnabled)
                     {
-                        <form method="post" asp-page-handler="ResetTemplate" class="d-inline" onsubmit="return confirm('@Localizer["Confirm_ResetTemplate"].Value.Trim()');">
+                        <form method="post" asp-page-handler="ResetTemplate" class="d-inline"
+                              data-confirm-modal
+                              data-confirm-title="@Localizer["Confirm_ResetTemplate_Title"]"
+                              data-confirm-message="@Localizer["Confirm_ResetTemplate"]"
+                              data-confirm-action="@Localizer["Reset"]"
+                              data-confirm-level="danger">
                             <input type="hidden" name="templateType" value="@((int)template.Type)" />
                             <button type="submit" class="btn btn-outline-secondary btn-sm">
                                 <loc key="Action_ResetToDefault" />
@@ -178,7 +175,11 @@
                                 <loc key="ApplyToAllCompanies_Desc" />
                             </div>
                             <button type="submit" class="btn btn-warning btn-sm" formaction="?handler=ApplyToAllCompanies"
-                                    onclick="return confirm('@Localizer["Confirm_ApplyToAllCompanies"].Value.Trim()');">
+                                    data-confirm-modal
+                                    data-confirm-title="@Localizer["Confirm_ApplyToAllCompanies_Title"]"
+                                    data-confirm-message="@Localizer["Confirm_ApplyToAllCompanies"]"
+                                    data-confirm-action="@Localizer["Apply"]"
+                                    data-confirm-level="warning">
                                 <loc key="ApplyToAllCompanies" />
                             </button>
                         </div>

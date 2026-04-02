@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -12,10 +13,12 @@ namespace ShiftManager.Services;
 public class TeamCalendarEventAggregator
 {
     private readonly AppDbContext _context;
+    private readonly ICompanyLocalizationService _localizationService;
 
-    public TeamCalendarEventAggregator(AppDbContext context)
+    public TeamCalendarEventAggregator(AppDbContext context, ICompanyLocalizationService localizationService)
     {
         _context = context;
+        _localizationService = localizationService;
     }
 
     /// <summary>
@@ -399,7 +402,7 @@ public class TeamCalendarEventAggregator
         DateOnly weekStart,
         DateOnly weekEnd)
     {
-        return await _context.ShiftAssignments
+        var assignments = await _context.ShiftAssignments
             .Include(a => a.ShiftInstance)
             .ThenInclude(si => si.ShiftType)
             .Where(a =>
@@ -407,17 +410,24 @@ public class TeamCalendarEventAggregator
                 memberUserIds.Contains(a.UserId.Value) &&
                 a.ShiftInstance.WorkDate >= weekStart &&
                 a.ShiftInstance.WorkDate <= weekEnd)
-            .Select(a => new ShiftEvent
+            .ToListAsync();
+
+        var culture = CultureInfo.CurrentUICulture.Name;
+        var result = new List<ShiftEvent>(assignments.Count);
+        foreach (var a in assignments)
+        {
+            result.Add(new ShiftEvent
             {
                 UserId = a.UserId!.Value,
                 Date = a.ShiftInstance.WorkDate,
                 ShiftTypeKey = a.ShiftInstance.ShiftType.Key,
-                ShiftTypeName = a.ShiftInstance.ShiftType.Name,
+                ShiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(a.ShiftInstance.ShiftType, a.CompanyId, culture),
                 NameEn = a.ShiftInstance.ShiftType.NameEn,
                 Start = a.ShiftInstance.ShiftType.Start,
                 End = a.ShiftInstance.ShiftType.End
-            })
-            .ToListAsync();
+            });
+        }
+        return result;
     }
 
     private async Task<List<ChoreEvent>> GetChoresAsync(

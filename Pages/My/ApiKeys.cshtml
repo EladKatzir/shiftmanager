@@ -114,10 +114,15 @@
                                                 🔄 Refresh
                                             </button>
                                         </form>
-                                        <form method="post" asp-page-handler="Revoke" style="display: inline;">
+                                        <form method="post" asp-page-handler="Revoke" style="display: inline;"
+                                              data-confirm-modal
+                                              data-confirm-title="@Localizer["ConfirmRevokeKey_Title"]"
+                                              data-confirm-message="@Localizer["ConfirmRevokeKey"]"
+                                              data-confirm-action="@Localizer["Revoke"]"
+                                              data-confirm-level="danger">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="keyId" value="@key.Id" />
-                                            <button type="submit" onclick="return confirm('@Localizer["ConfirmRevokeKey"].Value.Trim()')" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                                            <button type="submit" style="background: var(--danger); color: var(--danger-text); border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;">
                                                 @Localizer["Revoke"]
                                             </button>
                                         </form>

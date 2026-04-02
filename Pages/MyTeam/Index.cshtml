@@ -402,7 +402,7 @@
         }
 
         /* Modals */
-        .modal {
+        .myteam-modal {
             display: none;
             position: fixed;
             top: 0;
@@ -417,11 +417,11 @@
             padding: 1rem;
         }
 
-        .modal.active {
+        .myteam-modal.active {
             display: flex;
         }
 
-        .modal-content {
+        .myteam-modal .modal-content {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 16px;
@@ -433,7 +433,7 @@
             animation: modalFadeIn 0.2s ease;
         }
 
-        .modal-content.large {
+        .myteam-modal .modal-content.large {
             max-width: 900px;
         }
 
@@ -448,7 +448,7 @@
             }
         }
 
-        .modal-header {
+        .myteam-modal .modal-header {
             padding: 1.5rem 1.75rem;
             border-bottom: 1px solid var(--border);
             display: flex;
@@ -458,7 +458,7 @@
             border-radius: 16px 16px 0 0;
         }
 
-        .modal-header h2 {
+        .myteam-modal .modal-header h2 {
             margin: 0;
             font-size: 1.25rem;
             font-weight: 600;
@@ -486,11 +486,11 @@
             color: var(--text);
         }
 
-        .modal-body {
+        .myteam-modal .modal-body {
             padding: 1.75rem;
         }
 
-        .modal-footer {
+        .myteam-modal .modal-footer {
             padding: 1.5rem 1.75rem;
             border-top: 1px solid var(--border);
             display: flex;
@@ -899,7 +899,7 @@
 </div>
 
 <!-- Calendar Switcher Modal -->
-<div class="modal" id="modalSwitchCalendar">
+<div class="myteam-modal" id="modalSwitchCalendar">
     <div class="modal-content">
         <div class="modal-header">
             <h2><loc key="MyCalendars" /></h2>
@@ -916,7 +916,7 @@
 </div>
 
 <!-- Create/Rename Calendar Modal -->
-<div class="modal" id="modalCalendarForm">
+<div class="myteam-modal" id="modalCalendarForm">
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="calendarFormTitle"><loc key="NewCalendar" /></h2>
@@ -937,7 +937,7 @@
 </div>
 
 <!-- Configure Members Modal -->
-<div class="modal" id="modalConfigureMembers">
+<div class="myteam-modal" id="modalConfigureMembers">
     <div class="modal-content large">
         <div class="modal-header">
             <h2><loc key="ConfigureGroupMembers" /></h2>
@@ -958,7 +958,7 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal" id="modalDeleteConfirm">
+<div class="myteam-modal" id="modalDeleteConfirm">
     <div class="modal-content">
         <div class="modal-header">
             <h2><loc key="DeleteCalendar" /></h2>

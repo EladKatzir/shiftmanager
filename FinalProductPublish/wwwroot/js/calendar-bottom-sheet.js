@@ -60,7 +60,7 @@
                 window.ErrorStates.getMessage('networkErrorTitle')
             );
         } else if (window.showToast) {
-            window.showToast(isHebrew() ? 'שגיאת רשת' : 'Network error', 'error');
+            window.showToast((window.AppLocalizer?.BottomSheet_NetworkError || 'Network error'), 'error');
         }
     }
 
@@ -276,7 +276,7 @@
 
             var sectionTitle = document.createElement('h4');
             sectionTitle.className = 'bottom-sheet__section-title';
-            sectionTitle.textContent = isHebrew() ? 'שיבוצים נוכחיים' : 'Current Assignments';
+            sectionTitle.textContent = (window.AppLocalizer?.BottomSheet_CurrentAssignments || 'Current Assignments');
             currentSection.appendChild(sectionTitle);
 
             var list = document.createElement('div');
@@ -294,7 +294,7 @@
                 if (assignment.isTrainee) {
                     var badge = document.createElement('span');
                     badge.className = 'bottom-sheet__trainee-badge';
-                    badge.textContent = isHebrew() ? 'מתמחה' : 'Trainee';
+                    badge.textContent = (window.AppLocalizer?.BottomSheet_Trainee || 'Trainee');
                     item.appendChild(badge);
                 }
 
@@ -303,7 +303,7 @@
                     var removeBtn = document.createElement('button');
                     removeBtn.type = 'button';
                     removeBtn.className = 'bottom-sheet__remove-btn';
-                    removeBtn.setAttribute('aria-label', (isHebrew() ? 'הסר ' : 'Remove ') + assignment.name);
+                    removeBtn.setAttribute('aria-label', (window.AppLocalizer?.BottomSheet_RemoveButton || 'Remove ') + assignment.name);
                     removeBtn.innerHTML = '&times;';
                     removeBtn.addEventListener('click', function () {
                         tapToConfirmRemove(removeBtn, cellData, assignment);
@@ -358,7 +358,7 @@
 
             var addTitle = document.createElement('h4');
             addTitle.className = 'bottom-sheet__section-title';
-            addTitle.textContent = isHebrew() ? 'הוסף שיבוץ' : 'Add Assignment';
+            addTitle.textContent = (window.AppLocalizer?.BottomSheet_AddAssignment || 'Add Assignment');
             addSection.appendChild(addTitle);
 
             // Chore-specific fields: title input + chore type dropdown
@@ -371,14 +371,14 @@
                 var titleLabel = document.createElement('label');
                 titleLabel.className = 'bottom-sheet__field-label';
                 titleLabel.setAttribute('for', 'bottom-sheet-chore-title');
-                titleLabel.textContent = isHebrew() ? 'כותרת התורנות' : 'Chore Title';
+                titleLabel.textContent = (window.AppLocalizer?.BottomSheet_ChoreTitle || 'Chore Title');
                 titleFieldGroup.appendChild(titleLabel);
                 choreTitleInput = document.createElement('input');
                 choreTitleInput.type = 'text';
                 choreTitleInput.className = 'bottom-sheet__input';
                 choreTitleInput.id = 'bottom-sheet-chore-title';
                 choreTitleInput.maxLength = 200;
-                choreTitleInput.placeholder = isHebrew() ? 'הזן כותרת...' : 'Enter title...';
+                choreTitleInput.placeholder = (window.AppLocalizer?.BottomSheet_EnterTitle || 'Enter title...');
                 titleFieldGroup.appendChild(choreTitleInput);
                 addSection.appendChild(titleFieldGroup);
 
@@ -390,7 +390,7 @@
                     var ctLabel = document.createElement('label');
                     ctLabel.className = 'bottom-sheet__field-label';
                     ctLabel.setAttribute('for', 'bottom-sheet-chore-type');
-                    ctLabel.textContent = isHebrew() ? 'סוג תורנות' : 'Chore Type';
+                    ctLabel.textContent = (window.AppLocalizer?.BottomSheet_ChoreType || 'Chore Type');
                     ctFieldGroup.appendChild(ctLabel);
                     choreTypeDropdown = document.createElement('select');
                     choreTypeDropdown.className = 'bottom-sheet__select';
@@ -420,9 +420,9 @@
             var hiddenSelect = document.querySelector('[data-role="assignee-select"]');
             var itemType = hiddenSelect ? (hiddenSelect.dataset.itemType || 'user') : 'user';
             if (itemType === 'shifttype') {
-                selectLabel.textContent = isHebrew() ? 'בחר משמרת' : 'Select Shift';
+                selectLabel.textContent = (window.AppLocalizer?.BottomSheet_SelectShift || 'Select Shift');
             } else {
-                selectLabel.textContent = isHebrew() ? 'בחר משתמש' : 'Select User';
+                selectLabel.textContent = (window.AppLocalizer?.BottomSheet_SelectUser || 'Select User');
             }
             fieldGroup.appendChild(selectLabel);
 
@@ -433,17 +433,36 @@
             // Default empty option
             var defaultOpt = document.createElement('option');
             defaultOpt.value = '';
-            defaultOpt.textContent = isHebrew() ? '-- בחר --' : '-- Select --';
+            defaultOpt.textContent = (window.AppLocalizer?.BottomSheet_DefaultOption || '-- Select --');
             userSelect.appendChild(defaultOpt);
 
-            // Populate from available users (read from page data or cell context)
-            var availableUsers = getAvailableUsers(cellData);
-            availableUsers.forEach(function (user) {
-                var opt = document.createElement('option');
-                opt.value = user.id;
-                opt.textContent = user.name;
-                userSelect.appendChild(opt);
-            });
+            // For Tech molecules in shift-mode, fetch eligible users per shift type dynamically
+            var calPageConfig = window.CalendarPageConfig;
+            if (calPageConfig && calPageConfig.isTechMolecule && calPageConfig.moleculeId > 0 &&
+                    itemType === 'user' && cellData.rowId && cellData.rowId.startsWith('shift-')) {
+                var shiftTypeId = parseInt(cellData.rowId.replace('shift-', ''), 10);
+                if (!isNaN(shiftTypeId) && shiftTypeId > 0) {
+                    populateEligibleUsersAsync(userSelect, calPageConfig.moleculeId, shiftTypeId);
+                } else {
+                    // Malformed rowId — fall back to full molecule user list
+                    var fallbackUsers = getAvailableUsers(cellData);
+                    fallbackUsers.forEach(function (user) {
+                        var opt = document.createElement('option');
+                        opt.value = user.id;
+                        opt.textContent = user.name;
+                        userSelect.appendChild(opt);
+                    });
+                }
+            } else {
+                // Populate from available users (read from page data or cell context)
+                var availableUsers = getAvailableUsers(cellData);
+                availableUsers.forEach(function (user) {
+                    var opt = document.createElement('option');
+                    opt.value = user.id;
+                    opt.textContent = user.name;
+                    userSelect.appendChild(opt);
+                });
+            }
 
             fieldGroup.appendChild(userSelect);
             addSection.appendChild(fieldGroup);
@@ -453,7 +472,7 @@
             var assignBtn = document.createElement('button');
             assignBtn.type = 'button';
             assignBtn.className = 'btn btn-primary bottom-sheet__action-btn';
-            assignBtn.textContent = isHebrew() ? 'שבץ' : 'Assign';
+            assignBtn.textContent = (window.AppLocalizer?.BottomSheet_Assign || 'Assign');
             assignBtn.addEventListener('click', function () {
                 // For chores, validate title inline instead of using prompt()
                 if (calendarType === 'chores') {
@@ -469,7 +488,7 @@
         var cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
         cancelBtn.className = 'btn btn-ghost bottom-sheet__action-btn';
-        cancelBtn.textContent = isHebrew() ? 'סגור' : 'Close';
+        cancelBtn.textContent = (window.AppLocalizer?.Close || 'Close');
         cancelBtn.addEventListener('click', close);
         actionsEl.appendChild(cancelBtn);
     }
@@ -480,12 +499,12 @@
         var label = cellData.rowLabel || '';
         if (calendarType === 'shifts') {
             if (cellData.rowId && cellData.rowId.indexOf('user-') === 0) {
-                return (isHebrew() ? 'משמרות של: ' : 'Shifts for: ') + label;
+                return (window.AppLocalizer?.BottomSheet_ShiftsFor || 'Shifts for: ') + label;
             }
-            return (isHebrew() ? 'שיבוץ ל: ' : 'Assigning to: ') + label;
+            return (window.AppLocalizer?.BottomSheet_AssigningTo || 'Assigning to: ') + label;
         }
         if (calendarType === 'chores') {
-            return (isHebrew() ? 'תורנויות של: ' : 'Chores for: ') + label;
+            return (window.AppLocalizer?.BottomSheet_ChoresFor || 'Chores for: ') + label;
         }
         if (calendarType === 'oncall') {
             return label;
@@ -498,21 +517,15 @@
         var date = cellData.date ? formatDate(cellData.date) : '';
         var label = cellData.rowLabel || '';
         if (calendarType === 'shifts') {
-            return isHebrew()
-                ? 'אין שיבוצים ל' + label + ' ב-' + date
-                : 'No one assigned to ' + label + ' on ' + date;
+            return (window.AppLocalizer?.BottomSheet_NoShiftsFor || 'No one assigned to {0} on {1}').replace('{0}', label).replace('{1}', date);
         }
         if (calendarType === 'chores') {
-            return isHebrew()
-                ? 'אין תורנויות ל' + label + ' ב-' + date
-                : 'No chores for ' + label + ' on ' + date;
+            return (window.AppLocalizer?.BottomSheet_NoChoresFor || 'No chores for {0} on {1}').replace('{0}', label).replace('{1}', date);
         }
         if (calendarType === 'oncall') {
-            return isHebrew()
-                ? 'אין תורנים ב-' + date
-                : 'No ' + label + ' assigned on ' + date;
+            return (window.AppLocalizer?.BottomSheet_NoOnCallFor || 'No {0} assigned on {1}').replace('{0}', label).replace('{1}', date);
         }
-        return isHebrew() ? 'אין שיבוצים עדיין' : 'No assignments yet';
+        return (window.AppLocalizer?.BottomSheet_NoAssignments || 'No assignments yet');
     }
 
     // --- Tap-to-confirm pattern for remove buttons ---
@@ -528,7 +541,7 @@
         var originalHtml = btn.innerHTML;
         btn.innerHTML = isHebrew() ? '✓' : '✓';
         btn.classList.add('bottom-sheet__remove-btn--confirming');
-        btn.setAttribute('aria-label', isHebrew() ? 'לחץ שוב לאישור' : 'Tap again to confirm');
+        btn.setAttribute('aria-label', (window.AppLocalizer?.BottomSheet_TapToConfirm || 'Tap again to confirm'));
         // Reset after 3 seconds
         var timeout = setTimeout(function () {
             btn.dataset.confirming = '';
@@ -563,7 +576,7 @@
         select.className = 'bottom-sheet__select bottom-sheet__select--small';
         var defOpt = document.createElement('option');
         defOpt.value = '';
-        defOpt.textContent = isHebrew() ? 'הוסף מתמחה...' : 'Add trainee...';
+        defOpt.textContent = (window.AppLocalizer?.BottomSheet_AddTrainee || 'Add trainee...');
         select.appendChild(defOpt);
         for (var i = 0; i < traineeSelect.options.length; i++) {
             var opt = document.createElement('option');
@@ -602,14 +615,14 @@
         .then(function (r) { return r.json(); })
         .then(function (result) {
             if (result.success) {
-                var msg = isHebrew() ? 'מתמחה שובץ בהצלחה' : 'Trainee assigned';
+                var msg = (window.AppLocalizer?.BottomSheet_TraineeAssigned || 'Trainee assigned');
                 if (window.showToast) window.showToast(msg, 'success');
                 close();
                 if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
             } else if (result.requiresOverride) {
                 // Show warnings and ask to confirm
                 var msgs = (result.warnings || []).map(function (w) { return w.message; }).join('\n');
-                var confirmLabel = isHebrew() ? 'אישורים נדרשים:\n' : 'Warnings:\n';
+                var confirmLabel = (window.AppLocalizer?.BottomSheet_Warnings || 'Warnings:') + '\n';
                 if (confirm(confirmLabel + msgs)) {
                     // Retry with override
                     fetch('/Calendar/Table?handler=AddTrainee', {
@@ -621,7 +634,7 @@
                     .then(function (r2) { return r2.json(); })
                     .then(function (r2) {
                         if (r2.success) {
-                            if (window.showToast) window.showToast(isHebrew() ? 'מתמחה שובץ בהצלחה' : 'Trainee assigned', 'success');
+                            if (window.showToast) window.showToast((window.AppLocalizer?.BottomSheet_TraineeAssigned || 'Trainee assigned'), 'success');
                             close();
                             if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
                         } else {
@@ -652,7 +665,7 @@
         .then(function (r) { return r.json(); })
         .then(function (result) {
             if (result.success) {
-                var msg = isHebrew() ? 'מתמחה הוסר בהצלחה' : 'Trainee removed';
+                var msg = (window.AppLocalizer?.BottomSheet_TraineeRemoved || 'Trainee removed');
                 if (window.showToast) window.showToast(msg, 'success');
                 close();
                 if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
@@ -668,19 +681,19 @@
     // --- Handle chore assignment with inline form (replaces prompt()) ---
     function handleChoreAssign(cellData, userId, titleInput, choreTypeDropdown) {
         if (!userId) {
-            var msg = isHebrew() ? 'נא לבחור משתמש' : 'Please select a user';
+            var msg = (window.AppLocalizer?.BottomSheet_SelectUserRequired || 'Please select a user');
             showErrorMsg(msg);
             return;
         }
         var title = titleInput ? titleInput.value.trim() : '';
         if (!title) {
-            var titleMsg = isHebrew() ? 'נא להזין כותרת' : 'Please enter a title';
+            var titleMsg = (window.AppLocalizer?.BottomSheet_TitleRequired || 'Please enter a title');
             showErrorMsg(titleMsg);
             if (titleInput) titleInput.focus();
             return;
         }
         if (title.length > 200) {
-            var lenMsg = isHebrew() ? 'הכותרת ארוכה מדי (מקסימום 200 תווים)' : 'Title too long (max 200 characters)';
+            var lenMsg = (window.AppLocalizer?.BottomSheet_TitleTooLong || 'Title too long (max 200 characters)');
             showErrorMsg(lenMsg);
             return;
         }
@@ -689,6 +702,40 @@
             // Close after initiating — quickAddChore handles its own toasts/confirms
             close();
             window.quickAddChore(cellData.date, userId, title, false, choreTypeId);
+        }
+    }
+
+    // --- Fetch eligible users for a Tech molecule shift type and populate a <select> ---
+    async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId) {
+        var loadingOpt = document.createElement('option');
+        loadingOpt.value = '';
+        loadingOpt.disabled = true;
+        loadingOpt.textContent = '...';
+        selectEl.appendChild(loadingOpt);
+        try {
+            var response = await fetch(
+                '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + moleculeId + '&shiftTypeId=' + shiftTypeId,
+                { credentials: 'same-origin' }
+            );
+            if (!response.ok) throw new Error('Server returned ' + response.status);
+            var data = await response.json();
+            if (loadingOpt.parentNode === selectEl) selectEl.removeChild(loadingOpt);
+            if (data.success && Array.isArray(data.users)) {
+                data.users.forEach(function (user) {
+                    var opt = document.createElement('option');
+                    opt.value = user.id;
+                    opt.textContent = user.name;
+                    selectEl.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            if (loadingOpt.parentNode === selectEl) selectEl.removeChild(loadingOpt);
+            console.error('Failed to load eligible users:', e);
+            var errOpt = document.createElement('option');
+            errOpt.value = '';
+            errOpt.disabled = true;
+            errOpt.textContent = (window.AppLocalizer?.BottomSheet_LoadError || 'Failed to load users');
+            selectEl.appendChild(errOpt);
         }
     }
 
@@ -735,7 +782,7 @@
     // --- Handle assign action ---
     function handleAssign(cellData, userId) {
         if (!userId) {
-            var msg = isHebrew() ? 'נא לבחור משתמש' : 'Please select a user';
+            var msg = (window.AppLocalizer?.BottomSheet_SelectUserRequired || 'Please select a user');
             showErrorMsg(msg);
             return;
         }
@@ -748,7 +795,7 @@
             if (typeof window.quickAddChore === 'function') {
                 var choreTypeSelect = document.getElementById('choreTypeSelect');
                 var choreTypeId = choreTypeSelect ? (choreTypeSelect.value || null) : null;
-                var fallbackTitle = isHebrew() ? 'תורנות' : 'Chore';
+                var fallbackTitle = (window.AppLocalizer?.BottomSheet_Chore || 'Chore');
                 window.quickAddChore(cellData.date, userId, fallbackTitle, false, choreTypeId);
                 close();
             }
@@ -770,7 +817,7 @@
                     window.quickAddShift(shiftTypeFromSelect, cellData.date, userIdFromRow);
                     close();
                 } else {
-                    var noShiftMsg = isHebrew() ? 'נא לבחור משמרת' : 'Please select a shift';
+                    var noShiftMsg = (window.AppLocalizer?.BottomSheet_SelectShiftRequired || 'Please select a shift');
                     showErrorMsg(noShiftMsg);
                 }
             } else if (cellData.rowId && cellData.rowId.indexOf('shift-') === 0) {
@@ -779,11 +826,11 @@
                 window.quickAddShift(shiftTypeId, cellData.date, userId);
                 close();
             } else {
-                var noActionMsg = isHebrew() ? 'לא ניתן להוסיף שיבוץ כאן' : 'Cannot add assignment here';
+                var noActionMsg = (window.AppLocalizer?.BottomSheet_CannotAddAssignment || 'Cannot add assignment here');
                 showErrorMsg(noActionMsg);
             }
         } else {
-            var noActionMsg2 = isHebrew() ? 'לא ניתן להוסיף שיבוץ כאן' : 'Cannot add assignment here';
+            var noActionMsg2 = (window.AppLocalizer?.BottomSheet_CannotAddAssignment || 'Cannot add assignment here');
             showErrorMsg(noActionMsg2);
         }
     }
@@ -823,7 +870,7 @@
             .then(function (r) { return r.json(); })
             .then(function (result) {
                 if (result.success) {
-                    var msg = isHebrew() ? 'השיבוץ הוסר בהצלחה' : 'Assignment removed';
+                    var msg = (window.AppLocalizer?.BottomSheet_AssignmentRemoved || 'Assignment removed');
                     if (window.showToast) window.showToast(msg, 'success');
                     close();
                     if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
@@ -836,7 +883,7 @@
             });
         } else {
             // Fallback for unknown calendar types
-            var noRemoveMsg = isHebrew() ? 'לא ניתן למחוק שיבוץ כאן' : 'Cannot remove assignment here';
+            var noRemoveMsg = (window.AppLocalizer?.BottomSheet_CannotRemoveAssignment || 'Cannot remove assignment here');
             showErrorMsg(noRemoveMsg);
         }
     }

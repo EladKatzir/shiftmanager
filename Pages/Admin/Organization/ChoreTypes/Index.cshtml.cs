@@ -39,7 +39,7 @@ public class IndexModel : LocalizedPageModel
     }
 
     // View Models
-    public record ChoreTypeVM(int Id, string Name, string DisplayName, string? Color, int SortOrder, string MoleculeName, bool IsActive, int ChoreCount);
+    public record ChoreTypeVM(int Id, string Name, string DisplayName, string? Color, int SortOrder, string MoleculeName, bool IsActive, int ChoreCount, string? NameEn, string? NameHe);
     public record MoleculeOption(int Id, string Name);
 
     // Data
@@ -52,20 +52,20 @@ public class IndexModel : LocalizedPageModel
     // Create form
     [BindProperty] public string ChoreTypeName { get; set; } = string.Empty;
     [BindProperty] public string ChoreTypeDisplayName { get; set; } = string.Empty;
+    [BindProperty] public string? ChoreTypeNameEn { get; set; }
+    [BindProperty] public string? ChoreTypeNameHe { get; set; }
     [BindProperty] public string? ChoreTypeColor { get; set; }
 
     // Edit form
     [BindProperty] public int EditId { get; set; }
     [BindProperty] public string EditDisplayName { get; set; } = string.Empty;
+    [BindProperty] public string? EditNameEn { get; set; }
+    [BindProperty] public string? EditNameHe { get; set; }
     [BindProperty] public string? EditColor { get; set; }
     [BindProperty] public int EditSortOrder { get; set; }
 
     public async Task OnGetAsync()
     {
-        if (TempData["SuccessMessage"] is string successMsg)
-            Success = successMsg;
-        if (TempData["ErrorMessage"] is string errorMsg)
-            Error = errorMsg;
 
         await LoadDataAsync();
     }
@@ -133,7 +133,9 @@ public class IndexModel : LocalizedPageModel
                     ct.SortOrder,
                     ct.Molecule.DisplayName,
                     ct.IsActive,
-                    choreCountsByType.GetValueOrDefault(ct.Id, 0)
+                    choreCountsByType.GetValueOrDefault(ct.Id, 0),
+                    ct.NameEn,
+                    ct.NameHe
                 ))
                 .ToList();
         }
@@ -160,6 +162,18 @@ public class IndexModel : LocalizedPageModel
         }
 
         if (ChoreTypeName.Trim().Length > 100)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_NameTooLong"].Value;
+            return RedirectToPage(new { MoleculeId });
+        }
+
+        if (!string.IsNullOrWhiteSpace(ChoreTypeNameEn) && ChoreTypeNameEn.Trim().Length > 100)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_NameTooLong"].Value;
+            return RedirectToPage(new { MoleculeId });
+        }
+
+        if (!string.IsNullOrWhiteSpace(ChoreTypeNameHe) && ChoreTypeNameHe.Trim().Length > 100)
         {
             TempData["ErrorMessage"] = _localizer["Error_NameTooLong"].Value;
             return RedirectToPage(new { MoleculeId });
@@ -194,7 +208,9 @@ public class IndexModel : LocalizedPageModel
             ChoreTypeName.Trim(),
             ChoreTypeDisplayName.Trim(),
             safeColor,
-            currentUserId);
+            currentUserId,
+            string.IsNullOrWhiteSpace(ChoreTypeNameEn) ? null : ChoreTypeNameEn.Trim(),
+            string.IsNullOrWhiteSpace(ChoreTypeNameHe) ? null : ChoreTypeNameHe.Trim());
 
         _logger.LogInformation("Created ChoreType {ChoreTypeId}: {ChoreTypeName} in Molecule {MoleculeId}",
             choreType.Id, choreType.Name, MoleculeId.Value);
@@ -220,6 +236,18 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage(new { MoleculeId });
         }
 
+        if (!string.IsNullOrWhiteSpace(EditNameEn) && EditNameEn.Trim().Length > 100)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_NameTooLong"].Value;
+            return RedirectToPage(new { MoleculeId });
+        }
+
+        if (!string.IsNullOrWhiteSpace(EditNameHe) && EditNameHe.Trim().Length > 100)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_NameTooLong"].Value;
+            return RedirectToPage(new { MoleculeId });
+        }
+
         // Verify user has access to this chore type's molecule (prevent IDOR)
         var existing = await _choreTypeService.GetByIdAsync(EditId);
         if (existing == null || !await IsUserAuthorizedForMoleculeAsync(existing.MoleculeId))
@@ -234,7 +262,9 @@ public class IndexModel : LocalizedPageModel
                 EditId,
                 EditDisplayName.Trim(),
                 SanitizeColor(EditColor),
-                EditSortOrder);
+                EditSortOrder,
+                string.IsNullOrWhiteSpace(EditNameEn) ? null : EditNameEn.Trim(),
+                string.IsNullOrWhiteSpace(EditNameHe) ? null : EditNameHe.Trim());
 
             _logger.LogInformation("Updated ChoreType {ChoreTypeId}: {ChoreTypeName}",
                 choreType.Id, choreType.DisplayName);

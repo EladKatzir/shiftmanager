@@ -17,19 +17,16 @@
         .page-header { margin-bottom: 2rem; }
         .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
         .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
-        .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
-        .alert-success { background: var(--success); color: var(--success-text); }
-        .alert-error { background: var(--danger); color: var(--danger-text); }
         .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
         .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .search-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
         .search-input { flex: 1; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; }
-        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
-        .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
-        .btn-success { background: var(--success); color: var(--success-text); border-color: var(--success); }
-        .btn-danger { background: var(--danger); color: var(--danger-text); border-color: var(--danger); }
-        .btn-ghost { background: transparent; color: var(--text); border-color: transparent; }
-        .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: var(--primary-bg); color: var(--primary); }
+        .friends-page .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none; }
+        .friends-page .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .friends-page .btn-success { background: var(--success); color: var(--success-text); border-color: var(--success); }
+        .friends-page .btn-danger { background: var(--danger); color: var(--danger-text); border-color: var(--danger); }
+        .friends-page .btn-ghost { background: transparent; color: var(--text); border-color: transparent; }
+        .friends-page .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; background: var(--primary-bg); color: var(--primary); }
         .friend-card { display: flex; align-items: center; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--border); }
         .friend-card:last-child { border-bottom: none; }
         .friend-avatar { flex-shrink: 0; }
@@ -44,13 +41,11 @@
     </style>
 }
 
+<div class="friends-page">
 <div class="page-header">
     <h1 class="page-title"><loc key="MyFriends" /></h1>
     <p class="page-subtitle"><loc key="FriendsDescription" /></p>
 </div>
-
-@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div> }
-@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div> }
 
 <div class="section-card">
     <h3 class="section-header"><loc key="AddFriend" /></h3>
@@ -151,7 +146,11 @@
                 </div>
                 <div class="friend-actions">
                     <form method="post" asp-page-handler="CancelRequest" style="display:inline"
-                          onsubmit="return confirm('@Localizer["ConfirmCancelRequest"].Value.Trim()');">
+                          data-confirm-modal
+                          data-confirm-title="@Localizer["ConfirmCancelRequest_Title"]"
+                          data-confirm-message="@Localizer["ConfirmCancelRequest"]"
+                          data-confirm-action="@Localizer["Cancel"]"
+                          data-confirm-level="danger">
                         <input type="hidden" name="id" value="@request.FriendshipId" />
                         <button type="submit" class="btn btn-ghost"><loc key="Cancel" /></button>
                     </form>
@@ -183,7 +182,11 @@
                 </div>
                 <div class="friend-actions">
                     <form method="post" asp-page-handler="Remove" style="display:inline"
-                          onsubmit="return confirm('@Localizer["ConfirmRemoveFriend"].Value.Trim()');">
+                          data-confirm-modal
+                          data-confirm-title="@Localizer["ConfirmRemoveFriend_Title"]"
+                          data-confirm-message="@Localizer["ConfirmRemoveFriend"]"
+                          data-confirm-action="@Localizer["Remove"]"
+                          data-confirm-level="danger">
                         <input type="hidden" name="id" value="@friend.FriendshipId" />
                         <button type="submit" class="btn btn-danger"><loc key="Remove" /></button>
                     </form>
@@ -195,4 +198,5 @@
     {
         <p class="empty-state"><loc key="NoFriendsYet" /></p>
     }
+</div>
 </div>

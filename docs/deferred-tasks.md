@@ -4,24 +4,9 @@ Tasks identified during development that are deferred for future work.
 
 ---
 
-## 1. ChoreType Bilingual Localization
+## ~~1. ChoreType Bilingual Localization~~ ✅ DONE (2026-04-02)
 
-**Priority:** Medium
-**Identified:** 2026-03-13
-**Context:** ShiftType localization fix (Issue 2) revealed ChoreType has zero i18n infrastructure
-
-**Problem:** `ChoreType` model only has `Name` (internal key) and `DisplayName` (single-language string). Unlike `ShiftType` (which has `Key`+`NameKey`+`CustomName` feeding `ResolveShiftTypeNameAsync`) or `OnDutyTypeConfig` (which has `NameEn`/`NameHe`), ChoreType names are stored in whatever language the admin typed.
-
-**Affected rendering sites:**
-- `Pages/Calendar/Chores.cshtml` lines 44, 114 — dropdown and legend use `choreType.DisplayName`
-- `Pages/Api/Calendar/GetChoresData.cshtml.cs` line 86 — API returns `ChoreType.DisplayName`
-
-**Required work:**
-1. Add `NameEn`/`NameHe` fields to `ChoreType` model (following `OnDutyTypeConfig` pattern)
-2. EF migration to add columns
-3. Update `ChoreTypeService.cs` and Admin/Organization/ChoreTypes/Index to accept bilingual names
-4. Update all rendering sites to select name by `CultureInfo.CurrentUICulture`
-5. Migrate existing `DisplayName` values to the appropriate language column
+**Implemented in session 2026-04-02.** `NameEn`/`NameHe` added to `ChoreType` model following `OnDutyTypeConfig` pattern. Migration `ChoreTypeBilingualNames` seeds `NameEn = DisplayName` for existing rows. All 9 rendering sites updated with `isHebrew && NameHe ?? NameEn ?? DisplayName` resolution. Admin CRUD UI updated with bilingual inputs. Browser-tested: EN/HE switching verified on Chores calendar (dropdown, legend, quick-entry).
 
 ---
 

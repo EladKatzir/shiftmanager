@@ -169,7 +169,11 @@
 
                             <form method="post" asp-page-handler="DeleteMasterProgram"
                                   style="display: inline;"
-                                  onsubmit="return confirm('@Localizer["MasterPrograms_ConfirmDelete"].Value.Trim()');">
+                                  data-confirm-modal
+                                  data-confirm-title="@Localizer["MasterPrograms_ConfirmDelete_Title"]"
+                                  data-confirm-message="@Localizer["MasterPrograms_ConfirmDelete"]"
+                                  data-confirm-action="@Localizer["Delete"]"
+                                  data-confirm-level="danger">
                                 <input type="hidden" name="masterProgramId" value="@masterProgram.Id" />
                                 <button type="submit" class="btn btn-sm btn-danger">
                                     🗑️ <loc key="Delete" />
@@ -184,7 +188,7 @@
 </div>
 
 @* Generate From Master Modal *@
-<div id="generateMasterModal" class="modal" style="display: none;">
+<div id="generateMasterModal" style="display: none;">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="post" asp-page-handler="GenerateFromMaster">
@@ -244,7 +248,7 @@
                 document.getElementById('generateMasterProgramName').textContent = '@Localizer["MasterProgram_Prefix"].Value.Trim()' + masterName;
                 document.getElementById('generateMasterProgramCount').textContent = '@Localizer["MasterProgram_WillApplyPrefix"].Value.Trim()' + programCount + ' @Localizer["MasterProgram_WillApplySuffix"].Value.Trim()';
 
-                document.getElementById('generateMasterModal').style.display = 'block';
+                document.getElementById('generateMasterModal').style.display = 'flex';
             });
         });
 
@@ -376,35 +380,33 @@
         border-top: 1px solid var(--border);
     }
 
-    /* Modal styles (reused) — must override components.css .modal base */
-    .modal {
+    /* Scoped to the generate master modal only — avoids polluting global .modal */
+    #generateMasterModal {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        max-width: none;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 9999;
-        opacity: 1;
-        visibility: visible;
-        transform: none;
-        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
     }
 
-    .modal-dialog {
+    #generateMasterModal .modal-dialog {
         position: relative;
         max-width: 600px;
         margin: 100px auto;
+        width: 100%;
     }
 
-    .modal-content {
+    #generateMasterModal .modal-content {
         background: var(--surface);
         border-radius: 8px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
-    .modal-header {
+    #generateMasterModal .modal-header {
         padding: 20px;
         border-bottom: 1px solid var(--border);
         display: flex;
@@ -412,11 +414,11 @@
         align-items: center;
     }
 
-    .modal-body {
+    #generateMasterModal .modal-body {
         padding: 20px;
     }
 
-    .modal-footer {
+    #generateMasterModal .modal-footer {
         padding: 20px;
         border-top: 1px solid var(--border);
         text-align: right;

@@ -485,24 +485,6 @@
     </div>
 </div>
 
-<!-- Success Message -->
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert-success">
-        <span style="font-size: 1.25rem;">✓</span>
-        <span>@TempData["SuccessMessage"]</span>
-    </div>
-}
-
-<!-- Error Message -->
-@if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
-{
-    <div class="alert-error">
-        <span style="font-size: 1.25rem;">✗</span>
-        <span>@(TempData["ErrorMessage"] ?? TempData["Error"])</span>
-    </div>
-}
-
 <!-- Date Range Filter -->
 <div class="filter-card">
     <h3 class="filter-header">@Localizer["DateRange"]</h3>

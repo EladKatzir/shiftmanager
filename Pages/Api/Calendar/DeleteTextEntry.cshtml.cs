@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using ShiftManager.Data;
+using ShiftManager.Hubs;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
@@ -16,6 +19,8 @@ public class DeleteTextEntryModel : PageModel
     private readonly ICalendarTextEntryService _textEntryService;
     private readonly IAuditLogService _auditLogService;
     private readonly IGrantService _grantService;
+    private readonly ICalendarNotificationService _notificationService;
+    private readonly AppDbContext _db;
     private readonly ILogger<DeleteTextEntryModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
 
@@ -23,12 +28,16 @@ public class DeleteTextEntryModel : PageModel
         ICalendarTextEntryService textEntryService,
         IAuditLogService auditLogService,
         IGrantService grantService,
+        ICalendarNotificationService notificationService,
+        AppDbContext db,
         ILogger<DeleteTextEntryModel> logger,
         IStringLocalizer<SharedResources> localizer)
     {
         _textEntryService = textEntryService;
         _auditLogService = auditLogService;
         _grantService = grantService;
+        _notificationService = notificationService;
+        _db = db;
         _logger = logger;
         _localizer = localizer;
     }
@@ -96,6 +105,31 @@ public class DeleteTextEntryModel : PageModel
                 entityType: "CalendarTextEntry",
                 entityId: data.Id,
                 description: $"Deleted text entry '{entry.Text}' for user {entry.UserId} on {entry.Date:yyyy-MM-dd}");
+
+            try
+            {
+                var moleculeId = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Where(c => c.Id == entry.CompanyId)
+                    .Select(c => c.MoleculeId)
+                    .FirstOrDefaultAsync();
+
+                if (moleculeId.HasValue)
+                {
+                    await _notificationService.NotifyTextEntryChangedAsync(
+                        CalendarGroups.Shifts(moleculeId.Value, null),
+                        new CalendarTextEntryChangedEvent(entry.Id, entry.UserId, entry.Date, null, "deleted"));
+                }
+                else
+                {
+                    _logger.LogWarning("TextEntry {EntryId} has CompanyId={CompanyId} with no Molecule — SignalR notification skipped",
+                        entry.Id, entry.CompanyId);
+                }
+            }
+            catch (Exception signalREx)
+            {
+                _logger.LogWarning(signalREx, "SignalR notification failed for text entry deletion {EntryId}", entry.Id);
+            }
 
             return new JsonResult(new { success = true, message = _localizer["DeleteTextEntry_Success"].Value });
         }

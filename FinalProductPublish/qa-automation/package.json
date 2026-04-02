@@ -1,0 +1,35 @@
+{
+  "name": "shiftmanager-qa-automation",
+  "version": "1.0.0",
+  "description": "QA automation suite for ShiftManager using Playwright",
+  "main": "discovery/app-crawler.js",
+  "scripts": {
+    "discover": "node discovery/app-crawler.js",
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "report": "npx playwright show-report",
+    "qa:production": "npx playwright test --config=playwright.production-qa.config.js",
+    "qa:production:headed": "npx playwright test --config=playwright.production-qa.config.js --headed",
+    "qa:production:debug": "npx playwright test --config=playwright.production-qa.config.js --debug",
+    "qa:production:module": "npx playwright test --config=playwright.production-qa.config.js --grep",
+    "qa:scorecard": "node generate-scorecard.js",
+    "qa:full": "npx playwright test --config=playwright.production-qa.config.js && node generate-scorecard.js"
+  },
+  "keywords": [
+    "qa",
+    "testing",
+    "playwright",
+    "automation"
+  ],
+  "author": "ShiftManager Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
+    "@playwright/test": "^1.40.0",
+    "playwright": "^1.40.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -665,6 +665,12 @@ namespace ShiftManager.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("NameEn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NameHe")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
 

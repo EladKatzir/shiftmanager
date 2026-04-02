@@ -32,7 +32,7 @@ public class LanguageEditModeModel : LocalizedPageModel
         // Validate parameters
         if (!companyId.HasValue || string.IsNullOrWhiteSpace(culture))
         {
-            TempData["Error"] = _localizer["Error_MissingCompanyIdOrCulture"].Value;
+            TempData["ErrorMessage"] = _localizer["Error_MissingCompanyIdOrCulture"].Value;
             return RedirectToPage("/Owner/LanguageManagement");
         }
 
@@ -40,7 +40,7 @@ public class LanguageEditModeModel : LocalizedPageModel
         var allowedCultures = new[] { "en-US", "he-IL" };
         if (!allowedCultures.Contains(culture))
         {
-            TempData["Error"] = string.Format(_localizer["Error_InvalidCulture"].Value, culture);
+            TempData["ErrorMessage"] = string.Format(_localizer["Error_InvalidCulture"].Value, culture);
             return RedirectToPage("/Owner/LanguageManagement");
         }
 
@@ -50,7 +50,7 @@ public class LanguageEditModeModel : LocalizedPageModel
         {
             _logger.LogWarning("Owner attempted to enter edit mode for CompanyId={CompanyId} but has CompanyId={SelectedCompanyId} selected",
                 companyId.Value, selectedCompanyId);
-            TempData["Error"] = _localizer["Error_CanOnlyEditCurrentCompanyTranslations"].Value;
+            TempData["ErrorMessage"] = _localizer["Error_CanOnlyEditCurrentCompanyTranslations"].Value;
             return RedirectToPage("/Owner/LanguageManagement");
         }
 

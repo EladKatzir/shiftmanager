@@ -22,9 +22,6 @@
         .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; line-height: 1.2; }
         .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; line-height: 1.5; }
 
-        .alert-success { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; background: var(--success); color: var(--success-text); border: 1px solid rgba(var(--success-rgb, 16, 185, 129), 0.3); }
-        .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; background: var(--danger); color: var(--danger-text); border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3); }
-
         .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
         .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
 
@@ -83,24 +80,6 @@
     <h1 class="page-title">@Localizer["DirectorAssignments"]</h1>
     <p class="page-subtitle">@Localizer["ManageDirectorAssignments"]</p>
 </div>
-
-<!-- Success Message -->
-@if (!string.IsNullOrEmpty(Model.Success))
-{
-    <div class="alert-success">
-        <span style="font-size: 1.25rem;">✓</span>
-        <span>@Model.Success</span>
-    </div>
-}
-
-<!-- Error Message -->
-@if (!string.IsNullOrEmpty(Model.Error))
-{
-    <div class="alert-error">
-        <span style="font-size: 1.25rem;">✗</span>
-        <span>@Model.Error</span>
-    </div>
-}
 
 <!-- Assign Director Form -->
 <div class="section-card">
@@ -165,8 +144,12 @@
                             <td>@assignment.GrantedByName</td>
                             <td>@assignment.GrantedAt.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>
-                                <form method="post" asp-page-handler="Revoke" style="display:inline" data-director-name="@assignment.DirectorName" data-company-name="@assignment.CompanyName" data-confirm-msg="@Localizer["ConfirmRevokeDirectorAccess"].Value.Trim()"
-                                      onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.directorName).replace('{1}', this.dataset.companyName));">
+                                <form method="post" asp-page-handler="Revoke" style="display:inline"
+                                      data-confirm-modal
+                                      data-confirm-title="@Localizer["ConfirmRevokeDirectorAccess_Title"]"
+                                      data-confirm-message="@string.Format(Localizer["ConfirmRevokeDirectorAccess"].Value, assignment.DirectorName, assignment.CompanyName)"
+                                      data-confirm-action="@Localizer["Revoke"]"
+                                      data-confirm-level="danger">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@assignment.Id" />
                                     <button type="submit" class="btn btn-danger">

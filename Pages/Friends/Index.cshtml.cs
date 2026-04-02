@@ -47,9 +47,6 @@ public class IndexModel : PageModel
         if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.FriendshipsEnabled))
             return NotFound();
 
-        if (TempData["SuccessMessage"] is string successMsg) Success = successMsg;
-        if (TempData["ErrorMessage"] is string errorMsg) Error = errorMsg;
-
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {

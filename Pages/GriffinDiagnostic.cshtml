@@ -116,7 +116,7 @@
             font-family: var(--font-mono);
             color: var(--warning);
         }
-        .badge {
+        .griffin-badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
             border-radius: var(--radius-full);
@@ -124,9 +124,9 @@
             font-weight: 600;
             margin-left: 0.5rem;
         }
-        .badge-success { background: var(--success); color: var(--success-text); }
-        .badge-error { background: var(--danger); color: var(--danger-text); }
-        .badge-warning { background: var(--warning); color: var(--warning-text); }
+        .griffin-badge-success { background: var(--success); color: var(--success-text) !important; }
+        .griffin-badge-error { background: var(--danger); color: var(--danger-text) !important; }
+        .griffin-badge-warning { background: var(--warning); color: var(--warning-text) !important; }
 
         .warning-box {
             background: var(--warning-soft);
@@ -164,7 +164,7 @@
             font-weight: 600;
         }
 
-        .btn {
+        .griffin-btn {
             display: inline-block;
             padding: 0.75rem 1.5rem;
             background: var(--primary);
@@ -176,14 +176,14 @@
             cursor: pointer;
             transition: var(--transition-colors);
         }
-        .btn:hover {
+        .griffin-btn:hover {
             background: var(--primary-hover);
             transform: translateY(-1px);
         }
-        .btn-secondary {
+        .griffin-btn-secondary {
             background: var(--text-muted);
         }
-        .btn-secondary:hover {
+        .griffin-btn-secondary:hover {
             background: var(--text-subtle);
         }
 
@@ -346,11 +346,11 @@
                             @Model.GriffinConfig.Enabled
                             @if (Model.GriffinConfig.Enabled)
                             {
-                                <span class="badge badge-success">@Localizer["Active"]</span>
+                                <span class="griffin-badge griffin-badge-success">@Localizer["Active"]</span>
                             }
                             else
                             {
-                                <span class="badge badge-error">@Localizer["Disabled"]</span>
+                                <span class="griffin-badge griffin-badge-error">@Localizer["Disabled"]</span>
                             }
                         </p>
                     </div>
@@ -365,11 +365,11 @@
                     <div class="field-value">@(Model.GriffinConfig.BaseUrl ?? "(NULL)")
                         @if (Model.BaseUrlHasScheme == true)
                         {
-                            <span class="badge badge-success">✓ @Localizer["ValidScheme"]</span>
+                            <span class="griffin-badge griffin-badge-success">✓ @Localizer["ValidScheme"]</span>
                         }
                         else if (Model.BaseUrlHasScheme == false)
                         {
-                            <span class="badge badge-error">✗ @Localizer["MissingScheme"]</span>
+                            <span class="griffin-badge griffin-badge-error">✗ @Localizer["MissingScheme"]</span>
                         }
                     </div>
                 </div>
@@ -379,15 +379,15 @@
                     <div class="field-value">@(Model.GriffinConfig.TokenConsumerUrl ?? "(NULL)")
                         @if (Model.CallbackUrlHasScheme == true)
                         {
-                            <span class="badge badge-success">✓ @Localizer["ValidScheme"]</span>
+                            <span class="griffin-badge griffin-badge-success">✓ @Localizer["ValidScheme"]</span>
                         }
                         else if (Model.CallbackUrlHasScheme == false)
                         {
-                            <span class="badge badge-error">✗ @Localizer["MissingScheme"]</span>
+                            <span class="griffin-badge griffin-badge-error">✗ @Localizer["MissingScheme"]</span>
                         }
                         @if (Model.CallbackUrlUsesLocalhost)
                         {
-                            <span class="badge badge-warning">@Localizer["UsesLocalhost"]</span>
+                            <span class="griffin-badge griffin-badge-warning">@Localizer["UsesLocalhost"]</span>
                         }
                     </div>
                     @if (Model.CallbackUrlPath != null)
@@ -668,10 +668,10 @@
         <h2>🔄 @Localizer["Actions"]</h2>
         <div class="section-body">
             <div class="actions">
-                <a href="/Owner/GriffinConfig" class="btn">→ @Localizer["GriffinConfiguration"]</a>
-                <a href="/GriffinDiagnostic" class="btn btn-secondary">🔄 @Localizer["RefreshDiagnostic"]</a>
-                <a href="/Auth/Login" class="btn btn-secondary">→ @Localizer["LoginPage"]</a>
-                <button onclick="window.print()" class="btn btn-secondary">🖨️ @Localizer["PrintReport"]</button>
+                <a href="/Owner/GriffinConfig" class="griffin-btn">→ @Localizer["GriffinConfiguration"]</a>
+                <a href="/GriffinDiagnostic" class="griffin-btn griffin-btn-secondary">🔄 @Localizer["RefreshDiagnostic"]</a>
+                <a href="/Auth/Login" class="griffin-btn griffin-btn-secondary">→ @Localizer["LoginPage"]</a>
+                <button onclick="window.print()" class="griffin-btn griffin-btn-secondary">🖨️ @Localizer["PrintReport"]</button>
             </div>
         </div>
     </div>

@@ -38,30 +38,6 @@
             line-height: 1.5;
         }
 
-        /* Alert Messages */
-        .alert {
-            padding: 1rem 1.25rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.9375rem;
-            font-weight: 500;
-        }
-
-        .alert-success {
-            background: var(--success);
-            color: var(--success-text);
-            border: 1px solid rgba(76, 175, 80, 0.3);
-        }
-
-        .alert-error {
-            background: var(--danger);
-            color: var(--danger-text);
-            border: 1px solid rgba(244, 67, 54, 0.3);
-        }
-
         /* Section Card */
         .section-card {
             background: var(--surface);
@@ -346,23 +322,6 @@
     <p class="page-subtitle">@Localizer["ManageCompanyAnnouncements"]</p>
 </div>
 
-<!-- Success/Error Messages -->
-@if (!string.IsNullOrEmpty(Model.Success))
-{
-    <div class="alert alert-success">
-        <span style="font-size: 1.25rem;"></span>
-        <span>@Model.Success</span>
-    </div>
-}
-
-@if (!string.IsNullOrEmpty(Model.Error))
-{
-    <div class="alert alert-error">
-        <span style="font-size: 1.25rem;"></span>
-        <span>@Model.Error</span>
-    </div>
-}
-
 <!-- Create Announcement Section -->
 <div class="section-card">
     <h2 class="section-title">@Localizer["CreateAnnouncement"]</h2>
@@ -519,7 +478,11 @@
                                 </button>
                             </form>
                             <form method="post" asp-page-handler="Delete" style="display:inline; margin: 0;"
-                                  onsubmit="return confirm('@Localizer["ConfirmDeleteAnnouncement"].Value.Trim()');">
+                                  data-confirm-modal
+                                  data-confirm-title="@Localizer["ConfirmDeleteAnnouncement_Title"]"
+                                  data-confirm-message="@Localizer["ConfirmDeleteAnnouncement"]"
+                                  data-confirm-action="@Localizer["Delete"]"
+                                  data-confirm-level="danger">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@announcement.Id" />
                                 <button type="submit" class="btn btn-danger btn-sm" title="@Localizer["Delete"]">

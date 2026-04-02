@@ -200,7 +200,11 @@
                                     </form>
                                 }
                                 <form method="post" asp-page-handler="Delete" style="display: inline;"
-                                      onsubmit="return confirm('@Localizer["ConfirmDeleteFeedback"].Value.Trim()');">
+                                      data-confirm-modal
+                                      data-confirm-title="@Localizer["ConfirmDeleteFeedback_Title"]"
+                                      data-confirm-message="@Localizer["ConfirmDeleteFeedback"]"
+                                      data-confirm-action="@Localizer["Delete"]"
+                                      data-confirm-level="danger">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="feedbackId" value="@feedback.Id" />
                                     <button type="submit" class="btn btn-sm btn-danger" title="@Localizer["DeleteFeedback"]">

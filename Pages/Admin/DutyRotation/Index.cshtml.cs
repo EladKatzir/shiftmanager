@@ -81,11 +81,6 @@ public class IndexModel : LocalizedPageModel
         if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.DutyRotationEnabled))
             return NotFound();
 
-        if (TempData["SuccessMessage"] is string successMsg)
-            Success = successMsg;
-        if (TempData["ErrorMessage"] is string errorMsg)
-            Error = errorMsg;
-
         await LoadDataAsync(rotationId);
         return Page();
     }

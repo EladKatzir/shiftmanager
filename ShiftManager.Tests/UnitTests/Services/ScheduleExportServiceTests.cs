@@ -38,12 +38,17 @@ public class ScheduleExportServiceTests : IDisposable
         _companyCacheMock.Setup(c => c.GetCompanyAsync(TestCompanyId))
             .ReturnsAsync(new Company { Id = TestCompanyId, MoleculeId = 1, Name = "TestCo", DisplayName = "Test Company" });
 
+        var localizationMock = new Mock<ICompanyLocalizationService>();
+        localizationMock.Setup(l => l.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync((ShiftType st, int _, string _) => st.Name);
+
         _service = new ScheduleExportService(
             _db,
             _tenantResolverMock.Object,
             Mock.Of<ILogger<ScheduleExportService>>(),
             _companyCacheMock.Object,
-            _jobTypeServiceMock.Object);
+            _jobTypeServiceMock.Object,
+            localizationMock.Object);
 
         // Seed a company
         _db.Companies.Add(new Company { Id = TestCompanyId, MoleculeId = 1, Name = "TestCo", DisplayName = "Test Company" });

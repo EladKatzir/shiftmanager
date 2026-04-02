@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using ShiftManager.Data;
@@ -42,6 +43,7 @@ public class AnalyticsService : IAnalyticsService
     private readonly ITenantResolver _tenantResolver;
     private readonly IMemoryCache _cache;
     private readonly ILogger<AnalyticsService> _logger;
+    private readonly ICompanyLocalizationService _localizationService;
 
     private const int CacheDurationMinutes = 5;
 
@@ -49,12 +51,14 @@ public class AnalyticsService : IAnalyticsService
         AppDbContext db,
         ITenantResolver tenantResolver,
         IMemoryCache cache,
-        ILogger<AnalyticsService> logger)
+        ILogger<AnalyticsService> logger,
+        ICompanyLocalizationService localizationService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _cache = cache;
         _logger = logger;
+        _localizationService = localizationService;
     }
 
     // ==================== Employee Analytics ====================
@@ -189,6 +193,8 @@ public class AnalyticsService : IAnalyticsService
                 .ToListAsync();
 
             var warnings = new List<BackToBackShiftDto>();
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            var culture = CultureInfo.CurrentUICulture.Name;
 
             // Group by user
             var userAssignments = assignments.GroupBy(a => new { a.UserId, a.User!.DisplayName });
@@ -225,15 +231,17 @@ public class AnalyticsService : IAnalyticsService
                     // Flag if rest is less than 8 hours
                     if (restHours < 8 && restHours >= 0)
                     {
+                        var firstShiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(current.ShiftInstance.ShiftType, companyId, culture);
+                        var secondShiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(next.ShiftInstance.ShiftType, companyId, culture);
                         warnings.Add(new BackToBackShiftDto
                         {
                             UserId = userGroup.Key.UserId!.Value,
                             EmployeeName = userGroup.Key.DisplayName,
                             FirstShiftDate = current.ShiftInstance.WorkDate,
-                            FirstShiftType = current.ShiftInstance.ShiftType.Name,
+                            FirstShiftType = firstShiftTypeName,
                             FirstShiftEnd = current.ShiftInstance.ShiftType.End,
                             SecondShiftDate = next.ShiftInstance.WorkDate,
-                            SecondShiftType = next.ShiftInstance.ShiftType.Name,
+                            SecondShiftType = secondShiftTypeName,
                             SecondShiftStart = next.ShiftInstance.ShiftType.Start,
                             RestHours = Math.Round(restHours, 1)
                         });
@@ -322,24 +330,30 @@ public class AnalyticsService : IAnalyticsService
                 .Select(g => new { ShiftInstanceId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.ShiftInstanceId, x => x.Count);
 
-            var results = instances
+            var understaffedItems = instances
                 .Select(si => new
                 {
                     ShiftInstance = si,
                     AssignedCount = assignmentCounts.ContainsKey(si.Id) ? assignmentCounts[si.Id] : 0
                 })
                 .Where(x => x.AssignedCount < x.ShiftInstance.StaffingRequired)
-                .Select(x => new StaffingIssueDto
+                .ToList();
+
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            var culture = CultureInfo.CurrentUICulture.Name;
+            var results = new List<StaffingIssueDto>();
+            foreach (var x in understaffedItems)
+            {
+                results.Add(new StaffingIssueDto
                 {
                     WorkDate = x.ShiftInstance.WorkDate,
-                    ShiftType = x.ShiftInstance.ShiftType.Name,
+                    ShiftType = await _localizationService.ResolveShiftTypeNameAsync(x.ShiftInstance.ShiftType, companyId, culture),
                     AssignedCount = x.AssignedCount,
                     RequiredCount = x.ShiftInstance.StaffingRequired,
                     Difference = x.AssignedCount - x.ShiftInstance.StaffingRequired
-                })
-                .OrderBy(s => s.WorkDate)
-                .ThenBy(s => s.ShiftType)
-                .ToList();
+                });
+            }
+            results = results.OrderBy(s => s.WorkDate).ThenBy(s => s.ShiftType).ToList();
 
             return results;
         }
@@ -368,23 +382,30 @@ public class AnalyticsService : IAnalyticsService
                 .Select(g => new { ShiftInstanceId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.ShiftInstanceId, x => x.Count);
 
-            var results = instances
+            var overstaffedItems = instances
                 .Select(si => new
                 {
                     ShiftInstance = si,
                     AssignedCount = assignmentCounts.ContainsKey(si.Id) ? assignmentCounts[si.Id] : 0
                 })
                 .Where(x => x.AssignedCount > x.ShiftInstance.StaffingRequired)
-                .Select(x => new StaffingIssueDto
+                .ToList();
+
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            var culture = CultureInfo.CurrentUICulture.Name;
+            var results = new List<StaffingIssueDto>();
+            foreach (var x in overstaffedItems)
+            {
+                results.Add(new StaffingIssueDto
                 {
                     WorkDate = x.ShiftInstance.WorkDate,
-                    ShiftType = x.ShiftInstance.ShiftType.Name,
+                    ShiftType = await _localizationService.ResolveShiftTypeNameAsync(x.ShiftInstance.ShiftType, companyId, culture),
                     AssignedCount = x.AssignedCount,
                     RequiredCount = x.ShiftInstance.StaffingRequired,
                     Difference = x.AssignedCount - x.ShiftInstance.StaffingRequired
-                })
-                .OrderBy(s => s.WorkDate)
-                .ThenBy(s => s.ShiftType)
+                });
+            }
+            results = results.OrderBy(s => s.WorkDate).ThenBy(s => s.ShiftType)
                 .ToList();
 
             return results;

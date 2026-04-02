@@ -66,9 +66,13 @@
             </div>
         }
 
-        <form method="post" asp-page-handler="PrepareForUpdate">
-            <button type="submit" class="btn btn-primary"
-                    onclick="return confirm('This will create a deployment export bundle at C:\\ShiftManager\\DeploymentExport. The bundle contains database credentials and should be treated as sensitive material. Proceed?')">
+        <form method="post" asp-page-handler="PrepareForUpdate"
+              data-confirm-modal
+              data-confirm-title="@Localizer["Owner_Backup_ExportConfirm_Title"]"
+              data-confirm-message="@Localizer["Owner_Backup_ExportConfirm"]"
+              data-confirm-action="@Localizer["Confirm"]"
+              data-confirm-level="warning">
+            <button type="submit" class="btn btn-primary">
                 &#x1F4E6; Export Now
             </button>
         </form>
@@ -124,21 +128,29 @@
                                            loc-title="Owner_Backup_Download">
                                             ⬇️
                                         </a>
-                                        <form method="post" asp-page-handler="RestoreBackup" class="inline-form">
+                                        <form method="post" asp-page-handler="RestoreBackup" class="inline-form"
+                                              data-confirm-modal
+                                              data-confirm-title="@Localizer["Owner_Backup_RestoreConfirm_Title"]"
+                                              data-confirm-message="@Localizer["Owner_Backup_RestoreConfirm"]"
+                                              data-confirm-action="@Localizer["Restore"]"
+                                              data-confirm-level="warning">
                                             <input type="hidden" name="backupFileName" value="@backup.FileName" />
                                             <button type="submit"
                                                     class="btn-action btn-restore"
-                                                    loc-title="Owner_Backup_Restore"
-                                                    onclick="return confirm('@Localizer["Owner_Backup_RestoreConfirm"].Value.Trim()')">
+                                                    loc-title="Owner_Backup_Restore">
                                                 ♻️
                                             </button>
                                         </form>
-                                        <form method="post" asp-page-handler="DeleteBackup" class="inline-form">
+                                        <form method="post" asp-page-handler="DeleteBackup" class="inline-form"
+                                              data-confirm-modal
+                                              data-confirm-title="@Localizer["Owner_Backup_DeleteConfirm_Title"]"
+                                              data-confirm-message="@Localizer["Owner_Backup_DeleteConfirm"]"
+                                              data-confirm-action="@Localizer["Delete"]"
+                                              data-confirm-level="danger">
                                             <input type="hidden" name="backupFileName" value="@backup.FileName" />
                                             <button type="submit"
                                                     class="btn-action btn-delete"
-                                                    loc-title="Owner_Backup_Delete"
-                                                    onclick="return confirm('@Localizer["Owner_Backup_DeleteConfirm"].Value.Trim()')">
+                                                    loc-title="Owner_Backup_Delete">
                                                 🗑️
                                             </button>
                                         </form>

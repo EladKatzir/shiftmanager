@@ -144,10 +144,14 @@ public class NotificationServiceTests : IDisposable
         SeedData().Wait();
 
         // Create the service under test
+        var companyLocalizationMock = new Mock<ICompanyLocalizationService>();
+        companyLocalizationMock.Setup(l => l.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync((ShiftType st, int _, string _) => st.Name);
         _sut = new NotificationService(
             _db, _logger.Object, _tenantResolver.Object,
             _mailService.Object, _localizer.Object,
-            _configuration.Object, _localization.Object);
+            _configuration.Object, _localization.Object,
+            companyLocalizationMock.Object);
     }
 
     private async Task SeedData()

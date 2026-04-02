@@ -14520,4 +14520,137 @@
   <data name="BottomSheet_NoOnCallFor" xml:space="preserve">
     <value>אין תורנים ב-{1}</value>
   </data>
+  <!-- Confirm modal title keys (Feedback Consolidation 2026-04-02) -->
+  <data name="ConfirmDeleteCompany_Title" xml:space="preserve">
+    <value>מחיקת חברה</value>
+  </data>
+  <data name="ConfirmDeleteAnnouncement_Title" xml:space="preserve">
+    <value>מחיקת הודעה</value>
+  </data>
+  <data name="ConfirmDeleteArea_Title" xml:space="preserve">
+    <value>מחיקת אזור</value>
+  </data>
+  <data name="ConfirmDeleteDepartment_Title" xml:space="preserve">
+    <value>מחיקת מחלקה</value>
+  </data>
+  <data name="ConfirmDeleteJobType_Title" xml:space="preserve">
+    <value>מחיקת סוג תפקיד</value>
+  </data>
+  <data name="ConfirmDeleteMolecule_Title" xml:space="preserve">
+    <value>מחיקת מולקולה</value>
+  </data>
+  <data name="ConfirmDeleteProject_Title" xml:space="preserve">
+    <value>מחיקת פרויקט</value>
+  </data>
+  <data name="ConfirmDeleteGrouping_Title" xml:space="preserve">
+    <value>מחיקת קבוצה</value>
+  </data>
+  <data name="ConfirmDeleteRotation_Title" xml:space="preserve">
+    <value>מחיקת רוטציה</value>
+  </data>
+  <data name="ConfirmRevokeGrant_Title" xml:space="preserve">
+    <value>ביטול הרשאה</value>
+  </data>
+  <data name="ConfirmRevokeRole_Title" xml:space="preserve">
+    <value>ביטול תפקיד</value>
+  </data>
+  <data name="ConfirmBatchApproval_Title" xml:space="preserve">
+    <value>אישור בקשות</value>
+  </data>
+  <data name="ConfirmDeleteRule_Title" xml:space="preserve">
+    <value>מחיקת כלל</value>
+  </data>
+  <data name="Confirm_DeleteHomeType_Title" xml:space="preserve">
+    <value>מחיקת סבב בית</value>
+  </data>
+  <data name="Confirm_UnassignUser_Title" xml:space="preserve">
+    <value>הסרת משתמש</value>
+  </data>
+  <data name="ConfirmRevokeKey_Title" xml:space="preserve">
+    <value>ביטול מפתח API</value>
+  </data>
+  <data name="ConfirmCancelRequest_Title" xml:space="preserve">
+    <value>ביטול בקשה</value>
+  </data>
+  <data name="ConfirmRemoveFriend_Title" xml:space="preserve">
+    <value>הסרת חבר</value>
+  </data>
+  <data name="DeleteConfirm_Title" xml:space="preserve">
+    <value>מחיקת התראה</value>
+  </data>
+  <data name="Confirm_ResetTemplate_Title" xml:space="preserve">
+    <value>איפוס תבנית</value>
+  </data>
+  <data name="Confirm_ApplyToAllCompanies_Title" xml:space="preserve">
+    <value>החלה על כל החברות</value>
+  </data>
+  <data name="MasterPrograms_ConfirmDelete_Title" xml:space="preserve">
+    <value>מחיקת תוכנית אב</value>
+  </data>
+  <data name="Programs_ConfirmDelete_Title" xml:space="preserve">
+    <value>מחיקת תוכנית</value>
+  </data>
+  <data name="ConfirmDeleteFeedback_Title" xml:space="preserve">
+    <value>מחיקת משוב</value>
+  </data>
+  <data name="LangMgmt_ConfirmDeleteOverride_Title" xml:space="preserve">
+    <value>מחיקת דריסה</value>
+  </data>
+  <data name="RemoveUserConfirm_Title" xml:space="preserve">
+    <value>הסרת משתמש</value>
+  </data>
+  <data name="Owner_EmailConfig_RemoveOverrideConfirm_Title" xml:space="preserve">
+    <value>הסרת דריסה</value>
+  </data>
+  <data name="LockedUsers_ConfirmClearRateLimits" xml:space="preserve">
+    <value>לנקות את כל נעילות הגבלת ההרשמה? משתמשים נעולים יוכלו לנסות להירשם מחדש.</value>
+  </data>
+  <data name="LockedUsers_ConfirmClearRateLimits_Title" xml:space="preserve">
+    <value>ניקוי הגבלות</value>
+  </data>
+  <data name="ConfirmRemoveGrant_Title" xml:space="preserve">
+    <value>הסרת הרשאה</value>
+  </data>
+  <data name="Grant_RemoveConfirm_Title" xml:space="preserve">
+    <value>הסרת הרשאה</value>
+  </data>
+  <data name="Confirm_Title" xml:space="preserve">
+    <value>אישור פעולה</value>
+  </data>
+  <data name="Owner_Backup_ExportConfirm" xml:space="preserve">
+    <value>פעולה זו תיצור חבילת ייצוא פריסה. החבילה מכילה אישורי מסד נתונים ויש להתייחס אליה כחומר רגיש. להמשיך?</value>
+  </data>
+  <data name="Owner_Backup_ExportConfirm_Title" xml:space="preserve">
+    <value>ייצוא חבילת פריסה</value>
+  </data>
+  <data name="Owner_Backup_RestoreConfirm_Title" xml:space="preserve">
+    <value>שחזור גיבוי</value>
+  </data>
+  <data name="Owner_Backup_DeleteConfirm_Title" xml:space="preserve">
+    <value>מחיקת גיבוי</value>
+  </data>
+  <data name="BulkImport_Confirm" xml:space="preserve">
+    <value>לייבא משתמשים מ-CSV? לא ניתן לבטל פעולה זו.</value>
+  </data>
+  <data name="BulkImport_Confirm_Title" xml:space="preserve">
+    <value>ייבוא משתמשים</value>
+  </data>
+  <data name="Restore" xml:space="preserve">
+    <value>שחזור</value>
+  </data>
+  <data name="ConfirmUnlockAccount_Title" xml:space="preserve">
+    <value>שחרור חשבון</value>
+  </data>
+  <data name="ConfirmDeleteUser_Title" xml:space="preserve">
+    <value>מחיקת משתמש</value>
+  </data>
+  <data name="ConfirmDeleteOnDutyType_Title" xml:space="preserve">
+    <value>מחיקת סוג תורנות</value>
+  </data>
+  <data name="ConfirmRevokeDirectorAccess_Title" xml:space="preserve">
+    <value>שלילת הרשאת מנהל</value>
+  </data>
+  <data name="ConfirmDeleteTimeOff_Title" xml:space="preserve">
+    <value>מחיקת חופש</value>
+  </data>
 </root>

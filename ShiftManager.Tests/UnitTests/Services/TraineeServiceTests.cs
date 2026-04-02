@@ -15,6 +15,7 @@ public class TraineeServiceTests : IDisposable
     private readonly AppDbContext _db;
     private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly Mock<ITenantResolver> _tenantResolverMock;
+    private readonly Mock<ICompanyLocalizationService> _localizationServiceMock;
     private readonly TraineeService _service;
 
     private const int CompanyId = 1;
@@ -38,11 +39,16 @@ public class TraineeServiceTests : IDisposable
         _tenantResolverMock = new Mock<ITenantResolver>();
         _tenantResolverMock.Setup(t => t.GetCurrentTenantId()).Returns(CompanyId);
 
+        _localizationServiceMock = new Mock<ICompanyLocalizationService>();
+        _localizationServiceMock.Setup(l => l.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync((ShiftType st, int _, string _) => st.Name);
+
         _service = new TraineeService(
             _db,
             Mock.Of<ILogger<TraineeService>>(),
             _notificationServiceMock.Object,
-            _tenantResolverMock.Object);
+            _tenantResolverMock.Object,
+            _localizationServiceMock.Object);
     }
 
     public void Dispose()

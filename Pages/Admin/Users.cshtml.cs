@@ -1662,7 +1662,6 @@ public class UsersModel : LocalizedPageModel
             await _db.UserNotifications.IgnoreQueryFilters().Where(n => n.UserId == id).ExecuteDeleteAsync();
             await _db.Chores.IgnoreQueryFilters().Where(c => c.UserId == id).ExecuteDeleteAsync();
             await _db.OnDuties.IgnoreQueryFilters().Where(o => o.UserId == id).ExecuteDeleteAsync();
-            await _db.UserDayNotes.IgnoreQueryFilters().Where(n => n.UserId == id).ExecuteDeleteAsync();
             // Delete entries ABOUT the deleted user; reassign authorship of entries they created for others
             await _db.CalendarTextEntries.IgnoreQueryFilters().Where(e => e.UserId == id).ExecuteDeleteAsync();
             await _db.CalendarTextEntries.IgnoreQueryFilters()

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
@@ -246,19 +247,23 @@ public class UserDataExportService
             })
             .ToList();
 
-        // Day notes
-        var dayNotes = await _db.UserDayNotes
+        // Day notes (migrated from UserDayNotes; stored as OverviewNote entries).
+        // SCOPE: exports only OverviewNote entries per handoff spec (03-notes-system-cleanup).
+        // QuickEntry items (CalendarTextEntryType.QuickEntry) are intentionally excluded here
+        // because they are manager-authored annotations about the user, not personal records
+        // created by the user — review this scope if GDPR requirements change.
+        var dayNotes = await _db.CalendarTextEntries
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(n => n.UserId == userId)
-            .Select(n => new
+            .Where(e => e.UserId == userId && e.EntryType == CalendarTextEntryType.OverviewNote)
+            .Select(e => new
             {
-                n.Id,
-                n.Date,
-                n.Note,
-                n.CreatedAt
+                e.Id,
+                e.Date,
+                e.Text,
+                e.CreatedAt
             })
-            .OrderByDescending(n => n.Date)
+            .OrderByDescending(e => e.Date)
             .ToListAsync();
 
         // Friendships

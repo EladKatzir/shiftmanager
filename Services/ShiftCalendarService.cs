@@ -1,4 +1,5 @@
 // Services/ShiftCalendarService.cs
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -13,14 +14,16 @@ public class ShiftCalendarService : IShiftCalendarService
     private readonly AppDbContext _db;
     private readonly ILogger<ShiftCalendarService> _logger;
     private readonly ICompanyCacheService _companyCacheService;
+    private readonly ICompanyLocalizationService _localizationService;
     private const int DEFAULT_REST_HOURS = 8;
     private const int DEFAULT_STAFFING_REQUIRED = 1;
 
-    public ShiftCalendarService(AppDbContext db, ILogger<ShiftCalendarService> logger, ICompanyCacheService companyCacheService)
+    public ShiftCalendarService(AppDbContext db, ILogger<ShiftCalendarService> logger, ICompanyCacheService companyCacheService, ICompanyLocalizationService localizationService)
     {
         _db = db;
         _logger = logger;
         _companyCacheService = companyCacheService;
+        _localizationService = localizationService;
     }
 
     public async Task<List<AppUser>> GetUsersForCalendarAsync(int moleculeId, int? jobTypeId)
@@ -371,8 +374,9 @@ public class ShiftCalendarService : IShiftCalendarService
 
             if (restHours < DEFAULT_REST_HOURS)
             {
+                var prevShiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(prevAssignment.ShiftInstance.ShiftType, prevAssignment.CompanyId, CultureInfo.CurrentUICulture.Name);
                 warnings.Add(new RestViolationWarning(
-                    prevAssignment.ShiftInstance.ShiftType.Name,
+                    prevShiftTypeName,
                     previousDate,
                     TimeSpan.FromHours(restHours)
                 ));
@@ -438,7 +442,8 @@ public class ShiftCalendarService : IShiftCalendarService
             .Where(c => c.IsActive)
             .ToListAsync();
 
-        // C-07 OPTIMIZED: Use projection for shifts overlay — only need UserId, WorkDate, ShiftTypeName
+        // C-07 OPTIMIZED: Slim projection (UserId, WorkDate, CompanyId, ShiftTypeId) — ShiftType entities
+        // loaded separately by distinct ID to avoid repeating ShiftType columns per assignment row
         var shiftsTask = _db.ShiftAssignments
             .IgnoreQueryFilters()
             .Where(sa => sa.UserId != null
@@ -449,7 +454,8 @@ public class ShiftCalendarService : IShiftCalendarService
             {
                 UserId = sa.UserId!.Value,
                 sa.ShiftInstance.WorkDate,
-                ShiftTypeName = sa.ShiftInstance.ShiftType.Name
+                CompanyId = sa.CompanyId,
+                ShiftTypeId = sa.ShiftInstance.ShiftTypeId
             })
             .ToListAsync();
 
@@ -458,8 +464,26 @@ public class ShiftCalendarService : IShiftCalendarService
         var timeOffRequests = timeOffTask.Result;
         var chores = choresTask.Result;
         var onDuties = onDutiesTask.Result;
-        var shifts = shiftsTask.Result;
+        var rawShifts = shiftsTask.Result;
         var dutyTypeConfigs = dutyTypeConfigsTask.Result;
+
+        // C-07 OPTIMIZED: Load distinct ShiftType entities in one query, then resolve names
+        var distinctShiftTypeIds = rawShifts.Select(s => s.ShiftTypeId).Distinct().ToList();
+        var shiftTypeMap = await _db.ShiftTypes
+            .IgnoreQueryFilters()
+            .Where(st => distinctShiftTypeIds.Contains(st.Id))
+            .ToDictionaryAsync(st => st.Id);
+
+        var culture = CultureInfo.CurrentUICulture.Name;
+        var shifts = new List<(int UserId, DateOnly WorkDate, string ShiftTypeName)>();
+        foreach (var s in rawShifts)
+        {
+            var shiftType = shiftTypeMap.GetValueOrDefault(s.ShiftTypeId);
+            var name = shiftType != null
+                ? await _localizationService.ResolveShiftTypeNameAsync(shiftType, s.CompanyId, culture)
+                : s.ShiftTypeId.ToString();
+            shifts.Add((s.UserId, s.WorkDate, name));
+        }
 
         // Build lookup dictionaries for O(1) access
         var choreLookup = chores.ToLookup(c => (c.UserId, c.Date));

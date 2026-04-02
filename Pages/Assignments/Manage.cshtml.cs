@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -28,8 +29,9 @@ public class ManageModel : LocalizedPageModel
     private readonly IGrantService _grantService;
     private readonly IConcurrencyService _concurrencyService;
     private readonly IAuditLogService _auditLogService;
+    private readonly ICompanyLocalizationService _localizationService;
 
-    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IShiftAssignmentService assignmentService, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService, IGrantService grantService, IConcurrencyService concurrencyService, IAuditLogService auditLogService)
+    public ManageModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, IShiftAssignmentService assignmentService, INotificationService notificationService, ILogger<ManageModel> logger, ICompanyContext companyContext, IDirectorService directorService, ITraineeService traineeService, IBusyUserService busyUserService, IGrantService grantService, IConcurrencyService concurrencyService, IAuditLogService auditLogService, ICompanyLocalizationService localizationService)
         : base(localizer)
     {
         _db = db;
@@ -43,6 +45,7 @@ public class ManageModel : LocalizedPageModel
         _grantService = grantService;
         _concurrencyService = concurrencyService;
         _auditLogService = auditLogService;
+        _localizationService = localizationService;
     }
 
 
@@ -254,16 +257,17 @@ public class ManageModel : LocalizedPageModel
         }
 
         // Send notification to the assigned user
+        var assignedShiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(Type!, Instance.CompanyId, CultureInfo.CurrentUICulture.Name);
         await _notificationService.CreateShiftAddedNotificationAsync(
             SelectedUserId.Value,
-            Type!.Name,
+            assignedShiftTypeName,
             Date,
-            Type.Start,
-            Type.End
+            Type!.Start,
+            Type!.End
         );
 
         await _auditLogService.LogAsync("ShiftAssignmentManaged", "ShiftAssignment", Instance.Id,
-            $"Assigned user {SelectedUserId.Value} to shift '{Type.Name}' on {Date:yyyy-MM-dd}");
+            $"Assigned user {SelectedUserId.Value} to shift '{Type!.Key}' on {Date:yyyy-MM-dd}");
 
         return RedirectToPage(new { date = Date, shiftTypeId = ShiftTypeId, returnUrl = ReturnUrl });
     }
@@ -303,9 +307,10 @@ public class ManageModel : LocalizedPageModel
             // Send notification before removing (only if user is assigned)
             if (a.UserId.HasValue)
             {
+                var shiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(a.ShiftInstance.ShiftType, a.ShiftInstance.CompanyId, CultureInfo.CurrentUICulture.Name);
                 await _notificationService.CreateShiftRemovedNotificationAsync(
                     a.UserId.Value,
-                    a.ShiftInstance.ShiftType.Name,
+                    shiftTypeName,
                     a.ShiftInstance.WorkDate,
                     a.ShiftInstance.ShiftType.Start,
                     a.ShiftInstance.ShiftType.End

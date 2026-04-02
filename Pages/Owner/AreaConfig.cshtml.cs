@@ -50,9 +50,6 @@ public class AreaConfigModel : PageModel
 
     public async Task OnGetAsync()
     {
-        if (TempData["SuccessMessage"] is string successMsg) Success = successMsg;
-        if (TempData["ErrorMessage"] is string errorMsg) Error = errorMsg;
-
         await LoadAreasAsync();
     }
 

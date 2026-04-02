@@ -215,7 +215,11 @@
 
                             <form method="post" asp-page-handler="DeleteProgram"
                                   style="display: inline;"
-                                  onsubmit="return confirm('@Localizer["Programs_ConfirmDelete"].Value.Trim()');">
+                                  data-confirm-modal
+                                  data-confirm-title="@Localizer["Programs_ConfirmDelete_Title"]"
+                                  data-confirm-message="@Localizer["Programs_ConfirmDelete"]"
+                                  data-confirm-action="@Localizer["Delete"]"
+                                  data-confirm-level="danger">
                                 <input type="hidden" name="programId" value="@program.Id" />
                                 <button type="submit" class="btn btn-sm btn-danger">
                                     🗑️ <loc key="Delete" />
@@ -230,7 +234,7 @@
 </div>
 
 @* Generate Instances Modal *@
-<div id="generateModal" class="modal" style="display: none;">
+<div id="generateModal" class="program-modal" style="display: none;">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="post" asp-page-handler="GenerateInstances">
@@ -470,7 +474,7 @@
     }
 
     /* Modal styles (same as Blueprints) */
-    .modal {
+    .program-modal {
         position: fixed;
         top: 0;
         left: 0;
@@ -491,25 +495,25 @@
         border-radius: 0;
     }
 
-    .modal.is-open {
+    .program-modal.is-open {
         opacity: 1;
         visibility: visible;
         transform: none;
     }
 
-    .modal-dialog {
+    .program-modal .modal-dialog {
         position: relative;
         max-width: 600px;
         margin: 100px auto;
     }
 
-    .modal-content {
+    .program-modal .modal-content {
         background: var(--surface);
         border-radius: 8px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
 
-    .modal-header {
+    .program-modal .modal-header {
         padding: 20px;
         border-bottom: 1px solid var(--border);
         display: flex;
@@ -517,11 +521,11 @@
         align-items: center;
     }
 
-    .modal-body {
+    .program-modal .modal-body {
         padding: 20px;
     }
 
-    .modal-footer {
+    .program-modal .modal-footer {
         padding: 20px;
         border-top: 1px solid var(--border);
         text-align: right;

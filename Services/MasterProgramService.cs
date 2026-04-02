@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -14,17 +15,20 @@ public class MasterProgramService : IMasterProgramService
     private readonly ILogger<MasterProgramService> _logger;
     private readonly ITenantResolver _tenantResolver;
     private readonly IShiftProgramService _shiftProgramService;
+    private readonly ICompanyLocalizationService _localizationService;
 
     public MasterProgramService(
         AppDbContext db,
         ILogger<MasterProgramService> logger,
         ITenantResolver tenantResolver,
-        IShiftProgramService shiftProgramService)
+        IShiftProgramService shiftProgramService,
+        ICompanyLocalizationService localizationService)
     {
         _db = db;
         _logger = logger;
         _tenantResolver = tenantResolver;
         _shiftProgramService = shiftProgramService;
+        _localizationService = localizationService;
     }
 
     // ==================== CRUD Operations ====================
@@ -294,6 +298,12 @@ public class MasterProgramService : IMasterProgramService
             throw new InvalidOperationException($"MasterProgram {masterProgramId} not found");
         }
 
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        var culture = CultureInfo.CurrentUICulture.Name;
+        var shiftTypeNameSet = new HashSet<string>();
+        foreach (var item in masterProgram.Items)
+            shiftTypeNameSet.Add(await _localizationService.ResolveShiftTypeNameAsync(item.Program.ShiftType, companyId, culture));
+
         var summary = new MasterProgramSummary
         {
             TotalPrograms = masterProgram.Items.Count,
@@ -304,11 +314,7 @@ public class MasterProgramService : IMasterProgramService
             TotalProgramDays = masterProgram.Items
                 .SelectMany(i => i.Program.ProgramDays)
                 .Count(),
-            ShiftTypeNames = masterProgram.Items
-                .Select(i => i.Program.ShiftType.Name)
-                .Distinct()
-                .OrderBy(name => name)
-                .ToList()
+            ShiftTypeNames = shiftTypeNameSet.OrderBy(name => name).ToList()
         };
 
         return summary;

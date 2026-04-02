@@ -28,11 +28,16 @@ public class MasterProgramServiceTests : IDisposable
         _db = new AppDbContext(options);
         _shiftProgramServiceMock = new Mock<IShiftProgramService>();
 
+        var localizationMock = new Mock<ICompanyLocalizationService>();
+        localizationMock.Setup(l => l.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync((ShiftType st, int _, string _) => st.Name);
+
         _service = new MasterProgramService(
             _db,
             Mock.Of<ILogger<MasterProgramService>>(),
             Mock.Of<ITenantResolver>(),
-            _shiftProgramServiceMock.Object);
+            _shiftProgramServiceMock.Object,
+            localizationMock.Object);
 
         // Seed company and shift type for programs
         _db.Companies.Add(new Company { Id = TestCompanyId, MoleculeId = 1, Name = "TestCo", DisplayName = "Test Co" });

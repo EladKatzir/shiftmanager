@@ -52,7 +52,7 @@ public class SelectMoleculeModel : PageModel
         if (!_rateLimiting.IsAllowed(rateLimitKey, 10, 15))
         {
             _logger.LogWarning("Rate limit exceeded for molecule switch by user {UserId}", userId);
-            TempData["Error"] = "Too many molecule switches. Please wait before trying again.";
+            TempData["ErrorMessage"] = "Too many molecule switches. Please wait before trying again.";
             return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToPage("/Admin/Users");
         }
 
@@ -65,7 +65,7 @@ public class SelectMoleculeModel : PageModel
             _logger.LogWarning(
                 "Director user {UserId} attempted to select unauthorized molecule {MoleculeId}",
                 userId, moleculeId);
-            TempData["Error"] = "Access denied to the selected molecule.";
+            TempData["ErrorMessage"] = "Access denied to the selected molecule.";
             return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToPage("/Admin/Users");
         }
 

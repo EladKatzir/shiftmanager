@@ -22,13 +22,6 @@
         .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
         .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
 
-        .alert-success, .alert-error {
-            padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem;
-            display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500;
-        }
-        .alert-success { background: var(--success); color: var(--success-text); border: 1px solid rgba(16, 185, 129, 0.3); }
-        .alert-error { background: var(--danger); color: var(--danger-text); border: 1px solid rgba(244, 67, 54, 0.3); }
-
         .section-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
             padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem;
@@ -76,8 +69,8 @@
             display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px;
             font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em;
         }
-        .badge-inactive { background: var(--surface-soft); color: var(--text-muted); }
-        .badge-active { background: var(--success-soft); color: var(--success); }
+        .badge-inactive { background: var(--surface-soft); color: var(--text-muted) !important; }
+        .badge-active { background: var(--success-soft); color: var(--success) !important; }
 
         .color-swatch {
             display: inline-block; width: 20px; height: 20px; border-radius: 4px;
@@ -107,14 +100,6 @@
     <p class="page-subtitle"><loc key="CreateAndManageChoreTypes" /></p>
 </div>
 
-@if (!string.IsNullOrEmpty(Model.Success))
-{
-    <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div>
-}
-@if (!string.IsNullOrEmpty(Model.Error))
-{
-    <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div>
-}
 
 <div class="section-card molecule-selector">
     <div class="info-box">
@@ -161,6 +146,14 @@
                     <input class="form-input" asp-for="ChoreTypeDisplayName" placeholder="@Localizer["Placeholder_ChoreTypeName"]" required />
                 </div>
                 <div class="form-group">
+                    <label class="form-label">@Localizer["NameEnglish"]</label>
+                    <input class="form-input" asp-for="ChoreTypeNameEn" placeholder="e.g. Cleaning" maxlength="100" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@Localizer["NameHebrew"]</label>
+                    <input class="form-input" asp-for="ChoreTypeNameHe" placeholder="e.g. ניקיון" maxlength="100" />
+                </div>
+                <div class="form-group">
                     <label class="form-label">@Localizer["Color"]</label>
                     <input class="form-input" type="color" asp-for="ChoreTypeColor" value="#3b82f6" />
                 </div>
@@ -178,6 +171,8 @@
                     <thead>
                         <tr>
                             <th><loc key="DisplayName" /></th>
+                            <th>@Localizer["NameEnglish"]</th>
+                            <th>@Localizer["NameHebrew"]</th>
                             <th><loc key="Name" /></th>
                             <th><loc key="Color" /></th>
                             <th><loc key="SortOrder" /></th>
@@ -191,6 +186,8 @@
                     {
                         <tr id="row-@ct.Id">
                             <td><strong>@(ct.DisplayName)</strong></td>
+                            <td><small>@(ct.NameEn ?? "-")</small></td>
+                            <td><small>@(ct.NameHe ?? "-")</small></td>
                             <td><small style="color: var(--text-muted);">@(ct.Name)</small></td>
                             <td>
                                 @if (!string.IsNullOrEmpty(ct.Color))
@@ -240,7 +237,7 @@
                             </td>
                         </tr>
                         <tr class="edit-row" id="edit-@ct.Id">
-                            <td colspan="7">
+                            <td colspan="9">
                                 <form method="post" asp-page-handler="Update">
                                     <input type="hidden" name="EditId" value="@ct.Id" />
                                     <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
@@ -248,6 +245,14 @@
                                         <div class="form-group">
                                             <label class="form-label">@Localizer["DisplayName"]</label>
                                             <input class="form-input" name="EditDisplayName" value="@ct.DisplayName" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["NameEnglish"]</label>
+                                            <input class="form-input" name="EditNameEn" value="@(ct.NameEn ?? "")" maxlength="100" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["NameHebrew"]</label>
+                                            <input class="form-input" name="EditNameHe" value="@(ct.NameHe ?? "")" maxlength="100" />
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label">@Localizer["Color"]</label>

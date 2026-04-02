@@ -8,6 +8,9 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["ChoresCalendar"];
+    var _isHebrewLocale = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he");
+    string LocalizeCt(ShiftManager.Models.ChoreType ct) =>
+        _isHebrewLocale && !string.IsNullOrWhiteSpace(ct.NameHe) ? ct.NameHe : ct.NameEn ?? ct.DisplayName;
 }
 
 @* Breadcrumb *@
@@ -41,7 +44,7 @@
                         @foreach (var choreType in Model.ChoreTypes)
                         {
                             var isSelected = choreType.Id == Model.ChoreTypeFilter;
-                            <option value="@choreType.Id" selected="@isSelected">@choreType.DisplayName</option>
+                            <option value="@choreType.Id" selected="@isSelected">@LocalizeCt(choreType)</option>
                         }
                     </select>
                 </div>
@@ -127,7 +130,7 @@
                         var patternClass = $"chore-pattern-{choreTypeIndex % 6}";
                         <div class="cal-toolbar__legend-item">
                             <span class="cal-toolbar__legend-color @patternClass" style="background-color: @(choreType.Color ?? "#6B7280")"></span>
-                            <span class="cal-toolbar__legend-label">@choreType.DisplayName</span>
+                            <span class="cal-toolbar__legend-label">@LocalizeCt(choreType)</span>
                         </div>
                         choreTypeIndex++;
                     }
@@ -170,7 +173,7 @@
     <select id="choreTypeSelect-quickentry" style="display:none" data-role="quickentry-choretype">
         @foreach (var ct in Model.ChoreTypes)
         {
-            <option value="@ct.Id" data-color="@(ct.Color ?? "#6B7280")">@ct.DisplayName</option>
+            <option value="@ct.Id" data-color="@(ct.Color ?? "#6B7280")">@LocalizeCt(ct)</option>
         }
     </select>
 

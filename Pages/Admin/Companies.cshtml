@@ -308,7 +308,7 @@
         }
 
         /* Modal */
-        .modal {
+        #renameModal {
             display: none;
             position: fixed;
             top: 0;
@@ -323,7 +323,7 @@
             animation: fadeIn 0.2s ease;
         }
 
-        .modal.active {
+        #renameModal.active {
             display: flex;
         }
 
@@ -586,7 +586,11 @@
                                     @Localizer["Rename"]
                                 </button>
                                 <form method="post" asp-page-handler="DeleteCompany" style="display:inline"
-                                      onsubmit="return confirm('@Localizer["ConfirmDeleteCompany"].Value.Trim()');">
+                                      data-confirm-modal
+                                      data-confirm-title="@Localizer["ConfirmDeleteCompany_Title"]"
+                                      data-confirm-message="@Localizer["ConfirmDeleteCompany"]"
+                                      data-confirm-action="@Localizer["Delete"]"
+                                      data-confirm-level="danger">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@c.Id" />
                                     <button type="submit" class="btn btn-danger">
@@ -609,7 +613,7 @@
 </div>
 
 <!-- Rename Company Modal -->
-<div id="renameModal" class="modal">
+<div id="renameModal">
     <div class="modal-content">
         <h3 class="modal-header">@Localizer["RenameCompany"]</h3>
         <form method="post" asp-page-handler="RenameCompany">

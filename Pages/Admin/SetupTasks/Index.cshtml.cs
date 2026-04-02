@@ -55,9 +55,6 @@ public class IndexModel : LocalizedPageModel
         if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.SetupTasksEnabled))
             return NotFound();
 
-        if (TempData["SuccessMessage"] is string successMsg) Success = successMsg;
-        if (TempData["ErrorMessage"] is string errorMsg) Error = errorMsg;
-
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var userId))
         {

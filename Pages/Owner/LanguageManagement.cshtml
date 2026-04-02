@@ -155,8 +155,13 @@
                                         <td><strong>@o.OverrideValue</strong></td>
                                         <td>@o.UpdatedAt.ToString("g")</td>
                                         <td>
-                                            <form method="post" asp-page-handler="DeleteOverride" asp-route-id="@o.Id" style="display:inline;">
-                                                <button type="submit" class="btn-delete" onclick="return confirm('@Localizer["LangMgmt_ConfirmDeleteOverride"].Value.Trim()');" title="Delete">🗑️</button>
+                                            <form method="post" asp-page-handler="DeleteOverride" asp-route-id="@o.Id" style="display:inline;"
+                                                  data-confirm-modal
+                                                  data-confirm-title="@Localizer["LangMgmt_ConfirmDeleteOverride_Title"]"
+                                                  data-confirm-message="@Localizer["LangMgmt_ConfirmDeleteOverride"]"
+                                                  data-confirm-action="@Localizer["Delete"]"
+                                                  data-confirm-level="danger">
+                                                <button type="submit" class="btn-delete" title="Delete">🗑️</button>
                                             </form>
                                         </td>
                                     </tr>
@@ -217,7 +222,11 @@
                                 <loc key="ApplyToAllCompanies_Desc" />
                             </span>
                             <button type="submit" formaction="?handler=ApplyOverrideToAllCompanies" class="btn btn-warning btn-sm"
-                                    onclick="return confirm('@Localizer["Confirm_ApplyToAllCompanies"].Value.Trim()');">
+                                    data-confirm-modal
+                                    data-confirm-title="@Localizer["Confirm_ApplyToAllCompanies_Title"]"
+                                    data-confirm-message="@Localizer["Confirm_ApplyToAllCompanies"]"
+                                    data-confirm-action="@Localizer["Apply"]"
+                                    data-confirm-level="warning">
                                 <loc key="ApplyToAllCompanies" />
                             </button>
                         </div>

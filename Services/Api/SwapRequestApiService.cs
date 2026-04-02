@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -14,11 +15,13 @@ public class SwapRequestApiService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<SwapRequestApiService> _logger;
+    private readonly ICompanyLocalizationService _localizationService;
 
-    public SwapRequestApiService(AppDbContext context, ILogger<SwapRequestApiService> logger)
+    public SwapRequestApiService(AppDbContext context, ILogger<SwapRequestApiService> logger, ICompanyLocalizationService localizationService)
     {
         _context = context;
         _logger = logger;
+        _localizationService = localizationService;
     }
 
     /// <summary>
@@ -446,8 +449,8 @@ public class SwapRequestApiService
             dto.ToUser = swapRequest.ToUser != null ? MapUserDto(swapRequest.ToUser) : null;
 
             // Map assignments
-            dto.FromAssignment = swapRequest.FromAssignment != null ? MapAssignmentDto(swapRequest.FromAssignment) : null;
-            dto.ToAssignment = swapRequest.ToAssignment != null ? MapAssignmentDto(swapRequest.ToAssignment) : null;
+            dto.FromAssignment = swapRequest.FromAssignment != null ? await MapAssignmentDtoAsync(swapRequest.FromAssignment) : null;
+            dto.ToAssignment = swapRequest.ToAssignment != null ? await MapAssignmentDtoAsync(swapRequest.ToAssignment) : null;
         }
 
         return dto;
@@ -465,7 +468,7 @@ public class SwapRequestApiService
         };
     }
 
-    private SwapShiftAssignmentDto MapAssignmentDto(ShiftAssignment assignment)
+    private async Task<SwapShiftAssignmentDto> MapAssignmentDtoAsync(ShiftAssignment assignment)
     {
         var dto = new SwapShiftAssignmentDto
         {
@@ -489,7 +492,7 @@ public class SwapRequestApiService
                 dto.ShiftInstance.ShiftType = new SwapShiftTypeDto
                 {
                     Id = assignment.ShiftInstance.ShiftType.Id,
-                    Name = assignment.ShiftInstance.ShiftType.Name,
+                    Name = await _localizationService.ResolveShiftTypeNameAsync(assignment.ShiftInstance.ShiftType, assignment.CompanyId, CultureInfo.CurrentUICulture.Name),
                     Key = assignment.ShiftInstance.ShiftType.Key,
                     Start = assignment.ShiftInstance.ShiftType.Start.ToString("HH:mm"),
                     End = assignment.ShiftInstance.ShiftType.End.ToString("HH:mm")

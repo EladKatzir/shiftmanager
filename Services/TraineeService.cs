@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
@@ -12,17 +13,20 @@ public class TraineeService : ITraineeService
     private readonly ILogger<TraineeService> _logger;
     private readonly INotificationService _notificationService;
     private readonly ITenantResolver _tenantResolver;
+    private readonly ICompanyLocalizationService _localizationService;
 
     public TraineeService(
         AppDbContext db,
         ILogger<TraineeService> logger,
         INotificationService notificationService,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        ICompanyLocalizationService localizationService)
     {
         _db = db;
         _logger = logger;
         _notificationService = notificationService;
         _tenantResolver = tenantResolver;
+        _localizationService = localizationService;
     }
 
     public async Task<bool> AssignTraineeToShiftAsync(int shiftAssignmentId, int traineeUserId, int assignedByUserId)
@@ -59,7 +63,8 @@ public class TraineeService : ITraineeService
             await _db.SaveChangesAsync();
 
             // Send notifications
-            var shiftInfo = $"{assignment.ShiftInstance.ShiftType.Name} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
+            var shiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(assignment.ShiftInstance.ShiftType, assignment.ShiftInstance.CompanyId, CultureInfo.CurrentUICulture.Name);
+            var shiftInfo = $"{shiftTypeName} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
             var primaryUserName = assignment.User?.DisplayName ?? "an employee";
 
             await _notificationService.CreateNotificationAsync(
@@ -114,7 +119,8 @@ public class TraineeService : ITraineeService
 
             var traineeId = assignment.TraineeUserId.Value;
             var traineeName = assignment.Trainee?.DisplayName ?? "Trainee";
-            var shiftInfo = $"{assignment.ShiftInstance.ShiftType.Name} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
+            var shiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(assignment.ShiftInstance.ShiftType, assignment.ShiftInstance.CompanyId, CultureInfo.CurrentUICulture.Name);
+            var shiftInfo = $"{shiftTypeName} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
 
             assignment.TraineeUserId = null;
             await _db.SaveChangesAsync();
@@ -265,7 +271,8 @@ public class TraineeService : ITraineeService
 
             foreach (var assignment in assignments)
             {
-                var shiftInfo = $"{assignment.ShiftInstance.ShiftType.Name} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
+                var shiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(assignment.ShiftInstance.ShiftType, assignment.ShiftInstance.CompanyId, CultureInfo.CurrentUICulture.Name);
+                var shiftInfo = $"{shiftTypeName} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
 
                 assignment.TraineeUserId = null;
 
@@ -355,7 +362,8 @@ public class TraineeService : ITraineeService
 
             foreach (var assignment in overlappingAssignments)
             {
-                var shiftInfo = $"{assignment.ShiftInstance.ShiftType.Name} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
+                var shiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(assignment.ShiftInstance.ShiftType, assignment.ShiftInstance.CompanyId, CultureInfo.CurrentUICulture.Name);
+                var shiftInfo = $"{shiftTypeName} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
 
                 assignment.TraineeUserId = null;
 

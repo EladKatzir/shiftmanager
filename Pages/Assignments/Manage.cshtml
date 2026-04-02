@@ -43,7 +43,12 @@
                             </span>
                         }
                     </div>
-                    <form method="post" asp-page-handler="Remove" style="margin: 0;" onsubmit="return confirm('@Localizer["RemoveUserConfirm"].Value.Trim()');">
+                    <form method="post" asp-page-handler="Remove" style="margin: 0;"
+                          data-confirm-modal
+                          data-confirm-title="@Localizer["RemoveUserConfirm_Title"]"
+                          data-confirm-message="@Localizer["RemoveUserConfirm"]"
+                          data-confirm-action="@Localizer["Remove"]"
+                          data-confirm-level="danger">
                         <input type="hidden" name="assignmentId" value="@a.AssignmentId" />
                         <input type="hidden" asp-for="ReturnUrl" />
                         <button class="btn btn-danger"><loc key="Remove" /></button>

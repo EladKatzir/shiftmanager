@@ -818,6 +818,7 @@ select.form-field__input {
   padding: var(--modal-padding);
   overflow-y: auto;
   flex: 1;
+  white-space: pre-wrap;
 }
 
 .modal__footer {
@@ -2247,6 +2248,55 @@ select.form-field__input {
 .toast-container .toast + .toast {
   margin-top: var(--space-3);
 }
+
+/* Pause toast progress bar on hover */
+.toast:hover .toast__progress { animation-play-state: paused; }
+
+/* ========================================
+   FEEDBACK MODAL (post-action acknowledgment)
+   Replaces TempData-to-Toast bridge with a
+   blocking modal the user must acknowledge.
+   ======================================== */
+
+.modal--feedback .modal__body {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.modal--feedback .feedback-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.modal--feedback .feedback-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.modal--feedback .feedback-message {
+  font-size: var(--text-base);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.modal--feedback .modal__footer,
+[dir="rtl"] .modal--feedback .modal__footer {
+  justify-content: center;
+}
+
+/* Feedback modal severity variants */
+.modal--feedback-success .feedback-icon { color: var(--success); }
+.modal--feedback-success .modal__header { border-bottom-color: var(--success); }
+
+.modal--feedback-error .feedback-icon { color: var(--danger); }
+.modal--feedback-error .modal__header { border-bottom-color: var(--danger); }
+
+.modal--feedback-warning .feedback-icon { color: var(--warning); }
+.modal--feedback-warning .modal__header { border-bottom-color: var(--warning); }
+
+.modal--feedback-info .feedback-icon { color: var(--info); }
+.modal--feedback-info .modal__header { border-bottom-color: var(--info); }
 
 /* ========================================
    24. MODAL FOCUS MANAGEMENT (B-013)

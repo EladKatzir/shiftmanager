@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using ShiftManager.Data;
+using ShiftManager.Hubs;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -14,17 +17,23 @@ public class QuickAddTextEntryModel : PageModel
     private readonly ICalendarTextEntryService _textEntryService;
     private readonly IAuditLogService _auditLogService;
     private readonly IGrantService _grantService;
+    private readonly ICalendarNotificationService _notificationService;
+    private readonly AppDbContext _db;
     private readonly ILogger<QuickAddTextEntryModel> _logger;
 
     public QuickAddTextEntryModel(
         ICalendarTextEntryService textEntryService,
         IAuditLogService auditLogService,
         IGrantService grantService,
+        ICalendarNotificationService notificationService,
+        AppDbContext db,
         ILogger<QuickAddTextEntryModel> logger)
     {
         _textEntryService = textEntryService;
         _auditLogService = auditLogService;
         _grantService = grantService;
+        _notificationService = notificationService;
+        _db = db;
         _logger = logger;
     }
 
@@ -103,6 +112,31 @@ public class QuickAddTextEntryModel : PageModel
                 entityType: "CalendarTextEntry",
                 entityId: entry.Id,
                 description: $"Created text entry '{data.Text}' for user {data.UserId} on {entryDate:yyyy-MM-dd} via Quick Entry");
+
+            try
+            {
+                var moleculeId = await _db.Companies
+                    .IgnoreQueryFilters()
+                    .Where(c => c.Id == entry.CompanyId)
+                    .Select(c => c.MoleculeId)
+                    .FirstOrDefaultAsync();
+
+                if (moleculeId.HasValue)
+                {
+                    await _notificationService.NotifyTextEntryChangedAsync(
+                        CalendarGroups.Shifts(moleculeId.Value, null),
+                        new CalendarTextEntryChangedEvent(entry.Id, entry.UserId, entry.Date, entry.Text, "created"));
+                }
+                else
+                {
+                    _logger.LogWarning("TextEntry {EntryId} has CompanyId={CompanyId} with no Molecule — SignalR notification skipped",
+                        entry.Id, entry.CompanyId);
+                }
+            }
+            catch (Exception signalREx)
+            {
+                _logger.LogWarning(signalREx, "SignalR notification failed for text entry {EntryId}", entry.Id);
+            }
 
             return new JsonResult(new
             {

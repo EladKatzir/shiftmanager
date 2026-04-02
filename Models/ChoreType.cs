@@ -6,6 +6,8 @@ public class ChoreType
     public int MoleculeId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
+    public string? NameEn { get; set; }
+    public string? NameHe { get; set; }
     public string? Color { get; set; }  // Hex color e.g. "#F0C14B"
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;

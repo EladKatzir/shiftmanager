@@ -27,7 +27,11 @@ public class ShiftCalendarServiceTests : IDisposable
         _companyCacheMock = new Mock<ICompanyCacheService>();
         var logger = Mock.Of<ILogger<ShiftCalendarService>>();
 
-        _service = new ShiftCalendarService(_db, logger, _companyCacheMock.Object);
+        var localizationMock = new Mock<ICompanyLocalizationService>();
+        localizationMock.Setup(l => l.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync((ShiftType st, int _, string _) => st.Name);
+
+        _service = new ShiftCalendarService(_db, logger, _companyCacheMock.Object, localizationMock.Object);
     }
 
     public void Dispose()

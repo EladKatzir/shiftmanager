@@ -142,9 +142,13 @@
         <div class="alert alert-info" style="margin-bottom: 1rem;">
             <strong><loc key="Owner_EmailConfig_OverrideActive">Company Override Active</loc></strong> —
             <loc key="Owner_EmailConfig_OverrideDesc">This company has custom email settings that override the global configuration.</loc>
-            <form method="post" asp-page-handler="RemoveOverride" style="display: inline;">
-                <button type="submit" class="btn btn-sm btn-ghost" style="margin-inline-start: 0.5rem;"
-                        onclick="return confirm('@Localizer["Owner_EmailConfig_RemoveOverrideConfirm", "Remove company override and use global settings?"]')">
+            <form method="post" asp-page-handler="RemoveOverride" style="display: inline;"
+                  data-confirm-modal
+                  data-confirm-title="@Localizer["Owner_EmailConfig_RemoveOverrideConfirm_Title"]"
+                  data-confirm-message="@Localizer["Owner_EmailConfig_RemoveOverrideConfirm"]"
+                  data-confirm-action="@Localizer["Remove"]"
+                  data-confirm-level="warning">
+                <button type="submit" class="btn btn-sm btn-ghost" style="margin-inline-start: 0.5rem;">
                     <loc key="Owner_EmailConfig_UseGlobal">Use Global Settings</loc>
                 </button>
             </form>

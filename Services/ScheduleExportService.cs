@@ -24,19 +24,22 @@ public class ScheduleExportService : IScheduleExportService
     private readonly ILogger<ScheduleExportService> _logger;
     private readonly ICompanyCacheService _companyCacheService;
     private readonly IJobTypeService _jobTypeService;
+    private readonly ICompanyLocalizationService _localizationService;
 
     public ScheduleExportService(
         AppDbContext db,
         ITenantResolver tenantResolver,
         ILogger<ScheduleExportService> logger,
         ICompanyCacheService companyCacheService,
-        IJobTypeService jobTypeService)
+        IJobTypeService jobTypeService,
+        ICompanyLocalizationService localizationService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
         _logger = logger;
         _companyCacheService = companyCacheService;
         _jobTypeService = jobTypeService;
+        _localizationService = localizationService;
 
         // Set QuestPDF license for community use
         QuestPDF.Settings.License = LicenseType.Community;
@@ -184,7 +187,7 @@ public class ScheduleExportService : IScheduleExportService
 
                 var shiftData = new ExportShiftData
                 {
-                    ShiftName = !string.IsNullOrEmpty(shift.Name) ? shift.Name : shift.ShiftType.Name,
+                    ShiftName = !string.IsNullOrEmpty(shift.Name) ? shift.Name : await _localizationService.ResolveShiftTypeNameAsync(shift.ShiftType, companyId, CultureInfo.CurrentUICulture.Name),
                     TimeRange = FormatTimeRange(shift.ShiftType.Start, shift.ShiftType.End),
                     RequiredStaff = shift.StaffingRequired,
                     AssignedStaff = shiftAssignments.Count,

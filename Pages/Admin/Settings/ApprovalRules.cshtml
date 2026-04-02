@@ -18,10 +18,6 @@
         .page-header { margin-bottom: 2rem; }
         .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
         .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
-        .alert-success, .alert-error, .alert-warning { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
-        .alert-success { background: var(--success); color: var(--success-text); }
-        .alert-error { background: var(--danger); color: var(--danger-text); }
-        .alert-warning { background: var(--warning); color: var(--warning-text); }
         .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
         .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
         .form-group { margin-bottom: 1rem; }
@@ -39,9 +35,9 @@
         .rules-table th { font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
         .rules-table tr:hover { background: var(--surface-soft); }
         .badge { display: inline-flex; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-        .badge-active { background: var(--success-soft, rgba(76,175,80,0.1)); color: var(--success); }
-        .badge-inactive { background: var(--border); color: var(--text-muted); }
-        .badge-default { background: var(--primary-soft); color: var(--primary); }
+        .badge-active { background: var(--success-soft, rgba(76,175,80,0.1)); color: var(--success) !important; }
+        .badge-inactive { background: var(--border); color: var(--text-muted) !important; }
+        .badge-default { background: var(--primary-soft); color: var(--primary) !important; }
         .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
         .checkbox-group { display: flex; align-items: center; gap: 0.5rem; }
         .checkbox-group input { width: auto; margin: 0; }
@@ -54,9 +50,6 @@
     <h1 class="page-title"><loc key="ApprovalRules" /></h1>
     <p class="page-subtitle"><loc key="ApprovalRulesDescription" /></p>
 </div>
-
-@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div> }
-@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div> }
 
 @if (Model.OrphanedRules.Any())
 {
@@ -209,10 +202,15 @@
                             </td>
                             <td>
                                 <div class="actions-cell">
-                                    <form method="post" asp-page-handler="Delete" style="display: inline; margin: 0;">
+                                    <form method="post" asp-page-handler="Delete" style="display: inline; margin: 0;"
+                                          data-confirm-modal
+                                          data-confirm-title="@Localizer["ConfirmDeleteRule_Title"]"
+                                          data-confirm-message="@Localizer["ConfirmDeleteRule"]"
+                                          data-confirm-action="@Localizer["Delete"]"
+                                          data-confirm-level="danger">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="ruleId" value="@rule.Id" />
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('@Localizer["ConfirmDeleteRule"]')">
+                                        <button type="submit" class="btn btn-danger">
                                             <loc key="DeleteRule" />
                                         </button>
                                     </form>

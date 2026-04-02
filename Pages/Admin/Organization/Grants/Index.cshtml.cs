@@ -59,8 +59,6 @@ public class IndexModel : LocalizedPageModel
 
     public async Task OnGetAsync()
     {
-        if (TempData["SuccessMessage"] is string successMsg) Success = successMsg;
-        if (TempData["ErrorMessage"] is string errorMsg) Error = errorMsg;
 
         // Load grant types for filter
         AvailableGrantTypes = await _db.GrantTypes

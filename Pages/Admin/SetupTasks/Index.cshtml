@@ -18,9 +18,6 @@
         .page-header { margin-bottom: 2rem; }
         .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
         .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
-        .alert-success, .alert-error { padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; }
-        .alert-success { background: var(--success); color: var(--success-text); }
-        .alert-error { background: var(--danger); color: var(--danger-text); }
         .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
         .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text); margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
         .view-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
@@ -63,9 +60,6 @@
     <h1 class="page-title"><loc key="SetupTasks" /></h1>
     <p class="page-subtitle"><loc key="SetupTasksDescription" /></p>
 </div>
-
-@if (!string.IsNullOrEmpty(Model.Success)) { <div class="alert-success"><span>&#10003;</span><span>@(Model.Success)</span></div> }
-@if (!string.IsNullOrEmpty(Model.Error)) { <div class="alert-error"><span>&#10007;</span><span>@(Model.Error)</span></div> }
 
 <div class="section-card">
     <div class="view-tabs">

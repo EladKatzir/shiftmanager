@@ -463,23 +463,6 @@
     </div>
 </div>
 
-<!-- Success/Error Messages -->
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">
-        <span style="font-size: 1.25rem;">✓</span>
-        <span>@TempData["SuccessMessage"]</span>
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-error">
-        <span style="font-size: 1.25rem;">✗</span>
-        <span>@TempData["ErrorMessage"]</span>
-    </div>
-}
-
 <!-- Join Requests Section -->
 <div class="section-card">
     <h2 class="section-title">@Localizer["JoinRequests"]</h2>
@@ -540,10 +523,14 @@
                     </label>
                     <span id="selectedCount" class="batch-count" aria-live="polite"></span>
                 </div>
-                <form method="post" asp-page-handler="BatchApproveJoinRequests" id="batchApprovalForm" style="margin: 0;">
+                <form method="post" asp-page-handler="BatchApproveJoinRequests" id="batchApprovalForm" style="margin: 0;"
+                      data-confirm-modal
+                      data-confirm-title="@Localizer["ConfirmBatchApproval_Title"]"
+                      data-confirm-message="@Localizer["ConfirmBatchApproval"]"
+                      data-confirm-action="@Localizer["Approve"]"
+                      data-confirm-level="danger">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-primary" id="batchApproveBtn" disabled
-                            onclick="return confirm('@(Localizer["ConfirmBatchApproval"].Value.Trim())');">
+                    <button type="submit" class="btn btn-primary" id="batchApproveBtn" disabled>
                         ✓ @Localizer["ApproveSelected"]
                     </button>
                 </form>
@@ -1023,9 +1010,11 @@
                         @if (u.IsLocked)
                         {
                             <form method="post" asp-page-handler="UnlockAccount" style="display:inline; margin: 0;"
-                                  data-display-name="@u.DisplayName"
-                                  data-confirm-msg="@(Localizer["ConfirmUnlockAccount"].Value.Trim())"
-                                  onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.displayName));">
+                                  data-confirm-modal
+                                  data-confirm-title="@Localizer["ConfirmUnlockAccount_Title"]"
+                                  data-confirm-message="@string.Format(Localizer["ConfirmUnlockAccount"].Value, u.DisplayName)"
+                                  data-confirm-action="@Localizer["UnlockAccount"]"
+                                  data-confirm-level="warning">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@u.Id" />
                                 <button type="submit" class="btn btn-warning btn-sm" title="@Localizer["UnlockAccount"]">
@@ -1037,9 +1026,11 @@
                             ✏️
                         </a>
                         <form method="post" asp-page-handler="DeleteUser" style="display:inline; margin: 0;"
-                              data-display-name="@u.DisplayName"
-                              data-confirm-msg="@(Localizer["ConfirmDeleteUser"].Value.Trim())"
-                              onsubmit="return confirm(this.dataset.confirmMsg.replace('{0}', this.dataset.displayName));">
+                              data-confirm-modal
+                              data-confirm-title="@Localizer["ConfirmDeleteUser_Title"]"
+                              data-confirm-message="@string.Format(Localizer["ConfirmDeleteUser"].Value, u.DisplayName)"
+                              data-confirm-action="@Localizer["Delete"]"
+                              data-confirm-level="danger">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@u.Id" />
                             <button type="submit" class="btn btn-danger btn-sm">
@@ -1113,10 +1104,15 @@
             @Model.BulkImportResult
         </div>
     }
-    <form method="post" asp-page-handler="BulkImport" enctype="multipart/form-data">
+    <form method="post" asp-page-handler="BulkImport" enctype="multipart/form-data"
+          data-confirm-modal
+          data-confirm-title="@Localizer["BulkImport_Confirm_Title"]"
+          data-confirm-message="@Localizer["BulkImport_Confirm"]"
+          data-confirm-action="@Localizer["Import"]"
+          data-confirm-level="warning">
         <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
             <input type="file" name="BulkImportFile" accept=".csv" class="form-input" style="max-width: 300px;" required loc-aria-label="Admin_BulkImportFile" />
-            <button type="submit" class="btn btn-primary" onclick="return confirm('Import users from CSV? This cannot be undone.');">
+            <button type="submit" class="btn btn-primary">
                 <loc key="Import" />
             </button>
         </div>

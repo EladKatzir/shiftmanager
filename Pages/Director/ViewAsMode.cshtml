@@ -20,20 +20,6 @@
     @Localizer["ViewAsModeDescription"]
 </p>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: var(--success-text); border-radius: 0.5rem;">
-        @TempData["SuccessMessage"]
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-error" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: var(--danger-text); border-radius: 0.5rem;">
-        @TempData["ErrorMessage"]
-    </div>
-}
-
 @if (Model.IsCurrentlyViewing)
 {
     <div class="card" style="border: 2px solid var(--warning); background: var(--surface);">

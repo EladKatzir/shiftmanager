@@ -8,6 +8,7 @@ using ShiftManager.Models;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using ShiftManager.ViewComponents;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Calendar;
@@ -268,10 +269,11 @@ public class ChoresModel : PageModel
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
 
         // Build groups by chore type
+        var isHebrew = CultureInfo.CurrentUICulture.Name.StartsWith("he");
         var groups = ChoreTypes.Select(ct => new ExcelCalendarGroup
         {
             Id = $"choretype-{ct.Id}",
-            Name = ct.DisplayName,
+            Name = LocalizeChoreTypeName(ct, isHebrew),
             SortOrder = ct.SortOrder
         }).ToList();
 
@@ -286,7 +288,7 @@ public class ChoresModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForUser(user.Id, chores, overlays, textEntries, overviewNotes);
+            row.Cells = BuildCellsForUser(user.Id, chores, overlays, textEntries, overviewNotes, isHebrew);
             rows.Add(row);
         }
 
@@ -329,7 +331,8 @@ public class ChoresModel : PageModel
         List<Chore> chores,
         Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
         Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
-        Dictionary<(int UserId, DateOnly Date), string> overviewNotes)
+        Dictionary<(int UserId, DateOnly Date), string> overviewNotes,
+        bool isHebrew)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
 
@@ -345,7 +348,7 @@ public class ChoresModel : PageModel
             cell.Assignments = userChores.Select(c => new ExcelCalendarAssignment
             {
                 Id = c.Id,
-                Name = c.ChoreType?.DisplayName ?? c.Title,
+                Name = c.ChoreType != null ? LocalizeChoreTypeName(c.ChoreType, isHebrew) : c.Title,
                 Role = c.ChoreType?.Color, // Use color as role for styling
                 UserId = c.UserId
             }).ToList();
@@ -403,4 +406,7 @@ public class ChoresModel : PageModel
 
         return cells;
     }
+
+    private static string LocalizeChoreTypeName(ChoreType ct, bool isHebrew) =>
+        isHebrew && !string.IsNullOrWhiteSpace(ct.NameHe) ? ct.NameHe : ct.NameEn ?? ct.DisplayName;
 }
