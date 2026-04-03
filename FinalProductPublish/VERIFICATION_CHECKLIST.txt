@@ -1,6 +1,6 @@
 ﻿================================================================================
                     DEPLOYMENT VERIFICATION CHECKLIST
-                           Version 3.6.0
+                           Version 3.6.5
 ================================================================================
 
 This checklist confirms that the ProjectPublish package has been verified
@@ -10,13 +10,13 @@ and is ready for deployment to your air-gapped Windows Server 2022 environment.
 BUILD INFORMATION
 ================================================================================
 
-Version:        v3.6.0
-Build Date:     2026-03-30 07:21:12 UTC
-Git Commit:     dbff805
+Version:        v3.6.5
+Build Date:     2026-04-03 13:04:16 UTC
+Git Commit:     46ee8c2
 Git Branch:     update
 
 Package Stats:
-  Total Files:  501
+  Total Files:  506
   DLL Count:    351
   Package Size: 157 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
@@ -66,7 +66,7 @@ AUTOMATED TESTING RESULTS
    âœ“ Disk space sufficient
 
 âœ… Build Verification:
-   âœ“ File count in expected range (501 files, expected ~370)
+   âœ“ File count in expected range (506 files, expected ~370)
    âœ“ DLL count in expected range (351 DLLs, expected ~335)
    âœ“ Package size in expected range (157 MB, expected ~110 MB)
    âœ“ All critical files present
@@ -179,12 +179,12 @@ This ProjectPublish package has been:
    âœ… Tested automatically
    âœ… Verified for completeness
    âœ… Documented comprehensively
-   âœ… Tagged in git (v3.6.0)
+   âœ… Tagged in git (v3.6.5)
 
 Package is READY FOR PRODUCTION DEPLOYMENT.
 
 Verified by: ShiftManager Automated Release Builder v1.0.0
-Date: 2026-03-30 07:21:12 UTC
-Git Commit: dbff805
+Date: 2026-04-03 13:04:16 UTC
+Git Commit: 46ee8c2
 
 ================================================================================
