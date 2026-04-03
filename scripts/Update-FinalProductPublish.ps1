@@ -142,6 +142,59 @@ function Remove-DirectoryContents {
     }
 }
 
+function Assert-NoTestContamination {
+    <#
+    .SYNOPSIS
+        Fails the build if test-framework or code-coverage artifacts leaked into the output.
+        These files trigger air-gapped malware scanners (instrumentation engines, IL rewriters).
+    #>
+    param([Parameter(Mandatory = $true)][string]$BaseDir)
+
+    $violations = @()
+
+    # Check banned directories
+    foreach ($dir in @('CodeCoverage', 'InstrumentationEngine', 'refs', 'runtimes')) {
+        $dirPath = Join-Path $BaseDir $dir
+        if (Test-Path -LiteralPath $dirPath) {
+            $violations += "BANNED DIRECTORY: $dir/"
+        }
+    }
+
+    # Check localized test-platform resource directories (cs, de, es, fr, it, ja, ko, pl, pt-BR, ru, tr, zh-Hans, zh-Hant)
+    foreach ($lang in @('cs','de','es','fr','it','ja','ko','pl','pt-BR','ru','tr','zh-Hans','zh-Hant')) {
+        $langDir = Join-Path $BaseDir $lang
+        if (Test-Path -LiteralPath $langDir) {
+            $testDlls = Get-ChildItem -LiteralPath $langDir -Filter '*TestPlatform*' -File -ErrorAction SilentlyContinue
+            if ($testDlls.Count -gt 0) {
+                $violations += "BANNED DIRECTORY: $lang/ (contains TestPlatform resource DLLs)"
+            }
+        }
+    }
+
+    # Check banned file patterns (non-recursive — test DLLs always land at the publish root)
+    foreach ($pattern in $Script:BannedFilePatterns) {
+        $foundFiles = Get-ChildItem -LiteralPath $BaseDir -Filter $pattern -File -ErrorAction SilentlyContinue
+        foreach ($f in $foundFiles) {
+            $violations += "BANNED FILE: $($f.Name)"
+        }
+    }
+
+    if ($violations.Count -gt 0) {
+        Write-Log -Level ERROR -Message "TEST CONTAMINATION DETECTED in $BaseDir!"
+        Write-Log -Level ERROR -Message "The following test/instrumentation artifacts were found:"
+        foreach ($v in $violations) {
+            Write-Log -Level ERROR -Message "  $v"
+        }
+        Write-Log -Level ERROR -Message ""
+        Write-Log -Level ERROR -Message "These files trigger air-gapped malware scanners."
+        Write-Log -Level ERROR -Message "Root cause: dotnet publish likely included the test project."
+        Write-Log -Level ERROR -Message "Fix: ensure Build-Release.ps1 publishes ShiftManager.csproj (NOT the .sln)."
+        throw "Build aborted: test contamination detected in output directory."
+    }
+
+    Write-Log -Level OK -Message "No test contamination detected."
+}
+
 function Get-FolderStats {
     param([string]$Path)
     if (-not (Test-Path -LiteralPath $Path)) {
@@ -198,13 +251,53 @@ function Assert-FileCountMatchWithTolerance {
 
 # Directories that should never be copied into FinalProductPublish.
 # These accumulate in ProjectPublish from QA runs, rollbacks, and manual testing.
+# FIX (2026-04-03): Also exclude test framework / code-coverage artifacts that leak
+# when dotnet publish accidentally includes the test project output.
 $Script:ExcludeDirs = @(
     'ProductionReady',
     'qa-automation',
     'test-screenshots',
     'test-tmp',
     'test-scripts',
-    'ProjectPublish_BACKUP_*'
+    'ProjectPublish_BACKUP_*',
+    'CodeCoverage',
+    'InstrumentationEngine',
+    'refs',
+    'runtimes',
+    'nav_test_results',
+    'qa_screenshots'
+)
+
+# Individual files that must NEVER appear in FinalProductPublish.
+# These are test-framework binaries that trigger air-gapped malware scanners
+# (instrumentation engines, IL rewriters, dynamic proxies, test hosts).
+$Script:BannedFilePatterns = @(
+    'testhost.exe',
+    'testhost.dll',
+    'ShiftManager.Tests.*',
+    'Castle.Core.dll',
+    'Mono.Cecil*.dll',
+    'Moq.dll',
+    'FluentAssertions.dll',
+    'xunit.*.dll',
+    'coverlet.*.dll',
+    'coverlet.*.pdb',
+    'Microsoft.TestPlatform.*.dll',
+    'Microsoft.VisualStudio.TestPlatform.*.dll',
+    'Microsoft.CodeCoverage.*.dll',
+    'Microsoft.VisualStudio.CodeCoverage.*.dll',
+    'Microsoft.VisualStudio.TraceDataCollector.dll',
+    'Microsoft.AspNetCore.Mvc.Testing.dll',
+    'Microsoft.AspNetCore.TestHost.dll',
+    'Microsoft.DiaSymReader.dll',
+    'Microsoft.DotNet.PlatformAbstractions.dll',
+    'Microsoft.EntityFrameworkCore.InMemory.dll',
+    'NuGet.Frameworks.dll',
+    'MvcTestingAppManifest.json',
+    'Microsoft.CodeCoverage.props',
+    'Microsoft.CodeCoverage.targets',
+    'coverlet.collector.targets',
+    'coverlet.collector.deps.json'
 )
 
 function Copy-Folder {
@@ -477,6 +570,10 @@ try {
     Assert-CriticalFiles -BaseDir $SourceDir -CriticalFiles $critical
     Write-Log -Level OK -Message "Critical files present in ProjectPublish."
 
+    # FIX (2026-04-03): Detect test contamination BEFORE copying to FinalProductPublish.
+    # If dotnet publish accidentally included the test project, catch it here.
+    Assert-NoTestContamination -BaseDir $SourceDir
+
     # STEP 5: Update FinalProductPublish (backup runs HERE, right before destructive replace)
     Write-Step -Step 5 -Total 6 -Title 'Updating FinalProductPublish'
 
@@ -497,6 +594,9 @@ try {
     Write-Log -Level INFO -Message "Copying ProjectPublish -> FinalProductPublish..."
     Copy-Folder -From $SourceDir -To $DestDir
     Write-Log -Level OK -Message "Copy completed."
+
+    # FIX (2026-04-03): Final safety check on destination after copy.
+    Assert-NoTestContamination -BaseDir $DestDir
 
     # Patch ApiKeyHmacSecret in FinalProductPublish to ensure the placeholder is never shipped.
     # The script is idempotent: it only replaces the literal placeholder string
