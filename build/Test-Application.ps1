@@ -84,12 +84,21 @@ try {
                 break
             }
 
-            # Check for fatal errors (exclude EF Core migration retry logs and PRAGMA)
-            # EF Core SQLite provider logs "Error" level for table rebuild retries during
-            # AlterColumn - these are recoverable internal operations, not fatal errors.
-            if ($log -match "Unhandled exception|fatal|HostAborted" -and $log -notmatch "PRAGMA") {
+            # Also read stderr (migration errors may appear there)
+            $errLog = ""
+            if (Test-Path "$testLogPath.err") {
+                $errLog = Get-Content "$testLogPath.err" -Raw -ErrorAction SilentlyContinue
+            }
+
+            # Check for fatal errors in both stdout and stderr
+            $fatalPattern = "Unhandled exception|fatal|HostAborted|CRITICAL|Database migration failed"
+            if (($log -match $fatalPattern) -or ($errLog -match $fatalPattern)) {
                 Write-ErrorMsg "Application startup errors detected"
                 Write-Host $log -ForegroundColor Red
+                if ($errLog) {
+                    Write-Host "STDERR:" -ForegroundColor Red
+                    Write-Host $errLog -ForegroundColor Red
+                }
                 throw "Startup failed"
             }
         }
@@ -99,6 +108,13 @@ try {
             Write-ErrorMsg "Application exited unexpectedly (exit code: $($testProcess.ExitCode))"
             if (Test-Path $testLogPath) {
                 Write-Host (Get-Content $testLogPath -Raw) -ForegroundColor Red
+            }
+            if (Test-Path "$testLogPath.err") {
+                $crashErr = Get-Content "$testLogPath.err" -Raw -ErrorAction SilentlyContinue
+                if ($crashErr) {
+                    Write-Host "STDERR:" -ForegroundColor Red
+                    Write-Host $crashErr -ForegroundColor Red
+                }
             }
             throw "Application crashed"
         }

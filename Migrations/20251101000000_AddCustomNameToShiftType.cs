@@ -10,19 +10,15 @@ namespace ShiftManager.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "CustomName",
-                table: "ShiftTypes",
-                type: "TEXT",
-                nullable: true);
+            // No-op. This backdated migration duplicated the CustomName column
+            // already added by 20251101145541_AddCustomNameAndSortOrderToShiftType.
+            // Running both caused "duplicate column name" on fresh databases.
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "CustomName",
-                table: "ShiftTypes");
+            // No-op — column is managed by the later migration.
         }
     }
 }

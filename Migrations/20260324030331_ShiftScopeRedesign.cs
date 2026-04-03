@@ -22,6 +22,9 @@ namespace ShiftManager.Migrations
             migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_ShiftTypes_MoleculeId\";", suppressTransaction: true);
             migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_ShiftTypes_ShiftGroupingId\";", suppressTransaction: true);
 
+            // Guard against leftover temp table from EF Core's internal table rebuilds
+            migrationBuilder.Sql("DROP TABLE IF EXISTS \"ef_temp_ShiftTypes\";", suppressTransaction: true);
+
             // Create temp table with final schema
             migrationBuilder.Sql(@"
 CREATE TABLE ""ef_temp_ShiftTypes"" (
@@ -94,6 +97,9 @@ FROM ""ShiftTypes"";", suppressTransaction: true);
             migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_ShiftTypes_Scope_MoleculeId\";", suppressTransaction: true);
             migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_ShiftTypes_JobTypeId\";", suppressTransaction: true);
             migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_ShiftTypes_ShiftGroupingId\";", suppressTransaction: true);
+
+            // Guard against leftover temp table from EF Core's internal table rebuilds
+            migrationBuilder.Sql("DROP TABLE IF EXISTS \"ef_temp_ShiftTypes\";", suppressTransaction: true);
 
             migrationBuilder.Sql(@"
 CREATE TABLE ""ef_temp_ShiftTypes"" (

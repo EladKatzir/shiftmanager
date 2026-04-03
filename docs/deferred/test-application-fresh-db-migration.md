@@ -1,15 +1,27 @@
 # Deferred Task: Fresh Database Migration Failure in Test-Application.ps1
 
-**Status:** DEFERRED - Known issue, blocking automated tests, workaround available
+**Status:** RESOLVED
 **Priority:** LOW
 **Discovered:** v3.6.0 publish debugging session
-**Last Updated:** 2026-03-30
+**Last Updated:** 2026-04-04
+**Resolved:** 2026-04-04
 
 ---
 
 ## Summary
 
-The `build/Test-Application.ps1` script fails when the published `ShiftManager.exe` application attempts to run `db.Database.MigrateAsync()` on a fresh SQLite database at startup. The failure occurs during the application of migration `20260324030331_ShiftScopeRedesign`, which uses raw SQL table rebuilds to work around EF Core 9's conflicting schema change logic.
+The `build/Test-Application.ps1` script fails when the published `ShiftManager.exe` application attempts to run `db.Database.MigrateAsync()` on a fresh SQLite database at startup.
+
+### Root Cause (RESOLVED)
+
+The failure was NOT caused by `ShiftScopeRedesign` (that was a red herring — the chain broke before it was reached). The actual root cause was **4 manually-backdated migrations** (identifiable by artificial timestamps and missing `.Designer.cs` files) that duplicated tables/columns already created by later EF-generated migrations:
+
+1. `20251101000000_AddCustomNameToShiftType` — duplicate `CustomName` column on ShiftTypes
+2. `20260206200000_AddDutyRotationTables` — duplicate DutyRotations/DutyRotationEntries/DutyRotationLogs tables
+3. `20260206200100_AddVacationApprovalRules` — duplicate VacationApprovalRules table
+4. `20260228120000_AddDepartmentIdToUserJoinRequests` — duplicate DepartmentId column on UserJoinRequests
+
+**Fix:** All 4 backdated migrations were made no-ops (empty Up/Down methods). The files are kept because existing databases reference them in `__EFMigrationsHistory`. Additional hardening: `ShiftScopeRedesign` got a `DROP TABLE IF EXISTS` guard, `Program.cs` got try-catch around `MigrateAsync()`, and `Test-Application.ps1` got improved error detection (reads stderr, expanded fatal patterns, removed PRAGMA mask).
 
 **Key fact:** The migration applies cleanly when run via `dotnet ef database update` at design-time, but fails at runtime in the published application.
 

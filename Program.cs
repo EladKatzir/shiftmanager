@@ -533,7 +533,15 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    await db.Database.MigrateAsync();
+    try
+    {
+        await db.Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        logger.LogCritical(ex, "Database migration failed. The application cannot start. Error: {Message}", ex.Message);
+        throw;
+    }
 
     // ============================================================
     // SQLITE WAL MODE + BUSY TIMEOUT (fixes C-01)

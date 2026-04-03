@@ -10,40 +10,16 @@ namespace ShiftManager.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "DepartmentId",
-                table: "UserJoinRequests",
-                type: "INTEGER",
-                nullable: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserJoinRequests_DepartmentId",
-                table: "UserJoinRequests",
-                column: "DepartmentId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_UserJoinRequests_Departments_DepartmentId",
-                table: "UserJoinRequests",
-                column: "DepartmentId",
-                principalTable: "Departments",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+            // No-op. This backdated migration duplicated the DepartmentId column,
+            // index, and FK on UserJoinRequests already added by
+            // 20260302220718_AddMoleculeIdToJobType.
+            // Running both caused "duplicate column name" on fresh databases.
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_UserJoinRequests_Departments_DepartmentId",
-                table: "UserJoinRequests");
-
-            migrationBuilder.DropIndex(
-                name: "IX_UserJoinRequests_DepartmentId",
-                table: "UserJoinRequests");
-
-            migrationBuilder.DropColumn(
-                name: "DepartmentId",
-                table: "UserJoinRequests");
+            // No-op — column is managed by the later migration.
         }
     }
 }
