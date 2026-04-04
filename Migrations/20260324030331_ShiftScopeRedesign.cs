@@ -55,7 +55,10 @@ CREATE TABLE ""ef_temp_ShiftTypes"" (
     CONSTRAINT ""CK_ShiftType_Molecule_Scope"" CHECK (""Scope"" != 1 OR ""MoleculeId"" IS NOT NULL)
 );", suppressTransaction: true);
 
-            // Copy data: CustomName maps to NameEn, Scope defaults to 1, new columns (AreaId, NameHe) default to NULL.
+            // Copy data: CustomName maps to NameEn, new columns (AreaId, NameHe) default to NULL.
+            // Scope is derived from existing FK columns to satisfy CHECK constraints:
+            //   Scope 1 (Molecule) if MoleculeId is set, else Scope 0 (Company).
+            //   AreaId (Scope 2) doesn't exist in the source table — it's new in this migration.
             // NameKey added by OpsConsoleScheduler (20260109), RowColor by AddExcelCalendarTables (20260205),
             // EligibleCompanyIds+RequiresOfficerRank by TechMoleculeConvergence (20260314) — all via explicit AddColumn.
             migrationBuilder.Sql(@"
@@ -65,7 +68,8 @@ INSERT INTO ""ef_temp_ShiftTypes""
      ""TechShiftType"", ""EligibleCompanyIds"", ""RequiresOfficerRank"")
 SELECT
      ""Id"", ""Key"", ""Start"", ""End"", ""CompanyId"", ""CustomName"", ""NameKey"", ""RowColor"",
-     1, ""JobTypeId"", ""MoleculeId"", ""ShiftGroupingId"",
+     CASE WHEN ""MoleculeId"" IS NOT NULL THEN 1 ELSE 0 END,
+     ""JobTypeId"", ""MoleculeId"", ""ShiftGroupingId"",
      ""TechShiftType"", ""EligibleCompanyIds"", ""RequiresOfficerRank""
 FROM ""ShiftTypes"";", suppressTransaction: true);
 
