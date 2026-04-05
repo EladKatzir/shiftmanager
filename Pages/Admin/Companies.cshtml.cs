@@ -419,6 +419,7 @@ public class CompaniesModel : LocalizedPageModel
         }
 
         company.Name = NewCompanyName;
+        company.DisplayName = NewCompanyName;
         {
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
                 () => _db.SaveChangesAsync(), "Company", RenameCompanyId);

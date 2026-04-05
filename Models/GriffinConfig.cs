@@ -44,7 +44,7 @@ public class GriffinConfig : IBelongsToCompany
     /// <summary>
     /// Timeout for Griffin API calls in seconds
     /// </summary>
-    public int TimeoutSeconds { get; set; } = 10;
+    public int TimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// When this config was last modified

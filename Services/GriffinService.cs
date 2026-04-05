@@ -64,7 +64,7 @@ public class GriffinService : IGriffinService
     {
         try
         {
-            using var client = _httpClientFactory.CreateClient();
+            using var client = _httpClientFactory.CreateClient("GriffinClient");
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
             var url = $"{griffinBaseUrl.TrimEnd('/')}/authentication/claimToken?hash={Uri.EscapeDataString(hashedToken)}";
@@ -75,7 +75,9 @@ public class GriffinService : IGriffinService
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Griffin token exchange failed with status {StatusCode}", response.StatusCode);
+                var errorBody = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Griffin token exchange failed with status {StatusCode}. Response: {ResponseBody}",
+                    response.StatusCode, errorBody.Length > 500 ? errorBody[..500] : errorBody);
                 _securityLogger.LogAuthenticationFailure("Griffin SSO", "unknown", $"Token exchange HTTP {response.StatusCode}");
                 return null;
             }
@@ -104,7 +106,7 @@ public class GriffinService : IGriffinService
     {
         try
         {
-            using var client = _httpClientFactory.CreateClient();
+            using var client = _httpClientFactory.CreateClient("GriffinClient");
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
             // SECURITY NOTE: Token passed as query parameter per Griffin API protocol.
@@ -118,7 +120,9 @@ public class GriffinService : IGriffinService
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Griffin token validation failed with status {StatusCode}", response.StatusCode);
+                var errorBody = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Griffin token validation failed with status {StatusCode}. Response: {ResponseBody}",
+                    response.StatusCode, errorBody.Length > 500 ? errorBody[..500] : errorBody);
                 _securityLogger.LogAuthenticationFailure("Griffin SSO", "unknown", $"Token validation HTTP {response.StatusCode}");
                 return false;
             }
@@ -142,7 +146,7 @@ public class GriffinService : IGriffinService
     {
         try
         {
-            using var client = _httpClientFactory.CreateClient();
+            using var client = _httpClientFactory.CreateClient("GriffinClient");
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
             // SECURITY NOTE: Token passed as query parameter per Griffin API protocol.
@@ -155,7 +159,9 @@ public class GriffinService : IGriffinService
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Griffin getClaims failed with status {StatusCode}", response.StatusCode);
+                var errorBody = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Griffin getClaims failed with status {StatusCode}. Response: {ResponseBody}",
+                    response.StatusCode, errorBody.Length > 500 ? errorBody[..500] : errorBody);
                 _securityLogger.LogAuthenticationFailure("Griffin SSO", "unknown", $"Claims retrieval HTTP {response.StatusCode}");
                 return null;
             }

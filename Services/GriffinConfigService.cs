@@ -36,22 +36,26 @@ public class GriffinConfigService : IGriffinConfigService
         try
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
-            return await GetGriffinConfigByCompanyIdAsync(companyId);
+            if (companyId > 0)
+            {
+                var config = await GetGriffinConfigByCompanyIdAsync(companyId);
+                if (config != null) return config;
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Unable to get Griffin config via tenant resolver, trying database fallback then appsettings");
-
-            // Try to find any enabled config in the database (for unauthenticated users on the login page)
-            var anyConfig = await GetAnyEnabledGriffinConfigAsync();
-            if (anyConfig != null)
-            {
-                _logger.LogDebug("Found enabled Griffin config from database (CompanyId={CompanyId}) without tenant context", anyConfig.CompanyId);
-                return anyConfig;
-            }
-
-            return GetConfigFromAppSettings();
+            _logger.LogDebug(ex, "Unable to get Griffin config via tenant resolver");
         }
+
+        // Fallback for unauthenticated users (login page, callback) or when tenant-scoped lookup found nothing
+        var anyConfig = await GetAnyEnabledGriffinConfigAsync();
+        if (anyConfig != null)
+        {
+            _logger.LogDebug("Found enabled Griffin config from database (CompanyId={CompanyId}) without tenant context", anyConfig.CompanyId);
+            return anyConfig;
+        }
+
+        return GetConfigFromAppSettings();
     }
 
     public async Task<GriffinConfig?> GetAnyEnabledGriffinConfigAsync()
@@ -256,7 +260,7 @@ public class GriffinConfigService : IGriffinConfigService
             }
 
             // Step 2: Make HTTP request to Griffin
-            using var client = _httpClientFactory.CreateClient();
+            using var client = _httpClientFactory.CreateClient("GriffinClient");
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
             var testUrl = $"{baseUrl.TrimEnd('/')}/authentication?tokenConsumerURL=test";
@@ -424,7 +428,7 @@ public class GriffinConfigService : IGriffinConfigService
         var autoProvisionUsers = _configuration.GetValue<bool>("Griffin:AutoProvisionUsers", true);
         var defaultRoleString = _configuration["Griffin:DefaultProvisionedRole"] ?? "Employee";
         var defaultRole = Enum.TryParse<UserRole>(defaultRoleString, out var role) ? role : UserRole.Employee;
-        var timeoutSeconds = _configuration.GetValue<int>("Griffin:TimeoutSeconds", 10);
+        var timeoutSeconds = _configuration.GetValue<int>("Griffin:TimeoutSeconds", 30);
 
         return new GriffinConfig
         {

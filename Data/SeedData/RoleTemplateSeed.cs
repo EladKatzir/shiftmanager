@@ -938,6 +938,7 @@ public static class RoleTemplateSeed
         // EditChoreTypes (ID 18) — grant to Lead, BRDirector, MoleculeAdmin
         grants.Add(G(3, 18, SAR));    // Lead — EditChoreTypes at SameAsRole (company+jobtype)
         grants.Add(G(2, 18, SAR));    // BRDirector — EditChoreTypes at SameAsRole (company)
+        grants.Add(G(2, 122, SAR));   // ManageOnDuty — Kabar can assign on-duty
         grants.Add(G(7, 18, ETM));    // MoleculeAdmin — EditChoreTypes at ExpandToMolecule
 
         return grants;

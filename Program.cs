@@ -231,6 +231,16 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddHttpClient(); // Required for MailService
+builder.Services.AddHttpClient("GriffinClient")
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        var handler = new HttpClientHandler();
+        if (builder.Configuration.GetValue<bool>("Griffin:SkipSslValidation", false))
+        {
+            handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        }
+        return handler;
+    });
 // Data Protection: Persist keys to stable filesystem path (survives IIS app pool recycle, server migration)
 // Keys are stored alongside the app so they're included in backup scope (fixes G-01, D-07)
 var dataProtectionKeysPath = Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys");

@@ -506,7 +506,7 @@ public class ShiftsModel : PageModel
                 row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
                 // Compute weekly hours for this user
                 var userShiftWindows = assignments
-                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
+                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
                     .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
                     .OrderBy(w => w.start)
                     .ToList();
@@ -661,7 +661,7 @@ public class ShiftsModel : PageModel
                     row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
                     // Compute weekly hours for this user
                     var userShiftWindows = assignments
-                        .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
+                        .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
                         .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
                         .OrderBy(w => w.start)
                         .ToList();
@@ -687,7 +687,7 @@ public class ShiftsModel : PageModel
                     row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
                     // Compute weekly hours for this user
                     var userShiftWindows = assignments
-                        .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
+                        .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
                         .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
                         .OrderBy(w => w.start)
                         .ToList();
@@ -716,7 +716,7 @@ public class ShiftsModel : PageModel
                 row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
                 // Compute weekly hours for this user
                 var userShiftWindows = assignments
-                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate)
+                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
                     .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
                     .OrderBy(w => w.start)
                     .ToList();

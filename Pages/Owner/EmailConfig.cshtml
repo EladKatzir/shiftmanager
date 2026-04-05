@@ -136,155 +136,207 @@
         </div>
     }
 
-    @* Company Override Section *@
-    @if (Model.HasCompanyOverride)
-    {
-        <div class="alert alert-info" style="margin-bottom: 1rem;">
-            <strong><loc key="Owner_EmailConfig_OverrideActive">Company Override Active</loc></strong> —
-            <loc key="Owner_EmailConfig_OverrideDesc">This company has custom email settings that override the global configuration.</loc>
-            <form method="post" asp-page-handler="RemoveOverride" style="display: inline;"
-                  data-confirm-modal
-                  data-confirm-title="@Localizer["Owner_EmailConfig_RemoveOverrideConfirm_Title"]"
-                  data-confirm-message="@Localizer["Owner_EmailConfig_RemoveOverrideConfirm"]"
-                  data-confirm-action="@Localizer["Remove"]"
-                  data-confirm-level="warning">
-                <button type="submit" class="btn btn-sm btn-ghost" style="margin-inline-start: 0.5rem;">
-                    <loc key="Owner_EmailConfig_UseGlobal">Use Global Settings</loc>
-                </button>
-            </form>
+    @* Effective Configuration — read-only summary *@
+    <div class="config-card" style="border-inline-start: 4px solid var(--success); margin-bottom: 1.5rem;">
+        <div class="card-header">
+            <h2>📋 <loc key="Owner_EmailConfig_EffectiveConfig">Active Configuration</loc></h2>
+            <span class="badge @(Model.EffectiveSource == "override" ? "badge-warning" : "badge-primary")" style="font-size: 0.75rem;">
+                @(Model.EffectiveSource == "override" ? Localizer["Owner_EmailConfig_SourceOverride", "Company Override"] : Localizer["Owner_EmailConfig_SourceGlobal", "Global"])
+            </span>
         </div>
-    }
-    else if (Model.IsOwner)
-    {
-        <div class="alert alert-success" style="margin-bottom: 1rem;">
-            <loc key="Owner_EmailConfig_UsingGlobal">This company is using the global email configuration. Save settings below to create a company-specific override.</loc>
-        </div>
-    }
-
-    <form method="post">
-        <div class="config-card">
-            <div class="card-header">
-                <h2>📧 <loc key="Owner_EmailConfig_ServiceConfig" /></h2>
-                <div class="form-group-inline">
-                    <label class="toggle-switch">
-                        <input type="checkbox" asp-for="EmailEnabled" />
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-status-text">@(Model.EmailEnabled ? Localizer["Enabled"] : Localizer["Disabled"])</span>
-                </div>
-            </div>
-
-            <div class="card-body">
-                <div class="form-group">
-                    <div class="label-with-help">
-                        <label asp-for="EmailApiUrl"><loc key="Owner_EmailConfig_ApiUrl" /></label>
-                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-url-help')" loc-title="Help_ShowDetails">
-                            ❓
-                        </button>
-                    </div>
-                    <input asp-for="EmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" id="email-url-input" onblur="validateUrl(this)" />
-                    <small class="form-text"><loc key="Owner_EmailConfig_ApiUrl_Help" /></small>
-
-                    <div class="context-panel" id="email-url-help" style="display: none;">
-                        <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_Purpose" /></strong>
-                            <p><loc key="ContextPanel_Email_ApiUrl_Purpose" /></p>
-                        </div>
-                        <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
-                            <p><loc key="ContextPanel_Email_ApiUrl_WhereToFind" /></p>
-                        </div>
-                        <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_Example" /></strong>
-                            <code class="example-code">https://api.sendgrid.com/v3/mail/send</code>
-                            <code class="example-code">https://api.mailgun.net/v3/yourdomain.com/messages</code>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="label-with-help">
-                        <label asp-for="EmailApiKey">
-                            <loc key="Owner_EmailConfig_ApiKey" />
-                            @if (Model.HasExistingKey)
-                            {
-                                <span class="badge badge-success">✅ <loc key="Configured" /></span>
-                            }
-                        </label>
-                        <div class="help-buttons-group">
-                            <button type="button" class="help-button" onclick="toggleFieldHelp('email-key-help')" loc-title="Help_ShowDetails">
-                                ❓
-                            </button>
-                            <button type="button" class="find-this-button" onclick="openModal('find-apikey-modal')" loc-title="FindThis_HowToFind">
-                                🔍 <loc key="FindThis_Button" />
-                            </button>
-                        </div>
-                    </div>
-                    <input asp-for="EmailApiKey" type="password" class="form-control"
-                           placeholder="@(Model.HasExistingKey ? "••••••••••••" : Localizer["Owner_EmailConfig_EnterApiKey"])" />
-                    <small class="form-text">
-                        @if (Model.HasExistingKey)
+        <div class="card-body">
+            <div class="effective-config-grid">
+                <div class="effective-config-item">
+                    <span class="effective-label"><loc key="Status" /></span>
+                    <span class="effective-value">
+                        @if (Model.EmailEnabled)
                         {
-                            <span><loc key="Owner_EmailConfig_ApiKey_ExistingHelp" /></span>
+                            <span class="badge badge-success"><loc key="Enabled" /></span>
                         }
                         else
                         {
-                            <span><loc key="Owner_EmailConfig_ApiKey_Help" /></span>
+                            <span class="badge badge-secondary"><loc key="Disabled" /></span>
                         }
-                    </small>
-
-                    <div class="context-panel" id="email-key-help" style="display: none;">
-                        <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_Purpose" /></strong>
-                            <p><loc key="ContextPanel_Email_ApiKey_Purpose" /></p>
-                        </div>
-                        <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_WhereToFind" /></strong>
-                            <p><loc key="ContextPanel_Email_ApiKey_WhereToFind" /></p>
-                        </div>
-                        <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_Security" /></strong>
-                            <p><loc key="ContextPanel_Email_ApiKey_Security" /></p>
-                        </div>
-                    </div>
+                    </span>
                 </div>
-
-                <div class="form-group">
-                    <div class="label-with-help">
-                        <label asp-for="EmailFromAddress"><loc key="Owner_EmailConfig_FromAddress" /></label>
-                        <button type="button" class="help-button" onclick="toggleFieldHelp('email-from-help')" loc-title="Help_ShowDetails">
-                            ❓
-                        </button>
-                    </div>
-                    <input asp-for="EmailFromAddress" type="email" class="form-control" placeholder="noreply@example.com" id="email-from-input" onblur="validateEmail(this)" />
-                    <small class="form-text"><loc key="Owner_EmailConfig_FromAddress_Help" /></small>
-
-                    <div class="context-panel" id="email-from-help" style="display: none;">
-                        <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_Purpose" /></strong>
-                            <p><loc key="ContextPanel_Email_FromAddress_Purpose" /></p>
-                        </div>
-                        <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_BestPractices" /></strong>
-                            <p><loc key="ContextPanel_Email_FromAddress_BestPractices" /></p>
-                        </div>
-                        <div class="context-panel-section">
-                            <strong><loc key="ContextPanel_Example" /></strong>
-                            <code class="example-code">noreply@yourcompany.com</code>
-                            <code class="example-code">notifications@yourdomain.mil</code>
-                        </div>
-                    </div>
+                <div class="effective-config-item">
+                    <span class="effective-label"><loc key="Owner_EmailConfig_ApiUrl" /></span>
+                    <span class="effective-value">@(string.IsNullOrEmpty(Model.EmailApiUrl) ? "—" : Model.EmailApiUrl)</span>
                 </div>
-            </div>
-
-            <div class="card-footer">
-                <button type="submit" class="btn btn-primary">💾 <loc key="SaveConfiguration" /></button>
-                <button type="button" class="btn btn-secondary" onclick="location.href='/Owner/EmailConfig?handler=Test'">
-                    📨 <loc key="Owner_EmailConfig_SendTestEmail" />
-                </button>
+                <div class="effective-config-item">
+                    <span class="effective-label"><loc key="Owner_EmailConfig_FromAddress" /></span>
+                    <span class="effective-value">@(string.IsNullOrEmpty(Model.EmailFromAddress) ? "—" : Model.EmailFromAddress)</span>
+                </div>
+                <div class="effective-config-item">
+                    <span class="effective-label"><loc key="Owner_EmailConfig_ApiKey" /></span>
+                    <span class="effective-value">@(Model.HasExistingKey ? "••••••••••••" : "—")</span>
+                </div>
             </div>
         </div>
-    </form>
+    </div>
+
+    @* Company Override Section — collapsed by default *@
+    <details class="override-details" style="margin-bottom: 1.5rem;">
+        <summary class="override-summary">
+            @if (Model.HasCompanyOverride)
+            {
+                <span class="badge badge-warning" style="margin-inline-end: 0.5rem;"><loc key="Owner_EmailConfig_OverrideActive">Override Active</loc></span>
+                <span><loc key="Owner_EmailConfig_CompanyOverrideSection">Company-Specific Email Override</loc></span>
+            }
+            else
+            {
+                <span class="badge badge-secondary" style="margin-inline-end: 0.5rem;"><loc key="Owner_EmailConfig_NoOverride">No Override</loc></span>
+                <span><loc key="Owner_EmailConfig_CreateOverride">Create Company-Specific Override</loc></span>
+            }
+        </summary>
+
+        <div class="override-content">
+            @if (Model.HasCompanyOverride)
+            {
+                <div class="alert alert-info" style="margin-bottom: 1rem; margin-top: 1rem;">
+                    <loc key="Owner_EmailConfig_OverrideDesc">This company has custom email settings that override the global configuration.</loc>
+                    <form method="post" asp-page-handler="RemoveOverride" style="display: inline;"
+                          data-confirm-modal
+                          data-confirm-title="@Localizer["Owner_EmailConfig_RemoveOverrideConfirm_Title"]"
+                          data-confirm-message="@Localizer["Owner_EmailConfig_RemoveOverrideConfirm"]"
+                          data-confirm-action="@Localizer["Remove"]"
+                          data-confirm-level="warning">
+                        <button type="submit" class="btn btn-sm btn-ghost" style="margin-inline-start: 0.5rem;">
+                            <loc key="Owner_EmailConfig_UseGlobal">Revert to Global</loc>
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 1rem;">
+                    <loc key="Owner_EmailConfig_UsingGlobal">This company uses the global email configuration. Save settings below to create a company-specific override.</loc>
+                </p>
+            }
+
+            <form method="post">
+                <div class="config-card">
+                    <div class="card-header">
+                        <h2>📧 <loc key="Owner_EmailConfig_ServiceConfig" /></h2>
+                        <div class="form-group-inline">
+                            <label class="toggle-switch">
+                                <input type="checkbox" asp-for="EmailEnabled" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-status-text">@(Model.EmailEnabled ? Localizer["Enabled"] : Localizer["Disabled"])</span>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="label-with-help">
+                                <label asp-for="EmailApiUrl"><loc key="Owner_EmailConfig_ApiUrl" /></label>
+                                <button type="button" class="help-button" onclick="toggleFieldHelp('email-url-help')" loc-title="Help_ShowDetails">
+                                    ❓
+                                </button>
+                            </div>
+                            <input asp-for="EmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" id="email-url-input" onblur="validateUrl(this)" />
+                            <small class="form-text"><loc key="Owner_EmailConfig_ApiUrl_Help" /></small>
+
+                            <div class="context-panel" id="email-url-help" style="display: none;">
+                                <div class="context-panel-section">
+                                    <strong><loc key="ContextPanel_Purpose" /></strong>
+                                    <p><loc key="ContextPanel_Email_ApiUrl_Purpose" /></p>
+                                </div>
+                                <div class="context-panel-section">
+                                    <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                                    <p><loc key="ContextPanel_Email_ApiUrl_WhereToFind" /></p>
+                                </div>
+                                <div class="context-panel-section">
+                                    <strong><loc key="ContextPanel_Example" /></strong>
+                                    <code class="example-code">https://api.sendgrid.com/v3/mail/send</code>
+                                    <code class="example-code">https://api.mailgun.net/v3/yourdomain.com/messages</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="label-with-help">
+                                <label asp-for="EmailApiKey">
+                                    <loc key="Owner_EmailConfig_ApiKey" />
+                                    @if (Model.HasExistingKey)
+                                    {
+                                        <span class="badge badge-success">✅ <loc key="Configured" /></span>
+                                    }
+                                </label>
+                                <div class="help-buttons-group">
+                                    <button type="button" class="help-button" onclick="toggleFieldHelp('email-key-help')" loc-title="Help_ShowDetails">
+                                        ❓
+                                    </button>
+                                    <button type="button" class="find-this-button" onclick="openModal('find-apikey-modal')" loc-title="FindThis_HowToFind">
+                                        🔍 <loc key="FindThis_Button" />
+                                    </button>
+                                </div>
+                            </div>
+                            <input asp-for="EmailApiKey" type="password" class="form-control"
+                                   placeholder="@(Model.HasExistingKey ? "••••••••••••" : Localizer["Owner_EmailConfig_EnterApiKey"])" />
+                            <small class="form-text">
+                                @if (Model.HasExistingKey)
+                                {
+                                    <span><loc key="Owner_EmailConfig_ApiKey_ExistingHelp" /></span>
+                                }
+                                else
+                                {
+                                    <span><loc key="Owner_EmailConfig_ApiKey_Help" /></span>
+                                }
+                            </small>
+
+                            <div class="context-panel" id="email-key-help" style="display: none;">
+                                <div class="context-panel-section">
+                                    <strong><loc key="ContextPanel_Purpose" /></strong>
+                                    <p><loc key="ContextPanel_Email_ApiKey_Purpose" /></p>
+                                </div>
+                                <div class="context-panel-section">
+                                    <strong><loc key="ContextPanel_WhereToFind" /></strong>
+                                    <p><loc key="ContextPanel_Email_ApiKey_WhereToFind" /></p>
+                                </div>
+                                <div class="context-panel-section">
+                                    <strong><loc key="ContextPanel_Security" /></strong>
+                                    <p><loc key="ContextPanel_Email_ApiKey_Security" /></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="label-with-help">
+                                <label asp-for="EmailFromAddress"><loc key="Owner_EmailConfig_FromAddress" /></label>
+                                <button type="button" class="help-button" onclick="toggleFieldHelp('email-from-help')" loc-title="Help_ShowDetails">
+                                    ❓
+                                </button>
+                            </div>
+                            <input asp-for="EmailFromAddress" type="email" class="form-control" placeholder="noreply@example.com" id="email-from-input" onblur="validateEmail(this)" />
+                            <small class="form-text"><loc key="Owner_EmailConfig_FromAddress_Help" /></small>
+
+                            <div class="context-panel" id="email-from-help" style="display: none;">
+                                <div class="context-panel-section">
+                                    <strong><loc key="ContextPanel_Purpose" /></strong>
+                                    <p><loc key="ContextPanel_Email_FromAddress_Purpose" /></p>
+                                </div>
+                                <div class="context-panel-section">
+                                    <strong><loc key="ContextPanel_BestPractices" /></strong>
+                                    <p><loc key="ContextPanel_Email_FromAddress_BestPractices" /></p>
+                                </div>
+                                <div class="context-panel-section">
+                                    <strong><loc key="ContextPanel_Example" /></strong>
+                                    <code class="example-code">noreply@yourcompany.com</code>
+                                    <code class="example-code">notifications@yourdomain.mil</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">💾 <loc key="SaveConfiguration" /></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </details>
 
     @* Test Email Section *@
     @if (Model.EmailEnabled && Model.HasExistingKey)
@@ -484,6 +536,56 @@
 </div>
 
 <style>
+/* Effective Config Grid */
+.effective-config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+.effective-config-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.effective-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.effective-value {
+    font-size: 0.9rem;
+    word-break: break-all;
+}
+
+/* Override Details Collapsible */
+.override-details {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+}
+.override-summary {
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    list-style: none;
+    gap: 0.5rem;
+}
+.override-summary::-webkit-details-marker { display: none; }
+.override-summary::before {
+    content: "▶";
+    font-size: 0.75rem;
+    transition: transform 0.2s;
+}
+.override-details[open] > .override-summary::before {
+    transform: rotate(90deg);
+}
+.override-content {
+    padding: 0 1.5rem 1.5rem;
+}
+
 /* Status Widget */
 .status-widget {
     background: var(--surface);

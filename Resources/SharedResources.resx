@@ -2159,7 +2159,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>On-Call Calendar</value>
   </data>
   <data name="OnDutyHakam" xml:space="preserve">
-    <value>Day Shift - Hakam</value>
+    <value>Day Shift - Hakamco</value>
   </data>
   <data name="OnDutyLead" xml:space="preserve">
     <value>Day Shift - Lead</value>
@@ -2198,7 +2198,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Day Shift Types</value>
   </data>
   <data name="OnDutyTypesDescription" xml:space="preserve">
-    <value>Manage custom day shift types. Default types (Hakam and Lead) cannot be modified.</value>
+    <value>Manage custom day shift types. Default types (Hakamco and Lead) cannot be modified.</value>
   </data>
   <data name="DefaultTypes" xml:space="preserve">
     <value>Default Types</value>
@@ -2881,7 +2881,7 @@ Are you absolutely sure you want to delete this user?</value>
     <comment>Phase 18 - Notification message: {0}=dateRange</comment>
   </data>
   <data name="OnDutyTypeHakam" xml:space="preserve">
-    <value>Hakam</value>
+    <value>Hakamco</value>
     <comment>Phase 18 - On-Duty type name</comment>
   </data>
   <data name="OnDutyTypeLead" xml:space="preserve">
@@ -4903,7 +4903,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>My Items</value>
   </data>
   <data name="Calendar_Hakam" xml:space="preserve">
-    <value>Hakam</value>
+    <value>Hakamco</value>
   </data>
   <data name="Calendar_Lead" xml:space="preserve">
     <value>Lead</value>
@@ -5169,10 +5169,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>View the BR shift calendar for assigned areas</value>
   </data>
   <data name="Grant_ViewHakamShiftCalendar" xml:space="preserve">
-    <value>View Hakam Shift Calendar</value>
+    <value>View Hakamco Shift Calendar</value>
   </data>
   <data name="Grant_ViewHakamShiftCalendar_Desc" xml:space="preserve">
-    <value>View the Hakam on-call shift calendar</value>
+    <value>View the Hakamco on-call shift calendar</value>
   </data>
 
   <!-- Grant Type Localizations - Shift Eligibility -->
@@ -5195,10 +5195,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>User can be assigned to BR shifts</value>
   </data>
   <data name="Grant_CanBeAssignedHakamShifts" xml:space="preserve">
-    <value>Eligible for Hakam On-Call</value>
+    <value>Eligible for Hakamco On-Call</value>
   </data>
   <data name="Grant_CanBeAssignedHakamShifts_Desc" xml:space="preserve">
-    <value>User can be assigned to Hakam on-call duties</value>
+    <value>User can be assigned to Hakamco on-call duties</value>
   </data>
 
   <!-- Grant Type Localizations - Blueprint/Program by Type -->
@@ -5239,16 +5239,16 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Create and edit BR shift programs</value>
   </data>
   <data name="Grant_ManageHakamBlueprints" xml:space="preserve">
-    <value>Manage Hakam Blueprints</value>
+    <value>Manage Hakamco Blueprints</value>
   </data>
   <data name="Grant_ManageHakamBlueprints_Desc" xml:space="preserve">
-    <value>Create and edit Hakam on-call blueprints</value>
+    <value>Create and edit Hakamco on-call blueprints</value>
   </data>
   <data name="Grant_ManageHakamPrograms" xml:space="preserve">
-    <value>Manage Hakam Programs</value>
+    <value>Manage Hakamco Programs</value>
   </data>
   <data name="Grant_ManageHakamPrograms_Desc" xml:space="preserve">
-    <value>Create and edit Hakam on-call programs</value>
+    <value>Create and edit Hakamco on-call programs</value>
   </data>
 
   <!-- Grant Type Localizations - Tech Calendars -->
@@ -6051,6 +6051,24 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Owner_EmailConfig_RemoveOverrideConfirm" xml:space="preserve">
     <value>Remove company override and use global settings?</value>
+  </data>
+  <data name="Owner_EmailConfig_EffectiveConfig" xml:space="preserve">
+    <value>Active Configuration</value>
+  </data>
+  <data name="Owner_EmailConfig_SourceOverride" xml:space="preserve">
+    <value>Company Override</value>
+  </data>
+  <data name="Owner_EmailConfig_SourceGlobal" xml:space="preserve">
+    <value>Global</value>
+  </data>
+  <data name="Owner_EmailConfig_CompanyOverrideSection" xml:space="preserve">
+    <value>Company-Specific Email Override</value>
+  </data>
+  <data name="Owner_EmailConfig_NoOverride" xml:space="preserve">
+    <value>No Override</value>
+  </data>
+  <data name="Owner_EmailConfig_CreateOverride" xml:space="preserve">
+    <value>Create Company-Specific Override</value>
   </data>
   <data name="Owner_EmailConfig_ApiUrl" xml:space="preserve">
     <value>API URL</value>
@@ -9293,7 +9311,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Contact an Owner to assign you to companies.</value>
   </data>
   <data name="OnDuty_Hakam" xml:space="preserve">
-    <value>Hakam</value>
+    <value>Hakamco</value>
   </data>
   <data name="OnDuty_Lead" xml:space="preserve">
     <value>Lead</value>
@@ -13957,10 +13975,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Create, edit, and manage store definitions and opening hours</value>
   </data>
   <data name="Grant_ViewHakamOnCall" xml:space="preserve">
-    <value>View Hakam On-Call</value>
+    <value>View Hakamco On-Call</value>
   </data>
   <data name="Grant_ViewHakamOnCall_Desc" xml:space="preserve">
-    <value>View Hakam on-call assignments in the On-Call Widget</value>
+    <value>View Hakamco on-call assignments in the On-Call Widget</value>
   </data>
   <data name="Grant_ViewCompanyOnCall" xml:space="preserve">
     <value>View Company On-Call</value>
@@ -14198,7 +14216,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>How does the On-Call calendar work?</value>
   </data>
   <data name="Help_Cal_OnCall_A" xml:space="preserve">
-    <value>The On-Call calendar tracks duty assignments (Hakam, Lead, etc.) across your area. It shows who is on duty for each date and duty type. Managers with the ManageOnDuty grant can assign and modify on-call rotations.</value>
+    <value>The On-Call calendar tracks duty assignments (Hakamco, Lead, etc.) across your area. It shows who is on duty for each date and duty type. Managers with the ManageOnDuty grant can assign and modify on-call rotations.</value>
   </data>
   <data name="Help_Cal_Overview_Q" xml:space="preserve">
     <value>What is the Overview page?</value>

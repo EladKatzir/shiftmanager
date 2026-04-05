@@ -38,7 +38,9 @@ public class EmailConfigService : IEmailConfigService
         if (companyConfig != null) return companyConfig;
 
         // Fall back to global config (CompanyId = null)
+        // SECURITY-AUDITED: SAFE — global config is intentionally shared, no tenant scoping
         return await _context.EmailConfigs
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(ec => ec.CompanyId == null);
     }
 

@@ -52,6 +52,7 @@ public class EmailConfigModel : LocalizedPageModel
     public bool GlobalHasExistingKey { get; set; }
     public bool HasCompanyOverride { get; set; }
     public bool IsOwner { get; set; }
+    public string EffectiveSource { get; set; } = "none";
 
     public bool HasExistingKey { get; set; }
 
@@ -96,6 +97,8 @@ public class EmailConfigModel : LocalizedPageModel
 
             // Load effective config for current company (company override or global fallback)
             var emailConfig = await _emailConfigService.GetEmailConfigAsync();
+            EffectiveSource = emailConfig == null ? "none"
+                : emailConfig.CompanyId.HasValue ? "override" : "global";
 
             EmailEnabled = emailConfig?.Enabled ?? false;
             EmailApiUrl = emailConfig?.ApiUrl ?? string.Empty;

@@ -2706,7 +2706,7 @@
     <comment>Phase 18 - Notification message: {0}=dateRange</comment>
   </data>
   <data name="OnDutyTypeHakam" xml:space="preserve">
-    <value>חק"מ</value>
+    <value>חק״מכו</value>
     <comment>Phase 18 - On-Duty type name</comment>
   </data>
   <data name="OnDutyTypeLead" xml:space="preserve">
@@ -4728,7 +4728,7 @@
     <value>הפריטים שלי</value>
   </data>
   <data name="Calendar_Hakam" xml:space="preserve">
-    <value>חכם</value>
+    <value>חק״מכו</value>
   </data>
   <data name="Calendar_Lead" xml:space="preserve">
     <value>מוביל</value>
@@ -5535,22 +5535,40 @@
     <value>שמור הגדרות גלובליות</value>
   </data>
   <data name="Owner_EmailConfig_UsingGlobal" xml:space="preserve">
-    <value>פלוגה זו משתמשת בהגדרות הדוא"ל הגלובליות. שמור הגדרות למטה כדי ליצור דריסה ייחודית לפלוגה.</value>
+    <value>דסק זה משתמש בהגדרות הדוא"ל הגלובליות. שמור הגדרות למטה כדי ליצור דריסה ייחודית לדסק.</value>
   </data>
   <data name="Owner_EmailConfig_KeyConfigured" xml:space="preserve">
     <value>מפתח API מוגדר</value>
   </data>
   <data name="Owner_EmailConfig_OverrideActive" xml:space="preserve">
-    <value>דריסה ייחודית לפלוגה פעילה</value>
+    <value>דריסה ייחודית לדסק פעיל</value>
   </data>
   <data name="Owner_EmailConfig_OverrideDesc" xml:space="preserve">
-    <value>לפלוגה זו הגדרות דוא"ל מותאמות אישית שדורסות את ההגדרות הגלובליות.</value>
+    <value>לדסק זה הגדרות דוא"ל מותאמות אישית שדורסות את ההגדרות הגלובליות.</value>
   </data>
   <data name="Owner_EmailConfig_UseGlobal" xml:space="preserve">
     <value>השתמש בהגדרות גלובליות</value>
   </data>
   <data name="Owner_EmailConfig_RemoveOverrideConfirm" xml:space="preserve">
     <value>להסיר את הדריסה ולהשתמש בהגדרות הגלובליות?</value>
+  </data>
+  <data name="Owner_EmailConfig_EffectiveConfig" xml:space="preserve">
+    <value>תצורה פעילה</value>
+  </data>
+  <data name="Owner_EmailConfig_SourceOverride" xml:space="preserve">
+    <value>דריסת דסק</value>
+  </data>
+  <data name="Owner_EmailConfig_SourceGlobal" xml:space="preserve">
+    <value>גלובלי</value>
+  </data>
+  <data name="Owner_EmailConfig_CompanyOverrideSection" xml:space="preserve">
+    <value>דריסת דוא"ל ייחודית לדסק</value>
+  </data>
+  <data name="Owner_EmailConfig_NoOverride" xml:space="preserve">
+    <value>ללא דריסה</value>
+  </data>
+  <data name="Owner_EmailConfig_CreateOverride" xml:space="preserve">
+    <value>צור דריסה ייחודית לדסק</value>
   </data>
   <data name="Owner_EmailConfig_ApiUrl" xml:space="preserve">
     <value>כתובת API</value>
@@ -6313,7 +6331,7 @@
     <value>מפ"צ</value>
   </data>
   <data name="Role_Lead_Desc" xml:space="preserve">
-    <value>מנהל משמרות עבור סוג התפקיד שלו בתוך פלוגה</value>
+    <value>מנהל משמרות עבור סוג התפקיד שלו בתוך דסק</value>
   </data>
   <data name="Role_PlatoonLeader" xml:space="preserve">
     <value>מ"מ</value>
@@ -8094,10 +8112,10 @@
     <value>המשתמש יכול להיות משובץ למשמרות דלתא</value>
   </data>
   <data name="Grant_CanBeAssignedHakamShifts" xml:space="preserve">
-    <value>זכאי לתורנות חק"ם</value>
+    <value>זכאי לתורנות חק״מכו</value>
   </data>
   <data name="Grant_CanBeAssignedHakamShifts_Desc" xml:space="preserve">
-    <value>המשתמש יכול להיות משובץ לתורנויות חק"ם</value>
+    <value>המשתמש יכול להיות משובץ לתורנויות חק״מכו</value>
   </data>
   <data name="Grant_CanBeAssignedHanava" xml:space="preserve">
     <value>זכאי למשמרות הנבה</value>
@@ -8172,16 +8190,16 @@
     <value>יצירה ועריכה של תוכניות משמרות דלתא</value>
   </data>
   <data name="Grant_ManageHakamBlueprints" xml:space="preserve">
-    <value>ניהול תבניות חק"ם</value>
+    <value>ניהול תבניות חק״מכו</value>
   </data>
   <data name="Grant_ManageHakamBlueprints_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תבניות תורנויות חק"ם</value>
+    <value>יצירה ועריכה של תבניות תורנויות חק״מכו</value>
   </data>
   <data name="Grant_ManageHakamPrograms" xml:space="preserve">
-    <value>ניהול תוכניות חק"ם</value>
+    <value>ניהול תוכניות חק״מכו</value>
   </data>
   <data name="Grant_ManageHakamPrograms_Desc" xml:space="preserve">
-    <value>יצירה ועריכה של תוכניות תורנויות חק"ם</value>
+    <value>יצירה ועריכה של תוכניות תורנויות חק״מכו</value>
   </data>
   <data name="Grant_ManageHanavaBlueprints" xml:space="preserve">
     <value>ניהול תבניות הנבה</value>
@@ -8286,10 +8304,10 @@
     <value>צפייה בלוח משמרות דלתא</value>
   </data>
   <data name="Grant_ViewHakamShiftCalendar" xml:space="preserve">
-    <value>צפייה בלוח חק"ם</value>
+    <value>צפייה בלוח חק״מכו</value>
   </data>
   <data name="Grant_ViewHakamShiftCalendar_Desc" xml:space="preserve">
-    <value>צפייה בלוח תורנויות חק"ם</value>
+    <value>צפייה בלוח תורנויות חק״מכו</value>
   </data>
   <data name="Grant_ViewHanavaCalendar" xml:space="preserve">
     <value>צפייה בלוח הנבה</value>
@@ -8573,7 +8591,7 @@
     <comment>Confirmation message for deleting a note</comment>
   </data>
   <data name="Calendar_Empty_NoUsersMessage" xml:space="preserve">
-    <value>לא נמצאו משתמשים בפלוגה שלך עבור הסינון הנבחר. נסה לשנות את סינון המשתמשים.</value>
+    <value>לא נמצאו משתמשים בדסק שלך עבור הסינון הנבחר. נסה לשנות את סינון המשתמשים.</value>
     <comment>Message shown when overview calendar has no users</comment>
   </data>
   <data name="NoAssignments" xml:space="preserve">
@@ -8787,7 +8805,7 @@
     <value>שם תצוגה</value>
   </data>
   <data name="SeedData_Company" xml:space="preserve">
-    <value>פלוגה</value>
+    <value>דסק</value>
   </data>
   <data name="SeedData_NoUsers" xml:space="preserve">
     <value>לא נמצאו משתמשים.</value>
@@ -8805,7 +8823,7 @@
     <value>מולקולה</value>
   </data>
   <data name="SeedData_CompanyScope" xml:space="preserve">
-    <value>פלוגה</value>
+    <value>דסק</value>
   </data>
   <data name="SeedData_CanOwn" xml:space="preserve">
     <value>יכול להחזיק</value>
@@ -9331,7 +9349,7 @@
     <value>ניהול משתמשים</value>
   </data>
   <data name="OnDuty_Hakam" xml:space="preserve">
-    <value>חכ"ם</value>
+    <value>חק״מכו</value>
   </data>
   <data name="OnDuty_Lead" xml:space="preserve">
     <value>אחראי</value>
@@ -12174,10 +12192,10 @@
     <value>כמפקד/ת, תשובצ/י אוטומטית לצוות מטה המולקולה</value>
   </data>
   <data name="Auth_RoleHint_MoleculeAdmin" xml:space="preserve">
-    <value>מפק"מ מנהל/ת את כל המולקולה ללא תלות בסוג תפקיד — סוג תפקיד ופלוגה נקבעים אוטומטית.</value>
+    <value>מפק"מ מנהל/ת את כל המולקולה ללא תלות בסוג תפקיד — סוג תפקיד ודסק נקבעים אוטומטית.</value>
   </data>
   <data name="Auth_RoleHint_AreaAdmin" xml:space="preserve">
-    <value>קב"ב מנהל/ת את כל האזור (כל המולקולות) — סוג תפקיד ופלוגה נקבעים אוטומטית.</value>
+    <value>קב"ב מנהל/ת את כל האזור (כל המולקולות) — סוג תפקיד ודסק נקבעים אוטומטית.</value>
   </data>
   <data name="Auth_SelectArea" xml:space="preserve">
     <value>בחר/י אזור</value>
@@ -12186,7 +12204,7 @@
     <value>-- בחר/י אזור --</value>
   </data>
   <data name="Auth_RoleHint_Director" xml:space="preserve">
-    <value>מ"מ מנהל/ת סוג תפקיד ספציפי ברמת המולקולה — פלוגה נקבעת אוטומטית למטה.</value>
+    <value>מ"מ מנהל/ת סוג תפקיד ספציפי ברמת המולקולה — דסק נקבע אוטומטית למטה.</value>
   </data>
   <data name="Error_Signup_SelectMolecule" xml:space="preserve">
     <value>נא לבחור מולקולה</value>
@@ -13719,7 +13737,7 @@
     <value>זרוע</value>
   </data>
   <data name="AuditEntity_company" xml:space="preserve">
-    <value>פלוגה</value>
+    <value>דסק</value>
   </data>
   <data name="AuditEntity_department" xml:space="preserve">
     <value>מחלקה</value>
@@ -13743,25 +13761,25 @@
     <value>מולקולה</value>
   </data>
   <data name="ShiftScope_Company" xml:space="preserve">
-    <value>פלוגה</value>
+    <value>דסק</value>
   </data>
   <data name="Blueprints_NoJobType" xml:space="preserve">
     <value>ללא סוג תפקיד</value>
   </data>
   <data name="Blueprints_SelectCompany" xml:space="preserve">
-    <value>בחר פלוגה</value>
+    <value>בחר דסק</value>
   </data>
   <data name="Blueprints_ScopeImpactWarning" xml:space="preserve">
-    <value>שינוי זה משפיע על כל הפלוגות במולקולה</value>
+    <value>שינוי זה משפיע על כל הדסקים במולקולה</value>
   </data>
   <data name="Blueprints_AreaScopeHelp" xml:space="preserve">
     <value>משמרות ברמת אזור מוצגות בכל המולקולות באזור</value>
   </data>
   <data name="Blueprints_MoleculeScopeHelp" xml:space="preserve">
-    <value>משמרות ברמת מולקולה משותפות לכל הפלוגות במולקולה</value>
+    <value>משמרות ברמת מולקולה משותפות לכל הדסקים במולקולה</value>
   </data>
   <data name="Blueprints_CompanyScopeHelp" xml:space="preserve">
-    <value>משמרות ברמת פלוגה שייכות לפלוגה ספציפית</value>
+    <value>משמרות ברמת דסק שייכות לדסק ספציפי</value>
   </data>
   <data name="QuickEntry_Toggle" xml:space="preserve">
     <value>הקצאה מהירה</value>
@@ -13923,16 +13941,16 @@
     <value>יצירה, עריכה וניהול של חנויות ושעות פתיחה</value>
   </data>
   <data name="Grant_ViewHakamOnCall" xml:space="preserve">
-    <value>צפייה בחק״מ תורן</value>
+    <value>צפייה בחק״מכו</value>
   </data>
   <data name="Grant_ViewHakamOnCall_Desc" xml:space="preserve">
-    <value>צפייה בשיבוצי חק״מ תורן בווידג׳ט התורנויות</value>
+    <value>צפייה בשיבוצי חק״מכו בווידג׳ט התורנויות</value>
   </data>
   <data name="Grant_ViewCompanyOnCall" xml:space="preserve">
     <value>צפייה בתורן פלוגתי</value>
   </data>
   <data name="Grant_ViewCompanyOnCall_Desc" xml:space="preserve">
-    <value>צפייה באנשי קשר תורנים ברמת הפלוגה בווידג׳ט התורנויות</value>
+    <value>צפייה באנשי קשר תורנים ברמת הדסק בווידג׳ט התורנויות</value>
   </data>
   <data name="Grant_ViewShiftsMolecule" xml:space="preserve">
     <value>צפייה במשמרות (גדוד)</value>
@@ -13993,7 +14011,7 @@
     <value>{0} רשומות טקסט</value>
   </data>
   <data name="Roles_ScopeDescription" xml:space="preserve">
-    <value>צפייה וניהול שיוכי תפקידים למשתמשים בפלוגה או במולקולה שלך. שייך תפקידים או בטל שיוכים קיימים.</value>
+    <value>צפייה וניהול שיוכי תפקידים למשתמשים בדסק או במולקולה שלך. שייך תפקידים או בטל שיוכים קיימים.</value>
   </data>
   <data name="Roles_CrossLinkToTemplates" xml:space="preserve">
     <value>לניהול תבניות תפקידים והרשאות ברמת הפרויקט, עבור אל</value>
@@ -14062,13 +14080,13 @@
     <value>כיצד נרשמים?</value>
   </data>
   <data name="Help_GS_Signup_A" xml:space="preserve">
-    <value>לחצו על כפתור "הצטרפות" בדף הכניסה. מלאו את הפרטים, בחרו פלוגה ותפקיד, ושלחו את הבקשה. מנהל יבדוק ויאשר את הבקשה. לאחר האישור, תוכלו להיכנס עם הפרטים שלכם.</value>
+    <value>לחצו על כפתור "הצטרפות" בדף הכניסה. מלאו את הפרטים, בחרו דסק ותפקיד, ושלחו את הבקשה. מנהל יבדוק ויאשר את הבקשה. לאחר האישור, תוכלו להיכנס עם הפרטים שלכם.</value>
   </data>
   <data name="Help_GS_FirstLogin_Q" xml:space="preserve">
     <value>מה לעשות אחרי הכניסה הראשונה?</value>
   </data>
   <data name="Help_GS_FirstLogin_A" xml:space="preserve">
-    <value>אחרי הכניסה: 1) בדקו את הפרופיל ועדכנו את שם התצוגה במידת הצורך. 2) ודאו את התפקיד והפלוגה המשויכים. 3) נווטו ללוח השנה כדי לראות את המשמרות שלכם. 4) הגדירו התראות בהגדרות הפרופיל.</value>
+    <value>אחרי הכניסה: 1) בדקו את הפרופיל ועדכנו את שם התצוגה במידת הצורך. 2) ודאו את התפקיד והדסק המשויכים. 3) נווטו ללוח השנה כדי לראות את המשמרות שלכם. 4) הגדירו התראות בהגדרות הפרופיל.</value>
   </data>
   <data name="Help_GS_Navigation_Q" xml:space="preserve">
     <value>כיצד מנווטים במערכת?</value>
@@ -14092,7 +14110,7 @@
     <value>אילו תפקידים קיימים במערכת?</value>
   </data>
   <data name="Help_Roles_Overview_A" xml:space="preserve">
-    <value>ב-ShiftManager קיימים התפקידים הבאים: חייל (משתמש בסיסי), מ"מ (מנהל פלוגה), קב"ר (מנהל ברמת גדוד), מפ"צ (מוביל צוות עם הרשאות מורחבות), מפק"מ (מנהל ברמת מולקולה), קב"ב (מנהל ברמת אזור), משבץ (מתמחה בשיבוצים), חניך (חייל בהכשרה), ובעלים (גישה מלאה למערכת).</value>
+    <value>ב-ShiftManager קיימים התפקידים הבאים: חייל (משתמש בסיסי), מ"מ (מנהל דסק), קב"ר (מנהל ברמת גדוד), מפ"צ (מוביל צוות עם הרשאות מורחבות), מפק"מ (מנהל ברמת מולקולה), קב"ב (מנהל ברמת אזור), משבץ (מתמחה בשיבוצים), חניך (חייל בהכשרה), ובעלים (גישה מלאה למערכת).</value>
   </data>
   <data name="Help_Roles_Employee_Q" xml:space="preserve">
     <value>מה חייל יכול לעשות?</value>
@@ -14104,7 +14122,7 @@
     <value>מה מ"מ יכול לעשות?</value>
   </data>
   <data name="Help_Roles_Manager_A" xml:space="preserve">
-    <value>מנהלים יכולים לעשות את כל מה שחייל יכול, בנוסף: לשבץ ולהסיר שיבוצי משמרות, לאשר או לדחות בקשות חופשה והחלפה, לנהל משתמשים בפלוגה שלהם, לצפות ביומני ביקורת, ולהגדיר סוגי משמרות ותורנויות.</value>
+    <value>מנהלים יכולים לעשות את כל מה שחייל יכול, בנוסף: לשבץ ולהסיר שיבוצי משמרות, לאשר או לדחות בקשות חופשה והחלפה, לנהל משתמשים בדסק שלהם, לצפות ביומני ביקורת, ולהגדיר סוגי משמרות ותורנויות.</value>
   </data>
   <data name="Help_Roles_Lead_Q" xml:space="preserve">
     <value>מה מפ"צ יכול לעשות?</value>
@@ -14116,7 +14134,7 @@
     <value>מה קב"ר יכול לעשות?</value>
   </data>
   <data name="Help_Roles_Director_A" xml:space="preserve">
-    <value>קב"רים פועלים ברמת הגדוד ויש להם הרשאות ניהול מורחבות על פני הפלוגה שלהם. הם יכולים לשבץ משמרות, לנהל משתמשים, ולאשר בקשות ברמת הפלוגה.</value>
+    <value>קב"רים פועלים ברמת הגדוד ויש להם הרשאות ניהול מורחבות על פני הדסק שלהם. הם יכולים לשבץ משמרות, לנהל משתמשים, ולאשר בקשות ברמת הדסק.</value>
   </data>
   <data name="Help_Roles_MoleculeAdmin_Q" xml:space="preserve">
     <value>מה מפק"מ יכול לעשות?</value>
@@ -14170,7 +14188,7 @@
     <value>מה זה דף הסקירה?</value>
   </data>
   <data name="Help_Cal_Overview_A" xml:space="preserve">
-    <value>דף הסקירה מספק תצוגה מאוחדת של כל המשתמשים בפלוגה שלך עם המשמרות, התורנויות והכוננויות שלהם לחודש. הוא כולל רשומות טקסט (הערות) ומדדים מרכזיים. זה אידיאלי לקבלת תמונה כללית של לוח השיבוצים.</value>
+    <value>דף הסקירה מספק תצוגה מאוחדת של כל המשתמשים בדסק שלך עם המשמרות, התורנויות והכוננויות שלהם לחודש. הוא כולל רשומות טקסט (הערות) ומדדים מרכזיים. זה אידיאלי לקבלת תמונה כללית של לוח השיבוצים.</value>
   </data>
   <data name="Help_Cal_QuickEntry_Q" xml:space="preserve">
     <value>כיצד לשבץ משמרות במהירות?</value>
@@ -14194,13 +14212,13 @@
     <value>כיצד לנהל משתמשים?</value>
   </data>
   <data name="Help_Admin_Users_A" xml:space="preserve">
-    <value>עברו אל ניהול &gt; משתמשים לניהול משתמשים. ניתן להוסיף משתמשים חדשים, לאשר בקשות הצטרפות, לערוך פרטי משתמש (תפקיד, פלוגה, סוג תפקיד), לנעול/לפתוח חשבונות, ולהשבית משתמשים. השתמשו במסננים לצמצום רשימת המשתמשים.</value>
+    <value>עברו אל ניהול &gt; משתמשים לניהול משתמשים. ניתן להוסיף משתמשים חדשים, לאשר בקשות הצטרפות, לערוך פרטי משתמש (תפקיד, דסק, סוג תפקיד), לנעול/לפתוח חשבונות, ולהשבית משתמשים. השתמשו במסננים לצמצום רשימת המשתמשים.</value>
   </data>
   <data name="Help_Admin_JoinRequests_Q" xml:space="preserve">
     <value>כיצד בקשות הצטרפות עובדות?</value>
   </data>
   <data name="Help_Admin_JoinRequests_A" xml:space="preserve">
-    <value>כשמשתמשים חדשים נרשמים, הם יוצרים בקשת הצטרפות. מנהלים רואים בקשות ממתינות בראש דף ניהול המשתמשים. ניתן לאשר (משייך את התפקיד והפלוגה המבוקשים) או לדחות כל בקשה. אישור קבוצתי זמין גם עבור מספר בקשות.</value>
+    <value>כשמשתמשים חדשים נרשמים, הם יוצרים בקשת הצטרפות. מנהלים רואים בקשות ממתינות בראש דף ניהול המשתמשים. ניתן לאשר (משייך את התפקיד והדסק המבוקשים) או לדחות כל בקשה. אישור קבוצתי זמין גם עבור מספר בקשות.</value>
   </data>
   <data name="Help_Admin_Organization_Q" xml:space="preserve">
     <value>כיצד להגדיר את הארגון?</value>
