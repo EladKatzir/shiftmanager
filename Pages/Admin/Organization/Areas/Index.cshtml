@@ -94,6 +94,10 @@
                     <td>@if (a.IsActive) { <span class="badge badge-active"><loc key="Active" /></span> } else { <span class="badge badge-inactive"><loc key="Inactive" /></span> }</td>
                     <td>
                         <div class="table-actions">
+                            <button type="button" class="btn btn-ghost"
+                                    onclick="openRenameModal(@a.Id, '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(a.Name))', '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(a.DisplayName))')">
+                                @Localizer["Edit"]
+                            </button>
                             <form method="post" asp-page-handler="ToggleActive" style="display:inline"><input type="hidden" name="id" value="@a.Id" /><button type="submit" class="btn btn-ghost">@(a.IsActive ? Localizer["Deactivate"] : Localizer["Activate"])</button></form>
                             @if (a.MoleculeCount == 0 && a.JobTypeCount == 0) { <form method="post" asp-page-handler="Delete" style="display:inline" data-confirm-modal data-confirm-title="@Localizer["ConfirmDeleteArea_Title"]" data-confirm-message="@Localizer["ConfirmDeleteArea"]" data-confirm-action="@Localizer["Delete"]" data-confirm-level="danger"><input type="hidden" name="id" value="@a.Id" /><button type="submit" class="btn btn-danger"><loc key="Delete" /></button></form> }
                         </div>
@@ -105,3 +109,45 @@
     }
     else { <p class="empty-state"><loc key="NoAreasYet" /></p> }
 </div>
+
+<!-- Rename Modal -->
+<div id="renameOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:flex-start; justify-content:center; padding-top:15vh;"
+     onclick="if(event.target===this) closeRenameModal()">
+    <div class="section-card" style="max-width:480px; width:100%; margin:0 1rem;">
+        <h3 class="section-header"><loc key="RenameArea" /></h3>
+        <form method="post" asp-page-handler="Rename">
+            <input type="hidden" asp-for="EditId" id="renameId" />
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">@Localizer["Name"] <span class="form-label-required">*</span></label>
+                <input class="form-input" asp-for="EditName" id="renameName" required />
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">@Localizer["DisplayName"]</label>
+                <input class="form-input" asp-for="EditDisplayName" id="renameDisplayName" />
+            </div>
+            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-ghost" onclick="closeRenameModal()">@Localizer["Cancel"]</button>
+                <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openRenameModal(id, name, displayName) {
+    document.getElementById('renameId').value = id;
+    document.getElementById('renameName').value = name;
+    document.getElementById('renameDisplayName').value = displayName;
+    var overlay = document.getElementById('renameOverlay');
+    overlay.style.display = 'flex';
+    document.getElementById('renameName').focus();
+}
+function closeRenameModal() {
+    document.getElementById('renameOverlay').style.display = 'none';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeRenameModal();
+});
+</script>
+}

@@ -1,8 +1,10 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Helpers;
 using ShiftManager.Models;
 using ShiftManager.Resources;
 using ShiftManager.Services;
@@ -49,6 +51,12 @@ public class IndexModel : LocalizedPageModel
     [BindProperty] public int SelectedAreaId { get; set; }
     [BindProperty] public int? SelectedMoleculeId { get; set; }
     [BindProperty] public int SortOrder { get; set; } = 0;
+
+    [BindProperty] public int EditId { get; set; }
+    [BindProperty] public string EditName { get; set; } = string.Empty;
+    [BindProperty] public string EditDisplayName { get; set; } = string.Empty;
+    [BindProperty] public string? EditColor { get; set; }
+    [BindProperty] public int EditSortOrder { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -115,6 +123,12 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
+        if (InputSanitizer.ContainsDangerousContent(JobTypeName) || InputSanitizer.ContainsDangerousContent(JobTypeDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
         if (SelectedAreaId <= 0)
         {
             TempData["ErrorMessage"] = _localizer["Error_AreaRequired"].Value;
@@ -125,6 +139,13 @@ public class IndexModel : LocalizedPageModel
         if (area == null)
         {
             TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        // Validate color format
+        if (!string.IsNullOrWhiteSpace(JobTypeColor) && !Regex.IsMatch(JobTypeColor.Trim(), @"^#[0-9A-Fa-f]{6}$"))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidColor"].Value;
             return RedirectToPage();
         }
 
@@ -161,6 +182,50 @@ public class IndexModel : LocalizedPageModel
             $"Created job type '{jobType.DisplayName}' in area (AreaId={jobType.AreaId})");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeCreated"], jobType.DisplayName);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostEditAsync()
+    {
+        if (EditId <= 0 || string.IsNullOrWhiteSpace(EditName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
+            return RedirectToPage();
+        }
+
+        if (InputSanitizer.ContainsDangerousContent(EditName) || InputSanitizer.ContainsDangerousContent(EditDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
+        if (!string.IsNullOrWhiteSpace(EditColor) && !Regex.IsMatch(EditColor.Trim(), @"^#[0-9A-Fa-f]{6}$"))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidColor"].Value;
+            return RedirectToPage();
+        }
+
+        // SECURITY-AUDITED: SAFE — requires Grant:ManageJobTypes policy; consistent with GET handler
+        var jobType = await _db.JobTypes.IgnoreQueryFilters().FirstOrDefaultAsync(jt => jt.Id == EditId);
+        if (jobType == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        var oldName = jobType.Name;
+        jobType.Name = EditName.Trim();
+        jobType.DisplayName = string.IsNullOrWhiteSpace(EditDisplayName) ? EditName.Trim() : EditDisplayName.Trim();
+        jobType.Color = string.IsNullOrWhiteSpace(EditColor) ? null : EditColor.Trim();
+        jobType.SortOrder = EditSortOrder;
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("JobType {JobTypeId} edited: name '{OldName}' -> '{NewName}'", EditId, oldName, jobType.Name);
+
+        await _auditLogService.LogAsync("JobTypeEdited", "JobType", EditId,
+            $"Job type edited: '{oldName}' -> '{jobType.DisplayName}'");
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeEdited"], jobType.DisplayName);
         return RedirectToPage();
     }
 

@@ -187,6 +187,15 @@
                         </td>
                         <td>
                             <div class="table-actions">
+                                <button type="button" class="btn btn-ghost"
+                                        data-id="@sg.Id"
+                                        data-name="@System.Web.HttpUtility.HtmlAttributeEncode(sg.Name)"
+                                        data-display-name="@System.Web.HttpUtility.HtmlAttributeEncode(sg.DisplayName)"
+                                        data-company-ids="@Json.Serialize(sg.CompanyIds)"
+                                        data-jobtype-ids="@Json.Serialize(sg.JobTypeIds)"
+                                        onclick="openEditModal(this)">
+                                    @Localizer["Edit"]
+                                </button>
                                 <form method="post" asp-page-handler="ToggleActive" style="display:inline">
                                     <input type="hidden" name="id" value="@sg.Id" />
                                     <button type="submit" class="btn btn-ghost">
@@ -215,3 +224,80 @@
         <p class="empty-state"><loc key="NoShiftGroupingsYet" /></p>
     }
 </div>
+
+<!-- Edit Modal -->
+<div id="editOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:flex-start; justify-content:center; padding-top:10vh; overflow-y:auto;"
+     onclick="if(event.target===this) closeEditModal()">
+    <div class="section-card" style="max-width:520px; width:100%; margin:0 1rem 2rem;">
+        <h3 class="section-header"><loc key="EditShiftGrouping" /></h3>
+        <form method="post" asp-page-handler="Edit">
+            <input type="hidden" asp-for="EditId" id="editId" />
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">@Localizer["Name"] <span class="form-label-required">*</span></label>
+                <input class="form-input" asp-for="EditName" id="editName" required />
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">@Localizer["DisplayName"]</label>
+                <input class="form-input" asp-for="EditDisplayName" id="editDisplayName" />
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">@Localizer["Companies"]</label>
+                <select class="form-select" name="EditCompanyIds" id="editCompanyIds" multiple>
+                    @foreach (var c in Model.AvailableCompanies)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="HoldCtrlToSelectMultiple" /></span>
+            </div>
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label class="form-label">@Localizer["JobTypes"]</label>
+                <select class="form-select" name="EditJobTypeIds" id="editJobTypeIds" multiple>
+                    @foreach (var jt in Model.AvailableJobTypes)
+                    {
+                        <option value="@jt.Id">@jt.AreaName - @jt.Name</option>
+                    }
+                </select>
+                <span class="form-hint"><loc key="HoldCtrlToSelectMultiple" /></span>
+            </div>
+            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" class="btn btn-ghost" onclick="closeEditModal()">@Localizer["Cancel"]</button>
+                <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function openEditModal(btn) {
+    document.getElementById('editId').value = btn.getAttribute('data-id');
+    document.getElementById('editName').value = btn.getAttribute('data-name');
+    document.getElementById('editDisplayName').value = btn.getAttribute('data-display-name');
+
+    var companyIds = JSON.parse(btn.getAttribute('data-company-ids') || '[]');
+    var jobTypeIds = JSON.parse(btn.getAttribute('data-jobtype-ids') || '[]');
+
+    preselectOptions('editCompanyIds', companyIds);
+    preselectOptions('editJobTypeIds', jobTypeIds);
+
+    document.getElementById('editOverlay').style.display = 'flex';
+    document.getElementById('editName').focus();
+}
+
+function preselectOptions(selectId, ids) {
+    var select = document.getElementById(selectId);
+    for (var i = 0; i < select.options.length; i++) {
+        select.options[i].selected = ids.indexOf(parseInt(select.options[i].value)) !== -1;
+    }
+}
+
+function closeEditModal() {
+    document.getElementById('editOverlay').style.display = 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeEditModal();
+});
+</script>
+}

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Resources;
+using ShiftManager.Helpers;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization.Areas;
@@ -39,6 +40,10 @@ public class IndexModel : LocalizedPageModel
     [BindProperty] public string AreaDisplayName { get; set; } = string.Empty;
     [BindProperty] public int SelectedProjectId { get; set; }
 
+    [BindProperty] public int EditId { get; set; }
+    [BindProperty] public string EditName { get; set; } = string.Empty;
+    [BindProperty] public string EditDisplayName { get; set; } = string.Empty;
+
     public async Task OnGetAsync()
     {
 
@@ -64,6 +69,13 @@ public class IndexModel : LocalizedPageModel
             TempData["ErrorMessage"] = _localizer["Error_AreaNameRequired"].Value;
             return RedirectToPage();
         }
+
+        if (InputSanitizer.ContainsDangerousContent(AreaName) || InputSanitizer.ContainsDangerousContent(AreaDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
         if (SelectedProjectId <= 0)
         {
             TempData["ErrorMessage"] = _localizer["Error_ProjectRequired"].Value;
@@ -88,6 +100,42 @@ public class IndexModel : LocalizedPageModel
             $"Created area '{area.DisplayName}' in project (ProjectId={area.ProjectId})");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_AreaCreated"], area.DisplayName);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostRenameAsync()
+    {
+        if (EditId <= 0 || string.IsNullOrWhiteSpace(EditName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
+            return RedirectToPage();
+        }
+
+        if (InputSanitizer.ContainsDangerousContent(EditName) || InputSanitizer.ContainsDangerousContent(EditDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
+        // SECURITY-AUDITED: SAFE — requires Grant:EditArea policy; consistent with GET handler
+        var area = await _db.Areas.IgnoreQueryFilters().FirstOrDefaultAsync(a => a.Id == EditId);
+        if (area == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_AreaNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        var oldName = area.Name;
+        area.Name = EditName.Trim();
+        area.DisplayName = string.IsNullOrWhiteSpace(EditDisplayName) ? EditName.Trim() : EditDisplayName.Trim();
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Area {AreaId} renamed from '{OldName}' to '{NewName}'", EditId, oldName, area.Name);
+
+        await _auditLogService.LogAsync("AreaRenamed", "Area", EditId,
+            $"Area renamed from '{oldName}' to '{area.DisplayName}'");
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_AreaRenamed"], area.DisplayName);
         return RedirectToPage();
     }
 

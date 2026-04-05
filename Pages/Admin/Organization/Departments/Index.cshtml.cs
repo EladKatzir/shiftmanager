@@ -6,6 +6,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
+using ShiftManager.Helpers;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Admin.Organization.Departments;
@@ -42,6 +43,10 @@ public class IndexModel : LocalizedPageModel
     [BindProperty] public string DepartmentName { get; set; } = string.Empty;
     [BindProperty] public string DepartmentDisplayName { get; set; } = string.Empty;
     [BindProperty] public int SelectedMoleculeId { get; set; }
+
+    [BindProperty] public int EditId { get; set; }
+    [BindProperty] public string EditName { get; set; } = string.Empty;
+    [BindProperty] public string EditDisplayName { get; set; } = string.Empty;
 
     public async Task OnGetAsync()
     {
@@ -97,6 +102,12 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
+        if (InputSanitizer.ContainsDangerousContent(DepartmentName) || InputSanitizer.ContainsDangerousContent(DepartmentDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
         if (SelectedMoleculeId <= 0)
         {
             TempData["ErrorMessage"] = _localizer["Error_MoleculeRequired"].Value;
@@ -135,6 +146,42 @@ public class IndexModel : LocalizedPageModel
             $"Created department '{department.DisplayName}' in molecule (MoleculeId={department.MoleculeId})");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentCreated"], department.DisplayName);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostRenameAsync()
+    {
+        if (EditId <= 0 || string.IsNullOrWhiteSpace(EditName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
+            return RedirectToPage();
+        }
+
+        if (InputSanitizer.ContainsDangerousContent(EditName) || InputSanitizer.ContainsDangerousContent(EditDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
+        // SECURITY-AUDITED: SAFE — requires Grant:ManageDepartments policy; consistent with GET handler
+        var department = await _db.Departments.IgnoreQueryFilters().FirstOrDefaultAsync(d => d.Id == EditId);
+        if (department == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_DepartmentNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        var oldName = department.Name;
+        department.Name = EditName.Trim();
+        department.DisplayName = string.IsNullOrWhiteSpace(EditDisplayName) ? EditName.Trim() : EditDisplayName.Trim();
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Department {DepartmentId} renamed from '{OldName}' to '{NewName}'", EditId, oldName, department.Name);
+
+        await _auditLogService.LogAsync("DepartmentRenamed", "Department", EditId,
+            $"Department renamed from '{oldName}' to '{department.DisplayName}'");
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentRenamed"], department.DisplayName);
         return RedirectToPage();
     }
 

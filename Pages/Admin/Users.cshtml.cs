@@ -70,7 +70,7 @@ public class UsersModel : LocalizedPageModel
         _hierarchyService = hierarchyService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, int? PrimaryShiftTypeId, string? PrimaryShiftTypeName);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, int? PrimaryShiftTypeId, string? PrimaryShiftTypeName, int? MoleculeId);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId, string? AuthMethod);
     public record MoleculeOption(int Id, string Name, string AreaName);
     public record JobTypeOption(int Id, string Name, string AreaName, string? Key);
@@ -91,6 +91,7 @@ public class UsersModel : LocalizedPageModel
     public Dictionary<int, List<string>> DirectorCompanyNames { get; set; } = new();
     public List<JobTypeOption> AvailableJobTypes { get; set; } = new();
     public List<ShiftType> AvailableShiftTypes { get; set; } = new();
+    public Dictionary<int, string> MoleculeNames { get; set; } = new();
 
     /// <summary>Maps companyId → list of valid jobTypeIds, for client-side filtering in the add-user form.</summary>
     public Dictionary<int, List<int>> JobTypesByCompany { get; set; } = new();
@@ -386,9 +387,10 @@ public class UsersModel : LocalizedPageModel
             var molecules = await _db.Molecules
                 .IgnoreQueryFilters()
                 .Where(m => moleculeIds.Contains(m.Id))
-                .Select(m => new { m.Id, m.AreaId, m.Type })
+                .Select(m => new { m.Id, m.AreaId, m.Type, m.DisplayName })
                 .ToListAsync();
             var moleculeLookup = molecules.ToDictionary(m => m.Id);
+            MoleculeNames = molecules.ToDictionary(m => m.Id, m => m.DisplayName);
             var activeJobTypes = allJobTypesWithArea.Where(jt => jt.IsActive).ToList();
 
             foreach (var company in Companies)
@@ -604,7 +606,8 @@ public class UsersModel : LocalizedPageModel
                     userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
                     u.RoleTemplateId,
                     u.PrimaryShiftTypeId,
-                    u.PrimaryShiftType?.NameEn ?? u.PrimaryShiftType?.Name
+                    u.PrimaryShiftType?.NameEn ?? u.PrimaryShiftType?.Name,
+                    userCompanies.TryGetValue(u.CompanyId, out var dirCompany) ? dirCompany.MoleculeId : null
                 ));
             }
             else
@@ -634,7 +637,8 @@ public class UsersModel : LocalizedPageModel
                         userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
                         u.RoleTemplateId,
                         u.PrimaryShiftTypeId,
-                        u.PrimaryShiftType?.NameEn ?? u.PrimaryShiftType?.Name
+                        u.PrimaryShiftType?.NameEn ?? u.PrimaryShiftType?.Name,
+                        company?.MoleculeId
                     ));
                 }
             }
@@ -1359,6 +1363,17 @@ public class UsersModel : LocalizedPageModel
                 {
                     _logger.LogWarning("Rejected cross-molecule PrimaryShiftType assignment: User {UserId} (Molecule {UserMolecule}) → ShiftType {StId} (Molecule {StMolecule})",
                         id, userCompany?.MoleculeId, st.Id, st.MoleculeId);
+                    TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
+                    return RedirectToPage();
+                }
+
+                // Validate EligibleCompanyIds: if the shift type restricts which companies can use it,
+                // the user's company must be in the eligible list
+                var eligibleIds = st.GetEligibleCompanyIdList();
+                if (eligibleIds != null && !eligibleIds.Contains(u.CompanyId))
+                {
+                    _logger.LogWarning("Rejected PrimaryShiftType assignment: User {UserId} (Company {CompanyId}) not in EligibleCompanyIds for ShiftType {StId}",
+                        id, u.CompanyId, st.Id);
                     TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
                     return RedirectToPage();
                 }

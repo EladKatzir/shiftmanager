@@ -921,10 +921,10 @@
                     </div>
                 </td>
                 <td>@(u.DepartmentName ?? "-")</td>
-                <td class="editable-cell" data-cell-type="primaryshifttype" data-user-id="@u.Id">
+                <td class="editable-cell" data-cell-type="primaryshifttype" data-user-id="@u.Id" data-user-molecule-id="@(u.MoleculeId?.ToString() ?? "")">
                     <div class="cell-display">
                         <span class="cell-display__value">@(u.PrimaryShiftTypeName ?? "-")</span>
-                        <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["Edit"]" aria-label="@Localizer["Edit"]">
+                        <button type="button" class="cell-display__edit-btn" onclick="enterPstEditMode(this)" title="@Localizer["Edit"]" aria-label="@Localizer["Edit"]">
                             ⚙️
                         </button>
                     </div>
@@ -933,10 +933,14 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@u.Id" />
                             <select class="form-input cell-edit__select" name="primaryShiftTypeId" data-original-value="@(u.PrimaryShiftTypeId?.ToString() ?? "")">
-                                <option value="" selected="@(!u.PrimaryShiftTypeId.HasValue)">-</option>
+                                <option value="">-</option>
                                 @foreach (var st in Model.AvailableShiftTypes)
                                 {
-                                    <option value="@st.Id" selected="@(u.PrimaryShiftTypeId == st.Id)">@(st.NameEn ?? st.Name)</option>
+                                    var molName = st.MoleculeId.HasValue && Model.MoleculeNames.TryGetValue(st.MoleculeId.Value, out var mn) ? mn : "";
+                                    var label = (st.NameEn ?? st.Name) + (Model.MoleculeNames.Count > 1 && !string.IsNullOrEmpty(molName) ? $" ({molName})" : "");
+                                    <option value="@st.Id"
+                                            data-molecule-id="@(st.MoleculeId?.ToString() ?? "")"
+                                            selected="@(u.PrimaryShiftTypeId == st.Id)">@label</option>
                                 }
                             </select>
                             <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]">✓</button>
@@ -1234,6 +1238,24 @@
             // Focus the select
             const select = edit.querySelector('select');
             if (select) select.focus();
+        }
+
+        function enterPstEditMode(button) {
+            const cell = button.closest('.editable-cell');
+            const userMoleculeId = cell.getAttribute('data-user-molecule-id');
+            const select = cell.querySelector('select[name="primaryShiftTypeId"]');
+
+            // Filter options to show only shift types from the user's molecule
+            if (select && userMoleculeId) {
+                for (var i = 0; i < select.options.length; i++) {
+                    var opt = select.options[i];
+                    var optMoleculeId = opt.getAttribute('data-molecule-id');
+                    // Always show the blank option; hide options from other molecules
+                    opt.hidden = optMoleculeId && optMoleculeId !== userMoleculeId;
+                }
+            }
+
+            enterEditMode(button);
         }
 
         function exitEditMode(button) {

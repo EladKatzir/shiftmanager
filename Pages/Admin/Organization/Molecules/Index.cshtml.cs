@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Helpers;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
@@ -20,18 +21,21 @@ public class IndexModel : LocalizedPageModel
     private readonly ILogger<IndexModel> _logger;
     private readonly ISetupTaskService _setupTaskService;
     private readonly IShiftTypeSeedService _shiftTypeSeedService;
+    private readonly IAuditLogService _auditLogService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<IndexModel> logger,
         ISetupTaskService setupTaskService,
-        IShiftTypeSeedService shiftTypeSeedService) : base(localizer)
+        IShiftTypeSeedService shiftTypeSeedService,
+        IAuditLogService auditLogService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _setupTaskService = setupTaskService;
         _shiftTypeSeedService = shiftTypeSeedService;
+        _auditLogService = auditLogService;
     }
 
     // View Models
@@ -47,6 +51,10 @@ public class IndexModel : LocalizedPageModel
     [BindProperty] public string MoleculeDisplayName { get; set; } = string.Empty;
     [BindProperty] public int SelectedAreaId { get; set; }
     [BindProperty] public MoleculeType SelectedType { get; set; }
+
+    [BindProperty] public int EditId { get; set; }
+    [BindProperty] public string EditName { get; set; } = string.Empty;
+    [BindProperty] public string EditDisplayName { get; set; } = string.Empty;
 
     public async Task OnGetAsync()
     {
@@ -92,6 +100,12 @@ public class IndexModel : LocalizedPageModel
         if (string.IsNullOrWhiteSpace(MoleculeName))
         {
             TempData["ErrorMessage"] = _localizer["Error_MoleculeNameRequired"].Value;
+            return RedirectToPage();
+        }
+
+        if (InputSanitizer.ContainsDangerousContent(MoleculeName) || InputSanitizer.ContainsDangerousContent(MoleculeDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
             return RedirectToPage();
         }
 
@@ -156,7 +170,46 @@ public class IndexModel : LocalizedPageModel
             _logger.LogInformation("Auto-generated setup tasks for new molecule {MoleculeId}", molecule.Id);
         }
 
+        await _auditLogService.LogAsync("MoleculeCreated", "Molecule", molecule.Id,
+            $"Created molecule '{molecule.DisplayName}' (Type={molecule.Type}) in area (AreaId={molecule.AreaId})");
+
         TempData["SuccessMessage"] = string.Format(_localizer["Success_MoleculeCreated"], molecule.DisplayName);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostRenameAsync()
+    {
+        if (EditId <= 0 || string.IsNullOrWhiteSpace(EditName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_RequiredFields"].Value;
+            return RedirectToPage();
+        }
+
+        if (InputSanitizer.ContainsDangerousContent(EditName) || InputSanitizer.ContainsDangerousContent(EditDisplayName))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value;
+            return RedirectToPage();
+        }
+
+        // SECURITY-AUDITED: SAFE — requires Grant:EditMolecule policy; consistent with GET handler
+        var molecule = await _db.Molecules.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == EditId);
+        if (molecule == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_MoleculeNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        var oldName = molecule.Name;
+        molecule.Name = EditName.Trim();
+        molecule.DisplayName = string.IsNullOrWhiteSpace(EditDisplayName) ? EditName.Trim() : EditDisplayName.Trim();
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Molecule {MoleculeId} renamed from '{OldName}' to '{NewName}'", EditId, oldName, molecule.Name);
+
+        await _auditLogService.LogAsync("MoleculeRenamed", "Molecule", EditId,
+            $"Molecule renamed from '{oldName}' to '{molecule.DisplayName}'");
+
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_MoleculeRenamed"], molecule.DisplayName);
         return RedirectToPage();
     }
 
@@ -175,6 +228,9 @@ public class IndexModel : LocalizedPageModel
 
         _logger.LogInformation("Molecule {MoleculeId} ({MoleculeName}) active status changed to {IsActive}",
             id, molecule.Name, molecule.IsActive);
+
+        await _auditLogService.LogAsync("MoleculeUpdated", "Molecule", id,
+            $"Molecule '{molecule.DisplayName}' {(molecule.IsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = molecule.IsActive
             ? string.Format(_localizer["Success_MoleculeActivated"], molecule.DisplayName)
@@ -209,6 +265,9 @@ public class IndexModel : LocalizedPageModel
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Deleted molecule {MoleculeId}: {MoleculeName}", id, molecule.Name);
+
+        await _auditLogService.LogAsync("MoleculeDeleted", "Molecule", id,
+            $"Deleted molecule '{molecule.DisplayName}'");
 
         TempData["SuccessMessage"] = string.Format(_localizer["Success_MoleculeDeleted"], molecule.DisplayName);
         return RedirectToPage();
