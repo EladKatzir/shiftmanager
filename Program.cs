@@ -752,6 +752,30 @@ using (var scope = app.Services.CreateScope())
             .Select(g => new { g.RoleTemplateId, g.GrantTypeId, g.TargetJobTypeId })
             .ToListAsync();
         var existingSet = existingMappings.Select(m => $"{m.RoleTemplateId}:{m.GrantTypeId}:{m.TargetJobTypeId?.ToString() ?? "null"}").ToHashSet();
+
+        // Prevent re-seeding of sentinel grants that were already resolved to actual JobType IDs.
+        // On re-runs, resolved grants have positive IDs (e.g. "2:22:5") while the seed still uses
+        // sentinel IDs (e.g. "2:22:-1"). Add sentinel aliases so the dedup catches them.
+        var sentinelMapRef = ShiftManager.Data.SeedData.RoleTemplateSeed.JobTypeSentinelMap;
+        if (sentinelMapRef.Count > 0)
+        {
+            var sentJobTypeNames = sentinelMapRef.Values.ToHashSet();
+            var resolvedJobTypeIds = await db.JobTypes
+                .Where(jt => sentJobTypeNames.Contains(jt.Name) && jt.MoleculeId == null)
+                .ToDictionaryAsync(jt => jt.Name, jt => jt.Id);
+
+            // Build reverse map: actual JobType ID → sentinel ID
+            var reverseSentinel = new Dictionary<int, int>();
+            foreach (var (sentinel, name) in sentinelMapRef)
+                if (resolvedJobTypeIds.TryGetValue(name, out var actualId))
+                    reverseSentinel[actualId] = sentinel;
+
+            // For each existing resolved grant, also add its sentinel alias to existingSet
+            foreach (var m in existingMappings)
+                if (m.TargetJobTypeId.HasValue && reverseSentinel.TryGetValue(m.TargetJobTypeId.Value, out var sentinelId))
+                    existingSet.Add($"{m.RoleTemplateId}:{m.GrantTypeId}:{sentinelId}");
+        }
+
         var newMappings = roleTemplateGrants
             .Where(g => !existingSet.Contains($"{g.RoleTemplateId}:{g.GrantTypeId}:{g.TargetJobTypeId?.ToString() ?? "null"}"))
             .ToList();
@@ -1263,7 +1287,7 @@ using (var scope = app.Services.CreateScope())
             .ToHashSetAsync();
 
         // Get the project ID for project-scoped grants (if Shifty organization exists)
-        var project = await db.Projects.FirstOrDefaultAsync();
+        var project = await db.Projects.OrderBy(p => p.Id).FirstOrDefaultAsync();
 
         foreach (var grantType in allGrantTypes)
         {

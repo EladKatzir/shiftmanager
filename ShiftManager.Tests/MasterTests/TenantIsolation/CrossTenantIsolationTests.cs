@@ -6,6 +6,7 @@ using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
 using ShiftManager.Tests.MasterTests.Infrastructure;
+using OnDutyEntity = ShiftManager.Models.OnDuty;
 
 namespace ShiftManager.Tests.MasterTests.TenantIsolation;
 
@@ -249,7 +250,7 @@ public class CrossTenantIsolationTests : MasterTestBase
     {
         var tzafonaUser = GetTestUser("Tzafona", "Employee");
 
-        var onDuty = new OnDuty
+        var onDuty = new OnDutyEntity
         {
             UserId = tzafonaUser.Id,
             Date = new DateOnly(2026, 4, 11),
@@ -257,16 +258,16 @@ public class CrossTenantIsolationTests : MasterTestBase
             CreatedBy = tzafonaUser.Id,
             CreatedAt = DateTime.UtcNow
         };
-        Db.Set<OnDuty>().Add(onDuty);
+        Db.Set<OnDutyEntity>().Add(onDuty);
         await Db.SaveChangesAsync();
         TrackEntity(onDuty);
 
         // OnDuty is global — no CompanyId property, no query filter
-        var found = await Db.Set<OnDuty>().AnyAsync(o => o.Id == onDuty.Id);
+        var found = await Db.Set<OnDutyEntity>().AnyAsync(o => o.Id == onDuty.Id);
         found.Should().BeTrue("OnDuty is global, visible without any tenant filter");
 
         // Verify OnDuty entity does NOT implement IBelongsToCompany
-        typeof(OnDuty).GetInterfaces().Should().NotContain(typeof(IBelongsToCompany),
+        typeof(OnDutyEntity).GetInterfaces().Should().NotContain(typeof(IBelongsToCompany),
             "OnDuty should not implement IBelongsToCompany — it's a global entity");
     }
 
