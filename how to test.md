@@ -2,11 +2,12 @@
 
 ## Test Architecture Overview
 
-The project has **three distinct test layers**:
+The project has **four distinct test layers**:
 
-1. **xUnit Unit Tests** (52 files) — fast, isolated, mock-based service tests
+1. **xUnit Unit Tests** (46 files) — fast, isolated, mock-based service tests
 2. **xUnit Integration Tests** (6 files) — cross-component tests using in-memory DB
-3. **Playwright E2E Tests** (62 files) — browser-based tests against a running app
+3. **xUnit Master Tests** (14 files) — comprehensive scenario tests covering grants, security, tenant isolation, shifts, chores, on-duty, user management, and infrastructure
+4. **Playwright E2E Tests** (62 files) — browser-based tests against a running app
 
 ---
 
@@ -36,6 +37,12 @@ dotnet test ShiftManager.Tests/ShiftManager.Tests.csproj --filter "FullyQualifie
 
 ```bash
 dotnet test ShiftManager.Tests/ShiftManager.Tests.csproj --filter "FullyQualifiedName~IntegrationTests"
+```
+
+### Run only master tests
+
+```bash
+dotnet test ShiftManager.Tests/ShiftManager.Tests.csproj --filter "FullyQualifiedName~MasterTests"
 ```
 
 ### Run a specific test class
@@ -151,12 +158,15 @@ npm test && npm run qa:production
 | All .NET tests      | `dotnet test ShiftManager.Tests/ShiftManager.Tests.csproj`     |
 | Unit tests only     | `dotnet test ... --filter "FullyQualifiedName~UnitTests"`      |
 | Integration only    | `dotnet test ... --filter "FullyQualifiedName~IntegrationTests"` |
+| Master tests only   | `dotnet test ... --filter "FullyQualifiedName~MasterTests"`    |
 | One test class      | `dotnet test ... --filter "FullyQualifiedName~ClassName"`      |
 | With coverage       | `dotnet test ... --collect:"XPlat Code Coverage"`              |
 | Playwright all      | `npm test` (from `qa-automation/`)                             |
 | Playwright headed   | `npm run test:headed`                                          |
 | Playwright debug    | `npm run test:debug`                                           |
 | Production QA       | `npm run qa:production`                                        |
+| Production headed   | `npm run qa:production:headed`                                 |
+| Production debug    | `npm run qa:production:debug`                                  |
 | View report         | `npm run report`                                               |
 
 ## Clean Up Test Results
