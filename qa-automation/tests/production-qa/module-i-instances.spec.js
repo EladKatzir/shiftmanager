@@ -19,12 +19,12 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await navigateTo(page, '/Calendar/Shifts?Mode=shift');
     await page.waitForLoadState('networkidle');
 
-    // STRICT: Assert the shifts-calendar container is visible
-    const calendar = page.locator('.shifts-calendar');
+    // STRICT: Assert the cal-page container is visible
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the toolbar rendered with all required selectors
-    const toolbar = page.locator('.shifts-calendar__toolbar');
+    const toolbar = page.locator('.cal-toolbar');
     await expect(toolbar).toBeVisible({ timeout: 5000 });
 
     const moleculeSelect = page.locator('#moleculeSelect');
@@ -38,8 +38,8 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await expect(shiftModeLink).toBeVisible({ timeout: 5000 });
 
     // STRICT: Assert either calendar data table or empty state is present
-    const calendarTable = page.locator('.shifts-calendar table, .excel-calendar');
-    const emptyState = page.locator('.shifts-calendar__empty');
+    const calendarTable = page.locator('.excel-calendar__table');
+    const emptyState = page.locator('.cal-empty');
     const hasTable = await calendarTable.first().isVisible({ timeout: 5000 }).catch(() => false);
     const hasEmpty = await emptyState.isVisible({ timeout: 3000 }).catch(() => false);
     expect(hasTable || hasEmpty).toBe(true);
@@ -51,12 +51,12 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await navigateTo(page, '/Calendar/Shifts?Mode=user');
     await page.waitForLoadState('networkidle');
 
-    // STRICT: Assert the shifts-calendar container is visible
-    const calendar = page.locator('.shifts-calendar');
+    // STRICT: Assert the cal-page container is visible
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the toolbar rendered
-    const toolbar = page.locator('.shifts-calendar__toolbar');
+    const toolbar = page.locator('.cal-toolbar');
     await expect(toolbar).toBeVisible({ timeout: 5000 });
 
     // STRICT: Assert the user mode toggle is active (btn-primary class)
@@ -64,8 +64,8 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await expect(userModeLink).toBeVisible({ timeout: 5000 });
 
     // STRICT: Assert either calendar data table or empty state is present
-    const calendarTable = page.locator('.shifts-calendar table, .excel-calendar');
-    const emptyState = page.locator('.shifts-calendar__empty');
+    const calendarTable = page.locator('.excel-calendar__table');
+    const emptyState = page.locator('.cal-empty');
     const hasTable = await calendarTable.first().isVisible({ timeout: 5000 }).catch(() => false);
     const hasEmpty = await emptyState.isVisible({ timeout: 3000 }).catch(() => false);
     expect(hasTable || hasEmpty).toBe(true);
@@ -78,11 +78,11 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the toolbar is visible
-    const toolbar = page.locator('.shifts-calendar__toolbar');
+    const toolbar = page.locator('.cal-toolbar');
     await expect(toolbar).toBeVisible({ timeout: 5000 });
 
     // STRICT: Assert the capacity mode toggle is active
@@ -115,8 +115,8 @@ test.describe('Module I: Shift Instance Manipulation', () => {
       expect(hasSheet || hasEditor || hasCapacityToggle).toBe(true);
     } else {
       // STRICT: If no cells, assert the empty state or a table without instances
-      const emptyState = page.locator('.shifts-calendar__empty');
-      const calendarTable = page.locator('.shifts-calendar table');
+      const emptyState = page.locator('.cal-empty');
+      const calendarTable = page.locator('.excel-calendar__table');
       const hasEmpty = await emptyState.isVisible({ timeout: 3000 }).catch(() => false);
       const hasTable = await calendarTable.first().isVisible({ timeout: 3000 }).catch(() => false);
       expect(hasEmpty || hasTable).toBe(true);
@@ -130,15 +130,15 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the toolbar with mode toggles is present
-    const toolbar = page.locator('.shifts-calendar__toolbar');
+    const toolbar = page.locator('.cal-toolbar');
     await expect(toolbar).toBeVisible({ timeout: 5000 });
 
     // STRICT: Assert mode toggle links exist
-    const toggleGroup = page.locator('.shifts-calendar__toggle-group').first();
+    const toggleGroup = page.locator('.cal-toolbar__toggle-group').first();
     await expect(toggleGroup).toBeVisible({ timeout: 5000 });
 
     await saveEvidence(page, EVIDENCE, 'I-04-override-name.png');
@@ -149,15 +149,15 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert date navigation exists
-    const dateNav = page.locator('.shifts-calendar__date-nav');
+    const dateNav = page.locator('.cal-toolbar__date-nav');
     await expect(dateNav).toBeVisible({ timeout: 5000 });
 
     // STRICT: Assert the date label is present and contains a date range
-    const dateLabel = page.locator('.shifts-calendar__date-label');
+    const dateLabel = page.locator('.cal-toolbar__date-label');
     await expect(dateLabel).toBeVisible({ timeout: 5000 });
     const labelText = await dateLabel.textContent();
     expect(labelText).toBeTruthy();
@@ -172,15 +172,15 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the toolbar is present
-    const toolbar = page.locator('.shifts-calendar__toolbar');
+    const toolbar = page.locator('.cal-toolbar');
     await expect(toolbar).toBeVisible({ timeout: 5000 });
 
     // STRICT: Assert the capacity mode toggle exists in the toggles section
-    const toggles = page.locator('.shifts-calendar__toggles');
+    const toggles = page.locator('.cal-toolbar__controls');
     await expect(toggles).toBeVisible({ timeout: 5000 });
 
     // STRICT: Assert URL contains CapacityMode parameter
@@ -195,18 +195,18 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the toolbar and capacity mode URL param
-    const toolbar = page.locator('.shifts-calendar__toolbar');
+    const toolbar = page.locator('.cal-toolbar');
     await expect(toolbar).toBeVisible({ timeout: 5000 });
     expect(page.url()).toContain('CapacityMode');
 
     // STRICT: Check for cells or empty state
-    const cells = page.locator('.excel-cell[data-shift-instance-id]');
+    const cells = page.locator('.excel-calendar__cell');
     const cellCount = await cells.count();
-    const emptyState = page.locator('.shifts-calendar__empty');
+    const emptyState = page.locator('.cal-empty');
     const hasEmpty = await emptyState.isVisible({ timeout: 3000 }).catch(() => false);
     expect(cellCount > 0 || hasEmpty).toBe(true);
 
@@ -218,7 +218,7 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded with capacity mode
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
     expect(page.url()).toContain('CapacityMode');
 
@@ -234,7 +234,7 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the view mode selector is present
@@ -255,7 +255,7 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the SignalR real-time script is loaded (for concurrency handling)
@@ -274,11 +274,11 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert date display shows a valid date range
-    const dateLabel = page.locator('.shifts-calendar__date-label');
+    const dateLabel = page.locator('.cal-toolbar__date-label');
     await expect(dateLabel).toBeVisible({ timeout: 5000 });
     const dateText = await dateLabel.textContent();
     expect(dateText).toBeTruthy();
@@ -292,7 +292,7 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the job type selector exists and has options
@@ -326,7 +326,7 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert the job type selector exists
@@ -360,16 +360,16 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await page.waitForLoadState('networkidle');
 
     // STRICT: Assert the calendar loaded
-    const calendar = page.locator('.shifts-calendar');
+    const calendar = page.locator('.cal-page');
     await expect(calendar).toBeVisible({ timeout: 15000 });
 
     // STRICT: Assert navigation buttons exist
-    const navBtns = page.locator('.shifts-calendar__nav-btn');
+    const navBtns = page.locator('.cal-toolbar__nav-btn');
     const navCount = await navBtns.count();
     expect(navCount).toBeGreaterThanOrEqual(2);
 
     // Capture the current date label
-    const dateLabel = page.locator('.shifts-calendar__date-label');
+    const dateLabel = page.locator('.cal-toolbar__date-label');
     await expect(dateLabel).toBeVisible({ timeout: 5000 });
     const originalDateText = await dateLabel.textContent();
     expect(originalDateText).toBeTruthy();
@@ -384,7 +384,7 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await expect(calendar).toBeVisible({ timeout: 10000 });
 
     // STRICT: Assert the date label changed
-    const newDateLabel = page.locator('.shifts-calendar__date-label');
+    const newDateLabel = page.locator('.cal-toolbar__date-label');
     await expect(newDateLabel).toBeVisible({ timeout: 5000 });
     const newDateText = await newDateLabel.textContent();
     expect(newDateText).toBeTruthy();
@@ -393,7 +393,7 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await saveEvidence(page, EVIDENCE, 'I-14-next-week.png');
 
     // Click the "Prev" navigation button (first nav btn)
-    const prevBtn = page.locator('.shifts-calendar__nav-btn').first();
+    const prevBtn = page.locator('.cal-toolbar__nav-btn').first();
     await expect(prevBtn).toBeVisible({ timeout: 3000 });
     await prevBtn.click();
     await page.waitForLoadState('networkidle');
@@ -402,7 +402,7 @@ test.describe('Module I: Shift Instance Manipulation', () => {
     await expect(calendar).toBeVisible({ timeout: 10000 });
 
     // STRICT: Assert the date label changed back to approximately the original
-    const backDateLabel = page.locator('.shifts-calendar__date-label');
+    const backDateLabel = page.locator('.cal-toolbar__date-label');
     await expect(backDateLabel).toBeVisible({ timeout: 5000 });
     const backDateText = await backDateLabel.textContent();
     expect(backDateText).toBeTruthy();

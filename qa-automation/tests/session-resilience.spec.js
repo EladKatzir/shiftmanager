@@ -48,19 +48,29 @@ test.describe('Session Management & Resilience', () => {
     const companyName = `Company_${timestamp}`;
     const companySlug = `slug-${timestamp}`;
 
+    // Select first available molecule (required field)
+    const moleculeSelect = page.locator('select[name="SelectedMoleculeId"]');
+    await expect(moleculeSelect).toBeVisible({ timeout: 5000 });
+    const moleculeOptions = await moleculeSelect.locator('option[value]:not([value=""])').all();
+    if (moleculeOptions.length === 0) {
+      test.skip(true, 'No molecules available to create company');
+      return;
+    }
+    await moleculeSelect.selectOption(await moleculeOptions[0].getAttribute('value') || '');
+
     // Fill inline form (requires company + manager info)
     await page.fill('input[name="CompanyName"]', companyName);
     await page.fill('input[name="CompanySlug"]', companySlug);
     await page.fill('input[name="ManagerEmail"]', `manager${timestamp}@test.com`);
     await page.fill('input[name="ManagerDisplayName"]', `Manager ${timestamp}`);
     await page.fill('input[name="ManagerPassword"]', '123456');
-    await page.locator('form:has(input[name="CompanyName"]) button[type="submit"]').click();
+    await page.locator('form:has(input[name="CompanyName"]) button[type="submit"]').first().click();
 
     // Wait for page to reload after POST-REDIRECT-GET
     await page.waitForLoadState('networkidle');
 
     // Verify company was created (should appear in list)
-    await expect(page.locator(`text="${companyName}"`).first()).toBeVisible();
+    await expect(page.locator(`td:has-text("${companyName}")`).first()).toBeVisible({ timeout: 10000 });
 
     // POST-REDIRECT-GET creates a new history entry at /Admin/Companies
     // So history is: /Home/Index -> /Admin/Companies -> /Admin/Companies (after redirect)

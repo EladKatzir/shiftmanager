@@ -89,8 +89,14 @@ test.describe('Authentication', () => {
     });
 
     test('P1-02: should logout successfully', async ({ page }) => {
+      // The logout form is inside a dropdown menu — open it first
+      const userMenuTrigger = page.locator('#sidebarUserMenuTrigger');
+      await expect(userMenuTrigger).toBeVisible({ timeout: 5000 });
+      await userMenuTrigger.click();
+      await page.waitForTimeout(300);
+
       // Find and click logout button
-      const logoutForm = page.locator('form[action*="Logout"]');
+      const logoutForm = page.locator('.sidebar-user-menu__logout-form');
       await expect(logoutForm).toBeVisible();
 
       await Promise.all([
@@ -103,10 +109,16 @@ test.describe('Authentication', () => {
     });
 
     test('P1-02: should clear session on logout', async ({ page }) => {
+      // The logout form is inside a dropdown menu — open it first
+      const userMenuTrigger = page.locator('#sidebarUserMenuTrigger');
+      await expect(userMenuTrigger).toBeVisible({ timeout: 5000 });
+      await userMenuTrigger.click();
+      await page.waitForTimeout(300);
+
       // Logout (with proper navigation wait)
       await Promise.all([
         page.waitForURL(/\/Auth\/Login/),
-        page.locator('form[action*="Logout"] button[type="submit"]').click(),
+        page.locator('.sidebar-user-menu__logout-form button[type="submit"]').click(),
       ]);
 
       // Try to access protected page

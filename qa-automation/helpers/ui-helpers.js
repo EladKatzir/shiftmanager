@@ -38,7 +38,7 @@ async function verifySidebarPresence(page, shouldBeVisible) {
  */
 async function verifySidebarCategories(page, expectedCategories) {
     for (const category of expectedCategories) {
-        const categoryElement = page.locator(`.nav-category:has-text("${category}"), .sidebar-category:has-text("${category}")`);
+        const categoryElement = page.locator(`.nav-category:has-text("${category}"), .nav-section-header:has-text("${category}"), .sidebar-category:has-text("${category}")`);
         await expect(categoryElement).toBeVisible();
     }
 }
@@ -58,11 +58,11 @@ async function verifyContextSwitcher(page) {
  * @param {string[]} expectedScopes - e.g., ['Mine Only', 'My Company']
  */
 async function verifyScopeSwitcher(page, expectedScopes) {
-    const scopeSwitcher = page.locator('.calendar-scope-switcher, .scope-switcher');
+    const scopeSwitcher = page.locator('.calendar-scope-switcher, .scope-switcher, .calendar-view-switcher');
     await expect(scopeSwitcher).toBeVisible();
 
     for (const scope of expectedScopes) {
-        const scopeButton = scopeSwitcher.locator(`button:has-text("${scope}"), [data-scope]:has-text("${scope}")`);
+        const scopeButton = scopeSwitcher.locator(`button:has-text("${scope}"), a:has-text("${scope}"), [data-scope]:has-text("${scope}")`);
         await expect(scopeButton).toBeVisible();
     }
 }

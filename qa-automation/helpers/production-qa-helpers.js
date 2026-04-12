@@ -107,20 +107,25 @@ async function loginAsOwner(page) {
  * Logout. STRICT: asserts redirect to login page.
  */
 async function logout(page) {
-  // Try multiple approaches: visible header logout button, direct POST, or navigate
-  const headerLogoutBtn = page.locator('header button:has-text("Logout"), .app-topbar button:has-text("Logout")').first();
-  const anyLogoutBtn = page.locator('button:has-text("Logout"):visible').first();
+  // The logout form is inside the sidebar user menu dropdown — open it first
+  const userMenuTrigger = page.locator('#sidebarUserMenuTrigger');
+  const hasTrigger = await userMenuTrigger.isVisible({ timeout: 3000 }).catch(() => false);
 
-  if (await headerLogoutBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await Promise.all([
-      page.waitForURL(/\/Auth\/Login/, { timeout: 10000 }),
-      headerLogoutBtn.click(),
-    ]);
-  } else if (await anyLogoutBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await Promise.all([
-      page.waitForURL(/\/Auth\/Login/, { timeout: 10000 }),
-      anyLogoutBtn.click(),
-    ]);
+  if (hasTrigger) {
+    await userMenuTrigger.click();
+    await page.waitForTimeout(300);
+
+    const logoutBtn = page.locator('.sidebar-user-menu__logout-form button[type="submit"]');
+    if (await logoutBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await Promise.all([
+        page.waitForURL(/\/Auth\/Login/, { timeout: 10000 }),
+        logoutBtn.click(),
+      ]);
+    } else {
+      // Fallback: POST directly to logout endpoint
+      await page.goto(`${BASE_URL}/Auth/Logout`);
+      await page.waitForLoadState('networkidle');
+    }
   } else {
     // Fallback: POST directly to logout endpoint
     await page.goto(`${BASE_URL}/Auth/Logout`);

@@ -44,8 +44,8 @@ test.describe('Module R: Concurrency', () => {
     await navigateTo(pageB, '/Calendar/Shifts');
 
     // STRICT: Both contexts must see the shifts calendar wrapper
-    const calendarA = page.locator('.shifts-calendar');
-    const calendarB = pageB.locator('.shifts-calendar');
+    const calendarA = page.locator('.cal-page');
+    const calendarB = pageB.locator('.cal-page');
     await expect(calendarA).toBeVisible({ timeout: 10000 });
     await expect(calendarB).toBeVisible({ timeout: 10000 });
 
@@ -74,7 +74,7 @@ test.describe('Module R: Concurrency', () => {
 
     // STRICT: All three see the shifts calendar wrapper
     for (const [label, p] of [['ctx1', page], ['ctx2', page2], ['ctx3', page3]]) {
-      const calendar = p.locator('.shifts-calendar');
+      const calendar = p.locator('.cal-page');
       await expect(calendar).toBeVisible({ timeout: 10000 });
       await expect(p).not.toHaveURL(/\/Auth\/Login/);
     }
@@ -101,8 +101,8 @@ test.describe('Module R: Concurrency', () => {
     await expect(page).not.toHaveURL(/\/Auth\/Login/);
     await expect(page2).not.toHaveURL(/\/Auth\/Login/);
     // STRICT: Both contexts see the chores calendar wrapper
-    const choresContentA = page.locator('.chores-calendar');
-    const choresContentB = page2.locator('.chores-calendar');
+    const choresContentA = page.locator('.cal-page');
+    const choresContentB = page2.locator('.cal-page');
     await expect(choresContentA).toBeVisible({ timeout: 10000 });
     await expect(choresContentB).toBeVisible({ timeout: 10000 });
 
@@ -315,7 +315,7 @@ test.describe('Module R: Concurrency', () => {
     // STRICT: All three contexts see the chores calendar wrapper
     for (const [label, p] of [['ctx1', page], ['ctx2', page2], ['ctx3', page3]]) {
       await expect(p).not.toHaveURL(/\/Auth\/Login/);
-      const content = p.locator('.chores-calendar');
+      const content = p.locator('.cal-page');
       await expect(content).toBeVisible({ timeout: 10000 });
     }
 

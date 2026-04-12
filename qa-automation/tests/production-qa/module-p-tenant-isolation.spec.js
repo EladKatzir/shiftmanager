@@ -228,7 +228,7 @@ test.describe('Module P: Tenant Isolation', () => {
     expect(page.url()).toContain('/Calendar/OnCall');
 
     // STRICT: On-call calendar wrapper must be visible
-    const calendarWrapper = page.locator('.oncall-calendar');
+    const calendarWrapper = page.locator('.cal-page');
     await expect(calendarWrapper).toBeVisible({ timeout: 10000 });
 
     // STRICT: No error page
@@ -246,7 +246,7 @@ test.describe('Module P: Tenant Isolation', () => {
     expect(page.url()).toContain('/Calendar/Shifts');
 
     // STRICT: Shifts calendar wrapper must be visible
-    const calendarWrapper = page.locator('.shifts-calendar');
+    const calendarWrapper = page.locator('.cal-page');
     await expect(calendarWrapper).toBeVisible({ timeout: 10000 });
 
     // STRICT: No error page
@@ -261,7 +261,7 @@ test.describe('Module P: Tenant Isolation', () => {
     await navigateTo(page, '/Calendar/Shifts');
 
     // STRICT: Shifts calendar wrapper must be visible
-    const calendarWrapper = page.locator('.shifts-calendar');
+    const calendarWrapper = page.locator('.cal-page');
     await expect(calendarWrapper).toBeVisible({ timeout: 10000 });
 
     // STRICT: No error page

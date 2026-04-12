@@ -38,11 +38,14 @@ test.describe('Account Lockout Protection', () => {
       await expect(page).toHaveURL(/\/Auth\/Login/);
 
       // Look for error message indicating failed login
-      const errorText = await page.locator('.small, .alert, [style*="color"]').allTextContents();
+      // The login page uses .auth-alert--error for error messages
+      const errorText = await page.locator('.auth-alert--error, .auth-alert--warning, .auth-alert, .small, .alert, [style*="color"]').allTextContents();
       const hasError = errorText.some(text =>
         text.includes('Invalid') ||
         text.includes('incorrect') ||
-        text.includes('failed')
+        text.includes('failed') ||
+        text.includes('שגיאה') ||
+        text.includes('לא תקין')
       );
 
       // We should see some kind of error message
@@ -239,8 +242,13 @@ test.describe('Account Lockout Protection', () => {
       // Should be redirected away from login (successful login)
       await expect(page).not.toHaveURL(/\/Auth\/Login/);
 
-      // Logout for cleanup
-      const logoutForm = page.locator('form[action*="Logout"]');
+      // Logout for cleanup — open the user menu dropdown first
+      const userMenuTrigger = page.locator('#sidebarUserMenuTrigger');
+      if (await userMenuTrigger.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await userMenuTrigger.click();
+        await page.waitForTimeout(300);
+      }
+      const logoutForm = page.locator('.sidebar-user-menu__logout-form');
       if (await logoutForm.isVisible({ timeout: 2000 })) {
         await logoutForm.locator('button[type="submit"]').click();
         await page.waitForURL(/\/Auth\/Login/);

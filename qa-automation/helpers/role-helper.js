@@ -19,7 +19,7 @@ try {
 const ROLE_CREDENTIALS = {
     Owner: {
         email: process.env.OWNER_EMAIL || 'admin@local',
-        password: process.env.OWNER_PASSWORD || 'easteregg'
+        password: process.env.OWNER_PASSWORD || 'admin123'
     },
     Director: {
         email: process.env.DIRECTOR_EMAIL || 'director@test.com',
@@ -195,15 +195,25 @@ class RoleHelper {
      * @returns {Promise<void>}
      */
     static async logout(page) {
-        // Find and click logout form/button
-        const logoutForm = page.locator('form[action*="Logout"]');
-        const logoutExists = await logoutForm.isVisible().catch(() => false);
+        // The logout form is inside the sidebar user menu dropdown — open it first
+        const userMenuTrigger = page.locator('#sidebarUserMenuTrigger');
+        const hasTrigger = await userMenuTrigger.isVisible({ timeout: 3000 }).catch(() => false);
 
-        if (logoutExists) {
-            await Promise.all([
-                page.waitForURL(/\/Auth\/Login/),
-                logoutForm.locator('button[type="submit"]').click(),
-            ]);
+        if (hasTrigger) {
+            await userMenuTrigger.click();
+            await page.waitForTimeout(300);
+
+            const logoutBtn = page.locator('.sidebar-user-menu__logout-form button[type="submit"]');
+            const logoutVisible = await logoutBtn.isVisible({ timeout: 2000 }).catch(() => false);
+
+            if (logoutVisible) {
+                await Promise.all([
+                    page.waitForURL(/\/Auth\/Login/),
+                    logoutBtn.click(),
+                ]);
+            } else {
+                await page.goto('/Auth/Login');
+            }
         } else {
             // Fallback: navigate directly to login page
             await page.goto('/Auth/Login');

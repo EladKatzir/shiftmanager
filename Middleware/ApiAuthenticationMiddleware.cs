@@ -71,6 +71,14 @@ public class ApiAuthenticationMiddleware
                 return;
             }
 
+            // SessionStatus allows anonymous access (session-check.js polls it for expiration)
+            // Page handler has [AllowAnonymous] and returns JSON { authenticated, state } with 401
+            if (context.Request.Path.StartsWithSegments("/Api/SessionStatus", StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                return;
+            }
+
             // Other internal endpoints require authentication
             // If user is already authenticated via cookies, allow request
             if (context.User?.Identity?.IsAuthenticated == true)

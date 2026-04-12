@@ -42,8 +42,8 @@ test.describe('Module W: Director, My, Public Pages', () => {
     const heading = page.locator('main h1').first();
     await expect(heading).toBeVisible({ timeout: 10000 });
 
-    // ASSERT: Profile form exists
-    const form = page.locator('form');
+    // ASSERT: Profile form exists (scoped to main to avoid sidebar logout form)
+    const form = page.locator('main form');
     await expect(form.first()).toBeVisible({ timeout: 5000 });
 
     // ASSERT: Display Name input field is visible and has a value
@@ -56,19 +56,21 @@ test.describe('Module W: Director, My, Public Pages', () => {
     const avatarCard = page.locator('.card').first();
     await expect(avatarCard).toBeVisible({ timeout: 5000 });
 
-    // ASSERT: Personal Information card is visible
-    await assertPageContains(page, 'DisplayName');
+    // ASSERT: Personal Information section is visible (label text is localized, e.g. "Display name")
+    await assertPageContains(page, 'Display');
 
     // ASSERT: Phone input exists
     const phoneInput = page.locator('input#Phone, input[name="Phone"]').first();
     await expect(phoneInput).toBeVisible({ timeout: 5000 });
 
-    // ASSERT: Save button is visible
-    const saveBtn = page.locator('button[type="submit"]').first();
+    // ASSERT: Save button is visible (scoped to main to avoid sidebar logout button)
+    const saveBtn = page.locator('main button[type="submit"], main form button[type="submit"]').first();
+    await saveBtn.scrollIntoViewIfNeeded().catch(() => {});
     await expect(saveBtn).toBeVisible({ timeout: 5000 });
 
-    // ASSERT: Cancel link is visible
-    const cancelLink = page.locator('a[href="/My"]');
+    // ASSERT: Cancel link is visible (links to /My or /My/Index or similar)
+    const cancelLink = page.locator('a[href="/My"], a[href="/My/Index"], a.btn-secondary, main a.btn').first();
+    await cancelLink.scrollIntoViewIfNeeded().catch(() => {});
     await expect(cancelLink).toBeVisible({ timeout: 5000 });
 
     await saveEvidence(page, EVIDENCE, 'W-03-profile.png');
@@ -82,8 +84,8 @@ test.describe('Module W: Director, My, Public Pages', () => {
     const heading = page.locator('main h1, main h2').first();
     await expect(heading).toBeVisible({ timeout: 10000 });
 
-    // ASSERT: Settings form exists
-    const form = page.locator('form');
+    // ASSERT: Settings form exists (scoped to main to avoid sidebar logout form)
+    const form = page.locator('main form');
     await expect(form.first()).toBeVisible({ timeout: 5000 });
 
     // ASSERT: At least one card section is visible

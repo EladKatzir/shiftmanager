@@ -1,0 +1,58 @@
+{
+  "screens": {
+    "Admin/Index": {
+      "totalRequests": 97,
+      "apiRequests": 7,
+      "loadTime": 621,
+      "requests": [
+        {
+          "url": "http://localhost:5000/Api/Localization?keys=Aria_LoadingPage,ContextSwitcher_SearchPlaceholder,ContextSwitcher_SearchLabel,Sidebar_CtrlKTooltip,Sidebar_Toggle,Language,ToggleDarkMode,CommandPaletteSearch,Aria_SearchCommands",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:5000/Api/SessionStatus",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:5000/Admin/Index",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:5000/Api/Telemetry?handler=PerformanceBatch",
+          "method": "POST"
+        },
+        {
+          "url": "http://localhost:5000/Api/Telemetry?handler=PerformanceBatch",
+          "method": "POST"
+        },
+        {
+          "url": "http://localhost:5000/Api/Localization?keys=Aria_LoadingPage,ContextSwitcher_SearchPlaceholder,ContextSwitcher_SearchLabel,Sidebar_CtrlKTooltip,Sidebar_Toggle,Language,ToggleDarkMode,CommandPaletteSearch,Aria_SearchCommands",
+          "method": "GET"
+        },
+        {
+          "url": "http://localhost:5000/Api/SessionStatus",
+          "method": "GET"
+        }
+      ]
+    },
+    "Calendar/Table": {
+      "totalRequests": 107,
+      "apiRequests": 8,
+      "loadTime": 652
+    },
+    "Admin/Users": {
+      "totalRequests": 47,
+      "duplicateRequests": 1,
+      "duplicates": [
+        "http://localhost:5000/Api/Telemetry?handler=PerformanceBatch"
+      ]
+    }
+  },
+  "workflows": {},
+  "slowEndpoints": [],
+  "errors": [],
+  "polling": {
+    "detected": false,
+    "urls": []
+  }
+}

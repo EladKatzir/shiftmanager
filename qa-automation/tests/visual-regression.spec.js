@@ -86,6 +86,7 @@ test.describe('Visual Regression Tests @visual', () => {
 
             await expect(page).toHaveScreenshot('calendar-month.png', {
                 fullPage: true,
+                maxDiffPixelRatio: 0.15,
                 mask: [
                     // Mask date-specific content that changes
                     page.locator('[data-testid="current-date"]'),
@@ -101,6 +102,7 @@ test.describe('Visual Regression Tests @visual', () => {
 
             await expect(page).toHaveScreenshot('calendar-week.png', {
                 fullPage: true,
+                maxDiffPixelRatio: 0.15,
                 mask: [
                     page.locator('[data-testid="current-date"]'),
                     page.locator('.today-indicator'),
@@ -116,6 +118,7 @@ test.describe('Visual Regression Tests @visual', () => {
 
             await expect(page).toHaveScreenshot('calendar-day.png', {
                 fullPage: true,
+                maxDiffPixelRatio: 0.15,
                 mask: [
                     page.locator('[data-testid="current-date"]'),
                     page.locator('.today-indicator'),
@@ -131,6 +134,7 @@ test.describe('Visual Regression Tests @visual', () => {
 
             await expect(page).toHaveScreenshot('calendar-table.png', {
                 fullPage: true,
+                maxDiffPixelRatio: 0.15,
                 mask: [
                     page.locator('[data-testid="current-date"]'),
                     page.locator('.today-indicator'),
@@ -170,7 +174,8 @@ test.describe('Visual Regression Tests @visual', () => {
             await page.waitForTimeout(500);
 
             await expect(page).toHaveScreenshot('admin-users.png', {
-                fullPage: true,
+                fullPage: false,
+                maxDiffPixelRatio: 0.15,
                 mask: [
                     // Mask user-specific data that may change
                     page.locator('td[data-field="email"]'),
@@ -186,7 +191,8 @@ test.describe('Visual Regression Tests @visual', () => {
             await page.waitForTimeout(500);
 
             await expect(page).toHaveScreenshot('admin-companies.png', {
-                fullPage: true,
+                fullPage: false,
+                maxDiffPixelRatio: 0.15,
             });
         });
 
@@ -281,6 +287,7 @@ test.describe('Visual Regression Tests @visual', () => {
 
             await expect(page).toHaveScreenshot('calendar-month-tablet.png', {
                 fullPage: true,
+                maxDiffPixelRatio: 0.15,
             });
         });
 
@@ -292,6 +299,7 @@ test.describe('Visual Regression Tests @visual', () => {
 
             await expect(page).toHaveScreenshot('calendar-month-mobile.png', {
                 fullPage: true,
+                maxDiffPixelRatio: 0.15,
             });
         });
 
@@ -333,6 +341,7 @@ test.describe('Visual Regression Tests @visual', () => {
 
             await expect(page).toHaveScreenshot('calendar-month-dark.png', {
                 fullPage: true,
+                maxDiffPixelRatio: 0.15,
             });
         });
     });

@@ -201,7 +201,7 @@ test.describe('Module Z: Error Handling & Edge Cases', () => {
     await page.waitForLoadState('networkidle');
 
     // ASSERT: Shifts calendar wrapper is visible (page loaded successfully)
-    const calendarWrapper = page.locator('.shifts-calendar');
+    const calendarWrapper = page.locator('.cal-page');
     await expect(calendarWrapper).toBeVisible({ timeout: 15000 });
 
     // ASSERT: No "unhandled exception" text on the page

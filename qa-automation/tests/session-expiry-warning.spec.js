@@ -53,7 +53,13 @@ test.describe('Session Expiry Warning System', () => {
       // Don't login - try to access endpoint as anonymous user
       await page.goto('/');
 
-      const response = await page.request.get('/Api/SessionStatus');
+      // Must send X-Requested-With header so the API handler returns 401
+      // instead of redirecting to login (302 -> 200)
+      const response = await page.request.get('/Api/SessionStatus', {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
 
       // Should return 401 Unauthorized
       expect(response.status()).toBe(401);

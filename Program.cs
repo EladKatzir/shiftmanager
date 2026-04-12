@@ -1200,11 +1200,26 @@ using (var scope = app.Services.CreateScope())
             DisplayName = seedingOptions.Owner.DisplayName,
             Role = UserRole.Owner,
             IsActive = true,
+            HasCompletedOnboarding = true,
             PasswordHash = hash,
             PasswordSalt = salt
         });
         await db.SaveChangesAsync();
         logger.LogInformation("Created owner user: {Email}", seedingOptions.Owner.Email);
+    }
+    else
+    {
+        // Ensure existing owner has onboarding completed and lockout cleared
+        var ownerUser = await db.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Email == seedingOptions.Owner.Email);
+        if (ownerUser != null && (!ownerUser.HasCompletedOnboarding || ownerUser.FailedLoginAttempts > 0 || ownerUser.LockoutEnd != null))
+        {
+            ownerUser.HasCompletedOnboarding = true;
+            ownerUser.FailedLoginAttempts = 0;
+            ownerUser.LockoutEnd = null;
+            await db.SaveChangesAsync();
+            logger.LogInformation("Fixed owner user flags: {Email}", seedingOptions.Owner.Email);
+        }
     }
 
     // Seed test Director user and companies (for QA)

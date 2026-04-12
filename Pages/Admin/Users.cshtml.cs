@@ -809,6 +809,7 @@ public class UsersModel : LocalizedPageModel
             Role = roleTemplate?.DerivedUserRole ?? targetRole,
             RoleTemplateId = roleTemplate?.Id,
             IsActive = true,
+            HasCompletedOnboarding = true, // Admin-created users skip onboarding
             PasswordHash = h,
             PasswordSalt = s,
             JobTypeId = NewJobTypeId

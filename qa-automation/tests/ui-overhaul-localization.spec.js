@@ -8,14 +8,26 @@ test.describe('UI Overhaul: Localization', () => {
     test.describe('English (Default)', () => {
 
         test.beforeEach(async ({ page }) => {
-            // Set English locale
+            // Set English locale explicitly (app defaults to Hebrew)
+            await page.context().addCookies([{
+                name: '.AspNetCore.Culture',
+                value: 'c=en-US|uic=en-US',
+                domain: 'localhost',
+                path: '/',
+            }]);
             await page.goto('/Auth/Login');
             await page.waitForLoadState('networkidle');
         });
 
         test('UI-L10N-01: Login page text is in English', async ({ page }) => {
-            // Look for English login text
-            const hasEnglish = await page.locator('text=Email, text=Password, text=Login, text=Sign').count() > 0;
+            // The culture cookie must be set before navigation; re-navigate to apply it
+            await page.goto('/Auth/Login');
+            await page.waitForLoadState('networkidle');
+
+            // Look for English login text — check each term separately since the locator
+            // syntax `text=A, text=B` creates a union selector that may not match
+            const bodyText = await page.locator('body').textContent();
+            const hasEnglish = /Email|Password|Login|Sign|Username/i.test(bodyText || '');
             expect(hasEnglish).toBe(true);
         });
 
