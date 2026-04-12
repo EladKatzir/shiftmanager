@@ -866,6 +866,25 @@
             Returns a 503 Service Unavailable response.
             </summary>
         </member>
+        <member name="T:ShiftManager.Extensions.ShiftTypeExtensions">
+            <summary>
+            Display helpers for <see cref="T:ShiftManager.Models.ShiftType"/>.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Extensions.ShiftTypeExtensions.GetDisplayNameAsync(ShiftManager.Models.ShiftType,Microsoft.Extensions.Localization.IStringLocalizer{ShiftManager.Resources.SharedResources},ShiftManager.Services.ICompanyLocalizationService,System.Int32)">
+             <summary>
+             Returns the correct display name for a ShiftType, matching the three-layer lookup of the
+             <c>&lt;loc&gt;</c> tag helper and then falling back to DB-stored <c>NameHe</c> / <c>NameEn</c>
+             so that runtime-generated keys like <c>ShiftType_CUSTOM_*_Name</c> — which were never
+             seeded into the <c>.resx</c> files — no longer leak as raw text in dropdowns and badges.
+            
+             Lookup order:
+               1. Company override (<see cref="M:ShiftManager.Services.ICompanyLocalizationService.GetOverrideValueAsync(System.Int32,System.String,System.String)"/>)
+               2. Base <c>.resx</c> (only resolves for canonical seeded keys)
+               3. DB <c>NameHe</c> / <c>NameEn</c> selected by current UI culture
+               4. Computed <see cref="P:ShiftManager.Models.ShiftType.Name"/> (predefined English names from <c>Key</c>)
+             </summary>
+        </member>
         <member name="T:ShiftManager.Helpers.CacheHelper">
             <summary>
             B-016: Cache helper utilities for stale cache handling
@@ -3458,6 +3477,13 @@
         <member name="P:ShiftManager.Models.Company.LocalizedName">
             <summary>
             Returns the culture-appropriate display name: NameHe when Hebrew, otherwise DisplayName ?? Name.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Company.ResolveLocalizedName(System.String,System.String,System.String)">
+            <summary>
+            Culture-aware company name resolver for use after EF projections (where the computed
+            <see cref="P:ShiftManager.Models.Company.LocalizedName"/> is not available because only raw fields were projected into a DTO).
+            Mirrors the fallback chain of <see cref="P:ShiftManager.Models.Company.LocalizedName"/> exactly.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.CompanyLanguageSettings">

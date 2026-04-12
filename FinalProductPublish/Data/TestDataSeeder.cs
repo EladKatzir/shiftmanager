@@ -75,6 +75,14 @@ namespace ShiftManager.Data
 
             if (existingUser != null)
             {
+                // Ensure existing test users have onboarding completed and lockout cleared
+                if (!existingUser.HasCompletedOnboarding || existingUser.FailedLoginAttempts > 0 || existingUser.LockoutEnd != null)
+                {
+                    existingUser.HasCompletedOnboarding = true;
+                    existingUser.FailedLoginAttempts = 0;
+                    existingUser.LockoutEnd = null;
+                    await _context.SaveChangesAsync();
+                }
                 _logger.LogInformation("Test user already exists: {Email}", email);
                 return;
             }
@@ -87,6 +95,7 @@ namespace ShiftManager.Data
                 CompanyId = companyId,
                 Role = role,
                 IsActive = true,
+                HasCompletedOnboarding = true,
                 PasswordHash = hash,
                 PasswordSalt = salt
             };

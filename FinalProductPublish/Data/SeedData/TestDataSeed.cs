@@ -288,6 +288,9 @@ public static class TestDataSeed
             existingUser.PasswordHash = hash;
             existingUser.PasswordSalt = salt;
             existingUser.IsActive = true;
+            existingUser.HasCompletedOnboarding = true;
+            existingUser.FailedLoginAttempts = 0;
+            existingUser.LockoutEnd = null;
             if (jobTypeId.HasValue && existingUser.JobTypeId == null)
                 existingUser.JobTypeId = jobTypeId.Value;
             if (existingUser.RoleTemplateId == null)
@@ -305,6 +308,7 @@ public static class TestDataSeed
             CompanyId = companyId,
             Role = role,
             IsActive = true,
+            HasCompletedOnboarding = true,
             JobTypeId = jobTypeId,
             RoleTemplateId = await MapRoleToTemplateIdAsync(context, role, jobTypeId),
             PasswordHash = newHash,
