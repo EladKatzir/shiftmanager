@@ -816,7 +816,7 @@
                                                                     <div class="tree-item">
                                                                         <span class="tree-spacer"></span>
                                                                         <span class="tree-icon tree-icon-company">C</span>
-                                                                        <span class="tree-label">@(company.DisplayName ?? company.Name)</span>
+                                                                        <span class="tree-label">@company.LocalizedName</span>
                                                                         <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
                                                                         @if (Model.CanManageHierarchy)
                                                                         {
@@ -842,7 +842,7 @@
                                                                                         loc-aria-label="DeleteCompany"
                                                                                         data-handler="DeleteCompany"
                                                                                         data-id="@company.Id"
-                                                                                        data-label="@(company.DisplayName ?? company.Name)">&#128465;</button>
+                                                                                        data-label="@company.LocalizedName">&#128465;</button>
                                                                             }
                                                                         </span>
                                                                         }
@@ -952,7 +952,7 @@
                         <div class="tree-item tree-item--root">
                             <span class="tree-spacer"></span>
                             <span class="tree-icon tree-icon-company">C</span>
-                            <span class="tree-label">@(company.DisplayName ?? company.Name)</span>
+                            <span class="tree-label">@company.LocalizedName</span>
                             <span class="tree-meta">(@company.UserCount <loc key="Users" />)</span>
                             <span class="badge badge-inactive"><loc key="NeedsAssignment" /></span>
                             @if (Model.CanManageHierarchy)
@@ -979,7 +979,7 @@
                                             loc-aria-label="DeleteCompany"
                                             data-handler="DeleteCompany"
                                             data-id="@company.Id"
-                                            data-label="@(company.DisplayName ?? company.Name)">&#128465;</button>
+                                            data-label="@company.LocalizedName">&#128465;</button>
                                 }
                             </span>
                             }

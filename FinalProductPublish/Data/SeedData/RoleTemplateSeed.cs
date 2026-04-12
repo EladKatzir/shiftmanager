@@ -151,7 +151,7 @@ public static class RoleTemplateSeed
                 NameKey = "Role_Trainee",
                 DescriptionKey = "Role_Trainee_Desc",
                 DisplayNameEN = "Trainee",
-                DisplayNameHE = "חניך",
+                DisplayNameHE = "נחפף",
                 ScopeLevel = RoleScopeLevel.Implicit,
                 IsSystem = true,
                 SortOrder = 101,

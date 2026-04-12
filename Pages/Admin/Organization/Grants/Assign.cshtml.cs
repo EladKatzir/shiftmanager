@@ -230,11 +230,13 @@ public class AssignModel : LocalizedPageModel
             .Select(m => new ScopeOption(m.Id, $"{m.Area.DisplayName} / {m.DisplayName}", "Molecule"))
             .ToListAsync();
 
-        AvailableCompanies = await _db.Companies
+        AvailableCompanies = (await _db.Companies
             .IgnoreQueryFilters()
-            .OrderBy(c => c.Name)
-            .Select(c => new ScopeOption(c.Id, c.DisplayName ?? c.Name, "Company"))
-            .ToListAsync();
+            .Select(c => new { c.Id, c.Name, c.DisplayName, c.NameHe })
+            .ToListAsync())
+            .Select(c => new ScopeOption(c.Id, Company.ResolveLocalizedName(c.Name, c.DisplayName, c.NameHe), "Company"))
+            .OrderBy(c => c.Name, StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+            .ToList();
 
         AvailableDepartments = await _db.Departments
             .IgnoreQueryFilters()

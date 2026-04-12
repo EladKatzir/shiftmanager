@@ -134,10 +134,11 @@ public class ScopeSwitcherModel : PageModel
         if (isDirector && userContext?.Path?.Molecule != null)
         {
             // Directors see all non-HQ companies in their molecule
-            var moleculeCompanies = await _db.Companies
+            var moleculeCompanies = (await _db.Companies
                 .Where(c => c.MoleculeId == userContext.Path.Molecule.Id && !c.IsHeadquarters)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+                .ToListAsync())
+                .OrderBy(c => c.LocalizedName, StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+                .ToList();
 
             var isFirst = true;
             foreach (var molCompany in moleculeCompanies)
@@ -286,11 +287,13 @@ public class ScopeSwitcherModel : PageModel
                             Id = mol.Id,
                             Name = mol.DisplayName ?? mol.Name,
                             Type = mol.Type.ToString(),
-                            Companies = mol.Companies.Select(c => new CompanyHierarchyDto
-                            {
-                                Id = c.Id,
-                                Name = c.DisplayName ?? c.Name
-                            }).ToList(),
+                            Companies = mol.Companies
+                                .OrderBy(c => c.LocalizedName, StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+                                .Select(c => new CompanyHierarchyDto
+                                {
+                                    Id = c.Id,
+                                    Name = c.LocalizedName
+                                }).ToList(),
                             Departments = mol.Departments.Select(d => new DepartmentHierarchyDto
                             {
                                 Id = d.Id,
@@ -331,7 +334,7 @@ public class ScopeSwitcherModel : PageModel
                                             new CompanyHierarchyDto
                                             {
                                                 Id = userContext.Path.Company.Id,
-                                                Name = userContext.Path.Company.DisplayName ?? userContext.Path.Company.Name
+                                                Name = userContext.Path.Company.LocalizedName
                                             }
                                         }
                                         : new List<CompanyHierarchyDto>(),

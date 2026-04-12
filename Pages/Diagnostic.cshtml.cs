@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Models;
 
 namespace ShiftManager.Pages;
 
@@ -38,10 +39,14 @@ public class DiagnosticModel : PageModel
     public async Task OnGetAsync()
     {
         // Get companies
-        Companies = await _db.Companies
+        var companiesRaw = await _db.Companies
             .IgnoreQueryFilters()
-            .Select(c => new CompanyInfo(c.Id, c.DisplayName ?? c.Name, c.Slug))
+            .Select(c => new { c.Id, c.Name, c.DisplayName, c.NameHe, c.Slug })
             .ToListAsync();
+        Companies = companiesRaw
+            .Select(c => new CompanyInfo(c.Id, Company.ResolveLocalizedName(c.Name, c.DisplayName, c.NameHe), c.Slug))
+            .OrderBy(c => c.Name, StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+            .ToList();
 
         // Get all users for dropdown
         AllUsers = await _db.Users

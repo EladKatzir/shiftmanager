@@ -162,11 +162,19 @@ public class IndexModel : LocalizedPageModel
             .Select(m => new MoleculeOption(m.Id, $"{m.Area.DisplayName} / {m.DisplayName}", m.AreaId))
             .ToListAsync();
 
-        AvailableCompanies = await _db.Companies.IgnoreQueryFilters()
+        var companiesRaw = await _db.Companies.IgnoreQueryFilters()
             .Include(c => c.Molecule)
-            .OrderBy(c => c.Molecule!.Name).ThenBy(c => c.Name)
-            .Select(c => new CompanyOption(c.Id, c.Molecule != null ? $"{c.Molecule.DisplayName} / {c.DisplayName ?? c.Name}" : c.DisplayName ?? c.Name, c.MoleculeId))
+            .Select(c => new { c.Id, c.Name, c.DisplayName, c.NameHe, c.MoleculeId, MoleculeDisplayName = c.Molecule != null ? c.Molecule.DisplayName : null })
             .ToListAsync();
+        var cultureComparer = StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true);
+        AvailableCompanies = companiesRaw.Select(c =>
+        {
+            var resolved = Company.ResolveLocalizedName(c.Name, c.DisplayName, c.NameHe);
+            var label = !string.IsNullOrEmpty(c.MoleculeDisplayName) ? $"{c.MoleculeDisplayName} / {resolved}" : resolved;
+            return new CompanyOption(c.Id, label, c.MoleculeId);
+        })
+        .OrderBy(c => c.Name, cultureComparer)
+        .ToList();
     }
 
     private async Task LoadSettingsAsync()

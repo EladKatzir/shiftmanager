@@ -478,6 +478,12 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">
+                        @Localizer["HebrewName"]
+                    </label>
+                    <input class="form-input" asp-for="CompanyNameHe" dir="rtl" placeholder="@Localizer["Placeholder_CompanyNameHe"]" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
                         @Localizer["Slug"] <span class="form-label-required">*</span>
                         <span class="form-label-hint"><loc key="CompanySlugHint">(lowercase, letters, numbers, hyphens)</loc></span>
                     </label>
@@ -571,8 +577,23 @@
                 <tbody>
                 @foreach (var c in Model.Companies)
                 {
+                    var englishName = c.DisplayName ?? c.Name;
+                    var hebrewName = c.NameHe;
+                    var isHebrewUI = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he", StringComparison.OrdinalIgnoreCase);
+                    var primaryName = isHebrewUI && !string.IsNullOrWhiteSpace(hebrewName) ? hebrewName : englishName;
+                    var primaryDir = isHebrewUI && !string.IsNullOrWhiteSpace(hebrewName) ? "rtl" : "ltr";
+                    string? sublineText = isHebrewUI
+                        ? (!string.IsNullOrWhiteSpace(hebrewName) ? englishName : null)
+                        : (!string.IsNullOrWhiteSpace(hebrewName) && hebrewName != englishName ? hebrewName : null);
+                    var sublineDir = isHebrewUI ? "ltr" : "rtl";
                     <tr>
-                        <td><strong>@(c.DisplayName ?? c.Name)</strong></td>
+                        <td>
+                            <strong dir="@primaryDir">@primaryName</strong>
+                            @if (sublineText != null)
+                            {
+                                <br /><span style="color: var(--text-muted); font-size: 0.85em;" dir="@sublineDir">@sublineText</span>
+                            }
+                        </td>
                         <td>@(c.MoleculeName ?? "-")</td>
                         <td><code>@c.Slug</code></td>
                         <td>@(c.DisplayName ?? "-")</td>
@@ -582,6 +603,7 @@
                                 <button type="button" class="btn btn-ghost"
                                         data-company-id="@c.Id"
                                         data-company-name="@System.Web.HttpUtility.HtmlAttributeEncode(c.DisplayName ?? c.Name)"
+                                        data-company-name-he="@System.Web.HttpUtility.HtmlAttributeEncode(c.NameHe ?? string.Empty)"
                                         onclick="renameCompanyClick(this)">
                                     @Localizer["Rename"]
                                 </button>
@@ -623,6 +645,11 @@
                 <label class="form-label">@Localizer["NewCompanyName"]</label>
                 <input type="text" class="form-input" id="newCompanyName" name="NewCompanyName" required />
             </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label class="form-label">@Localizer["HebrewName"]</label>
+                <input type="text" class="form-input" id="newCompanyNameHe" name="NewCompanyNameHe" dir="rtl" placeholder="@Localizer["Placeholder_CompanyNameHe"]" />
+                <span class="form-hint">@Localizer["CompanyNameHe_ClearHint"]</span>
+            </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary">
                     <span>💾</span>
@@ -639,12 +666,14 @@
 function renameCompanyClick(button) {
     const id = button.getAttribute('data-company-id');
     const currentName = button.getAttribute('data-company-name');
-    renameCompany(id, currentName);
+    const currentNameHe = button.getAttribute('data-company-name-he') || '';
+    renameCompany(id, currentName, currentNameHe);
 }
 
-function renameCompany(id, currentName) {
+function renameCompany(id, currentName, currentNameHe) {
     document.getElementById('renameCompanyId').value = id;
     document.getElementById('newCompanyName').value = currentName;
+    document.getElementById('newCompanyNameHe').value = currentNameHe || '';
     document.getElementById('renameModal').classList.add('active');
 }
 

@@ -26,11 +26,18 @@ public class Company
     /// Returns the culture-appropriate display name: NameHe when Hebrew, otherwise DisplayName ?? Name.
     /// </summary>
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public string LocalizedName =>
-        System.Threading.Thread.CurrentThread.CurrentUICulture.Name.StartsWith("he", StringComparison.OrdinalIgnoreCase)
-            && !string.IsNullOrWhiteSpace(NameHe)
-            ? NameHe
-            : DisplayName ?? Name;
+    public string LocalizedName => ResolveLocalizedName(Name, DisplayName, NameHe);
+
+    /// <summary>
+    /// Culture-aware company name resolver for use after EF projections (where the computed
+    /// <see cref="LocalizedName"/> is not available because only raw fields were projected into a DTO).
+    /// Mirrors the fallback chain of <see cref="LocalizedName"/> exactly.
+    /// </summary>
+    public static string ResolveLocalizedName(string? name, string? displayName, string? nameHe) =>
+        System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(nameHe)
+            ? nameHe!
+            : (displayName ?? name ?? string.Empty);
 
     // Organizational hierarchy - Molecule FK (nullable during migration, required after)
     public int? MoleculeId { get; set; }

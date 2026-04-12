@@ -89,10 +89,11 @@ public class DirectorsModel : LocalizedPageModel
             .ToListAsync();
 
         // Load all companies (including soft-deleted for reassignment scenarios)
-        AvailableCompanies = await _db.Companies
+        AvailableCompanies = (await _db.Companies
             .IgnoreQueryFilters()
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+            .ToListAsync())
+            .OrderBy(c => c.LocalizedName, StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+            .ToList();
     }
 
     public async Task<IActionResult> OnPostAssignAsync()
@@ -138,7 +139,7 @@ public class DirectorsModel : LocalizedPageModel
 
         if (existingAssignment != null)
         {
-            TempData["ErrorMessage"] = string.Format(_localizer["Error_DirectorAlreadyAssigned"].Value, director.DisplayName, company.Name);
+            TempData["ErrorMessage"] = string.Format(_localizer["Error_DirectorAlreadyAssigned"].Value, director.DisplayName, company.LocalizedName);
             return RedirectToPage();
         }
 
@@ -157,7 +158,7 @@ public class DirectorsModel : LocalizedPageModel
         _logger.LogInformation("Assigned Director {DirectorEmail} to Company {CompanyName} by {GrantedBy}",
             director.Email, company.Name, currentUserId);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorAssignedToCompany"].Value, director.DisplayName, company.Name);
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorAssignedToCompany"].Value, director.DisplayName, company.LocalizedName);
         return RedirectToPage();
     }
 
@@ -239,7 +240,7 @@ public class DirectorsModel : LocalizedPageModel
         _logger.LogInformation("Reassigned Director {UserId} from Company {OldCompanyId} to {NewCompanyId}",
             assignment.UserId, assignment.CompanyId, newCompanyId);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorReassigned"].Value, company.Name);
+        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorReassigned"].Value, company.LocalizedName);
         return RedirectToPage();
     }
 }

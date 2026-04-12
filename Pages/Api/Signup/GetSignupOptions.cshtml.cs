@@ -92,15 +92,18 @@ public class GetSignupOptionsModel : PageModel
 
         try
         {
-            var companies = await _db.Companies
+            var companiesRaw = await _db.Companies
                 .Where(c => c.MoleculeId == moleculeId && !c.IsHeadquarters)
-                .OrderBy(c => c.DisplayName ?? c.Name)
+                .Select(c => new { c.Id, c.Name, c.DisplayName, c.NameHe })
+                .ToListAsync();
+            var companies = companiesRaw
                 .Select(c => new CompanyOption
                 {
                     Id = c.Id,
-                    Name = c.DisplayName ?? c.Name
+                    Name = ShiftManager.Models.Company.ResolveLocalizedName(c.Name, c.DisplayName, c.NameHe)
                 })
-                .ToListAsync();
+                .OrderBy(c => c.Name, StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+                .ToList();
 
             return new JsonResult(new { companies });
         }

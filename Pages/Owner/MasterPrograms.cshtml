@@ -1,9 +1,12 @@
 @page
 @model ShiftManager.Pages.Owner.MasterProgramsModel
 @using Microsoft.Extensions.Localization
+@using ShiftManager.Extensions
 @using ShiftManager.Resources
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ICompanyLocalizationService OverrideSvc
+@inject ShiftManager.Services.ITenantResolver TenantResolver
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["MasterPrograms_Title"];
@@ -76,14 +79,7 @@
                                     <h4>@program.Name</h4>
                                     <div class="program-selector-meta">
                                         <span class="badge badge-primary">
-                                            @if (!string.IsNullOrWhiteSpace(program.ShiftType.NameKey))
-                                            {
-                                                <loc key="@program.ShiftType.NameKey" />
-                                            }
-                                            else
-                                            {
-                                                @program.ShiftType.Name
-                                            }
+                                            @(await program.ShiftType.GetDisplayNameAsync(Localizer, OverrideSvc, TenantResolver.GetCurrentTenantId()))
                                         </span>
                                         <span class="text-muted">
                                             @program.ProgramDays.Count @Localizer["MasterPrograms_DaysPerWeek"]
@@ -141,14 +137,7 @@
                                     <li>
                                         <strong>@item.Program.Name</strong>
                                         <span class="text-muted">
-                                            (@if (!string.IsNullOrWhiteSpace(item.Program.ShiftType.NameKey))
-                                            {
-                                                <loc key="@item.Program.ShiftType.NameKey" />
-                                            }
-                                            else
-                                            {
-                                                @item.Program.ShiftType.Name
-                                            })
+                                            (@(await item.Program.ShiftType.GetDisplayNameAsync(Localizer, OverrideSvc, TenantResolver.GetCurrentTenantId())))
                                         </span>
                                         <span class="badge badge-secondary">
                                             @item.Program.ProgramDays.Count @Localizer["MasterPrograms_Days"]

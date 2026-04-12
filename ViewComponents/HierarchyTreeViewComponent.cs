@@ -110,10 +110,11 @@ public class HierarchyTreeViewComponent : ViewComponent
             .OrderBy(m => m.Name)
             .ToListAsync();
 
-        var companies = await _db.Companies
+        var companies = (await _db.Companies
             .IgnoreQueryFilters()
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+            .ToListAsync())
+            .OrderBy(c => c.LocalizedName, StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+            .ToList();
 
         var departments = await _db.Departments
             .IgnoreQueryFilters()
@@ -143,7 +144,7 @@ public class HierarchyTreeViewComponent : ViewComponent
                     {
                         Id = c.Id,
                         MoleculeId = m.Id,
-                        Name = string.IsNullOrEmpty(c.DisplayName) ? c.Name : c.DisplayName,
+                        Name = c.LocalizedName,
                         Slug = c.Slug
                     }).ToList(),
                     Departments = departments.Where(d => d.MoleculeId == m.Id).Select(d => new HierarchyDepartmentNode

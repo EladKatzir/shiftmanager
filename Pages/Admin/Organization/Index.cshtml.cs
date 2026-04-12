@@ -43,7 +43,10 @@ public class IndexModel : LocalizedPageModel
     public record ProjectVM(int Id, string Name, string DisplayName, bool IsActive, int AreaCount);
     public record AreaVM(int Id, int ProjectId, string Name, string DisplayName, bool IsActive, int MoleculeCount, int JobTypeCount);
     public record MoleculeVM(int Id, int AreaId, string Name, string DisplayName, MoleculeType Type, bool IsActive, int CompanyCount, int DepartmentCount);
-    public record CompanyVM(int Id, int? MoleculeId, string Name, string? DisplayName, int UserCount);
+    public record CompanyVM(int Id, int? MoleculeId, string Name, string? DisplayName, string? NameHe, int UserCount)
+    {
+        public string LocalizedName => Company.ResolveLocalizedName(Name, DisplayName, NameHe);
+    }
     public record DepartmentVM(int Id, int MoleculeId, string Name, string DisplayName, bool IsActive, int UserCount);
 
     // Data
@@ -146,17 +149,19 @@ public class IndexModel : LocalizedPageModel
 
         var companiesRaw = await _db.Companies
             .IgnoreQueryFilters()
-            .OrderBy(c => c.Name)
             .ToListAsync();
 
+        var cultureComparer = StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true);
         Companies = companiesRaw
             .Select(c => new CompanyVM(
                 c.Id,
                 c.MoleculeId,
                 c.Name,
                 c.DisplayName,
+                c.NameHe,
                 userCountsByCompany.GetValueOrDefault(c.Id, 0)
             ))
+            .OrderBy(c => c.LocalizedName, cultureComparer)
             .ToList();
 
         // Load departments with user counts

@@ -101,11 +101,13 @@ public class IndexModel : LocalizedPageModel
             .ThenBy(m => m.Name)
             .ToList();
 
-        AvailableCompanies = await _db.Companies
+        AvailableCompanies = (await _db.Companies
             .IgnoreQueryFilters()
-            .OrderBy(c => c.Name)
-            .Select(c => new CompanyOption(c.Id, c.DisplayName ?? c.Name))
-            .ToListAsync();
+            .Select(c => new { c.Id, c.Name, c.DisplayName, c.NameHe })
+            .ToListAsync())
+            .Select(c => new CompanyOption(c.Id, Company.ResolveLocalizedName(c.Name, c.DisplayName, c.NameHe)))
+            .OrderBy(c => c.Name, StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+            .ToList();
 
         var allActiveJobTypes = await _jobTypeService.GetAllJobTypesAsync();
         AvailableJobTypes = allActiveJobTypes

@@ -33,16 +33,12 @@
                 <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--surface); border-radius: 0.5rem; cursor: pointer;">
                     <input type="checkbox" name="CompanyIds" value="@company.Id" checked="@isSelected" />
                     <div>
-                        <strong>@company.Name</strong>
+                        <strong>@company.LocalizedName</strong>
                         @if (!string.IsNullOrEmpty(company.Slug))
                         {
                             <span style="color: var(--muted); margin-inline-start: 0.5rem;">
                                 (<code>@company.Slug</code>)
                             </span>
-                        }
-                        @if (!string.IsNullOrEmpty(company.DisplayName) && company.DisplayName != company.Name)
-                        {
-                            <div style="color: var(--muted); font-size: 0.9rem;">@company.DisplayName</div>
                         }
                     </div>
                 </label>

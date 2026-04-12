@@ -273,24 +273,40 @@ public class SeedDataModel : PageModel
             ExpectedFeatureFlags = FeatureFlagSeed.GetFeatureFlags().Count;
 
             // Diagnostic: Companies
-            Companies = await _db.Companies
+            var companiesRaw = await _db.Companies
                 .IgnoreQueryFilters()
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.DisplayName,
+                    c.NameHe,
+                    c.MoleculeId,
+                    MoleculeName = c.Molecule != null ? c.Molecule.Name : null
+                })
+                .ToListAsync();
+            var nameComparer = StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true);
+            Companies = companiesRaw
                 .Select(c => new CompanyDiagnosticVM
                 {
                     Id = c.Id,
-                    Name = c.Name,
+                    Name = Models.Company.ResolveLocalizedName(c.Name, c.DisplayName, c.NameHe),
                     MoleculeId = c.MoleculeId,
-                    MoleculeName = c.Molecule != null ? c.Molecule.Name : null,
+                    MoleculeName = c.MoleculeName,
                     IsOrphaned = c.MoleculeId == null
                 })
                 .OrderBy(c => c.MoleculeName)
-                .ThenBy(c => c.Name)
-                .ToListAsync();
+                .ThenBy(c => c.Name, nameComparer)
+                .ToList();
 
             // Diagnostic: Users (first 50) — join Company manually since AppUser has no nav property
-            var companyLookup = await _db.Companies
+            var companyLookupRaw = await _db.Companies
                 .IgnoreQueryFilters()
-                .ToDictionaryAsync(c => c.Id, c => new { c.Name, c.MoleculeId });
+                .Select(c => new { c.Id, c.Name, c.DisplayName, c.NameHe, c.MoleculeId })
+                .ToListAsync();
+            var companyLookup = companyLookupRaw.ToDictionary(
+                c => c.Id,
+                c => new { Name = Models.Company.ResolveLocalizedName(c.Name, c.DisplayName, c.NameHe), c.MoleculeId });
 
             Users = await _db.Users
                 .IgnoreQueryFilters()

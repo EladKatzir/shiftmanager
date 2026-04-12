@@ -578,7 +578,7 @@ public class UsersModel : LocalizedPageModel
                     ? molName
                     : "?";
 
-                // Build display: "אלחוט (3 פלוגות)" with tooltip listing company names
+                // Build display: "אלחוט (3 דסקים)" with tooltip listing company names
                 var scopeDisplay = string.Format(
                     _localizer["Users_DirectorMoleculeScope"],
                     moleculeName,

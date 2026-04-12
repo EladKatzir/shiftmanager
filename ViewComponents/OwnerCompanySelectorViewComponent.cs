@@ -31,10 +31,11 @@ public class OwnerCompanySelectorViewComponent : ViewComponent
             return Content(string.Empty);
         }
 
-        var companies = await _db.Companies
+        var companies = (await _db.Companies
             .Include(c => c.Molecule)
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+            .ToListAsync())
+            .OrderBy(c => c.LocalizedName, StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+            .ToList();
 
         // Disambiguate duplicate LocalizedNames by appending the molecule name.
         // e.g. multiple "כלל צוותי" become "כלל צוותי - אורן", "כלל צוותי - גפן"

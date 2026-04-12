@@ -151,7 +151,7 @@ public static class RoleTemplateSeed
                 NameKey = "Role_Trainee",
                 DescriptionKey = "Role_Trainee_Desc",
                 DisplayNameEN = "Trainee",
-                DisplayNameHE = "חניך",
+                DisplayNameHE = "נחפף",
                 ScopeLevel = RoleScopeLevel.Implicit,
                 IsSystem = true,
                 SortOrder = 101,
@@ -327,6 +327,7 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 116, SAR, useOwnJobType: true));  // ManageJoinRequests (OWN)
         grants.Add(G(3, 38, SAR, useOwnJobType: true));   // AssignRoles (OWN — BUG 4 fix)
         grants.Add(G(3, 120, SAR));  // ViewSystemAlerts
+        grants.Add(G(3, 118, SAR));  // EditCompanyUsers (GAP fix: Lead/מפ״צ must create soldiers in own company — Pages/Admin/Users.cshtml.cs:754)
         // Sidebar redesign: monitoring grants (molecule-scoped, own jobtype)
         grants.Add(G(3, 52, ETM, useOwnJobType: true));   // ViewAnalytics
         grants.Add(G(3, 53, ETM, useOwnJobType: true));   // ViewReports
@@ -457,6 +458,7 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 52, ETM, useOwnJobType: true));   // ViewAnalytics
         grants.Add(G(5, 53, ETM, useOwnJobType: true));   // ViewReports
         grants.Add(G(5, 59, ETM, useOwnJobType: true));   // ViewAuditLog
+        grants.Add(G(5, 122, ETM));  // ManageOnDuty (GAP fix: Director/מ״מ assigns on-duty at molecule scope)
 
         // ============================================
         // MOLECULE ADMIN (Template 7) — 94 grants
@@ -609,6 +611,8 @@ public static class RoleTemplateSeed
         // Monitoring grants (GAP fix: Lead has these, DepartmentLead should too)
         grants.Add(G(9, 59, SAR));   // ViewAuditLog
         grants.Add(G(9, 120, SAR));  // ViewSystemAlerts
+        grants.Add(G(9, 118, SAR));  // EditCompanyUsers (GAP fix: DeptLead needs 118, not just 29 — Pages/Admin/Users.cshtml.cs:754)
+        grants.Add(G(9, 122, SAR));  // ManageOnDuty (GAP fix: tech department duty rotation)
 
         // ============================================
         // AREA ADMIN (Template 10) — 119 grants
@@ -939,6 +943,7 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 18, SAR));    // Lead — EditChoreTypes at SameAsRole (company+jobtype)
         grants.Add(G(2, 18, SAR));    // BRDirector — EditChoreTypes at SameAsRole (company)
         grants.Add(G(2, 122, SAR));   // ManageOnDuty — Kabar can assign on-duty
+        grants.Add(G(2, 113, SAR));   // DirectorHubAccess (GAP fix: BRDirector/קב״ר peer to Director — needs hub visibility)
         grants.Add(G(7, 18, ETM));    // MoleculeAdmin — EditChoreTypes at ExpandToMolecule
 
         return grants;

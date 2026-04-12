@@ -180,12 +180,12 @@ public class RoleTemplateAutoGrantTests : MasterTestBase
 
     [Theory]
     [InlineData("Tzafona", "Employee", 21)]
-    [InlineData("Tzafona", "Lead", 49)]
-    [InlineData("Tzafona", "BRDirector", 58)]
-    [InlineData("Tzafona", "Director", 58)]
+    [InlineData("Tzafona", "Lead", 50)]  // +1: added EditCompanyUsers (GAP fix)
+    [InlineData("Tzafona", "BRDirector", 59)]  // +1: added DirectorHubAccess (GAP fix)
+    [InlineData("Tzafona", "Director", 59)]    // +1: added ManageOnDuty (GAP fix)
     [InlineData("Tzafona", "Assigner", 22)]
     [InlineData("Hitazmut", "MoleculeAdmin", 95)]
-    [InlineData("Yekev", "DepartmentLead", 48)]
+    [InlineData("Yekev", "DepartmentLead", 50)]  // +2: added EditCompanyUsers + ManageOnDuty (GAP fix)
     [InlineData("Tzafona", "AreaAdmin", 119)]
     [InlineData("SystemAdmins", "Owner", 130)]
     public async Task User_Has_ExpectedAutoGrantCount(string company, string template, int expectedCount)

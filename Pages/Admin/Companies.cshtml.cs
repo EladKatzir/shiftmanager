@@ -46,7 +46,7 @@ public class CompaniesModel : LocalizedPageModel
         _concurrencyService = concurrencyService;
     }
 
-    public record CompanyVM(int Id, string Name, string? Slug, string? DisplayName, int UserCount, string? MoleculeName);
+    public record CompanyVM(int Id, string Name, string? NameHe, string? Slug, string? DisplayName, int UserCount, string? MoleculeName);
     public record DirectorVM(int Id, string DisplayName, string Email);
     public record MoleculeVM(int Id, string Name, string DisplayName);
 
@@ -55,6 +55,7 @@ public class CompaniesModel : LocalizedPageModel
     public List<MoleculeVM> AvailableMolecules { get; set; } = new();
 
     [BindProperty] public string CompanyName { get; set; } = string.Empty;
+    [BindProperty] public string? CompanyNameHe { get; set; }
     [BindProperty] public string CompanySlug { get; set; } = string.Empty;
     [BindProperty] public string CompanyDisplayName { get; set; } = string.Empty;
     [BindProperty] public int? SelectedMoleculeId { get; set; }
@@ -67,6 +68,7 @@ public class CompaniesModel : LocalizedPageModel
 
     [BindProperty] public int RenameCompanyId { get; set; }
     [BindProperty] public string NewCompanyName { get; set; } = string.Empty;
+    [BindProperty] public string? NewCompanyNameHe { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -86,19 +88,22 @@ public class CompaniesModel : LocalizedPageModel
             .Select(g => new { CompanyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.CompanyId, x => x.Count);
 
-        Companies = await _db.Companies
+        Companies = (await _db.Companies
             .IgnoreQueryFilters()
             .Include(c => c.Molecule)
-            .OrderBy(c => c.Name)
             .Select(c => new CompanyVM(
                 c.Id,
                 c.Name,
+                c.NameHe,
                 c.Slug,
                 c.DisplayName,
                 userCountsByCompany.GetValueOrDefault(c.Id, 0),
                 c.Molecule != null ? (c.Molecule.DisplayName ?? c.Molecule.Name) : null
             ))
-            .ToListAsync();
+            .ToListAsync())
+            .OrderBy(c => Models.Company.ResolveLocalizedName(c.Name, c.DisplayName, c.NameHe),
+                StringComparer.Create(System.Globalization.CultureInfo.CurrentUICulture, ignoreCase: true))
+            .ToList();
 
         // Load molecules for the molecule dropdown
         AvailableMolecules = await _db.Molecules
@@ -144,6 +149,13 @@ public class CompaniesModel : LocalizedPageModel
             return Page();
         }
 
+        if (!string.IsNullOrWhiteSpace(CompanyNameHe) && ContainsDangerousContent(CompanyNameHe))
+        {
+            _logger.LogWarning("XSS attempt detected in company Hebrew name: {NameHe}", CompanyNameHe);
+            Error = _localizer["Error_DangerousContentDetected"].Value;
+            return Page();
+        }
+
         if (!string.IsNullOrWhiteSpace(ManagerDisplayName) && ContainsDangerousContent(ManagerDisplayName))
         {
             _logger.LogWarning("XSS attempt detected in manager display name: {DisplayName}", ManagerDisplayName);
@@ -161,6 +173,12 @@ public class CompaniesModel : LocalizedPageModel
         if (!string.IsNullOrWhiteSpace(CompanyDisplayName) && CompanyDisplayName.Length > 200)
         {
             Error = _localizer["Error_CompanyDisplayNameTooLong"];
+            return Page();
+        }
+
+        if (!string.IsNullOrWhiteSpace(CompanyNameHe) && CompanyNameHe.Length > 200)
+        {
+            Error = _localizer["Error_CompanyNameOrSlugTooLong"];
             return Page();
         }
 
@@ -240,6 +258,7 @@ public class CompaniesModel : LocalizedPageModel
             var company = new Company
             {
                 Name = CompanyName,
+                NameHe = string.IsNullOrWhiteSpace(CompanyNameHe) ? null : CompanyNameHe.Trim(),
                 Slug = CompanySlug,
                 DisplayName = string.IsNullOrWhiteSpace(CompanyDisplayName) ? CompanyName : CompanyDisplayName,
                 MoleculeId = SelectedMoleculeId > 0 ? SelectedMoleculeId : null
@@ -404,8 +423,21 @@ public class CompaniesModel : LocalizedPageModel
             return RedirectToPage();
         }
 
+        if (!string.IsNullOrWhiteSpace(NewCompanyNameHe) && ContainsDangerousContent(NewCompanyNameHe))
+        {
+            _logger.LogWarning("XSS attempt detected in company rename (Hebrew): {NameHe}", NewCompanyNameHe);
+            TempData["ErrorMessage"] = _localizer["Error_DangerousContentDetected"].Value;
+            return RedirectToPage();
+        }
+
         // Validate field length
         if (NewCompanyName.Length > 200)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_CompanyNameOrSlugTooLong"].Value;
+            return RedirectToPage();
+        }
+
+        if (!string.IsNullOrWhiteSpace(NewCompanyNameHe) && NewCompanyNameHe.Length > 200)
         {
             TempData["ErrorMessage"] = _localizer["Error_CompanyNameOrSlugTooLong"].Value;
             return RedirectToPage();
@@ -420,6 +452,9 @@ public class CompaniesModel : LocalizedPageModel
 
         company.Name = NewCompanyName;
         company.DisplayName = NewCompanyName;
+        // Explicit Hebrew-field semantics: empty input clears the override (falls back to Name in Hebrew UI).
+        // Never silently preserve a stale NameHe — the admin submitted a rename, they own this decision.
+        company.NameHe = string.IsNullOrWhiteSpace(NewCompanyNameHe) ? null : NewCompanyNameHe.Trim();
         {
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
                 () => _db.SaveChangesAsync(), "Company", RenameCompanyId);

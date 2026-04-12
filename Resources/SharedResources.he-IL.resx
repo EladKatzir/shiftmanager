@@ -5017,7 +5017,7 @@
     <value>החלף מולקולה</value>
   </data>
   <data name="Users_DirectorMoleculeScope" xml:space="preserve">
-    <value>{0} ({1} פלוגות)</value>
+    <value>{0} ({1} דסקים)</value>
   </data>
   <data name="ContextSwitcher_NoResults" xml:space="preserve">
     <value>לא נמצאו חברות תואמות</value>
@@ -5526,10 +5526,10 @@
     <value>הגדרות דוא"ל גלובליות</value>
   </data>
   <data name="Owner_EmailConfig_GlobalBadge" xml:space="preserve">
-    <value>חל על כל הפלוגות</value>
+    <value>חל על כל הדסקים</value>
   </data>
   <data name="Owner_EmailConfig_GlobalDesc" xml:space="preserve">
-    <value>הגדרות אלו חלות על כל הפלוגות כברירת מחדל. פלוגות בודדות יכולות לדרוס אותן למטה.</value>
+    <value>הגדרות אלו חלות על כל הדסקים כברירת מחדל. דסקים בודדים יכולים לדרוס אותן למטה.</value>
   </data>
   <data name="Owner_EmailConfig_SaveGlobal" xml:space="preserve">
     <value>שמור הגדרות גלובליות</value>
@@ -5854,6 +5854,14 @@
   <data name="Placeholder_CompanyName" xml:space="preserve">
     <value>החברה שלי בע"מ</value>
     <comment>A-015 - Placeholder for company name input</comment>
+  </data>
+  <data name="Placeholder_CompanyNameHe" xml:space="preserve">
+    <value>החברה שלי בע"מ</value>
+    <comment>Placeholder for Hebrew company name input</comment>
+  </data>
+  <data name="CompanyNameHe_ClearHint" xml:space="preserve">
+    <value>ניתן להשאיר ריק — משתמשי ממשק בעברית יראו את השם באנגלית.</value>
+    <comment>Hint text under Hebrew name input in rename modal explaining fallback behavior</comment>
   </data>
   <data name="Placeholder_CompanySlug" xml:space="preserve">
     <value>my-company</value>
@@ -6337,7 +6345,7 @@
     <value>מ"מ</value>
   </data>
   <data name="Role_PlatoonLeader_Desc" xml:space="preserve">
-    <value>מנהל משמרות עבור סוג התפקיד שלו בכל הפלוגות במולקולה</value>
+    <value>מנהל משמרות עבור סוג התפקיד שלו בכל הדסקים במולקולה</value>
   </data>
   <data name="Role_TextLead" xml:space="preserve">
     <value>מפקד צוות טקסט</value>
@@ -6388,7 +6396,7 @@
     <value>בעלי המערכת עם גישה מנהלתית מלאה</value>
   </data>
   <data name="Role_Trainee_Desc" xml:space="preserve">
-    <value>חניך המשובץ עם חונך לליווי במשמרות</value>
+    <value>נחפף המשובץ עם חונך לליווי במשמרות</value>
   </data>
   <data name="Role_Manager_Desc" xml:space="preserve">
     <value>מנהל עם הרשאות פיקוח על צוות ושיבוץ</value>
@@ -7878,16 +7886,16 @@
     <value>לא ניתן לשבץ מעבר לנדרש. הגדל את הדרישה תחילה.</value>
   </data>
   <data name="Error_FailedToAssignTrainee" xml:space="preserve">
-    <value>שיבוץ חניך נכשל. נא לבדוק כללי אימות.</value>
+    <value>שיבוץ נחפף נכשל. נא לבדוק כללי אימות.</value>
   </data>
   <data name="Success_TraineeAssigned" xml:space="preserve">
-    <value>חניך שובץ בהצלחה.</value>
+    <value>נחפף שובץ בהצלחה.</value>
   </data>
   <data name="Error_FailedToRemoveTrainee" xml:space="preserve">
-    <value>הסרת חניך נכשלה.</value>
+    <value>הסרת נחפף נכשלה.</value>
   </data>
   <data name="Success_TraineeRemoved" xml:space="preserve">
-    <value>חניך הוסר בהצלחה.</value>
+    <value>נחפף הוסר בהצלחה.</value>
   </data>
   <data name="Error_MissingCompanyIdOrCulture" xml:space="preserve">
     <value>חסר מזהה חברה או פרמטר שפה.</value>
@@ -8736,7 +8744,7 @@
     <value>מולקולות</value>
   </data>
   <data name="SeedData_Companies" xml:space="preserve">
-    <value>פלוגות</value>
+    <value>דסקים</value>
   </data>
   <data name="SeedData_Departments" xml:space="preserve">
     <value>מחלקות</value>
@@ -8775,7 +8783,7 @@
     <value>זרע דגלי פיצ'ר</value>
   </data>
   <data name="SeedData_DiagCompanies" xml:space="preserve">
-    <value>אבחון פלוגות</value>
+    <value>אבחון דסקים</value>
   </data>
   <data name="SeedData_DiagUsers" xml:space="preserve">
     <value>אבחון משתמשים</value>
@@ -8799,7 +8807,7 @@
     <value>תקין</value>
   </data>
   <data name="SeedData_NoCompanies" xml:space="preserve">
-    <value>לא נמצאו פלוגות. זרע את הארגון תחילה.</value>
+    <value>לא נמצאו דסקים. זרע את הארגון תחילה.</value>
   </data>
   <data name="SeedData_DisplayName" xml:space="preserve">
     <value>שם תצוגה</value>
@@ -9199,10 +9207,10 @@
     <value>הדפדפן שלך מיושן ועלול שלא להציג את היישום בצורה תקינה. אנא השתמש ב-Chrome 80+, Firefox 80+ או Edge 80+.</value>
   </data>
   <data name="Director_NoCompaniesAssigned" xml:space="preserve">
-    <value>עדיין לא שובצת לפלוגות.</value>
+    <value>עדיין לא שובצת לדסקים.</value>
   </data>
   <data name="Director_ContactOwnerForCompanies" xml:space="preserve">
-    <value>פנה לבעלים כדי שישבץ אותך לפלוגות.</value>
+    <value>פנה לבעלים כדי שישבץ אותך לדסקים.</value>
   </data>
   <data name="Nav_DirectorHub" xml:space="preserve">
     <value>מרכז מפקד</value>
@@ -12150,7 +12158,7 @@
     <value>העתק מדויק</value>
   </data>
   <data name="Calendar_CopyExactDesc" xml:space="preserve">
-    <value>העתק את כל השיבוצים, החניכים והשינויים הידניים לימי היעד</value>
+    <value>העתק את כל השיבוצים, הנחפפים והשינויים הידניים לימי היעד</value>
   </data>
   <data name="Calendar_CopyStaffingOnly" xml:space="preserve">
     <value>העתק איוש בלבד</value>
@@ -12219,7 +12227,7 @@
     <value>יש לבחור מחלקה עבור מולקולה זו.</value>
   </data>
   <data name="Error_CannotAddCompanyToTechMolecule" xml:space="preserve">
-    <value>לא ניתן להוסיף פלוגות למולקולה טכנית. השתמש במחלקות במקום.</value>
+    <value>לא ניתן להוסיף דסקים למולקולה טכנית. השתמש במחלקות במקום.</value>
   </data>
   <data name="Error_CannotAddDepartmentToNonTechMolecule" xml:space="preserve">
     <value>ניתן להוסיף מחלקות למולקולות טכניות בלבד.</value>
@@ -12228,7 +12236,7 @@
     <value>ניהול היררכיה</value>
   </data>
   <data name="Grant_ManageHierarchy_Desc" xml:space="preserve">
-    <value>הוספה, שינוי שם ומחיקה של פלוגות ומחלקות בהיררכיה הארגונית.</value>
+    <value>הוספה, שינוי שם ומחיקה של דסקים ומחלקות בהיררכיה הארגונית.</value>
   </data>
   <data name="Grant_ManageHomeTypes" xml:space="preserve">
     <value>ניהול סוגי בית</value>
@@ -13669,10 +13677,10 @@
     <value>מחיקת משמרת</value>
   </data>
   <data name="AuditAction_TraineeAdded" xml:space="preserve">
-    <value>הוספת חניך</value>
+    <value>הוספת נחפף</value>
   </data>
   <data name="AuditAction_TraineeRemoved" xml:space="preserve">
-    <value>הסרת חניך</value>
+    <value>הסרת נחפף</value>
   </data>
   <data name="AuditAction_ShiftUserChanged" xml:space="preserve">
     <value>החלפת משובץ</value>
@@ -13947,7 +13955,7 @@
     <value>צפייה בשיבוצי חק״מכו בווידג׳ט התורנויות</value>
   </data>
   <data name="Grant_ViewCompanyOnCall" xml:space="preserve">
-    <value>צפייה בתורן פלוגתי</value>
+    <value>צפייה בתורן דסקי</value>
   </data>
   <data name="Grant_ViewCompanyOnCall_Desc" xml:space="preserve">
     <value>צפייה באנשי קשר תורנים ברמת הדסק בווידג׳ט התורנויות</value>
@@ -14020,7 +14028,7 @@
     <value>תבניות תפקידים (מרכז בעלים)</value>
   </data>
   <data name="RoleTemplates_ScopeDescription" xml:space="preserve">
-    <value>הגדרה וניהול תבניות תפקידים וההרשאות המשויכות אליהן בכל הפרויקט. תבניות שנוצרות כאן זמינות לשיוך בכל הפלוגות.</value>
+    <value>הגדרה וניהול תבניות תפקידים וההרשאות המשויכות אליהן בכל הפרויקט. תבניות שנוצרות כאן זמינות לשיוך בכל הדסקים.</value>
   </data>
   <data name="RoleTemplates_CrossLinkToRoles" xml:space="preserve">
     <value>לשיוך תפקידים למשתמשים ספציפיים, עבור אל</value>
@@ -14110,7 +14118,7 @@
     <value>אילו תפקידים קיימים במערכת?</value>
   </data>
   <data name="Help_Roles_Overview_A" xml:space="preserve">
-    <value>ב-ShiftManager קיימים התפקידים הבאים: חייל (משתמש בסיסי), מ"מ (מנהל דסק), קב"ר (מנהל ברמת גדוד), מפ"צ (מוביל צוות עם הרשאות מורחבות), מפק"מ (מנהל ברמת מולקולה), קב"ב (מנהל ברמת אזור), משבץ (מתמחה בשיבוצים), חניך (חייל בהכשרה), ובעלים (גישה מלאה למערכת).</value>
+    <value>ב-ShiftManager קיימים התפקידים הבאים: חייל (משתמש בסיסי), מ"מ (מנהל דסק), קב"ר (מנהל ברמת גדוד), מפ"צ (מוביל צוות עם הרשאות מורחבות), מפק"מ (מנהל ברמת מולקולה), קב"ב (מנהל ברמת אזור), משבץ (מתמחה בשיבוצים), נחפף (חייל בהכשרה), ובעלים (גישה מלאה למערכת).</value>
   </data>
   <data name="Help_Roles_Employee_Q" xml:space="preserve">
     <value>מה חייל יכול לעשות?</value>
@@ -14140,7 +14148,7 @@
     <value>מה מפק"מ יכול לעשות?</value>
   </data>
   <data name="Help_Roles_MoleculeAdmin_A" xml:space="preserve">
-    <value>למפק"מים יש פיקוח על מולקולה שלמה (קבוצת פלוגות). הם יכולים לצפות ולנהל פעולות בכל הפלוגות במולקולה שלהם, לגשת לניתוח חוצה-פלוגות, ולאשר בקשות ברמה גבוהה יותר.</value>
+    <value>למפק"מים יש פיקוח על מולקולה שלמה (קבוצת דסקים). הם יכולים לצפות ולנהל פעולות בכל הדסקים במולקולה שלהם, לגשת לניתוח חוצה-דסקים, ולאשר בקשות ברמה גבוהה יותר.</value>
   </data>
   <data name="Help_Roles_AreaAdmin_Q" xml:space="preserve">
     <value>מה מנהל אזור יכול לעשות?</value>
@@ -14152,7 +14160,7 @@
     <value>מה בעלים יכול לעשות?</value>
   </data>
   <data name="Help_Roles_Owner_A" xml:space="preserve">
-    <value>לבעלים יש גישה מלאה למערכת. הם יכולים לנהל את כל המשתמשים, להגדיר תבניות תפקידים והרשאות, לגשת למרכז הבעלים עם הגדרות מערכת כלליות, לנהל את כל הפלוגות והמולקולות, ולצפות ביומני ביקורת מקיפים.</value>
+    <value>לבעלים יש גישה מלאה למערכת. הם יכולים לנהל את כל המשתמשים, להגדיר תבניות תפקידים והרשאות, לגשת למרכז הבעלים עם הגדרות מערכת כלליות, לנהל את כל הדסקים והמולקולות, ולצפות ביומני ביקורת מקיפים.</value>
   </data>
   <data name="Help_Roles_Grants_Q" xml:space="preserve">
     <value>מה זה הרשאות (גרנטים)?</value>
