@@ -83,7 +83,7 @@
             </div>
 
             <button type="button" class="btn btn-secondary cal-toolbar__print" onclick="window.print()" title="@Localizer["Print"]">
-                <span class="btn-icon">&#128438;</span>
+                <span class="btn-icon"><icon name="printer" /></span>
                 <span class="btn-text">@Localizer["Print"]</span>
             </button>
         </div>
@@ -127,7 +127,7 @@
 
             <div class="cal-toolbar__toggle-group">
                 <button type="button" class="btn btn-ghost" onclick="openFilterModal()">
-                    <span class="btn-icon">&#128269;</span>
+                    <span class="btn-icon"><icon name="search" /></span>
                     @Localizer["Filter"]
                 </button>
                 <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@(!Model.JustMine)"
@@ -141,7 +141,7 @@
                 <button type="button" id="quickEntryToggle" class="btn btn-ghost quick-entry-toggle"
                         onclick="window.CalendarQuickEntry && window.CalendarQuickEntry.toggle()"
                         title="@Localizer["QuickEntry_Toggle"]">
-                    <span class="btn-icon">&#9889;</span>
+                    <span class="btn-icon"><icon name="zap" /></span>
                     <loc key="QuickEntry_Toggle" />
                 </button>
                 <button type="button" id="quickEntryHelp" class="btn btn-ghost quick-entry-help-btn"

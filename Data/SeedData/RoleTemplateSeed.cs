@@ -737,7 +737,7 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 106, ETA));  // CanBeAssignedNOC
 
         // ============================================
-        // OWNER (Template 11) — 130 grants at ETP (ALL grant types, ALL canGive)
+        // OWNER (Template 11) — 132 grants at ETP (ALL grant types, ALL canGive)
         // Self-scoped grants stay SAR. Every other grant at ETP with canGive:true.
         // ============================================
         // Self-scoped grants (SAR)
@@ -944,7 +944,37 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 18, SAR));    // BRDirector — EditChoreTypes at SameAsRole (company)
         grants.Add(G(2, 122, SAR));   // ManageOnDuty — Kabar can assign on-duty
         grants.Add(G(2, 113, SAR));   // DirectorHubAccess (GAP fix: BRDirector/קב״ר peer to Director — needs hub visibility)
-        grants.Add(G(7, 18, ETM));    // MoleculeAdmin — EditChoreTypes at ExpandToMolecule
+        // NOTE: G(7, 18, ETM) removed here — duplicate of line ~514 (seed dedupe 2026-04-15).
+
+        // ============================================
+        // ManageOnDutyTypes (ID 111) — Duty-type admin (GAP fix 2026-04-15: was only on AreaAdmin + Owner)
+        // ============================================
+        grants.Add(G(2, 111, SAR));   // BRDirector — ManageOnDutyTypes at SameAsRole (company)
+        grants.Add(G(3, 111, SAR));   // Lead — ManageOnDutyTypes at SameAsRole (company)
+        grants.Add(G(7, 111, ETM));   // MoleculeAdmin — ManageOnDutyTypes at ExpandToMolecule
+
+        // ============================================
+        // EditOnCallCalendar (ID 131) — Collaborative on-call editing (2026-04-15)
+        // Area-scoped. Granted broadly to hakam-eligible roles. POST handlers still IDOR-check.
+        // ============================================
+        grants.Add(G(1, 131, ETA));   // Employee
+        grants.Add(G(2, 131, ETA));   // BRDirector
+        grants.Add(G(3, 131, ETA));   // Lead
+        grants.Add(G(5, 131, ETA));   // Director
+        grants.Add(G(7, 131, ETA));   // MoleculeAdmin
+        grants.Add(G(8, 131, SAR));   // Assigner — SAR per invariant (AssignerRoleTests: inherited grants stay at SameAsRole)
+        grants.Add(G(9, 131, ETA));   // DepartmentLead
+        grants.Add(G(10, 131, ETA));  // AreaAdmin
+        grants.Add(G(11, 131, ETP, canGive: true));  // Owner
+        // Trainee intentionally omitted — learning role, no write access.
+
+        // ============================================
+        // EditAreaCalendarPalette (ID 132) — Per-area color overrides (2026-04-15)
+        // ============================================
+        grants.Add(G(2, 132, SAR));   // BRDirector
+        grants.Add(G(7, 132, ETM));   // MoleculeAdmin
+        grants.Add(G(10, 132, ETA));  // AreaAdmin
+        grants.Add(G(11, 132, ETP, canGive: true));  // Owner
 
         return grants;
     }

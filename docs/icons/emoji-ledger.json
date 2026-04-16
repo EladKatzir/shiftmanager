@@ -1,0 +1,59 @@
+{
+  "$schema": "Authoritative migration ledger. Each entry tracks one emoji→Lucide conversion across all call sites.",
+  "_format": {
+    "emoji": "The Unicode emoji being replaced",
+    "lucide": "Preferred Lucide icon name (see IconTagHelper.cs)",
+    "fallback": "Used when preferred is missing from IconTagHelper",
+    "callSites": "file:line list discovered by phase-1 grep scan",
+    "status": "pending | icons-added | resx-stripped | verified"
+  },
+  "_runCommand": "Regenerate callSites via: rg -n '📅|📋|🧹|⚠️|📊|👤|📝|🔔|🎯|⚙️|✅|❌|💾|✏️|🗑️|⏰|🏠|👥|🏢|📜|🕐|🏖️|🛡️|🎨|🌍|☰|✉️|⚡|🔍|🔒|🗂️|📐|⭐|👮|➕|➖|🔧|📦|🚀|💡|🔗' --type cshtml --type cs --type js",
+  "entries": [
+    { "emoji": "📅", "lucide": "calendar",        "fallback": null,           "status": "pending", "domain": "calendar" },
+    { "emoji": "📋", "lucide": "clipboard-list",  "fallback": "file-text",    "status": "pending", "domain": "list" },
+    { "emoji": "🧹", "lucide": "sparkles",        "fallback": "star",         "status": "pending", "domain": "chores" },
+    { "emoji": "⚠️", "lucide": "alert-triangle",  "fallback": null,           "status": "pending", "domain": "warning" },
+    { "emoji": "📊", "lucide": "bar-chart-2",     "fallback": null,           "status": "pending", "domain": "analytics" },
+    { "emoji": "👤", "lucide": "user",            "fallback": null,           "status": "pending", "domain": "user" },
+    { "emoji": "📝", "lucide": "pencil",          "fallback": "edit",         "status": "pending", "domain": "requests" },
+    { "emoji": "🔔", "lucide": "bell",            "fallback": null,           "status": "pending", "domain": "notifications" },
+    { "emoji": "🎯", "lucide": "target",          "fallback": "check-circle", "status": "pending", "domain": "onduty" },
+    { "emoji": "⚙️", "lucide": "settings",        "fallback": null,           "status": "pending", "domain": "settings" },
+    { "emoji": "✅", "lucide": "check",           "fallback": null,           "status": "pending", "domain": "success" },
+    { "emoji": "❌", "lucide": "x",               "fallback": null,           "status": "pending", "domain": "error" },
+    { "emoji": "💾", "lucide": "save",            "fallback": null,           "status": "pending", "domain": "save" },
+    { "emoji": "✏️", "lucide": "pencil",          "fallback": null,           "status": "pending", "domain": "edit" },
+    { "emoji": "🗑️", "lucide": "trash-2",         "fallback": null,           "status": "pending", "domain": "delete" },
+    { "emoji": "⏰", "lucide": "alarm-clock",     "fallback": "clock",        "status": "pending", "domain": "time" },
+    { "emoji": "🏠", "lucide": "home",            "fallback": null,           "status": "pending", "domain": "home" },
+    { "emoji": "👥", "lucide": "users",           "fallback": null,           "status": "pending", "domain": "teams" },
+    { "emoji": "🏢", "lucide": "building-2",      "fallback": null,           "status": "pending", "domain": "companies" },
+    { "emoji": "📜", "lucide": "scroll-text",     "fallback": "file-text",    "status": "pending", "domain": "audit" },
+    { "emoji": "🕐", "lucide": "clock",           "fallback": null,           "status": "pending", "domain": "shifts" },
+    { "emoji": "🏖️", "lucide": "palm-tree",       "fallback": "globe",        "status": "pending", "domain": "vacation" },
+    { "emoji": "🛡️", "lucide": "shield",          "fallback": null,           "status": "pending", "domain": "backup-duty" },
+    { "emoji": "🎨", "lucide": "palette",         "fallback": null,           "status": "pending", "domain": "theming" },
+    { "emoji": "🌍", "lucide": "globe",           "fallback": null,           "status": "pending", "domain": "locale" },
+    { "emoji": "☰",  "lucide": "menu",            "fallback": null,           "status": "pending", "domain": "mobile-nav" },
+    { "emoji": "✉️", "lucide": "mail",            "fallback": null,           "status": "pending", "domain": "messages" },
+    { "emoji": "⚡", "lucide": "zap",             "fallback": null,           "status": "pending", "domain": "quick-actions" },
+    { "emoji": "🔍", "lucide": "search",          "fallback": null,           "status": "pending", "domain": "search" },
+    { "emoji": "🔒", "lucide": "lock",            "fallback": null,           "status": "pending", "domain": "security" },
+    { "emoji": "🗂️", "lucide": "folder",          "fallback": "folder-tree",  "status": "pending", "domain": "org-tree" },
+    { "emoji": "⭐", "lucide": "star",            "fallback": null,           "status": "pending", "domain": "favorites" },
+    { "emoji": "➕", "lucide": "plus",            "fallback": null,           "status": "pending", "domain": "add" },
+    { "emoji": "➖", "lucide": "minus",           "fallback": null,           "status": "pending", "domain": "remove" },
+    { "emoji": "🔧", "lucide": "settings",        "fallback": null,           "status": "pending", "domain": "config" },
+    { "emoji": "📦", "lucide": "folder",          "fallback": "package",      "status": "pending", "domain": "packaging" },
+    { "emoji": "🚀", "lucide": "zap",             "fallback": null,           "status": "pending", "domain": "launch" },
+    { "emoji": "💡", "lucide": "help-circle",     "fallback": "info",         "status": "pending", "domain": "hints" },
+    { "emoji": "🔗", "lucide": "link",            "fallback": null,           "status": "pending", "domain": "external-link" }
+  ],
+  "scopeExceptions": [
+    {
+      "file": "wwwroot/js/shift-swap-game.js",
+      "emojis": ["📅", "🔔", "⏰", "🧹", "☕", "📦"],
+      "reason": "Game *content*, not UI *chrome*. Match-3 tiles need playful variety that monochrome icons can't deliver."
+    }
+  ]
+}

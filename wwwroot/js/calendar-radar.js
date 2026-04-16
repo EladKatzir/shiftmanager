@@ -36,7 +36,7 @@
             // Enable Radar Mode
             if (radarBtn) {
                 radarBtn.classList.add('active');
-                radarBtn.textContent = '📡 ' + (window.AppLocalizer?.Radar_Active || 'Radar (Active)');
+                radarBtn.innerHTML = Icons.render('radio', { size: 16 }) + ' ' + escapeHtml(window.AppLocalizer?.Radar_Active || 'Radar (Active)');
             }
 
             await loadConflicts();
@@ -53,7 +53,7 @@
             // Disable Radar Mode
             if (radarBtn) {
                 radarBtn.classList.remove('active');
-                radarBtn.textContent = '📡 ' + (window.AppLocalizer?.Radar || 'Radar');
+                radarBtn.innerHTML = Icons.render('radio', { size: 16 }) + ' ' + escapeHtml(window.AppLocalizer?.Radar || 'Radar');
             }
 
             clearConflictHighlights();
@@ -177,19 +177,19 @@
         // Set badge content based on conflict type
         switch (conflictType) {
             case 'underfilled':
-                badge.textContent = `⚠️ ${conflict.filled}/${conflict.required}`;
+                badge.innerHTML = Icons.render('alert-triangle', { size: 14 }) + ` ${Number(conflict.filled)}/${Number(conflict.required)}`;
                 badge.title = (window.AppLocalizer?.Radar_Understaffed || 'Understaffed') + `: ${conflict.required - conflict.filled} ` + (window.AppLocalizer?.Radar_Needed || 'needed');
                 badge.classList.add('badge-warning');
                 break;
 
             case 'overfilled':
-                badge.textContent = `⚠️ ${conflict.filled}/${conflict.required}`;
+                badge.innerHTML = Icons.render('alert-triangle', { size: 14 }) + ` ${Number(conflict.filled)}/${Number(conflict.required)}`;
                 badge.title = (window.AppLocalizer?.Radar_Overstaffed || 'Overstaffed') + `: ${conflict.filled - conflict.required} ` + (window.AppLocalizer?.Radar_Extra || 'extra');
                 badge.classList.add('badge-danger');
                 break;
 
             default:
-                badge.textContent = '⚠️';
+                badge.innerHTML = Icons.render('alert-triangle', { size: 14 });
                 badge.title = window.AppLocalizer?.Radar_ConflictDetected || 'Conflict detected';
                 badge.classList.add('badge-warning');
         }
@@ -257,11 +257,11 @@
     function getConflictTitle(conflict) {
         switch (conflict.type) {
             case 'underfilled':
-                return '⚠️ ' + (window.AppLocalizer?.Radar_Understaffed || 'Understaffed');
+                return Icons.render('alert-triangle', { size: 14 }) + ' ' + escapeHtml(window.AppLocalizer?.Radar_Understaffed || 'Understaffed');
             case 'overfilled':
-                return '⚠️ ' + (window.AppLocalizer?.Radar_Overstaffed || 'Overstaffed');
+                return Icons.render('alert-triangle', { size: 14 }) + ' ' + escapeHtml(window.AppLocalizer?.Radar_Overstaffed || 'Overstaffed');
             default:
-                return '⚠️ ' + (window.AppLocalizer?.Radar_Conflict || 'Conflict');
+                return Icons.render('alert-triangle', { size: 14 }) + ' ' + escapeHtml(window.AppLocalizer?.Radar_Conflict || 'Conflict');
         }
     }
 

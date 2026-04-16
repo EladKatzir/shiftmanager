@@ -348,7 +348,7 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">⚙️ <loc key="My_Settings" /></h1>
+    <h1 class="page-title"><icon name="settings" /> <loc key="My_Settings" /></h1>
     <p class="page-subtitle"><loc key="My_Settings_Subtitle" /></p>
 </div>
 
@@ -356,7 +356,7 @@
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
 {
     <div class="alert alert-success">
-        <span class="alert-icon">✓</span>
+        <span class="alert-icon"><icon name="check" /></span>
         <span>@Model.SuccessMessage</span>
     </div>
 }
@@ -428,7 +428,7 @@
         <!-- Preferred Time -->
         <div class="form-group">
             <label class="form-label" asp-for="PreferredTime">
-                🕐 @Localizer["Settings_PreferredTime"]
+                <icon name="clock" /> @Localizer["Settings_PreferredTime"]
             </label>
             <input type="time" class="form-input" asp-for="PreferredTime" style="max-width: 200px;" />
             <div class="form-help-text"><loc key="Settings_PreferredTime_Help" /></div>
@@ -441,7 +441,7 @@
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="IncludeUpcomingShifts" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">📅 <loc key="Settings_IncludeShifts" /></div>
+                        <div class="checkbox-title"><icon name="calendar" /> <loc key="Settings_IncludeShifts" /></div>
                         <div class="checkbox-description"><loc key="Settings_IncludeShifts_Desc" /></div>
                     </div>
                 </label>
@@ -457,7 +457,7 @@
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="IncludeChores" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">🧹 <loc key="Settings_IncludeChores" /></div>
+                        <div class="checkbox-title"><icon name="star" /> <loc key="Settings_IncludeChores" /></div>
                         <div class="checkbox-description"><loc key="Settings_IncludeChores_Desc" /></div>
                     </div>
                 </label>
@@ -476,7 +476,7 @@
     <!-- Phase 6 Extension: Day-Before Reminders -->
     <div class="card">
         <h2 class="card-title">
-            <span class="card-title-icon">⏰</span>
+            <span class="card-title-icon"><icon name="clock" /></span>
             <span><loc key="Settings_DayBeforeReminders" /></span>
         </h2>
 
@@ -495,7 +495,7 @@
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="RemindBeforeShifts" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">📅 <loc key="Settings_RemindBeforeShifts" /></div>
+                        <div class="checkbox-title"><icon name="calendar" /> <loc key="Settings_RemindBeforeShifts" /></div>
                         <div class="checkbox-description"><loc key="Settings_RemindBeforeShifts_Desc" /></div>
                     </div>
                 </label>
@@ -503,7 +503,7 @@
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="RemindBeforeChores" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">🧹 <loc key="Settings_RemindBeforeChores" /></div>
+                        <div class="checkbox-title"><icon name="star" /> <loc key="Settings_RemindBeforeChores" /></div>
                         <div class="checkbox-description"><loc key="Settings_RemindBeforeChores_Desc" /></div>
                     </div>
                 </label>
@@ -522,7 +522,7 @@
     <!-- Phase 6 Extension: OnDuty Role Subscriptions -->
     <div class="card">
         <h2 class="card-title">
-            <span class="card-title-icon">📋</span>
+            <span class="card-title-icon"><icon name="file-text" /></span>
             <span><loc key="Settings_OnDutySubscriptions" /></span>
         </h2>
 
@@ -566,7 +566,7 @@
     <!-- Form Actions -->
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">
-            <span>💾</span>
+            <span><icon name="save" /></span>
             <span><loc key="SaveSettings" /></span>
         </button>
         <a href="/My" class="btn btn-secondary">

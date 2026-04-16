@@ -120,7 +120,8 @@
             </div>
             <div class="form-group">
                 <label class="form-label">@Localizer["Icon"]</label>
-                <input class="form-input" asp-for="Icon" placeholder="📌" maxlength="10" />
+                @* Icon field now stores a Lucide icon name (e.g. "shield", "pin", "target"); legacy emoji values still render via fallback. *@
+                <input class="form-input" asp-for="Icon" placeholder="shield" maxlength="32" />
             </div>
             <div class="form-group">
                 <label class="form-label">@Localizer["Color"]</label>

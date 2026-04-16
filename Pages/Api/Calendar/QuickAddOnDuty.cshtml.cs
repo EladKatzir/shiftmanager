@@ -14,7 +14,11 @@ namespace ShiftManager.Pages.Api.Calendar;
 /// <summary>
 /// ✅ PHASE 20: API endpoint to quickly create on-duty assignments from calendar views
 /// </summary>
-[Authorize(Policy = "Grant:ManageOnDuty")]
+// 2026-04-15: widened from [Authorize(Policy = "Grant:ManageOnDuty")] to plain [Authorize]
+// so EditOnCallCalendar-grant holders (any hakam-eligible user) can reach the handler.
+// The in-handler CanUserManageOnDutyAsync check is the real auth gate (OR chain of
+// AssignHakamDuties | AssignKatzinDuties | ManageOnDuty | EditOnCallCalendar).
+[Authorize]
 [IgnoreAntiforgeryToken]
 public class QuickAddOnDutyModel : PageModel
 {

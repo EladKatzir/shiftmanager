@@ -178,15 +178,17 @@ public class NotificationCenterModel : LocalizedPageModel
         return RedirectToPage();
     }
 
+    // Returns a Lucide icon name (see IconTagHelper). The view renders via <icon>
+    // with a regex-gated fallback, so legacy stored values still display.
     private static string GetNotificationIcon(NotificationType type) => type switch
     {
-        NotificationType.ShiftAdded => "📅",
-        NotificationType.ShiftRemoved => "🗑️",
-        NotificationType.TimeOffApproved => "✅",
-        NotificationType.TimeOffDeclined => "❌",
-        NotificationType.SwapRequestApproved => "🔄",
-        NotificationType.SwapRequestDeclined => "⛔",
-        _ => "📢"
+        NotificationType.ShiftAdded => "calendar",
+        NotificationType.ShiftRemoved => "trash-2",
+        NotificationType.TimeOffApproved => "check",
+        NotificationType.TimeOffDeclined => "x",
+        NotificationType.SwapRequestApproved => "refresh-cw",
+        NotificationType.SwapRequestDeclined => "x-circle",
+        _ => "megaphone"
     };
 
     private static string GetNotificationCssClass(NotificationType type) => type switch

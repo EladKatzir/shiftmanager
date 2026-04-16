@@ -27,7 +27,17 @@
                     aria-selected="@(scope.IsActive ? "true" : "false")"
                     aria-controls="calendar-panel"
                     tabindex="@(scope.IsActive ? "0" : "-1")">
-                <span class="scope-switcher__btn-icon" aria-hidden="true">@scope.Icon</span>
+                @* scope.Icon: Lucide name ("shield") or legacy emoji. Ascii-name → <icon>, else raw. *@
+                <span class="scope-switcher__btn-icon" aria-hidden="true">
+                    @if (!string.IsNullOrEmpty(scope.Icon) && System.Text.RegularExpressions.Regex.IsMatch(scope.Icon, "^[a-z][a-z0-9-]*$"))
+                    {
+                        <icon name="@scope.Icon" />
+                    }
+                    else
+                    {
+                        @scope.Icon
+                    }
+                </span>
                 <span class="scope-switcher__btn-label">@scope.Label</span>
             </button>
         }

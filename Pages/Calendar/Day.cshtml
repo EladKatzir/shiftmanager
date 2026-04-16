@@ -27,7 +27,7 @@
 <div class="calendar-header">
     <div class="header-main">
         <h2>
-            <span class="calendar-icon">📅</span>
+            <span class="calendar-icon"><icon name="calendar" /></span>
             @Model.CurrentDate.ToString("dddd, MMMM dd, yyyy")
         </h2>
         @* ✅ PHASE 20: Show My Items toggle *@
@@ -43,7 +43,7 @@
             <span class="nav-text">@Model.Previous.Label</span>
         </a>
         <a class="btn btn-primary" href="/Calendar/Day">
-            <span class="nav-icon">📅</span>
+            <span class="nav-icon"><icon name="calendar" /></span>
             <span class="nav-text"><loc key="Today" /></span>
         </a>
         <a class="btn btn-ghost" href="/Calendar/Day?year=@Model.Next.Date.Year&month=@Model.Next.Date.Month&day=@Model.Next.Date.Day">
@@ -57,7 +57,7 @@
     {
         <div class="calendar-metrics">
             <div class="metric-item metric-shifts">
-                <span class="metric-icon">📅</span>
+                <span class="metric-icon"><icon name="calendar" /></span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.VisibleShiftCount</span>
                     <span class="metric-label"><loc key="Calendar_Shifts" /></span>
@@ -67,7 +67,7 @@
             @if (Model.VisibleChoreCount > 0)
             {
                 <div class="metric-item metric-shifts">
-                    <span class="metric-icon">🧹</span>
+                    <span class="metric-icon"><icon name="star" /></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.VisibleChoreCount</span>
                         <span class="metric-label"><loc key="Calendar_Chores" /></span>
@@ -78,7 +78,7 @@
             @if (Model.VisibleOnDutyCount > 0)
             {
                 <div class="metric-item metric-shifts">
-                    <span class="metric-icon">🎯</span>
+                    <span class="metric-icon"><icon name="check-circle" /></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.VisibleOnDutyCount</span>
                         <span class="metric-label"><loc key="Calendar_OnDuty" /></span>
@@ -89,7 +89,7 @@
             @if (Model.PendingItemsCount > 0)
             {
                 <div class="metric-item metric-pending">
-                    <span class="metric-icon">⏳</span>
+                    <span class="metric-icon"><icon name="clock" /></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.PendingItemsCount</span>
                         <span class="metric-label"><loc key="Calendar_Pending" /></span>
@@ -99,7 +99,7 @@
 
             <require-grant key="ViewAnalytics">
             <div class="metric-item metric-coverage">
-                <span class="metric-icon">✅</span>
+                <span class="metric-icon"><icon name="check" /></span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.CoveragePercent%</span>
                     <span class="metric-label"><loc key="Calendar_Coverage" /></span>
@@ -126,19 +126,19 @@
     <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
     <require-grant key="ViewShifts">
     <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
-        <span>📊</span>
+        <span><icon name="bar-chart-2" /></span>
         <loc key="Calendar_ManageShifts" />
     </a>
     </require-grant>
     <require-grant key="ViewChores">
     <a class="btn btn-secondary btn-sm" href="/Public/Chores">
-        <span>🧹</span>
+        <span><icon name="star" /></span>
         <loc key="Calendar_ManageChores" />
     </a>
     </require-grant>
     <require-grant key="ViewDuties">
     <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
-        <span>🛡️</span>
+        <span><icon name="shield" /></span>
         <loc key="Calendar_ManageOnDuty" />
     </a>
     </require-grant>
@@ -169,7 +169,7 @@
                         <span class="item-title">@item.Title</span>
                         @if (item.IsTrainee)
                         {
-                            <span class="trainee-badge">👤 <loc key="Trainee" /></span>
+                            <span class="trainee-badge"><icon name="user" /> <loc key="Trainee" /></span>
                         }
                     </div>
                     <div class="item-details">
@@ -216,7 +216,7 @@
                         else
                         {
                             <a href="@item.ManagementUrl" class="btn btn-secondary btn-sm" loc-title="Calendar_ManageShift">
-                                <span class="manage-icon">⚙️</span>
+                                <span class="manage-icon"><icon name="settings" /></span>
                                 <span><loc key="Manage" /></span>
                             </a>
                         }

@@ -319,7 +319,7 @@ public class EmailConfigModel : LocalizedPageModel
     </style>
 </head>
 <body>
-    <div class='test-banner'><h2>✅ Test Email Successful</h2></div>
+    <div class='test-banner'><h2>Test Email Successful</h2></div>
     <div class='test-info'>
         <p><strong>This is a test email from ShiftManager.</strong></p>
         <p>If you're seeing this message, your email configuration is working correctly!</p>
@@ -334,7 +334,7 @@ public class EmailConfigModel : LocalizedPageModel
         var sb = new StringBuilder();
         sb.AppendLine($"Timestamp: {log.Timestamp:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine($"Duration: {log.DurationMs}ms");
-        sb.AppendLine($"Success: {(log.Success ? "✅ Yes" : "❌ No")}");
+        sb.AppendLine($"Success: {(log.Success ? "Yes" : "No")}");
         sb.AppendLine();
 
         if (!string.IsNullOrEmpty(log.ValidationErrors))

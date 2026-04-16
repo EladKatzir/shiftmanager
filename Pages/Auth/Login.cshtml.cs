@@ -327,6 +327,23 @@ public class LoginModel : LocalizedPageModel
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 
+            // Seed the theme cookie from DB so the next render derives --primary-* tokens
+            // without a DB hit. Mirrors what /Api/My/Theme sets on save; readable by
+            // theme-engine.js (HttpOnly=false) for pre-paint FOUC prevention.
+            if (!string.IsNullOrEmpty(user.ThemeColor) || !string.IsNullOrEmpty(user.ThemeMode))
+            {
+                var themePayload = System.Text.Json.JsonSerializer.Serialize(new { color = user.ThemeColor, mode = user.ThemeMode });
+                Response.Cookies.Append("theme", themePayload, new CookieOptions
+                {
+                    HttpOnly = false,
+                    IsEssential = true,
+                    SameSite = SameSiteMode.Lax,
+                    Secure = Request.IsHttps,
+                    Expires = DateTimeOffset.UtcNow.AddYears(1),
+                    Path = "/"
+                });
+            }
+
             _logger.LogInformation("User {UserId} ({Email}) signed in successfully. Role={Role}", user.Id, ShiftManager.Services.PiiMasker.MaskEmail(user.Email), user.Role);
 
             // A-07: Force redirect to password change page if MustChangePassword flag is set

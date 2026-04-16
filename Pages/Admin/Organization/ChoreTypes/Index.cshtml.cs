@@ -370,10 +370,6 @@ public class IndexModel : LocalizedPageModel
     /// Sanitizes a color value to a strict #RRGGBB hex format to prevent CSS injection.
     /// Returns null if the input is empty or doesn't match the expected format.
     /// </summary>
-    private static string? SanitizeColor(string? color)
-    {
-        if (string.IsNullOrWhiteSpace(color)) return null;
-        var trimmed = color.Trim();
-        return Regex.IsMatch(trimmed, @"^#[0-9A-Fa-f]{6}$") ? trimmed : null;
-    }
+    // Delegates to shared utility to avoid drift (2026-04-15 extraction).
+    private static string? SanitizeColor(string? color) => ShiftManager.Services.ColorUtilities.SanitizeHexColor(color);
 }

@@ -24,7 +24,7 @@
 <div class="feature-flags-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">📦</span>
+            <span class="page-icon"><icon name="folder" /></span>
             <loc key="MasterPrograms_Title" />
         </h1>
         <p class="page-subtitle"><loc key="MasterPrograms_Subtitle" /></p>
@@ -153,7 +153,7 @@
                                     data-master-id="@masterProgram.Id"
                                     data-master-name="@masterProgram.Name"
                                     data-program-count="@masterProgram.Items.Count">
-                                📅 @Localizer["MasterPrograms_GenerateFullWeek"]
+                                <icon name="calendar" /> @Localizer["MasterPrograms_GenerateFullWeek"]
                             </button>
 
                             <form method="post" asp-page-handler="DeleteMasterProgram"
@@ -165,7 +165,7 @@
                                   data-confirm-level="danger">
                                 <input type="hidden" name="masterProgramId" value="@masterProgram.Id" />
                                 <button type="submit" class="btn btn-sm btn-danger">
-                                    🗑️ <loc key="Delete" />
+                                    <icon name="trash-2" /> <loc key="Delete" />
                                 </button>
                             </form>
                         </div>
@@ -217,7 +217,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeGenerateMasterModal()"><loc key="Button_Cancel">Cancel</loc></button>
-                    <button type="submit" class="btn btn-primary">📅 @Localizer["MasterPrograms_GenerateFullWeek"]</button>
+                    <button type="submit" class="btn btn-primary"><icon name="calendar" /> @Localizer["MasterPrograms_GenerateFullWeek"]</button>
                 </div>
             </form>
         </div>

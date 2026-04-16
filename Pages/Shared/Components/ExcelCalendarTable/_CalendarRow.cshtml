@@ -22,7 +22,7 @@
                 @row.Label
                 @if (!string.IsNullOrEmpty(row.CompanyName))
                 {
-                    <span class="company-badge" title="@row.CompanyName">🏢 @row.CompanyName</span>
+                    <span class="company-badge" title="@row.CompanyName"><icon name="building-2" size="sm" /> @row.CompanyName</span>
                 }
             </span>
             @if (!string.IsNullOrEmpty(row.SubLabel))

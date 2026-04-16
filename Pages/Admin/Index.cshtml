@@ -18,7 +18,7 @@
 <div class="owner-panel-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">🎛️</span>
+            <span class="page-icon"><icon name="sliders" size="lg" /></span>
             <loc key="AdminHub_Title">Admin Hub</loc>
         </h1>
         <p class="page-subtitle"><loc key="AdminHub_Subtitle">Operations Center</loc></p>
@@ -27,28 +27,28 @@
     @* Quick Stats *@
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">👥</div>
+            <div class="stat-icon"><icon name="users" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.TotalUsers</div>
                 <div class="stat-label"><loc key="Stat_Users">Users</loc></div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">📋</div>
+            <div class="stat-icon"><icon name="file-text" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.TotalShifts</div>
                 <div class="stat-label"><loc key="Stat_Shifts">Shifts</loc></div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">🧹</div>
+            <div class="stat-icon"><icon name="star" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.TotalChores</div>
                 <div class="stat-label"><loc key="Stat_Chores">Chores</loc></div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">👤</div>
+            <div class="stat-icon"><icon name="user" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.TotalAssignments</div>
                 <div class="stat-label"><loc key="Stat_Assignments">Assignments</loc></div>
@@ -58,12 +58,12 @@
 
     @* People Management *@
     <h2 class="section-title">
-        <span class="section-icon">👥</span>
+        <span class="section-icon"><icon name="users" /></span>
         <loc key="Section_PeopleManagement">People Management</loc>
     </h2>
     <div class="admin-tools-grid">
         <a href="/Admin/Users" class="admin-tool-card">
-            <div class="tool-icon">👥</div>
+            <div class="tool-icon"><icon name="users" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_Users">Users</loc></h3>
                 <p><loc key="Section_UsersDesc">User CRUD, role assignment, approvals</loc></p>
@@ -72,7 +72,7 @@
         </a>
 
         <a href="/MyTeam/Index" class="admin-tool-card">
-            <div class="tool-icon">🏅</div>
+            <div class="tool-icon"><icon name="medal" size="lg" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_MyGroups">My Groups</loc></h3>
                 <p><loc key="Section_MyGroupsDesc">Create and manage custom schedule groups</loc></p>
@@ -85,14 +85,14 @@
     @if (Model.HasViewHierarchy || Model.HasEditCompany || Model.HasManageJobTypes || Model.HasManageDepartments)
     {
         <h2 class="section-title">
-            <span class="section-icon">🏗️</span>
+            <span class="section-icon"><icon name="construction" /></span>
             <loc key="Section_OrganizationStructure">Organization & Structure</loc>
         </h2>
         <div class="admin-tools-grid">
             @if (Model.HasViewHierarchy)
             {
                 <a href="/Admin/Organization" class="admin-tool-card">
-                    <div class="tool-icon">🏢</div>
+                    <div class="tool-icon"><icon name="building" /></div>
                     <div class="tool-content">
                         <h3><loc key="Section_OrganizationHub">Organization Hub</loc></h3>
                         <p><loc key="Section_OrganizationHubDesc">Hierarchy tree and entity overview</loc></p>
@@ -141,14 +141,14 @@
 
     @* Scheduling Configuration *@
     <h2 class="section-title">
-        <span class="section-icon">📅</span>
+        <span class="section-icon"><icon name="calendar" /></span>
         <loc key="Section_SchedulingConfig">Scheduling Configuration</loc>
     </h2>
     <div class="admin-tools-grid">
         @if (Model.HasManageBlueprints)
         {
         <a href="/Owner/Blueprints" class="admin-tool-card">
-            <div class="tool-icon">📘</div>
+            <div class="tool-icon"><icon name="book-open" size="lg" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_Blueprints">Blueprints</loc></h3>
                 <p><loc key="Section_BlueprintsDesc">Manage shift type definitions</loc></p>
@@ -158,7 +158,7 @@
         }
 
         <a href="/Owner/Programs" class="admin-tool-card">
-            <div class="tool-icon">📅</div>
+            <div class="tool-icon"><icon name="calendar" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_Programs">Programs</loc></h3>
                 <p><loc key="Section_ProgramsDesc">Create weekly schedule templates</loc></p>
@@ -167,7 +167,7 @@
         </a>
 
         <a href="/Admin/HomeTypes" class="admin-tool-card">
-            <div class="tool-icon">🏠</div>
+            <div class="tool-icon"><icon name="home" /></div>
             <div class="tool-content">
                 <h3><loc key="HomeTypes">Home Types</loc></h3>
                 <p><loc key="HomeTypes_Description">Manage home rotation templates</loc></p>
@@ -176,7 +176,7 @@
         </a>
 
         <a href="/Admin/Config" class="admin-tool-card">
-            <div class="tool-icon">⚙️</div>
+            <div class="tool-icon"><icon name="settings" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_CompanySettings">Company Settings</loc></h3>
                 <p><loc key="Section_CompanySettingsDesc">Rest periods, weekly hour limits, duty types</loc></p>
@@ -199,7 +199,7 @@
             @if (Model.HasViewSettings)
             {
                 <a href="/Admin/Settings" class="admin-tool-card">
-                    <div class="tool-icon">📊</div>
+                    <div class="tool-icon"><icon name="pie-chart" /></div>
                     <div class="tool-content">
                         <h3><loc key="Section_HierarchySettings">Hierarchy Settings</loc></h3>
                         <p><loc key="Section_HierarchySettingsDesc">Rest hours and weekly caps by level</loc></p>
@@ -223,7 +223,7 @@
             @if (Model.VacationApprovalEnabled && Model.HasSystemConfiguration)
             {
                 <a href="/Admin/Settings/ApprovalRules" class="admin-tool-card">
-                    <div class="tool-icon">✅</div>
+                    <div class="tool-icon"><icon name="check" /></div>
                     <div class="tool-content">
                         <h3><loc key="Section_ApprovalRules">Approval Rules</loc></h3>
                         <p><loc key="Section_ApprovalRulesDesc">Vacation approval workflow configuration</loc></p>
@@ -247,7 +247,7 @@
             @if (Model.SetupTasksEnabled && Model.HasSystemConfiguration)
             {
                 <a href="/Admin/SetupTasks" class="admin-tool-card">
-                    <div class="tool-icon">📋</div>
+                    <div class="tool-icon"><icon name="file-text" /></div>
                     <div class="tool-content">
                         <h3><loc key="Section_SetupTasks">Setup Tasks</loc></h3>
                         <p><loc key="Section_SetupTasksDesc">Company setup wizard and checklist</loc></p>
@@ -276,7 +276,7 @@
             </a>
 
             <a href="/Director/NotificationHub" class="admin-tool-card">
-                <div class="tool-icon">🔔</div>
+                <div class="tool-icon"><icon name="bell" /></div>
                 <div class="tool-content">
                     <h3><loc key="Section_NotificationHub">Notification Hub</loc></h3>
                     <p><loc key="Section_NotificationHubDesc">Cross-company notifications</loc></p>
@@ -285,7 +285,7 @@
             </a>
 
             <a href="/Director/CompanyFilter" class="admin-tool-card">
-                <div class="tool-icon">🏢</div>
+                <div class="tool-icon"><icon name="building" /></div>
                 <div class="tool-content">
                     <h3><loc key="Section_CompanyFilter">Company Filter</loc></h3>
                     <p><loc key="Section_CompanyFilterDesc">Select which companies to manage</loc></p>
@@ -297,12 +297,12 @@
 
     @* Operations Management *@
     <h2 class="section-title">
-        <span class="section-icon">📊</span>
+        <span class="section-icon"><icon name="pie-chart" /></span>
         <loc key="Section_OperationsManagement">Operations Management</loc>
     </h2>
     <div class="admin-tools-grid">
         <a href="/Calendar/Table" class="admin-tool-card">
-            <div class="tool-icon">📋</div>
+            <div class="tool-icon"><icon name="file-text" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_ShiftAssignments">Shift Assignments</loc></h3>
                 <p><loc key="Section_ShiftAssignmentsDesc">Manage shift staffing with Roster Dock</loc></p>
@@ -311,7 +311,7 @@
         </a>
 
         <a href="/Assignments/Manage" class="admin-tool-card">
-            <div class="tool-icon">🗂️</div>
+            <div class="tool-icon"><icon name="folder" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_AssignmentManager">Assignment Manager</loc></h3>
                 <p><loc key="Section_AssignmentManagerDesc">Advanced assignment operations</loc></p>
@@ -320,7 +320,7 @@
         </a>
 
         <a href="/Public/Chores" class="admin-tool-card">
-            <div class="tool-icon">🧹</div>
+            <div class="tool-icon"><icon name="star" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_ChoresManagement">Chores Management</loc></h3>
                 <p><loc key="Section_ChoresManagementDesc">Chore calendar and assignments</loc></p>
@@ -329,7 +329,7 @@
         </a>
 
         <a href="/Public/OnDuty" class="admin-tool-card">
-            <div class="tool-icon">📌</div>
+            <div class="tool-icon"><icon name="pin" size="lg" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_OnDutyManagement">OnDuty Management</loc></h3>
                 <p><loc key="Section_OnDutyManagementDesc">On-call duty assignments</loc></p>
@@ -338,7 +338,7 @@
         </a>
 
         <a href="/Requests/Index" class="admin-tool-card">
-            <div class="tool-icon">📝</div>
+            <div class="tool-icon"><icon name="edit" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_RequestsApprovals">Requests & Approvals</loc></h3>
                 <p><loc key="Section_RequestsApprovalsDesc">Time-off and swap request management</loc></p>
@@ -349,12 +349,12 @@
 
     @* Monitoring & Analytics *@
     <h2 class="section-title">
-        <span class="section-icon">📈</span>
+        <span class="section-icon"><icon name="trending-up" /></span>
         <loc key="Section_MonitoringAnalytics">Monitoring & Analytics</loc>
     </h2>
     <div class="admin-tools-grid">
         <a href="/Admin/Analytics" class="admin-tool-card">
-            <div class="tool-icon">📊</div>
+            <div class="tool-icon"><icon name="pie-chart" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_AnalyticsDashboard">Analytics Dashboard</loc></h3>
                 <p><loc key="Section_AnalyticsDashboardDesc">Metrics, trends, insights</loc></p>
@@ -363,7 +363,7 @@
         </a>
 
         <a href="/Admin/AuditLog" class="admin-tool-card">
-            <div class="tool-icon">🔍</div>
+            <div class="tool-icon"><icon name="search" /></div>
             <div class="tool-content">
                 <h3><loc key="Section_AuditLog">Audit Log</loc></h3>
                 <p><loc key="Section_AuditLogDesc">System audit trail and compliance</loc></p>

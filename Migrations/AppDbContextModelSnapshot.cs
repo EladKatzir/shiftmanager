@@ -377,6 +377,12 @@ namespace ShiftManager.Migrations
                     b.Property<string>("Skills")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ThemeColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ThemeMode")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DepartmentId");
@@ -426,6 +432,60 @@ namespace ShiftManager.Migrations
                     b.HasIndex("ProjectId");
 
                     b.ToTable("Areas");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.AreaCalendarPalette", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AreaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Chore")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OnDuty")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ShiftAfternoon")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ShiftHome")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ShiftMorning")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ShiftNight")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Vacation")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AreaId")
+                        .IsUnique();
+
+                    b.ToTable("AreaCalendarPalettes");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.AreaSettings", b =>
@@ -3514,6 +3574,17 @@ namespace ShiftManager.Migrations
                         .IsRequired();
 
                     b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ShiftManager.Models.AreaCalendarPalette", b =>
+                {
+                    b.HasOne("ShiftManager.Models.Area", "Area")
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Area");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.AreaSettings", b =>

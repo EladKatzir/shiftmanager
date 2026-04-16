@@ -77,21 +77,22 @@
   --info-rgb: 30, 58, 95;
 
   /* Shift Type Colors (Time-of-Day Metaphor) */
-  --shift-morning: #F0C14B;
-  --shift-morning-soft: #FEF7E0;
+  --shift-morning: #FFB547;
+  --shift-morning-soft: #FFF3DB;
   --shift-morning-text: #1A1F2B;
 
-  --shift-afternoon: #6B7F59;
-  --shift-afternoon-soft: #EEF2E9;
-  --shift-afternoon-text: #FFFFFF;
+  --shift-afternoon: #66B2A0;
+  --shift-afternoon-soft: #E8F3EF;
+  --shift-afternoon-text: #1A1F2B;  /* AA fix 2026-04-16: white was 2.5:1, dark is 6.6:1 */
 
-  --shift-night: #1E3A5F;
-  --shift-night-soft: #E8F1F8;
+  --shift-night: #3D5A80;
+  --shift-night-soft: #E6EBF2;
   --shift-night-text: #FFFFFF;
 
-  --shift-hakam: #8B4513;
-  --shift-hakam-soft: #F5EDE5;
-  --shift-hakam-text: #FFFFFF;
+  /* 2026-04-15: retuned to terracotta for on-duty consistency; --onduty alias added below */
+  --shift-hakam: #C97064;
+  --shift-hakam-soft: #F7E3DF;
+  --shift-hakam-text: #1A1F2B;  /* AA fix 2026-04-16: white was 3.5:1, dark is 5.2:1 */
 
   --shift-br: #4A5568;
   --shift-br-soft: #EDF2F7;
@@ -104,6 +105,23 @@
   --shift-lead: #FF9671;
   --shift-lead-soft: #FFE6DC;
   --shift-lead-text: #FFFFFF;
+
+  /* 2026-04-15: unified truth palette for Home / OnDuty / Chore / Vacation */
+  --shift-home: #B088C7;
+  --shift-home-soft: #F0E6F6;
+  --shift-home-text: #1A1F2B;  /* AA fix 2026-04-16: white was 2.9:1, dark is 5.7:1 */
+
+  --onduty: var(--shift-hakam);
+  --onduty-soft: var(--shift-hakam-soft);
+  --onduty-text: var(--shift-hakam-text);
+
+  --chore: #E6C447;
+  --chore-soft: #FBF3D5;
+  --chore-text: #1A1F2B;
+
+  --vacation: #7FA8C9;
+  --vacation-soft: #E6EFF5;
+  --vacation-text: #1A1F2B;  /* AA fix 2026-04-16: white was 2.5:1, dark is 7.0:1 */
 
   /* Accent Gold (trophy, highlight) */
   --accent-gold: #FFD700;
@@ -201,9 +219,10 @@
   --shift-night-soft: #1A2D42;
   --shift-night-text: #FFFFFF;
 
-  --shift-hakam: #CD8B5A;
-  --shift-hakam-soft: #332618;
-  --shift-hakam-text: #E8B88A;
+  /* 2026-04-15: retuned terracotta (dark variant) */
+  --shift-hakam: #E08A7D;
+  --shift-hakam-soft: #3D251F;
+  --shift-hakam-text: #F2BDB5;
 
   --shift-br: #6B7B8F;
   --shift-br-soft: #2D3748;
@@ -216,6 +235,23 @@
   --shift-lead: #FF8A65;
   --shift-lead-soft: #3D2520;
   --shift-lead-text: #FFB89E;
+
+  /* 2026-04-15: truth palette dark variants */
+  --shift-home: #C9A6DC;
+  --shift-home-soft: #2D2538;
+  --shift-home-text: #D4B8E3;
+
+  --onduty: var(--shift-hakam);
+  --onduty-soft: var(--shift-hakam-soft);
+  --onduty-text: var(--shift-hakam-text);
+
+  --chore: #F4D35E;
+  --chore-soft: #3D3418;
+  --chore-text: #F4D35E;
+
+  --vacation: #9DC1DD;
+  --vacation-soft: #1F2D38;
+  --vacation-text: #B8D6E6;
 
   /* Accent Gold (trophy, highlight) */
   --accent-gold: #FFD700;
@@ -564,9 +600,9 @@ Verified Contrast Ratios (Dark Mode):
     --shift-night-soft: #1A2D42;
     --shift-night-text: #FFFFFF;
 
-    --shift-hakam: #CD8B5A;
-    --shift-hakam-soft: #332618;
-    --shift-hakam-text: #E8B88A;
+    --shift-hakam: #E08A7D;
+    --shift-hakam-soft: #3D251F;
+    --shift-hakam-text: #F2BDB5;
 
     --shift-br: #6B7B8F;
     --shift-br-soft: #2D3748;
@@ -579,6 +615,22 @@ Verified Contrast Ratios (Dark Mode):
     --shift-lead: #FF8A65;
     --shift-lead-soft: #3D2520;
     --shift-lead-text: #FFB89E;
+
+    --shift-home: #C9A6DC;
+    --shift-home-soft: #2D2538;
+    --shift-home-text: #D4B8E3;
+
+    --onduty: var(--shift-hakam);
+    --onduty-soft: var(--shift-hakam-soft);
+    --onduty-text: var(--shift-hakam-text);
+
+    --chore: #F4D35E;
+    --chore-soft: #3D3418;
+    --chore-text: #F4D35E;
+
+    --vacation: #9DC1DD;
+    --vacation-soft: #1F2D38;
+    --vacation-text: #B8D6E6;
 
     /* Accent Gold (trophy, highlight) */
     --accent-gold: #FFD700;

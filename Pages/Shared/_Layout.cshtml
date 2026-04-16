@@ -8,6 +8,7 @@
 @inject IStringLocalizer<SharedResources> Localizer
 @inject IViewAsModeService ViewAsModeService
 @inject IFeatureFlagService FeatureFlagService
+@inject IAreaPaletteService AreaPaletteService
 @{
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
@@ -68,10 +69,47 @@
         if (theme === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
         }
+        // Per-user theme color (Shift+Click picker). Cookie is set by /Api/My/Theme.
+        var m = document.cookie.match(/(?:^|;\s*)theme=([^;]+)/);
+        if (m) {
+            try {
+                var t = JSON.parse(decodeURIComponent(m[1]));
+                if (t && t.color) document.documentElement.setAttribute('data-theme-color', t.color);
+                if (t && t.mode)  document.documentElement.setAttribute('data-theme-mode',  t.mode);
+            } catch (_) { /* ignore malformed cookie */ }
+        }
     })();
     </script>
+    @* Theme engine — derives --primary-* tokens BEFORE any stylesheet paints (no FOUC) *@
+    <script src="~/js/theme-engine.js" asp-append-version="true"></script>
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @* 2026-04-15: Per-Area calendar palette override. Hex values are strict-validated via ColorUtilities.SanitizeHexColor before persistence.
+       Injected AFTER tokens.css (which is imported by site.css) so these custom properties cascade-override the defaults. *@
+    @{
+        var __paletteOverride = await AreaPaletteService.GetPaletteForCurrentUserAsync();
+    }
+    @if (__paletteOverride != null)
+    {
+        <style id="area-palette-override">
+            :root {
+                @if (!string.IsNullOrEmpty(__paletteOverride.ShiftMorning))   { @:--shift-morning: @__paletteOverride.ShiftMorning;
+                }
+                @if (!string.IsNullOrEmpty(__paletteOverride.ShiftAfternoon)) { @:--shift-afternoon: @__paletteOverride.ShiftAfternoon;
+                }
+                @if (!string.IsNullOrEmpty(__paletteOverride.ShiftNight))     { @:--shift-night: @__paletteOverride.ShiftNight;
+                }
+                @if (!string.IsNullOrEmpty(__paletteOverride.ShiftHome))      { @:--shift-home: @__paletteOverride.ShiftHome;
+                }
+                @if (!string.IsNullOrEmpty(__paletteOverride.OnDuty))         { @:--onduty: @__paletteOverride.OnDuty; --shift-hakam: @__paletteOverride.OnDuty;
+                }
+                @if (!string.IsNullOrEmpty(__paletteOverride.Chore))          { @:--chore: @__paletteOverride.Chore;
+                }
+                @if (!string.IsNullOrEmpty(__paletteOverride.Vacation))       { @:--vacation: @__paletteOverride.Vacation;
+                }
+            }
+        </style>
+    }
     <link rel="stylesheet" href="~/css/print.css" asp-append-version="true" media="print" />
     @if (isHebrew)
     {
@@ -84,6 +122,8 @@
     }
     @* Lucide Icons - MIT licensed SVG icon library (local copy for air-gapped environments) *@
     <script src="~/lib/lucide/lucide.min.js" asp-append-version="true"></script>
+    @* JS-side icon renderer — mirrors IconTagHelper so dynamically-built DOM can emit SVGs *@
+    <script src="~/js/icon-runtime.js" asp-append-version="true"></script>
     @* Centralized logger — must load before any JS that uses Logger *@
     <script src="~/js/logger.js" asp-append-version="true"></script>
     @* B-007: Calendar skeleton loading handler *@
@@ -418,7 +458,7 @@
             <a href="/Home" class="sidebar-brand">
                 <div class="sidebar-brand__logo">
                     <img src="~/images/shifty-logo.svg" alt="Shifty" width="48" height="48" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                    <span class="sidebar-brand__logo-fallback" style="display:none; font-size:28px;">📊</span>
+                    <span class="sidebar-brand__logo-fallback" style="display:none;"><icon name="bar-chart-2" size="28" /></span>
                 </div>
                 <div class="sidebar-brand__text">
                     <span class="sidebar-brand__name">SHIFTY</span>
@@ -678,7 +718,7 @@
 
                     @* Ctrl+K shortcut hint *@
                     <div class="sidebar-shortcut" loc-title="Sidebar_CtrlKTooltip">
-                        <span class="sidebar-shortcut__icon">⌨️</span>
+                        <span class="sidebar-shortcut__icon"><icon name="keyboard" /></span>
                         <span class="sidebar-shortcut__key">Ctrl</span>
                         <span>+</span>
                         <span class="sidebar-shortcut__key">@Localizer["Sidebar_CtrlKLabel"]</span>
@@ -730,7 +770,7 @@
 
                         @* Notifications *@
                         <a href="/My/NotificationCenter" class="action-btn" style="position: relative;" aria-label="@Localizer["Nav_Notifications"]">
-                            <span>🔔</span>
+                            <span><icon name="bell" /></span>
                             @await Component.InvokeAsync("UnreadNotificationCount")
                         </a>
 
@@ -761,7 +801,7 @@
             @if (isViewingAsManager && viewAsCompanyName != null)
             {
                 <div style="background: var(--warning); color: var(--warning-text); padding: 0.75rem 1.5rem; text-align: center; font-weight: 600; border-bottom: 2px solid var(--warning-hover);">
-                    ⚠️ @Localizer["ViewAs_ViewingAs"] <strong>@viewAsCompanyName</strong> —
+                    <icon name="alert-triangle" /> @Localizer["ViewAs_ViewingAs"] <strong>@viewAsCompanyName</strong> —
                     <a href="/Director/ViewAsMode" style="color: inherit; text-decoration: underline; margin-inline-start: 1rem;">@Localizer["ViewAs_ExitViewMode"]</a>
                 </div>
             }
@@ -816,7 +856,7 @@
         <div class="command-palette-backdrop" onclick="closeCommandPalette()"></div>
         <div class="command-palette-content">
             <div class="command-palette-search">
-                <span class="command-palette-icon">🔍</span>
+                <span class="command-palette-icon"><icon name="search" /></span>
                 <input type="text" id="commandPaletteInput" loc-placeholder="CommandPaletteSearch" autocomplete="off" loc-aria-label="Aria_SearchCommands" />
                 <span class="command-palette-hint">Ctrl+J</span>
             </div>

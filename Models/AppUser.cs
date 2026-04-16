@@ -60,6 +60,13 @@ public class AppUser : IBelongsToCompany
     // B-05: Onboarding wizard — shows first-login walkthrough for new users
     public bool HasCompletedOnboarding { get; set; } = false;
 
+    // Per-user appearance preferences (hidden Shift+Click theme picker).
+    // ThemeColor is the user's chosen --primary in #RRGGBB form; every other token is
+    // HSL-derived at render time. ThemeMode is "light" | "dark" | "auto" (or null = default).
+    // Both NULL means "use system defaults" — no override is applied.
+    public string? ThemeColor { get; set; }
+    public string? ThemeMode { get; set; }
+
     // Organizational - workforce users have JobType, tech users have Department
     public int? JobTypeId { get; set; }    // Workforce molecules only
     public int? DepartmentId { get; set; }  // Tech molecules only

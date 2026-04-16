@@ -18,7 +18,7 @@
 <div class="griffin-config-container">
     @* System-Wide Feature Banner *@
     <div class="system-wide-banner">
-        <div class="banner-icon">🌐</div>
+        <div class="banner-icon"><icon name="globe" size="xl" /></div>
         <div class="banner-content">
             <h3><loc key="Griffin_SystemWideAuth" /></h3>
             <p><loc key="Griffin_SystemWideAuth_Desc" /></p>
@@ -27,7 +27,7 @@
 
     <div class="page-header">
         <h1>
-            <span class="page-icon">🛡️</span>
+            <span class="page-icon"><icon name="shield" /></span>
             <loc key="Owner_GriffinConfig" />
         </h1>
         <p class="page-subtitle"><loc key="Griffin_Subtitle" /></p>
@@ -77,7 +77,7 @@
         </div>
         <form method="post" asp-page-handler="TestConnection" style="display: inline;">
             <button type="submit" class="btn btn-secondary btn-sm status-retest-btn">
-                🔌 <loc key="Status_RetestConnection" />
+                <icon name="link" /> <loc key="Status_RetestConnection" />
             </button>
         </form>
     </div>
@@ -85,14 +85,14 @@
     @if (!string.IsNullOrEmpty(Model.SuccessMessage))
     {
         <div class="alert alert-success">
-            <strong>✅ <loc key="Success" />:</strong> @Model.SuccessMessage
+            <strong><icon name="check" /> <loc key="Success" />:</strong> @Model.SuccessMessage
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-error">
-            <strong>❌ <loc key="Error" />:</strong> @Model.ErrorMessage
+            <strong><icon name="x" /> <loc key="Error" />:</strong> @Model.ErrorMessage
         </div>
     }
 
@@ -101,13 +101,13 @@
         @if (Model.TestConnectionResult.Value)
         {
             <div class="alert alert-success">
-                <strong>✅ <loc key="Success" />:</strong> <loc key="Owner_Griffin_ConnectionSuccess" />
+                <strong><icon name="check" /> <loc key="Success" />:</strong> <loc key="Owner_Griffin_ConnectionSuccess" />
             </div>
         }
         else
         {
             <div class="alert alert-error">
-                <strong>❌ <loc key="Error" />:</strong> <loc key="Owner_Griffin_ConnectionFailed" />
+                <strong><icon name="x" /> <loc key="Error" />:</strong> <loc key="Owner_Griffin_ConnectionFailed" />
             </div>
         }
     }
@@ -115,7 +115,7 @@
     <form method="post">
         <div class="config-card">
             <div class="card-header">
-                <h2>🛡️ <loc key="Griffin_ServiceConfig" /></h2>
+                <h2><icon name="shield" /> <loc key="Griffin_ServiceConfig" /></h2>
                 <div class="form-group-inline">
                     <label class="toggle-switch">
                         <input type="checkbox" asp-for="Enabled" />
@@ -131,10 +131,10 @@
                         <label asp-for="BaseUrl">@Localizer["Griffin_ServerUrl"]</label>
                         <div class="help-buttons-group">
                             <button type="button" class="help-button" onclick="toggleFieldHelp('baseurl-help')" loc-title="Help_ShowDetails">
-                                ❓
+                                <icon name="help-circle" />
                             </button>
                             <button type="button" class="find-this-button" onclick="openModal('find-baseurl-modal')" loc-title="FindThis_HowToFind">
-                                🔍 @Localizer["Griffin_FindThis"]
+                                <icon name="search" /> @Localizer["Griffin_FindThis"]
                             </button>
                         </div>
                     </div>
@@ -162,7 +162,7 @@
                     <div class="label-with-help">
                         <label asp-for="TokenConsumerUrl">@Localizer["Griffin_CallbackUrl"]</label>
                         <button type="button" class="help-button" onclick="toggleFieldHelp('callback-help')" loc-title="Help_ShowDetails">
-                            ❓
+                            <icon name="help-circle" />
                         </button>
                     </div>
                     <input asp-for="TokenConsumerUrl" class="form-control"
@@ -190,7 +190,7 @@
                     <div class="label-with-help">
                         <label asp-for="TimeoutSeconds">@Localizer["Griffin_Timeout"]</label>
                         <button type="button" class="help-button" onclick="toggleFieldHelp('timeout-help')" loc-title="Help_ShowDetails">
-                            ❓
+                            <icon name="help-circle" />
                         </button>
                     </div>
                     <input asp-for="TimeoutSeconds" type="number" min="1" max="60" class="form-control" placeholder="10" />
@@ -212,7 +212,7 @@
 
         <div class="config-card">
             <div class="card-header">
-                <h2>👥 <loc key="Griffin_UserProvisioning" /></h2>
+                <h2><icon name="users" /> <loc key="Griffin_UserProvisioning" /></h2>
             </div>
 
             <div class="card-body">
@@ -237,7 +237,7 @@
 
                 <div style="margin-top: 1.5rem; padding: 1rem; background: var(--warning-soft); border-inline-start: 4px solid var(--warning); border-radius: 6px;">
                     <p style="margin: 0; color: var(--text); line-height: 1.6;">
-                        <strong>⚠️ @Localizer["Griffin_SecurityNote_Title"]</strong> @Localizer["Griffin_SecurityNote_Text"]
+                        <strong><icon name="alert-triangle" /> @Localizer["Griffin_SecurityNote_Title"]</strong> @Localizer["Griffin_SecurityNote_Text"]
                     </p>
                 </div>
             </div>
@@ -245,12 +245,12 @@
 
         <div class="config-card">
             <div class="card-footer">
-                <button type="submit" class="btn btn-primary">💾 <loc key="Griffin_SaveConfig" /></button>
+                <button type="submit" class="btn btn-primary"><icon name="save" /> <loc key="Griffin_SaveConfig" /></button>
                 <button type="submit" asp-page-handler="TestConnection" class="btn btn-secondary">
-                    🔌 <loc key="Griffin_TestConnection" />
+                    <icon name="link" /> <loc key="Griffin_TestConnection" />
                 </button>
                 <a href="/GriffinDiagnostic" class="btn btn-secondary" target="_blank" style="background: var(--accent); border-color: var(--accent);">
-                    🔍 <loc key="Griffin_RunDiagnostic" />
+                    <icon name="search" /> <loc key="Griffin_RunDiagnostic" />
                 </a>
                 <a href="/Owner/Hub" class="btn btn-outline"><loc key="Button_Cancel">Cancel</loc></a>
             </div>
@@ -260,7 +260,7 @@
     @* Info Card *@
     <div class="config-card">
         <div class="card-header">
-            <h2>ℹ️ <loc key="Griffin_AboutTitle" /></h2>
+            <h2><icon name="info" /> <loc key="Griffin_AboutTitle" /></h2>
         </div>
         <div class="card-body">
             <p><strong><loc key="Griffin_AboutDesc" /></strong></p>
@@ -282,7 +282,7 @@
 
             <div style="margin-top: 1.5rem; padding: 1rem; background: var(--info-soft); border-inline-start: 4px solid var(--info); border-radius: 6px;">
                 <p style="margin: 0; color: var(--text); line-height: 1.6;">
-                    <strong>💡 @Localizer["Note"]:</strong> @Localizer["Griffin_NoteText"]
+                    <strong><icon name="help-circle" /> @Localizer["Note"]:</strong> @Localizer["Griffin_NoteText"]
                 </p>
             </div>
         </div>
@@ -293,9 +293,9 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>🔍 <loc key="Owner_Griffin_DiagnosticsTitle" /></h2>
+                <h2><icon name="search" /> <loc key="Owner_Griffin_DiagnosticsTitle" /></h2>
                 <button type="button" onclick="exportDiagnostics()" class="btn btn-sm btn-secondary">
-                    📥 <loc key="Owner_Griffin_ExportDiagnostics" />
+                    <icon name="download" /> <loc key="Owner_Griffin_ExportDiagnostics" />
                 </button>
             </div>
             <div class="card-body">
@@ -311,7 +311,7 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>📊 <loc key="Owner_Griffin_RecentTests" /></h2>
+                <h2><icon name="bar-chart-2" /> <loc key="Owner_Griffin_RecentTests" /></h2>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -333,11 +333,11 @@
                                     <td>
                                         @if (log.Success)
                                         {
-                                            <span class="badge badge-success">✓ <loc key="Owner_Griffin_Status_Success" /></span>
+                                            <span class="badge badge-success"><icon name="check" /> <loc key="Owner_Griffin_Status_Success" /></span>
                                         }
                                         else
                                         {
-                                            <span class="badge badge-error">✗ <loc key="Owner_Griffin_Status_Failed" /></span>
+                                            <span class="badge badge-error"><icon name="x" /> <loc key="Owner_Griffin_Status_Failed" /></span>
                                         }
                                     </td>
                                     <td>@(log.ResponseStatusCode?.ToString() ?? "N/A")</td>
@@ -357,7 +357,7 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>⚠️ <loc key="Owner_Griffin_RecentFailures" /></h2>
+                <h2><icon name="alert-triangle" /> <loc key="Owner_Griffin_RecentFailures" /></h2>
             </div>
             <div class="card-body">
                 @foreach (var failure in Model.RecentFailures)
@@ -390,9 +390,9 @@
 <div id="find-baseurl-modal" class="modal-overlay" onclick="closeModal('find-baseurl-modal')" style="display: none;">
     <div class="modal-container" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <h3>🔍 <loc key="FindThis_Griffin_BaseUrl_Title" /></h3>
+            <h3><icon name="search" /> <loc key="FindThis_Griffin_BaseUrl_Title" /></h3>
             <button type="button" class="modal-close-btn" onclick="closeModal('find-baseurl-modal')" loc-title="Close">
-                ✕
+                <icon name="x" />
             </button>
         </div>
         <div class="modal-body">
@@ -419,7 +419,7 @@
                 </div>
             </div>
             <div class="modal-note">
-                <strong>💡 <loc key="Note" />:</strong> <loc key="FindThis_Griffin_BaseUrl_Note" />
+                <strong><icon name="help-circle" /> <loc key="Note" />:</strong> <loc key="FindThis_Griffin_BaseUrl_Note" />
             </div>
         </div>
         <div class="modal-footer">

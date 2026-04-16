@@ -14,7 +14,7 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Owner;
 
-// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — Owner page requires Grant:AdminAccess (all 107 grants);
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — Owner page requires Grant:AdminAccess (all ~132 grants);
 // cross-company SSO config management by design
 [Authorize(Policy = "Grant:AdminAccess")]
 public class GriffinConfigModel : LocalizedPageModel
@@ -176,7 +176,7 @@ public class GriffinConfigModel : LocalizedPageModel
 
             if (result.Success)
             {
-                SuccessMessage = $"✅ Configuration saved and connection successful! Griffin responded with HTTP {result.StatusCode} in {result.DurationMs}ms. Login with ADFS will now work with these settings.";
+                SuccessMessage = $"Configuration saved and connection successful! Griffin responded with HTTP {result.StatusCode} in {result.DurationMs}ms. Login with ADFS will now work with these settings.";
 
                 // Audit log
                 await _auditLogService.LogUserActionAsync(
@@ -189,7 +189,7 @@ public class GriffinConfigModel : LocalizedPageModel
             }
             else
             {
-                ErrorMessage = $"⚠️ Configuration saved, but connection test failed: {result.ErrorMessage}. Please verify the Base URL and ensure the Griffin server is reachable.";
+                ErrorMessage = $"Configuration saved, but connection test failed: {result.ErrorMessage}. Please verify the Base URL and ensure the Griffin server is reachable.";
             }
 
             // Reload logs to show the new test result
@@ -291,7 +291,7 @@ public class GriffinConfigModel : LocalizedPageModel
         sb.AppendLine();
         sb.AppendLine($"Timestamp: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine($"Duration: {result.DurationMs} ms");
-        sb.AppendLine($"Success: {(result.Success ? "✓ YES" : "✗ NO")}");
+        sb.AppendLine($"Success: {(result.Success ? "YES" : "NO")}");
         sb.AppendLine();
 
         if (result.ValidationErrors != null && result.ValidationErrors.Any())

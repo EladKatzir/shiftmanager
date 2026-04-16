@@ -19,7 +19,7 @@
 <div class="permissions-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">🔐</span>
+            <span class="page-icon"><icon name="lock" /></span>
             <loc key="Owner_Permissions" />
         </h1>
         <p class="page-subtitle"><loc key="Owner_Permissions_Desc" /></p>
@@ -28,28 +28,28 @@
     <!-- Stats Grid -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">📊</div>
+            <div class="stat-icon"><icon name="bar-chart-2" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.TotalGrants</div>
                 <div class="stat-label"><loc key="Permissions_TotalGrants" /></div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">👥</div>
+            <div class="stat-icon"><icon name="users" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.UsersWithGrants</div>
                 <div class="stat-label"><loc key="Permissions_UsersWithGrants" /></div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">🤖</div>
+            <div class="stat-icon"><icon name="settings" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.AutoGrants</div>
                 <div class="stat-label"><loc key="Permissions_AutoGrants" /></div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">✋</div>
+            <div class="stat-icon"><icon name="user" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.ManualGrants</div>
                 <div class="stat-label"><loc key="Permissions_ManualGrants" /></div>
@@ -62,28 +62,28 @@
         <h2 class="section-header"><loc key="QuickActions" /></h2>
         <div class="quick-actions">
             <a href="/Admin/Organization/Grants" class="action-card">
-                <div class="action-icon">📋</div>
+                <div class="action-icon"><icon name="file-text" /></div>
                 <div class="action-content">
                     <h3><loc key="ViewAllGrants" /></h3>
                     <p><loc key="ViewAllGrants_Desc" /></p>
                 </div>
-                <div class="action-arrow">→</div>
+                <div class="action-arrow"><icon name="arrow-right" /></div>
             </a>
             <a href="/Admin/Organization/Grants/Assign" class="action-card">
-                <div class="action-icon">➕</div>
+                <div class="action-icon"><icon name="plus" /></div>
                 <div class="action-content">
                     <h3><loc key="AssignGrant" /></h3>
                     <p><loc key="AssignGrant_Desc" /></p>
                 </div>
-                <div class="action-arrow">→</div>
+                <div class="action-arrow"><icon name="arrow-right" /></div>
             </a>
             <a href="/Admin/Organization/Roles" class="action-card">
-                <div class="action-icon">👔</div>
+                <div class="action-icon"><icon name="user" /></div>
                 <div class="action-content">
                     <h3><loc key="ManageRoles" /></h3>
                     <p><loc key="ManageRoles_Desc" /></p>
                 </div>
-                <div class="action-arrow">→</div>
+                <div class="action-arrow"><icon name="arrow-right" /></div>
             </a>
         </div>
     </div>

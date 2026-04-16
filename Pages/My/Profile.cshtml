@@ -377,7 +377,7 @@
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
 {
     <div class="alert alert-success">
-        <span class="alert-icon">✓</span>
+        <span class="alert-icon"><icon name="check" /></span>
         <span>@Model.SuccessMessage</span>
     </div>
 }
@@ -385,7 +385,7 @@
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
     <div class="alert alert-error">
-        <span class="alert-icon">✗</span>
+        <span class="alert-icon"><icon name="x" /></span>
         <span>@Model.ErrorMessage</span>
     </div>
 }
@@ -419,7 +419,7 @@
                 @if (!string.IsNullOrEmpty(Model.AvatarUrl))
                 {
                     <button type="submit" asp-page-handler="DeleteAvatar" class="btn btn-danger">
-                        <span>🗑️</span>
+                        <span><icon name="trash-2" /></span>
                         <span><loc key="DeleteAvatar" /></span>
                     </button>
                 }
@@ -492,7 +492,7 @@
                 @Localizer["HireDate"]
                 @if (!Model.CanEditProfessionalInfo)
                 {
-                    <span class="locked-icon">🔒</span>
+                    <span class="locked-icon"><icon name="lock" /></span>
                 }
             </label>
             @if (Model.CanEditProfessionalInfo)
@@ -541,7 +541,7 @@
     <!-- Form Actions -->
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">
-            <span>💾</span>
+            <span><icon name="save" /></span>
             <span><loc key="SaveChanges" /></span>
         </button>
         <a href="/My" class="btn btn-secondary">

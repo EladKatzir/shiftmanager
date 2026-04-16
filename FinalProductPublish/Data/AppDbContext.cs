@@ -93,7 +93,7 @@ public class AppDbContext : DbContext
     public DbSet<ShiftGroupingCompany> ShiftGroupingCompanies => Set<ShiftGroupingCompany>();
     public DbSet<ShiftGroupingJobType> ShiftGroupingJobTypes => Set<ShiftGroupingJobType>();
 
-    // Grant System (107 built-in grants, 12 role templates)
+    // Grant System (132 built-in grants as of 2026-04-15, 12 role templates)
     public DbSet<GrantType> GrantTypes => Set<GrantType>();
     public DbSet<Grant> Grants => Set<Grant>();
     public DbSet<RoleTemplate> RoleTemplates => Set<RoleTemplate>();

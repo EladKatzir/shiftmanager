@@ -110,10 +110,13 @@ public class OnDutyService : IOnDutyService
     /// </summary>
     public async Task<bool> CanUserManageOnDutyAsync(int userId)
     {
-        // Check if user has any duty assignment grant
-        var hasHakamGrant = await _grantService.HasGrantAsync(userId, "AssignHakamDuties");
-        var hasKatzinGrant = await _grantService.HasGrantAsync(userId, "AssignKatzinDuties");
-        return hasHakamGrant || hasKatzinGrant;
+        // Any of these grants authorizes on-call editing. ManageOnDuty was previously
+        // omitted (bug fix 2026-04-15). EditOnCallCalendar (2026-04-15) opens the on-call
+        // calendar to all hakam-eligible users for collaborative edits.
+        return await _grantService.HasGrantAsync(userId, "AssignHakamDuties")
+            || await _grantService.HasGrantAsync(userId, "AssignKatzinDuties")
+            || await _grantService.HasGrantAsync(userId, "ManageOnDuty")
+            || await _grantService.HasGrantAsync(userId, "EditOnCallCalendar");
     }
 
     /// <summary>
@@ -385,9 +388,15 @@ public class OnDutyService : IOnDutyService
             // ✅ Grant-based: Check if user has AssignHakamDuties or AssignKatzinDuties grant for the assignee's company
             if (onDuty.User != null)
             {
-                var hasHakamGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "AssignHakamDuties", onDuty.User.CompanyId);
-                var hasKatzinGrant = await _grantService.HasGrantForCompanyAsync(currentUserId, "AssignKatzinDuties", onDuty.User.CompanyId);
-                if (!hasHakamGrant && !hasKatzinGrant)
+                // 2026-04-16: include ManageOnDuty + EditOnCallCalendar in the cancel-auth check.
+                // Without these, holders of those grants pass the broad CanUserManageOnDutyAsync gate
+                // in DeleteOnDuty.cshtml.cs but get rejected here — contradicting the collaborative
+                // editing design.
+                var hasHakamGrant   = await _grantService.HasGrantForCompanyAsync(currentUserId, "AssignHakamDuties", onDuty.User.CompanyId);
+                var hasKatzinGrant  = await _grantService.HasGrantForCompanyAsync(currentUserId, "AssignKatzinDuties", onDuty.User.CompanyId);
+                var hasManageGrant  = await _grantService.HasGrantAsync(currentUserId, "ManageOnDuty");
+                var hasEditOnCallGrant = await _grantService.HasGrantAsync(currentUserId, "EditOnCallCalendar");
+                if (!hasHakamGrant && !hasKatzinGrant && !hasManageGrant && !hasEditOnCallGrant)
                 {
                     return (false, "You do not have permission to cancel this on-duty assignment.");
                 }

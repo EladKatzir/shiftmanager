@@ -19,7 +19,7 @@
 <div class="requests-page">
     @* Page Header *@
     <div class="page-header">
-        <h1 class="page-title">📋 <loc key="MyRequests" /></h1>
+        <h1 class="page-title"><icon name="file-text" /> <loc key="MyRequests" /></h1>
         <p class="page-subtitle"><loc key="ManageYourTimeOffAndShiftSwaps" /></p>
     </div>
 
@@ -27,7 +27,7 @@
     @if (!string.IsNullOrEmpty(Model.Message))
     {
         <div class="alert alert-success">
-            <span class="alert-icon">✓</span>
+            <span class="alert-icon"><icon name="check" /></span>
             <span>@Model.Message</span>
         </div>
     }
@@ -48,7 +48,7 @@
             @* Time Off Request Form *@
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">📅 <loc key="RequestTimeOff" /></h3>
+                    <h3 class="card-title"><icon name="calendar" /> <loc key="RequestTimeOff" /></h3>
                 </div>
                 <div class="card-body">
                     <form method="post" asp-page-handler="TimeOff">
@@ -99,7 +99,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-block">
-                            <span>📝</span>
+                            <span><icon name="edit" /></span>
                             <span><loc key="SubmitTimeOffRequest" /></span>
                         </button>
                     </form>
@@ -143,7 +143,7 @@
                     else
                     {
                         <div class="empty-state">
-                            <div class="empty-state-icon-large">📅</div>
+                            <div class="empty-state-icon-large"><icon name="calendar" /></div>
                             <p class="text-subtle"><loc key="NoUpcomingShiftsForSwapping" /></p>
                         </div>
                     }
@@ -213,7 +213,7 @@
                     else
                     {
                         <div class="empty-state">
-                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-icon"><icon name="file-text" /></div>
                             <p class="text-subtle"><loc key="NoTimeOffRequestsYet" /></p>
                         </div>
                     }

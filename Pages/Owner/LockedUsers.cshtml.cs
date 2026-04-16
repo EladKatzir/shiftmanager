@@ -11,7 +11,7 @@ namespace ShiftManager.Pages.Owner;
 /// Page for viewing and unlocking locked user accounts.
 /// Fixes A-06, I-01, I-05.
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner page requires Grant:AdminAccess (all 107 grants)
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner page requires Grant:AdminAccess (all ~132 grants)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class LockedUsersModel : PageModel
 {

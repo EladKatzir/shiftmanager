@@ -13,7 +13,7 @@ namespace ShiftManager.Pages.Owner.Hub;
 /// <summary>
 /// SeedData diagnostic page - Shows seed status, allows seeding, and displays diagnostic info.
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner seed data diagnostic requires Grant:AdminAccess (all 107 grants)
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner seed data diagnostic requires Grant:AdminAccess (all ~132 grants)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class SeedDataModel : PageModel
 {

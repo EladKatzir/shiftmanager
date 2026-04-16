@@ -21,7 +21,7 @@
 <div class="email-config-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">📧</span>
+            <span class="page-icon"><icon name="mail" /></span>
             <loc key="Owner_EmailConfig" />
         </h1>
         <p class="page-subtitle"><loc key="Owner_EmailConfig_Subtitle" /></p>
@@ -71,7 +71,7 @@
         </div>
         <form method="post" asp-page-handler="TestConnection" style="display: inline;">
             <button type="submit" class="btn btn-secondary btn-sm status-retest-btn">
-                📧 <loc key="Status_RetestEmail" />
+                <icon name="mail" /> <loc key="Status_RetestEmail" />
             </button>
         </form>
     </div>
@@ -79,14 +79,14 @@
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
-            <strong>✅ Success:</strong> @Model.Success
+            <strong><icon name="check" /> Success:</strong> @Model.Success
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-error">
-            <strong>❌ Error:</strong> @Model.Error
+            <strong><icon name="x" /> Error:</strong> @Model.Error
         </div>
     }
 
@@ -95,7 +95,7 @@
     {
         <div class="config-card" style="border-inline-start: 4px solid var(--primary); margin-bottom: 1.5rem;">
             <div class="card-header">
-                <h2>🌐 <loc key="Owner_EmailConfig_GlobalConfig">Global Email Configuration</loc></h2>
+                <h2><icon name="globe" /> <loc key="Owner_EmailConfig_GlobalConfig">Global Email Configuration</loc></h2>
                 <div class="form-group-inline">
                     <span class="badge badge-primary" style="font-size: 0.75rem;"><loc key="Owner_EmailConfig_GlobalBadge">Applies to all companies</loc></span>
                 </div>
@@ -121,7 +121,7 @@
                         <input asp-for="GlobalEmailApiKey" type="password" class="form-control" placeholder="@(Model.GlobalHasExistingKey ? "••••••••••••" : Localizer["Owner_EmailConfig_ApiKey_Placeholder"])" />
                         @if (Model.GlobalHasExistingKey)
                         {
-                            <small class="form-text" style="color: var(--success);">✓ <loc key="Owner_EmailConfig_KeyConfigured">API key is configured</loc></small>
+                            <small class="form-text" style="color: var(--success);"><icon name="check" /> <loc key="Owner_EmailConfig_KeyConfigured">API key is configured</loc></small>
                         }
                     </div>
                     <div class="form-group">
@@ -139,7 +139,7 @@
     @* Effective Configuration — read-only summary *@
     <div class="config-card" style="border-inline-start: 4px solid var(--success); margin-bottom: 1.5rem;">
         <div class="card-header">
-            <h2>📋 <loc key="Owner_EmailConfig_EffectiveConfig">Active Configuration</loc></h2>
+            <h2><icon name="file-text" /> <loc key="Owner_EmailConfig_EffectiveConfig">Active Configuration</loc></h2>
             <span class="badge @(Model.EffectiveSource == "override" ? "badge-warning" : "badge-primary")" style="font-size: 0.75rem;">
                 @(Model.EffectiveSource == "override" ? Localizer["Owner_EmailConfig_SourceOverride", "Company Override"] : Localizer["Owner_EmailConfig_SourceGlobal", "Global"])
             </span>
@@ -217,7 +217,7 @@
             <form method="post">
                 <div class="config-card">
                     <div class="card-header">
-                        <h2>📧 <loc key="Owner_EmailConfig_ServiceConfig" /></h2>
+                        <h2><icon name="mail" /> <loc key="Owner_EmailConfig_ServiceConfig" /></h2>
                         <div class="form-group-inline">
                             <label class="toggle-switch">
                                 <input type="checkbox" asp-for="EmailEnabled" />
@@ -232,7 +232,7 @@
                             <div class="label-with-help">
                                 <label asp-for="EmailApiUrl"><loc key="Owner_EmailConfig_ApiUrl" /></label>
                                 <button type="button" class="help-button" onclick="toggleFieldHelp('email-url-help')" loc-title="Help_ShowDetails">
-                                    ❓
+                                    <icon name="help-circle" />
                                 </button>
                             </div>
                             <input asp-for="EmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" id="email-url-input" onblur="validateUrl(this)" />
@@ -261,15 +261,15 @@
                                     <loc key="Owner_EmailConfig_ApiKey" />
                                     @if (Model.HasExistingKey)
                                     {
-                                        <span class="badge badge-success">✅ <loc key="Configured" /></span>
+                                        <span class="badge badge-success"><icon name="check" /> <loc key="Configured" /></span>
                                     }
                                 </label>
                                 <div class="help-buttons-group">
                                     <button type="button" class="help-button" onclick="toggleFieldHelp('email-key-help')" loc-title="Help_ShowDetails">
-                                        ❓
+                                        <icon name="help-circle" />
                                     </button>
                                     <button type="button" class="find-this-button" onclick="openModal('find-apikey-modal')" loc-title="FindThis_HowToFind">
-                                        🔍 <loc key="FindThis_Button" />
+                                        <icon name="search" /> <loc key="FindThis_Button" />
                                     </button>
                                 </div>
                             </div>
@@ -306,7 +306,7 @@
                             <div class="label-with-help">
                                 <label asp-for="EmailFromAddress"><loc key="Owner_EmailConfig_FromAddress" /></label>
                                 <button type="button" class="help-button" onclick="toggleFieldHelp('email-from-help')" loc-title="Help_ShowDetails">
-                                    ❓
+                                    <icon name="help-circle" />
                                 </button>
                             </div>
                             <input asp-for="EmailFromAddress" type="email" class="form-control" placeholder="noreply@example.com" id="email-from-input" onblur="validateEmail(this)" />
@@ -331,7 +331,7 @@
                     </div>
 
                     <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">💾 <loc key="SaveConfiguration" /></button>
+                        <button type="submit" class="btn btn-primary"><icon name="save" /> <loc key="SaveConfiguration" /></button>
                     </div>
                 </div>
             </form>
@@ -343,7 +343,7 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>🧪 <loc key="Owner_EmailConfig_TestEmail" /></h2>
+                <h2><icon name="help-circle" /> <loc key="Owner_EmailConfig_TestEmail" /></h2>
             </div>
             <div class="card-body">
                 <p><loc key="Owner_EmailConfig_TestEmail_Desc" /></p>
@@ -352,7 +352,7 @@
                         <label for="testEmail"><loc key="Owner_EmailConfig_RecipientEmail" /></label>
                         <input type="email" name="testEmail" class="form-control" placeholder="test@example.com" required />
                     </div>
-                    <button type="submit" class="btn btn-secondary">📨 <loc key="Owner_EmailConfig_SendTestEmail" /></button>
+                    <button type="submit" class="btn btn-secondary"><icon name="mail" /> <loc key="Owner_EmailConfig_SendTestEmail" /></button>
                 </form>
             </div>
         </div>
@@ -363,7 +363,7 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>🔍 <loc key="Owner_EmailConfig_TestDiagnostics" /></h2>
+                <h2><icon name="search" /> <loc key="Owner_EmailConfig_TestDiagnostics" /></h2>
             </div>
             <div class="card-body">
                 <div class="diagnostics-output">
@@ -376,13 +376,13 @@
     @* Recent Email Logs *@
     <div class="config-card">
         <div class="card-header">
-            <h2>📋 <loc key="Owner_EmailConfig_RecentLogs" /></h2>
+            <h2><icon name="file-text" /> <loc key="Owner_EmailConfig_RecentLogs" /></h2>
             <div class="header-actions">
                 <a href="/Owner/EmailConfig?handler=ExportLogsJson&count=100" class="btn btn-secondary btn-sm">
-                    📥 <loc key="Export" /> JSON (100)
+                    <icon name="download" /> <loc key="Export" /> JSON (100)
                 </a>
                 <a href="/Owner/EmailConfig?handler=ExportLogsCsv&count=100" class="btn btn-secondary btn-sm">
-                    📥 <loc key="Export" /> CSV (100)
+                    <icon name="download" /> <loc key="Export" /> CSV (100)
                 </a>
             </div>
         </div>
@@ -409,11 +409,11 @@
                                 <td>
                                     @if (log.Success)
                                     {
-                                        <span class="status-badge status-success">✅ @log.ResponseStatusCode</span>
+                                        <span class="status-badge status-success"><icon name="check" /> @log.ResponseStatusCode</span>
                                     }
                                     else
                                     {
-                                        <span class="status-badge status-failure">❌ @(log.ResponseStatusCode?.ToString() ?? "N/A")</span>
+                                        <span class="status-badge status-failure"><icon name="x" /> @(log.ResponseStatusCode?.ToString() ?? "N/A")</span>
                                     }
                                 </td>
                                 <td>@log.DurationMs ms</td>
@@ -434,7 +434,7 @@
     {
         <div class="config-card">
             <div class="card-header">
-                <h2>⚠️ <loc key="Owner_EmailConfig_RecentFailures" /></h2>
+                <h2><icon name="alert-triangle" /> <loc key="Owner_EmailConfig_RecentFailures" /></h2>
             </div>
             <div class="card-body">
                 @foreach (var log in Model.RecentFailures)
@@ -454,7 +454,7 @@
     @* Email Status *@
     <div class="config-card">
         <div class="card-header">
-            <h2>📊 <loc key="Owner_EmailConfig_Statistics" /></h2>
+            <h2><icon name="bar-chart-2" /> <loc key="Owner_EmailConfig_Statistics" /></h2>
         </div>
         <div class="card-body">
             <div class="stats-grid">
@@ -481,12 +481,12 @@
     @* Email Templates Navigation *@
     <div class="card mt-4">
         <div class="card-header">
-            <h5 class="mb-0">📝 <loc key="Owner_EmailConfig_Templates" /></h5>
+            <h5 class="mb-0"><icon name="edit" /> <loc key="Owner_EmailConfig_Templates" /></h5>
         </div>
         <div class="card-body">
             <p class="text-muted"><loc key="Owner_EmailConfig_Templates_Desc" /></p>
             <a href="/Owner/EmailTemplates" class="btn btn-primary">
-                <span>📝</span> <loc key="Owner_EmailConfig_ManageTemplates" />
+                <span><icon name="edit" /></span> <loc key="Owner_EmailConfig_ManageTemplates" />
             </a>
         </div>
     </div>
@@ -496,9 +496,9 @@
 <div id="find-apikey-modal" class="modal-overlay" onclick="closeModal('find-apikey-modal')" style="display: none;">
     <div class="modal-container" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <h3>🔍 <loc key="FindThis_Email_ApiKey_Title" /></h3>
+            <h3><icon name="search" /> <loc key="FindThis_Email_ApiKey_Title" /></h3>
             <button type="button" class="modal-close-btn" onclick="closeModal('find-apikey-modal')" loc-title="Close">
-                ✕
+                <icon name="x" />
             </button>
         </div>
         <div class="modal-body">
@@ -524,7 +524,7 @@
                 </div>
             </div>
             <div class="modal-note">
-                <strong>🔒 <loc key="Security" />:</strong> <loc key="FindThis_Email_ApiKey_SecurityNote" />
+                <strong><icon name="lock" /> <loc key="Security" />:</strong> <loc key="FindThis_Email_ApiKey_SecurityNote" />
             </div>
         </div>
         <div class="modal-footer">

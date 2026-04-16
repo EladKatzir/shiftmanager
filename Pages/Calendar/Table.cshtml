@@ -1572,14 +1572,14 @@
 </div>
 
 <button class="add-shift-row-btn" onclick="showAddShiftRowModal()">
-    <span>➕</span>
+    <span><icon name="plus" /></span>
     <span><loc key="AddCustomShiftRow" /></span>
 </button>
 
 @if (!Model.ShiftTypes.Any())
 {
     <div class="alert alert--warning" style="margin: 1rem 0; padding: 1rem; border-radius: 0.5rem;">
-        <strong>⚠️ <loc key="Calendar_NoShiftTypesConfigured" /></strong>
+        <strong><icon name="alert-triangle" /> <loc key="Calendar_NoShiftTypesConfigured" /></strong>
         <p style="margin: 0.5rem 0 0 0;">
             <a href="/Owner/Blueprints"><loc key="Calendar_ConfigureShiftTypes" /></a>
         </p>
@@ -1620,7 +1620,7 @@
                                 <small style="color: var(--text-muted);">@Localization.FormatTime(shiftType.Start) - @Localization.FormatTime(shiftType.End)</small>
                                 @if (Model.IsMoleculeMode && shiftType.CompanyId.HasValue && Model.CompanyNames.TryGetValue(shiftType.CompanyId.Value, out var ownerName))
                                 {
-                                    <span class="company-badge" title="@ownerName">🏢 @ownerName</span>
+                                    <span class="company-badge" title="@ownerName"><icon name="building-2" /> @ownerName</span>
                                 }
                             </div>
                             <div class="shift-metadata" id="metadata-edit-@shiftType.Id" style="display: none;">
@@ -1643,9 +1643,9 @@
                             </div>
                         </div>
                         <div style="display: flex; gap: 0.25rem; margin-top: 0.5rem;">
-                            <button class="shift-edit-btn" id="edit-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, true)">✏️ @Localizer["Edit"]</button>
-                            <button class="shift-edit-btn" id="save-btn-@shiftType.Id" onclick="saveShiftMetadata(@shiftType.Id)" style="display: none;">💾 @Localizer["Save"]</button>
-                            <button class="shift-edit-btn" id="cancel-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, false)" style="display: none;">❌ @Localizer["Cancel"]</button>
+                            <button class="shift-edit-btn" id="edit-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, true)"><icon name="pencil" /> @Localizer["Edit"]</button>
+                            <button class="shift-edit-btn" id="save-btn-@shiftType.Id" onclick="saveShiftMetadata(@shiftType.Id)" style="display: none;"><icon name="save" /> @Localizer["Save"]</button>
+                            <button class="shift-edit-btn" id="cancel-btn-@shiftType.Id" onclick="toggleEditMode(@shiftType.Id, false)" style="display: none;"><icon name="x" /> @Localizer["Cancel"]</button>
                         </div>
                     </td>
                     @foreach (var date in Model.Dates)
@@ -1703,7 +1703,7 @@
                                                  onclick="handleUnassignedSlotClick(this, event)">
                                                 <div class="assignment-slot-content">
                                                     <div><loc key="SelectEmployee" /></div>
-                                                    <div class="slot-actions">👤</div>
+                                                    <div class="slot-actions"><icon name="user" /></div>
                                                 </div>
                                             </div>
                                         }
@@ -1722,10 +1722,10 @@
                                             }
                                         }
                                         <div class="adjust-headcount-btn" onclick="showAdjustHeadcount(@instanceId, event)" title="@Localizer["AdjustRequiredHeadcount"]">
-                                            ⚙️
+                                            <icon name="settings" />
                                         </div>
                                         <button class="shift-delete-btn" onclick="confirmDeleteShift(@instanceId, event)" aria-label="@Localizer["DeleteShift"]" title="@Localizer["DeleteShift"]">
-                                            <span>🗑️</span>
+                                            <span><icon name="trash-2" /></span>
                                         </button>
                                     </div>
                                 </div>
@@ -1733,7 +1733,7 @@
                             else
                             {
                                 <div class="add-assignment-btn" onclick="showAmountPicker(this, event)">
-                                    <span>➕ <loc key="AddAssignment" /></span>
+                                    <span><icon name="plus" /> <loc key="AddAssignment" /></span>
                                 </div>
                             }
 
@@ -1803,11 +1803,11 @@
 <!-- Context Menu for Slots -->
 <div class="action-menu" id="slotContextMenu" role="menu">
     <div class="action-menu-item" role="menuitem" onclick="showAddTraineeMenu(event)">
-        <span>👤</span>
+        <span><icon name="user" /></span>
         <span id="traineeMenuLabel"><loc key="AddTrainee" /></span>
     </div>
     <div class="action-menu-item" role="menuitem" id="removeTraineeItem" onclick="removeTrainee(event)" style="display: none;">
-        <span>🚫</span>
+        <span><icon name="ban" /></span>
         <span><loc key="RemoveTrainee" /></span>
     </div>
     <div class="action-menu-item" role="menuitem" onclick="showChangeUserMenu(event)">
@@ -1815,7 +1815,7 @@
         <span><loc key="ChangePrimaryUser" /></span>
     </div>
     <div class="action-menu-item danger" role="menuitem" onclick="removeUser(event)">
-        <span>❌</span>
+        <span><icon name="x" /></span>
         <span><loc key="RemoveUser" /></span>
     </div>
 </div>
@@ -1854,7 +1854,7 @@
 <div class="fill-options-modal" id="fillOptionsModal">
     <div class="fill-options-content">
         <div class="fill-options-header">
-            <h3>📋 <loc key="Calendar_CopyShiftAcrossDays" /></h3>
+            <h3><icon name="file-text" /> <loc key="Calendar_CopyShiftAcrossDays" /></h3>
             <button onclick="closeFillOptions()" loc-aria-label="Aria_CloseDialog" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">×</button>
         </div>
 
@@ -1870,7 +1870,7 @@
             </div>
 
             <div class="fill-option-item" data-mode="staffing" onclick="selectFillOption('staffing')">
-                <div class="fill-option-title">👥 <loc key="Calendar_CopyStaffingOnly" /></div>
+                <div class="fill-option-title"><icon name="users" /> <loc key="Calendar_CopyStaffingOnly" /></div>
                 <div class="fill-option-desc"><loc key="Calendar_CopyStaffingOnlyDesc" /></div>
             </div>
 
@@ -2979,7 +2979,7 @@ function updateMoleculeFilter() {
 <div id="rosterDock" class="roster-dock">
     <div class="roster-dock-header">
         <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">
-            👥 <loc key="Roster" />
+            <icon name="users" /> <loc key="Roster" />
         </h3>
         <button class="close-roster-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">
             ×
@@ -3002,7 +3002,7 @@ function updateMoleculeFilter() {
 
 <!-- Roster Dock Toggle Button (Fixed Position) -->
 <button id="rosterDockToggle" class="roster-toggle-btn" loc-title="Title_OpenRosterDock">
-    ☰ <loc key="Roster" />
+    <icon name="menu" /> <loc key="Roster" />
 </button>
 
 <!-- Radar Mode Toggle Button (Fixed Position) -->

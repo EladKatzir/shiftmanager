@@ -18,7 +18,7 @@
 <div class="db-console-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">💾</span>
+            <span class="page-icon"><icon name="database" /></span>
             @Localizer["Owner_DatabaseConsole"]
         </h1>
         <p class="page-subtitle"><loc key="Owner_DatabaseConsole_Subtitle" /></p>
@@ -27,32 +27,32 @@
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-error">
-            <strong>❌ Error:</strong> @Model.Error
+            <strong><icon name="x" /> Error:</strong> @Model.Error
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.QueryResult))
     {
         <div class="alert alert-success">
-            <strong>✅ Success:</strong> @Model.QueryResult
+            <strong><icon name="check" /> Success:</strong> @Model.QueryResult
         </div>
     }
 
     <div class="console-layout">
         <div class="console-sidebar">
-            <h3>📋 <loc key="Owner_DatabaseConsole_Tables" /></h3>
+            <h3><icon name="file-text" /> <loc key="Owner_DatabaseConsole_Tables" /></h3>
             <div class="tables-list">
                 @foreach (var table in Model.Tables)
                 {
                     <div class="table-item" onclick="insertTableName('@table')">
-                        <span class="table-icon">📊</span>
+                        <span class="table-icon"><icon name="bar-chart-2" /></span>
                         <span class="table-name">@table</span>
                     </div>
                 }
             </div>
 
             <div class="quick-queries">
-                <h3>⚡ <loc key="Owner_DatabaseConsole_QuickQueries" /></h3>
+                <h3><icon name="help-circle" /> <loc key="Owner_DatabaseConsole_QuickQueries" /></h3>
                 <button type="button" class="quick-query-btn" onclick="setQuery('SELECT * FROM Users LIMIT 10')">
                     <loc key="Owner_DatabaseConsole_ListUsers" />
                 </button>
@@ -90,8 +90,8 @@
                     <textarea asp-for="Query" class="query-textarea" rows="8"
                               placeholder="@Localizer["Owner_DatabaseConsole_QueryPlaceholder"]"></textarea>
                     <div class="query-actions">
-                        <button type="submit" class="btn btn-primary">▶️ <loc key="Owner_DatabaseConsole_Execute" /></button>
-                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('Query').value = ''">🗑️ <loc key="Clear" /></button>
+                        <button type="submit" class="btn btn-primary"><icon name="chevron-right" /> <loc key="Owner_DatabaseConsole_Execute" /></button>
+                        <button type="button" class="btn btn-ghost" onclick="document.getElementById('Query').value = ''"><icon name="trash-2" /> <loc key="Clear" /></button>
                     </div>
                 </div>
             </form>
@@ -99,14 +99,14 @@
             @if (Model.IsResultTruncated)
             {
                 <div class="alert alert-warning" style="background: var(--warning-soft, #fff3cd); border: 1px solid var(--warning, #ffc107); color: var(--warning-text, #856404); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                    <strong>⚠️ Results limited to 1,000 rows.</strong> Add a LIMIT clause to your query for specific ranges.
+                    <strong><icon name="alert-triangle" /> Results limited to 1,000 rows.</strong> Add a LIMIT clause to your query for specific ranges.
                 </div>
             }
 
             @if (Model.ResultRows.Any())
             {
                 <div class="results-container">
-                    <h3>📊 <loc key="Owner_DatabaseConsole_QueryResults" /></h3>
+                    <h3><icon name="bar-chart-2" /> <loc key="Owner_DatabaseConsole_QueryResults" /></h3>
                     <div class="results-table-wrapper">
                         <table class="results-table data-table--sticky-header">
                             <thead>

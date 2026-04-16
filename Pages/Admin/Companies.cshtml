@@ -434,7 +434,7 @@
 @if (!string.IsNullOrEmpty(Model.Success))
 {
     <div class="alert-success">
-        <span style="font-size: 1.25rem;">✓</span>
+        <span style="font-size: 1.25rem;"><icon name="check" /></span>
         <span>@Model.Success</span>
     </div>
 }
@@ -447,7 +447,7 @@
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert-error">
-            <span style="font-size: 1.25rem;">✗</span>
+            <span style="font-size: 1.25rem;"><icon name="x" /></span>
             <span>@Model.Error</span>
         </div>
     }
@@ -538,7 +538,7 @@
         </fieldset>
 
         <button class="btn btn-primary" type="submit">
-            <span>➕</span>
+            <span><icon name="plus" /></span>
             <span>@Localizer["CreateCompanyManager"]</span>
         </button>
     </form>
@@ -616,7 +616,7 @@
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@c.Id" />
                                     <button type="submit" class="btn btn-danger">
-                                        <span>🗑️</span>
+                                        <span><icon name="trash" /></span>
                                         <span>@Localizer["Delete"]</span>
                                     </button>
                                 </form>
@@ -652,7 +652,7 @@
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary">
-                    <span>💾</span>
+                    <span><icon name="save" /></span>
                     <span>@Localizer["Rename"]</span>
                 </button>
                 <button type="button" class="btn btn-ghost" onclick="closeRenameModal()">@Localizer["Cancel"]</button>

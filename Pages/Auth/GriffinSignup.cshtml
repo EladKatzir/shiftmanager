@@ -24,8 +24,8 @@
         <div class="auth-hero">
             <span class="auth-hero__float" aria-hidden="true">🔐</span>
             <span class="auth-hero__float" aria-hidden="true">🗓️</span>
-            <span class="auth-hero__float" aria-hidden="true">👥</span>
-            <span class="auth-hero__float" aria-hidden="true">✓</span>
+            <span class="auth-hero__float" aria-hidden="true"><icon name="users" /></span>
+            <span class="auth-hero__float" aria-hidden="true"><icon name="check" /></span>
 
             <div class="auth-hero__content">
                 <img src="~/images/shifty-logo.svg" alt="Shifty Logo" class="auth-hero__logo" />
@@ -46,7 +46,7 @@
                 @if (!string.IsNullOrEmpty(Model.PendingRequestMessage))
                 {
                     <div class="auth-alert auth-alert--info" style="background: var(--success-soft); border-color: var(--success); color: var(--success);">
-                        <span class="auth-alert__icon">✓</span>
+                        <span class="auth-alert__icon"><icon name="check" /></span>
                         <div class="auth-alert__content">
                             <div class="auth-alert__title">@Localizer["RequestSubmitted"]</div>
                             <div>@Model.PendingRequestMessage</div>
@@ -58,7 +58,7 @@
                 @if (!string.IsNullOrEmpty(Model.Error))
                 {
                     <div class="auth-alert auth-alert--error">
-                        <span class="auth-alert__icon">❌</span>
+                        <span class="auth-alert__icon"><icon name="x" /></span>
                         <div class="auth-alert__content">@Model.Error</div>
                     </div>
                 }

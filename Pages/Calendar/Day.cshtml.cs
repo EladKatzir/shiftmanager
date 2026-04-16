@@ -300,7 +300,7 @@ public class DayModel : PageModel
             AssigneeName = chore.User?.DisplayName ?? "Unknown",
             TimeRange = "",
             ColorClass = "chore-green",
-            Icon = "🧹",
+            Icon = "sparkles",
             IsCurrentUser = chore.UserId == currentUserId,
             ManagementUrl = $"/Public/Chores?year={chore.Date.Year}&month={chore.Date.Month}",
             Details = string.IsNullOrEmpty(chore.Notes) ? chore.Title : $"{chore.Title} - {chore.Notes}"

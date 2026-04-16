@@ -521,10 +521,11 @@
             display: inline-block;
         }
 
-        .legend-item--vacation .legend-dot { background: #10B981; }
-        .legend-item--shift .legend-dot { background: #3B82F6; }
-        .legend-item--chore .legend-dot { background: #F59E0B; }
-        .legend-item--duty .legend-dot { background: #8B5CF6; }
+        /* 2026-04-15: aligned to unified calendar palette tokens (tokens.css). */
+        .legend-item--vacation .legend-dot { background: var(--vacation); }
+        .legend-item--shift .legend-dot { background: var(--shift-morning); }
+        .legend-item--chore .legend-dot { background: var(--chore); }
+        .legend-item--duty .legend-dot { background: var(--onduty); }
 
         /* Table Wrapper */
         .overview-calendar__table-wrapper {

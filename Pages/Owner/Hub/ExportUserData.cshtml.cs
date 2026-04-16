@@ -15,7 +15,7 @@ namespace ShiftManager.Pages.Owner.Hub;
 /// With a userId: immediately downloads single-user JSON export (existing behaviour).
 /// QA Item 65 / E-06.
 /// </summary>
-// SECURITY-AUDITED: IgnoreQueryFilters in UserDataExportService are SAFE — OwnerHub requires Grant:AdminAccess (all 107 grants)
+// SECURITY-AUDITED: IgnoreQueryFilters in UserDataExportService are SAFE — OwnerHub requires Grant:AdminAccess (all ~132 grants)
 // SECURITY-AUDITED: User list query uses IgnoreQueryFilters — SAFE — Owner has cross-tenant read access by design (Grant:AdminAccess)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class ExportUserDataModel : PageModel

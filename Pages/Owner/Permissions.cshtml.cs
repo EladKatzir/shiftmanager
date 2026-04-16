@@ -8,7 +8,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// Owner Permissions Dashboard - Summary stats and links to grant management pages
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner page requires Grant:AdminAccess (all 107 grants)
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner page requires Grant:AdminAccess (all ~132 grants)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class PermissionsModel : PageModel
 {

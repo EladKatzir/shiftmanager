@@ -28,7 +28,7 @@
 <div class="calendar-header">
     <div class="header-main">
         <h2>
-            <span class="calendar-icon">📅</span>
+            <span class="calendar-icon"><icon name="calendar" /></span>
             Week of @Localization.FormatMediumDate(Model.CurrentWeekStart)
         </h2>
         @* ✅ PHASE 20: Show My Items toggle *@
@@ -44,7 +44,7 @@
             <span class="nav-text">@Model.Previous.Label</span>
         </a>
         <a class="btn btn-primary" href="/Calendar/Week">
-            <span class="nav-icon">📅</span>
+            <span class="nav-icon"><icon name="calendar" /></span>
             <span class="nav-text"><loc key="ThisWeek" /></span>
         </a>
         <a class="btn btn-ghost" href="/Calendar/Week?year=@Model.Next.WeekStart.Year&month=@Model.Next.WeekStart.Month&day=@Model.Next.WeekStart.Day">
@@ -58,7 +58,7 @@
     {
         <div class="calendar-metrics">
             <div class="metric-item metric-shifts">
-                <span class="metric-icon">📅</span>
+                <span class="metric-icon"><icon name="calendar" /></span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.VisibleShiftCount</span>
                     <span class="metric-label"><loc key="Calendar_Shifts" /></span>
@@ -68,7 +68,7 @@
             @if (Model.VisibleChoreCount > 0)
             {
                 <div class="metric-item metric-shifts">
-                    <span class="metric-icon">🧹</span>
+                    <span class="metric-icon"><icon name="star" /></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.VisibleChoreCount</span>
                         <span class="metric-label"><loc key="Calendar_Chores" /></span>
@@ -79,7 +79,7 @@
             @if (Model.VisibleOnDutyCount > 0)
             {
                 <div class="metric-item metric-shifts">
-                    <span class="metric-icon">🎯</span>
+                    <span class="metric-icon"><icon name="check-circle" /></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.VisibleOnDutyCount</span>
                         <span class="metric-label"><loc key="Calendar_OnDuty" /></span>
@@ -90,7 +90,7 @@
             @if (Model.PendingItemsCount > 0)
             {
                 <div class="metric-item metric-pending">
-                    <span class="metric-icon">⏳</span>
+                    <span class="metric-icon"><icon name="clock" /></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.PendingItemsCount</span>
                         <span class="metric-label"><loc key="Calendar_Pending" /></span>
@@ -100,7 +100,7 @@
 
             <require-grant key="ViewAnalytics">
             <div class="metric-item metric-coverage">
-                <span class="metric-icon">✅</span>
+                <span class="metric-icon"><icon name="check" /></span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.CoveragePercent%</span>
                     <span class="metric-label"><loc key="Calendar_Coverage" /></span>
@@ -127,19 +127,19 @@
     <span class="quick-actions-label"><loc key="Calendar_QuickActions" />:</span>
     <require-grant key="ViewShifts">
     <a class="btn btn-secondary btn-sm" href="/Calendar/Table">
-        <span>📊</span>
+        <span><icon name="bar-chart-2" /></span>
         <loc key="Calendar_ManageShifts" />
     </a>
     </require-grant>
     <require-grant key="ViewChores">
     <a class="btn btn-secondary btn-sm" href="/Public/Chores">
-        <span>🧹</span>
+        <span><icon name="star" /></span>
         <loc key="Calendar_ManageChores" />
     </a>
     </require-grant>
     <require-grant key="ViewDuties">
     <a class="btn btn-secondary btn-sm" href="/Public/OnDuty">
-        <span>🛡️</span>
+        <span><icon name="shield" /></span>
         <loc key="Calendar_ManageOnDuty" />
     </a>
     </require-grant>
@@ -260,7 +260,7 @@
                                 else if (item.Type == CalendarItemType.Shift)
                                 {
                                     <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
-                                        <span class="manage-icon">⚙️</span>
+                                        <span class="manage-icon"><icon name="settings" /></span>
                                     </a>
                                 }
                             }
@@ -310,7 +310,7 @@
                                         else if (item.Type == CalendarItemType.Shift)
                                         {
                                             <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
-                                                <span class="manage-icon">⚙️</span>
+                                                <span class="manage-icon"><icon name="settings" /></span>
                                             </a>
                                         }
                                     }

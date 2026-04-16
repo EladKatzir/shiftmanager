@@ -21,7 +21,7 @@
 <div class="backup-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">💾</span>
+            <span class="page-icon"><icon name="save" /></span>
             @Localizer["Owner_Backup"]
         </h1>
         <p class="page-subtitle"><loc key="Owner_Backup_Subtitle" /></p>
@@ -30,14 +30,14 @@
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
-            <strong>✅ Success:</strong> @Model.Success
+            <strong><icon name="check" /> Success:</strong> @Model.Success
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-error">
-            <strong>❌ Error:</strong> @Model.Error
+            <strong><icon name="x" /> Error:</strong> @Model.Error
         </div>
     }
 
@@ -79,9 +79,9 @@
     </div>
 
     <div class="backup-actions-card">
-        <h2>🔧 <loc key="Owner_Backup_Actions" /></h2>
+        <h2><icon name="settings" /> <loc key="Owner_Backup_Actions" /></h2>
         <form method="post" asp-page-handler="CreateBackup">
-            <button type="submit" class="btn btn-primary">💾 <loc key="Owner_Backup_CreateNew" /></button>
+            <button type="submit" class="btn btn-primary"><icon name="save" /> <loc key="Owner_Backup_CreateNew" /></button>
         </form>
         <p class="help-text">
             Backups are created automatically on application startup and daily at 03:00. A maximum of 2 system backups are retained. You can also create manual backups using the button above.
@@ -89,12 +89,12 @@
     </div>
 
     <div class="backups-list-card">
-        <h2>📦 <loc key="Owner_Backup_AvailableBackups" /></h2>
+        <h2><icon name="folder" /> <loc key="Owner_Backup_AvailableBackups" /></h2>
 
         @if (!Model.Backups.Any())
         {
             <div class="empty-state">
-                <div class="empty-icon">📦</div>
+                <div class="empty-icon"><icon name="folder" size="xl" /></div>
                 <p><loc key="Owner_Backup_NoBackupsFound" /></p>
                 <small><loc key="Owner_Backup_CreateFirstBackup" /></small>
             </div>
@@ -116,7 +116,7 @@
                         {
                             <tr>
                                 <td>
-                                    <span class="file-icon">💾</span>
+                                    <span class="file-icon"><icon name="save" /></span>
                                     <span class="file-name">@backup.FileName</span>
                                 </td>
                                 <td>@backup.SizeFormatted</td>
@@ -126,7 +126,7 @@
                                         <a href="/Owner/Backup?handler=DownloadBackup&backupFileName=@backup.FileName"
                                            class="btn-action btn-download"
                                            loc-title="Owner_Backup_Download">
-                                            ⬇️
+                                            <icon name="download" />
                                         </a>
                                         <form method="post" asp-page-handler="RestoreBackup" class="inline-form"
                                               data-confirm-modal
@@ -138,7 +138,7 @@
                                             <button type="submit"
                                                     class="btn-action btn-restore"
                                                     loc-title="Owner_Backup_Restore">
-                                                ♻️
+                                                <icon name="refresh-cw" />
                                             </button>
                                         </form>
                                         <form method="post" asp-page-handler="DeleteBackup" class="inline-form"
@@ -151,7 +151,7 @@
                                             <button type="submit"
                                                     class="btn-action btn-delete"
                                                     loc-title="Owner_Backup_Delete">
-                                                🗑️
+                                                <icon name="trash-2" />
                                             </button>
                                         </form>
                                     </div>
@@ -167,7 +167,7 @@
     @if (Model.SystemBackups.Any())
     {
         <div class="backups-list-card">
-            <h2>🔄 System Backups (Auto-generated)</h2>
+            <h2><icon name="refresh-cw" /> System Backups (Auto-generated)</h2>
             <div class="backups-table-wrapper">
                 <table class="backups-table">
                     <thead>
@@ -183,7 +183,7 @@
                         {
                             <tr>
                                 <td>
-                                    <span class="file-icon">🔄</span>
+                                    <span class="file-icon"><icon name="refresh-cw" /></span>
                                     <span class="file-name">@backup.FileName</span>
                                 </td>
                                 <td>@backup.SizeFormatted</td>
@@ -193,7 +193,7 @@
                                         <a href="/Owner/Backup?handler=DownloadBackup&backupFileName=@backup.FileName"
                                            class="btn-action btn-download"
                                            loc-title="Owner_Backup_Download">
-                                            ⬇️
+                                            <icon name="download" />
                                         </a>
                                     </div>
                                 </td>
@@ -206,7 +206,7 @@
     }
 
     <div class="info-card">
-        <h3>ℹ️ <loc key="Owner_Backup_ImportantInfo" /></h3>
+        <h3><icon name="info" /> <loc key="Owner_Backup_ImportantInfo" /></h3>
         <ul>
             <li><strong><loc key="Owner_Backup_AutoBackups" />:</strong> <loc key="Owner_Backup_AutoBackups_Desc" /></li>
             <li><strong><loc key="Owner_Backup_BeforeRestore" />:</strong> <loc key="Owner_Backup_BeforeRestore_Desc" /></li>

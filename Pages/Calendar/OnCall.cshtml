@@ -45,7 +45,8 @@
                         @foreach (var dutyType in Model.DutyTypes)
                         {
                             var isSelected = dutyType.TypeValue == Model.DutyTypeFilter;
-                            <option value="@dutyType.TypeValue" selected="@isSelected">@dutyType.Icon @dutyType.Name</option>
+                            @* <option> text nodes can't host tag helpers; icon is carried via data-icon at line ~173 for JS use. *@
+                            <option value="@dutyType.TypeValue" selected="@isSelected">@dutyType.Name</option>
                         }
                     </select>
                 </div>
@@ -88,7 +89,7 @@
             </div>
 
             <button type="button" class="btn btn-secondary cal-toolbar__print" onclick="window.print()" title="@Localizer["Print"]">
-                <span class="btn-icon">&#128438;</span>
+                <span class="btn-icon"><icon name="printer" /></span>
                 <span class="btn-text">@Localizer["Print"]</span>
             </button>
         </div>
@@ -97,7 +98,7 @@
         <div class="cal-toolbar__controls">
             <div class="cal-toolbar__toggle-group">
                 <button type="button" class="btn btn-ghost" onclick="openFilterModal()">
-                    <span class="btn-icon">&#128269;</span>
+                    <span class="btn-icon"><icon name="search" /></span>
                     @Localizer["Filter"]
                 </button>
                 <a href="?AreaId=@Model.AreaId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&DutyTypeFilter=@Model.DutyTypeFilter&JustMine=@(!Model.JustMine)"
@@ -111,7 +112,7 @@
                 <button type="button" id="quickEntryToggle" class="btn btn-ghost quick-entry-toggle"
                         onclick="window.CalendarQuickEntry && window.CalendarQuickEntry.toggle()"
                         title="@Localizer["QuickEntry_Toggle"]">
-                    <span class="btn-icon">&#9889;</span>
+                    <span class="btn-icon"><icon name="zap" /></span>
                     <loc key="QuickEntry_Toggle" />
                 </button>
                 <button type="button" id="quickEntryHelp" class="btn btn-ghost quick-entry-help-btn"
@@ -129,7 +130,17 @@
                     {
                         <div class="cal-toolbar__legend-item">
                             <span class="cal-toolbar__legend-color" style="background-color: @dutyType.Color"></span>
-                            <span class="cal-toolbar__legend-label">@dutyType.Icon @dutyType.Name</span>
+                            <span class="cal-toolbar__legend-label">
+                                @if (!string.IsNullOrEmpty(dutyType.Icon) && System.Text.RegularExpressions.Regex.IsMatch(dutyType.Icon, "^[a-z][a-z0-9-]*$"))
+                                {
+                                    <icon name="@dutyType.Icon" />
+                                }
+                                else
+                                {
+                                    @dutyType.Icon
+                                }
+                                @dutyType.Name
+                            </span>
                         </div>
                     }
                 </div>

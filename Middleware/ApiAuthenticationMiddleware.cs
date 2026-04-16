@@ -380,6 +380,13 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
+        // My API - per-user preferences endpoints (theme picker, future user-level config).
+        // Cookie-authenticated browser flow; always scoped to the current user claim.
+        if (path.StartsWithSegments("/Api/My", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return false;
     }
 

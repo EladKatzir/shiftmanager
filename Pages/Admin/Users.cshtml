@@ -458,7 +458,7 @@
            asp-route-UserFilterMoleculeId="@Model.UserFilterMoleculeId"
            asp-route-UserFilterJobTypeId="@Model.UserFilterJobTypeId"
            class="btn btn-primary">
-            📊 @Localizer["ExportCSV"]
+            <icon name="pie-chart" /> @Localizer["ExportCSV"]
         </a>
     </div>
 </div>
@@ -531,7 +531,7 @@
                       data-confirm-level="danger">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-primary" id="batchApproveBtn" disabled>
-                        ✓ @Localizer["ApproveSelected"]
+                        <icon name="check" /> @Localizer["ApproveSelected"]
                     </button>
                 </form>
             </div>
@@ -597,13 +597,13 @@
                                     <button class="btn btn-success btn-sm" type="button"
                                             onclick="approveSingleRequest(@request.Id)"
                                             aria-label="@Localizer["Approve"] @request.DisplayName">
-                                        ✓
+                                        <icon name="check" />
                                     </button>
                                     <button class="btn btn-danger btn-sm" type="button"
                                             data-display-name="@request.DisplayName"
                                             onclick="rejectSingleRequest(@request.Id, this.dataset.displayName)"
                                             aria-label="@Localizer["Reject"] @request.DisplayName">
-                                        ✗
+                                        <icon name="x" />
                                     </button>
                                 </div>
                             </td>
@@ -654,11 +654,11 @@
                         <td>
                             @if (request.Status == JoinRequestStatus.Approved)
                             {
-                                <span class="status-badge status-approved">✓ @Localizer["Approved"]</span>
+                                <span class="status-badge status-approved"><icon name="check" /> @Localizer["Approved"]</span>
                             }
                             else
                             {
-                                <span class="status-badge status-rejected">✗ @Localizer["Rejected"]</span>
+                                <span class="status-badge status-rejected"><icon name="x" /> @Localizer["Rejected"]</span>
                             }
                         </td>
                     </tr>
@@ -713,7 +713,7 @@
         @if (!string.IsNullOrEmpty(Model.Error))
         {
             <div class="alert alert-error" style="margin-bottom: 1rem;">
-                <span>✗</span>
+                <span><icon name="x" /></span>
                 <span>@Model.Error</span>
             </div>
         }
@@ -889,7 +889,7 @@
                     @if (u.IsLocked)
                     {
                         var lockoutTime = u.LockoutEnd.HasValue ? Localization.FormatTime(u.LockoutEnd.Value.ToLocalTime()) : "";
-                        <span style="color: var(--danger); margin-inline-start: 0.5rem;" title="@Localizer["LockedUntil", lockoutTime]">🔒</span>
+                        <span style="color: var(--danger); margin-inline-start: 0.5rem;" title="@Localizer["LockedUntil", lockoutTime]"><icon name="lock" /></span>
                     }
                 </td>
                 <td>@u.Email</td>
@@ -901,7 +901,7 @@
                     <div class="cell-display">
                         <span class="cell-display__value">@(u.JobTypeName ?? "-")</span>
                         <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["EditJobType"]" aria-label="@Localizer["EditJobType"]">
-                            ⚙️
+                            <icon name="settings" />
                         </button>
                     </div>
                     <div class="cell-edit">
@@ -915,8 +915,8 @@
                                     <option value="@jt.Id" selected="@(u.JobTypeId == jt.Id)">@jt.Name</option>
                                 }
                             </select>
-                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]">✓</button>
-                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]">✗</button>
+                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]"><icon name="check" /></button>
+                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]"><icon name="x" /></button>
                         </form>
                     </div>
                 </td>
@@ -925,7 +925,7 @@
                     <div class="cell-display">
                         <span class="cell-display__value">@(u.PrimaryShiftTypeName ?? "-")</span>
                         <button type="button" class="cell-display__edit-btn" onclick="enterPstEditMode(this)" title="@Localizer["Edit"]" aria-label="@Localizer["Edit"]">
-                            ⚙️
+                            <icon name="settings" />
                         </button>
                     </div>
                     <div class="cell-edit">
@@ -943,8 +943,8 @@
                                             selected="@(u.PrimaryShiftTypeId == st.Id)">@label</option>
                                 }
                             </select>
-                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]">✓</button>
-                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]">✗</button>
+                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]"><icon name="check" /></button>
+                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]"><icon name="x" /></button>
                         </form>
                     </div>
                 </td>
@@ -959,7 +959,7 @@
                             ? RoleDisplayHelper.GetRoleDisplayName(Localizer, userRoleTemplate, u.JobTypeKey)
                             : RoleDisplayHelper.GetRoleDisplayName(Localizer, u.Role, u.JobTypeKey))</span>
                         <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["EditRole"]" aria-label="@Localizer["EditRole"]">
-                            ⚙️
+                            <icon name="settings" />
                         </button>
                     </div>
                     <div class="cell-edit">
@@ -976,8 +976,8 @@
                                     <option value="@rt.Id" data-derived-role="@rt.DerivedUserRole" selected="@(u.RoleTemplateId == rt.Id)">@RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)</option>
                                 }
                             </select>
-                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]">✓</button>
-                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]">✗</button>
+                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]"><icon name="check" /></button>
+                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]"><icon name="x" /></button>
                         </form>
                     </div>
                 </td>
@@ -1027,7 +1027,7 @@
                             </form>
                         }
                         <a href="/Admin/EditProfile?UserId=@u.Id" class="btn btn-sm">
-                            ✏️
+                            <icon name="pencil" />
                         </a>
                         <form method="post" asp-page-handler="DeleteUser" style="display:inline; margin: 0;"
                               data-confirm-modal
@@ -1038,7 +1038,7 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@u.Id" />
                             <button type="submit" class="btn btn-danger btn-sm">
-                                🗑️
+                                <icon name="trash" />
                             </button>
                         </form>
                     </div>
@@ -1081,7 +1081,7 @@
 
     <div class="warning-box">
         <div class="warning-title">
-            ⚠️ @Localizer["UserDeletionWarning"]
+            <icon name="alert-triangle" /> @Localizer["UserDeletionWarning"]
         </div>
         <div class="warning-text">
             @Localizer["DeletingUserWillRemove"]:<br/>

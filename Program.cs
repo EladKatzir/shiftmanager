@@ -312,6 +312,8 @@ builder.Services.AddScoped<IClientTelemetryService, ClientTelemetryService>();
 builder.Services.AddScoped<IHierarchyService, HierarchyService>();
 builder.Services.AddScoped<IJobTypeService, JobTypeService>();
 builder.Services.AddScoped<IGrantService, GrantService>();
+builder.Services.AddScoped<IGrantBackfillService, GrantBackfillService>();
+builder.Services.AddScoped<IAreaPaletteService, AreaPaletteService>();
 builder.Services.AddScoped<IScopeFilterService, ScopeFilterService>(); // A-018: Scope-based data filtering
 
 // B-018: Concurrent Edit Conflict Detection
@@ -1288,7 +1290,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Seed Owner user's grants - GODMODE: ALL 130 grants at Project level
+    // Seed Owner user's grants - GODMODE: ALL 132 grants at Project level
     var ownerUserForGrants = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Role == UserRole.Owner);
     if (ownerUserForGrants != null)
     {

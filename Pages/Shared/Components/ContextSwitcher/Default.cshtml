@@ -24,7 +24,7 @@ else if (Model.HasNoContexts)
 {
     <div class="context-switcher context-switcher--empty" id="contextSwitcher">
         <div class="context-switcher__empty">
-            <span class="context-switcher__empty-icon" aria-hidden="true">🏢</span>
+            <span class="context-switcher__empty-icon" aria-hidden="true"><icon name="building-2" /></span>
             <span class="context-switcher__empty-text"><loc key="ContextSwitcher_NoContextsAvailable" /></span>
         </div>
     </div>
@@ -34,7 +34,7 @@ else if (Model.HasSingleContext && Model.CurrentContext != null)
 {
     <div class="context-switcher context-switcher--single" id="contextSwitcher">
         <div class="context-switcher__label">
-            <span aria-hidden="true">📍</span>
+            <span aria-hidden="true"><icon name="pin" /></span>
             @if (Model.IsMoleculeMode)
             {
                 <span><loc key="ContextSwitcher_MoleculeLabel" /></span>
@@ -49,7 +49,7 @@ else if (Model.HasSingleContext && Model.CurrentContext != null)
              {
                  <text>title="@Model.CurrentContext.FullName"</text>
              }>
-            <span class="context-switcher__icon" aria-hidden="true">🏢</span>
+            <span class="context-switcher__icon" aria-hidden="true"><icon name="building-2" /></span>
             <span class="context-switcher__name">@Model.CurrentContext.DisplayName</span>
         </div>
     </div>
@@ -62,7 +62,7 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
          data-total-contexts="@Model.TotalContextCount"
          data-switch-mode="@(Model.IsMoleculeMode ? "molecule" : "company")">
         <div class="context-switcher__label">
-            <span aria-hidden="true">📍</span>
+            <span aria-hidden="true"><icon name="pin" /></span>
             @if (Model.IsMoleculeMode)
             {
                 <span><loc key="ContextSwitcher_MoleculeLabel" /></span>
@@ -93,7 +93,7 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
                 }
                 loc-aria-label="ContextSwitcher_SelectContext">
             <span class="context-switcher__current">
-                <span class="context-switcher__icon" aria-hidden="true">🏢</span>
+                <span class="context-switcher__icon" aria-hidden="true"><icon name="building-2" /></span>
                 <span class="context-switcher__name">@Model.CurrentContext.DisplayName</span>
             </span>
             <span class="context-switcher__chevron" aria-hidden="true">▼</span>
@@ -142,7 +142,7 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
                                         <text>title="@option.FullName"</text>
                                     }
                                     aria-selected="@(option.Id == Model.CurrentContext?.Id ? "true" : "false")">
-                                <span class="context-switcher__option-icon" aria-hidden="true">🏢</span>
+                                <span class="context-switcher__option-icon" aria-hidden="true"><icon name="building-2" /></span>
                                 <span class="context-switcher__option-name">@option.DisplayName</span>
                                 <span class="context-switcher__option-check" aria-hidden="true">✓</span>
                             </button>
@@ -150,7 +150,7 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
                     </div>
                 }
                 <div class="context-switcher__no-results" id="contextSwitcherNoResults" style="display: none;" aria-live="polite">
-                    <span class="context-switcher__no-results-icon" aria-hidden="true">🔍</span>
+                    <span class="context-switcher__no-results-icon" aria-hidden="true"><icon name="search" /></span>
                     <span class="context-switcher__no-results-text"><loc key="ContextSwitcher_NoResults" /></span>
                 </div>
             </div>

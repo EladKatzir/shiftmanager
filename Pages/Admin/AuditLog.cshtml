@@ -77,7 +77,7 @@
 
 <!-- Page Header -->
 <div class="page-header">
-    <h1 class="page-title">📋 @Localizer["AuditLog"]</h1>
+    <h1 class="page-title"><icon name="file-text" /> @Localizer["AuditLog"]</h1>
     <p class="page-subtitle">@Localizer["AuditLogDescription", Model.TotalRecords]</p>
 </div>
 
@@ -303,7 +303,7 @@ else
 {
     <div class="section-card">
         <div class="empty-state">
-            <div class="empty-icon">📋</div>
+            <div class="empty-icon"><icon name="file-text" /></div>
             <h3 class="empty-title">@Localizer["NoAuditLogs"]</h3>
             <p class="empty-text">@Localizer["NoAuditLogsMessage"]</p>
             <a href="/Admin/AuditLog" class="btn btn-primary">@Localizer["ClearFilters"]</a>

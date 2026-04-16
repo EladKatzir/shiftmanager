@@ -709,10 +709,10 @@
     <value>staffed</value>
   </data>
   <data name="FullyStaffed" xml:space="preserve">
-    <value>✓ Fully Staffed</value>
+    <value>Fully Staffed</value>
   </data>
   <data name="NeedsMore" xml:space="preserve">
-    <value>⚠ Needs {0} more</value>
+    <value>Needs {0} more</value>
   </data>
   <data name="Empty" xml:space="preserve">
     <value>Empty</value>
@@ -1077,7 +1077,7 @@
     <value>Enter "View as Manager" mode to scope your view to a single company with Manager-level permissions. This is useful for troubleshooting or understanding the Manager experience.</value>
   </data>
   <data name="CurrentlyInViewAsManagerMode" xml:space="preserve">
-    <value>⚠️ Currently in View as Manager Mode</value>
+    <value>Currently in View as Manager Mode</value>
   </data>
   <data name="YouAreViewingAsManagerOf" xml:space="preserve">
     <value>You are viewing as Manager of:</value>
@@ -1762,7 +1762,7 @@
     <value>Reject this join request from {0}?</value>
   </data>
   <data name="ConfirmDeleteUser" xml:space="preserve">
-    <value>⚠️ WARNING: This will permanently delete {0} and remove all their shift assignments, time-off requests, and swap requests. This action cannot be undone.
+    <value>WARNING: This will permanently delete {0} and remove all their shift assignments, time-off requests, and swap requests. This action cannot be undone.
 
 Are you absolutely sure you want to delete this user?</value>
   </data>
@@ -2972,7 +2972,7 @@ Are you absolutely sure you want to delete this user?</value>
     <comment>Phase 19 - Toast notification on score save</comment>
   </data>
   <data name="Game_MilestoneReached" xml:space="preserve">
-    <value>New milestone reached! 🎉</value>
+    <value>New milestone reached!</value>
     <comment>Phase 19 - Toast notification on milestone</comment>
   </data>
   <data name="Game_Roast_1000_A" xml:space="preserve">
@@ -3124,7 +3124,7 @@ Are you absolutely sure you want to delete this user?</value>
     <comment>Phase 20 - Placeholder for chore title input</comment>
   </data>
   <data name="Calendar_MyCalendar" xml:space="preserve">
-    <value>📅 My Shifty</value>
+    <value>My Shifty</value>
     <comment>Phase 20 - My Calendar section title (Shifty is a brand name)</comment>
   </data>
   <data name="Calendar_Management" xml:space="preserve">
@@ -3937,7 +3937,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>ADFS authentication is not configured. Please use local login or contact your administrator.</value>
   </data>
   <data name="Login_FailedAttempts_Warning" xml:space="preserve">
-    <value>⚠️ Please verify your credentials carefully. Account will be locked after 10 failed attempts.</value>
+    <value>Please verify your credentials carefully. Account will be locked after 10 failed attempts.</value>
   </data>
   <data name="Login_AccountLocked_Title" xml:space="preserve">
     <value>Account Temporarily Locked</value>
@@ -4504,10 +4504,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Please provide a valid email address.</value>
   </data>
   <data name="Success_TestEmailSent" xml:space="preserve">
-    <value>✅ Test email sent successfully to {0}. Check diagnostics below.</value>
+    <value>Test email sent successfully to {0}. Check diagnostics below.</value>
   </data>
   <data name="Error_TestEmailFailed" xml:space="preserve">
-    <value>❌ Test email failed: {0}. Check diagnostics below.</value>
+    <value>Test email failed: {0}. Check diagnostics below.</value>
   </data>
   <data name="Error_TestEmailFailedNoDiagnostics" xml:space="preserve">
     <value>Test email failed - no diagnostic information available.</value>
@@ -4641,10 +4641,10 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   
   <data name="Email_DailyDigestSubject" xml:space="preserve">
-    <value>📬 Daily Digest - {0}</value>
+    <value>Daily Digest - {0}</value>
   </data>
   <data name="Email_DailyDigestTitle" xml:space="preserve">
-    <value>📬 Daily Digest for {0}</value>
+    <value>Daily Digest for {0}</value>
   </data>
   <data name="Email_DailyDigestIntro" xml:space="preserve">
     <value>Here's your summary for the upcoming week:</value>
@@ -4656,10 +4656,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Sent at {0} UTC</value>
   </data>
   <data name="Email_UpcomingShifts" xml:space="preserve">
-    <value>📅 Upcoming Shifts (Next 7 Days)</value>
+    <value>Upcoming Shifts (Next 7 Days)</value>
   </data>
   <data name="Email_PendingRequests" xml:space="preserve">
-    <value>⏳ Pending Requests</value>
+    <value>Pending Requests</value>
   </data>
   <data name="Email_TimeOffRequests" xml:space="preserve">
     <value>Time Off Requests:</value>
@@ -4671,13 +4671,13 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Pending approval</value>
   </data>
   <data name="Email_AssignedChores" xml:space="preserve">
-    <value>🧹 Assigned Chores (Next 7 Days)</value>
+    <value>Assigned Chores (Next 7 Days)</value>
   </data>
   <data name="Email_OnDutyAssignments" xml:space="preserve">
-    <value>🎖️ OnDuty Assignments (Next 7 Days)</value>
+    <value>OnDuty Assignments (Next 7 Days)</value>
   </data>
   <data name="Email_TodaysOnDutyAssignments" xml:space="preserve">
-    <value>📋 Today's On-Duty Assignments</value>
+    <value>Today's On-Duty Assignments</value>
   </data>
   <data name="Email_UnknownRole" xml:space="preserve">
     <value>Unknown Role</value>
@@ -4687,10 +4687,10 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   
   <data name="Email_ReminderSubject" xml:space="preserve">
-    <value>⏰ Reminder: Assignments Tomorrow ({0})</value>
+    <value>Reminder: Assignments Tomorrow ({0})</value>
   </data>
   <data name="Email_ReminderTitle" xml:space="preserve">
-    <value>⏰ Reminder: Upcoming Assignments Tomorrow</value>
+    <value>Reminder: Upcoming Assignments Tomorrow</value>
   </data>
   <data name="Email_ReminderIntro" xml:space="preserve">
     <value>Hi {0}, here's what you have scheduled for tomorrow ({1}):</value>
@@ -4699,16 +4699,16 @@ Are you absolutely sure you want to delete this user?</value>
     <value>This is your automated day-before reminder. To change your preferences, visit your Settings page.</value>
   </data>
   <data name="Email_UpcomingShiftsTomorrow" xml:space="preserve">
-    <value>📅 Upcoming Shifts Tomorrow</value>
+    <value>Upcoming Shifts Tomorrow</value>
   </data>
   <data name="Email_Shift" xml:space="preserve">
     <value>Shift</value>
   </data>
   <data name="Email_ChoresAssignedTomorrow" xml:space="preserve">
-    <value>🧹 Chores Assigned Tomorrow</value>
+    <value>Chores Assigned Tomorrow</value>
   </data>
   <data name="Email_OnDutyAssignmentsTomorrow" xml:space="preserve">
-    <value>👮 On-Duty Assignments Tomorrow</value>
+    <value>On-Duty Assignments Tomorrow</value>
   </data>
   <data name="Email_AccountApprovedSubject" xml:space="preserve">
     <value>Account Approved - Welcome to {0}!</value>
@@ -11646,10 +11646,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Get Started</value>
   </data>
   <data name="Alert_Success" xml:space="preserve">
-    <value>✅ Success:</value>
+    <value>Success:</value>
   </data>
   <data name="Alert_Error" xml:space="preserve">
-    <value>❌ Error:</value>
+    <value>Error:</value>
   </data>
   <data name="Button_Reset" xml:space="preserve">
     <value>Reset</value>
@@ -11664,7 +11664,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Compose complete weekly schedules from multiple programs</value>
   </data>
   <data name="MasterPrograms_CreateNew" xml:space="preserve">
-    <value>➕ Create New Master Program</value>
+    <value>Create New Master Program</value>
   </data>
   <data name="MasterPrograms_Name" xml:space="preserve">
     <value>Master Program Name</value>
@@ -11691,10 +11691,10 @@ Are you absolutely sure you want to delete this user?</value>
     <value>days/week</value>
   </data>
   <data name="MasterPrograms_Create" xml:space="preserve">
-    <value>➕ Create Master Program</value>
+    <value>Create Master Program</value>
   </data>
   <data name="MasterPrograms_Existing" xml:space="preserve">
-    <value>📦 Existing Master Programs</value>
+    <value>Existing Master Programs</value>
   </data>
   <data name="MasterPrograms_NoneYet" xml:space="preserve">
     <value>No master programs defined yet. Create one above to get started.</value>
@@ -11724,7 +11724,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Toggle system features without redeploying</value>
   </data>
   <data name="FeatureFlags_CoreFeatures" xml:space="preserve">
-    <value>🔧 Core Features</value>
+    <value>Core Features</value>
   </data>
   <data name="FeatureFlags_EnforceCompanyScope_Desc" xml:space="preserve">
     <value>Enforce multi-tenant company scoping for data isolation</value>
@@ -11748,7 +11748,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Allow users to generate and manage API keys</value>
   </data>
   <data name="FeatureFlags_ApiEndpoints" xml:space="preserve">
-    <value>🔌 API Endpoints</value>
+    <value>API Endpoints</value>
   </data>
   <data name="FeatureFlags_Flags" xml:space="preserve">
     <value>flags</value>
@@ -11760,7 +11760,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Changes take effect immediately</value>
   </data>
   <data name="Blueprints_MigrationRequired" xml:space="preserve">
-    <value>⚠️ Migration Required:</value>
+    <value>Migration Required:</value>
   </data>
   <data name="Blueprints_MigrationDesc" xml:space="preserve">
     <value>Some shift types are missing NameKey values (required for localization).</value>
@@ -11799,7 +11799,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Checking usage...</value>
   </data>
   <data name="Blueprints_CannotDelete" xml:space="preserve">
-    <value>⚠️ Cannot Delete</value>
+    <value>Cannot Delete</value>
   </data>
   <data name="Blueprints_UsedByPrograms_Before" xml:space="preserve">
     <value>This shift type is used by </value>
@@ -11820,7 +11820,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Deleting it will NOT delete those shifts. Historical shift data will be preserved.</value>
   </data>
   <data name="Blueprints_SafeToDelete" xml:space="preserve">
-    <value>✓ Safe to Delete</value>
+    <value>Safe to Delete</value>
   </data>
   <data name="Blueprints_NotInUse" xml:space="preserve">
     <value>This shift type is not currently in use.</value>
@@ -11943,7 +11943,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Timeout for Griffin API calls (1-60 seconds). Recommended: 10 seconds</value>
   </data>
   <data name="Griffin_UserProvisioning" xml:space="preserve">
-    <value>👥 User Provisioning (System-Wide)</value>
+    <value>User Provisioning (System-Wide)</value>
   </data>
   <data name="Griffin_AutoProvision" xml:space="preserve">
     <value>Auto-Provision New Users</value>
@@ -11958,7 +11958,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Default role assigned to auto-provisioned users across all companies</value>
   </data>
   <data name="Griffin_SecurityNote_Title" xml:space="preserve">
-    <value>⚠️ Security Note:</value>
+    <value>Security Note:</value>
   </data>
   <data name="Griffin_SecurityNote_Text" xml:space="preserve">
     <value>Auto-provisioning applies to &lt;strong&gt;all companies&lt;/strong&gt;. Any user who successfully authenticates via ADFS will automatically get an account in the system. Ensure your Griffin ADFS server is properly configured to only allow authorized users.</value>
@@ -11973,7 +11973,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Run Full Diagnostic</value>
   </data>
   <data name="Griffin_AboutTitle" xml:space="preserve">
-    <value>ℹ️ About Griffin ADFS</value>
+    <value>About Griffin ADFS</value>
   </data>
   <data name="Griffin_AboutDesc" xml:space="preserve">
     <value>Griffin ADFS provides centralized domain authentication for air-gapped military/government environments.</value>
@@ -12015,7 +12015,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Configure languages and customize translations for your company</value>
   </data>
   <data name="LangMgmt_CompanySettings" xml:space="preserve">
-    <value>🎌 Company Language Settings</value>
+    <value>Company Language Settings</value>
   </data>
   <data name="LangMgmt_CompanySettings_Desc" xml:space="preserve">
     <value>Configure which two languages are available for users to toggle between.</value>
@@ -12036,7 +12036,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Save Language Settings</value>
   </data>
   <data name="LangMgmt_TranslationEditor" xml:space="preserve">
-    <value>✏️ In-App Translation Editor</value>
+    <value>In-App Translation Editor</value>
   </data>
   <data name="LangMgmt_EditorDesc1" xml:space="preserve">
     <value>Edit translations directly by clicking on text throughout the application.</value>
@@ -12051,7 +12051,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Enter Edit Mode</value>
   </data>
   <data name="LangMgmt_Overrides" xml:space="preserve">
-    <value>📝 Translation Overrides</value>
+    <value>Translation Overrides</value>
   </data>
   <data name="LangMgmt_SearchPlaceholder" xml:space="preserve">
     <value>Search by key or value...</value>
@@ -12093,7 +12093,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Clear filters</value>
   </data>
   <data name="LangMgmt_AddOverride" xml:space="preserve">
-    <value>➕ Add Translation Override</value>
+    <value>Add Translation Override</value>
   </data>
   <data name="LangMgmt_ResourceKey_Hint" xml:space="preserve">
     <value>Key from SharedResources (e.g., Button_Save, Dashboard_Title)</value>
@@ -14713,4 +14713,61 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ConfirmDeleteTimeOff_Title" xml:space="preserve">
     <value>Delete Time-Off</value>
   </data>
+  <!-- 2026-04-16: AreaPalette admin page + back-fill UI strings -->
+  <data name="AreaPalette_Title" xml:space="preserve"><value>Area Calendar Palette</value></data>
+  <data name="AreaPalette_Subtitle" xml:space="preserve"><value>Customize shift / on-duty / chore / vacation colors for this area. Leave a slot empty to inherit the global default.</value></data>
+  <data name="AreaPalette_AreaLabel" xml:space="preserve"><value>Area:</value></data>
+  <data name="AreaPalette_PickArea" xml:space="preserve"><value>-- pick an area --</value></data>
+  <data name="AreaPalette_ColorsHeader" xml:space="preserve"><value>Colors</value></data>
+  <data name="AreaPalette_LivePreviewHeader" xml:space="preserve"><value>Live preview</value></data>
+  <data name="AreaPalette_DarkToggle" xml:space="preserve"><value>Dark</value></data>
+  <data name="AreaPalette_RtlToggle" xml:space="preserve"><value>RTL</value></data>
+  <data name="AreaPalette_PreviewNote" xml:space="preserve"><value>Preview uses a scoped CSS-variable container; changes don't affect this page until you Save.</value></data>
+  <data name="AreaPalette_Slot_ShiftMorning" xml:space="preserve"><value>Morning shift</value></data>
+  <data name="AreaPalette_Slot_ShiftAfternoon" xml:space="preserve"><value>Afternoon shift</value></data>
+  <data name="AreaPalette_Slot_ShiftNight" xml:space="preserve"><value>Night shift</value></data>
+  <data name="AreaPalette_Slot_ShiftHome" xml:space="preserve"><value>Home shift</value></data>
+  <data name="AreaPalette_Slot_OnDuty" xml:space="preserve"><value>On-duty / Hakam</value></data>
+  <data name="AreaPalette_Slot_Chore" xml:space="preserve"><value>Chore</value></data>
+  <data name="AreaPalette_Slot_Vacation" xml:space="preserve"><value>Vacation</value></data>
+  <data name="AreaPalette_ResetSlotTitle" xml:space="preserve"><value>Reset to default</value></data>
+  <data name="AreaPalette_SaveButton" xml:space="preserve"><value>Save Palette</value></data>
+  <data name="AreaPalette_ClearAllButton" xml:space="preserve"><value>Clear All</value></data>
+  <data name="AreaPalette_ClearAllConfirm" xml:space="preserve"><value>Remove all overrides for this area? Defaults will apply.</value></data>
+  <data name="AreaPalette_CancelButton" xml:space="preserve"><value>Cancel</value></data>
+  <data name="AreaPalette_SavedMessage" xml:space="preserve"><value>Palette saved. Colors will apply on the next page load.</value></data>
+  <data name="AreaPalette_ResetMessage" xml:space="preserve"><value>Palette reset — defaults from tokens.css will apply.</value></data>
+  <data name="AreaPalette_AreaRequired" xml:space="preserve"><value>Area must be selected.</value></data>
+  <!-- Live preview JS labels (rendered into mini-calendar badges) -->
+  <!-- New grant display names + descriptions (2026-04-16: D4 discipline fix) -->
+  <data name="Grant_EditOnCallCalendar" xml:space="preserve"><value>Edit On-Call Calendar</value></data>
+  <data name="Grant_EditOnCallCalendar_Desc" xml:space="preserve"><value>Allows assigning, unassigning, and adding text notes on the On-Call calendar — collaborative editing for hakam-eligible users.</value></data>
+  <data name="Grant_EditAreaCalendarPalette" xml:space="preserve"><value>Edit Area Calendar Palette</value></data>
+  <data name="Grant_EditAreaCalendarPalette_Desc" xml:space="preserve"><value>Allows customizing the shift / on-duty / chore / vacation colors per area.</value></data>
+  <data name="AreaPalette_PreviewBadge_Morning" xml:space="preserve"><value>Morning</value></data>
+  <data name="AreaPalette_PreviewBadge_Afternoon" xml:space="preserve"><value>Afternoon</value></data>
+  <data name="AreaPalette_PreviewBadge_Night" xml:space="preserve"><value>Night</value></data>
+  <data name="AreaPalette_PreviewBadge_Home" xml:space="preserve"><value>Home</value></data>
+  <data name="AreaPalette_PreviewBadge_Hakam" xml:space="preserve"><value>Hakam</value></data>
+  <data name="AreaPalette_PreviewBadge_Chore" xml:space="preserve"><value>Chore</value></data>
+  <data name="AreaPalette_PreviewBadge_Vacation" xml:space="preserve"><value>Vacation</value></data>
+  <data name="AreaPalette_ContrastPass" xml:space="preserve"><value>AA</value></data>
+  <data name="AreaPalette_ContrastFail" xml:space="preserve"><value>low</value></data>
+  <data name="AreaPalette_DayLabel_Sun" xml:space="preserve"><value>Sun</value></data>
+  <data name="AreaPalette_DayLabel_Mon" xml:space="preserve"><value>Mon</value></data>
+  <data name="AreaPalette_DayLabel_Tue" xml:space="preserve"><value>Tue</value></data>
+  <data name="AreaPalette_DayLabel_Wed" xml:space="preserve"><value>Wed</value></data>
+  <data name="AreaPalette_DayLabel_Thu" xml:space="preserve"><value>Thu</value></data>
+  <data name="AreaPalette_DayLabel_Fri" xml:space="preserve"><value>Fri</value></data>
+  <data name="AreaPalette_DayLabel_Sat" xml:space="preserve"><value>Sat</value></data>
+  <!-- Back-fill / Surplus extras -->
+  <data name="Grants_BackfillReportTruncated" xml:space="preserve"><value>… and</value></data>
+  <data name="Grants_BackfillReportTruncatedMore" xml:space="preserve"><value>more</value></data>
+  <data name="Grants_SurplusAudit" xml:space="preserve"><value>Surplus Auto-Grant Audit</value></data>
+  <data name="Grants_SurplusAuditDesc" xml:space="preserve"><value>Detect users who have &lt;strong&gt;auto-grants&lt;/strong&gt; their RoleTemplate no longer declares. Typically caused by a grant being removed from the template seed after users had already been provisioned. &lt;strong&gt;Warn-only&lt;/strong&gt; — this report never modifies data. Manual admin grants (IsAutoGrant=false) are intentionally excluded.</value></data>
+  <data name="Grants_SurplusAuditRun" xml:space="preserve"><value>Run audit</value></data>
+  <data name="Grants_SurplusReportSummary" xml:space="preserve"><value>Surplus:</value></data>
+  <data name="Grants_SurplusReportRows" xml:space="preserve"><value>stale auto-grant rows</value></data>
+  <data name="Grants_SurplusReportDetails" xml:space="preserve"><value>Show affected users (review and remove manually if intended)</value></data>
+  <data name="Grants_SurplusReportClean" xml:space="preserve"><value>No stale auto-grants found.</value></data>
 </root>

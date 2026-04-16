@@ -248,7 +248,7 @@
         @* ✅ PHASE 7: Contextual Metrics - Tactical Truth *@
         <div class="calendar-metrics">
             <div class="metric-item metric-shifts">
-                <span class="metric-icon">🧹</span>
+                <span class="metric-icon"><icon name="star" /></span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.TotalChoresCount</span>
                     <span class="metric-label"><loc key="Calendar_Chores" /></span>
@@ -258,7 +258,7 @@
             @if (Model.UnassignedChoresCount > 0)
             {
                 <div class="metric-item metric-pending">
-                    <span class="metric-icon">⏳</span>
+                    <span class="metric-icon"><icon name="clock" /></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.UnassignedChoresCount</span>
                         <span class="metric-label"><loc key="Calendar_Unassigned" /></span>
@@ -270,7 +270,7 @@
                 @if (Model.MyChoresCount > 0)
                 {
                     <div class="metric-item metric-coverage">
-                        <span class="metric-icon">👤</span>
+                        <span class="metric-icon"><icon name="user" /></span>
                         <div class="metric-content">
                             <span class="metric-value">@Model.MyChoresCount</span>
                             <span class="metric-label"><loc key="Calendar_MyItems" /></span>
@@ -365,7 +365,7 @@
                                 @if (canEdit)
                                 {
                                     <button class="delete-btn" data-delete-id="@chore.Id" data-delete-title="@chore.Title.Trim()">
-                                        🗑️
+                                        <icon name="trash-2" />
                                     </button>
                                 }
                                 else

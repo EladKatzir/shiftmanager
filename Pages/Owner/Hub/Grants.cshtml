@@ -246,6 +246,138 @@
                         <button type="submit" class="btn btn-primary"><loc key="Grants_AddUserMgmtGrants">Add User Management Grants</loc></button>
                     </form>
                 </div>
+
+                @* 2026-04-15: Back-fill card — propagate new template AutoGrants to existing users. *@
+                <div class="action-card">
+                    <div class="action-card-header">
+                        <span class="action-card-icon">&#x1F504;</span>
+                        <h3><loc key="Grants_BackfillAutoGrants">Back-fill Template AutoGrants</loc></h3>
+                    </div>
+                    <p class="action-card-desc"><loc key="Grants_BackfillAutoGrantsDesc">After adding new grants to a RoleTemplate seed, use this to propagate those grants to every existing user on that template. Idempotent — never touches admin-granted manual rows. Leave the template empty to scan all templates.</loc></p>
+
+                    <form method="post" asp-page-handler="BackfillPreview" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.5rem;">
+                        <label style="font-size:0.875rem;"><loc key="Grants_BackfillTemplateFilter">Role Template (optional):</loc></label>
+                        <select name="roleTemplateId" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;">
+                            <option value=""><loc key="Grants_BackfillAllTemplates">All templates</loc></option>
+                            @foreach (var rt in Model.RoleTemplates.OrderBy(r => r.Id))
+                            {
+                                <option value="@rt.Id">@rt.Key (id @rt.Id)</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-outline"><loc key="Grants_BackfillDryRun">Dry-run</loc></button>
+                    </form>
+
+                    @if (Model.BackfillPreview != null)
+                    {
+                        <div style="margin:0.75rem 0;padding:0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface-alt);">
+                            <div style="font-weight:600;margin-bottom:0.5rem;">
+                                <loc key="Grants_BackfillReportSummary">Dry-run:</loc>
+                                @Model.BackfillPreview.UsersWithMissingGrants / @Model.BackfillPreview.UsersScanned
+                                <loc key="Grants_BackfillReportUsers">users missing</loc>
+                                @Model.BackfillPreview.TotalMissingGrantRows
+                                <loc key="Grants_BackfillReportGrants">grant rows</loc>
+                            </div>
+                            @if (Model.BackfillPreview.Entries.Any())
+                            {
+                                <details>
+                                    <summary style="cursor:pointer;font-size:0.875rem;"><loc key="Grants_BackfillReportDetails">Show affected users</loc></summary>
+                                    <ul style="margin:0.5rem 0 0 1.25rem;font-size:0.8125rem;max-height:300px;overflow-y:auto;">
+                                        @foreach (var e in Model.BackfillPreview.Entries.Take(50))
+                                        {
+                                            <li style="margin-bottom:0.4rem;">
+                                                <strong>#@e.UserId @e.Email</strong> (@e.RoleTemplateKey) — @e.MissingGrantCount missing
+                                                @if (e.MissingGrantKeys.Any())
+                                                {
+                                                    <div style="margin-top:0.15rem;font-family:ui-monospace,monospace;color:var(--text-muted);font-size:0.75rem;">
+                                                        @string.Join(", ", e.MissingGrantKeys)
+                                                    </div>
+                                                }
+                                            </li>
+                                        }
+                                        @if (Model.BackfillPreview.Entries.Count > 50)
+                                        {
+                                            <li><em><loc key="Grants_BackfillReportTruncated">… and</loc> @(Model.BackfillPreview.Entries.Count - 50) <loc key="Grants_BackfillReportTruncatedMore">more</loc></em></li>
+                                        }
+                                    </ul>
+                                </details>
+                            }
+                        </div>
+                    }
+
+                    <form method="post" asp-page-handler="BackfillExecute" onsubmit="return confirm('Apply missing AutoGrants to every user on the selected template(s)? This action is logged but cannot be selectively undone.');">
+                        <label style="font-size:0.875rem;"><loc key="Grants_BackfillTemplateFilter">Role Template (optional):</loc></label>
+                        <select name="roleTemplateId" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;margin-right:0.5rem;">
+                            <option value=""><loc key="Grants_BackfillAllTemplates">All templates</loc></option>
+                            @foreach (var rt in Model.RoleTemplates.OrderBy(r => r.Id))
+                            {
+                                <option value="@rt.Id">@rt.Key (id @rt.Id)</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-primary"><loc key="Grants_BackfillExecute">Back-fill now</loc></button>
+                    </form>
+                </div>
+
+                @* 2026-04-16: Surplus audit card — warn-only, never removes. *@
+                <div class="action-card">
+                    <div class="action-card-header">
+                        <span class="action-card-icon">&#x1F50D;</span>
+                        <h3><loc key="Grants_SurplusAudit">Surplus Auto-Grant Audit</loc></h3>
+                    </div>
+                    <p class="action-card-desc"><loc key="Grants_SurplusAuditDesc">Detect users who have <strong>auto-grants</strong> their RoleTemplate no longer declares. Typically caused by a grant being removed from the template seed after users had already been provisioned. <strong>Warn-only</strong> — this report never modifies data. Manual admin grants (IsAutoGrant=false) are intentionally excluded.</loc></p>
+
+                    <form method="post" asp-page-handler="SurplusPreview" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.5rem;">
+                        <label style="font-size:0.875rem;"><loc key="Grants_BackfillTemplateFilter">Role Template (optional):</loc></label>
+                        <select name="roleTemplateId" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;">
+                            <option value=""><loc key="Grants_BackfillAllTemplates">All templates</loc></option>
+                            @foreach (var rt in Model.RoleTemplates.OrderBy(r => r.Id))
+                            {
+                                <option value="@rt.Id">@rt.Key (id @rt.Id)</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-outline"><loc key="Grants_SurplusAuditRun">Run audit</loc></button>
+                    </form>
+
+                    @if (Model.SurplusPreview != null)
+                    {
+                        <div style="margin:0.75rem 0;padding:0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface-alt);">
+                            <div style="font-weight:600;margin-bottom:0.5rem;">
+                                <loc key="Grants_SurplusReportSummary">Surplus:</loc>
+                                @Model.SurplusPreview.UsersWithSurplus / @Model.SurplusPreview.UsersScanned
+                                <loc key="Grants_BackfillReportUsers">users with</loc>
+                                @Model.SurplusPreview.TotalSurplusRows
+                                <loc key="Grants_SurplusReportRows">stale auto-grant rows</loc>
+                            </div>
+                            @if (Model.SurplusPreview.Entries.Any())
+                            {
+                                <details open>
+                                    <summary style="cursor:pointer;font-size:0.875rem;"><loc key="Grants_SurplusReportDetails">Show affected users (review and remove manually if intended)</loc></summary>
+                                    <ul style="margin:0.5rem 0 0 1.25rem;font-size:0.8125rem;max-height:300px;overflow-y:auto;">
+                                        @foreach (var e in Model.SurplusPreview.Entries.Take(50))
+                                        {
+                                            <li style="margin-bottom:0.4rem;">
+                                                <strong>#@e.UserId @e.Email</strong> (@e.RoleTemplateKey) — @e.SurplusGrantCount surplus
+                                                @if (e.SurplusGrantKeys.Any())
+                                                {
+                                                    <div style="margin-top:0.15rem;font-family:ui-monospace,monospace;color:var(--text-muted);font-size:0.75rem;">
+                                                        @string.Join(", ", e.SurplusGrantKeys)
+                                                    </div>
+                                                }
+                                            </li>
+                                        }
+                                        @if (Model.SurplusPreview.Entries.Count > 50)
+                                        {
+                                            <li><em><loc key="Grants_BackfillReportTruncated">… and</loc> @(Model.SurplusPreview.Entries.Count - 50) <loc key="Grants_BackfillReportTruncatedMore">more</loc></em></li>
+                                        }
+                                    </ul>
+                                </details>
+                            }
+                            else
+                            {
+                                <div style="font-size:0.8125rem;color:var(--success, #22c55e);"><loc key="Grants_SurplusReportClean">No stale auto-grants found.</loc></div>
+                            }
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>

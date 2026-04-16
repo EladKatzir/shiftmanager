@@ -705,10 +705,10 @@
     <value>מאוישים</value>
   </data>
   <data name="FullyStaffed" xml:space="preserve">
-    <value>✓ מאויש במלואו</value>
+    <value>מאויש במלואו</value>
   </data>
   <data name="NeedsMore" xml:space="preserve">
-    <value>⚠ נדרשים {0} נוספים</value>
+    <value>נדרשים {0} נוספים</value>
   </data>
   <data name="Empty" xml:space="preserve">
     <value>ריק</value>
@@ -1073,7 +1073,7 @@
     <value>היכנס ל"מצב תצוגה כמנהל" כדי להגביל את התצוגה שלך לחברה אחת עם הרשאות ברמת מנהל. זה שימושי לפתרון בעיות או הבנת חוויית המנהל.</value>
   </data>
   <data name="CurrentlyInViewAsManagerMode" xml:space="preserve">
-    <value>⚠️ כרגע במצב תצוגה כמנהל</value>
+    <value>כרגע במצב תצוגה כמנהל</value>
   </data>
   <data name="YouAreViewingAsManagerOf" xml:space="preserve">
     <value>אתה צופה כמנהל של:</value>
@@ -1758,7 +1758,7 @@
     <value>לדחות את בקשת ההצטרפות מ-{0}?</value>
   </data>
   <data name="ConfirmDeleteUser" xml:space="preserve">
-    <value>⚠️ אזהרה: פעולה זו תמחק לצמיתות את {0} ותסיר את כל הקצאות המשמרות, בקשות החופש ובקשות החלפת המשמרות שלו. לא ניתן לבטל פעולה זו.
+    <value>אזהרה: פעולה זו תמחק לצמיתות את {0} ותסיר את כל הקצאות המשמרות, בקשות החופש ובקשות החלפת המשמרות שלו. לא ניתן לבטל פעולה זו.
 
 האם אתה בטוח לחלוטין שברצונך למחוק משתמש זה?</value>
   </data>
@@ -2797,7 +2797,7 @@
     <comment>Phase 19 - Toast notification on score save</comment>
   </data>
   <data name="Game_MilestoneReached" xml:space="preserve">
-    <value>אבן דרך חדשה! 🎉</value>
+    <value>אבן דרך חדשה!</value>
     <comment>Phase 19 - Toast notification on milestone</comment>
   </data>
   <data name="Game_Roast_1000_A" xml:space="preserve">
@@ -2949,7 +2949,7 @@
     <comment>Phase 20 - Placeholder for chore title input</comment>
   </data>
   <data name="Calendar_MyCalendar" xml:space="preserve">
-    <value>📅 השיפטי שלי</value>
+    <value>השיפטי שלי</value>
     <comment>Phase 20 - My Calendar section title (Shifty is a brand name)</comment>
   </data>
   <data name="Calendar_Management" xml:space="preserve">
@@ -3762,7 +3762,7 @@
     <value>אימות ADFS לא מוגדר. אנא השתמש בהתחברות מקומית או פנה למנהל המערכת.</value>
   </data>
   <data name="Login_FailedAttempts_Warning" xml:space="preserve">
-    <value>⚠️ אנא וודא את פרטי ההתחברות שלך בקפידה. החשבון יינעל לאחר 10 ניסיונות כושלים.</value>
+    <value>אנא וודא את פרטי ההתחברות שלך בקפידה. החשבון יינעל לאחר 10 ניסיונות כושלים.</value>
   </data>
   <data name="Login_AccountLocked_Title" xml:space="preserve">
     <value>החשבון נעול זמנית</value>
@@ -4329,10 +4329,10 @@
     <value>אנא ספק כתובת אימייל תקינה.</value>
   </data>
   <data name="Success_TestEmailSent" xml:space="preserve">
-    <value>✅ אימייל בדיקה נשלח בהצלחה אל {0}. בדוק את האבחון למטה.</value>
+    <value>אימייל בדיקה נשלח בהצלחה אל {0}. בדוק את האבחון למטה.</value>
   </data>
   <data name="Error_TestEmailFailed" xml:space="preserve">
-    <value>❌ אימייל בדיקה נכשל: {0}. בדוק את האבחון למטה.</value>
+    <value>אימייל בדיקה נכשל: {0}. בדוק את האבחון למטה.</value>
   </data>
   <data name="Error_TestEmailFailedNoDiagnostics" xml:space="preserve">
     <value>אימייל בדיקה נכשל - אין מידע אבחון זמין.</value>
@@ -4466,10 +4466,10 @@
   </data>
   
   <data name="Email_DailyDigestSubject" xml:space="preserve">
-    <value>📬 תקציר יומי - {0}</value>
+    <value>תקציר יומי - {0}</value>
   </data>
   <data name="Email_DailyDigestTitle" xml:space="preserve">
-    <value>📬 תקציר יומי עבור {0}</value>
+    <value>תקציר יומי עבור {0}</value>
   </data>
   <data name="Email_DailyDigestIntro" xml:space="preserve">
     <value>הנה הסיכום שלך לשבוע הקרוב:</value>
@@ -4481,10 +4481,10 @@
     <value>נשלח ב-{0} UTC</value>
   </data>
   <data name="Email_UpcomingShifts" xml:space="preserve">
-    <value>📅 משמרות קרובות (7 הימים הבאים)</value>
+    <value>משמרות קרובות (7 הימים הבאים)</value>
   </data>
   <data name="Email_PendingRequests" xml:space="preserve">
-    <value>⏳ בקשות ממתינות</value>
+    <value>בקשות ממתינות</value>
   </data>
   <data name="Email_TimeOffRequests" xml:space="preserve">
     <value>בקשות חופש:</value>
@@ -4496,13 +4496,13 @@
     <value>ממתין לאישור</value>
   </data>
   <data name="Email_AssignedChores" xml:space="preserve">
-    <value>🧹 משימות משובצות (7 הימים הבאים)</value>
+    <value>משימות משובצות (7 הימים הבאים)</value>
   </data>
   <data name="Email_OnDutyAssignments" xml:space="preserve">
-    <value>🎖️ שיבוצי תורנות (7 הימים הבאים)</value>
+    <value>שיבוצי תורנות (7 הימים הבאים)</value>
   </data>
   <data name="Email_TodaysOnDutyAssignments" xml:space="preserve">
-    <value>📋 תורנות היום</value>
+    <value>תורנות היום</value>
   </data>
   <data name="Email_UnknownRole" xml:space="preserve">
     <value>תפקיד לא ידוע</value>
@@ -4512,10 +4512,10 @@
   </data>
   
   <data name="Email_ReminderSubject" xml:space="preserve">
-    <value>⏰ תזכורת: שיבוצים למחר ({0})</value>
+    <value>תזכורת: שיבוצים למחר ({0})</value>
   </data>
   <data name="Email_ReminderTitle" xml:space="preserve">
-    <value>⏰ תזכורת: שיבוצים קרובים למחר</value>
+    <value>תזכורת: שיבוצים קרובים למחר</value>
   </data>
   <data name="Email_ReminderIntro" xml:space="preserve">
     <value>שלום {0}, הנה מה שמתוכנן לך למחר ({1}):</value>
@@ -4524,16 +4524,16 @@
     <value>זוהי התזכורת האוטומטית שלך ליום לפני. כדי לשנות את ההעדפות שלך, בקר בדף ההגדרות.</value>
   </data>
   <data name="Email_UpcomingShiftsTomorrow" xml:space="preserve">
-    <value>📅 משמרות קרובות למחר</value>
+    <value>משמרות קרובות למחר</value>
   </data>
   <data name="Email_Shift" xml:space="preserve">
     <value>משמרת</value>
   </data>
   <data name="Email_ChoresAssignedTomorrow" xml:space="preserve">
-    <value>🧹 משימות משובצות למחר</value>
+    <value>משימות משובצות למחר</value>
   </data>
   <data name="Email_OnDutyAssignmentsTomorrow" xml:space="preserve">
-    <value>👮 שיבוצי תורנות למחר</value>
+    <value>שיבוצי תורנות למחר</value>
   </data>
   <data name="Email_AccountApprovedSubject" xml:space="preserve">
     <value>החשבון אושר - ברוכים הבאים ל{0}!</value>
@@ -11612,10 +11612,10 @@
     <value>התחל</value>
   </data>
   <data name="Alert_Success" xml:space="preserve">
-    <value>✅ הצלחה:</value>
+    <value>הצלחה:</value>
   </data>
   <data name="Alert_Error" xml:space="preserve">
-    <value>❌ שגיאה:</value>
+    <value>שגיאה:</value>
   </data>
   <data name="Button_Reset" xml:space="preserve">
     <value>איפוס</value>
@@ -11630,7 +11630,7 @@
     <value>הרכב לוחות זמנים שבועיים שלמים ממספר תוכניות</value>
   </data>
   <data name="MasterPrograms_CreateNew" xml:space="preserve">
-    <value>➕ צור תוכנית אב חדשה</value>
+    <value>צור תוכנית אב חדשה</value>
   </data>
   <data name="MasterPrograms_Name" xml:space="preserve">
     <value>שם תוכנית אב</value>
@@ -11657,10 +11657,10 @@
     <value>ימים/שבוע</value>
   </data>
   <data name="MasterPrograms_Create" xml:space="preserve">
-    <value>➕ צור תוכנית אב</value>
+    <value>צור תוכנית אב</value>
   </data>
   <data name="MasterPrograms_Existing" xml:space="preserve">
-    <value>📦 תוכניות אב קיימות</value>
+    <value>תוכניות אב קיימות</value>
   </data>
   <data name="MasterPrograms_NoneYet" xml:space="preserve">
     <value>אין תוכניות אב מוגדרות עדיין. צור אחת למעלה כדי להתחיל.</value>
@@ -11690,7 +11690,7 @@
     <value>הפעל/כבה תכונות מערכת ללא פריסה מחדש</value>
   </data>
   <data name="FeatureFlags_CoreFeatures" xml:space="preserve">
-    <value>🔧 תכונות ליבה</value>
+    <value>תכונות ליבה</value>
   </data>
   <data name="FeatureFlags_EnforceCompanyScope_Desc" xml:space="preserve">
     <value>אכוף הפרדת נתונים לפי חברה (מרובת דיירים)</value>
@@ -11714,7 +11714,7 @@
     <value>אפשר למשתמשים ליצור ולנהל מפתחות API</value>
   </data>
   <data name="FeatureFlags_ApiEndpoints" xml:space="preserve">
-    <value>🔌 נקודות קצה API</value>
+    <value>נקודות קצה API</value>
   </data>
   <data name="FeatureFlags_Flags" xml:space="preserve">
     <value>דגלים</value>
@@ -11726,7 +11726,7 @@
     <value>שינויים נכנסים לתוקף מיידית</value>
   </data>
   <data name="Blueprints_MigrationRequired" xml:space="preserve">
-    <value>⚠️ נדרשת הגירה:</value>
+    <value>נדרשת הגירה:</value>
   </data>
   <data name="Blueprints_MigrationDesc" xml:space="preserve">
     <value>חלק מסוגי המשמרות חסרים ערכי NameKey (נדרש ללוקליזציה).</value>
@@ -11765,7 +11765,7 @@
     <value>בודק שימוש...</value>
   </data>
   <data name="Blueprints_CannotDelete" xml:space="preserve">
-    <value>⚠️ לא ניתן למחוק</value>
+    <value>לא ניתן למחוק</value>
   </data>
   <data name="Blueprints_UsedByPrograms_Before" xml:space="preserve">
     <value>סוג משמרת זה בשימוש ב-</value>
@@ -11786,7 +11786,7 @@
     <value>מחיקתו לא תמחק את המשמרות האלה. נתוני משמרות היסטוריים יישמרו.</value>
   </data>
   <data name="Blueprints_SafeToDelete" xml:space="preserve">
-    <value>✓ בטוח למחיקה</value>
+    <value>בטוח למחיקה</value>
   </data>
   <data name="Blueprints_NotInUse" xml:space="preserve">
     <value>סוג משמרת זה אינו בשימוש כרגע.</value>
@@ -11909,7 +11909,7 @@
     <value>זמן תפוגה לקריאות API של Griffin (1-60 שניות). מומלץ: 10 שניות</value>
   </data>
   <data name="Griffin_UserProvisioning" xml:space="preserve">
-    <value>👥 הקצאת משתמשים (כלל-מערכתי)</value>
+    <value>הקצאת משתמשים (כלל-מערכתי)</value>
   </data>
   <data name="Griffin_AutoProvision" xml:space="preserve">
     <value>הקצאה אוטומטית של משתמשים חדשים</value>
@@ -11924,7 +11924,7 @@
     <value>תפקיד ברירת מחדל המוקצה למשתמשים מוקצים אוטומטית בכל החברות</value>
   </data>
   <data name="Griffin_SecurityNote_Title" xml:space="preserve">
-    <value>⚠️ הערת אבטחה:</value>
+    <value>הערת אבטחה:</value>
   </data>
   <data name="Griffin_SecurityNote_Text" xml:space="preserve">
     <value>הקצאה אוטומטית חלה על &lt;strong&gt;כל החברות&lt;/strong&gt;. כל משתמש שמזדהה בהצלחה דרך ADFS יקבל אוטומטית חשבון במערכת. ודא ששרת Griffin ADFS שלך מוגדר כראוי לאפשר רק משתמשים מורשים.</value>
@@ -11939,7 +11939,7 @@
     <value>הפעל אבחון מלא</value>
   </data>
   <data name="Griffin_AboutTitle" xml:space="preserve">
-    <value>ℹ️ אודות Griffin ADFS</value>
+    <value>אודות Griffin ADFS</value>
   </data>
   <data name="Griffin_AboutDesc" xml:space="preserve">
     <value>Griffin ADFS מספק אימות דומיין מרכזי לסביבות צבאיות/ממשלתיות מנותקות.</value>
@@ -11981,7 +11981,7 @@
     <value>הגדר שפות והתאם תרגומים לחברה שלך</value>
   </data>
   <data name="LangMgmt_CompanySettings" xml:space="preserve">
-    <value>🎌 הגדרות שפת חברה</value>
+    <value>הגדרות שפת חברה</value>
   </data>
   <data name="LangMgmt_CompanySettings_Desc" xml:space="preserve">
     <value>הגדר אילו שתי שפות זמינות למשתמשים למעבר ביניהן.</value>
@@ -12002,7 +12002,7 @@
     <value>שמור הגדרות שפה</value>
   </data>
   <data name="LangMgmt_TranslationEditor" xml:space="preserve">
-    <value>✏️ עורך תרגומים באפליקציה</value>
+    <value>עורך תרגומים באפליקציה</value>
   </data>
   <data name="LangMgmt_EditorDesc1" xml:space="preserve">
     <value>ערוך תרגומים ישירות על ידי לחיצה על טקסט ברחבי האפליקציה.</value>
@@ -12017,7 +12017,7 @@
     <value>כנס למצב עריכה</value>
   </data>
   <data name="LangMgmt_Overrides" xml:space="preserve">
-    <value>📝 דריסות תרגום</value>
+    <value>דריסות תרגום</value>
   </data>
   <data name="LangMgmt_SearchPlaceholder" xml:space="preserve">
     <value>חפש לפי מפתח או ערך...</value>
@@ -12059,7 +12059,7 @@
     <value>נקה מסננים</value>
   </data>
   <data name="LangMgmt_AddOverride" xml:space="preserve">
-    <value>➕ הוסף דריסת תרגום</value>
+    <value>הוסף דריסת תרגום</value>
   </data>
   <data name="LangMgmt_ResourceKey_Hint" xml:space="preserve">
     <value>מפתח מ-SharedResources (לדוגמה, Button_Save, Dashboard_Title)</value>
@@ -14679,4 +14679,62 @@
   <data name="ConfirmDeleteTimeOff_Title" xml:space="preserve">
     <value>מחיקת חופש</value>
   </data>
+  <!-- 2026-04-16: AreaPalette admin page + back-fill UI strings -->
+  <data name="AreaPalette_Title" xml:space="preserve"><value>פלטת לוח שנה למרחב</value></data>
+  <data name="AreaPalette_Subtitle" xml:space="preserve"><value>התאמת צבעי משמרות / תורנות / מטלות / חופשות עבור המרחב הזה. השאר משבצת ריקה כדי לרשת את ברירת המחדל הגלובלית.</value></data>
+  <data name="AreaPalette_AreaLabel" xml:space="preserve"><value>מרחב:</value></data>
+  <data name="AreaPalette_PickArea" xml:space="preserve"><value>-- בחר מרחב --</value></data>
+  <data name="AreaPalette_ColorsHeader" xml:space="preserve"><value>צבעים</value></data>
+  <data name="AreaPalette_LivePreviewHeader" xml:space="preserve"><value>תצוגה מקדימה חיה</value></data>
+  <data name="AreaPalette_DarkToggle" xml:space="preserve"><value>חשוך</value></data>
+  <data name="AreaPalette_RtlToggle" xml:space="preserve"><value>ימין-לשמאל</value></data>
+  <data name="AreaPalette_PreviewNote" xml:space="preserve"><value>התצוגה משתמשת במשתני CSS מבודדים; שינויים לא משפיעים על הדף עד לחיצת שמירה.</value></data>
+  <data name="AreaPalette_Slot_ShiftMorning" xml:space="preserve"><value>משמרת בוקר</value></data>
+  <data name="AreaPalette_Slot_ShiftAfternoon" xml:space="preserve"><value>משמרת צהריים</value></data>
+  <data name="AreaPalette_Slot_ShiftNight" xml:space="preserve"><value>משמרת לילה</value></data>
+  <data name="AreaPalette_Slot_ShiftHome" xml:space="preserve"><value>משמרת בית</value></data>
+  <data name="AreaPalette_Slot_OnDuty" xml:space="preserve"><value>תורנות / חק"ם</value></data>
+  <data name="AreaPalette_Slot_Chore" xml:space="preserve"><value>מטלה</value></data>
+  <data name="AreaPalette_Slot_Vacation" xml:space="preserve"><value>חופש</value></data>
+  <data name="AreaPalette_ResetSlotTitle" xml:space="preserve"><value>איפוס לברירת מחדל</value></data>
+  <data name="AreaPalette_SaveButton" xml:space="preserve"><value>שמור פלטה</value></data>
+  <data name="AreaPalette_ClearAllButton" xml:space="preserve"><value>נקה הכל</value></data>
+  <data name="AreaPalette_ClearAllConfirm" xml:space="preserve"><value>להסיר את כל ההגדרות המותאמות למרחב הזה? יחולו ברירות המחדל.</value></data>
+  <data name="AreaPalette_CancelButton" xml:space="preserve"><value>ביטול</value></data>
+  <data name="AreaPalette_SavedMessage" xml:space="preserve"><value>הפלטה נשמרה. הצבעים יחולו בטעינת הדף הבאה.</value></data>
+  <data name="AreaPalette_ResetMessage" xml:space="preserve"><value>הפלטה אופסה — יחולו ברירות המחדל מ-tokens.css.</value></data>
+  <data name="AreaPalette_AreaRequired" xml:space="preserve"><value>חובה לבחור מרחב.</value></data>
+  <!-- Live preview JS labels (rendered into mini-calendar badges) -->
+  <!-- New grant display names + descriptions (2026-04-16: D4 discipline fix) -->
+  <data name="Grant_EditOnCallCalendar" xml:space="preserve"><value>עריכת לוח תורנויות</value></data>
+  <data name="Grant_EditOnCallCalendar_Desc" xml:space="preserve"><value>מאפשר הקצאה, ביטול הקצאה והוספת הערות בלוח התורנויות — עריכה משותפת לכל המורשים לתורנות חק"ם.</value></data>
+  <data name="Grant_EditAreaCalendarPalette" xml:space="preserve"><value>עריכת פלטת לוח שנה למרחב</value></data>
+  <data name="Grant_EditAreaCalendarPalette_Desc" xml:space="preserve"><value>מאפשר התאמה אישית של צבעי משמרות / תורנות / מטלות / חופשות עבור המרחב.</value></data>
+  <data name="AreaPalette_PreviewBadge_Morning" xml:space="preserve"><value>בוקר</value></data>
+  <data name="AreaPalette_PreviewBadge_Afternoon" xml:space="preserve"><value>צהריים</value></data>
+  <data name="AreaPalette_PreviewBadge_Night" xml:space="preserve"><value>לילה</value></data>
+  <data name="AreaPalette_PreviewBadge_Home" xml:space="preserve"><value>בית</value></data>
+  <data name="AreaPalette_PreviewBadge_Hakam" xml:space="preserve"><value>חק"ם</value></data>
+  <data name="AreaPalette_PreviewBadge_Chore" xml:space="preserve"><value>מטלה</value></data>
+  <data name="AreaPalette_PreviewBadge_Vacation" xml:space="preserve"><value>חופש</value></data>
+  <data name="AreaPalette_ContrastPass" xml:space="preserve"><value>תקין</value></data>
+  <data name="AreaPalette_ContrastFail" xml:space="preserve"><value>נמוך</value></data>
+  <data name="AreaPalette_DayLabel_Sun" xml:space="preserve"><value>א</value></data>
+  <data name="AreaPalette_DayLabel_Mon" xml:space="preserve"><value>ב</value></data>
+  <data name="AreaPalette_DayLabel_Tue" xml:space="preserve"><value>ג</value></data>
+  <data name="AreaPalette_DayLabel_Wed" xml:space="preserve"><value>ד</value></data>
+  <data name="AreaPalette_DayLabel_Thu" xml:space="preserve"><value>ה</value></data>
+  <data name="AreaPalette_DayLabel_Fri" xml:space="preserve"><value>ו</value></data>
+  <data name="AreaPalette_DayLabel_Sat" xml:space="preserve"><value>ש</value></data>
+  <!-- Back-fill / Surplus extras -->
+  <data name="Grants_BackfillReportTruncated" xml:space="preserve"><value>… ועוד</value></data>
+  <data name="Grants_BackfillReportTruncatedMore" xml:space="preserve"><value>נוספים</value></data>
+  <data name="Grants_SurplusAudit" xml:space="preserve"><value>בדיקת הרשאות עודפות</value></data>
+  <data name="Grants_SurplusAuditDesc" xml:space="preserve"><value>זיהוי משתמשים בעלי &lt;strong&gt;הרשאות אוטומטיות&lt;/strong&gt; שהתבנית של תפקידם כבר אינה כוללת. בדרך כלל נגרם מהסרת הרשאה מתבנית לאחר שמשתמשים כבר הוקצו. &lt;strong&gt;אזהרה בלבד&lt;/strong&gt; — הדוח אינו משנה נתונים. הרשאות שהוקצו ידנית על ידי מנהל (IsAutoGrant=false) לא נכללות בכוונה.</value></data>
+  <data name="AreaPalette_Slot_OnDutyHebrew" xml:space="preserve"><value>תורנות</value></data>
+  <data name="Grants_SurplusAuditRun" xml:space="preserve"><value>הרץ ביקורת</value></data>
+  <data name="Grants_SurplusReportSummary" xml:space="preserve"><value>עודף:</value></data>
+  <data name="Grants_SurplusReportRows" xml:space="preserve"><value>שורות הרשאה אוטומטית מיותמות</value></data>
+  <data name="Grants_SurplusReportDetails" xml:space="preserve"><value>הצג משתמשים מושפעים (לבדיקה והסרה ידנית במידת הצורך)</value></data>
+  <data name="Grants_SurplusReportClean" xml:space="preserve"><value>לא נמצאו הרשאות אוטומטיות מיותמות.</value></data>
 </root>

@@ -12,7 +12,7 @@ namespace ShiftManager.Pages.Owner.Hub;
 /// OwnerHub - Consolidated dashboard for system-wide administration.
 /// Provides 7 category cards: Hierarchy, People, Grants, Scheduling, Settings, Analytics, Seed Data.
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — OwnerHub requires Grant:AdminAccess (all 107 grants)
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — OwnerHub requires Grant:AdminAccess (all ~132 grants)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class IndexModel : PageModel
 {

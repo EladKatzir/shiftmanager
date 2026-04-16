@@ -15,7 +15,7 @@ namespace ShiftManager.Pages.Owner.Hub;
 /// Grant Management UI - Unified page for managing grant types, role templates, and user grants.
 /// Supports CanGive delegation with depth limiting.
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner grant management requires Grant:AdminAccess (all 107 grants)
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner grant management requires Grant:AdminAccess (all ~132 grants; exact count: _db.GrantTypes.CountAsync(gt => gt.IsActive))
 [Authorize(Policy = "Grant:AdminAccess")]
 public class GrantsModel : PageModel
 {
@@ -24,15 +24,69 @@ public class GrantsModel : PageModel
     private readonly ILogger<GrantsModel> _logger;
     private readonly IRoleService _roleService;
     private readonly IConcurrencyService _concurrencyService;
+    private readonly IGrantBackfillService _backfillService;
 
-    public GrantsModel(AppDbContext db, IGrantService grantService, ILogger<GrantsModel> logger, IRoleService roleService, IConcurrencyService concurrencyService)
+    public GrantsModel(AppDbContext db, IGrantService grantService, ILogger<GrantsModel> logger, IRoleService roleService, IConcurrencyService concurrencyService, IGrantBackfillService backfillService)
     {
         _db = db;
         _grantService = grantService;
         _logger = logger;
         _roleService = roleService;
         _concurrencyService = concurrencyService;
+        _backfillService = backfillService;
     }
+
+    // Back-fill Grant Actions handlers (2026-04-15).
+    // Preview = dry-run (no writes). Execute = apply missing template AutoGrants.
+    public BackfillReport? BackfillPreview { get; set; }
+    public SurplusReport? SurplusPreview { get; set; }
+
+    public async Task<IActionResult> OnPostBackfillPreviewAsync(int? roleTemplateId)
+    {
+        BackfillPreview = await _backfillService.PreviewAsync(roleTemplateId);
+        SuccessMessage = $"Dry-run complete. {BackfillPreview.UsersWithMissingGrants} of {BackfillPreview.UsersScanned} users would receive {BackfillPreview.TotalMissingGrantRows} new grant rows.";
+        await LoadPageDataAsync();
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostSurplusPreviewAsync(int? roleTemplateId)
+    {
+        SurplusPreview = await _backfillService.PreviewSurplusAsync(roleTemplateId);
+        if (SurplusPreview.UsersWithSurplus == 0)
+        {
+            SuccessMessage = $"No surplus auto-grants found across {SurplusPreview.UsersScanned} users. Templates and user grants are aligned.";
+        }
+        else
+        {
+            SuccessMessage = $"Surplus audit: {SurplusPreview.UsersWithSurplus} of {SurplusPreview.UsersScanned} users have {SurplusPreview.TotalSurplusRows} stale auto-grants (template was edited; rows remain). Manual admin grants are excluded — only flagged when no longer in the template.";
+        }
+        await LoadPageDataAsync();
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostBackfillExecuteAsync(int? roleTemplateId)
+    {
+        var actorId = GetCurrentUserId();
+        var result = await _backfillService.ExecuteAsync(roleTemplateId, actorId);
+
+        if (result.UsersFailed > 0)
+        {
+            ErrorMessage = $"Back-fill completed with {result.UsersFailed} failure(s). Inserted {result.TotalGrantsInserted} grants across {result.UsersUpdated} users (of {result.UsersProcessed} scanned). See logs for details.";
+        }
+        else
+        {
+            SuccessMessage = $"Back-fill complete. Inserted {result.TotalGrantsInserted} grants across {result.UsersUpdated} users (of {result.UsersProcessed} scanned).";
+        }
+        return RedirectToPage();
+    }
+
+    private int GetCurrentUserId()
+    {
+        var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        return claim != null && int.TryParse(claim.Value, out var id) ? id : 0;
+    }
+
+    private async Task LoadPageDataAsync() => await OnGetAsync();
 
     // Stats
     public int TotalGrantTypes { get; set; }

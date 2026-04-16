@@ -50,7 +50,7 @@
 <div class="feature-flags-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">📋</span>
+            <span class="page-icon"><icon name="file-text" /></span>
             <loc key="Blueprints_Title">Shift Blueprints</loc>
         </h1>
         <p class="page-subtitle"><loc key="Blueprints_Subtitle">Manage shift type definitions with bilingual names</loc></p>
@@ -78,7 +78,7 @@
             @Localizer["Blueprints_MigrationDesc"]
             <form method="post" asp-page-handler="PopulateNameKeys" style="display: inline;">
                 <button type="submit" class="btn btn-sm btn-warning" style="margin-inline-start: 10px;">
-                    🔧 <loc key="Blueprints_PopulateNameKeys" />
+                    <icon name="settings" /> <loc key="Blueprints_PopulateNameKeys" />
                 </button>
             </form>
         </div>
@@ -86,7 +86,7 @@
 
     @* Create New ShiftType Section *@
     <div class="feature-category">
-        <h2>➕ <loc key="Blueprints_CreateNew">Create New Shift Type</loc></h2>
+        <h2><icon name="plus" /> <loc key="Blueprints_CreateNew">Create New Shift Type</loc></h2>
         <form method="post" asp-page-handler="CreateShiftType">
             <div class="form-group-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
                 <div class="form-group">
@@ -159,14 +159,14 @@
             </div>
 
             <button type="submit" class="btn btn-primary">
-                ➕ <loc key="Button_CreateShiftType">Create Shift Type</loc>
+                <icon name="plus" /> <loc key="Button_CreateShiftType">Create Shift Type</loc>
             </button>
         </form>
     </div>
 
     @* Existing ShiftTypes Table *@
     <div class="feature-category">
-        <h2>📋 <loc key="Blueprints_ExistingTypes">Existing Shift Types</loc></h2>
+        <h2><icon name="file-text" /> <loc key="Blueprints_ExistingTypes">Existing Shift Types</loc></h2>
 
         @if (Model.ShiftTypes.Count == 0)
         {
@@ -278,7 +278,7 @@
                                             class="btn btn-sm btn-secondary edit-name-btn"
                                             data-shift-id="@shiftType.Id"
                                             data-name-key="@shiftType.NameKey">
-                                        ✏️ @Localizer["Blueprints_EditName"]
+                                        <icon name="pencil" /> @Localizer["Blueprints_EditName"]
                                     </button>
                                 }
 
@@ -287,13 +287,13 @@
                                         data-shift-id="@shiftType.Id"
                                         data-start="@shiftType.Start.ToString("HH:mm")"
                                         data-end="@shiftType.End.ToString("HH:mm")">
-                                    🕐 @Localizer["Blueprints_EditTime"]
+                                    <icon name="clock" /> @Localizer["Blueprints_EditTime"]
                                 </button>
 
                                 @* ✅ P1-4: Allow deleting ALL shift types with usage warning *@
                                 <button type="button" class="btn btn-sm btn-danger" data-shift-name="@shiftType.Name"
                                         onclick="confirmDeleteShiftType(@shiftType.Id, this.dataset.shiftName)">
-                                    🗑️ <loc key="Delete" />
+                                    <icon name="trash-2" /> <loc key="Delete" />
                                 </button>
                             </td>
                         </tr>

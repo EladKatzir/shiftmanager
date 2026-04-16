@@ -34,7 +34,7 @@
 <div class="feature-flags-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">⏰</span>
+            <span class="page-icon"><icon name="clock" /></span>
             <loc key="Programs_Title" /> (<loc key="Programs_WeeklyTemplates" />)
         </h1>
         <p class="page-subtitle"><loc key="Programs_Subtitle" /></p>
@@ -56,7 +56,7 @@
 
     @* Create New Program Section *@
     <div class="feature-category">
-        <h2>➕ <loc key="Programs_CreateNew" /></h2>
+        <h2><icon name="plus" /> <loc key="Programs_CreateNew" /></h2>
         <form method="post" asp-page-handler="CreateProgram">
             <div class="form-group-grid" style="grid-template-columns: 1fr 1fr;">
                 <div class="form-group">
@@ -127,14 +127,14 @@
             </div>
 
             <button type="submit" class="btn btn-primary" onclick="collectPerDayStaffing()">
-                ➕ <loc key="Programs_CreateProgram" />
+                <icon name="plus" /> <loc key="Programs_CreateProgram" />
             </button>
         </form>
     </div>
 
     @* Existing Programs List *@
     <div class="feature-category">
-        <h2>⏰ <loc key="Programs_Existing" /></h2>
+        <h2><icon name="clock" /> <loc key="Programs_Existing" /></h2>
 
         @if (Model.Programs.Count == 0)
         {
@@ -199,7 +199,7 @@
                                     class="btn btn-sm btn-success generate-btn"
                                     data-program-id="@program.Id"
                                     data-program-name="@program.Name">
-                                📅 @Localizer["Programs_GenerateInstances"]
+                                <icon name="calendar" /> @Localizer["Programs_GenerateInstances"]
                             </button>
 
                             <form method="post" asp-page-handler="DeleteProgram"
@@ -211,7 +211,7 @@
                                   data-confirm-level="danger">
                                 <input type="hidden" name="programId" value="@program.Id" />
                                 <button type="submit" class="btn btn-sm btn-danger">
-                                    🗑️ <loc key="Delete" />
+                                    <icon name="trash-2" /> <loc key="Delete" />
                                 </button>
                             </form>
                         </div>
@@ -262,7 +262,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeGenerateModal()"><loc key="Button_Cancel">Cancel</loc></button>
-                    <button type="submit" class="btn btn-primary">📅 @Localizer["Programs_GenerateInstances"]</button>
+                    <button type="submit" class="btn btn-primary"><icon name="calendar" /> @Localizer["Programs_GenerateInstances"]</button>
                 </div>
             </form>
         </div>

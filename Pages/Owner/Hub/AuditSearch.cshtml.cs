@@ -11,7 +11,7 @@ namespace ShiftManager.Pages.Owner.Hub;
 /// OwnerHub Audit Log Search - Cross-tenant audit log search with filtering and pagination.
 /// Provides entity type, user, date range, and action type filtering with paginated results.
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — OwnerHub requires Grant:AdminAccess (all 107 grants)
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — OwnerHub requires Grant:AdminAccess (all ~132 grants)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class AuditSearchModel : PageModel
 {

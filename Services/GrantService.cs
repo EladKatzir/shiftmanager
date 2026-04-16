@@ -44,7 +44,8 @@ public class GrantService : IGrantService
             || await HasGrantAsync(userId, "AssignBRShifts")
             || await HasGrantAsync(userId, "AssignTechShifts")
             || await HasGrantAsync(userId, "AssignChores")
-            || await HasGrantAsync(userId, "ManageOnDuty");
+            || await HasGrantAsync(userId, "ManageOnDuty")
+            || await HasGrantAsync(userId, "EditOnCallCalendar");
     }
 
     public async Task<bool> HasGrantAsync(int userId, string grantKey, GrantScope scope)

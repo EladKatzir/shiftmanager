@@ -60,8 +60,16 @@
 
                     <div style="display: flex; align-items: flex-start; gap: 1rem;">
                         <!-- Icon -->
-                        <div class="notification-icon" style="font-size: 1.5rem; flex-shrink: 0; margin-top: 0.25rem;">
-                            @notification.Icon
+                        @* notification.Icon: Lucide name ("calendar") or legacy emoji. Ascii-name → <icon>, else raw. *@
+                        <div class="notification-icon" style="flex-shrink: 0; margin-top: 0.25rem;">
+                            @if (!string.IsNullOrEmpty(notification.Icon) && System.Text.RegularExpressions.Regex.IsMatch(notification.Icon, "^[a-z][a-z0-9-]*$"))
+                            {
+                                <icon name="@notification.Icon" size="lg" />
+                            }
+                            else
+                            {
+                                <span style="font-size: 1.5rem;">@notification.Icon</span>
+                            }
                         </div>
 
                         <!-- Content -->

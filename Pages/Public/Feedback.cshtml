@@ -195,7 +195,7 @@
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="feedbackId" value="@feedback.Id" />
                                         <button type="submit" class="btn btn-sm btn-warning" title="@Localizer["MarkToWorkOn"]">
-                                            ✓
+                                            <icon name="check" />
                                         </button>
                                     </form>
                                 }
@@ -208,7 +208,7 @@
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="feedbackId" value="@feedback.Id" />
                                     <button type="submit" class="btn btn-sm btn-danger" title="@Localizer["DeleteFeedback"]">
-                                        🗑️
+                                        <icon name="trash-2" />
                                     </button>
                                 </form>
                             </div>

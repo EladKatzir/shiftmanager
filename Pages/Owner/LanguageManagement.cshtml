@@ -21,7 +21,7 @@
 
 <div class="language-management-container">
     <div class="page-header">
-        <h1><span class="page-icon">🌐</span> <loc key="LangMgmt_Title" /></h1>
+        <h1><span class="page-icon"><icon name="globe" /></span> <loc key="LangMgmt_Title" /></h1>
         <p class="page-subtitle"><loc key="LangMgmt_Subtitle" /></p>
     </div>
 
@@ -29,7 +29,7 @@
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
-            <strong>✓ @Localizer["Alert_Success"]</strong> @Model.Success
+            <strong><icon name="check" /> @Localizer["Alert_Success"]</strong> @Model.Success
         </div>
     }
 
@@ -37,7 +37,7 @@
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-error">
-            <strong>✗ @Localizer["Alert_Error"]</strong> @Model.Error
+            <strong><icon name="x" /> @Localizer["Alert_Error"]</strong> @Model.Error
         </div>
     }
 
@@ -46,7 +46,7 @@
         @* Language Settings Card *@
         <div class="config-card">
             <div class="card-header">
-                <h2>🎌 <loc key="LangMgmt_CompanySettings" /></h2>
+                <h2><icon name="flag" /> <loc key="LangMgmt_CompanySettings" /></h2>
             </div>
             <div class="card-body">
                 <p class="help-text">@Localizer["LangMgmt_CompanySettings_Desc"]</p>
@@ -76,7 +76,7 @@
                     </div>
 
                     <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">💾 <loc key="LangMgmt_SaveSettings" /></button>
+                        <button type="submit" class="btn btn-primary"><icon name="save" /> <loc key="LangMgmt_SaveSettings" /></button>
                     </div>
                 </form>
             </div>
@@ -85,7 +85,7 @@
         @* Edit Mode Entry Point *@
         <div class="config-card edit-mode-card">
             <div class="card-header">
-                <h2>✏️ <loc key="LangMgmt_TranslationEditor" /></h2>
+                <h2><icon name="pencil" /> <loc key="LangMgmt_TranslationEditor" /></h2>
             </div>
             <div class="card-body">
                 <p style="color: var(--primary-contrast);">@Localizer["LangMgmt_EditorDesc1"]</p>
@@ -103,7 +103,7 @@
                         </select>
                     </div>
                     <div class="card-footer" style="background: transparent; border: none; padding-inline-start: 0;">
-                        <button type="submit" class="btn btn-warning">🚀 <loc key="LangMgmt_EnterEditMode" /></button>
+                        <button type="submit" class="btn btn-warning"><icon name="help-circle" /> <loc key="LangMgmt_EnterEditMode" /></button>
                     </div>
                 </form>
             </div>
@@ -112,7 +112,7 @@
         @* Overrides Table *@
         <div class="config-card">
             <div class="card-header">
-                <h2>📝 <loc key="LangMgmt_Overrides" /></h2>
+                <h2><icon name="edit" /> <loc key="LangMgmt_Overrides" /></h2>
             </div>
             <div class="card-body">
                 @* Search/Filter Form *@
@@ -126,7 +126,7 @@
                             <option value="en-US" selected="@(Model.FilterCulture == "en-US")">@Localizer["LangMgmt_English"]</option>
                             <option value="he-IL" selected="@(Model.FilterCulture == "he-IL")">@Localizer["LangMgmt_Hebrew"]</option>
                         </select>
-                        <button type="submit" class="btn btn-secondary">🔍 <loc key="LangMgmt_Search" /></button>
+                        <button type="submit" class="btn btn-secondary"><icon name="search" /> <loc key="LangMgmt_Search" /></button>
                     </div>
                 </form>
 
@@ -161,7 +161,7 @@
                                                   data-confirm-message="@Localizer["LangMgmt_ConfirmDeleteOverride"]"
                                                   data-confirm-action="@Localizer["Delete"]"
                                                   data-confirm-level="danger">
-                                                <button type="submit" class="btn-delete" title="Delete">🗑️</button>
+                                                <button type="submit" class="btn-delete" title="Delete"><icon name="trash-2" /></button>
                                             </form>
                                         </td>
                                     </tr>
@@ -186,7 +186,7 @@
         @* Add Override Form *@
         <div class="config-card">
             <div class="card-header">
-                <h2>➕ <loc key="LangMgmt_AddOverride" /></h2>
+                <h2><icon name="plus" /> <loc key="LangMgmt_AddOverride" /></h2>
             </div>
             <div class="card-body">
                 <form method="post" asp-page-handler="AddOverride">
@@ -215,7 +215,7 @@
 
                     <div class="card-footer" style="display: flex; flex-direction: column; gap: 0;">
                         <div style="padding-bottom: var(--space-3);">
-                            <button type="submit" class="btn btn-primary">💾 <loc key="LangMgmt_AddOverrideBtn" /></button>
+                            <button type="submit" class="btn btn-primary"><icon name="save" /> <loc key="LangMgmt_AddOverrideBtn" /></button>
                         </div>
                         <div style="border-top: 1px solid var(--border); padding-top: var(--space-3); display: flex; align-items: center; gap: var(--space-3);">
                             <span style="flex: 1; font-size: 0.85rem; color: var(--text-muted);">

@@ -142,9 +142,14 @@ public class OnCallModel : PageModel
         // Calculate date range
         CalculateDateRange();
 
-        // Check edit permission - ManageOnDuty is for assigning on-duty shifts;
-        // ManageOnDutyTypes is for admin configuration of type definitions
-        CanEdit = await _grantService.HasGrantAsync(currentUserId, "ManageOnDuty");
+        // Check edit permission — any of these grants authorizes OnCall edits
+        // (assign/unassign users + quick-entry text notes). Matches the OR chain
+        // in OnDutyService.CanUserManageOnDutyAsync. Widened 2026-04-15 to include
+        // EditOnCallCalendar (collaborative editing for hakam-eligible users).
+        CanEdit = await _grantService.HasGrantAsync(currentUserId, "ManageOnDuty")
+            || await _grantService.HasGrantAsync(currentUserId, "AssignHakamDuties")
+            || await _grantService.HasGrantAsync(currentUserId, "AssignKatzinDuties")
+            || await _grantService.HasGrantAsync(currentUserId, "EditOnCallCalendar");
 
         // Build calendar data (duty types as rows, dates as columns)
         await BuildDutyTypeBasedCalendarAsync();
@@ -267,7 +272,7 @@ public class OnCallModel : PageModel
         {
             TypeValue = (int)OnDutyType.Hakam,
             Name = _localizer["Hakam"],
-            Icon = "👮",
+            Icon = "shield-check",
             Color = "#8B4513", // Saddle Brown from design tokens
             IsBackupType = false
         });
@@ -276,7 +281,7 @@ public class OnCallModel : PageModel
         {
             TypeValue = (int)OnDutyType.Lead,
             Name = _localizer["Lead"],
-            Icon = "⭐",
+            Icon = "star",
             Color = "#1E3A5F", // Deep Navy from design tokens
             IsBackupType = false
         });

@@ -41,7 +41,7 @@
     @if (!string.IsNullOrEmpty(Model.GeneratedApiKey))
     {
         <div class="card" style="padding: 2rem; margin-bottom: 2rem; background: var(--warning-soft); border: 2px solid var(--warning);">
-            <h3 style="color: var(--warning); margin-top: 0; margin-bottom: 1rem;">⚠️ @Localizer["ApiKeyGenerated"]</h3>
+            <h3 style="color: var(--warning); margin-top: 0; margin-bottom: 1rem;"><icon name="alert-triangle" /> @Localizer["ApiKeyGenerated"]</h3>
             <p style="margin-bottom: 1rem; color: var(--text);">@Localizer["ApiKeySaveWarning"]</p>
             <div style="background: var(--surface); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border); font-family: monospace; word-break: break-all; margin-bottom: 1rem;">
                 @Model.GeneratedApiKey
@@ -84,7 +84,7 @@
                                         <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace; display: flex; align-items: center; gap: 0.5rem;">
                                             <span style="user-select: all;">@key.PlainTextKey</span>
                                             <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">
-                                                📋 @Localizer["CopyToClipboard"]
+                                                <icon name="file-text" /> @Localizer["CopyToClipboard"]
                                             </button>
                                         </div>
                                     }
@@ -301,10 +301,10 @@
 
                             <div style="display: flex; gap: 1rem;">
                                 <button type="button" data-request-name="@request.Name" data-request-scopes="@request.RequestedScopes" onclick="showApproveModal(@request.Id, this.dataset.requestName, this.dataset.requestScopes)" style="flex: 1; background: var(--success); color: var(--success-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
-                                    ✓ @Localizer["Approve"]
+                                    <icon name="check" /> @Localizer["Approve"]
                                 </button>
                                 <button type="button" data-request-name="@request.Name" onclick="showRejectModal(@request.Id, this.dataset.requestName)" style="flex: 1; background: var(--danger); color: var(--danger-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
-                                    ✗ @Localizer["Reject"]
+                                    <icon name="x" /> @Localizer["Reject"]
                                 </button>
                             </div>
                         </div>
@@ -349,7 +349,7 @@
                                                 <div style="font-size: 0.85rem; color: var(--muted); font-family: monospace; display: flex; align-items: center; gap: 0.5rem;">
                                                     <span style="user-select: all; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@key.PlainTextKey</span>
                                                     <button type="button" onclick="copyToClipboard('@key.PlainTextKey')" style="background: var(--primary); color: var(--primary-contrast); border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer; flex-shrink: 0;">
-                                                        📋 @Localizer["CopyToClipboard"]
+                                                        <icon name="file-text" /> @Localizer["CopyToClipboard"]
                                                     </button>
                                                 </div>
                                             }
@@ -464,7 +464,7 @@
     <div class="card" style="max-width: 600px; width: 90%; padding: 2rem; position: relative;">
         <button type="button" onclick="hideApproveModal()" loc-aria-label="Aria_CloseDialog" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted);">&times;</button>
 
-        <h3 style="color: var(--success); margin-top: 0; margin-bottom: 1.5rem;">✓ @Localizer["ApproveApiKeyRequest"]</h3>
+        <h3 style="color: var(--success); margin-top: 0; margin-bottom: 1.5rem;"><icon name="check" /> @Localizer["ApproveApiKeyRequest"]</h3>
 
         <form method="post" asp-page-handler="Approve">
             @Html.AntiForgeryToken()
@@ -497,7 +497,7 @@
 
             <div style="display: flex; gap: 1rem;">
                 <button type="submit" style="flex: 1; background: var(--success); color: var(--success-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
-                    ✓ @Localizer["ApproveAndGenerateKey"]
+                    <icon name="check" /> @Localizer["ApproveAndGenerateKey"]
                 </button>
                 <button type="button" onclick="hideApproveModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                     @Localizer["Cancel"]
@@ -512,7 +512,7 @@
     <div class="card" style="max-width: 600px; width: 90%; padding: 2rem; position: relative;">
         <button type="button" onclick="hideRejectModal()" loc-aria-label="Aria_CloseDialog" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted);">&times;</button>
 
-        <h3 style="color: var(--danger); margin-top: 0; margin-bottom: 1.5rem;">✗ @Localizer["RejectApiKeyRequest"]</h3>
+        <h3 style="color: var(--danger); margin-top: 0; margin-bottom: 1.5rem;"><icon name="x" /> @Localizer["RejectApiKeyRequest"]</h3>
 
         <form method="post" asp-page-handler="Reject">
             @Html.AntiForgeryToken()
@@ -529,7 +529,7 @@
 
             <div style="display: flex; gap: 1rem;">
                 <button type="submit" style="flex: 1; background: var(--danger); color: var(--danger-text); border: none; padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
-                    ✗ @Localizer["RejectRequest"]
+                    <icon name="x" /> @Localizer["RejectRequest"]
                 </button>
                 <button type="button" onclick="hideRejectModal()" style="flex: 1; background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.75rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
                     @Localizer["Cancel"]

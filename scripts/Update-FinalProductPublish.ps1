@@ -543,6 +543,17 @@ try {
 
     # STEP 4: Verify ProjectPublish
     Write-Step -Step 4 -Total 6 -Title 'Verifying ProjectPublish'
+
+    # 2026-04-15: hard gate — calendar-palette token drift between light/dark blocks
+    $tokenLint = Join-Path $PSScriptRoot 'verify-tokens.ps1'
+    if (Test-Path -LiteralPath $tokenLint) {
+        Write-Log -Level INFO -Message 'Running verify-tokens.ps1 (palette drift check)...'
+        & $tokenLint
+        if ($LASTEXITCODE -ne 0) {
+            throw "Token drift detected. Fix missing dark-mode counterparts before publishing."
+        }
+        Write-Log -Level OK -Message 'Palette tokens consistent across light/dark blocks.'
+    }
     $srcStats = Get-FolderStats -Path $SourceDir
     if (-not $srcStats.Exists) {
         throw ("Build output missing: {0}" -f $SourceDir)

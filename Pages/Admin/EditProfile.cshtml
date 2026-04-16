@@ -25,7 +25,7 @@
     @if (!string.IsNullOrEmpty(Model.SuccessMessage))
     {
         <div class="alert alert-success">
-            <span class="alert-icon">✓</span>
+            <span class="alert-icon"><icon name="check" /></span>
             <span>@Model.SuccessMessage</span>
         </div>
     }
@@ -33,7 +33,7 @@
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-error">
-            <span class="alert-icon">✗</span>
+            <span class="alert-icon"><icon name="x" /></span>
             <span>@Model.ErrorMessage</span>
         </div>
     }
@@ -45,7 +45,7 @@
             <!-- Row 1: Personal Info + Account Settings -->
             <div class="profile-card">
                 <div class="profile-card__header">
-                    <span class="profile-card__icon">👤</span>
+                    <span class="profile-card__icon"><icon name="user" /></span>
                     <h2 class="profile-card__title">@Localizer["EditProfile_PersonalInfo"]</h2>
                 </div>
                 <div class="profile-card__body">
@@ -213,7 +213,7 @@
             <!-- Row 3: Skills & Certifications (full width) -->
             <div class="profile-card profile-card--full">
                 <div class="profile-card__header">
-                    <span class="profile-card__icon">🎯</span>
+                    <span class="profile-card__icon"><icon name="check-circle" /></span>
                     <h2 class="profile-card__title">@Localizer["EditProfile_SkillsCertifications"]</h2>
                 </div>
                 <div class="profile-card__body">
@@ -247,7 +247,7 @@
     {
         <div class="profile-card profile-card--history">
             <div class="profile-card__header">
-                <span class="profile-card__icon">📋</span>
+                <span class="profile-card__icon"><icon name="file-text" /></span>
                 <h2 class="profile-card__title">@Localizer["EditProfile_RecentChanges"]</h2>
             </div>
             <div class="profile-card__body">

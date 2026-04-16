@@ -35,9 +35,11 @@ public class OnDutyTypeConfig
     public string NameHe { get; set; } = string.Empty;
 
     /// <summary>
-    /// Icon/Emoji to display for this type
+    /// Icon for this type. Prefer a Lucide icon name (e.g. "shield", "target", "pin")
+    /// which renders via &lt;icon name="..."/&gt;. Legacy values (emoji chars) still render
+    /// as plain text via the renderer's fallback branch — do not break on existing data.
     /// </summary>
-    public string Icon { get; set; } = "📌";
+    public string Icon { get; set; } = "pin";
 
     /// <summary>
     /// CSS color for this type (e.g., "#8b5cf6" or "purple")

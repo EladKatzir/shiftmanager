@@ -468,7 +468,7 @@
 @if (!string.IsNullOrEmpty(Model.Success))
 {
     <div class="alert-success">
-        <span style="font-size: 1.25rem;">✓</span>
+        <span style="font-size: 1.25rem;"><icon name="check" /></span>
         <span>@Model.Success</span>
     </div>
 }
@@ -477,7 +477,7 @@
 @if (!string.IsNullOrEmpty(Model.Error))
 {
     <div class="alert-error">
-        <span style="font-size: 1.25rem;">✗</span>
+        <span style="font-size: 1.25rem;"><icon name="x" /></span>
         <span>@Model.Error</span>
     </div>
 }
@@ -486,7 +486,7 @@
 <div class="config-section">
     <div class="section-card" style="max-width: 800px;">
         <h3 class="section-header">
-            <span>⚙️</span>
+            <span><icon name="settings" /></span>
             <span><loc key="CompanySettings" /></span>
         </h3>
         <form method="post">
@@ -501,7 +501,7 @@
                     <input class="form-input" asp-for="WeeklyCap" type="number" min="0" id="WeeklyCap" />
                 </div>
                 <button class="btn btn-primary" type="submit">
-                    <span>💾</span>
+                    <span><icon name="save" /></span>
                     <span><loc key="Save" /></span>
                 </button>
             </div>
@@ -515,7 +515,7 @@
 <div class="config-section">
     <div class="section-card">
         <h3 class="section-header">
-            <span>📋</span>
+            <span><icon name="file-text" /></span>
             <span><loc key="OnDutyTypes" /></span>
         </h3>
         <p class="section-description">
@@ -527,7 +527,7 @@
         <div class="type-list">
             <div class="type-item">
                 <div class="type-info">
-                    <span class="type-icon">🛡️</span>
+                    <span class="type-icon"><icon name="shield" /></span>
                     <div class="type-details">
                         <div class="type-name"><loc key="OnDutyHakam" /></div>
                         <div class="type-value"><loc key="ValueLabel" />: 0</div>
@@ -539,7 +539,7 @@
             </div>
             <div class="type-item">
                 <div class="type-info">
-                    <span class="type-icon">⭐</span>
+                    <span class="type-icon"><icon name="star" /></span>
                     <div class="type-details">
                         <div class="type-name"><loc key="OnDutyLead" /></div>
                         <div class="type-value"><loc key="ValueLabel" />: 1</div>
@@ -579,7 +579,7 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="typeId" value="@type.Id" />
                                 <button type="submit" class="btn btn-danger">
-                                    <span>🗑️</span>
+                                    <span><icon name="trash" /></span>
                                     <span><loc key="Delete" /></span>
                                 </button>
                             </form>
@@ -591,7 +591,7 @@
 
         <!-- Add New Type Button -->
         <button class="btn btn-success" style="margin-top: 1.5rem;" onclick="openAddTypeModal()">
-            <span>➕</span>
+            <span><icon name="plus" /></span>
             <span><loc key="AddNewOnDutyType" /></span>
         </button>
     </div>
@@ -618,7 +618,8 @@
 
             <div class="form-group">
                 <label class="form-label" for="onDutyTypeIcon"><loc key="Icon" /> (@Localizer["Emoji"])</label>
-                <input type="text" name="Icon" id="onDutyTypeIcon" class="form-input" value="📌" maxlength="10" />
+                @* Icon field now stores a Lucide icon name (e.g. "shield", "pin", "target"); legacy emoji values still render via fallback. *@
+                <input type="text" name="Icon" id="onDutyTypeIcon" class="form-input" value="pin" maxlength="32" />
             </div>
 
             <div class="form-group">
@@ -629,7 +630,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-ghost" onclick="closeAddTypeModal()">@Localizer["Cancel"]</button>
                 <button type="submit" class="btn btn-primary">
-                    <span>➕</span>
+                    <span><icon name="plus" /></span>
                     <span><loc key="Add" /></span>
                 </button>
             </div>

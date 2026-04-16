@@ -18,7 +18,7 @@
 <div class="owner-panel-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">🔧</span>
+            <span class="page-icon"><icon name="settings" /></span>
             @Localizer["Owner_AdminPanel"]
         </h1>
         <p class="page-subtitle"><loc key="Owner_AdminPanel_Subtitle" /></p>
@@ -27,28 +27,28 @@
     @* Quick Stats *@
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">📊</div>
+            <div class="stat-icon"><icon name="bar-chart-2" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.TotalUsers</div>
                 <div class="stat-label"><loc key="Owner_TotalUsers" /></div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">🏢</div>
+            <div class="stat-icon"><icon name="building-2" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.TotalCompanies</div>
                 <div class="stat-label"><loc key="Owner_TotalCompanies" /></div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">💾</div>
+            <div class="stat-icon"><icon name="database" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.DatabaseSize</div>
                 <div class="stat-label"><loc key="Owner_DatabaseSize" /></div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">⏱️</div>
+            <div class="stat-icon"><icon name="clock" /></div>
             <div class="stat-content">
                 <div class="stat-value">@Model.Uptime</div>
                 <div class="stat-label"><loc key="Owner_Uptime" /></div>
@@ -58,168 +58,168 @@
 
     @* Operations Section - Organizational Structure *@
     <h2 class="section-title">
-        <span class="section-icon">🏢</span>
+        <span class="section-icon"><icon name="building-2" /></span>
         <loc key="Owner_Section_Operations">Operations</loc>
     </h2>
     <div class="admin-tools-grid">
         <a href="/Admin/Companies" class="admin-tool-card">
-            <div class="tool-icon">🏢</div>
+            <div class="tool-icon"><icon name="building-2" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_Companies" /></h3>
                 <p><loc key="Owner_Companies_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Admin/Directors" class="admin-tool-card">
-            <div class="tool-icon">👔</div>
+            <div class="tool-icon"><icon name="user" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_Directors" /></h3>
                 <p><loc key="Owner_Directors_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Admin/Organization/JobTypes" class="admin-tool-card">
-            <div class="tool-icon">💼</div>
+            <div class="tool-icon"><icon name="briefcase" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_JobTypes" /></h3>
                 <p><loc key="Owner_JobTypes_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Admin/Organization/Hierarchy" class="admin-tool-card">
-            <div class="tool-icon">🏛️</div>
+            <div class="tool-icon"><icon name="building" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_Hierarchy" /></h3>
                 <p><loc key="Owner_Hierarchy_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/AreaConfig" class="admin-tool-card">
-            <div class="tool-icon">🏪</div>
+            <div class="tool-icon"><icon name="building-2" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_AreaConfig" /></h3>
                 <p><loc key="Owner_AreaConfig_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/Permissions" class="admin-tool-card">
-            <div class="tool-icon">🔐</div>
+            <div class="tool-icon"><icon name="lock" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_Permissions" /></h3>
                 <p><loc key="Owner_Permissions_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/Hub/RoleTemplates" class="admin-tool-card">
-            <div class="tool-icon">🎭</div>
+            <div class="tool-icon"><icon name="users" /></div>
             <div class="tool-content">
                 <h3><loc key="RoleTemplates_Title">Role Templates</loc></h3>
                 <p><loc key="RoleTemplates_Desc">Create and manage role templates with grants</loc></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/MasterPrograms" class="admin-tool-card">
-            <div class="tool-icon">🎯</div>
+            <div class="tool-icon"><icon name="check-circle" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_MasterPrograms">Master Programs</loc></h3>
                 <p><loc key="Owner_MasterPrograms_Desc">Advanced program configuration</loc></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Admin/AuditLog" class="admin-tool-card">
-            <div class="tool-icon">🔍</div>
+            <div class="tool-icon"><icon name="search" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_SecurityAudit" /></h3>
                 <p><loc key="Owner_SecurityAudit_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
     </div>
 
     @* Infrastructure Section - System Configuration *@
     <h2 class="section-title">
-        <span class="section-icon">⚙️</span>
+        <span class="section-icon"><icon name="settings" /></span>
         <loc key="Owner_Section_Infrastructure">Infrastructure</loc>
     </h2>
     <div class="admin-tools-grid">
         <a href="/Owner/FeatureFlags" class="admin-tool-card">
-            <div class="tool-icon">🚩</div>
+            <div class="tool-icon"><icon name="flag" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_FeatureFlags" /></h3>
                 <p><loc key="Owner_FeatureFlags_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/EmailConfig" class="admin-tool-card">
-            <div class="tool-icon">📧</div>
+            <div class="tool-icon"><icon name="mail" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_EmailConfig" /></h3>
                 <p><loc key="Owner_EmailConfig_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/GriffinConfig" class="admin-tool-card">
-            <div class="tool-icon">🛡️</div>
+            <div class="tool-icon"><icon name="shield" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_GriffinConfig" /></h3>
                 <p><loc key="Owner_GriffinConfig_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/SystemHealth" class="admin-tool-card">
-            <div class="tool-icon">🏥</div>
+            <div class="tool-icon"><icon name="heart" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_SystemHealth" /></h3>
                 <p><loc key="Owner_SystemHealth_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/DatabaseConsole" class="admin-tool-card">
-            <div class="tool-icon">💾</div>
+            <div class="tool-icon"><icon name="database" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_DatabaseConsole" /></h3>
                 <p><loc key="Owner_DatabaseConsole_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/Backup" class="admin-tool-card">
-            <div class="tool-icon">💼</div>
+            <div class="tool-icon"><icon name="briefcase" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_Backup" /></h3>
                 <p><loc key="Owner_Backup_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/LanguageManagement" class="admin-tool-card">
-            <div class="tool-icon">🌐</div>
+            <div class="tool-icon"><icon name="globe" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_LanguageManagement" /></h3>
                 <p><loc key="Owner_LanguageManagement_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
 
         <a href="/Owner/GameConfig" class="admin-tool-card">
-            <div class="tool-icon">🎮</div>
+            <div class="tool-icon"><icon name="star" /></div>
             <div class="tool-content">
                 <h3><loc key="Owner_GameConfig" /></h3>
                 <p><loc key="Owner_GameConfig_Desc" /></p>
             </div>
-            <div class="tool-arrow">→</div>
+            <div class="tool-arrow"><icon name="arrow-right" /></div>
         </a>
     </div>
 

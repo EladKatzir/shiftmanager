@@ -308,6 +308,16 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "ViewShiftsMolecule", NameKey = "Grant_ViewShiftsMolecule", DescriptionKey = "Grant_ViewShiftsMolecule_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "ViewShiftsArea", NameKey = "Grant_ViewShiftsArea", DescriptionKey = "Grant_ViewShiftsArea_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 
+        // ============================================
+        // Collaborative On-Call Editing (2026-04-15)
+        // ============================================
+        grants.Add(new GrantType { Id = id++, Key = "EditOnCallCalendar", NameKey = "Grant_EditOnCallCalendar", DescriptionKey = "Grant_EditOnCallCalendar_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+
+        // ============================================
+        // Per-Area Calendar Palette override (2026-04-15)
+        // ============================================
+        grants.Add(new GrantType { Id = id++, Key = "EditAreaCalendarPalette", NameKey = "Grant_EditAreaCalendarPalette", DescriptionKey = "Grant_EditAreaCalendarPalette_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
+
         return grants;
     }
 }

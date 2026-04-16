@@ -18,7 +18,7 @@
 <div class="system-health-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">🏥</span>
+            <span class="page-icon"><icon name="heart" /></span>
             @Localizer["Owner_SystemHealth"]
         </h1>
     </div>
@@ -30,7 +30,7 @@
             <h2>@Model.OverallStatus</h2>
             <p>@Localizer["Owner_SystemHealth_LastChecked"] @DateTime.Now.ToString("g")</p>
         </div>
-        <button onclick="location.reload()" class="btn btn-ghost">🔄 @Localizer["Owner_SystemHealth_Refresh"]</button>
+        <button onclick="location.reload()" class="btn btn-ghost"><icon name="refresh-cw" /> @Localizer["Owner_SystemHealth_Refresh"]</button>
     </div>
 
     @* Security Warnings (fixes D-01, B-06, H-07, B-10) *@
@@ -38,14 +38,14 @@
     {
         <div class="health-check-card" style="border: 2px solid var(--danger); background: var(--danger-bg, rgba(220,53,69,0.1)); margin-bottom: 1rem;">
             <div class="check-header">
-                <h3>🔒 @Localizer["Owner_SystemHealth_SecurityWarnings"]</h3>
+                <h3><icon name="lock" /> @Localizer["Owner_SystemHealth_SecurityWarnings"]</h3>
                 <span class="status-badge badge-error">@Localizer["Owner_SystemHealth_ActionRequired"]</span>
             </div>
             <div class="check-details">
                 @foreach (var warning in Model.SecurityWarnings)
                 {
                     <div class="detail-item" style="color: var(--danger, #dc3545); font-weight: 600;">
-                        <span>⚠️ @warning</span>
+                        <span><icon name="alert-triangle" /> @warning</span>
                     </div>
                 }
             </div>
@@ -57,7 +57,7 @@
         @* Database Health *@
         <div class="health-check-card">
             <div class="check-header">
-                <h3>💾 @Localizer["Owner_SystemHealth_Database"]</h3>
+                <h3><icon name="database" /> @Localizer["Owner_SystemHealth_Database"]</h3>
                 <span class="status-badge @(Model.DatabaseHealthy ? "badge-success" : "badge-error")">
                     @(Model.DatabaseHealthy ? Localizer["Owner_SystemHealth_Healthy"] : Localizer["Owner_SystemHealth_Error"])
                 </span>
@@ -81,7 +81,7 @@
         @* Memory Usage *@
         <div class="health-check-card">
             <div class="check-header">
-                <h3>💻 @Localizer["Owner_SystemHealth_Memory"]</h3>
+                <h3><icon name="bar-chart-2" /> @Localizer["Owner_SystemHealth_Memory"]</h3>
                 <span class="status-badge @(Model.MemoryHealthy ? "badge-success" : "badge-warning")">
                     @(Model.MemoryHealthy ? Localizer["Owner_SystemHealth_Healthy"] : Localizer["Owner_SystemHealth_High"])
                 </span>
@@ -105,7 +105,7 @@
         @* Application Uptime *@
         <div class="health-check-card">
             <div class="check-header">
-                <h3>⏱️ @Localizer["Owner_SystemHealth_Uptime"]</h3>
+                <h3><icon name="clock" /> @Localizer["Owner_SystemHealth_Uptime"]</h3>
                 <span class="status-badge badge-info">@Localizer["Owner_SystemHealth_Running"]</span>
             </div>
             <div class="check-details">
@@ -127,7 +127,7 @@
         @* Configuration Status *@
         <div class="health-check-card">
             <div class="check-header">
-                <h3>⚙️ @Localizer["Owner_SystemHealth_Configuration"]</h3>
+                <h3><icon name="settings" /> @Localizer["Owner_SystemHealth_Configuration"]</h3>
                 <span class="status-badge badge-success">@Localizer["Owner_SystemHealth_OK"]</span>
             </div>
             <div class="check-details">
@@ -157,7 +157,7 @@
 
     @* Detailed Logs *@
     <div class="health-logs">
-        <h2>📋 @Localizer["Owner_SystemHealth_RecentLogs"]</h2>
+        <h2><icon name="file-text" /> @Localizer["Owner_SystemHealth_RecentLogs"]</h2>
         <div class="logs-stats">
             <div class="log-stat">
                 <span class="log-count error">@Model.ErrorCount</span>
@@ -175,7 +175,7 @@
         @if (Model.ErrorCount > 0)
         {
             <div class="alert alert-warning">
-                <strong>⚠️ @Localizer["Owner_SystemHealth_Attention"]</strong> @Model.ErrorCount @Localizer["Owner_SystemHealth_ErrorsDetected"]
+                <strong><icon name="alert-triangle" /> @Localizer["Owner_SystemHealth_Attention"]</strong> @Model.ErrorCount @Localizer["Owner_SystemHealth_ErrorsDetected"]
             </div>
         }
     </div>

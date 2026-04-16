@@ -22,7 +22,7 @@
 <div class="data-lifecycle-container">
     <div class="page-header">
         <h1>
-            <span class="page-icon">📦</span>
+            <span class="page-icon"><icon name="folder" /></span>
             <loc key="Owner_DataLifecycle" />
         </h1>
         <p class="page-subtitle"><loc key="Owner_DataLifecycle_Subtitle" /></p>
@@ -31,14 +31,14 @@
     @if (!string.IsNullOrEmpty(Model.Success))
     {
         <div class="alert alert-success">
-            <strong>✅ @Localizer["Success"]:</strong> @Model.Success
+            <strong><icon name="check" /> @Localizer["Success"]:</strong> @Model.Success
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.Error))
     {
         <div class="alert alert-danger">
-            <strong>❌ @Localizer["Error"]:</strong> @Model.Error
+            <strong><icon name="x" /> @Localizer["Error"]:</strong> @Model.Error
         </div>
     }
 
@@ -66,7 +66,7 @@
                     role="tab"
                     aria-controls="archive"
                     aria-selected="@(Model.ActiveTab == "archive" ? "true" : "false")">
-                📥 <loc key="Owner_DataLifecycle_CreateArchive" />
+                <icon name="download" /> <loc key="Owner_DataLifecycle_CreateArchive" />
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -78,7 +78,7 @@
                     role="tab"
                     aria-controls="purge"
                     aria-selected="@(Model.ActiveTab == "purge" ? "true" : "false")">
-                🗑️ <loc key="Owner_DataLifecycle_PurgeData" />
+                <icon name="trash-2" /> <loc key="Owner_DataLifecycle_PurgeData" />
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -90,7 +90,7 @@
                     role="tab"
                     aria-controls="import"
                     aria-selected="@(Model.ActiveTab == "import" ? "true" : "false")">
-                📤 <loc key="Owner_DataLifecycle_ReImport" />
+                <icon name="upload" /> <loc key="Owner_DataLifecycle_ReImport" />
             </button>
         </li>
     </ul>
@@ -103,7 +103,7 @@
              aria-labelledby="archive-tab">
 
             <div class="tab-panel-content">
-                <h2>📥 <loc key="Owner_DataLifecycle_CreateArchive" /></h2>
+                <h2><icon name="download" /> <loc key="Owner_DataLifecycle_CreateArchive" /></h2>
                 <p><loc key="Owner_DataLifecycle_CreateArchive_Desc" /></p>
 
                 <form method="post" asp-page-handler="Preview">
@@ -143,7 +143,7 @@
 
                     <div class="button-group">
                         <button type="submit" class="btn btn-secondary">
-                            🔍 <loc key="Owner_DataLifecycle_PreviewCounts" />
+                            <icon name="search" /> <loc key="Owner_DataLifecycle_PreviewCounts" />
                         </button>
                     </div>
                 </form>
@@ -151,7 +151,7 @@
                 @if (Model.Preview != null)
                 {
                     <div class="preview-section">
-                        <h3>📊 <loc key="Owner_DataLifecycle_PreviewResults" /></h3>
+                        <h3><icon name="bar-chart-2" /> <loc key="Owner_DataLifecycle_PreviewResults" /></h3>
                         <div class="stats-grid">
                             @foreach (var count in Model.Preview.Counts)
                             {
@@ -169,7 +169,7 @@
                         @if (Model.Preview.Warnings.Any())
                         {
                             <div class="warnings-section">
-                                <h4>⚠️ <loc key="Owner_DataLifecycle_Warnings" />:</h4>
+                                <h4><icon name="alert-triangle" /> <loc key="Owner_DataLifecycle_Warnings" />:</h4>
                                 <ul>
                                     @foreach (var warning in Model.Preview.Warnings)
                                     {
@@ -187,7 +187,7 @@
                             <input type="hidden" asp-for="IncludeChores" />
                             <input type="hidden" asp-for="IncludeOnDuty" />
                             <button type="submit" class="btn btn-primary">
-                                📦 <loc key="Owner_DataLifecycle_CreateArchive" />
+                                <icon name="folder" /> <loc key="Owner_DataLifecycle_CreateArchive" />
                             </button>
                         </form>
                     </div>
@@ -196,31 +196,31 @@
                 @if (Model.LastArchive != null && Model.LastArchive.Success)
                 {
                     <div class="download-section">
-                        <h3>⬇️ <loc key="Owner_DataLifecycle_DownloadArchives" /></h3>
+                        <h3><icon name="download" /> <loc key="Owner_DataLifecycle_DownloadArchives" /></h3>
                         <div class="download-cards">
                             <div class="download-card">
                                 <div class="download-header">
-                                    <span class="download-icon">📄</span>
+                                    <span class="download-icon"><icon name="file-text" /></span>
                                     <div>
                                         <h4><loc key="Owner_DataLifecycle_CsvExport" /></h4>
                                         <p><loc key="Owner_DataLifecycle_Size" />: @((Model.LastArchive.CsvZipSizeBytes / 1024.0 / 1024.0).ToString("F2")) MB</p>
                                     </div>
                                 </div>
                                 <a href="?handler=DownloadCsv" class="btn btn-primary">
-                                    📥 <loc key="Owner_DataLifecycle_DownloadCsvZip" />
+                                    <icon name="download" /> <loc key="Owner_DataLifecycle_DownloadCsvZip" />
                                 </a>
                             </div>
 
                             <div class="download-card">
                                 <div class="download-header">
-                                    <span class="download-icon">🔄</span>
+                                    <span class="download-icon"><icon name="refresh-cw" /></span>
                                     <div>
                                         <h4><loc key="Owner_DataLifecycle_NdjsonExport" /></h4>
                                         <p><loc key="Owner_DataLifecycle_Size" />: @((Model.LastArchive.NdjsonZipSizeBytes / 1024.0 / 1024.0).ToString("F2")) MB</p>
                                     </div>
                                 </div>
                                 <a href="?handler=DownloadNdjson" class="btn btn-primary">
-                                    📥 <loc key="Owner_DataLifecycle_DownloadNdjsonZip" />
+                                    <icon name="download" /> <loc key="Owner_DataLifecycle_DownloadNdjsonZip" />
                                 </a>
                             </div>
                         </div>
@@ -241,17 +241,17 @@
              aria-labelledby="purge-tab">
 
             <div class="tab-panel-content">
-                <h2>🗑️ <loc key="Owner_DataLifecycle_PurgeHistoricalData" /></h2>
+                <h2><icon name="trash-2" /> <loc key="Owner_DataLifecycle_PurgeHistoricalData" /></h2>
 
                 @if (!Model.HasFreshArchive)
                 {
                     <div class="alert alert-warning">
-                        <strong>⚠️ <loc key="Warning" />:</strong> <loc key="Owner_DataLifecycle_PurgeWarning" />
+                        <strong><icon name="alert-triangle" /> <loc key="Warning" />:</strong> <loc key="Owner_DataLifecycle_PurgeWarning" />
                     </div>
                 }
 
                 <div class="danger-notice">
-                    <div class="danger-icon">⚠️</div>
+                    <div class="danger-icon"><icon name="alert-triangle" size="xl" /></div>
                     <div class="danger-content">
                         <strong><loc key="Owner_DataLifecycle_DestructiveOperation" /></strong><br />
                         <loc key="Owner_DataLifecycle_DestructiveOperation_Desc" />
@@ -321,7 +321,7 @@
 
                     <div class="button-group">
                         <button type="submit" class="btn btn-danger" @(!Model.HasFreshArchive ? "disabled" : "")>
-                            🗑️ <loc key="Owner_DataLifecycle_PurgeData" />
+                            <icon name="trash-2" /> <loc key="Owner_DataLifecycle_PurgeData" />
                         </button>
                     </div>
                 </form>
@@ -329,7 +329,7 @@
                 @if (Model.LastPurgeResult != null && Model.LastPurgeResult.Success)
                 {
                     <div class="purge-results">
-                        <h3>✅ <loc key="Owner_DataLifecycle_PurgeResults" /></h3>
+                        <h3><icon name="check" /> <loc key="Owner_DataLifecycle_PurgeResults" /></h3>
                         <div class="stats-grid">
                             @foreach (var count in Model.LastPurgeResult.DeletedCounts)
                             {
@@ -359,7 +359,7 @@
              aria-labelledby="import-tab">
 
             <div class="tab-panel-content">
-                <h2>📤 <loc key="Owner_DataLifecycle_ReImport" /></h2>
+                <h2><icon name="upload" /> <loc key="Owner_DataLifecycle_ReImport" /></h2>
                 <p><loc key="Owner_DataLifecycle_ReImport_Desc" /></p>
 
                 <form method="post" asp-page-handler="ValidateArchive" enctype="multipart/form-data">
@@ -373,7 +373,7 @@
 
                     <div class="button-group">
                         <button type="submit" class="btn btn-secondary">
-                            🔍 <loc key="Owner_DataLifecycle_ValidateArchive" />
+                            <icon name="search" /> <loc key="Owner_DataLifecycle_ValidateArchive" />
                         </button>
                     </div>
                 </form>
@@ -381,12 +381,12 @@
                 @if (Model.ValidationResult != null)
                 {
                     <div class="validation-results">
-                        <h3>📋 <loc key="Owner_DataLifecycle_ValidationResults" /></h3>
+                        <h3><icon name="file-text" /> <loc key="Owner_DataLifecycle_ValidationResults" /></h3>
 
                         @if (!Model.ValidationResult.IsValid)
                         {
                             <div class="alert alert-danger">
-                                <strong>❌ <loc key="Owner_DataLifecycle_ValidationFailed" /></strong>
+                                <strong><icon name="x" /> <loc key="Owner_DataLifecycle_ValidationFailed" /></strong>
                                 <ul>
                                     @foreach (var error in Model.ValidationResult.Errors)
                                     {
@@ -398,7 +398,7 @@
                         else
                         {
                             <div class="alert alert-success">
-                                <strong>✅ <loc key="Owner_DataLifecycle_ValidationPassed" /></strong>
+                                <strong><icon name="check" /> <loc key="Owner_DataLifecycle_ValidationPassed" /></strong>
                             </div>
 
                             <div class="validation-info">
@@ -410,7 +410,7 @@
                             @if (Model.ValidationResult.MissingUsers.Any())
                             {
                                 <div class="alert alert-warning">
-                                    <strong>⚠️ <loc key="Owner_DataLifecycle_MissingUsers" /> (@Model.ValidationResult.MissingUsers.Count):</strong>
+                                    <strong><icon name="alert-triangle" /> <loc key="Owner_DataLifecycle_MissingUsers" /> (@Model.ValidationResult.MissingUsers.Count):</strong>
                                     <ul>
                                         @foreach (var email in Model.ValidationResult.MissingUsers.Take(10))
                                         {
@@ -428,7 +428,7 @@
                             @if (Model.ValidationResult.Warnings.Any())
                             {
                                 <div class="warnings-section">
-                                    <h4>⚠️ <loc key="Owner_DataLifecycle_Warnings" />:</h4>
+                                    <h4><icon name="alert-triangle" /> <loc key="Owner_DataLifecycle_Warnings" />:</h4>
                                     <ul>
                                         @foreach (var warning in Model.ValidationResult.Warnings)
                                         {
@@ -462,7 +462,7 @@
 
                                 <div class="button-group">
                                     <button type="submit" class="btn btn-primary">
-                                        📤 <loc key="Owner_DataLifecycle_ImportData" />
+                                        <icon name="upload" /> <loc key="Owner_DataLifecycle_ImportData" />
                                     </button>
                                 </div>
                             </form>
@@ -489,9 +489,9 @@
                                     <div class="stat-card">
                                         <div class="stat-header">@stat.Key</div>
                                         <div class="stat-breakdown">
-                                            <span class="stat-inserted">✅ @stat.Value.Inserted <loc key="Inserted" /></span>
-                                            <span class="stat-skipped">⏭️ @stat.Value.Skipped <loc key="Skipped" /></span>
-                                            <span class="stat-failed">❌ @stat.Value.Failed <loc key="Failed" /></span>
+                                            <span class="stat-inserted"><icon name="check" /> @stat.Value.Inserted <loc key="Inserted" /></span>
+                                            <span class="stat-skipped"><icon name="chevron-right" /> @stat.Value.Skipped <loc key="Skipped" /></span>
+                                            <span class="stat-failed"><icon name="x" /> @stat.Value.Failed <loc key="Failed" /></span>
                                         </div>
                                     </div>
                                 }

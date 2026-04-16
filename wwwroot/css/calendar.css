@@ -505,6 +505,15 @@
   color: var(--shift-hakam-text);
 }
 
+.shift-badge--home {
+  background-color: var(--shift-home-soft);
+  color: var(--shift-home-text);
+}
+
+.shift-badge--home .shift-badge__indicator {
+  background-color: var(--shift-home);
+}
+
 .shift-badge--hakam .shift-badge__indicator {
   background-color: var(--shift-hakam);
 }

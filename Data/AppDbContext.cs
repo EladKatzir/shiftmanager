@@ -84,6 +84,7 @@ public class AppDbContext : DbContext
     // Hierarchy (Project → Area → Molecule → Company/Department → User)
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Area> Areas => Set<Area>();
+    public DbSet<AreaCalendarPalette> AreaCalendarPalettes => Set<AreaCalendarPalette>();
     public DbSet<Molecule> Molecules => Set<Molecule>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<JobType> JobTypes => Set<JobType>();
@@ -93,7 +94,7 @@ public class AppDbContext : DbContext
     public DbSet<ShiftGroupingCompany> ShiftGroupingCompanies => Set<ShiftGroupingCompany>();
     public DbSet<ShiftGroupingJobType> ShiftGroupingJobTypes => Set<ShiftGroupingJobType>();
 
-    // Grant System (107 built-in grants, 12 role templates)
+    // Grant System (132 built-in grants as of 2026-04-15, 12 role templates)
     public DbSet<GrantType> GrantTypes => Set<GrantType>();
     public DbSet<Grant> Grants => Set<Grant>();
     public DbSet<RoleTemplate> RoleTemplates => Set<RoleTemplate>();
@@ -1707,6 +1708,23 @@ public class AppDbContext : DbContext
                 .HasForeignKey(q => q.MoleculeId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(q => new { q.MoleculeId, q.IsEnabled });
+        });
+
+        // AreaCalendarPalette (2026-04-15): unique per Area, cascade on Area deletion.
+        modelBuilder.Entity<AreaCalendarPalette>(b =>
+        {
+            b.HasIndex(p => p.AreaId).IsUnique();
+            b.HasOne(p => p.Area)
+                .WithMany()
+                .HasForeignKey(p => p.AreaId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.Property(p => p.ShiftMorning).HasMaxLength(7);
+            b.Property(p => p.ShiftAfternoon).HasMaxLength(7);
+            b.Property(p => p.ShiftNight).HasMaxLength(7);
+            b.Property(p => p.ShiftHome).HasMaxLength(7);
+            b.Property(p => p.OnDuty).HasMaxLength(7);
+            b.Property(p => p.Chore).HasMaxLength(7);
+            b.Property(p => p.Vacation).HasMaxLength(7);
         });
 
         base.OnModelCreating(modelBuilder);

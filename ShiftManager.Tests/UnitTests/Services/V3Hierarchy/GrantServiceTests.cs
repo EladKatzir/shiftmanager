@@ -888,8 +888,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 130 grants
-        grantTypes.Should().HaveCount(130, "Should have exactly 130 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, and store grants");
+        // Assert - 132 grants (added EditOnCallCalendar + EditAreaCalendarPalette on 2026-04-15)
+        grantTypes.Should().HaveCount(132, "Should have exactly 132 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, store, collaborative on-call editing, and per-area palette grants");
     }
 
     [Fact]

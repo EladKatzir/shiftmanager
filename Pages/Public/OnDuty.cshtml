@@ -276,7 +276,7 @@
         @* ✅ PHASE 7: Contextual Metrics - Tactical Truth *@
         <div class="calendar-metrics">
             <div class="metric-item metric-shifts">
-                <span class="metric-icon">🎯</span>
+                <span class="metric-icon"><icon name="check-circle" /></span>
                 <div class="metric-content">
                     <span class="metric-value">@Model.TotalOnDutyCount</span>
                     <span class="metric-label"><loc key="Calendar_OnDuty" /></span>
@@ -297,7 +297,7 @@
             @if (Model.LeadCount > 0)
             {
                 <div class="metric-item metric-shifts">
-                    <span class="metric-icon">⭐</span>
+                    <span class="metric-icon"><icon name="star" /></span>
                     <div class="metric-content">
                         <span class="metric-value">@Model.LeadCount</span>
                         <span class="metric-label"><loc key="Calendar_Lead" /></span>
@@ -309,7 +309,7 @@
                 @if (Model.MyOnDutyCount > 0)
                 {
                     <div class="metric-item metric-coverage">
-                        <span class="metric-icon">👤</span>
+                        <span class="metric-icon"><icon name="user" /></span>
                         <div class="metric-content">
                             <span class="metric-value">@Model.MyOnDutyCount</span>
                             <span class="metric-label"><loc key="Calendar_MyItems" /></span>
@@ -420,7 +420,7 @@
                                 @if (canEdit)
                                 {
                                     <button class="delete-btn" data-delete-id="@onDuty.Id" data-delete-title="@typeLabel - @onDuty.User?.DisplayName">
-                                        🗑️
+                                        <icon name="trash-2" />
                                     </button>
                                 }
                                 else

@@ -483,7 +483,7 @@
     @if (!Model.Items.Any())
     {
         <div class="empty-state">
-            <div class="empty-state-icon">📅</div>
+            <div class="empty-state-icon"><icon name="calendar" /></div>
             <div class="empty-state-title"><loc key="NothingHereYet" /></div>
             <div class="empty-state-text"><loc key="InDateRange" />: @Model.RangeStart.ToString("yyyy-MM-dd") - @Model.RangeEnd.ToString("yyyy-MM-dd")</div>
         </div>
@@ -549,7 +549,7 @@
 
         <!-- Empty state for filtered -->
         <div id="filteredEmptyState" class="empty-state" style="display: none;">
-            <div class="empty-state-icon">🔍</div>
+            <div class="empty-state-icon"><icon name="search" /></div>
             <div class="empty-state-title"><loc key="NoItemsMatch" /></div>
             <div class="empty-state-text"><loc key="ClearFilters" /></div>
         </div>
