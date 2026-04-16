@@ -462,7 +462,8 @@
                 <select name="OnDutyType" id="onDutyType" class="form-select" required>
                     <option value="">@Localizer["SelectType"]</option>
                     @* ✅ PHASE 18: Show default OnDuty types (from enum) *@
-                    <option value="@((int)OnDutyType.Hakam)">🛡️ @Localizer["OnDutyHakam"]</option>
+                    @* <option> text nodes can't host tag helpers — icon shown in the rendered list elsewhere. *@
+                    <option value="@((int)OnDutyType.Hakam)">@Localizer["OnDutyHakam"]</option>
                     <option value="@((int)OnDutyType.Lead)">⭐ @Localizer["OnDutyLead"]</option>
                     @* ✅ PHASE 18: Show custom OnDuty types (from database) *@
                     @foreach (var customType in Model.CustomOnDutyTypes)
