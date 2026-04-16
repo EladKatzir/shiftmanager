@@ -839,7 +839,7 @@ async function submitQuickAdd(date) {
         // First click — enter confirm state
         btn.dataset.confirming = 'true';
         btn._originalHtml = btn.innerHTML;
-        btn.innerHTML = '✓';
+        btn.innerHTML = Icons.render('check', { size: 16 });
         btn.classList.add('excel-calendar__remove-btn--confirming');
         btn.setAttribute('title', isHebrew ? 'לחץ שוב לאישור' : 'Click again to confirm');
 

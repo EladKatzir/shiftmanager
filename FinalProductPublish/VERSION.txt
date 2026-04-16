@@ -1,16 +1,16 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 3.7.0
+                           Version 3.7.5
 ================================================================================
 
-VERSION: 3.7.0
-RELEASE DATE: 2026-04-13
-BUILD DATE: 2026-04-13 02:41:17 UTC
-GIT COMMIT: baefe48
+VERSION: 3.7.5
+RELEASE DATE: 2026-04-16
+BUILD DATE: 2026-04-16 09:00:08 UTC
+GIT COMMIT: bdff2ef
 GIT BRANCH: update
 
 PACKAGE INFORMATION:
-  Total Files:  508
+  Total Files:  512
   DLL Count:    351
   Package Size: 163 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-04-13 02:41:17 UTC
+Build Date:     2026-04-16 09:00:08 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v3.7.0
+  âœ“ Git tagged: v3.7.5
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -258,16 +258,16 @@ CERTIFICATION
 This package has been:
   âœ… Built successfully with no errors
   âœ… Tested automatically with comprehensive checks
-  âœ… Verified for completeness (508 files)
+  âœ… Verified for completeness (512 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v3.7.0)
+  âœ… Tagged in version control (v3.7.5)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-04-13 02:41:17 UTC
-Git Commit: baefe48
+Date: 2026-04-16 09:00:08 UTC
+Git Commit: bdff2ef
 
 ================================================================================
 LICENSE

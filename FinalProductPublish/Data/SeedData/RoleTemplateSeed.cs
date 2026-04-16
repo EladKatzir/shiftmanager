@@ -955,24 +955,26 @@ public static class RoleTemplateSeed
 
         // ============================================
         // EditOnCallCalendar (ID 131) — Collaborative on-call editing (2026-04-15)
+        // Area-scoped. Granted broadly to hakam-eligible roles. POST handlers still IDOR-check.
         // ============================================
-        grants.Add(G(1, 131, ETA));
-        grants.Add(G(2, 131, ETA));
-        grants.Add(G(3, 131, ETA));
-        grants.Add(G(5, 131, ETA));
-        grants.Add(G(7, 131, ETA));
-        grants.Add(G(8, 131, SAR));
-        grants.Add(G(9, 131, ETA));
-        grants.Add(G(10, 131, ETA));
-        grants.Add(G(11, 131, ETP, canGive: true));
+        grants.Add(G(1, 131, ETA));   // Employee
+        grants.Add(G(2, 131, ETA));   // BRDirector
+        grants.Add(G(3, 131, ETA));   // Lead
+        grants.Add(G(5, 131, ETA));   // Director
+        grants.Add(G(7, 131, ETA));   // MoleculeAdmin
+        grants.Add(G(8, 131, SAR));   // Assigner — SAR per invariant (AssignerRoleTests: inherited grants stay at SameAsRole)
+        grants.Add(G(9, 131, ETA));   // DepartmentLead
+        grants.Add(G(10, 131, ETA));  // AreaAdmin
+        grants.Add(G(11, 131, ETP, canGive: true));  // Owner
+        // Trainee intentionally omitted — learning role, no write access.
 
         // ============================================
         // EditAreaCalendarPalette (ID 132) — Per-area color overrides (2026-04-15)
         // ============================================
-        grants.Add(G(2, 132, SAR));
-        grants.Add(G(7, 132, ETM));
-        grants.Add(G(10, 132, ETA));
-        grants.Add(G(11, 132, ETP, canGive: true));
+        grants.Add(G(2, 132, SAR));   // BRDirector
+        grants.Add(G(7, 132, ETM));   // MoleculeAdmin
+        grants.Add(G(10, 132, ETA));  // AreaAdmin
+        grants.Add(G(11, 132, ETP, canGive: true));  // Owner
 
         return grants;
     }

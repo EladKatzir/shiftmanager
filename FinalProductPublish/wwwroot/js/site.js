@@ -123,6 +123,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Brand area clicked
 
+    // Shift+Click (no Ctrl/Cmd) opens the hidden Appearance picker.
+    // Thematic pun: the *Shift* key opens appearance in *Shift*Manager.
+    if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Lazy-load picker assets on first open.
+      if (!window.ThemePicker) {
+        if (!document.querySelector('link[href*="theme-picker.css"]')) {
+          const cssLink = document.createElement('link');
+          cssLink.rel = 'stylesheet';
+          cssLink.href = '/css/theme-picker.css?v=' + Date.now();
+          document.head.appendChild(cssLink);
+        }
+        if (!document.querySelector('script[src*="theme-picker.js"]')) {
+          const script = document.createElement('script');
+          script.src = '/js/theme-picker.js?v=' + Date.now();
+          script.onload = function () { if (window.ThemePicker) window.ThemePicker.open(); };
+          document.head.appendChild(script);
+          return;
+        }
+      }
+      if (window.ThemePicker) window.ThemePicker.open();
+      return;
+    }
+
     // Only trigger game if Ctrl/Cmd key is pressed
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
@@ -920,35 +946,35 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
 function getCommandPalettePages() {
   return [
     // Manager/Admin Pages
-    { title: window.AppLocalizer.Home, subtitle: window.AppLocalizer.DashboardOverview, url: '/Home/Index', icon: '🏠', roles: ['Manager', 'Director', 'Owner'] },
-    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_MonthView || 'Month View'}`, subtitle: window.AppLocalizer.MonthlySchedule, url: '/Calendar/Month', icon: '📅', roles: ['all'] },
+    { title: window.AppLocalizer.Home, subtitle: window.AppLocalizer.DashboardOverview, url: '/Home/Index', icon: 'home', roles: ['Manager', 'Director', 'Owner'] },
+    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_MonthView || 'Month View'}`, subtitle: window.AppLocalizer.MonthlySchedule, url: '/Calendar/Month', icon: 'calendar', roles: ['all'] },
     { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_WeekView || 'Week View'}`, subtitle: window.AppLocalizer.WeeklySchedule, url: '/Calendar/Week', icon: '📆', roles: ['all'] },
-    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_DayView || 'Day View'}`, subtitle: window.AppLocalizer.DailySchedule, url: '/Calendar/Day', icon: '📋', roles: ['all'] },
-    { title: window.AppLocalizer?.Nav_Requests || 'Requests', subtitle: window.AppLocalizer.ManageRequests, url: '/Requests/Index', icon: '📝', roles: ['Manager', 'Director', 'Owner'] },
-    { title: window.AppLocalizer?.Nav_Analytics || 'Analytics', subtitle: window.AppLocalizer.ViewReports, url: '/Admin/Analytics', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
-    { title: window.AppLocalizer?.Nav_Users || 'Users', subtitle: window.AppLocalizer.ManageEmployees, url: '/Admin/Users', icon: '👥', roles: ['Manager', 'Director', 'Owner'] },
-    { title: window.AppLocalizer?.Nav_Companies || 'Companies', subtitle: window.AppLocalizer.ManageOrganizations, url: '/Admin/Companies', icon: '🏢', roles: ['Owner'] },
+    { title: `${window.AppLocalizer.Calendar} - ${window.AppLocalizer?.Nav_DayView || 'Day View'}`, subtitle: window.AppLocalizer.DailySchedule, url: '/Calendar/Day', icon: 'file-text', roles: ['all'] },
+    { title: window.AppLocalizer?.Nav_Requests || 'Requests', subtitle: window.AppLocalizer.ManageRequests, url: '/Requests/Index', icon: 'pencil', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Analytics || 'Analytics', subtitle: window.AppLocalizer.ViewReports, url: '/Admin/Analytics', icon: 'bar-chart-2', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Users || 'Users', subtitle: window.AppLocalizer.ManageEmployees, url: '/Admin/Users', icon: 'users', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_Companies || 'Companies', subtitle: window.AppLocalizer.ManageOrganizations, url: '/Admin/Companies', icon: 'users', roles: ['Owner'] },
     { title: window.AppLocalizer?.Nav_Directors || 'Directors', subtitle: window.AppLocalizer.AssignDirectors, url: '/Admin/Directors', icon: '👔', roles: ['Owner'] },
-    { title: window.AppLocalizer?.Nav_Configuration || 'Configuration', subtitle: window.AppLocalizer.SystemSettings, url: '/Admin/Config', icon: '⚙️', roles: ['Manager', 'Director', 'Owner'] },
-    { title: window.AppLocalizer?.Nav_ShiftTypes || 'Shift Types', subtitle: window.AppLocalizer.ManageShiftDefinitions, url: '/Admin/ShiftTypes', icon: '🕐', roles: ['Manager', 'Director', 'Owner'] },
-    { title: window.AppLocalizer?.Nav_TimeOff || 'Time Off', subtitle: window.AppLocalizer.ApprovedTimeOff, url: '/Admin/TimeOff', icon: '🏖️', roles: ['Manager', 'Director', 'Owner'] },
-    { title: window.AppLocalizer?.Nav_AuditLog || 'Audit Log', subtitle: window.AppLocalizer.SystemActivityLog, url: '/Admin/AuditLog', icon: '📜', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Configuration || 'Configuration', subtitle: window.AppLocalizer.SystemSettings, url: '/Admin/Config', icon: 'settings', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_ShiftTypes || 'Shift Types', subtitle: window.AppLocalizer.ManageShiftDefinitions, url: '/Admin/ShiftTypes', icon: 'clock', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_TimeOff || 'Time Off', subtitle: window.AppLocalizer.ApprovedTimeOff, url: '/Admin/TimeOff', icon: 'clock', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_AuditLog || 'Audit Log', subtitle: window.AppLocalizer.SystemActivityLog, url: '/Admin/AuditLog', icon: 'file-text', roles: ['Owner'] },
     { title: window.AppLocalizer?.Nav_Chores || 'Chores', subtitle: window.AppLocalizer.TaskManagement, url: '/Public/Chores', icon: '🗂️', roles: ['all'] },
-    { title: window.AppLocalizer?.Nav_OnDuty || 'On Duty', subtitle: window.AppLocalizer.CurrentDutyRoster, url: '/Public/OnDuty', icon: '🎯', roles: ['all'] },
+    { title: window.AppLocalizer?.Nav_OnDuty || 'On Duty', subtitle: window.AppLocalizer.CurrentDutyRoster, url: '/Public/OnDuty', icon: 'check-circle', roles: ['all'] },
 
     // Ops Console Scheduler (NEW)
-    { title: window.AppLocalizer?.Nav_ScheduleTable || 'Schedule Table', subtitle: window.AppLocalizer?.Nav_ScheduleTableDesc || 'Operations console for shift assignments', url: '/Calendar/Table', icon: '📊', roles: ['Manager', 'Director', 'Owner'] },
+    { title: window.AppLocalizer?.Nav_ScheduleTable || 'Schedule Table', subtitle: window.AppLocalizer?.Nav_ScheduleTableDesc || 'Operations console for shift assignments', url: '/Calendar/Table', icon: 'bar-chart-2', roles: ['Manager', 'Director', 'Owner'] },
     { title: window.AppLocalizer?.Nav_Blueprints || 'Blueprints', subtitle: window.AppLocalizer?.Nav_BlueprintsDesc || 'Manage shift types with localized names', url: '/Owner/Blueprints', icon: '📐', roles: ['Owner'] },
-    { title: window.AppLocalizer?.Nav_Programs || 'Programs', subtitle: window.AppLocalizer?.Nav_ProgramsDesc || 'Create weekly shift templates and generate instances', url: '/Owner/Programs', icon: '📋', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_Programs || 'Programs', subtitle: window.AppLocalizer?.Nav_ProgramsDesc || 'Create weekly shift templates and generate instances', url: '/Owner/Programs', icon: 'file-text', roles: ['Owner'] },
     { title: window.AppLocalizer?.Nav_MasterPrograms || 'Master Programs', subtitle: window.AppLocalizer?.Nav_MasterProgramsDesc || 'Compose full weekly schedules from multiple programs', url: '/Owner/MasterPrograms', icon: '🗂️', roles: ['Owner'] },
-    { title: window.AppLocalizer?.Nav_RoleTemplates || 'Role Templates', subtitle: window.AppLocalizer?.Nav_RoleTemplatesDesc || 'Manage system and custom role templates', url: '/Owner/Hub/RoleTemplates', icon: '👤', roles: ['Owner'] },
+    { title: window.AppLocalizer?.Nav_RoleTemplates || 'Role Templates', subtitle: window.AppLocalizer?.Nav_RoleTemplatesDesc || 'Manage system and custom role templates', url: '/Owner/Hub/RoleTemplates', icon: 'user', roles: ['Owner'] },
 
     // Employee Pages
-    { title: window.AppLocalizer?.Nav_MyRequests || 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: '📝', roles: ['Employee', 'Trainee'] },
-    { title: window.AppLocalizer?.Nav_MyGroups || 'My Groups', subtitle: window.AppLocalizer?.ViewGroupMembers || 'View group members', url: '/MyTeam/Index', icon: '👥', roles: ['Employee', 'Trainee'] },
-    { title: window.AppLocalizer?.Nav_CompanyOverview || 'Company Overview', subtitle: window.AppLocalizer?.OverviewCalendarDesc || 'Company-wide view of all assignments', url: '/Calendar/Overview', icon: '📋', roles: ['all'] },
-    { title: window.AppLocalizer?.Nav_MyProfile || 'My Profile', subtitle: window.AppLocalizer.UpdateMyInformation, url: '/My/Profile', icon: '👤', roles: ['Employee', 'Trainee'] },
-    { title: window.AppLocalizer?.Nav_Notifications || 'Notifications', subtitle: window.AppLocalizer.ViewNotifications, url: '/My/NotificationCenter', icon: '🔔', roles: ['all'] }
+    { title: window.AppLocalizer?.Nav_MyRequests || 'My Requests', subtitle: window.AppLocalizer.ViewMyRequests, url: '/My/Requests', icon: 'pencil', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_MyGroups || 'My Groups', subtitle: window.AppLocalizer?.ViewGroupMembers || 'View group members', url: '/MyTeam/Index', icon: 'users', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_CompanyOverview || 'Company Overview', subtitle: window.AppLocalizer?.OverviewCalendarDesc || 'Company-wide view of all assignments', url: '/Calendar/Overview', icon: 'file-text', roles: ['all'] },
+    { title: window.AppLocalizer?.Nav_MyProfile || 'My Profile', subtitle: window.AppLocalizer.UpdateMyInformation, url: '/My/Profile', icon: 'user', roles: ['Employee', 'Trainee'] },
+    { title: window.AppLocalizer?.Nav_Notifications || 'Notifications', subtitle: window.AppLocalizer.ViewNotifications, url: '/My/NotificationCenter', icon: 'bell', roles: ['all'] }
   ];
 }
 
@@ -1129,8 +1155,13 @@ function renderCommandPaletteResults(showingRecent) {
       item.classList.add('selected');
     }
 
+    // page.icon is a Lucide name (e.g. "home", "calendar"). Render via icon-runtime
+    // if available; fall back to escaped text so legacy data never breaks the UI.
+    const iconHtml = (window.Icons && window.Icons.render)
+      ? window.Icons.render(page.icon, { size: 24 })
+      : escapeHtml(page.icon);
     item.innerHTML = `
-      <div class="command-palette-item-icon">${escapeHtml(page.icon)}</div>
+      <div class="command-palette-item-icon">${iconHtml}</div>
       <div class="command-palette-item-content">
         <div class="command-palette-item-title">${escapeHtml(page.title)}</div>
         <div class="command-palette-item-subtitle">${escapeHtml(page.subtitle)}</div>

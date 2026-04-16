@@ -2572,6 +2572,30 @@
         <member name="M:ShiftManager.Migrations.ChoreTypeBilingualNames.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.ThemePreferences">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ThemePreferences.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ThemePreferences.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ThemePreferences.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddAreaCalendarPalettes">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAreaCalendarPalettes.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAreaCalendarPalettes.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAreaCalendarPalettes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -3324,6 +3348,25 @@
             SECURITY-AUDITED: Cross-tenant FK — PrimaryShiftType may belong to a different company.
             Load via IgnoreQueryFilters() when needed.
             </summary>
+        </member>
+        <member name="T:ShiftManager.Models.AreaCalendarPalette">
+             <summary>
+             Per-Area override of the unified calendar color palette (2026-04-15).
+             One row per Area (unique AreaId). Every slot is nullable — a null slot
+             means "use the global default from tokens.css for this color".
+            
+             Not <c>IBelongsToCompany</c> because Area lives ABOVE Company in the
+             hierarchy (Project -> Area -> Molecule -> Company). One palette applies
+             to every molecule/company inside the area. Write authorization is via
+             the area-scoped grant <c>EditAreaCalendarPalette</c>.
+            
+             All hex values must pass <c>ColorUtilities.SanitizeHexColor</c> (strict
+             <c>#RRGGBB</c>) before being persisted — prevents CSS injection when
+             rendered into an inline <c>&lt;style&gt;</c> block.
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.AreaCalendarPalette.AreaId">
+            <summary>FK to Area. Unique (one palette per area).</summary>
         </member>
         <member name="T:ShiftManager.Models.AuditLog">
             <summary>
@@ -4274,7 +4317,9 @@
         </member>
         <member name="P:ShiftManager.Models.OnDutyTypeConfig.Icon">
             <summary>
-            Icon/Emoji to display for this type
+            Icon for this type. Prefer a Lucide icon name (e.g. "shield", "target", "pin")
+            which renders via &lt;icon name="..."/&gt;. Legacy values (emoji chars) still render
+            as plain text via the renderer's fallback branch — do not break on existing data.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.OnDutyTypeConfig.Color">
@@ -5377,6 +5422,14 @@
             <summary>
             API endpoint for client-side JavaScript localization
             Fetches localized strings for given keys, respecting current culture and company overrides
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.My.ThemeModel">
+            <summary>
+            Per-user appearance (theme) endpoint. Scope: the authenticated user only —
+            reads <c>User.FindFirst(ClaimTypes.NameIdentifier)</c> and never accepts a userId
+            from the request body. Also updates the <c>theme</c> cookie so the next page
+            render derives colors without a DB hit.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.OnDuty.GetEligibleUsersModel">
@@ -6757,6 +6810,19 @@
             Calculates a percentile value from a sorted list.
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.ColorUtilities">
+            <summary>
+            Shared color-handling utilities. Extracted 2026-04-15 from duplicate private helpers
+            in ChoreTypes and DutyTypes admin pages; the AreaCalendarPalette page also needs this.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ColorUtilities.SanitizeHexColor(System.String)">
+            <summary>
+            Accepts a user-supplied color string and returns it only if it matches strict
+            <c>#RRGGBB</c>. Prevents CSS injection in <c>style=""</c> attributes.
+            Returns <c>null</c> for null/empty/invalid input.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.ICompanyCacheService">
             <summary>
             Service interface for caching company metadata
@@ -7314,6 +7380,31 @@
             <summary>
             Preview of archive counts
             </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IAreaPaletteService">
+             <summary>
+             Resolves the calendar-palette override for the current user's Area.
+             Added 2026-04-15 — drives the per-area color customization UI at
+             <c>/Admin/Organization/AreaPalette</c>.
+            
+             Returns null when no override exists (caller falls back to tokens.css defaults).
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IAreaPaletteService.GetPaletteForCurrentUserAsync">
+            <summary>Palette for the current user's area (resolves via HierarchyService), or null if none.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IAreaPaletteService.GetPaletteForAreaAsync(System.Int32)">
+            <summary>Palette for an explicit area, or null if none.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IAreaPaletteService.SavePaletteAsync(System.Int32,ShiftManager.Models.AreaCalendarPalette,System.Int32)">
+            <summary>
+            Upsert the palette for <paramref name="areaId"/>. All provided hex values
+            must already be validated (call <c>ColorUtilities.SanitizeHexColor</c> first).
+            Pass null for a slot to clear it. Invalidates cache.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IAreaPaletteService.InvalidateAreaCache(System.Int32)">
+            <summary>Invalidate cache (safety hatch after manual DB edits).</summary>
         </member>
         <member name="T:ShiftManager.Services.IClientTelemetryService">
             <summary>
@@ -7925,6 +8016,64 @@
             <summary>
             Searches for users that can be added as friends.
             </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IGrantBackfillService">
+             <summary>
+             Reusable facility for propagating new template AutoGrants to users who
+             already have their RoleTemplate assigned. Added 2026-04-15 as a permanent
+             admin tool — see <c>/Owner/Hub/Grants</c> "Grant Actions" tab.
+            
+             Idempotent: skips users whose grants already match the template.
+             Safe for manual admin grants (IsAutoGrant=false) — they are never touched.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGrantBackfillService.PreviewAsync(System.Nullable{System.Int32})">
+            <summary>
+            Dry-run. Returns the users who would receive additional AutoGrants
+            if <see cref="M:ShiftManager.Services.IGrantBackfillService.ExecuteAsync(System.Nullable{System.Int32},System.Int32)"/> were called now, with no DB writes.
+            </summary>
+            <param name="roleTemplateId">Optional filter: limit to a single template.</param>
+        </member>
+        <member name="M:ShiftManager.Services.IGrantBackfillService.ExecuteAsync(System.Nullable{System.Int32},System.Int32)">
+            <summary>
+            Apply missing AutoGrants. Delegates to
+            <c>IGrantService.ApplyAutoGrantsAsync</c> per user (idempotent inside).
+            </summary>
+            <param name="roleTemplateId">Optional filter: limit to a single template.</param>
+            <param name="actingUserId">Id of the admin running the back-fill — used for audit logging.</param>
+        </member>
+        <member name="M:ShiftManager.Services.IGrantBackfillService.PreviewSurplusAsync(System.Nullable{System.Int32})">
+             <summary>
+             Read-only surplus audit. Finds users whose Grants table contains rows
+             where <c>IsAutoGrant=true</c> but the grant is no longer in their
+             template's <c>AutoGrants</c> list (template was edited, stale auto-grant
+             remained). Manual admin grants (<c>IsAutoGrant=false</c>) are excluded —
+             those are intentional and not flagged.
+            
+             WARN-ONLY: this method never modifies data. Removing surplus is a
+             deliberate admin decision made manually.
+             </summary>
+        </member>
+        <member name="T:ShiftManager.Services.BackfillReport">
+            <summary>Summary of a dry-run.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.BackfillReportEntry">
+            <summary>Per-user drift entry.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.BackfillReportEntry.MissingGrantKeys">
+            <summary>The actual grant keys that would be inserted on Execute. Populated by PreviewAsync (2026-04-16).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.SurplusReportEntry">
+            <summary>Per-user surplus entry — auto-grants no longer in their template.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.SurplusReportEntry.SurplusGrantKeys">
+            <summary>Grant keys present as IsAutoGrant=true on the user but absent from the template AutoGrants.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.SurplusReport">
+            <summary>Summary of surplus audit (warn-only).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.BackfillResult">
+            <summary>Outcome of an execute run.</summary>
         </member>
         <member name="M:ShiftManager.Services.IGrantService.HasCalendarEditPermissionAsync(System.Int32)">
             <summary>

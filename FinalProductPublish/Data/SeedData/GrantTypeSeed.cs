@@ -310,11 +310,14 @@ public static class GrantTypeSeed
 
         // ============================================
         // Collaborative On-Call Editing (2026-04-15)
+        // Grants any hakam-eligible user the right to assign/unassign users and add text notes
+        // on the OnCall calendar (/Calendar/OnCall). POST handlers still perform IDOR scope check.
         // ============================================
         grants.Add(new GrantType { Id = id++, Key = "EditOnCallCalendar", NameKey = "Grant_EditOnCallCalendar", DescriptionKey = "Grant_EditOnCallCalendar_Desc", Category = GrantCategory.Duty, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 
         // ============================================
         // Per-Area Calendar Palette override (2026-04-15)
+        // Grants Area Admins the right to customize the shift/chore/on-duty/vacation colors per area.
         // ============================================
         grants.Add(new GrantType { Id = id++, Key = "EditAreaCalendarPalette", NameKey = "Grant_EditAreaCalendarPalette", DescriptionKey = "Grant_EditAreaCalendarPalette_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 

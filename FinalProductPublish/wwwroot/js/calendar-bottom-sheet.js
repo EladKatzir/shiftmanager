@@ -539,7 +539,7 @@
         // First tap — show confirmation state
         btn.dataset.confirming = 'true';
         var originalHtml = btn.innerHTML;
-        btn.innerHTML = isHebrew() ? '✓' : '✓';
+        btn.innerHTML = Icons.render('check', { size: 16 });
         btn.classList.add('bottom-sheet__remove-btn--confirming');
         btn.setAttribute('aria-label', (window.AppLocalizer?.BottomSheet_TapToConfirm || 'Tap again to confirm'));
         // Reset after 3 seconds
