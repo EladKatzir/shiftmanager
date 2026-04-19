@@ -101,9 +101,18 @@
      * Log error to telemetry (if available)
      */
     function logToTelemetry(error, context = {}) {
-        // Use the existing telemetry trackError if available
+        // Use the existing telemetry trackError if available.
+        // trackError signature: (message: string, source: string|null, lineno: number|null,
+        //                        colno: number|null, error: Error|null)
         if (window.__telemetry && typeof window.__telemetry.trackError === 'function') {
-            window.__telemetry.trackError(error, context);
+            const message = (error && error.message) ? error.message : String(error);
+            window.__telemetry.trackError(
+                message,
+                context && context.source ? context.source : null,
+                context && typeof context.lineno === 'number' ? context.lineno : null,
+                context && typeof context.colno === 'number' ? context.colno : null,
+                error instanceof Error ? error : null
+            );
         }
 
         // Also track as an event for error boundary specific tracking

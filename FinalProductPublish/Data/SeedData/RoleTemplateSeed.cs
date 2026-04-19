@@ -278,6 +278,7 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 68, SAR, useOwnJobType: true));
         // Assigner extra: molecule-wide chore assignment
         grants.Add(G(8, 17, ETM));   // AssignChores (ETM — only this grant is molecule-scoped)
+        grants.Add(G(8, 34, ETM));   // GAP fix: ViewAllUsers (ETM) — 17 AssignChores at ETM was unusable without molecule-wide user visibility
 
         // ============================================
         // LEAD (Template 3) — 48 grants
@@ -309,8 +310,8 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 7, SAR, useOwnJobType: true));    // EditShiftPrograms (OWN)
         grants.Add(G(3, 8, SAR, useOwnJobType: true));    // CreateShiftPrograms (OWN)
         grants.Add(G(3, 9, SAR, useOwnJobType: true));    // DeleteShiftPrograms (OWN)
-        grants.Add(G(3, 10, ETM, useOwnJobType: true));   // EditShiftTypes (MOLECULE — widened from SAR for blueprint management)
-        grants.Add(G(3, 11, ETM, useOwnJobType: true));   // CreateShiftTypes (MOLECULE — widened from SAR for blueprint management)
+        grants.Add(G(3, 10, ETM, useOwnJobType: true));   // EditShiftTypes (MOLECULE, own JobType + null/global shifts — Lead/מפ"צ edits within their JobType)
+        grants.Add(G(3, 11, ETM, useOwnJobType: true));   // CreateShiftTypes (MOLECULE, own JobType — Lead/מפ"צ creates within their JobType)
         grants.Add(G(3, 69, SAR, useOwnJobType: true));   // ManageAlhutBlueprints (OWN)
         grants.Add(G(3, 70, SAR, useOwnJobType: true));   // ManageAlhutPrograms (OWN)
         grants.Add(G(3, 71, SAR, useOwnJobType: true));   // ManageTextBlueprints (OWN)
@@ -332,6 +333,10 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 52, ETM, useOwnJobType: true));   // ViewAnalytics
         grants.Add(G(3, 53, ETM, useOwnJobType: true));   // ViewReports
         grants.Add(G(3, 59, ETM, useOwnJobType: true));   // ViewAuditLog
+        // GAP fix: Lead peer-consistency with BRDirector/Director (both have these; Lead was missing)
+        grants.Add(G(3, 32, SAR, useOwnJobType: true));   // ResetPasswords — Lead resets passwords for own-jobtype squad
+        grants.Add(G(3, 33, SAR, useOwnJobType: true));   // AssignJobTypes — mirrors approval/assignment pattern
+        grants.Add(G(3, 24, SAR, useOwnJobType: true));   // ApproveExtendedLeave — Lead approves extended leave for own jobtype
 
         // ============================================
         // BR DIRECTOR (Template 2) — 56 grants
@@ -359,12 +364,13 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 68, SAR, useOwnJobType: true));
         // BRDirector-specific
         grants.Add(G(2, 5, ETM, canGive: true));   // AssignBRShifts (ETM, ALL, CanGive)
+        grants.Add(G(2, 13, ETM, canGive: true));  // AssignHakamDuties (ETM — קב"ר assigns Hakam duties across their molecule)
         grants.Add(G(2, 2, ETM));                   // ViewAllShifts (ETM)
         grants.Add(G(2, 7, SAR, useOwnJobType: true));
         grants.Add(G(2, 8, SAR, useOwnJobType: true));
         grants.Add(G(2, 9, SAR, useOwnJobType: true));
-        grants.Add(G(2, 10, SAR, useOwnJobType: true));
-        grants.Add(G(2, 11, SAR, useOwnJobType: true));
+        grants.Add(G(2, 10, ETM));   // EditShiftTypes (MOLECULE — קב"ר edits all shifts in molecule, all JobTypes, per hierarchy rule)
+        grants.Add(G(2, 11, ETM));   // CreateShiftTypes (MOLECULE — קב"ר creates shifts across molecule, all JobTypes)
         grants.Add(G(2, 73, SAR));   // ManageBRBlueprints (ALL)
         grants.Add(G(2, 74, SAR));   // ManageBRPrograms (ALL)
         grants.Add(G(2, 75, SAR));   // ManageHakamBlueprints (ALL — BR manages Hakam)
@@ -386,6 +392,7 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 33, SAR));    // AssignJobTypes (BUG 2 fix)
         grants.Add(G(2, 24, SAR, targetJobTypeId: JT_SENTINEL_BR));   // ApproveExtendedLeave (BR — BUG 3 fix)
         grants.Add(G(2, 24, SAR, targetJobTypeId: JT_SENTINEL_HAKAM)); // ApproveExtendedLeave (Hakam — BUG 3 fix)
+        grants.Add(G(2, 15, SAR, targetJobTypeId: JT_SENTINEL_HAKAM)); // GAP fix: EditDutyPrograms (Hakam — BR manages Hakam duty programs)
         grants.Add(G(2, 112, SAR));  // AccessAdminNavigation
         grants.Add(G(2, 114, SAR));  // ManagerHomeAccess
         grants.Add(G(2, 120, SAR));  // ViewSystemAlerts
@@ -394,6 +401,10 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 52, SAR));   // ViewAnalytics
         grants.Add(G(2, 53, SAR));   // ViewReports
         grants.Add(G(2, 59, SAR));   // ViewAuditLog
+        // GAP fix: BRDirector peer-to-Lead consistency (Lead has 36/37 at SAR useOwnJobType; BR owns all jobtypes in company)
+        grants.Add(G(2, 36, SAR));   // AssignGrants — BR manages grants for their BR+Hakam staff
+        grants.Add(G(2, 37, SAR));   // RevokeGrants — mirror of AssignGrants
+        grants.Add(G(2, 119, SAR));  // ManageAnnouncements — BR communicates to company troops
 
         // ============================================
         // DIRECTOR (Template 5) — 58 grants
@@ -426,8 +437,8 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 7, ETM, useOwnJobType: true));
         grants.Add(G(5, 8, ETM, useOwnJobType: true));
         grants.Add(G(5, 9, ETM, useOwnJobType: true));
-        grants.Add(G(5, 10, ETM, useOwnJobType: true));
-        grants.Add(G(5, 11, ETM, useOwnJobType: true));
+        grants.Add(G(5, 10, ETM, useOwnJobType: true));   // EditShiftTypes — Director/מ"מ limited to own JobType + null/global shifts
+        grants.Add(G(5, 11, ETM, useOwnJobType: true));   // CreateShiftTypes — Director/מ"מ limited to own JobType
         grants.Add(G(5, 69, ETM, useOwnJobType: true));   // ManageAlhutBlueprints (OWN)
         grants.Add(G(5, 70, ETM, useOwnJobType: true));   // ManageAlhutPrograms (OWN)
         grants.Add(G(5, 71, ETM, useOwnJobType: true));   // ManageTextBlueprints (OWN)
@@ -459,6 +470,10 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 53, ETM, useOwnJobType: true));   // ViewReports
         grants.Add(G(5, 59, ETM, useOwnJobType: true));   // ViewAuditLog
         grants.Add(G(5, 122, ETM));  // ManageOnDuty (GAP fix: Director/מ״מ assigns on-duty at molecule scope)
+        // GAP fix: Director manager-level grants (BRDirector has these; Director was missing)
+        grants.Add(G(5, 23, ETM, useOwnJobType: true));  // OverrideVacationLimits — Director overrides for own jobtype at molecule
+        grants.Add(G(5, 27, ETM, useOwnJobType: true));  // InitiateSwap — Director initiates swaps on behalf of own-jobtype soldiers
+        grants.Add(G(5, 31, ETM, useOwnJobType: true));  // DeactivateUsers — scoped to own jobtype (security review: prevents cross-jobtype deactivation)
 
         // ============================================
         // MOLECULE ADMIN (Template 7) — 94 grants
@@ -557,6 +572,15 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 124, ETM));  // ManageHierarchy (add/rename/delete companies & departments)
         // Sidebar redesign: duty rotation management
         grants.Add(G(7, 122, ETM));  // ManageOnDuty
+        // GAP fix: MoleculeAdmin Duty bundle + admin completeness (mirrors AreaAdmin's coherent bundle)
+        grants.Add(G(7, 13, ETM, canGive: true));  // AssignHakamDuties — Hakam duty assignment across molecule
+        grants.Add(G(7, 14, ETM, canGive: true));  // AssignKatzinDuties — Katzin duty assignment across molecule
+        grants.Add(G(7, 15, ETM));                 // EditDutyPrograms — edit duty programs (ALL duty types at molecule)
+        grants.Add(G(7, 107, ETM));                // ManageKatzinBlueprints — parallel to Hakam blueprints
+        grants.Add(G(7, 108, ETM));                // ManageKatzinPrograms — parallel to Hakam programs
+        grants.Add(G(7, 113, ETM));                // DirectorHubAccess — MoleculeAdmin is a hub-level admin
+        grants.Add(G(7, 47, ETM));                 // ManageDepartments — departments are molecule-scoped (page gates on 47 specifically)
+        grants.Add(G(7, 121, ETM));                // ViewAllAreas — parity with Director (below) which has 121 at ETM
 
         // ============================================
         // DEPARTMENT LEAD (Template 9) — 48 grants
@@ -613,6 +637,14 @@ public static class RoleTemplateSeed
         grants.Add(G(9, 120, SAR));  // ViewSystemAlerts
         grants.Add(G(9, 118, SAR));  // EditCompanyUsers (GAP fix: DeptLead needs 118, not just 29 — Pages/Admin/Users.cshtml.cs:754)
         grants.Add(G(9, 122, SAR));  // ManageOnDuty (GAP fix: tech department duty rotation)
+        // GAP fix: DepartmentLead operational authority (tech team had no local approver/admin)
+        grants.Add(G(9, 22, SAR));   // ApproveVacations — dept head approves tech team vacations
+        grants.Add(G(9, 26, SAR));   // ApproveSwaps — dept head approves swaps within department
+        grants.Add(G(9, 24, SAR));   // ApproveExtendedLeave — dept head approves extended leave
+        grants.Add(G(9, 32, SAR));   // ResetPasswords — dept head resets tech passwords
+        grants.Add(G(9, 38, SAR));   // AssignRoles — dept head assigns roles within department
+        grants.Add(G(9, 17, SAR));   // AssignChores — techs also do chores; dept head assigns
+        grants.Add(G(9, 116, SAR));  // ManageJoinRequests — dept head reviews new tech applicants
 
         // ============================================
         // AREA ADMIN (Template 10) — 119 grants

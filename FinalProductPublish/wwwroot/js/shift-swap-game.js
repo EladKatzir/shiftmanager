@@ -211,7 +211,7 @@
                         <div class="shift-swap-header-actions">
                             <button class="shift-swap-hint" aria-label="${localization.hint}" title="${localization.hint}">💡</button>
                             <button class="shift-swap-trophy" aria-label="${localization.trophy}" title="${localization.trophy}">🏆</button>
-                            <button class="shift-swap-close" aria-label="Close game">&times;</button>
+                            <button class="shift-swap-close" aria-label="${localization.closeGame || (window.AppLocalizer && window.AppLocalizer.SwapGame_CloseGame) || 'Close game'}">&times;</button>
                         </div>
                     </div>
                     <p class="shift-swap-subtitle">${localization.instructions}</p>

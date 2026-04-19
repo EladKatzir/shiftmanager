@@ -66,8 +66,17 @@
     return `<svg class="${cls.join(' ')}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${ariaLabel}>${paths}</svg>`;
   }
 
+  // NOTE: avoid arrow-fn with paren-wrapped object-return + index access.
+  // NUglify (used by LigerShark.WebOptimizer) miscompiles
+  //   c => ({ ... }[c])
+  // into
+  //   n => { ... }
+  // stripping the parens, turning the object literal into a block body and
+  // producing "Unexpected token ':'" at parse time. Use a hoisted lookup table
+  // and a plain function expression instead — that survives minification cleanly.
+  var ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   function escapeAttr(s) {
-    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    return String(s).replace(/[&<>"']/g, function (c) { return ESCAPE_MAP[c]; });
   }
 
   window.Icons = { render, has: (n) => n in ICONS };

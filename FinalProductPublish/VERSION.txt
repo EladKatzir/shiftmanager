@@ -1,18 +1,18 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 3.7.5
+                           Version 3.8.0
 ================================================================================
 
-VERSION: 3.7.5
-RELEASE DATE: 2026-04-16
-BUILD DATE: 2026-04-16 09:00:08 UTC
-GIT COMMIT: bdff2ef
+VERSION: 3.8.0
+RELEASE DATE: 2026-04-19
+BUILD DATE: 2026-04-19 04:10:52 UTC
+GIT COMMIT: 225a8f6
 GIT BRANCH: update
 
 PACKAGE INFORMATION:
   Total Files:  512
   DLL Count:    351
-  Package Size: 163 MB
+  Package Size: 164 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
   Platform:     Windows x64 (Server 2022 / Windows 10+)
 
@@ -130,7 +130,7 @@ INSTALLATION SUMMARY
 ================================================================================
 
 Installation Type: Self-Contained
-Installation Size: 163 MB
+Installation Size: 164 MB
 Installation Time: 1 minute (extract + configure)
 First Run Time:    5-10 seconds (database creation)
 
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-04-16 09:00:08 UTC
+Build Date:     2026-04-19 04:10:52 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v3.7.5
+  âœ“ Git tagged: v3.8.0
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -260,14 +260,14 @@ This package has been:
   âœ… Tested automatically with comprehensive checks
   âœ… Verified for completeness (512 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v3.7.5)
+  âœ… Tagged in version control (v3.8.0)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-04-16 09:00:08 UTC
-Git Commit: bdff2ef
+Date: 2026-04-19 04:10:52 UTC
+Git Commit: 225a8f6
 
 ================================================================================
 LICENSE

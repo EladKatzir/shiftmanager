@@ -15,12 +15,25 @@
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  overflow-y: auto;
+  overflow: visible;
   background-color: var(--sidebar-bg);
   border-inline-end: 1px solid var(--sidebar-border);
   z-index: var(--z-sticky);
   transition: width var(--duration-slow) var(--ease-in-out),
               transform var(--duration-slow) var(--ease-in-out);
+}
+
+/* Scrollable inner wrapper — scopes overflow-y:auto here so the aside itself stays
+   overflow:visible, allowing the toggle button (absolute right:-12px) to protrude
+   outside the sidebar edge and receive real pointer events.
+   height:0 + flex:1 forces the browser to use flex-allocated height rather than
+   expanding to content height, which activates overflow-y:auto correctly. */
+.sidebar-scroll {
+  flex: 1;
+  height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Collapsed State */
@@ -91,6 +104,15 @@
 
 [dir="rtl"].sidebar-initially-collapsed .app-sidebar .sidebar-toggle__icon {
   transform: rotate(0);
+}
+
+.sidebar-initially-collapsed .app-sidebar .sidebar-toggle {
+  left: calc(var(--sidebar-width-collapsed, 64px) - 12px);
+}
+
+[dir="rtl"].sidebar-initially-collapsed .app-sidebar .sidebar-toggle {
+  left: auto;
+  right: calc(var(--sidebar-width-collapsed, 64px) - 12px);
 }
 
 .sidebar-initially-collapsed .app-main {
@@ -999,9 +1021,9 @@
    ======================================== */
 
 .sidebar-toggle {
-  position: absolute;
-  top: 50%;
-  right: -12px;
+  position: fixed;
+  top: 50vh;
+  left: calc(var(--sidebar-width) - 12px);
   transform: translateY(-50%);
   width: 24px;
   height: 24px;
@@ -1013,13 +1035,15 @@
   border-radius: var(--radius-full);
   color: var(--text-muted);
   cursor: pointer;
-  transition: var(--transition-colors), var(--transition-shadow);
-  z-index: 1;
+  transition: left var(--duration-slow) var(--ease-in-out),
+              right var(--duration-slow) var(--ease-in-out),
+              var(--transition-colors), var(--transition-shadow);
+  z-index: var(--z-fixed);
 }
 
 [dir="rtl"] .sidebar-toggle {
-  right: auto;
-  left: -12px;
+  left: auto;
+  right: calc(var(--sidebar-width) - 12px);
 }
 
 .sidebar-toggle:hover {
@@ -1048,6 +1072,16 @@
 
 [dir="rtl"] .app-sidebar.is-collapsed .sidebar-toggle__icon {
   transform: rotate(0);
+}
+
+/* Track sidebar edge when collapsed */
+.app-sidebar.is-collapsed .sidebar-toggle {
+  left: calc(var(--sidebar-width-collapsed, 64px) - 12px);
+}
+
+[dir="rtl"] .app-sidebar.is-collapsed .sidebar-toggle {
+  left: auto;
+  right: calc(var(--sidebar-width-collapsed, 64px) - 12px);
 }
 
 /* ========================================

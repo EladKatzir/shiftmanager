@@ -682,6 +682,12 @@
             Convention: all seeded with IsEnabled: true. Disable in production via Owner > Feature Flags as needed.
             </summary>
         </member>
+        <member name="M:ShiftManager.Data.SeedData.FeatureFlagSeed.FDisabled(System.String,System.String,System.DateTime)">
+            <summary>
+            Helper to create a feature flag that seeds DISABLED by default. Used for flags that
+            modify foundational behavior (e.g. HebrewDefault) where we want explicit opt-in.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Data.SeedData.FeatureFlagSeed.F(System.String,System.String,System.DateTime)">
             <summary>
             Helper to create a FeatureFlag with common defaults (global scope, enabled).
@@ -1505,6 +1511,31 @@
             <summary>
             Middleware that authenticates requests using Griffin ADFS tokens.
             Runs BEFORE CompanyContextMiddleware and UseAuthentication.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Middleware.LegacyCultureCookieResetMiddleware">
+             <summary>
+             One-shot migration middleware that removes stale <c>.AspNetCore.Culture=en-US</c> cookies
+             left over from the era when <c>en-US</c> was the app's default culture. Runs BEFORE
+             <c>UseRequestLocalization()</c> so removing the cookie on the same request causes the
+             configured <c>DefaultRequestCulture</c> (now <c>he-IL</c>) to take effect immediately.
+            
+             Gate logic (any branch 1 wins — do nothing):
+             1. If the marker cookie <c>.culture_explicit</c> exists with ANY non-empty value, the
+                user's language intent has already been recorded (either via a deliberate toggle or
+                a prior auto-reset). Leave everything alone.
+             2. Else if <c>.AspNetCore.Culture</c> parses to <c>en-US</c> for both <c>c=</c> and
+                <c>uic=</c>, treat it as a legacy auto-placed cookie: delete it and write
+                <c>.culture_explicit=auto-reset</c> so future requests skip branch 2.
+             3. Otherwise do nothing (no cookie, or Hebrew cookie — both already resolve correctly).
+            
+             Only wired up when <c>FeatureFlags:HebrewDefault</c> is <c>true</c>.
+             </summary>
+        </member>
+        <member name="T:ShiftManager.Middleware.LegacyCultureCookieResetMiddleware.RequestCookieCollection">
+            <summary>
+            Minimal <see cref="T:Microsoft.AspNetCore.Http.IRequestCookieCollection"/> wrapper so the middleware can rewrite
+            <c>Request.Cookies</c> in-place. ASP.NET's default impl is internal and sealed.
             </summary>
         </member>
         <member name="T:ShiftManager.Middleware.RateLimitingMiddleware">
@@ -5583,37 +5614,37 @@
             B-019, B-020, B-021: Local Observability Stack (Air-Gapped)
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostEventAsync(ShiftManager.Pages.Api.AnalyticsEventDto)">
+        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostEventAsync">
             <summary>
             POST /Api/Telemetry?handler=Event
             Logs a single analytics event.
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostEventBatchAsync(System.Collections.Generic.List{ShiftManager.Pages.Api.AnalyticsEventDto})">
+        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostEventBatchAsync">
             <summary>
             POST /Api/Telemetry?handler=EventBatch
             Logs a batch of analytics events.
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostErrorAsync(ShiftManager.Pages.Api.ClientErrorDto)">
+        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostErrorAsync">
             <summary>
             POST /Api/Telemetry?handler=Error
             Logs a single client-side error.
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostErrorBatchAsync(System.Collections.Generic.List{ShiftManager.Pages.Api.ClientErrorDto})">
+        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostErrorBatchAsync">
             <summary>
             POST /Api/Telemetry?handler=ErrorBatch
             Logs a batch of client-side errors.
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostPerformanceAsync(ShiftManager.Pages.Api.PerformanceMetricDto)">
+        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostPerformanceAsync">
             <summary>
             POST /Api/Telemetry?handler=Performance
             Logs a single performance metric.
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostPerformanceBatchAsync(System.Collections.Generic.List{ShiftManager.Pages.Api.PerformanceMetricDto})">
+        <member name="M:ShiftManager.Pages.Api.TelemetryModel.OnPostPerformanceBatchAsync">
             <summary>
             POST /Api/Telemetry?handler=PerformanceBatch
             Logs a batch of performance metrics.
@@ -5628,6 +5659,13 @@
         <member name="M:ShiftManager.Pages.Api.TelemetryModel.IsRateLimitAllowed">
             <summary>
             Simple rate limiting by IP address.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Api.TelemetryModel.TryReadJsonBodyAsync``1">
+            <summary>
+            Reads and deserializes the request body as JSON, regardless of the Content-Type header.
+            Returns null on empty body, malformed JSON, or any read error — callers treat null
+            the same as they previously treated a null [FromBody] parameter.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Api.TelemetryModel.TruncateField(System.String,System.Int32)">
@@ -5929,6 +5967,19 @@
             Blueprints - Manage ShiftTypes (shift definitions) with scope-aware permissions.
             Supports Company, Molecule, and Area scoped shift types.
             Grant-based authorization: EditShiftTypes for edit/delete, CreateShiftTypes for create.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.CheckEditGrantForShiftTypeAsync(System.Int32,ShiftManager.Models.ShiftType)">
+            <summary>
+            Authorization check for editing a ShiftType. Returns (allowed, errorMessage).
+            Two-step logic:
+              1. Scope check — user must have an EditShiftTypes grant that covers the shift's scope
+                 (Area / Molecule / Company). Fails => SCOPE error.
+              2. JobType check — for shifts with a specific JobTypeId, the user must hold at least one
+                 EditShiftTypes grant whose JobTypeId is null (cross-JobType, e.g. קב"ר) OR equals the
+                 shift's JobTypeId. Global shifts (ShiftType.JobTypeId == null) bypass this step so any
+                 role with the scope grant can edit them. Fails => JOBTYPE error carrying the shift's
+                 JobType name for a "This isn't a {JobType} shift" message.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Owner.ClearCompanySelectionModel">
@@ -8079,6 +8130,21 @@
             <summary>
             Checks if the user has any calendar editing grant (shift, chore, or on-duty assignment).
             Used by text entry endpoints where multiple grant types authorize the same action.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGrantService.HasCalendarNotePermissionAsync(System.Int32)">
+            <summary>
+            Gate for free-text QuickEntry creation/deletion on calendar cells. Broader than
+            HasCalendarEditPermissionAsync: also accepts WriteOverviewNotes (grant 110) which every
+            role has. Assignment actions still use HasCalendarEditPermissionAsync.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGrantService.CanReachUserForNoteAsync(System.Int32,System.Int32)">
+            <summary>
+            Verifies note-writing access to the target user's company.
+            Manager tier (any assign grant) → accessible-company set from assign grants (may be cross-company within molecule).
+            Note-only tier (WriteOverviewNotes alone) → caller's own company only.
+            Self-target (callerId == targetUserId) always allowed.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.GrantVerificationResult">

@@ -324,8 +324,24 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false,
                 return;
             }
 
-            // Other error (400, 500, etc.)
-            showToast(window.AppLocalizer.ErrorCreatingOnDuty, 'error');
+            // Other error (400, 500, etc.) — surface the server's message via the shared feedback modal
+            // (globally loaded in _Layout.cshtml) so the user must press "אישור"/OK to dismiss.
+            var serverMessage = null;
+            try {
+                var parsed = await response.clone().json();
+                if (parsed && typeof parsed.message === 'string' && parsed.message.length > 0) {
+                    serverMessage = parsed.message;
+                }
+            } catch (e) { /* non-JSON body — fall back to generic message */ }
+
+            var errorText = serverMessage || window.AppLocalizer.ErrorCreatingOnDuty;
+            if (window.FeedbackModal && typeof window.FeedbackModal.show === 'function') {
+                window.FeedbackModal.show('error', errorText);
+            } else {
+                // Fallback: blocking alert preserves the "must acknowledge" semantics if the modal
+                // script failed to load for any reason.
+                alert(errorText);
+            }
             return;
         }
 

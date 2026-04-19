@@ -119,8 +119,26 @@ public static class FeatureFlagSeed
             F(Flags.VacationApprovalEnabled, "Enables the vacation approval workflow including rule-based routing, auto-approve, and multi-level approval.", now),
             F(Flags.StoreHoursEnabled, "Enables the Store Hours feature including store management, opening hours, and Quick Info widget integration.", now),
             F(Flags.EmailServiceEnabled, "Global kill switch for email notifications. When disabled, no emails are sent regardless of per-company settings.", now),
+
+            // Localization flags — read at startup, require an app restart to take effect.
+            FDisabled(Flags.HebrewDefault, "When enabled: anonymous visitors default to Hebrew, and legacy en-US cookies from the old default are auto-cleared on next visit. Read ONCE at app startup — toggling this flag in the UI requires an app restart to take effect. Disabled by default for rollback safety.", now),
         };
     }
+
+    /// <summary>
+    /// Helper to create a feature flag that seeds DISABLED by default. Used for flags that
+    /// modify foundational behavior (e.g. HebrewDefault) where we want explicit opt-in.
+    /// </summary>
+    private static FeatureFlag FDisabled(string name, string description, DateTime now) => new()
+    {
+        Name = name,
+        IsEnabled = false,
+        Description = description,
+        CompanyId = null,
+        UserId = null,
+        CreatedAt = now,
+        UpdatedAt = now
+    };
 
     /// <summary>
     /// Helper to create a FeatureFlag with common defaults (global scope, enabled).
@@ -228,5 +246,8 @@ public static class FeatureFlagSeed
         public const string VacationApprovalEnabled = "FF_VACATION_APPROVAL_ENABLED";
         public const string StoreHoursEnabled = "FF_STORE_HOURS_ENABLED";
         public const string EmailServiceEnabled = "FF_EMAIL_SERVICE_ENABLED";
+
+        // Localization flags (startup-only — require app restart to take effect)
+        public const string HebrewDefault = "FF_HEBREW_DEFAULT";
     }
 }

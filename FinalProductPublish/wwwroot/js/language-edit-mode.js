@@ -7,6 +7,11 @@
 (function() {
     'use strict';
 
+    // Localizer helper — falls back to the key name if AppLocalizer hasn't loaded.
+    // `fmt` supports a single {0} placeholder (which is all our keys need).
+    const L = (k) => (window.AppLocalizer && window.AppLocalizer[k]) || k;
+    const fmt = (tpl, v) => tpl.replace('{0}', v);
+
     // Only run if edit mode is active
     if (!isEditModeActive()) {
         return;
@@ -279,7 +284,7 @@
             const newValue = input.value.trim();
 
             if (!newValue) {
-                alert('Value cannot be empty');
+                alert(L('LangEdit_EmptyValue'));
                 return;
             }
 
@@ -291,7 +296,7 @@
             // Update DOM element
             element.textContent = newValue;
             element.classList.add('has-draft');
-            element.setAttribute('title', 'This text has been edited (draft)');
+            element.setAttribute('title', L('LangEdit_DraftTitle'));
 
             // Update draft count
             updateDraftCount();
@@ -360,7 +365,7 @@
         const draftKeys = Object.keys(drafts);
 
         if (draftKeys.length === 0) {
-            alert('No draft changes yet. Click on any text to edit it.');
+            alert(L('LangEdit_NoDraftChanges'));
             return;
         }
 
@@ -379,8 +384,8 @@
         modal.innerHTML = `
             <div class="edit-mode-modal edit-mode-modal-wide">
                 <div class="edit-mode-modal-header">
-                    <h3>📋 Draft Changes (${draftKeys.length})</h3>
-                    <button class="edit-mode-modal-close" aria-label="Close">&times;</button>
+                    <h3>📋 ${escapeHtml(fmt(L('LangEdit_DraftChangesHeader'), draftKeys.length))}</h3>
+                    <button class="edit-mode-modal-close" aria-label="${L('Close')}">&times;</button>
                 </div>
                 <div class="edit-mode-modal-body">
                     <div class="draft-list">
@@ -388,7 +393,7 @@
                     </div>
                 </div>
                 <div class="edit-mode-modal-footer">
-                    <button class="edit-mode-btn edit-mode-btn-cancel">Close</button>
+                    <button class="edit-mode-btn edit-mode-btn-cancel">${L('Close')}</button>
                 </div>
             </div>
         `;
@@ -411,13 +416,16 @@
         const draftKeys = Object.keys(drafts);
 
         if (draftKeys.length === 0) {
-            if (confirm('No changes to save. Exit edit mode anyway?')) {
+            if (confirm(L('LangEdit_NoChangesToSave'))) {
                 exitEditMode();
             }
             return;
         }
 
-        if (!confirm(`Save ${draftKeys.length} draft change(s) to the database?`)) {
+        const saveConfirmMsg = draftKeys.length === 1
+            ? L('LangEdit_SaveOneConfirm')
+            : fmt(L('LangEdit_SaveManyConfirm'), draftKeys.length);
+        if (!confirm(saveConfirmMsg)) {
             return;
         }
 
@@ -445,16 +453,19 @@
             const result = await response.json();
 
             if (result.success) {
-                alert(`Successfully saved ${draftKeys.length} translation(s)!`);
+                const successMsg = draftKeys.length === 1
+                    ? L('LangEdit_SaveOneSuccess')
+                    : fmt(L('LangEdit_SaveManySuccess'), draftKeys.length);
+                alert(successMsg);
                 clearDrafts();
                 exitEditMode();
                 window.location.href = '/Owner/LanguageManagement';
             } else {
-                alert(`Error: ${result.message || 'Failed to save translations'}`);
+                alert(fmt(L('LangEdit_SaveError'), result.message || L('LangEdit_SaveFallback')));
             }
         } catch (error) {
             Logger.error('LangEdit', 'Save failed:', error);
-            alert(`Failed to save drafts: ${error.message}`);
+            alert(fmt(L('LangEdit_SaveFailed'), error.message));
         }
     }
 
@@ -466,13 +477,16 @@
         const count = Object.keys(drafts).length;
 
         if (count === 0) {
-            if (confirm('Exit edit mode?')) {
+            if (confirm(L('LangEdit_ExitConfirm'))) {
                 exitEditModeAndRedirect();
             }
             return;
         }
 
-        if (!confirm(`Discard ${count} draft change(s) without saving?`)) {
+        const discardMsg = count === 1
+            ? L('LangEdit_DiscardOne')
+            : fmt(L('LangEdit_DiscardMany'), count);
+        if (!confirm(discardMsg)) {
             return;
         }
 

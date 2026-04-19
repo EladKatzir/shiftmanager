@@ -14,6 +14,10 @@
 (function() {
     'use strict';
 
+    // Localizer helper — falls back to the key name if AppLocalizer hasn't loaded.
+    const L = (k) => (window.AppLocalizer && window.AppLocalizer[k]) || k;
+    const fmt = (tpl, v) => tpl.replace('{0}', v);
+
     // Check if Localization API is available
     if (!window.Localization) {
         Logger.warn('LocAttrs', 'window.Localization API not found. Attributes will not be localized.');
@@ -202,7 +206,7 @@
         }
 
         if (attributes.length === 0) {
-            alert('No localizable attributes found on this element');
+            alert(L('LocAttrs_NoAttributes'));
             return;
         }
 
@@ -223,18 +227,18 @@
         modal.innerHTML = `
             <div class="edit-mode-modal">
                 <div class="edit-mode-modal-header">
-                    <h3>✏️ Edit Attribute Localization</h3>
-                    <button class="edit-mode-modal-close" aria-label="Close">&times;</button>
+                    <h3>✏️ ${escapeHtml(L('LocAttrs_EditTitle'))}</h3>
+                    <button class="edit-mode-modal-close" aria-label="${L('Close')}">&times;</button>
                 </div>
                 <div class="edit-mode-modal-body">
                     <p style="margin-bottom: 1rem; color: var(--muted);">
-                        Right-click an element to edit its HTML attribute translations (title, placeholder, aria-label).
+                        ${escapeHtml(L('LocAttrs_EditHelp'))}
                     </p>
                     ${attributesHtml}
                 </div>
                 <div class="edit-mode-modal-footer">
-                    <button class="edit-mode-btn edit-mode-btn-cancel">Cancel</button>
-                    <button class="edit-mode-btn edit-mode-btn-save">💾 Save Draft</button>
+                    <button class="edit-mode-btn edit-mode-btn-cancel">${L('Cancel')}</button>
+                    <button class="edit-mode-btn edit-mode-btn-save">💾 ${escapeHtml(L('LocAttrs_SaveDraft'))}</button>
                 </div>
             </div>
         `;
@@ -262,7 +266,10 @@
                 }
             });
 
-            alert(`Updated ${attributes.length} attribute(s). Use "Save & Exit" to commit changes.`);
+            const updatedMsg = attributes.length === 1
+                ? L('LocAttrs_UpdatedOne')
+                : fmt(L('LocAttrs_UpdatedMany'), attributes.length);
+            alert(updatedMsg);
             closeModal();
         });
 

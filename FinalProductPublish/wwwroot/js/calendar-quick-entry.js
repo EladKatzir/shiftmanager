@@ -47,6 +47,15 @@
 
     // --- Helpers ---
 
+    // Reads data-can-assign from the toggle button (set by the page based on Model.CanEdit).
+    // Users without assign grants (only WriteOverviewNotes) get false — slash menu is suppressed
+    // so they can only type plain free text. Plain-text submission goes through the regular
+    // Enter-submit path and is authorized server-side by HasCalendarNotePermissionAsync.
+    function canUserAssign() {
+        var btn = document.getElementById('quickEntryToggle');
+        return btn ? btn.dataset.canAssign === 'true' : false;
+    }
+
     function getCulture() {
         var lang = document.documentElement.lang || 'en-US';
         return lang.startsWith('he') ? 'he-IL' : 'en-US';
@@ -550,8 +559,12 @@
         var cell = e.target.closest('.excel-calendar__cell');
         if (!cell) return;
 
-        if (cell.classList.contains('excel-calendar__cell--readonly') ||
-            cell.classList.contains('excel-calendar__cell--past')) {
+        // --past still blocks (QuickAddTextEntry rejects past dates).
+        // --readonly no longer blocks: quick-entry owns its own permission tier (WriteOverviewNotes),
+        // and the server enforces scope via CanReachUserForNoteAsync. The toggle itself is only visible
+        // when the user has note permission (CanWriteNote on the page model), so if this handler runs
+        // the user is already authorized to attempt writes.
+        if (cell.classList.contains('excel-calendar__cell--past')) {
             return;
         }
 
@@ -666,7 +679,9 @@
             return;
         }
 
-        if (value.startsWith('/') && !slashCommand) {
+        // Slash palette is only available to users with assign grants (data-can-assign="true").
+        // Note-only tier (grant 110) types `/` as literal text — the dropdown never opens.
+        if (value.startsWith('/') && !slashCommand && canUserAssign()) {
             showSlashPalette(value);
             return;
         }
