@@ -1,7 +1,7 @@
 # Grants & Permissions System — Complete Deep Dive
 
-> **Last Updated:** 2026-02-25
-> **Total Grant Types:** 125
+> **Last Updated:** 2026-04-17
+> **Total Grant Types:** 132
 > **Total Role Templates:** 11 (system) + custom
 > **Supersedes:** `GRANTS_AND_ROLES.md`, `GRANT-KEY-REFERENCE.md` (both outdated at 125 grants)
 
@@ -11,7 +11,7 @@
 
 1. [Architecture Overview](#1-architecture-overview)
 2. [What Are Grants?](#2-what-are-grants)
-3. [All 125 Grant Types](#3-all-125-grant-types)
+3. [All 132 Grant Types](#3-all-132-grant-types)
 4. [UserRole Enum](#4-userrole-enum)
 5. [Role Templates](#5-role-templates)
 6. [All 11 System Role Templates](#6-all-11-system-role-templates)
@@ -58,7 +58,7 @@ A **Grant** is a single permission record linking a **user** to a **grant type**
 |-------|------|---------|
 | `Id` | int | Primary key |
 | `UserId` | int | Who has the grant |
-| `GrantTypeId` | int | What permission (1 of 125) |
+| `GrantTypeId` | int | What permission (1 of 132) |
 | `ProjectId` | int? | Scope: entire project |
 | `AreaId` | int? | Scope: area |
 | `MoleculeId` | int? | Scope: molecule |
@@ -124,7 +124,7 @@ public enum GrantScopeMode
 
 ---
 
-## 3. All 125 Grant Types
+## 3. All 132 Grant Types
 
 ### Shift Grants (IDs 1-12)
 
@@ -392,7 +392,7 @@ The `UserRole` enum defines 7 roles. These are **NOT directly used for access co
 
 | Value | Role | Purpose |
 |-------|------|---------|
-| 0 | **Owner** | System administrator — all 125 grants at Project scope |
+| 0 | **Owner** | System administrator — all 132 grants at Project scope |
 | 1 | **Manager** | Company-level management (AlhutLead, TextLead, BRDirector, MoleculeAdmin, DepartmentLead) |
 | 2 | **Employee** | Standard user — view + self-service grants |
 | 3 | **Director** | Molecule-level oversight (AlhutDirector, TextDirector) |
@@ -511,8 +511,7 @@ A **RoleTemplate** is a named bundle of auto-grants provisioned when a user is a
 
 ### Owner (ID=11)
 - **Scope:** Project | **UserRole:** Owner | **SortOrder:** 1 | **Not visible in signup**
-- **123 grants** — ALL grant types at ETP with CanGive=true
-  - Self-scoped (SAR): RequestVacation, RequestSwap, CanBeAssigned* eligibilities
+- **132 grants** — ALL grant types at ETP with CanGive=true
   - Everything else: @ ETP (project-wide) + CanGive
 
 ---
@@ -558,7 +557,7 @@ All seed data in `Data/SeedData/`:
 
 | File | What's Seeded |
 |------|---------------|
-| `GrantTypeSeed.cs` | All 125 grant type definitions |
+| `GrantTypeSeed.cs` | All 132 grant type definitions |
 | `RoleTemplateSeed.cs` | All 11 system role templates + auto-grant mappings |
 
 BRDirector uses **sentinel JobType IDs** (-1 for BR, -2 for Hakam) that are resolved to actual DB IDs during `Program.cs` startup.
@@ -595,7 +594,7 @@ public class TableModel : PageModel { }
 
 ### Layer 2: Dynamic Policy Provider (`GrantPolicyProvider.cs`)
 
-Intercepts any `"Grant:*"` policy string, extracts the grant key, and dynamically creates an `AuthorizationPolicy` with `GrantRequirement`. No need to register each of 125 grants manually.
+Intercepts any `"Grant:*"` policy string, extracts the grant key, and dynamically creates an `AuthorizationPolicy` with `GrantRequirement`. No need to register each of 132 grants manually.
 
 ### Layer 3: Authorization Handler (`GrantAuthorizationHandler.cs`)
 
@@ -806,7 +805,7 @@ All endpoints require `Grant:AdminAccess`.
 | `Authorization/GrantPolicyProvider.cs` | ~50 | Dynamic policy factory |
 | `Authorization/GrantRequirement.cs` | ~17 | IAuthorizationRequirement |
 | `TagHelpers/RequireGrantTagHelper.cs` | ~117 | View-level `<require-grant>` |
-| `Data/SeedData/GrantTypeSeed.cs` | — | All 125 grant types |
+| `Data/SeedData/GrantTypeSeed.cs` | — | All 132 grant types |
 | `Data/SeedData/RoleTemplateSeed.cs` | — | All 11 role templates + mappings |
 | `Pages/Owner/Hub/Grants.cshtml.cs` | — | Grant management UI |
 | `Pages/Owner/Hub/RoleTemplates/*.cshtml.cs` | — | Role template CRUD |

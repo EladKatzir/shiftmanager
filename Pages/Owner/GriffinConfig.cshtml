@@ -138,7 +138,7 @@
                             </button>
                         </div>
                     </div>
-                    <input asp-for="BaseUrl" class="form-control" placeholder="http://griffin-auth.example.mil" id="baseurl-input" onblur="validateUrl(this)" />
+                    <input asp-for="BaseUrl" class="form-control" loc-placeholder="Placeholder_GriffinBaseUrl" id="baseurl-input" onblur="validateUrl(this)" />
                     <small class="form-text">@Localizer["Griffin_ServerUrl_Hint"]</small>
 
                     <div class="context-panel" id="baseurl-help" style="display: none;">
@@ -166,7 +166,7 @@
                         </button>
                     </div>
                     <input asp-for="TokenConsumerUrl" class="form-control"
-                           placeholder="https://your-app.local/Auth/GriffinCallback" id="callback-input" onblur="validateUrl(this)" />
+                           loc-placeholder="Placeholder_GriffinCallback" id="callback-input" onblur="validateUrl(this)" />
                     <small class="form-text">@Localizer["Griffin_CallbackUrl_Hint"]</small>
 
                     <div class="context-panel" id="callback-help" style="display: none;">

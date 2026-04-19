@@ -861,7 +861,7 @@
                 <span><loc key="SwitchCalendar" /></span>
             </button>
             <button class="btn" id="btnConfigureMembers">
-                <span class="icon">⚙️</span>
+                <span class="icon"><icon name="settings" size="sm" /></span>
                 <span><loc key="ConfigureMembers" /></span>
             </button>
             <button class="btn btn-primary" id="btnNewCalendar">
@@ -888,11 +888,11 @@
 
     <!-- Empty State (hidden by default) -->
     <div class="empty-state" id="emptyState" style="display: none;">
-        <div class="empty-state-icon">📅</div>
+        <div class="empty-state-icon"><icon name="users" size="2xl" /></div>
         <h3><loc key="NoGroupMembers" /></h3>
         <p><loc key="AddGroupMembersToStart" /></p>
         <button class="btn btn-primary" onclick="document.getElementById('btnConfigureMembers').click()">
-            <span class="icon">⚙️</span>
+            <span class="icon"><icon name="settings" size="sm" /></span>
             <span><loc key="ConfigureMembers" /></span>
         </button>
     </div>

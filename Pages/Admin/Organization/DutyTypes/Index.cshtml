@@ -112,16 +112,16 @@
         <div class="form-grid">
             <div class="form-group">
                 <label class="form-label">@Localizer["NameEnglish"] <span class="form-label-required">*</span></label>
-                <input class="form-input" asp-for="NameEn" placeholder="e.g. Officer" maxlength="100" required />
+                <input class="form-input" asp-for="NameEn" loc-placeholder="Placeholder_DutyTypeNameEn" maxlength="100" required />
             </div>
             <div class="form-group">
                 <label class="form-label">@Localizer["NameHebrew"] <span class="form-label-required">*</span></label>
-                <input class="form-input" asp-for="NameHe" placeholder="e.g. קצין" maxlength="100" required />
+                <input class="form-input" asp-for="NameHe" loc-placeholder="Placeholder_DutyTypeNameHe" maxlength="100" required />
             </div>
             <div class="form-group">
                 <label class="form-label">@Localizer["Icon"]</label>
                 @* Icon field now stores a Lucide icon name (e.g. "shield", "pin", "target"); legacy emoji values still render via fallback. *@
-                <input class="form-input" asp-for="Icon" placeholder="shield" maxlength="32" />
+                <input class="form-input" asp-for="Icon" loc-placeholder="Placeholder_DutyTypeIcon" maxlength="32" />
             </div>
             <div class="form-group">
                 <label class="form-label">@Localizer["Color"]</label>

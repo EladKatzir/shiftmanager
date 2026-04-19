@@ -9,7 +9,16 @@
             onclick="toggleShowMyItems(@Model.ShowMyItemsOnly.ToString().ToLower())"
             aria-label="@(Model.ShowMyItemsOnly ? Localizer["Calendar_ToggleShowAll_Tooltip"] : Localizer["Calendar_ToggleMyItems_Tooltip"])"
             title="@(Model.ShowMyItemsOnly ? Localizer["Calendar_ToggleShowAll_Tooltip"] : Localizer["Calendar_ToggleMyItems_Tooltip"])">
-        <span class="toggle-icon">@(Model.ShowMyItemsOnly ? "👤" : "👥")</span>
+        <span class="toggle-icon">
+            @if (Model.ShowMyItemsOnly)
+            {
+                <icon name="user" size="sm" />
+            }
+            else
+            {
+                <icon name="users" size="sm" />
+            }
+        </span>
         <span class="toggle-labels">
             <span class="toggle-label-primary">@(Model.ShowMyItemsOnly ? Localizer["Calendar_MyItemsOnly"] : Localizer["Calendar_ShowingAll"])</span>
             <span class="toggle-label-secondary">@(Model.ShowMyItemsOnly ? Localizer["Calendar_ClickToShowAll"] : Localizer["Calendar_ClickToFilterMine"])</span>

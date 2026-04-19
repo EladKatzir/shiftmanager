@@ -364,7 +364,7 @@
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
     <div class="alert alert-error">
-        <span class="alert-icon">✕</span>
+        <span class="alert-icon"><icon name="x-circle" size="sm" /></span>
         <span>@Model.ErrorMessage</span>
     </div>
 }
@@ -374,7 +374,7 @@
     <!-- Military Rank -->
     <div class="card">
         <h2 class="card-title">
-            <span class="card-title-icon">🎖️</span>
+            <span class="card-title-icon"><icon name="medal" /></span>
             <span><loc key="Profile_Rank" /></span>
         </h2>
 
@@ -400,7 +400,7 @@
     <!-- Daily Digest Notifications -->
     <div class="card">
         <h2 class="card-title">
-            <span class="card-title-icon">📬</span>
+            <span class="card-title-icon"><icon name="mail" /></span>
             <span><loc key="Settings_DailyDigest" /></span>
         </h2>
 
@@ -465,7 +465,7 @@
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="IncludeOnDuty" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">🎖️ <loc key="Settings_IncludeOnDuty" /></div>
+                        <div class="checkbox-title"><icon name="medal" size="sm" /> <loc key="Settings_IncludeOnDuty" /></div>
                         <div class="checkbox-description"><loc key="Settings_IncludeOnDuty_Desc" /></div>
                     </div>
                 </label>
@@ -511,7 +511,7 @@
                 <label class="checkbox-item">
                     <input type="checkbox" asp-for="RemindBeforeOnDuty" />
                     <div class="checkbox-label">
-                        <div class="checkbox-title">👮 <loc key="Settings_RemindBeforeOnDuty" /></div>
+                        <div class="checkbox-title"><icon name="shield" size="sm" /> <loc key="Settings_RemindBeforeOnDuty" /></div>
                         <div class="checkbox-description"><loc key="Settings_RemindBeforeOnDuty_Desc" /></div>
                     </div>
                 </label>
@@ -570,7 +570,7 @@
             <span><loc key="SaveSettings" /></span>
         </button>
         <a href="/My" class="btn btn-secondary">
-            <span>✕</span>
+            <span><icon name="x" size="sm" /></span>
             <span><loc key="Cancel" /></span>
         </a>
     </div>
@@ -580,7 +580,7 @@
 <require-grant key="ManageApiKeys">
     <div class="card" style="margin-top: 1.5rem;">
         <h2 class="card-title">
-            <span class="card-title-icon">🔑</span>
+            <span class="card-title-icon"><icon name="key" /></span>
             <span><loc key="ApiKeys" /></span>
         </h2>
         <a href="/My/ApiKeys" class="btn btn-secondary">

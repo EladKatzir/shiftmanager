@@ -17,6 +17,7 @@ public class ExcelCalendarRow
 {
     public string Id { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
+    public string? Icon { get; set; }  // Lucide icon name (e.g. "shield", "star"). Rendered via <icon> tag helper when set.
     public string? SubLabel { get; set; }  // Secondary info line (rotation group, emergency tier)
     public string? Color { get; set; }
     public string? GroupId { get; set; }
@@ -55,6 +56,7 @@ public class ExcelCalendarAssignment
     public int? UserId { get; set; }
     public int? TraineeUserId { get; set; }
     public string? TraineeName { get; set; }
+    public string? AssignmentTooltip { get; set; }  // e.g. "Assigned by X on Y" — set by oncall calendar
 }
 
 public class ExcelCalendarOverlay

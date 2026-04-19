@@ -104,7 +104,7 @@
             @if (Model.HasEditCompany)
             {
                 <a href="/Admin/Companies" class="admin-tool-card">
-                    <div class="tool-icon">🏛️</div>
+                    <div class="tool-icon"><icon name="landmark" size="lg" /></div>
                     <div class="tool-content">
                         <h3><loc key="Section_Companies">Companies</loc></h3>
                         <p><loc key="Section_CompaniesDesc">Manage tenants, create/edit companies</loc></p>
@@ -116,7 +116,7 @@
             @if (Model.HasManageJobTypes)
             {
                 <a href="/Admin/Organization/JobTypes" class="admin-tool-card">
-                    <div class="tool-icon">🏷️</div>
+                    <div class="tool-icon"><icon name="tag" size="lg" /></div>
                     <div class="tool-content">
                         <h3><loc key="Section_JobTypes">Job Types</loc></h3>
                         <p><loc key="Section_JobTypesDesc">Manage job type definitions and colors</loc></p>
@@ -128,7 +128,7 @@
             @if (Model.HasManageDepartments)
             {
                 <a href="/Admin/Organization/Departments" class="admin-tool-card">
-                    <div class="tool-icon">🏬</div>
+                    <div class="tool-icon"><icon name="store" size="lg" /></div>
                     <div class="tool-content">
                         <h3><loc key="Section_Departments">Departments</loc></h3>
                         <p><loc key="Section_DepartmentsDesc">Department management for Tech molecules</loc></p>
@@ -192,7 +192,7 @@
     @if (showConfigSection)
     {
         <h2 class="section-title">
-            <span class="section-icon">🔧</span>
+            <span class="section-icon"><icon name="settings" /></span>
             <loc key="Section_Configuration">Configuration</loc>
         </h2>
         <div class="admin-tools-grid">
@@ -211,7 +211,7 @@
             @if (Model.HasManageAnnouncements)
             {
                 <a href="/Admin/Announcements" class="admin-tool-card">
-                    <div class="tool-icon">📢</div>
+                    <div class="tool-icon"><icon name="megaphone" size="lg" /></div>
                     <div class="tool-content">
                         <h3><loc key="Section_Announcements">Announcements</loc></h3>
                         <p><loc key="Section_AnnouncementsDesc">Company announcements and notices</loc></p>
@@ -235,7 +235,7 @@
             @if (Model.DutyRotationEnabled && Model.HasManageOnDuty)
             {
                 <a href="/Admin/DutyRotation" class="admin-tool-card">
-                    <div class="tool-icon">🔄</div>
+                    <div class="tool-icon"><icon name="refresh-cw" size="lg" /></div>
                     <div class="tool-content">
                         <h3><loc key="Section_DutyRotation">Duty Rotations</loc></h3>
                         <p><loc key="Section_DutyRotationDesc">On-duty rotation management</loc></p>
@@ -262,12 +262,12 @@
     @if (Model.IsDirector)
     {
         <h2 class="section-title">
-            <span class="section-icon">👔</span>
+            <span class="section-icon"><icon name="briefcase" /></span>
             <loc key="Section_DirectorTools">Director Tools</loc>
         </h2>
         <div class="admin-tools-grid">
             <a href="/Director/ViewAsMode" class="admin-tool-card">
-                <div class="tool-icon">👀</div>
+                <div class="tool-icon"><icon name="eye" size="lg" /></div>
                 <div class="tool-content">
                     <h3><loc key="Section_ViewAsManager">View As Manager</loc></h3>
                     <p><loc key="Section_ViewAsManagerDesc">Impersonate Manager perspective</loc></p>

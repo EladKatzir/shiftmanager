@@ -499,7 +499,7 @@
             </select>
         </div>
         <a asp-page-handler="ExportCsv" asp-route-dateRange="@Model.DateRange" class="btn btn-primary">
-            <span>📥</span>
+            <span><icon name="download" size="sm" /></span>
             <span>@Localizer["ExportReport"]</span>
         </a>
     </form>
@@ -648,7 +648,7 @@
         else
         {
             <div class="empty-state">
-                <div class="empty-state-icon">🔄</div>
+                <div class="empty-state-icon"><icon name="refresh-cw" size="2xl" /></div>
                 <div class="empty-state-text">@Localizer["NoDataAvailable"]</div>
             </div>
         }

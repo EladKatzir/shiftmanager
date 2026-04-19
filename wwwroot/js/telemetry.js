@@ -376,13 +376,32 @@
     function sendBatch(handler, data) {
         if (!data || data.length === 0) return Promise.resolve();
 
-        return fetch(CONFIG.endpoint + '?handler=' + handler, {
+        var url = CONFIG.endpoint + '?handler=' + handler;
+        var body = JSON.stringify(data);
+
+        // navigator.sendBeacon is the API designed for telemetry: the MIME type travels
+        // bound to the Blob itself (cannot be stripped by fetch interceptors / extensions),
+        // delivery is guaranteed during pagehide/unload, and the request is not commonly
+        // wrapped by privacy extensions the way window.fetch is.
+        if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+            try {
+                var blob = new Blob([body], { type: 'application/json' });
+                if (navigator.sendBeacon(url, blob)) {
+                    return Promise.resolve();
+                }
+            } catch (e) {
+                // Fall through to fetch fallback below
+            }
+        }
+
+        // Fallback for environments without sendBeacon or when its queue is full.
+        return fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(data),
-            keepalive: true // Ensure request completes even if page unloads
+            body: body,
+            keepalive: true
         }).catch(function(err) {
             Logger.log('Telemetry', 'Failed to send batch:', err);
         });

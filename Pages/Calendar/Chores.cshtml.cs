@@ -73,6 +73,8 @@ public class ChoresModel : PageModel
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
     public bool CanEdit { get; set; }
+    // See Shifts.cshtml.cs for rationale: quick-entry toggle visible to any user with WriteOverviewNotes.
+    public bool CanWriteNote { get; set; }
     public List<Molecule> AvailableMolecules { get; set; } = new();
     public Molecule? SelectedMolecule { get; set; }
     public List<ChoreType> ChoreTypes { get; set; } = new();
@@ -142,6 +144,7 @@ public class ChoresModel : PageModel
 
         // Check edit permission
         CanEdit = await _grantService.HasGrantAsync(currentUserId, "AssignChores");
+        CanWriteNote = CanEdit || await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
 
         // Build calendar data
         if (MoleculeId.HasValue)

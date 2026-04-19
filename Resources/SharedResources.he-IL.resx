@@ -3272,6 +3272,12 @@
   <data name="BottomDock_Toggle" xml:space="preserve">
     <value>הצג/הסתר לוח כוננויות</value>
   </data>
+  <data name="BottomDock_Minimize" xml:space="preserve">
+    <value>מזער</value>
+  </data>
+  <data name="BottomDock_Restore" xml:space="preserve">
+    <value>שחזר ווידג'ט</value>
+  </data>
   <data name="Owner_Companies" xml:space="preserve">
     <value>חברות</value>
   </data>
@@ -11870,7 +11876,7 @@
     <value>אימות כלל-מערכתי</value>
   </data>
   <data name="Griffin_SystemWideAuth_Desc" xml:space="preserve">
-    <value>Griffin ADFS מוגדר פעם אחת ברמת &lt;strong&gt;הבעלים&lt;/strong&gt; וחל על &lt;strong&gt;כל החברות&lt;/strong&gt; במערכת שלך. משתמשים מכל חברה יכולים להזדהות באמצעות אישורי הדומיין שלהם.</value>
+    <value>Griffin ADFS מוגדר פעם אחת ברמת הבעלים וחל על כל החברות במערכת שלך. משתמשים מכל חברה יכולים להזדהות באמצעות אישורי הדומיין שלהם.</value>
   </data>
   <data name="Griffin_Subtitle" xml:space="preserve">
     <value>הגדר אימות דומיין מרכזי לכל החברות</value>
@@ -11927,7 +11933,7 @@
     <value>הערת אבטחה:</value>
   </data>
   <data name="Griffin_SecurityNote_Text" xml:space="preserve">
-    <value>הקצאה אוטומטית חלה על &lt;strong&gt;כל החברות&lt;/strong&gt;. כל משתמש שמזדהה בהצלחה דרך ADFS יקבל אוטומטית חשבון במערכת. ודא ששרת Griffin ADFS שלך מוגדר כראוי לאפשר רק משתמשים מורשים.</value>
+    <value>הקצאה אוטומטית חלה על כל החברות. כל משתמש שמזדהה בהצלחה דרך ADFS יקבל אוטומטית חשבון במערכת. ודא ששרת Griffin ADFS שלך מוגדר כראוי לאפשר רק משתמשים מורשים.</value>
   </data>
   <data name="Griffin_SaveConfig" xml:space="preserve">
     <value>שמור הגדרות</value>
@@ -11960,16 +11966,16 @@
     <value>הגדרות כלל-מערכתיות:</value>
   </data>
   <data name="Griffin_Config1" xml:space="preserve">
-    <value>&lt;strong&gt;מוגדר פעם אחת&lt;/strong&gt; על ידי בעל המערכת</value>
+    <value>מוגדר פעם אחת על ידי בעל המערכת</value>
   </data>
   <data name="Griffin_Config2" xml:space="preserve">
-    <value>&lt;strong&gt;חל על כל החברות&lt;/strong&gt; במערכת</value>
+    <value>חל על כל החברות במערכת</value>
   </data>
   <data name="Griffin_Config3" xml:space="preserve">
-    <value>&lt;strong&gt;שרת Griffin יחיד&lt;/strong&gt; משרת את כל הפריסה</value>
+    <value>שרת Griffin יחיד משרת את כל הפריסה</value>
   </data>
   <data name="Griffin_Config4" xml:space="preserve">
-    <value>&lt;strong&gt;אימות עקבי&lt;/strong&gt; בכל החברות והמשתמשים</value>
+    <value>אימות עקבי בכל החברות והמשתמשים</value>
   </data>
   <data name="Griffin_NoteText" xml:space="preserve">
     <value>חברות בודדות לא יכולות לדרוס או להשבית אימות ADFS. אם מופעל כאן, כל המשתמשים בכל החברות יראו את אפשרות "התחבר עם Griffin ADFS" בדף הכניסה.</value>
@@ -14352,10 +14358,13 @@
     <value>משתמש לא מאומת</value>
   </data>
   <data name="DeleteTextEntry_NoPermissionDelete" xml:space="preserve">
-    <value>אין לך הרשאה למחוק ערכים בלוח שנה</value>
+    <value>אין לך הרשאה למחוק ערכי טקסט</value>
   </data>
   <data name="DeleteTextEntry_NotFound" xml:space="preserve">
     <value>ערך טקסט לא נמצא</value>
+  </data>
+  <data name="DeleteTextEntry_OwnRowOrManagerOnly" xml:space="preserve">
+    <value>ניתן למחוק רק הערות בשורה שלך, או כמנהל בתחום האחריות שלך</value>
   </data>
   <data name="DeleteTextEntry_CannotDeleteOverviewNotes" xml:space="preserve">
     <value>לא ניתן למחוק הערות סקירה דרך נקודת קצה זו</value>
@@ -14544,7 +14553,7 @@
     <value>אין תורנויות ל{0} ב-{1}</value>
   </data>
   <data name="BottomSheet_NoOnCallFor" xml:space="preserve">
-    <value>אין תורנים ב-{1}</value>
+    <value>אין {0} ב-{1}</value>
   </data>
   <!-- Confirm modal title keys (Feedback Consolidation 2026-04-02) -->
   <data name="ConfirmDeleteCompany_Title" xml:space="preserve">
@@ -14730,11 +14739,164 @@
   <data name="Grants_BackfillReportTruncated" xml:space="preserve"><value>… ועוד</value></data>
   <data name="Grants_BackfillReportTruncatedMore" xml:space="preserve"><value>נוספים</value></data>
   <data name="Grants_SurplusAudit" xml:space="preserve"><value>בדיקת הרשאות עודפות</value></data>
-  <data name="Grants_SurplusAuditDesc" xml:space="preserve"><value>זיהוי משתמשים בעלי &lt;strong&gt;הרשאות אוטומטיות&lt;/strong&gt; שהתבנית של תפקידם כבר אינה כוללת. בדרך כלל נגרם מהסרת הרשאה מתבנית לאחר שמשתמשים כבר הוקצו. &lt;strong&gt;אזהרה בלבד&lt;/strong&gt; — הדוח אינו משנה נתונים. הרשאות שהוקצו ידנית על ידי מנהל (IsAutoGrant=false) לא נכללות בכוונה.</value></data>
+  <data name="Grants_SurplusAuditDesc" xml:space="preserve"><value>זיהוי משתמשים בעלי הרשאות אוטומטיות שהתבנית של תפקידם כבר אינה כוללת. בדרך כלל נגרם מהסרת הרשאה מתבנית לאחר שמשתמשים כבר הוקצו. אזהרה בלבד — הדוח אינו משנה נתונים. הרשאות שהוקצו ידנית על ידי מנהל (IsAutoGrant=false) לא נכללות בכוונה.</value></data>
   <data name="AreaPalette_Slot_OnDutyHebrew" xml:space="preserve"><value>תורנות</value></data>
   <data name="Grants_SurplusAuditRun" xml:space="preserve"><value>הרץ ביקורת</value></data>
   <data name="Grants_SurplusReportSummary" xml:space="preserve"><value>עודף:</value></data>
   <data name="Grants_SurplusReportRows" xml:space="preserve"><value>שורות הרשאה אוטומטית מיותמות</value></data>
   <data name="Grants_SurplusReportDetails" xml:space="preserve"><value>הצג משתמשים מושפעים (לבדיקה והסרה ידנית במידת הצורך)</value></data>
   <data name="Grants_SurplusReportClean" xml:space="preserve"><value>לא נמצאו הרשאות אוטומטיות מיותמות.</value></data>
+  <data name="Grants_BackfillAutoGrants" xml:space="preserve"><value>מילוי הרשאות אוטומטיות מתבנית</value></data>
+  <data name="Grants_BackfillAutoGrantsDesc" xml:space="preserve"><value>לאחר הוספת הרשאות חדשות לתבנית תפקיד, השתמש בפעולה זו כדי להפיץ את ההרשאות לכל המשתמשים הקיימים באותה תבנית. אידמפוטנטי — לעולם לא נוגע בשורות שהוקצו ידנית על ידי מנהל. השאר את שדה התבנית ריק כדי לסרוק את כל התבניות.</value></data>
+  <data name="Grants_BackfillTemplateFilter" xml:space="preserve"><value>תבנית תפקיד (אופציונלי):</value></data>
+  <data name="Grants_BackfillAllTemplates" xml:space="preserve"><value>כל התבניות</value></data>
+  <data name="Grants_BackfillDryRun" xml:space="preserve"><value>הרצת בדיקה</value></data>
+  <data name="Grants_BackfillReportSummary" xml:space="preserve"><value>בדיקה:</value></data>
+  <data name="Grants_BackfillReportUsers" xml:space="preserve"><value>משתמשים חסרים</value></data>
+  <data name="Grants_BackfillReportGrants" xml:space="preserve"><value>שורות הרשאה</value></data>
+  <data name="Grants_BackfillReportDetails" xml:space="preserve"><value>הצג משתמשים מושפעים</value></data>
+  <data name="Grants_BackfillExecute" xml:space="preserve"><value>בצע מילוי כעת</value></data>
+  <data name="Grants_BackfillConfirm" xml:space="preserve"><value>להחיל הרשאות אוטומטיות חסרות על כל המשתמשים בתבנית(ות) שנבחרו? הפעולה נרשמת ביומן אך אינה ניתנת לביטול סלקטיבי.</value></data>
+  <data name="Grants_SurplusReportUsersWith" xml:space="preserve"><value>משתמשים עם</value></data>
+  <data name="ThemePicker_Title" xml:space="preserve"><value>מראה</value></data>
+  <data name="ThemePicker_Close" xml:space="preserve"><value>סגור</value></data>
+  <data name="ThemePicker_HueLabel" xml:space="preserve"><value>בחירת גוון / רוויה</value></data>
+  <data name="ThemePicker_LightnessLabel" xml:space="preserve"><value>בהירות</value></data>
+  <data name="ThemePicker_QuickPickTitle" xml:space="preserve"><value>בחירה מהירה</value></data>
+  <data name="ThemePicker_PresetsLabel" xml:space="preserve"><value>צבעים מוגדרים מראש</value></data>
+  <data name="ThemePicker_ModeTitle" xml:space="preserve"><value>מצב</value></data>
+  <data name="ThemePicker_ModesLabel" xml:space="preserve"><value>מצב צבע</value></data>
+  <data name="ThemePicker_PreviewTitle" xml:space="preserve"><value>תצוגה מקדימה</value></data>
+  <data name="ThemePicker_SaveButton" xml:space="preserve"><value>שמור</value></data>
+  <data name="ThemePicker_CancelButton" xml:space="preserve"><value>ביטול</value></data>
+  <data name="ThemePicker_BadgeText" xml:space="preserve"><value>תגית</value></data>
+  <data name="ThemePicker_FocusText" xml:space="preserve"><value>התמקד בי</value></data>
+  <data name="ThemePicker_ResetButton" xml:space="preserve"><value>איפוס לברירת מחדל</value></data>
+  <data name="ThemePicker_SavedToast" xml:space="preserve"><value>נשמר</value></data>
+  <data name="ThemePicker_SaveErrorToast" xml:space="preserve"><value>לא ניתן לשמור</value></data>
+  <data name="ThemePicker_ResetToast" xml:space="preserve"><value>בוצע איפוס</value></data>
+  <data name="ThemePicker_ResetErrorToast" xml:space="preserve"><value>לא ניתן לאפס</value></data>
+  <data name="ThemePicker_LightMode" xml:space="preserve"><value>בהיר</value></data>
+  <data name="ThemePicker_DarkMode" xml:space="preserve"><value>כהה</value></data>
+  <data name="ThemePicker_AutoMode" xml:space="preserve"><value>אוטומטי</value></data>
+  <data name="ThemePicker_PresetNavy" xml:space="preserve"><value>כחול כהה</value></data>
+  <data name="ThemePicker_PresetSky" xml:space="preserve"><value>תכלת</value></data>
+  <data name="ThemePicker_PresetForest" xml:space="preserve"><value>יער</value></data>
+  <data name="ThemePicker_PresetCoral" xml:space="preserve"><value>אלמוג</value></data>
+  <data name="ThemePicker_PresetPlum" xml:space="preserve"><value>שזיף</value></data>
+  <data name="ThemePicker_PresetEmerald" xml:space="preserve"><value>ירוק אמרלד</value></data>
+  <data name="ThemePicker_PresetSunset" xml:space="preserve"><value>שקיעה</value></data>
+  <data name="ThemePicker_PresetSlate" xml:space="preserve"><value>צפחה</value></data>
+  <data name="ExportUserData_Title" xml:space="preserve"><value>ייצוא נתוני משתמשים</value></data>
+  <data name="ExportUserData_Subtitle" xml:space="preserve"><value>ייצוא נתוני משתמש מלאים כ-JSON לצורך תאימות ל-GDPR או סקירה מנהלית.</value></data>
+  <data name="ExportUserData_SelectUsers" xml:space="preserve"><value>בחר משתמשים לייצוא</value></data>
+  <data name="ExportUserData_NSelected" xml:space="preserve"><value>{0} נבחרו</value></data>
+  <data name="ExportUserData_SearchPlaceholder" xml:space="preserve"><value>חפש לפי שם, דוא"ל או חברה...</value></data>
+  <data name="ExportUserData_SearchAriaLabel" xml:space="preserve"><value>חיפוש משתמשים</value></data>
+  <data name="ExportUserData_SelectAll" xml:space="preserve"><value>בחר הכל</value></data>
+  <data name="ExportUserData_DeselectAll" xml:space="preserve"><value>נקה בחירה</value></data>
+  <data name="ExportUserData_NoUsersFound" xml:space="preserve"><value>לא נמצאו משתמשים פעילים.</value></data>
+  <data name="ExportUserData_SelectUserAria" xml:space="preserve"><value>בחר את {0}</value></data>
+  <data name="ExportUserData_NoUsersSelected" xml:space="preserve"><value>לא נבחרו משתמשים.</value></data>
+  <data name="ExportUserData_OneUserWillBeExported" xml:space="preserve"><value>משתמש אחד ייוצא.</value></data>
+  <data name="ExportUserData_ManyUsersWillBeExported" xml:space="preserve"><value>{0} משתמשים ייוצאו.</value></data>
+  <data name="ExportUserData_ExportAsJson" xml:space="preserve"><value>ייצוא כ-JSON</value></data>
+  <data name="ExportUserData_AboutTitle" xml:space="preserve"><value>אודות הייצוא</value></data>
+  <data name="ExportUserData_AboutItem1" xml:space="preserve"><value>חבילת הייצוא של כל משתמש כוללת: פרופיל, שיבוצי משמרות, מטלות, תורנויות, בקשות חופש, בקשות החלפה, התראות, ניקוד משחקים, רישומי יומן, הרשאות, שיוך לתפקידים, הערות יום וחברויות.</value></data>
+  <data name="ExportUserData_AboutItem2" xml:space="preserve"><value>הנתונים המיוצאים מסופקים כקובץ JSON יחיד המכיל את כל המשתמשים הנבחרים.</value></data>
+  <data name="ExportUserData_AboutItem3" xml:space="preserve"><value>שדות רגישים (גיבוב סיסמה ומלח) אינם נכללים בייצוא.</value></data>
+  <data name="ExportUserData_AboutItem4" xml:space="preserve"><value>ניתן גם לייצא משתמש יחיד על ידי מעבר לכתובת /Owner/Hub/ExportUserData/{userId}.</value></data>
+  <data name="ExportUserData_SelectAtLeastOne" xml:space="preserve"><value>בחר לפחות משתמש אחד לייצוא.</value></data>
+  <data name="ExportUserData_ErrorDuringExport" xml:space="preserve"><value>אירעה שגיאה במהלך הייצוא. נסה שוב.</value></data>
+  <data name="Public_Busy" xml:space="preserve"><value>עסוק</value></data>
+  <data name="Public_InvalidChoreId" xml:space="preserve"><value>מזהה מטלה לא תקין: {0}</value></data>
+  <data name="Public_InvalidOnDutyId" xml:space="preserve"><value>מזהה תורנות לא תקין: {0}</value></data>
+  <data name="Public_FeedbackImageAlt" xml:space="preserve"><value>תמונת משוב</value></data>
+  <data name="Email_TraineeAdded_Subject" xml:space="preserve"><value>נוסף חניך: {0} בתאריך {1}</value></data>
+  <data name="Email_TraineeAdded_Title" xml:space="preserve"><value>נוסף חניך למשמרת שלך</value></data>
+  <data name="Email_TraineeAdded_Body" xml:space="preserve"><value>חניך נוסף לשיבוץ המשמרת שלך:</value></data>
+  <data name="Email_TraineeAdded_Highlight" xml:space="preserve"><value>{0} יצטרף אליך כחניך</value></data>
+  <data name="Email_TraineeAdded_Guidance" xml:space="preserve"><value>אנא סייע בהדרכה ובהכוונת החניך במהלך המשמרת.</value></data>
+  <data name="Email_SlotRemoved_Subject" xml:space="preserve"><value>משמרת הוסרה: {0} בתאריך {1}</value></data>
+  <data name="Email_SlotRemoved_Title" xml:space="preserve"><value>שיבוץ משמרת הוסר</value></data>
+  <data name="Email_SlotRemoved_Body" xml:space="preserve"><value>שיבוץ המשמרת שלך הוסר מלוח הזמנים:</value></data>
+  <data name="Email_SlotRemoved_Reason" xml:space="preserve"><value>סיבה</value></data>
+  <data name="Email_SlotRemoved_ContactManager" xml:space="preserve"><value>לשאלות בנוגע לשינוי זה, אנא פנה למנהל.</value></data>
+  <data name="Email_ShiftModified_Subject" xml:space="preserve"><value>משמרת שונתה: {0} בתאריך {1}</value></data>
+  <data name="Email_ShiftModified_Title" xml:space="preserve"><value>המשמרת שלך שונתה</value></data>
+  <data name="Email_ShiftModified_Body" xml:space="preserve"><value>שיבוץ המשמרת שלך עודכן:</value></data>
+  <data name="Email_ShiftModified_Changes" xml:space="preserve"><value>שינויים</value></data>
+  <data name="Email_ShiftModified_ReviewPrompt" xml:space="preserve"><value>אנא סקור את פרטי המשמרת המעודכנים ופנה למנהל לכל שאלה.</value></data>
+  <data name="LangEdit_EmptyValue" xml:space="preserve"><value>הערך אינו יכול להיות ריק</value></data>
+  <data name="LangEdit_DraftTitle" xml:space="preserve"><value>טקסט זה נערך (טיוטה)</value></data>
+  <data name="LangEdit_NoDraftChanges" xml:space="preserve"><value>אין עדיין שינויים. לחץ על טקסט כדי לערוך אותו.</value></data>
+  <data name="LangEdit_DraftChangesHeader" xml:space="preserve"><value>שינויי טיוטה ({0})</value></data>
+  <data name="LangEdit_NoChangesToSave" xml:space="preserve"><value>אין שינויים לשמור. לצאת ממצב עריכה בכל זאת?</value></data>
+  <data name="LangEdit_SaveOneConfirm" xml:space="preserve"><value>לשמור שינוי טיוטה אחד למסד הנתונים?</value></data>
+  <data name="LangEdit_SaveManyConfirm" xml:space="preserve"><value>לשמור {0} שינויי טיוטה למסד הנתונים?</value></data>
+  <data name="LangEdit_SaveOneSuccess" xml:space="preserve"><value>תרגום אחד נשמר בהצלחה!</value></data>
+  <data name="LangEdit_SaveManySuccess" xml:space="preserve"><value>{0} תרגומים נשמרו בהצלחה!</value></data>
+  <data name="LangEdit_SaveError" xml:space="preserve"><value>שגיאה: {0}</value></data>
+  <data name="LangEdit_SaveFallback" xml:space="preserve"><value>שמירת התרגומים נכשלה</value></data>
+  <data name="LangEdit_SaveFailed" xml:space="preserve"><value>שמירת הטיוטות נכשלה: {0}</value></data>
+  <data name="LangEdit_ExitConfirm" xml:space="preserve"><value>לצאת ממצב עריכה?</value></data>
+  <data name="LangEdit_DiscardOne" xml:space="preserve"><value>לבטל שינוי טיוטה אחד בלי לשמור?</value></data>
+  <data name="LangEdit_DiscardMany" xml:space="preserve"><value>לבטל {0} שינויי טיוטה בלי לשמור?</value></data>
+  <data name="LocAttrs_NoAttributes" xml:space="preserve"><value>לא נמצאו מאפיינים הניתנים לתרגום באלמנט זה</value></data>
+  <data name="LocAttrs_EditTitle" xml:space="preserve"><value>עריכת תרגום מאפיינים</value></data>
+  <data name="LocAttrs_EditHelp" xml:space="preserve"><value>לחץ קליק ימני על אלמנט כדי לערוך את תרגומי המאפיינים שלו (title, placeholder, aria-label).</value></data>
+  <data name="LocAttrs_UpdatedOne" xml:space="preserve"><value>מאפיין אחד עודכן. השתמש ב"שמור וצא" כדי לבצע את השינויים.</value></data>
+  <data name="LocAttrs_UpdatedMany" xml:space="preserve"><value>{0} מאפיינים עודכנו. השתמש ב"שמור וצא" כדי לבצע את השינויים.</value></data>
+  <data name="LocAttrs_SaveDraft" xml:space="preserve"><value>שמור טיוטה</value></data>
+  <data name="SwapGame_CloseGame" xml:space="preserve"><value>סגור משחק</value></data>
+  <data name="Error_InvalidExportRequest" xml:space="preserve"><value>בקשת ייצוא לא תקינה</value></data>
+  <data name="Error_UnsupportedExportFormat" xml:space="preserve"><value>פורמט ייצוא לא נתמך</value></data>
+  <data name="PageTitle_NoName" xml:space="preserve"><value>השיפטי שלך</value></data>
+  <data name="PageTitle_WithName" xml:space="preserve"><value>השיפטי של {0}</value></data>
+  <data name="Placeholder_ManagerEmail" xml:space="preserve"><value>manager@company.com</value></data>
+  <data name="Hint_SlugValidation" xml:space="preserve"><value>מותרות אותיות אנגליות קטנות, מספרים ומקפים בלבד</value></data>
+  <data name="Placeholder_ChoreTypeKey" xml:space="preserve"><value>chore-type-key</value></data>
+  <data name="Placeholder_ChoreTypeNameEn" xml:space="preserve"><value>לדוגמה: Cleaning</value></data>
+  <data name="Placeholder_ChoreTypeNameHe" xml:space="preserve"><value>לדוגמה: ניקיון</value></data>
+  <data name="Placeholder_DutyTypeNameEn" xml:space="preserve"><value>לדוגמה: Officer</value></data>
+  <data name="Placeholder_DutyTypeNameHe" xml:space="preserve"><value>לדוגמה: קצין</value></data>
+  <data name="Placeholder_DutyTypeIcon" xml:space="preserve"><value>shield</value></data>
+  <data name="Placeholder_ShiftGroupingKey" xml:space="preserve"><value>grouping-key</value></data>
+  <data name="Placeholder_PhoneIsraeli" xml:space="preserve"><value>050-1234567</value></data>
+  <data name="Placeholder_AssignmentName" xml:space="preserve"><value>למשל, פתיחת חנות, סבב אבטחה וכו'</value></data>
+  <data name="Placeholder_EmailFromAddress" xml:space="preserve"><value>noreply@example.com</value></data>
+  <data name="Placeholder_GriffinBaseUrl" xml:space="preserve"><value>http://griffin-auth.example.mil</value></data>
+  <data name="Placeholder_GriffinCallback" xml:space="preserve"><value>https://your-app.local/Auth/GriffinCallback</value></data>
+  <data name="AssignmentManage_NameHint" xml:space="preserve"><value>שם זה יוצג כ-"{0}-'השם שלך'" בלוח השנה</value></data>
+  <data name="AreaConfig_CalendarColors" xml:space="preserve"><value>צבעי לוח שנה</value></data>
+  <data name="OnDuty_AssignedByTooltip" xml:space="preserve"><value>הוקצה על ידי {0} בתאריך {1}</value></data>
+  <data name="Hub_PermissionSimulator" xml:space="preserve"><value>סימולטור הרשאות</value></data>
+  <data name="PermSim_Title" xml:space="preserve"><value>סימולטור הרשאות</value></data>
+  <data name="PermSim_Subtitle" xml:space="preserve"><value>בדוק גישה של משתמש או תפקיד לכל הרשאה בכל היקף</value></data>
+  <data name="PermSim_Who" xml:space="preserve"><value>מי</value></data>
+  <data name="PermSim_RealUser" xml:space="preserve"><value>משתמש אמיתי</value></data>
+  <data name="PermSim_HypotheticalRole" xml:space="preserve"><value>תפקיד היפותטי</value></data>
+  <data name="PermSim_SearchUser" xml:space="preserve"><value>חפש לפי שם או מייל…</value></data>
+  <data name="PermSim_SelectRole" xml:space="preserve"><value>תבנית תפקיד</value></data>
+  <data name="PermSim_RoleScopeArea" xml:space="preserve"><value>אזור התפקיד</value></data>
+  <data name="PermSim_RoleScopeMolecule" xml:space="preserve"><value>מולקולה של התפקיד</value></data>
+  <data name="PermSim_RoleScopeCompany" xml:space="preserve"><value>חברה של התפקיד</value></data>
+  <data name="PermSim_RoleScopeJobType" xml:space="preserve"><value>סוג תפקיד</value></data>
+  <data name="PermSim_Any" xml:space="preserve"><value>כל</value></data>
+  <data name="PermSim_WhatGrant" xml:space="preserve"><value>מה (הרשאה)</value></data>
+  <data name="PermSim_SearchGrant" xml:space="preserve"><value>חפש מפתח הרשאה…</value></data>
+  <data name="PermSim_WhereScope" xml:space="preserve"><value>איפה (היקף יעד)</value></data>
+  <data name="PermSim_CopyFromUser" xml:space="preserve"><value>העתק היקף מהמשתמש שנבחר ↑</value></data>
+  <data name="PermSim_ScopeProject" xml:space="preserve"><value>פרויקט</value></data>
+  <data name="PermSim_ScopeArea" xml:space="preserve"><value>אזור</value></data>
+  <data name="PermSim_ScopeMolecule" xml:space="preserve"><value>מולקולה</value></data>
+  <data name="PermSim_ScopeCompany" xml:space="preserve"><value>חברה</value></data>
+  <data name="PermSim_ScopeDept" xml:space="preserve"><value>מזהה מחלקה</value></data>
+  <data name="PermSim_ScopeJobType" xml:space="preserve"><value>סוג עבודה</value></data>
+  <data name="PermSim_TargetUserId" xml:space="preserve"><value>מזהה משתמש יעד</value></data>
+  <data name="PermSim_Reset" xml:space="preserve"><value>אפס</value></data>
+  <data name="PermSim_Run" xml:space="preserve"><value>▶ הרץ</value></data>
+  <data name="PermSim_Result" xml:space="preserve"><value>תוצאה</value></data>
+  <data name="PermSim_EmptyState" xml:space="preserve"><value>הגדר את הסימולציה ולחץ הרץ</value></data>
+  <data name="PermSim_Open" xml:space="preserve"><value>פתח סימולטור</value></data>
 </root>

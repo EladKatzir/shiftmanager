@@ -179,16 +179,17 @@ public class RoleTemplateAutoGrantTests : MasterTestBase
     // ================================================================
 
     [Theory]
-    // Counts reflect the 2026-04-15 additions: ManageOnDutyTypes (111) + EditOnCallCalendar (131) + EditAreaCalendarPalette (132).
-    [InlineData("Tzafona", "Employee", 22)]      // +1: EditOnCallCalendar
-    [InlineData("Tzafona", "Lead", 52)]          // +1 EditCompanyUsers (prior), +1 ManageOnDutyTypes, +1 EditOnCallCalendar
-    [InlineData("Tzafona", "BRDirector", 62)]    // +1 DirectorHubAccess (prior), +1 ManageOnDutyTypes, +1 EditOnCallCalendar, +1 EditAreaCalendarPalette
-    [InlineData("Tzafona", "Director", 60)]      // +1 ManageOnDuty (prior), +1 EditOnCallCalendar
-    [InlineData("Tzafona", "Assigner", 23)]      // +1: EditOnCallCalendar
-    [InlineData("Hitazmut", "MoleculeAdmin", 97)]// -1 dedupe G(7,18), +1 ManageOnDutyTypes, +1 EditOnCallCalendar, +1 EditAreaCalendarPalette
-    [InlineData("Yekev", "DepartmentLead", 51)]  // +2 EditCompanyUsers + ManageOnDuty (prior), +1 EditOnCallCalendar
-    [InlineData("Tzafona", "AreaAdmin", 121)]    // +1 EditOnCallCalendar, +1 EditAreaCalendarPalette
-    [InlineData("SystemAdmins", "Owner", 132)]   // +1 EditOnCallCalendar, +1 EditAreaCalendarPalette
+    // Counts reflect the 2026-04-17 audit fills (see plans/opition-c-please-also-gentle-sutherland.md):
+    // no new grants added; total still 132. Additions are role-template assignments of existing grants.
+    [InlineData("Tzafona", "Employee", 22)]      // unchanged
+    [InlineData("Tzafona", "Lead", 55)]          // +3: ResetPasswords, AssignJobTypes, ApproveExtendedLeave (all SAR own-jobtype)
+    [InlineData("Tzafona", "BRDirector", 67)]    // +5: AssignHakamDuties, EditDutyPrograms (Hakam sentinel), AssignGrants, RevokeGrants, ManageAnnouncements
+    [InlineData("Tzafona", "Director", 63)]      // +3: OverrideVacationLimits, InitiateSwap, DeactivateUsers (all ETM own-jobtype)
+    [InlineData("Tzafona", "Assigner", 24)]      // +1: ViewAllUsers (ETM) — fixes broken cross-company chore assignment
+    [InlineData("Hitazmut", "MoleculeAdmin", 105)]// +8: Duty bundle (13/14/15/107/108), DirectorHubAccess, ManageDepartments, ViewAllAreas
+    [InlineData("Yekev", "DepartmentLead", 58)]  // +7: ApproveVacations, ApproveSwaps, ApproveExtendedLeave, ResetPasswords, AssignRoles, AssignChores, ManageJoinRequests
+    [InlineData("Tzafona", "AreaAdmin", 121)]    // unchanged
+    [InlineData("SystemAdmins", "Owner", 132)]   // unchanged
     public async Task User_Has_ExpectedAutoGrantCount(string company, string template, int expectedCount)
     {
         var user = GetTestUser(company, template);

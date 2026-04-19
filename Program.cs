@@ -116,11 +116,39 @@ builder.Services.AddSingleton(
         System.Text.Unicode.UnicodeRanges.GeneralPunctuation));
 
 // Configure localization
+// FF_HEBREW_DEFAULT feature flag (stored in DB, managed at /Owner/FeatureFlags):
+//   false → en-US default, legacy-cookie middleware OFF (rollback path)
+//   true  → he-IL default, legacy en-US cookies are auto-cleared on next visit
+// Read once at startup via raw SQL because DefaultRequestCulture is configured BEFORE
+// DI is built. Toggling the flag in the admin UI requires an app restart to take effect.
+// See LegacyCultureCookieResetMiddleware + LanguageToggle for the .culture_explicit marker.
+var hebrewDefaultEnabled = ReadHebrewDefaultFlagFromDb(builder.Configuration);
+
+static bool ReadHebrewDefaultFlagFromDb(IConfiguration cfg)
+{
+    try
+    {
+        var cs = cfg.GetConnectionString("Default");
+        if (string.IsNullOrEmpty(cs)) return false;
+        using var conn = new SqliteConnection(cs);
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT IsEnabled FROM FeatureFlags WHERE Name = 'FF_HEBREW_DEFAULT' AND CompanyId IS NULL AND UserId IS NULL LIMIT 1";
+        var result = cmd.ExecuteScalar();
+        return result != null && result != DBNull.Value && Convert.ToInt64(result) != 0;
+    }
+    catch
+    {
+        // Fresh install: the FeatureFlags table may not exist yet before first migration.
+        // Treat any failure as "disabled" so startup never breaks on this check.
+        return false;
+    }
+}
 builder.Services.AddLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     var supportedCultures = new[] { "en-US", "he-IL" };
-    options.DefaultRequestCulture = new RequestCulture("en-US");
+    options.DefaultRequestCulture = new RequestCulture(hebrewDefaultEnabled ? "he-IL" : "en-US");
     options.SupportedCultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
     options.SupportedUICultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
 
@@ -314,6 +342,7 @@ builder.Services.AddScoped<IJobTypeService, JobTypeService>();
 builder.Services.AddScoped<IGrantService, GrantService>();
 builder.Services.AddScoped<IGrantBackfillService, GrantBackfillService>();
 builder.Services.AddScoped<IAreaPaletteService, AreaPaletteService>();
+builder.Services.AddScoped<IPermissionSimulatorService, PermissionSimulatorService>();
 builder.Services.AddScoped<IScopeFilterService, ScopeFilterService>(); // A-018: Scope-based data filtering
 
 // B-018: Concurrent Edit Conflict Detection
@@ -789,6 +818,38 @@ using (var scope = app.Services.CreateScope())
             db.RoleTemplateGrants.AddRange(newMappings);
             await db.SaveChangesAsync();
             logger.LogInformation("Seeded {MappingCount} new grant mappings", newMappings.Count);
+        }
+
+        // Reconcile mutable fields on existing role-template-grant mappings.
+        // Insertion above only adds NEW rows; it never updates rows whose identity keys
+        // (RoleTemplateId, GrantTypeId, TargetJobTypeId) already exist but whose ScopeMode /
+        // UseOwnJobType / CanOwn / CanGive have since changed in the seed. Without this,
+        // seed edits never propagate to the DB and back-fill produces grants with stale scope.
+        // System templates (IsSystem = true) are the source of truth from code; admin-customized
+        // non-system templates are left alone.
+        var fullExisting = await db.RoleTemplateGrants
+            .Include(g => g.RoleTemplate)
+            .Where(g => g.RoleTemplate != null && g.RoleTemplate.IsSystem)
+            .ToListAsync();
+        var seedLookup = roleTemplateGrants.ToDictionary(
+            g => $"{g.RoleTemplateId}:{g.GrantTypeId}:{g.TargetJobTypeId?.ToString() ?? "null"}",
+            g => g);
+        int reconciled = 0;
+        foreach (var row in fullExisting)
+        {
+            var key = $"{row.RoleTemplateId}:{row.GrantTypeId}:{row.TargetJobTypeId?.ToString() ?? "null"}";
+            if (!seedLookup.TryGetValue(key, out var seed)) continue;
+            bool changed = false;
+            if (row.ScopeMode != seed.ScopeMode) { row.ScopeMode = seed.ScopeMode; changed = true; }
+            if (row.UseOwnJobType != seed.UseOwnJobType) { row.UseOwnJobType = seed.UseOwnJobType; changed = true; }
+            if (row.CanOwn != seed.CanOwn) { row.CanOwn = seed.CanOwn; changed = true; }
+            if (row.CanGive != seed.CanGive) { row.CanGive = seed.CanGive; changed = true; }
+            if (changed) reconciled++;
+        }
+        if (reconciled > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("Reconciled {Count} role-template-grant mappings (ScopeMode/UseOwnJobType/CanOwn/CanGive changes)", reconciled);
         }
     }
 
@@ -1594,6 +1655,12 @@ app.UseRouting();
 app.UseRequestLogging();
 
 // Add request localization middleware
+// Must run BEFORE UseRequestLocalization so that deleting the legacy cookie causes
+// the configured DefaultRequestCulture to take effect on the same request.
+if (hebrewDefaultEnabled)
+{
+    app.UseMiddleware<ShiftManager.Middleware.LegacyCultureCookieResetMiddleware>();
+}
 app.UseRequestLocalization();
 
 // Griffin ADFS authentication (BEFORE CompanyContext)

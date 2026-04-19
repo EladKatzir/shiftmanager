@@ -3,7 +3,7 @@
 <div class="language-toggle">
     <button class="action-btn language-btn" onclick="toggleLanguage('@Model.CurrentLanguage', '@Model.DefaultCulture', '@Model.AlternateCulture')"
             loc-aria-label="Language" loc-title="Language">
-        <span class="language-icon">🌐</span>
+        <span class="language-icon"><icon name="globe" /></span>
         <span class="language-text">@(Model.IsHebrew ? "עב" : "En")</span>
     </button>
 </div>
@@ -18,6 +18,10 @@ function toggleLanguage(currentLang, defaultCulture, alternateCulture) {
     expires.setFullYear(expires.getFullYear() + 1);
 
     document.cookie = `.AspNetCore.Culture=c=${newLang}|uic=${newLang}; expires=${expires.toUTCString()}; path=/`;
+    // Dual-write: marker cookie records deliberate intent so LegacyCultureCookieResetMiddleware
+    // won't treat the culture cookie as auto-placed. MUST be kept in sync with Login.cshtml's
+    // own language toggle — both writer sites must set both cookies together.
+    document.cookie = `.culture_explicit=v2; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
 
     // Reload the page to apply the new language
     window.location.reload();

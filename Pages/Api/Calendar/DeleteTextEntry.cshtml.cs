@@ -66,10 +66,10 @@ public class DeleteTextEntryModel : PageModel
                     { StatusCode = 401 };
             }
 
-            // SECURITY: Verify caller has calendar editing permissions (shift, chore, or on-duty)
-            if (!await _grantService.HasCalendarEditPermissionAsync(currentUserId))
+            // SECURITY: caller must have note-writing permission (WriteOverviewNotes OR any calendar-edit grant)
+            if (!await _grantService.HasCalendarNotePermissionAsync(currentUserId))
             {
-                _logger.LogWarning("SECURITY: User {UserId} attempted to delete text entry {EntryId} without calendar edit permissions",
+                _logger.LogWarning("SECURITY: User {UserId} attempted to delete text entry {EntryId} without note permission",
                     currentUserId, data.Id);
                 return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_NoPermissionDelete"].Value })
                     { StatusCode = 403 };
@@ -90,6 +90,17 @@ public class DeleteTextEntryModel : PageModel
                 _logger.LogWarning("SECURITY: User {UserId} attempted to delete OverviewNote {EntryId} via DeleteTextEntry endpoint",
                     currentUserId, data.Id);
                 return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_CannotDeleteOverviewNotes"].Value })
+                    { StatusCode = 403 };
+            }
+
+            // SECURITY: mirror the write-side scope rule via CanReachUserForNoteAsync.
+            // Self-row is always allowed; non-self requires assign-grant-tier + accessible scope.
+            // (CanReachUserForNoteAsync short-circuits on self-target and enforces both gates for others.)
+            if (!await _grantService.CanReachUserForNoteAsync(currentUserId, entry.UserId))
+            {
+                _logger.LogWarning("SECURITY: User {UserId} cannot delete entry {EntryId} on row {TargetUserId} (tier/scope fail)",
+                    currentUserId, data.Id, entry.UserId);
+                return new JsonResult(new { success = false, message = _localizer["DeleteTextEntry_OwnRowOrManagerOnly"].Value })
                     { StatusCode = 403 };
             }
 

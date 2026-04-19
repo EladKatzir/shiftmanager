@@ -247,19 +247,15 @@ public class OnDutyService : IOnDutyService
                 return (false, "User not authenticated.", null);
             }
 
-            // Check if current user can manage OnDuty
+            // Authorization: outer gate uses the collaborative-editing OR chain
+            // (AssignHakamDuties | AssignKatzinDuties | ManageOnDuty | EditOnCallCalendar).
+            // Previously a second, narrower check required AssignHakamDuties/AssignKatzinDuties
+            // specifically — inconsistent with the outer gate and broken for custom duty types
+            // (which were incorrectly mapped to AssignHakamDuties). Officer-rank enforcement for
+            // Katzin / officer-required custom types still happens via IsUserEligibleForDutyAsync below.
             if (!await CanUserManageOnDutyAsync(currentUserId))
             {
                 return (false, "You do not have permission to create on-duty assignments.", null);
-            }
-
-            // ✅ Grant-based: Validate user has the SPECIFIC grant for this duty type
-            var requiredGrant = type == OnDutyType.Lead ? "AssignKatzinDuties" : "AssignHakamDuties";
-            var hasTypeSpecificGrant = await _grantService.HasGrantAsync(currentUserId, requiredGrant);
-            if (!hasTypeSpecificGrant)
-            {
-                var dutyTypeName = type == OnDutyType.Lead ? "Katzin" : "Hakam";
-                return (false, $"You do not have permission to assign {dutyTypeName} duties.", null);
             }
 
             // Check if duty type requires officer rank (only enforce when feature flag is enabled)

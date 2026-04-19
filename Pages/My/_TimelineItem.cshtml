@@ -2,13 +2,13 @@
 @inject ShiftManager.Services.ILocalizationService Localization
 @{
     var typeClass = Model.Type.ToString().ToLower();
-    var icon = Model.Type switch
+    var iconName = Model.Type switch
     {
-        ShiftManager.Pages.My.IndexModel.ItemType.Vacation => "🏖️",
-        ShiftManager.Pages.My.IndexModel.ItemType.OnDuty => "🚨",
-        ShiftManager.Pages.My.IndexModel.ItemType.Shift => "🌙",
-        ShiftManager.Pages.My.IndexModel.ItemType.Chore => "🧹",
-        _ => "📋"
+        ShiftManager.Pages.My.IndexModel.ItemType.Vacation => "palm-tree",
+        ShiftManager.Pages.My.IndexModel.ItemType.OnDuty => "siren",
+        ShiftManager.Pages.My.IndexModel.ItemType.Shift => "moon",
+        ShiftManager.Pages.My.IndexModel.ItemType.Chore => "brush",
+        _ => "clipboard-list"
     };
 }
 
@@ -22,7 +22,7 @@
          conflict: @(Model.HasConflict ? "true" : "false")
      })'>
     <div class="item-colorbar @typeClass"></div>
-    <div class="item-icon">@icon</div>
+    <div class="item-icon"><icon name="@iconName" /></div>
     <div class="item-content">
         <div class="item-title">@Model.Title</div>
         @if (!string.IsNullOrEmpty(Model.TimeRange))

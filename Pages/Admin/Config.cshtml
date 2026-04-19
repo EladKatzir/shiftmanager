@@ -560,7 +560,17 @@
                 {
                     <div class="type-item">
                         <div class="type-info">
-                            <span class="type-icon">@type.Icon</span>
+                            <span class="type-icon" style="color: @type.Color;">
+                                @if (!string.IsNullOrEmpty(type.Icon) && System.Text.RegularExpressions.Regex.IsMatch(type.Icon, "^[a-z][a-z0-9-]*$"))
+                                {
+                                    <icon name="@type.Icon" size="lg" />
+                                }
+                                else
+                                {
+                                    @* Legacy emoji value from before Lucide migration — render as-is *@
+                                    @type.Icon
+                                }
+                            </span>
                             <div class="type-details">
                                 <div class="type-name">@type.NameEn / @type.NameHe</div>
                                 <div class="type-value"><loc key="ValueLabel" />: @type.TypeValue</div>
@@ -617,9 +627,25 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="onDutyTypeIcon"><loc key="Icon" /> (@Localizer["Emoji"])</label>
-                @* Icon field now stores a Lucide icon name (e.g. "shield", "pin", "target"); legacy emoji values still render via fallback. *@
-                <input type="text" name="Icon" id="onDutyTypeIcon" class="form-input" value="pin" maxlength="32" />
+                <label class="form-label" for="onDutyTypeIcon"><loc key="Icon" /></label>
+                @* Lucide icon picker. The Icon column stores a Lucide name (e.g. "shield", "pin") — rendered via <icon> everywhere it appears. *@
+                <input type="hidden" name="Icon" id="onDutyTypeIcon" value="pin" maxlength="32" />
+                <div class="icon-picker" id="onDutyTypeIconPicker" role="radiogroup" aria-label="@Localizer["Icon"]">
+                    @foreach (var iconName in new[] {
+                        "shield", "shield-check", "star", "pin", "target", "bell", "siren",
+                        "flag", "alert-triangle", "user", "users", "users-round", "key", "lock",
+                        "radio", "phone", "mail", "hammer", "briefcase", "medal", "zap",
+                        "heart", "home", "eye", "search", "sparkles", "sun", "moon", "globe",
+                        "calendar", "calendar-check", "clock", "file-text", "clipboard-list",
+                        "building", "building-2", "landmark", "map-pin", "tag"
+                    })
+                    {
+                        <button type="button" class="icon-picker__option" data-icon="@iconName"
+                                role="radio" aria-label="@iconName" title="@iconName">
+                            <icon name="@iconName" size="md" />
+                        </button>
+                    }
+                </div>
             </div>
 
             <div class="form-group">
@@ -638,6 +664,48 @@
     </div>
 </div>
 
+<style>
+.icon-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    max-height: 220px;
+    overflow-y: auto;
+}
+.icon-picker__option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.icon-picker__option:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+.icon-picker__option.is-selected {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.25);
+}
+.icon-picker__option:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+}
+</style>
+
 <script>
 function openAddTypeModal() {
     document.getElementById('addTypeModal').classList.add('active');
@@ -646,6 +714,31 @@ function openAddTypeModal() {
 function closeAddTypeModal() {
     document.getElementById('addTypeModal').classList.remove('active');
 }
+
+// Icon picker — clicking an option stores its name in the hidden input and marks it selected.
+(function () {
+    var picker = document.getElementById('onDutyTypeIconPicker');
+    var hidden = document.getElementById('onDutyTypeIcon');
+    if (!picker || !hidden) return;
+
+    function select(opt) {
+        picker.querySelectorAll('.icon-picker__option').forEach(function (el) {
+            el.classList.toggle('is-selected', el === opt);
+            el.setAttribute('aria-checked', el === opt ? 'true' : 'false');
+        });
+        hidden.value = opt.dataset.icon;
+    }
+
+    // Preselect matching the hidden input's current value.
+    var initial = picker.querySelector('.icon-picker__option[data-icon="' + hidden.value + '"]')
+        || picker.querySelector('.icon-picker__option');
+    if (initial) select(initial);
+
+    picker.addEventListener('click', function (e) {
+        var opt = e.target.closest('.icon-picker__option');
+        if (opt) select(opt);
+    });
+})();
 
 // Close modal on backdrop click
 document.getElementById('addTypeModal').addEventListener('click', (e) => {

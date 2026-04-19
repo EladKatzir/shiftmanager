@@ -19,6 +19,15 @@
     <td class="excel-calendar__row-label">
         <div class="excel-calendar__row-label-content">
             <span class="excel-calendar__row-label-name">
+                @if (!string.IsNullOrEmpty(row.Icon) && System.Text.RegularExpressions.Regex.IsMatch(row.Icon, "^[a-z][a-z0-9-]*$"))
+                {
+                    <span class="excel-calendar__row-icon"><icon name="@row.Icon" size="sm" /></span>
+                }
+                else if (!string.IsNullOrEmpty(row.Icon))
+                {
+                    @* Legacy emoji fallback for pre-migration data *@
+                    <span class="excel-calendar__row-icon">@row.Icon</span>
+                }
                 @row.Label
                 @if (!string.IsNullOrEmpty(row.CompanyName))
                 {
@@ -70,7 +79,8 @@
                              data-trainee-name="@(assignment.TraineeName ?? "")"
                              data-role-color="@roleColor"
                              data-entry-type="@(roleColor == "text-entry" ? "text" : "")"
-                             style="@assignStyle">
+                             style="@assignStyle"
+                             title="@assignment.AssignmentTooltip">
                             <span class="excel-calendar__assignment-name">@assignment.Name</span>
                             @if (!string.IsNullOrEmpty(assignment.SubLabel))
                             {
@@ -78,12 +88,12 @@
                             }
                             @if (assignment.IsTrainee || assignment.IsTraineeShift)
                             {
-                                <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]">🎓</span>
+                                <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]"><icon name="medal" size="sm" /></span>
                             }
                             @if (!string.IsNullOrEmpty(assignment.TraineeName))
                             {
                                 <span class="excel-calendar__trainee-sub">
-                                    <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]">🎓</span>
+                                    <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]"><icon name="medal" size="sm" /></span>
                                     @assignment.TraineeName
                                 </span>
                             }
@@ -108,7 +118,7 @@
                     <div class="excel-calendar__badges">
                         @if (cell.Overlay.HasVacation)
                         {
-                            <span class="excel-calendar__badge excel-calendar__badge--vacation" title="@Localizer["Vacation"]">🏖️</span>
+                            <span class="excel-calendar__badge excel-calendar__badge--vacation" title="@Localizer["Vacation"]"><icon name="palm-tree" size="sm" /></span>
                         }
                         @if (cell.Overlay.HasTextEntry)
                         {
@@ -119,7 +129,7 @@
                         }
                         @if (cell.Overlay.HasOverviewNote)
                         {
-                            <span class="excel-calendar__badge excel-calendar__badge--note" title="@cell.Overlay.OverviewNoteText">📋</span>
+                            <span class="excel-calendar__badge excel-calendar__badge--note" title="@cell.Overlay.OverviewNoteText"><icon name="clipboard-list" size="sm" /></span>
                         }
                     </div>
                 }

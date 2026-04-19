@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Text.Json;
 
@@ -23,15 +25,18 @@ public class ExportUserDataModel : PageModel
     private readonly UserDataExportService _exportService;
     private readonly AppDbContext _db;
     private readonly ILogger<ExportUserDataModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public ExportUserDataModel(
         UserDataExportService exportService,
         AppDbContext db,
-        ILogger<ExportUserDataModel> logger)
+        ILogger<ExportUserDataModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _exportService = exportService;
         _db = db;
         _logger = logger;
+        _localizer = localizer;
     }
 
     // ── Selection UI state ────────────────────────────────────────────────
@@ -79,7 +84,7 @@ public class ExportUserDataModel : PageModel
     {
         if (SelectedUserIds == null || SelectedUserIds.Count == 0)
         {
-            ModelState.AddModelError(string.Empty, "Select at least one user to export.");
+            ModelState.AddModelError(string.Empty, _localizer["ExportUserData_SelectAtLeastOne"].Value);
             // Reload user list so the page can re-render
             await LoadUserListAsync();
             return Page();
@@ -135,7 +140,7 @@ public class ExportUserDataModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during batch user data export");
-            ModelState.AddModelError(string.Empty, "An error occurred during export. Please try again.");
+            ModelState.AddModelError(string.Empty, _localizer["ExportUserData_ErrorDuringExport"].Value);
             await LoadUserListAsync();
             return Page();
         }

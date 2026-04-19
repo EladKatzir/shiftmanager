@@ -402,14 +402,14 @@
 @if (!string.IsNullOrEmpty(Model.Error))
 {
     <div class="alert-error">
-        <span style="font-size: 1.25rem;">✗</span>
+        <span><icon name="x-circle" size="lg" /></span>
         <span>@Model.Error</span>
     </div>
 }
 @if (!string.IsNullOrEmpty(Model.Message))
 {
     <div style="padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: 500; background: var(--success); color: var(--success-text); border: 1px solid rgba(var(--success-rgb, 16, 185, 129), 0.3);">
-        <span style="font-size: 1.25rem;">✓</span>
+        <span><icon name="check-circle" size="lg" /></span>
         <span>@Model.Message</span>
     </div>
 }
@@ -462,7 +462,7 @@
     <div class="requests-section">
         <div class="section-header">
             <h2 class="section-title">
-                <span>📅</span>
+                <span><icon name="calendar" /></span>
                 <span><loc key="PendingTimeOff" /></span>
                 @if (Model.TimeOff.Any())
                 {
@@ -487,12 +487,12 @@
 
                         <div class="request-info">
                             <div class="request-info-item">
-                                <span class="icon">📅</span>
+                                <span class="icon"><icon name="calendar" size="sm" /></span>
                                 <span class="label"><loc key="Dates" />:</span>
                                 <span>@Localization.FormatMediumDate(r.StartDate) → @Localization.FormatMediumDate(r.EndDate)</span>
                             </div>
                             <div class="request-info-item">
-                                <span class="icon">⏱️</span>
+                                <span class="icon"><icon name="clock" size="sm" /></span>
                                 <span class="label"><loc key="Duration" />:</span>
                                 <span>@((r.EndDate.DayNumber - r.StartDate.DayNumber + 1)) <loc key="Days" /></span>
                             </div>
@@ -512,14 +512,14 @@
                         <form method="post" asp-page-handler="ApproveTimeOff" style="margin: 0;">
                             <input type="hidden" name="id" value="@r.Id" />
                             <button type="submit" class="btn btn-approve">
-                                <span>✓</span>
+                                <span><icon name="check" /></span>
                                 <span><loc key="Approve" /></span>
                             </button>
                         </form>
                         <form method="post" asp-page-handler="DeclineTimeOff" style="margin: 0;">
                             <input type="hidden" name="id" value="@r.Id" />
                             <button type="submit" class="btn btn-decline">
-                                <span>✗</span>
+                                <span><icon name="x" /></span>
                                 <span><loc key="Decline" /></span>
                             </button>
                         </form>
@@ -540,7 +540,7 @@
     else
     {
         <div class="empty-state">
-            <div class="empty-state-icon">✓</div>
+            <div class="empty-state-icon"><icon name="check-circle" size="2xl" /></div>
             <div class="empty-state-title"><loc key="NoTimeOffRequestsYet" /></div>
             <div class="empty-state-text"><loc key="AllCaughtUp" /></div>
         </div>
@@ -553,7 +553,7 @@
     <div class="requests-section">
         <div class="section-header">
             <h2 class="section-title">
-                <span>🔄</span>
+                <span><icon name="refresh-cw" /></span>
                 <span><loc key="PendingSwaps" /></span>
                 @if (Model.Swaps.Any())
                 {
@@ -578,12 +578,12 @@
 
                         <div class="request-info">
                             <div class="request-info-item">
-                                <span class="icon">📅</span>
+                                <span class="icon"><icon name="calendar" size="sm" /></span>
                                 <span class="label"><loc key="Shift" />:</span>
                                 <span>@s.When</span>
                             </div>
                             <div class="request-info-item">
-                                <span class="icon">→</span>
+                                <span class="icon"><icon name="arrow-right" size="sm" /></span>
                                 <span class="label"><loc key="ProposedTo" />:</span>
                                 <span>@s.ToUser</span>
                             </div>
@@ -596,14 +596,14 @@
                         <form method="post" asp-page-handler="ApproveSwap" style="margin: 0;">
                             <input type="hidden" name="id" value="@s.Id" />
                             <button type="submit" class="btn btn-approve">
-                                <span>✓</span>
+                                <span><icon name="check" /></span>
                                 <span><loc key="Approve" /></span>
                             </button>
                         </form>
                         <form method="post" asp-page-handler="DeclineSwap" style="margin: 0;">
                             <input type="hidden" name="id" value="@s.Id" />
                             <button type="submit" class="btn btn-decline">
-                                <span>✗</span>
+                                <span><icon name="x" /></span>
                                 <span><loc key="Decline" /></span>
                             </button>
                         </form>
@@ -624,7 +624,7 @@
     else
     {
         <div class="empty-state">
-            <div class="empty-state-icon">✓</div>
+            <div class="empty-state-icon"><icon name="check-circle" size="2xl" /></div>
             <div class="empty-state-title"><loc key="NoSwapRequestsYet" /></div>
             <div class="empty-state-text"><loc key="AllCaughtUp" /></div>
         </div>
@@ -637,7 +637,7 @@
     <div class="requests-section">
         <div class="section-header">
             <h2 class="section-title">
-                <span>📋</span>
+                <span><icon name="clipboard-list" /></span>
                 <span><loc key="ApprovedTimeOffRequests" /></span>
                 @if (Model.ApprovedTimeOffs.Any())
                 {
@@ -667,7 +667,7 @@
 
                             <div class="request-info">
                                 <div class="request-info-item">
-                                    <span class="icon">📅</span>
+                                    <span class="icon"><icon name="calendar" size="sm" /></span>
                                     <span class="label"><loc key="Dates" />:</span>
                                     <span>
                                         @Localization.FormatMediumDate(timeOff.StartDate)
@@ -678,12 +678,12 @@
                                     </span>
                                 </div>
                                 <div class="request-info-item">
-                                    <span class="icon">⏱️</span>
+                                    <span class="icon"><icon name="clock" size="sm" /></span>
                                     <span class="label"><loc key="Duration" />:</span>
                                     <span>@days @(days == 1 ? Localizer["Day"] : Localizer["Days"])</span>
                                 </div>
                                 <div class="request-info-item">
-                                    <span class="icon">📝</span>
+                                    <span class="icon"><icon name="pencil" size="sm" /></span>
                                     <span class="label"><loc key="RequestedOn" />:</span>
                                     <span>@Localization.FormatDateTime(timeOff.CreatedAt)</span>
                                 </div>
@@ -753,7 +753,7 @@
         else
         {
             <div class="empty-state">
-                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-icon"><icon name="calendar" size="2xl" /></div>
                 <div class="empty-state-title"><loc key="NoApprovedTimeOffRequestsTitle" /></div>
                 <div class="empty-state-text"><loc key="NoApprovedTimeOffRequestsMessage" /></div>
             </div>

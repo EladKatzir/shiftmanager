@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Models.Export;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Api;
@@ -11,16 +13,18 @@ namespace ShiftManager.Pages.Api;
 public class ScheduleExportModel : PageModel
 {
     private readonly IScheduleExportService _exportService;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
-    public ScheduleExportModel(IScheduleExportService exportService)
+    public ScheduleExportModel(IScheduleExportService exportService, IStringLocalizer<SharedResources> localizer)
     {
         _exportService = exportService;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync([FromBody] ScheduleExportRequest request)
     {
         if (request == null)
-            return BadRequest("Invalid export request");
+            return BadRequest(_localizer["Error_InvalidExportRequest"].Value);
 
         // Validate date range to prevent excessive resource consumption
         if ((request.EndDate - request.StartDate).Days > 365)
@@ -55,7 +59,7 @@ public class ScheduleExportModel : PageModel
                 break;
 
             default:
-                return BadRequest("Unsupported export format");
+                return BadRequest(_localizer["Error_UnsupportedExportFormat"].Value);
         }
 
         return File(fileBytes, contentType, fileName);

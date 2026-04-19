@@ -38,8 +38,8 @@
                         <strong>@a.UserLabel</strong>
                         @if (a.TraineeUserId != null)
                         {
-                            <span style="margin-inline-start: 0.5rem; padding: 0.25rem 0.5rem; background-color: var(--info); color: var(--info-text); border-radius: 0.25rem; font-size: 0.875rem;">
-                                👤 @Localizer["TraineeLabel"]: @a.TraineeName
+                            <span style="margin-inline-start: 0.5rem; padding: 0.25rem 0.5rem; background-color: var(--info); color: var(--info-text); border-radius: 0.25rem; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <icon name="medal" size="sm" /> @Localizer["TraineeLabel"]: @a.TraineeName
                             </span>
                         }
                     </div>
@@ -106,9 +106,9 @@
         {
             <div style="margin-bottom: 1rem;">
                 <label for="ShiftName" class="form-label"><loc key="ShiftNameOptional" /></label>
-                <input type="text" id="shiftNameInput" class="input" asp-for="ShiftName" placeholder="e.g., Store Opening, Security Round, etc." />
+                <input type="text" id="shiftNameInput" class="input" asp-for="ShiftName" loc-placeholder="Placeholder_AssignmentName" />
                 <div class="small" style="color:var(--muted); margin-top:0.25rem;">
-                    This name will be displayed as "@Model.Type?.Key.ToLower()-'your name'" in the calendar
+                    @string.Format(Localizer["AssignmentManage_NameHint"].Value, Model.Type?.Key?.ToLower() ?? "")
                 </div>
             </div>
         }

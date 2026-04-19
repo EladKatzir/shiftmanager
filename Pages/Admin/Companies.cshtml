@@ -487,7 +487,7 @@
                         @Localizer["Slug"] <span class="form-label-required">*</span>
                         <span class="form-label-hint"><loc key="CompanySlugHint">(lowercase, letters, numbers, hyphens)</loc></span>
                     </label>
-                    <input class="form-input" asp-for="CompanySlug" placeholder="my-company" pattern="[a-z0-9\-]+" title="Only lowercase letters, numbers, and hyphens allowed" required />
+                    <input class="form-input" asp-for="CompanySlug" loc-placeholder="Placeholder_CompanySlug" pattern="[a-z0-9\-]+" loc-title="Hint_SlugValidation" required />
                 </div>
                 <div class="form-group">
                     <label class="form-label">@Localizer["DisplayName"]</label>
@@ -520,7 +520,7 @@
                     <label class="form-label">
                         @Localizer["ManagerEmail"] <span class="form-label-required" id="managerEmailRequired">*</span>
                     </label>
-                    <input class="form-input" asp-for="ManagerEmail" type="email" placeholder="manager@company.com" id="managerEmail" />
+                    <input class="form-input" asp-for="ManagerEmail" type="email" loc-placeholder="Placeholder_ManagerEmail" id="managerEmail" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">

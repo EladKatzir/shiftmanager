@@ -168,9 +168,13 @@ public class UserApiService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        // Assign role template grants for the new user
+        // Assign role template grants for the new user.
+        // Include MoleculeId in the scope so ETM-mode grants (e.g. BRDirector EditShiftTypes)
+        // resolve correctly — DetermineEffectiveScope pulls roleScope.MoleculeId for ExpandToMolecule.
         var roleTemplateKey = MapUserRoleToRoleTemplateKey(roleEnum);
-        var scope = GrantScope.Company(companyId);
+        var company = await _context.Companies.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+        var scope = new GrantScope(CompanyId: companyId, MoleculeId: company?.MoleculeId);
         var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(user.Id, roleTemplateKey, scope);
 
         _logger.LogInformation("User created via API: {Email} (CompanyId: {CompanyId}, UserId: {UserId}, GrantsAssigned: {GrantsCount})",

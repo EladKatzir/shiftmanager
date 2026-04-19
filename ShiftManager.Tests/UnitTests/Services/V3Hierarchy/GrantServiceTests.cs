@@ -299,6 +299,134 @@ public class GrantServiceTests : IDisposable
         grants.Should().HaveCount(2);
     }
 
+    // --- Calendar note permission + target-scope tests (2026-04-19 feature broadening) ---
+
+    [Fact]
+    public async Task HasCalendarNotePermissionAsync_WithOnlyWriteOverviewNotes_ReturnsTrue()
+    {
+        var entities = await SetupTestEntitiesAsync();
+        var writeNotesGrant = new GrantType { Key = "WriteOverviewNotes", NameKey = "Grant_WriteOverviewNotes", Category = GrantCategory.Shift };
+        _db.GrantTypes.Add(writeNotesGrant);
+        await _db.SaveChangesAsync();
+        await _service.GrantAsync(entities.User.Id, writeNotesGrant.Id, GrantScope.Self());
+
+        var result = await _service.HasCalendarNotePermissionAsync(entities.User.Id);
+
+        result.Should().BeTrue("user with WriteOverviewNotes should pass the note gate");
+    }
+
+    [Fact]
+    public async Task HasCalendarNotePermissionAsync_WithNoGrants_ReturnsFalse()
+    {
+        var entities = await SetupTestEntitiesAsync();
+
+        var result = await _service.HasCalendarNotePermissionAsync(entities.User.Id);
+
+        result.Should().BeFalse("user without any grants should not pass");
+    }
+
+    [Fact]
+    public async Task CanReachUserForNoteAsync_SelfTarget_ReturnsTrue()
+    {
+        var entities = await SetupTestEntitiesAsync();
+
+        var result = await _service.CanReachUserForNoteAsync(entities.User.Id, entities.User.Id);
+
+        result.Should().BeTrue("self-target is always reachable");
+    }
+
+    [Fact]
+    public async Task CanReachUserForNoteAsync_NoteOnlyTier_SameCompanyPeer_ReturnsFalse()
+    {
+        var entities = await SetupTestEntitiesAsync();
+        // Caller is in Companies[0]; target also in Companies[0]. No assign grants for caller.
+        var target = new AppUser
+        {
+            CompanyId = entities.Companies[0].Id,
+            Email = "target@test.com",
+            DisplayName = "Target User",
+            IsActive = true,
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.Add(target);
+        await _db.SaveChangesAsync();
+
+        var result = await _service.CanReachUserForNoteAsync(entities.User.Id, target.Id);
+
+        result.Should().BeFalse("note-only tier (no assign grants) can only write on own row — same-company peers are rejected");
+    }
+
+    [Fact]
+    public async Task CanReachUserForNoteAsync_NoteOnlyTier_DifferentCompany_ReturnsFalse()
+    {
+        var entities = await SetupTestEntitiesAsync();
+        // Target in Companies[1]; caller in Companies[0]. No assign grants → note-only tier.
+        var target = new AppUser
+        {
+            CompanyId = entities.Companies[1].Id,
+            Email = "other@test.com",
+            DisplayName = "Other Company User",
+            IsActive = true,
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.Add(target);
+        await _db.SaveChangesAsync();
+
+        var result = await _service.CanReachUserForNoteAsync(entities.User.Id, target.Id);
+
+        result.Should().BeFalse("note-only tier must reject cross-company targets");
+    }
+
+    [Fact]
+    public async Task CanReachUserForNoteAsync_ManagerTier_CrossCompanyWithinMolecule_ReturnsTrue()
+    {
+        var entities = await SetupTestEntitiesAsync();
+        // Target in Companies[1], caller has molecule-scoped AssignAlhutShifts covering both companies.
+        var assignGrantType = new GrantType { Key = "AssignAlhutShifts", NameKey = "Grant_AssignAlhutShifts", Category = GrantCategory.Shift };
+        _db.GrantTypes.Add(assignGrantType);
+        await _db.SaveChangesAsync();
+        await _service.GrantAsync(entities.User.Id, assignGrantType.Id, GrantScope.Molecule(entities.Molecule.Id));
+
+        var target = new AppUser
+        {
+            CompanyId = entities.Companies[1].Id,
+            Email = "crossco@test.com",
+            DisplayName = "Cross-Company Target",
+            IsActive = true,
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.Add(target);
+        await _db.SaveChangesAsync();
+
+        var result = await _service.CanReachUserForNoteAsync(entities.User.Id, target.Id);
+
+        result.Should().BeTrue("manager tier with molecule-scoped assign grant reaches other companies in same molecule");
+    }
+
+    [Fact]
+    public async Task CanReachUserForNoteAsync_InactiveTarget_ReturnsFalse()
+    {
+        var entities = await SetupTestEntitiesAsync();
+        var target = new AppUser
+        {
+            CompanyId = entities.Companies[0].Id,
+            Email = "inactive@test.com",
+            DisplayName = "Inactive User",
+            IsActive = false,
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.Add(target);
+        await _db.SaveChangesAsync();
+
+        var result = await _service.CanReachUserForNoteAsync(entities.User.Id, target.Id);
+
+        result.Should().BeFalse("inactive target users are unreachable");
+    }
+
     private record TestEntities(
         Project Project,
         Area Area,
@@ -856,9 +984,10 @@ public class AssignerRoleTests : IDisposable
         employeeGrantTypeIds.Should().BeSubsetOf(assignerGrantTypeIds,
             "Assigner should have all Employee grants");
 
-        // Assigner = Employee + AssignChores (exactly 1 extra)
-        assignerGrants.Should().HaveCount(employeeGrants.Count + 1,
-            "Assigner = Employee + AssignChores");
+        // Assigner = Employee + AssignChores(17) + ViewAllUsers(34) (2 extras — ViewAllUsers added
+        // 2026-04-18 so molecule-wide AssignChores has user visibility to match)
+        assignerGrants.Should().HaveCount(employeeGrants.Count + 2,
+            "Assigner = Employee + AssignChores + ViewAllUsers");
 
         // AssignChores (grant ID 17) should be molecule-scoped
         var assignChoresGrant = assignerGrants.FirstOrDefault(g => g.GrantTypeId == 17);
@@ -866,8 +995,14 @@ public class AssignerRoleTests : IDisposable
         assignChoresGrant!.ScopeMode.Should().Be(GrantScopeMode.ExpandToMolecule,
             "Assigner's AssignChores should be molecule-scoped");
 
-        // All inherited grants should be SAR (not widened)
-        var inheritedGrants = assignerGrants.Where(g => g.GrantTypeId != 17).ToList();
+        // ViewAllUsers (grant ID 34) should also be molecule-scoped
+        var viewAllUsersGrant = assignerGrants.FirstOrDefault(g => g.GrantTypeId == 34);
+        viewAllUsersGrant.Should().NotBeNull("Assigner should have ViewAllUsers grant (gap fix for cross-company chore assignment)");
+        viewAllUsersGrant!.ScopeMode.Should().Be(GrantScopeMode.ExpandToMolecule,
+            "Assigner's ViewAllUsers should be molecule-scoped");
+
+        // All inherited (non-assigner-specific) grants should be SAR (not widened)
+        var inheritedGrants = assignerGrants.Where(g => g.GrantTypeId != 17 && g.GrantTypeId != 34).ToList();
         inheritedGrants.Should().AllSatisfy(g =>
         {
             g.ScopeMode.Should().Be(GrantScopeMode.SameAsRole,

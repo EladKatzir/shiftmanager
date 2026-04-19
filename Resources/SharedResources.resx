@@ -3447,6 +3447,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="BottomDock_Toggle" xml:space="preserve">
     <value>Toggle On-Call Panel</value>
   </data>
+  <data name="BottomDock_Minimize" xml:space="preserve">
+    <value>Minimize</value>
+  </data>
+  <data name="BottomDock_Restore" xml:space="preserve">
+    <value>Restore widget</value>
+  </data>
   <data name="Owner_Companies" xml:space="preserve">
     <value>Companies</value>
   </data>
@@ -11904,7 +11910,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>System-Wide Authentication</value>
   </data>
   <data name="Griffin_SystemWideAuth_Desc" xml:space="preserve">
-    <value>Griffin ADFS is configured once at the &lt;strong&gt;owner level&lt;/strong&gt; and applies to &lt;strong&gt;all companies&lt;/strong&gt; in your system. Users from any company can authenticate using their domain credentials.</value>
+    <value>Griffin ADFS is configured once at the owner level and applies to all companies in your system. Users from any company can authenticate using their domain credentials.</value>
   </data>
   <data name="Griffin_Subtitle" xml:space="preserve">
     <value>Configure centralized domain authentication for all companies</value>
@@ -11961,7 +11967,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Security Note:</value>
   </data>
   <data name="Griffin_SecurityNote_Text" xml:space="preserve">
-    <value>Auto-provisioning applies to &lt;strong&gt;all companies&lt;/strong&gt;. Any user who successfully authenticates via ADFS will automatically get an account in the system. Ensure your Griffin ADFS server is properly configured to only allow authorized users.</value>
+    <value>Auto-provisioning applies to all companies. Any user who successfully authenticates via ADFS will automatically get an account in the system. Ensure your Griffin ADFS server is properly configured to only allow authorized users.</value>
   </data>
   <data name="Griffin_SaveConfig" xml:space="preserve">
     <value>Save Configuration</value>
@@ -11994,16 +12000,16 @@ Are you absolutely sure you want to delete this user?</value>
     <value>System-Wide Configuration:</value>
   </data>
   <data name="Griffin_Config1" xml:space="preserve">
-    <value>&lt;strong&gt;Configured once&lt;/strong&gt; by the system owner</value>
+    <value>Configured once by the system owner</value>
   </data>
   <data name="Griffin_Config2" xml:space="preserve">
-    <value>&lt;strong&gt;Applies to all companies&lt;/strong&gt; in the system</value>
+    <value>Applies to all companies in the system</value>
   </data>
   <data name="Griffin_Config3" xml:space="preserve">
-    <value>&lt;strong&gt;Single Griffin server&lt;/strong&gt; serves the entire deployment</value>
+    <value>Single Griffin server serves the entire deployment</value>
   </data>
   <data name="Griffin_Config4" xml:space="preserve">
-    <value>&lt;strong&gt;Consistent authentication&lt;/strong&gt; across all companies and users</value>
+    <value>Consistent authentication across all companies and users</value>
   </data>
   <data name="Griffin_NoteText" xml:space="preserve">
     <value>Individual companies cannot override or disable ADFS authentication. If enabled here, all users across all companies will see the "Login with Griffin ADFS" option on the login page.</value>
@@ -14386,10 +14392,13 @@ Are you absolutely sure you want to delete this user?</value>
     <value>User not authenticated</value>
   </data>
   <data name="DeleteTextEntry_NoPermissionDelete" xml:space="preserve">
-    <value>You do not have permission to delete calendar entries</value>
+    <value>You do not have permission to delete text entries</value>
   </data>
   <data name="DeleteTextEntry_NotFound" xml:space="preserve">
     <value>Text entry not found</value>
+  </data>
+  <data name="DeleteTextEntry_OwnRowOrManagerOnly" xml:space="preserve">
+    <value>You can only delete notes on your own row, or as a manager within your scope</value>
   </data>
   <data name="DeleteTextEntry_CannotDeleteOverviewNotes" xml:space="preserve">
     <value>Cannot delete overview notes via this endpoint</value>
@@ -14764,10 +14773,164 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Grants_BackfillReportTruncated" xml:space="preserve"><value>… and</value></data>
   <data name="Grants_BackfillReportTruncatedMore" xml:space="preserve"><value>more</value></data>
   <data name="Grants_SurplusAudit" xml:space="preserve"><value>Surplus Auto-Grant Audit</value></data>
-  <data name="Grants_SurplusAuditDesc" xml:space="preserve"><value>Detect users who have &lt;strong&gt;auto-grants&lt;/strong&gt; their RoleTemplate no longer declares. Typically caused by a grant being removed from the template seed after users had already been provisioned. &lt;strong&gt;Warn-only&lt;/strong&gt; — this report never modifies data. Manual admin grants (IsAutoGrant=false) are intentionally excluded.</value></data>
+  <data name="Grants_SurplusAuditDesc" xml:space="preserve"><value>Detect users who have auto-grants their RoleTemplate no longer declares. Typically caused by a grant being removed from the template seed after users had already been provisioned. Warn-only — this report never modifies data. Manual admin grants (IsAutoGrant=false) are intentionally excluded.</value></data>
   <data name="Grants_SurplusAuditRun" xml:space="preserve"><value>Run audit</value></data>
   <data name="Grants_SurplusReportSummary" xml:space="preserve"><value>Surplus:</value></data>
   <data name="Grants_SurplusReportRows" xml:space="preserve"><value>stale auto-grant rows</value></data>
   <data name="Grants_SurplusReportDetails" xml:space="preserve"><value>Show affected users (review and remove manually if intended)</value></data>
   <data name="Grants_SurplusReportClean" xml:space="preserve"><value>No stale auto-grants found.</value></data>
+  <data name="Grants_BackfillAutoGrants" xml:space="preserve"><value>Back-fill Template AutoGrants</value></data>
+  <data name="Grants_BackfillAutoGrantsDesc" xml:space="preserve"><value>After adding new grants to a RoleTemplate seed, use this to propagate those grants to every existing user on that template. Idempotent — never touches admin-granted manual rows. Leave the template empty to scan all templates.</value></data>
+  <data name="Grants_BackfillTemplateFilter" xml:space="preserve"><value>Role Template (optional):</value></data>
+  <data name="Grants_BackfillAllTemplates" xml:space="preserve"><value>All templates</value></data>
+  <data name="Grants_BackfillDryRun" xml:space="preserve"><value>Dry-run</value></data>
+  <data name="Grants_BackfillReportSummary" xml:space="preserve"><value>Dry-run:</value></data>
+  <data name="Grants_BackfillReportUsers" xml:space="preserve"><value>users missing</value></data>
+  <data name="Grants_BackfillReportGrants" xml:space="preserve"><value>grant rows</value></data>
+  <data name="Grants_BackfillReportDetails" xml:space="preserve"><value>Show affected users</value></data>
+  <data name="Grants_BackfillExecute" xml:space="preserve"><value>Back-fill now</value></data>
+  <data name="Grants_BackfillConfirm" xml:space="preserve"><value>Apply missing AutoGrants to every user on the selected template(s)? This action is logged but cannot be selectively undone.</value></data>
+  <data name="Grants_SurplusReportUsersWith" xml:space="preserve"><value>users with</value></data>
+  <data name="ThemePicker_Title" xml:space="preserve"><value>Appearance</value></data>
+  <data name="ThemePicker_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="ThemePicker_HueLabel" xml:space="preserve"><value>Hue / saturation picker</value></data>
+  <data name="ThemePicker_LightnessLabel" xml:space="preserve"><value>Lightness</value></data>
+  <data name="ThemePicker_QuickPickTitle" xml:space="preserve"><value>Quick pick</value></data>
+  <data name="ThemePicker_PresetsLabel" xml:space="preserve"><value>Preset colors</value></data>
+  <data name="ThemePicker_ModeTitle" xml:space="preserve"><value>Mode</value></data>
+  <data name="ThemePicker_ModesLabel" xml:space="preserve"><value>Color mode</value></data>
+  <data name="ThemePicker_PreviewTitle" xml:space="preserve"><value>Preview</value></data>
+  <data name="ThemePicker_SaveButton" xml:space="preserve"><value>Save</value></data>
+  <data name="ThemePicker_CancelButton" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ThemePicker_BadgeText" xml:space="preserve"><value>Badge</value></data>
+  <data name="ThemePicker_FocusText" xml:space="preserve"><value>Focus me</value></data>
+  <data name="ThemePicker_ResetButton" xml:space="preserve"><value>Reset to default</value></data>
+  <data name="ThemePicker_SavedToast" xml:space="preserve"><value>Saved</value></data>
+  <data name="ThemePicker_SaveErrorToast" xml:space="preserve"><value>Could not save</value></data>
+  <data name="ThemePicker_ResetToast" xml:space="preserve"><value>Reset</value></data>
+  <data name="ThemePicker_ResetErrorToast" xml:space="preserve"><value>Could not reset</value></data>
+  <data name="ThemePicker_LightMode" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemePicker_DarkMode" xml:space="preserve"><value>Dark</value></data>
+  <data name="ThemePicker_AutoMode" xml:space="preserve"><value>Auto</value></data>
+  <data name="ThemePicker_PresetNavy" xml:space="preserve"><value>Navy</value></data>
+  <data name="ThemePicker_PresetSky" xml:space="preserve"><value>Sky</value></data>
+  <data name="ThemePicker_PresetForest" xml:space="preserve"><value>Forest</value></data>
+  <data name="ThemePicker_PresetCoral" xml:space="preserve"><value>Coral</value></data>
+  <data name="ThemePicker_PresetPlum" xml:space="preserve"><value>Plum</value></data>
+  <data name="ThemePicker_PresetEmerald" xml:space="preserve"><value>Emerald</value></data>
+  <data name="ThemePicker_PresetSunset" xml:space="preserve"><value>Sunset</value></data>
+  <data name="ThemePicker_PresetSlate" xml:space="preserve"><value>Slate</value></data>
+  <data name="ExportUserData_Title" xml:space="preserve"><value>Export User Data</value></data>
+  <data name="ExportUserData_Subtitle" xml:space="preserve"><value>Export complete user data as JSON for GDPR compliance or administrative review.</value></data>
+  <data name="ExportUserData_SelectUsers" xml:space="preserve"><value>Select Users to Export</value></data>
+  <data name="ExportUserData_NSelected" xml:space="preserve"><value>{0} selected</value></data>
+  <data name="ExportUserData_SearchPlaceholder" xml:space="preserve"><value>Search by name, email, or company...</value></data>
+  <data name="ExportUserData_SearchAriaLabel" xml:space="preserve"><value>Search users</value></data>
+  <data name="ExportUserData_SelectAll" xml:space="preserve"><value>Select All</value></data>
+  <data name="ExportUserData_DeselectAll" xml:space="preserve"><value>Deselect All</value></data>
+  <data name="ExportUserData_NoUsersFound" xml:space="preserve"><value>No active users found.</value></data>
+  <data name="ExportUserData_SelectUserAria" xml:space="preserve"><value>Select {0}</value></data>
+  <data name="ExportUserData_NoUsersSelected" xml:space="preserve"><value>No users selected.</value></data>
+  <data name="ExportUserData_OneUserWillBeExported" xml:space="preserve"><value>1 user will be exported.</value></data>
+  <data name="ExportUserData_ManyUsersWillBeExported" xml:space="preserve"><value>{0} users will be exported.</value></data>
+  <data name="ExportUserData_ExportAsJson" xml:space="preserve"><value>Export as JSON</value></data>
+  <data name="ExportUserData_AboutTitle" xml:space="preserve"><value>About This Export</value></data>
+  <data name="ExportUserData_AboutItem1" xml:space="preserve"><value>Each user's exported package includes: profile, shift assignments, chores, on-duty entries, time-off requests, swap requests, notifications, game scores, audit log entries, grants, role assignments, day notes, and friendships.</value></data>
+  <data name="ExportUserData_AboutItem2" xml:space="preserve"><value>Exported data is provided as a single JSON file containing all selected users.</value></data>
+  <data name="ExportUserData_AboutItem3" xml:space="preserve"><value>Sensitive fields (password hash &amp; salt) are excluded from the export.</value></data>
+  <data name="ExportUserData_AboutItem4" xml:space="preserve"><value>You can also export a single user by navigating to /Owner/Hub/ExportUserData/{userId}.</value></data>
+  <data name="ExportUserData_SelectAtLeastOne" xml:space="preserve"><value>Select at least one user to export.</value></data>
+  <data name="ExportUserData_ErrorDuringExport" xml:space="preserve"><value>An error occurred during export. Please try again.</value></data>
+  <data name="Public_Busy" xml:space="preserve"><value>Busy</value></data>
+  <data name="Public_InvalidChoreId" xml:space="preserve"><value>Invalid chore ID: {0}</value></data>
+  <data name="Public_InvalidOnDutyId" xml:space="preserve"><value>Invalid on-duty ID: {0}</value></data>
+  <data name="Public_FeedbackImageAlt" xml:space="preserve"><value>Feedback image</value></data>
+  <data name="Email_TraineeAdded_Subject" xml:space="preserve"><value>Trainee Added: {0} on {1}</value></data>
+  <data name="Email_TraineeAdded_Title" xml:space="preserve"><value>Trainee Added to Your Shift</value></data>
+  <data name="Email_TraineeAdded_Body" xml:space="preserve"><value>A trainee has been added to your shift assignment:</value></data>
+  <data name="Email_TraineeAdded_Highlight" xml:space="preserve"><value>{0} will be joining you as a trainee</value></data>
+  <data name="Email_TraineeAdded_Guidance" xml:space="preserve"><value>Please help guide and mentor your trainee during this shift.</value></data>
+  <data name="Email_SlotRemoved_Subject" xml:space="preserve"><value>Shift Removed: {0} on {1}</value></data>
+  <data name="Email_SlotRemoved_Title" xml:space="preserve"><value>Shift Assignment Removed</value></data>
+  <data name="Email_SlotRemoved_Body" xml:space="preserve"><value>Your shift assignment has been removed from the schedule:</value></data>
+  <data name="Email_SlotRemoved_Reason" xml:space="preserve"><value>Reason</value></data>
+  <data name="Email_SlotRemoved_ContactManager" xml:space="preserve"><value>If you have any questions about this change, please contact your manager.</value></data>
+  <data name="Email_ShiftModified_Subject" xml:space="preserve"><value>Shift Modified: {0} on {1}</value></data>
+  <data name="Email_ShiftModified_Title" xml:space="preserve"><value>Your Shift Has Been Modified</value></data>
+  <data name="Email_ShiftModified_Body" xml:space="preserve"><value>Your shift assignment has been updated:</value></data>
+  <data name="Email_ShiftModified_Changes" xml:space="preserve"><value>Changes</value></data>
+  <data name="Email_ShiftModified_ReviewPrompt" xml:space="preserve"><value>Please review the updated shift details and contact your manager if you have any questions.</value></data>
+  <data name="LangEdit_EmptyValue" xml:space="preserve"><value>Value cannot be empty</value></data>
+  <data name="LangEdit_DraftTitle" xml:space="preserve"><value>This text has been edited (draft)</value></data>
+  <data name="LangEdit_NoDraftChanges" xml:space="preserve"><value>No draft changes yet. Click on any text to edit it.</value></data>
+  <data name="LangEdit_DraftChangesHeader" xml:space="preserve"><value>Draft Changes ({0})</value></data>
+  <data name="LangEdit_NoChangesToSave" xml:space="preserve"><value>No changes to save. Exit edit mode anyway?</value></data>
+  <data name="LangEdit_SaveOneConfirm" xml:space="preserve"><value>Save 1 draft change to the database?</value></data>
+  <data name="LangEdit_SaveManyConfirm" xml:space="preserve"><value>Save {0} draft changes to the database?</value></data>
+  <data name="LangEdit_SaveOneSuccess" xml:space="preserve"><value>Successfully saved 1 translation!</value></data>
+  <data name="LangEdit_SaveManySuccess" xml:space="preserve"><value>Successfully saved {0} translations!</value></data>
+  <data name="LangEdit_SaveError" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="LangEdit_SaveFallback" xml:space="preserve"><value>Failed to save translations</value></data>
+  <data name="LangEdit_SaveFailed" xml:space="preserve"><value>Failed to save drafts: {0}</value></data>
+  <data name="LangEdit_ExitConfirm" xml:space="preserve"><value>Exit edit mode?</value></data>
+  <data name="LangEdit_DiscardOne" xml:space="preserve"><value>Discard 1 draft change without saving?</value></data>
+  <data name="LangEdit_DiscardMany" xml:space="preserve"><value>Discard {0} draft changes without saving?</value></data>
+  <data name="LocAttrs_NoAttributes" xml:space="preserve"><value>No localizable attributes found on this element</value></data>
+  <data name="LocAttrs_EditTitle" xml:space="preserve"><value>Edit Attribute Localization</value></data>
+  <data name="LocAttrs_EditHelp" xml:space="preserve"><value>Right-click an element to edit its HTML attribute translations (title, placeholder, aria-label).</value></data>
+  <data name="LocAttrs_UpdatedOne" xml:space="preserve"><value>Updated 1 attribute. Use Save &amp; Exit to commit changes.</value></data>
+  <data name="LocAttrs_UpdatedMany" xml:space="preserve"><value>Updated {0} attributes. Use Save &amp; Exit to commit changes.</value></data>
+  <data name="LocAttrs_SaveDraft" xml:space="preserve"><value>Save Draft</value></data>
+  <data name="SwapGame_CloseGame" xml:space="preserve"><value>Close game</value></data>
+  <data name="Error_InvalidExportRequest" xml:space="preserve"><value>Invalid export request</value></data>
+  <data name="Error_UnsupportedExportFormat" xml:space="preserve"><value>Unsupported export format</value></data>
+  <data name="PageTitle_NoName" xml:space="preserve"><value>your shifty</value></data>
+  <data name="PageTitle_WithName" xml:space="preserve"><value>{0}'s shifty</value></data>
+  <data name="Placeholder_ManagerEmail" xml:space="preserve"><value>manager@company.com</value></data>
+  <data name="Hint_SlugValidation" xml:space="preserve"><value>Only lowercase letters, numbers, and hyphens allowed</value></data>
+  <data name="Placeholder_ChoreTypeKey" xml:space="preserve"><value>chore-type-key</value></data>
+  <data name="Placeholder_ChoreTypeNameEn" xml:space="preserve"><value>e.g. Cleaning</value></data>
+  <data name="Placeholder_ChoreTypeNameHe" xml:space="preserve"><value>e.g. ניקיון</value></data>
+  <data name="Placeholder_DutyTypeNameEn" xml:space="preserve"><value>e.g. Officer</value></data>
+  <data name="Placeholder_DutyTypeNameHe" xml:space="preserve"><value>e.g. קצין</value></data>
+  <data name="Placeholder_DutyTypeIcon" xml:space="preserve"><value>shield</value></data>
+  <data name="Placeholder_ShiftGroupingKey" xml:space="preserve"><value>grouping-key</value></data>
+  <data name="Placeholder_PhoneIsraeli" xml:space="preserve"><value>050-1234567</value></data>
+  <data name="Placeholder_AssignmentName" xml:space="preserve"><value>e.g., Store Opening, Security Round, etc.</value></data>
+  <data name="Placeholder_EmailFromAddress" xml:space="preserve"><value>noreply@example.com</value></data>
+  <data name="Placeholder_GriffinBaseUrl" xml:space="preserve"><value>http://griffin-auth.example.mil</value></data>
+  <data name="Placeholder_GriffinCallback" xml:space="preserve"><value>https://your-app.local/Auth/GriffinCallback</value></data>
+  <data name="AssignmentManage_NameHint" xml:space="preserve"><value>This name will be displayed as "{0}-'your name'" in the calendar</value></data>
+  <data name="AreaPalette_Slot_OnDutyHebrew" xml:space="preserve"><value>On-Duty</value></data>
+  <data name="AreaConfig_CalendarColors" xml:space="preserve"><value>Calendar Colors</value></data>
+  <data name="OnDuty_AssignedByTooltip" xml:space="preserve"><value>Assigned by {0} on {1}</value></data>
+  <data name="Hub_PermissionSimulator" xml:space="preserve"><value>Permission Simulator</value></data>
+  <data name="PermSim_Title" xml:space="preserve"><value>Permission Simulator</value></data>
+  <data name="PermSim_Subtitle" xml:space="preserve"><value>Test any user or role against any grant at any scope</value></data>
+  <data name="PermSim_Who" xml:space="preserve"><value>Who</value></data>
+  <data name="PermSim_RealUser" xml:space="preserve"><value>Real User</value></data>
+  <data name="PermSim_HypotheticalRole" xml:space="preserve"><value>Hypothetical Role</value></data>
+  <data name="PermSim_SearchUser" xml:space="preserve"><value>Search by name or email…</value></data>
+  <data name="PermSim_SelectRole" xml:space="preserve"><value>Role Template</value></data>
+  <data name="PermSim_RoleScopeArea" xml:space="preserve"><value>Role Area</value></data>
+  <data name="PermSim_RoleScopeMolecule" xml:space="preserve"><value>Role Molecule</value></data>
+  <data name="PermSim_RoleScopeCompany" xml:space="preserve"><value>Role Company</value></data>
+  <data name="PermSim_RoleScopeJobType" xml:space="preserve"><value>Role Job Type</value></data>
+  <data name="PermSim_Any" xml:space="preserve"><value>any</value></data>
+  <data name="PermSim_WhatGrant" xml:space="preserve"><value>What (Grant)</value></data>
+  <data name="PermSim_SearchGrant" xml:space="preserve"><value>Search grant key…</value></data>
+  <data name="PermSim_WhereScope" xml:space="preserve"><value>Where (Target Scope)</value></data>
+  <data name="PermSim_CopyFromUser" xml:space="preserve"><value>Copy scope from selected user ↑</value></data>
+  <data name="PermSim_ScopeProject" xml:space="preserve"><value>Project</value></data>
+  <data name="PermSim_ScopeArea" xml:space="preserve"><value>Area</value></data>
+  <data name="PermSim_ScopeMolecule" xml:space="preserve"><value>Molecule</value></data>
+  <data name="PermSim_ScopeCompany" xml:space="preserve"><value>Company</value></data>
+  <data name="PermSim_ScopeDept" xml:space="preserve"><value>Department ID</value></data>
+  <data name="PermSim_ScopeJobType" xml:space="preserve"><value>Job Type</value></data>
+  <data name="PermSim_TargetUserId" xml:space="preserve"><value>Target User ID</value></data>
+  <data name="PermSim_Reset" xml:space="preserve"><value>Reset</value></data>
+  <data name="PermSim_Run" xml:space="preserve"><value>▶ Run</value></data>
+  <data name="PermSim_Result" xml:space="preserve"><value>Result</value></data>
+  <data name="PermSim_EmptyState" xml:space="preserve"><value>Configure the simulation and click Run</value></data>
+  <data name="PermSim_Open" xml:space="preserve"><value>Open Simulator</value></data>
 </root>

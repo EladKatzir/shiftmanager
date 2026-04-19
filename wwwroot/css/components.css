@@ -3480,6 +3480,7 @@ picture img {
   /* DR-PRINT-01: Hide bottom dock and system alerts in print output */
   .bottom-dock,
   .bottom-dock__toggle,
+  .bottom-dock__pill,
   .system-alerts {
     display: none !important;
   }
@@ -3513,19 +3514,19 @@ picture img {
   gap: var(--space-2);
   width: 100%;
   padding: var(--space-3) var(--space-4);
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  background: transparent;
   color: var(--primary-contrast);
   border: none;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: 0;
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   cursor: pointer;
-  box-shadow: var(--shadow-lg);
+  box-shadow: none;
   transition: background var(--duration-fast) var(--ease-out);
 }
 
 .bottom-dock__toggle:hover {
-  background: linear-gradient(135deg, var(--primary-hover), var(--primary));
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .bottom-dock__toggle:focus-visible {
@@ -3547,7 +3548,7 @@ picture img {
   display: flex;
   align-items: center;
   padding: 0 var(--space-1);
-  color: var(--text-muted);
+  color: var(--primary-contrast);
   opacity: 0.6;
   font-size: 14px;
   letter-spacing: 2px;
@@ -3566,6 +3567,92 @@ picture img {
 
 .bottom-dock.is-dragging .bottom-dock__drag-handle {
   cursor: grabbing;
+}
+
+/* Header row — drag handle + toggle + minimize */
+.bottom-dock__header {
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: var(--primary-contrast);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
+}
+
+.bottom-dock__header .bottom-dock__toggle {
+  flex: 1;
+}
+
+/* Minimize button — small chip inside the header, enters Mini state */
+.bottom-dock__minimize {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-height: 28px;
+  padding: 0;
+  margin-block-start: var(--space-2);
+  margin-inline-end: var(--space-2);
+  background: transparent;
+  color: var(--primary-contrast) !important; /* dark-on-dark guard */
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.bottom-dock__minimize:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.bottom-dock__minimize:focus-visible {
+  outline: 2px solid var(--primary-contrast);
+  outline-offset: 2px;
+}
+
+/* Mini state — hide header + content, reveal pill */
+.bottom-dock.is-mini {
+  width: auto;
+  background: transparent;
+  box-shadow: none;
+}
+
+.bottom-dock.is-mini .bottom-dock__header,
+.bottom-dock.is-mini .bottom-dock__content {
+  display: none;
+}
+
+.bottom-dock.is-mini .bottom-dock__pill {
+  display: inline-flex;
+}
+
+/* Pill — circular icon shown only in Mini state */
+.bottom-dock__pill {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: var(--primary-contrast) !important; /* dark-on-dark guard */
+  border: none;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.bottom-dock__pill:hover {
+  transform: scale(1.06);
+}
+
+.bottom-dock__pill:focus-visible {
+  outline: 2px solid var(--primary-contrast);
+  outline-offset: 2px;
 }
 
 .bottom-dock__content {
@@ -3615,6 +3702,19 @@ picture img {
     width: 100%;
     max-width: 100%;
     border-radius: 0;
+  }
+
+  /* Mini overrides mobile full-width so the pill stays 44x44 in the corner */
+  .bottom-dock.is-mini {
+    right: var(--space-3);
+    left: auto;
+    width: auto;
+    max-width: none;
+  }
+
+  [dir="rtl"] .bottom-dock.is-mini {
+    right: auto;
+    left: var(--space-3);
   }
 
   .bottom-dock__toggle {

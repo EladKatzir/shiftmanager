@@ -6,21 +6,25 @@
 (function () {
   'use strict';
 
+  // Localizer lookup — falls back to the key name if AppLocalizer hasn't loaded
+  // (the `<loc>` and `_LocalizationScript.cshtml` layer matches this convention).
+  const L = (k) => (window.AppLocalizer && window.AppLocalizer[k]) || k;
+
   const PRESETS = [
-    { name: 'Navy',    color: '#1E3A5F' },
-    { name: 'Sky',     color: '#5B9BD5' },
-    { name: 'Forest',  color: '#2F6F4A' },
-    { name: 'Coral',   color: '#E5735B' },
-    { name: 'Plum',    color: '#7B3F7A' },
-    { name: 'Emerald', color: '#0E9F6E' },
-    { name: 'Sunset',  color: '#D97706' },
-    { name: 'Slate',   color: '#475569' }
+    { nameKey: 'ThemePicker_PresetNavy',    color: '#1E3A5F' },
+    { nameKey: 'ThemePicker_PresetSky',     color: '#5B9BD5' },
+    { nameKey: 'ThemePicker_PresetForest',  color: '#2F6F4A' },
+    { nameKey: 'ThemePicker_PresetCoral',   color: '#E5735B' },
+    { nameKey: 'ThemePicker_PresetPlum',    color: '#7B3F7A' },
+    { nameKey: 'ThemePicker_PresetEmerald', color: '#0E9F6E' },
+    { nameKey: 'ThemePicker_PresetSunset',  color: '#D97706' },
+    { nameKey: 'ThemePicker_PresetSlate',   color: '#475569' }
   ];
 
   const MODES = [
-    { key: 'light', label: 'Light' },
-    { key: 'dark',  label: 'Dark'  },
-    { key: 'auto',  label: 'Auto'  }
+    { key: 'light', labelKey: 'ThemePicker_LightMode' },
+    { key: 'dark',  labelKey: 'ThemePicker_DarkMode'  },
+    { key: 'auto',  labelKey: 'ThemePicker_AutoMode'  }
   ];
 
   let root = null;
@@ -57,17 +61,19 @@
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-modal', 'true');
     root.setAttribute('aria-labelledby', 'theme-picker-title');
+    // Hex / R / G / B are intentionally literal — per QA review, they are universal
+    // technical identifiers (rgb() standard) preserved in English in Israeli design tools.
     root.innerHTML = `
       <div class="theme-picker" role="document">
         <header class="theme-picker__header">
-          <h2 class="theme-picker__title" id="theme-picker-title">Appearance</h2>
-          <button class="theme-picker__close" aria-label="Close" data-action="close">&times;</button>
+          <h2 class="theme-picker__title" id="theme-picker-title">${L('ThemePicker_Title')}</h2>
+          <button class="theme-picker__close" aria-label="${L('ThemePicker_Close')}" data-action="close">&times;</button>
         </header>
 
         <div class="theme-picker__grid">
           <div class="theme-picker__canvas-wrap">
-            <canvas class="theme-picker__canvas" width="180" height="180" aria-label="Hue / saturation picker"></canvas>
-            <input type="range" class="theme-picker__lightness" min="0" max="100" value="50" aria-label="Lightness" />
+            <canvas class="theme-picker__canvas" width="180" height="180" aria-label="${L('ThemePicker_HueLabel')}"></canvas>
+            <input type="range" class="theme-picker__lightness" min="0" max="100" value="50" aria-label="${L('ThemePicker_LightnessLabel')}" />
           </div>
 
           <div class="theme-picker__inputs">
@@ -79,33 +85,33 @@
         </div>
 
         <div>
-          <p class="theme-picker__section-title">Quick pick</p>
-          <div class="theme-picker__presets" role="radiogroup" aria-label="Preset colors"></div>
+          <p class="theme-picker__section-title">${L('ThemePicker_QuickPickTitle')}</p>
+          <div class="theme-picker__presets" role="radiogroup" aria-label="${L('ThemePicker_PresetsLabel')}"></div>
         </div>
 
         <div>
-          <p class="theme-picker__section-title">Mode</p>
-          <div class="theme-picker__modes" role="radiogroup" aria-label="Color mode"></div>
+          <p class="theme-picker__section-title">${L('ThemePicker_ModeTitle')}</p>
+          <div class="theme-picker__modes" role="radiogroup" aria-label="${L('ThemePicker_ModesLabel')}"></div>
         </div>
 
         <div>
-          <p class="theme-picker__section-title">Preview</p>
+          <p class="theme-picker__section-title">${L('ThemePicker_PreviewTitle')}</p>
           <div class="theme-picker__preview">
             <div class="theme-picker__preview-row">
-              <button class="theme-picker__preview-btn">Save</button>
-              <button class="theme-picker__preview-btn theme-picker__preview-btn--outline">Cancel</button>
-              <span class="theme-picker__preview-badge">Badge</span>
+              <button class="theme-picker__preview-btn">${L('ThemePicker_SaveButton')}</button>
+              <button class="theme-picker__preview-btn theme-picker__preview-btn--outline">${L('ThemePicker_CancelButton')}</button>
+              <span class="theme-picker__preview-badge">${L('ThemePicker_BadgeText')}</span>
             </div>
             <div class="theme-picker__preview-row">
               <div class="theme-picker__preview-bar"><span></span></div>
-              <input class="theme-picker__preview-input" value="Focus me" />
+              <input class="theme-picker__preview-input" value="${L('ThemePicker_FocusText')}" />
             </div>
           </div>
         </div>
 
         <footer class="theme-picker__footer">
-          <button data-action="reset">Reset to default</button>
-          <button class="theme-picker__save" data-action="save">Save</button>
+          <button data-action="reset">${L('ThemePicker_ResetButton')}</button>
+          <button class="theme-picker__save" data-action="save">${L('ThemePicker_SaveButton')}</button>
         </footer>
       </div>`;
     document.body.appendChild(root);
@@ -134,12 +140,13 @@
     // Presets
     const presetsHost = root.querySelector('.theme-picker__presets');
     PRESETS.forEach(p => {
+      const label = L(p.nameKey);
       const btn = document.createElement('button');
       btn.className = 'theme-picker__preset';
-      btn.title = p.name;
+      btn.title = label;
       btn.style.background = p.color;
       btn.setAttribute('role', 'radio');
-      btn.setAttribute('aria-label', p.name);
+      btn.setAttribute('aria-label', label);
       btn.addEventListener('click', () => {
         state.color = p.color;
         syncInputs();
@@ -154,7 +161,7 @@
     MODES.forEach(m => {
       const btn = document.createElement('button');
       btn.className = 'theme-picker__mode';
-      btn.textContent = m.label;
+      btn.textContent = L(m.labelKey);
       btn.setAttribute('role', 'radio');
       btn.dataset.mode = m.key;
       btn.addEventListener('click', () => {
@@ -282,10 +289,10 @@
       });
       if (!res.ok) throw new Error('Save failed');
       if (window.ThemeEngine) window.ThemeEngine.apply(state.color, state.mode);
-      toast('Saved');
+      toast(L('ThemePicker_SavedToast'));
       initial = { ...state };
     } catch (err) {
-      toast('Could not save');
+      toast(L('ThemePicker_SaveErrorToast'));
       if (window.Logger) window.Logger.error('ThemePicker', 'Save failed', err);
     }
   }
@@ -301,10 +308,10 @@
       if (el) el.remove();
       document.documentElement.removeAttribute('data-theme-color');
       document.documentElement.removeAttribute('data-theme-mode');
-      toast('Reset');
+      toast(L('ThemePicker_ResetToast'));
       close();
     } catch (err) {
-      toast('Could not reset');
+      toast(L('ThemePicker_ResetErrorToast'));
       if (window.Logger) window.Logger.error('ThemePicker', 'Reset failed', err);
     }
   }

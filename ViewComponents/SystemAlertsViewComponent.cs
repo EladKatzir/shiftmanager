@@ -42,11 +42,19 @@ public class SystemAlertsViewComponent : ViewComponent
         }
 
         var cultureCacheKey = $"{CacheKey}_{System.Globalization.CultureInfo.CurrentUICulture.Name}";
-        var alerts = _cache.GetOrCreate(cultureCacheKey, entry =>
+        var alerts = (_cache.GetOrCreate(cultureCacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
             return CollectAlerts();
-        }) ?? new List<string>();
+        }) ?? new List<string>()).ToList();
+
+        var isOwner = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "Owner";
+        if (isOwner)
+        {
+            var hmacSecret = _configuration.GetValue<string>("Security:ApiKeyHmacSecret");
+            if (!_env.IsDevelopment() && (string.IsNullOrEmpty(hmacSecret) || hmacSecret == "ShiftManager-ApiKey-HMAC-v1-Default"))
+                alerts.Add(_localizer["SystemAlert_DefaultHmacSecret"]);
+        }
 
         return View(alerts);
     }
@@ -115,11 +123,6 @@ public class SystemAlertsViewComponent : ViewComponent
                 alerts.Add(_localizer["SystemAlert_NoDataProtectionKeys"]);
         }
         catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check data protection"); }
-
-        // Check HMAC secret (skip in Development — not relevant for local dev)
-        var hmacSecret = _configuration.GetValue<string>("Security:ApiKeyHmacSecret");
-        if (!_env.IsDevelopment() && (string.IsNullOrEmpty(hmacSecret) || hmacSecret == "ShiftManager-ApiKey-HMAC-v1-Default"))
-            alerts.Add(_localizer["SystemAlert_DefaultHmacSecret"]);
 
         // G-04: Check Hebrew font availability for PDF exports
         try

@@ -304,7 +304,8 @@
                         </div>
                     }
 
-                    <form method="post" asp-page-handler="BackfillExecute" onsubmit="return confirm('Apply missing AutoGrants to every user on the selected template(s)? This action is logged but cannot be selectively undone.');">
+                    @{ var backfillConfirmJs = System.Text.Json.JsonSerializer.Serialize(Localizer["Grants_BackfillConfirm"].Value); }
+                    <form method="post" asp-page-handler="BackfillExecute" onsubmit="return confirm(@backfillConfirmJs);">
                         <label style="font-size:0.875rem;"><loc key="Grants_BackfillTemplateFilter">Role Template (optional):</loc></label>
                         <select name="roleTemplateId" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;margin-right:0.5rem;">
                             <option value=""><loc key="Grants_BackfillAllTemplates">All templates</loc></option>
@@ -323,7 +324,7 @@
                         <span class="action-card-icon">&#x1F50D;</span>
                         <h3><loc key="Grants_SurplusAudit">Surplus Auto-Grant Audit</loc></h3>
                     </div>
-                    <p class="action-card-desc"><loc key="Grants_SurplusAuditDesc">Detect users who have <strong>auto-grants</strong> their RoleTemplate no longer declares. Typically caused by a grant being removed from the template seed after users had already been provisioned. <strong>Warn-only</strong> — this report never modifies data. Manual admin grants (IsAutoGrant=false) are intentionally excluded.</loc></p>
+                    <p class="action-card-desc"><loc key="Grants_SurplusAuditDesc">Detect users who have auto-grants their RoleTemplate no longer declares. Typically caused by a grant being removed from the template seed after users had already been provisioned. Warn-only — this report never modifies data. Manual admin grants (IsAutoGrant=false) are intentionally excluded.</loc></p>
 
                     <form method="post" asp-page-handler="SurplusPreview" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.5rem;">
                         <label style="font-size:0.875rem;"><loc key="Grants_BackfillTemplateFilter">Role Template (optional):</loc></label>
@@ -343,7 +344,7 @@
                             <div style="font-weight:600;margin-bottom:0.5rem;">
                                 <loc key="Grants_SurplusReportSummary">Surplus:</loc>
                                 @Model.SurplusPreview.UsersWithSurplus / @Model.SurplusPreview.UsersScanned
-                                <loc key="Grants_BackfillReportUsers">users with</loc>
+                                <loc key="Grants_SurplusReportUsersWith">users with</loc>
                                 @Model.SurplusPreview.TotalSurplusRows
                                 <loc key="Grants_SurplusReportRows">stale auto-grant rows</loc>
                             </div>
@@ -377,6 +378,17 @@
                             }
                         </div>
                     }
+                </div>
+
+                <div class="action-card">
+                    <div class="action-card-header">
+                        <span class="action-card-icon">&#x1F50D;</span>
+                        <h3><loc key="Hub_PermissionSimulator">Permission Simulator</loc></h3>
+                    </div>
+                    <p class="action-card-desc"><loc key="PermSim_Subtitle">Test any user or role against any grant at any scope</loc></p>
+                    <a href="/Owner/Hub/PermissionSimulator" class="btn btn-primary">
+                        <loc key="PermSim_Open">Open Simulator</loc>
+                    </a>
                 </div>
             </div>
         </div>
@@ -1378,7 +1390,7 @@ const hierarchyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.
             Companies = m.Companies.Select(c => new { c.Id, c.Name })
         })
     })
-})));
+}), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
 
 // State
 let selectedUserId = null;

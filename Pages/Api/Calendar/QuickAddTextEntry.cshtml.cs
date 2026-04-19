@@ -97,11 +97,21 @@ public class QuickAddTextEntryModel : PageModel
                     { StatusCode = 401 };
             }
 
-            // SECURITY: Verify caller has calendar editing permissions (shift, chore, or on-duty)
-            if (!await _grantService.HasCalendarEditPermissionAsync(currentUserId))
+            // SECURITY: caller must have note-writing permission (WriteOverviewNotes OR any calendar-edit grant)
+            if (!await _grantService.HasCalendarNotePermissionAsync(currentUserId))
             {
-                _logger.LogWarning("SECURITY: User {UserId} attempted to create text entry without calendar edit permissions", currentUserId);
-                return new JsonResult(new { success = false, message = "You do not have permission to create calendar entries" })
+                _logger.LogWarning("SECURITY: User {UserId} attempted to create text entry without note permission", currentUserId);
+                return new JsonResult(new { success = false, message = "You do not have permission to create text entries" })
+                    { StatusCode = 403 };
+            }
+
+            // SECURITY: verify the target user is within the caller's accessible scope
+            // (managers with assign grants: cross-company within molecule; note-only tier: own company only)
+            if (!await _grantService.CanReachUserForNoteAsync(currentUserId, data.UserId))
+            {
+                _logger.LogWarning("SECURITY: User {UserId} attempted to write note on out-of-scope user {TargetUserId}",
+                    currentUserId, data.UserId);
+                return new JsonResult(new { success = false, message = "Target user is outside your accessible scope" })
                     { StatusCode = 403 };
             }
 

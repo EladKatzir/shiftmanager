@@ -2096,23 +2096,10 @@ th { text-align: left; }
   gap: 1rem;
 }
 
-.action-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 0.75rem;
-  padding: 0.75rem;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
+/* Legacy .action-btn duplicate removed — the canonical rule above (line ~482) uses
+   var(--text) so icons remain visible in BOTH light and dark themes. A previous
+   override forced color: white, which made stroke="currentColor" SVGs invisible
+   on the light-mode near-white button background. */
 
 .theme-icon {
   font-size: 1.2rem;
@@ -7007,12 +6994,14 @@ code {
     border-color: var(--border);
   }
 
-  /* SVG Icons - use lighter colors for dark backgrounds (DR-THEME-01) */
+  /* SVG Icons - use lighter colors for dark backgrounds (DR-THEME-01)
+     Only override the arrow SVG color - do NOT redeclare background-position,
+     -repeat, or -size: the base .form-select rule and [dir="rtl"] .form-select
+     flip in rtl.css already handle those correctly. Redeclaring position here
+     at higher specificity (0,3,0) was overriding the RTL flip (0,2,0) and
+     placing the arrow over the Hebrew text in dark + RTL. */
   :root:not([data-theme="light"]) .form-select {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23aab' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 16px 12px;
   }
 
   :root:not([data-theme="light"]) .btn-close {

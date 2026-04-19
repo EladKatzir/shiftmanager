@@ -1,9 +1,11 @@
 @page
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
+@using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @model ShiftManager.Pages.Admin.Organization.AreaPalette.IndexModel
 @{
+    Layout = "_Layout";
     ViewData["Title"] = Localizer["AreaPalette_Title"].Value;
 
     // Defaults from tokens.css (must stay in sync with wwwroot/css/tokens.css).
@@ -24,38 +26,160 @@
     var p = Model.CurrentPalette;
 }
 
-<div class="container" style="max-width:1400px;margin:0 auto;padding:1.5rem;">
-    <h1><loc key="AreaPalette_Title">Area Calendar Palette</loc></h1>
-    <p style="color:var(--text-muted);"><loc key="AreaPalette_Subtitle">Customize shift / on-duty / chore / vacation colors for this area. Leave a slot empty to inherit the global default.</loc></p>
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["AreaPalette_Title"], IsActive = true }
+})
 
-    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
-    {
-        <div class="alert alert-success" style="padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:var(--success,#22c55e);">@Model.SuccessMessage</div>
-    }
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-error" style="padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--error,#ef4444);">@Model.ErrorMessage</div>
-    }
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
 
-    <form method="get" style="margin-bottom:1rem;display:flex;gap:0.5rem;align-items:center;">
-        <label for="area-select" style="font-weight:600;"><loc key="AreaPalette_AreaLabel">Area:</loc></label>
-        <select id="area-select" name="areaId" onchange="this.form.submit()" style="padding:0.5rem;border:1px solid var(--border);border-radius:6px;min-width:240px;">
-            <option value=""><loc key="AreaPalette_PickArea">-- pick an area --</loc></option>
+        .section-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem;
+        }
+        .section-header {
+            font-size: 1.125rem; font-weight: 600; color: var(--text);
+            margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
+        }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .form-select {
+            width: 100%; max-width: 320px; padding: 0.625rem 0.875rem; font-size: 0.9375rem;
+            color: var(--text); background: var(--surface-soft); border: 1px solid var(--border);
+            border-radius: 8px; transition: border-color 0.15s ease;
+        }
+        .form-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); color: var(--primary-contrast) !important; border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+        .btn-ghost:hover { background: var(--surface-soft); }
+
+        .message-banner {
+            padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500;
+            margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .message-banner--success { background: var(--success-soft); color: var(--success); border: 1px solid var(--success); }
+        .message-banner--error   { background: var(--danger-soft);  color: var(--danger);  border: 1px solid var(--danger); }
+
+        /* Palette editor */
+        .palette-layout {
+            display: grid;
+            grid-template-columns: minmax(320px, 1fr) minmax(320px, 1.4fr);
+            gap: 2rem;
+            align-items: start;
+        }
+        @@media (max-width: 900px) {
+            .palette-layout { grid-template-columns: 1fr; }
+        }
+
+        .palette-slot {
+            display: grid;
+            grid-template-columns: auto 60px 110px auto auto;
+            gap: 0.5rem;
+            align-items: center;
+            padding: 0.625rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: background-color 0.15s ease;
+        }
+        .palette-slot--custom { background: var(--surface-soft); }
+        .palette-slot__label { font-weight: 600; font-size: 0.875rem; min-width: 130px; color: var(--text); }
+        .palette-slot__color { width: 60px; height: 36px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; padding: 0; }
+        .palette-slot__hex {
+            font-family: ui-monospace, monospace; font-size: 0.875rem;
+            padding: 0.4rem 0.5rem; border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text); background: var(--surface);
+        }
+        .palette-slot__reset {
+            background: none; border: none; cursor: pointer; color: var(--text-muted);
+            font-size: 1rem; padding: 0.25rem; border-radius: 4px; transition: color 0.15s ease;
+        }
+        .palette-slot__reset:hover { color: var(--text); }
+
+        .contrast-ok  { background: rgba(34,197,94,0.15);  color: var(--success, #22c55e); font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
+        .contrast-bad { background: rgba(239,68,68,0.15);  color: var(--danger,  #ef4444); font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
+
+        /* Live preview */
+        .palette-preview-panel { position: sticky; top: 1rem; }
+        .preview-toolbar { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem; }
+        .preview-toolbar h2 { margin: 0; flex: 1; font-size: 1.125rem; font-weight: 600; }
+        .preview-toolbar label { font-size: 0.875rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem; }
+        .palette-preview {
+            border: 1px solid var(--border); border-radius: 10px; padding: 1rem;
+            background: var(--surface); color: var(--text); min-height: 420px;
+        }
+        .palette-preview[data-theme="dark"] { background: #0f141c; color: #e8ecef; }
+        .preview-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; }
+
+        .palette-preview__grid { display: grid; grid-template-columns: 120px repeat(7,1fr); gap: 4px; font-size: 0.8125rem; }
+        .palette-preview__header { font-weight: 600; padding: 6px; text-align: center; background: rgba(0,0,0,0.04); border-radius: 4px; }
+        .palette-preview[data-theme="dark"] .palette-preview__header { background: rgba(255,255,255,0.08); }
+        .palette-preview__rail { font-weight: 600; padding: 6px 8px; display: flex; align-items: center; }
+        .palette-preview__cell { padding: 4px; min-height: 36px; border: 1px dashed transparent; border-radius: 4px; }
+        .palette-preview__badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; line-height: 1.2; }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">
+        <icon name="palette" /> <loc key="AreaPalette_Title" />
+    </h1>
+    <p class="page-subtitle"><loc key="AreaPalette_Subtitle" /></p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="message-banner message-banner--success">
+        <icon name="check-circle" /> @Model.SuccessMessage
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="message-banner message-banner--error">
+        <icon name="alert-circle" /> @Model.ErrorMessage
+    </div>
+}
+
+<!-- Area selector -->
+<div class="section-card">
+    <h2 class="section-header"><loc key="AreaPalette_AreaLabel" /></h2>
+    <form method="get" class="form-group">
+        <label class="form-label" for="area-select"><loc key="AreaPalette_PickArea" /></label>
+        <select id="area-select" name="areaId" class="form-select" onchange="this.form.submit()">
+            <option value="">— <loc key="AreaPalette_PickArea" /> —</option>
             @foreach (var a in Model.Areas)
             {
-                <option value="@a.Id" selected="@(Model.SelectedAreaId == a.Id)">@a.DisplayName (id @a.Id)</option>
+                <option value="@a.Id" selected="@(Model.SelectedAreaId == a.Id)">@a.DisplayName</option>
             }
         </select>
     </form>
+</div>
 
-    @if (Model.SelectedAreaId.HasValue)
-    {
-        <form method="post" asp-page-handler="Save" id="palette-form" style="display:grid;grid-template-columns:minmax(320px, 1fr) minmax(320px, 1.4fr);gap:2rem;align-items:start;">
-            <input type="hidden" name="AreaId" value="@Model.SelectedAreaId" />
+@if (Model.SelectedAreaId.HasValue)
+{
+    <form method="post" asp-page-handler="Save" id="palette-form">
+        <input type="hidden" name="AreaId" value="@Model.SelectedAreaId" />
 
-            @* ----------------------- EDITOR (left) ----------------------- *@
-            <div class="palette-editor" style="display:flex;flex-direction:column;gap:0.75rem;">
-                <h2 style="margin:0 0 0.5rem;"><loc key="AreaPalette_ColorsHeader">Colors</loc></h2>
+        <div class="palette-layout">
+
+            @* ---- EDITOR (left) ---- *@
+            <div class="section-card">
+                <h2 class="section-header"><loc key="AreaPalette_ColorsHeader" /></h2>
 
                 @foreach (var slot in new[]
                 {
@@ -75,257 +199,186 @@
                     var val = ValueOrDefault(cur, defaults[slotKey]);
                     var isCustom = !string.IsNullOrWhiteSpace(cur);
                     var resetTitle = Localizer["AreaPalette_ResetSlotTitle"].Value;
-                    <div class="palette-slot" data-slot="@slotKey" style="display:grid;grid-template-columns:auto 60px 110px auto auto;gap:0.5rem;align-items:center;padding:0.5rem;border:1px solid var(--border);border-radius:8px;@(isCustom ? "background:var(--surface-alt);" : "")">
-                        <label style="font-weight:600;min-width:130px;">@label</label>
+                    <div class="palette-slot @(isCustom ? "palette-slot--custom" : "")" data-slot="@slotKey">
+                        <span class="palette-slot__label">@label</span>
                         <input type="color"
                                name="@slotKey"
                                value="@val"
+                               class="palette-slot__color"
                                data-slot-picker
                                data-default="@defaults[slotKey]"
-                               style="width:60px;height:36px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:0;"
                                oninput="document.querySelector('[data-slot-hex=&quot;@slotKey&quot;]').value=this.value;window.updatePalettePreview&&window.updatePalettePreview()" />
                         <input type="text"
                                data-slot-hex="@slotKey"
                                value="@val"
+                               class="palette-slot__hex"
                                pattern="^#[0-9A-Fa-f]{6}$"
                                maxlength="7"
-                               style="font-family:ui-monospace,monospace;padding:0.4rem;border:1px solid var(--border);border-radius:6px;"
                                oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value)){this.form.querySelector('input[type=color][name=&quot;@slotKey&quot;]').value=this.value;window.updatePalettePreview&&window.updatePalettePreview();}" />
-                        <span data-contrast-indicator="@slotKey" style="font-size:0.75rem;padding:2px 8px;border-radius:10px;"></span>
-                        <button type="button" title="@resetTitle" data-reset="@slotKey" onclick="resetSlot('@slotKey','@defaults[slotKey]')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">↺</button>
+                        <span data-contrast-indicator="@slotKey"></span>
+                        <button type="button" class="palette-slot__reset" title="@resetTitle" data-reset="@slotKey" onclick="resetSlot('@slotKey','@defaults[slotKey]')">↺</button>
                     </div>
                 }
 
-                <div style="display:flex;gap:0.5rem;margin-top:1rem;">
-                    <button type="submit" class="btn btn-primary" style="padding:0.6rem 1.2rem;"><loc key="AreaPalette_SaveButton">Save Palette</loc></button>
-                    <button type="submit" asp-page-handler="Reset" class="btn btn-outline" onclick="return confirm('@Localizer["AreaPalette_ClearAllConfirm"].Value');" style="padding:0.6rem 1.2rem;"><loc key="AreaPalette_ClearAllButton">Clear All</loc></button>
-                    <a asp-page="/Admin/Organization/Index" class="btn btn-outline" style="padding:0.6rem 1.2rem;"><loc key="AreaPalette_CancelButton">Cancel</loc></a>
+                <div style="display:flex;gap:0.5rem;margin-top:1.25rem;flex-wrap:wrap;">
+                    <button type="submit" class="btn btn-primary">
+                        <icon name="save" /> <loc key="AreaPalette_SaveButton" />
+                    </button>
+                    <button type="submit" asp-page-handler="Reset" class="btn btn-ghost"
+                            onclick="return confirm('@Localizer["AreaPalette_ClearAllConfirm"].Value');">
+                        <icon name="rotate-ccw" /> <loc key="AreaPalette_ClearAllButton" />
+                    </button>
+                    <a href="/Admin/Organization" class="btn btn-ghost">
+                        <icon name="arrow-left" /> <loc key="AreaPalette_CancelButton" />
+                    </a>
                 </div>
             </div>
 
-            @* ----------------------- LIVE PREVIEW (right) ----------------------- *@
-            <div class="palette-preview-panel" style="position:sticky;top:1rem;">
-                <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">
-                    <h2 style="margin:0;flex:1;"><loc key="AreaPalette_LivePreviewHeader">Live preview</loc></h2>
-                    <label style="font-size:0.875rem;"><input type="checkbox" id="preview-dark" onchange="window.updatePalettePreview&&window.updatePalettePreview()" /> <loc key="AreaPalette_DarkToggle">Dark</loc></label>
-                    <label style="font-size:0.875rem;"><input type="checkbox" id="preview-rtl" onchange="window.updatePalettePreview&&window.updatePalettePreview()" /> <loc key="AreaPalette_RtlToggle">RTL</loc></label>
+            @* ---- LIVE PREVIEW (right) ---- *@
+            <div class="palette-preview-panel">
+                <div class="section-card">
+                    <div class="preview-toolbar">
+                        <h2><loc key="AreaPalette_LivePreviewHeader" /></h2>
+                        <label><input type="checkbox" id="preview-dark" onchange="window.updatePalettePreview&&window.updatePalettePreview()" /> <loc key="AreaPalette_DarkToggle" /></label>
+                        <label><input type="checkbox" id="preview-rtl"  onchange="window.updatePalettePreview&&window.updatePalettePreview()" /> <loc key="AreaPalette_RtlToggle" /></label>
+                    </div>
+                    <div id="palette-preview" class="palette-preview" data-theme="light" dir="ltr"></div>
+                    <p class="preview-note"><loc key="AreaPalette_PreviewNote" /></p>
                 </div>
-                <div id="palette-preview" class="palette-preview" data-theme="light" dir="ltr">
-                    <!-- Mini-calendar renders here; JS paints via inline CSS vars. -->
-                </div>
-                <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;"><loc key="AreaPalette_PreviewNote">Preview uses a scoped CSS-variable container; changes don't affect this page until you Save.</loc></p>
             </div>
-        </form>
+        </div>
+    </form>
 
-        <style>
-            .palette-preview {
-                border:1px solid var(--border);
-                border-radius:10px;
-                padding:1rem;
-                background:var(--surface, #fff);
-                color:var(--text, #1a1f2b);
-                min-height:420px;
-            }
-            .palette-preview[data-theme="dark"] {
-                background:#0f141c;
-                color:#e8ecef;
-            }
-            .palette-preview__grid {
-                display:grid;
-                grid-template-columns:120px repeat(7, 1fr);
-                gap:4px;
-                font-size:0.8125rem;
-            }
-            .palette-preview__header {
-                font-weight:600;
-                padding:6px;
-                text-align:center;
-                background:rgba(0,0,0,0.04);
-                border-radius:4px;
-            }
-            .palette-preview[data-theme="dark"] .palette-preview__header {
-                background:rgba(255,255,255,0.08);
-            }
-            .palette-preview__rail {
-                font-weight:600;
-                padding:6px 8px;
-                display:flex;
-                align-items:center;
-            }
-            .palette-preview__cell {
-                padding:4px;
-                min-height:36px;
-                border:1px dashed transparent;
-                border-radius:4px;
-            }
-            .palette-preview__badge {
-                display:inline-block;
-                padding:4px 8px;
-                border-radius:6px;
-                font-size:0.75rem;
-                font-weight:600;
-                line-height:1.2;
-            }
-            .contrast-ok  { background:rgba(34,197,94,0.15);color:var(--success,#22c55e); }
-            .contrast-bad { background:rgba(239,68,68,0.15);color:var(--error,#ef4444); }
-        </style>
-
-        <script>
-            // Localized labels injected from server (2026-04-16 fix: previously hardcoded English).
-            const PALETTE_I18N = {
-                badges: {
-                    ShiftMorning:   '@Localizer["AreaPalette_PreviewBadge_Morning"].Value',
-                    ShiftAfternoon: '@Localizer["AreaPalette_PreviewBadge_Afternoon"].Value',
-                    ShiftNight:     '@Localizer["AreaPalette_PreviewBadge_Night"].Value',
-                    ShiftHome:      '@Localizer["AreaPalette_PreviewBadge_Home"].Value',
-                    OnDuty:         '@Localizer["AreaPalette_PreviewBadge_Hakam"].Value',
-                    Chore:          '@Localizer["AreaPalette_PreviewBadge_Chore"].Value',
-                    Vacation:       '@Localizer["AreaPalette_PreviewBadge_Vacation"].Value',
-                },
-                contrastPass: '@Localizer["AreaPalette_ContrastPass"].Value',
-                contrastFail: '@Localizer["AreaPalette_ContrastFail"].Value',
-                days: [
-                    '@Localizer["AreaPalette_DayLabel_Sun"].Value',
-                    '@Localizer["AreaPalette_DayLabel_Mon"].Value',
-                    '@Localizer["AreaPalette_DayLabel_Tue"].Value',
-                    '@Localizer["AreaPalette_DayLabel_Wed"].Value',
-                    '@Localizer["AreaPalette_DayLabel_Thu"].Value',
-                    '@Localizer["AreaPalette_DayLabel_Fri"].Value',
-                    '@Localizer["AreaPalette_DayLabel_Sat"].Value',
-                ],
+    <script>
+        const PALETTE_I18N = {
+            badges: {
+                ShiftMorning:   '@Localizer["AreaPalette_PreviewBadge_Morning"].Value',
+                ShiftAfternoon: '@Localizer["AreaPalette_PreviewBadge_Afternoon"].Value',
+                ShiftNight:     '@Localizer["AreaPalette_PreviewBadge_Night"].Value',
+                ShiftHome:      '@Localizer["AreaPalette_PreviewBadge_Home"].Value',
+                OnDuty:         '@Localizer["AreaPalette_PreviewBadge_Hakam"].Value',
+                Chore:          '@Localizer["AreaPalette_PreviewBadge_Chore"].Value',
+                Vacation:       '@Localizer["AreaPalette_PreviewBadge_Vacation"].Value',
+            },
+            contrastPass: '@Localizer["AreaPalette_ContrastPass"].Value',
+            contrastFail: '@Localizer["AreaPalette_ContrastFail"].Value',
+            days: [
+                '@Localizer["AreaPalette_DayLabel_Sun"].Value',
+                '@Localizer["AreaPalette_DayLabel_Mon"].Value',
+                '@Localizer["AreaPalette_DayLabel_Tue"].Value',
+                '@Localizer["AreaPalette_DayLabel_Wed"].Value',
+                '@Localizer["AreaPalette_DayLabel_Thu"].Value',
+                '@Localizer["AreaPalette_DayLabel_Fri"].Value',
+                '@Localizer["AreaPalette_DayLabel_Sat"].Value',
+            ],
+        };
+        (function(){
+            const slots = ['ShiftMorning','ShiftAfternoon','ShiftNight','ShiftHome','OnDuty','Chore','Vacation'];
+            const tokenMap = {
+                ShiftMorning:   '--shift-morning',
+                ShiftAfternoon: '--shift-afternoon',
+                ShiftNight:     '--shift-night',
+                ShiftHome:      '--shift-home',
+                OnDuty:         '--onduty',
+                Chore:          '--chore',
+                Vacation:       '--vacation',
             };
-            (function(){
-                const slots = ['ShiftMorning','ShiftAfternoon','ShiftNight','ShiftHome','OnDuty','Chore','Vacation'];
-                const tokenMap = {
-                    ShiftMorning:   '--shift-morning',
-                    ShiftAfternoon: '--shift-afternoon',
-                    ShiftNight:     '--shift-night',
-                    ShiftHome:      '--shift-home',
-                    OnDuty:         '--onduty',
-                    Chore:          '--chore',
-                    Vacation:       '--vacation',
+
+            function hexToRgb(hex){
+                const m = /^#([0-9A-Fa-f]{6})$/.exec((hex||'').trim());
+                if(!m) return null;
+                const n = parseInt(m[1], 16);
+                return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+            }
+            function relLum(rgb){
+                const s = [rgb.r, rgb.g, rgb.b].map(v => {
+                    const x = v/255;
+                    return x <= 0.03928 ? x/12.92 : Math.pow((x+0.055)/1.055, 2.4);
+                });
+                return 0.2126*s[0] + 0.7152*s[1] + 0.0722*s[2];
+            }
+            function contrast(bgHex, fgHex){
+                const bg = hexToRgb(bgHex), fg = hexToRgb(fgHex);
+                if(!bg||!fg) return 0;
+                const L1 = Math.max(relLum(bg), relLum(fg));
+                const L2 = Math.min(relLum(bg), relLum(fg));
+                return (L1 + 0.05) / (L2 + 0.05);
+            }
+            function weekDays(){
+                const today = new Date();
+                const day = today.getDay();
+                const sunday = new Date(today); sunday.setDate(today.getDate() - day);
+                const out = [];
+                for(let i=0;i<7;i++){
+                    const d = new Date(sunday); d.setDate(sunday.getDate()+i);
+                    out.push(d);
+                }
+                return out;
+            }
+
+            window.updatePalettePreview = function(){
+                const preview = document.getElementById('palette-preview');
+                if(!preview) return;
+                const darkOn = document.getElementById('preview-dark').checked;
+                const rtlOn  = document.getElementById('preview-rtl').checked;
+                preview.setAttribute('data-theme', darkOn ? 'dark' : 'light');
+                preview.setAttribute('dir', rtlOn ? 'rtl' : 'ltr');
+
+                const values = {};
+                slots.forEach(s => {
+                    const v = document.querySelector(`input[type=color][name="${s}"]`)?.value;
+                    if(v){ values[s] = v; preview.style.setProperty(tokenMap[s], v); }
+                });
+                if(values.OnDuty) preview.style.setProperty('--shift-hakam', values.OnDuty);
+
+                const fgFor = {
+                    ShiftMorning:'#1A1F2B', ShiftAfternoon:'#1A1F2B', ShiftNight:'#FFFFFF',
+                    ShiftHome:'#1A1F2B', OnDuty:'#1A1F2B', Chore:'#1A1F2B', Vacation:'#1A1F2B',
                 };
+                slots.forEach(s => {
+                    const badge = document.querySelector(`[data-contrast-indicator="${s}"]`);
+                    if(!badge) return;
+                    const ratio = contrast(values[s] || '#000', fgFor[s]);
+                    const pass = ratio >= 4.5;
+                    badge.textContent = `${pass ? PALETTE_I18N.contrastPass : PALETTE_I18N.contrastFail} ${ratio.toFixed(1)}:1`;
+                    badge.className = pass ? 'contrast-ok' : 'contrast-bad';
+                });
 
-                function hexToRgb(hex){
-                    const m = /^#([0-9A-Fa-f]{6})$/.exec((hex||'').trim());
-                    if(!m) return null;
-                    const n = parseInt(m[1], 16);
-                    return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
-                }
-                function relLum(rgb){
-                    const s = [rgb.r, rgb.g, rgb.b].map(v => {
-                        const x = v/255;
-                        return x <= 0.03928 ? x/12.92 : Math.pow((x+0.055)/1.055, 2.4);
-                    });
-                    return 0.2126*s[0] + 0.7152*s[1] + 0.0722*s[2];
-                }
-                function contrast(bgHex, fgHex){
-                    const bg = hexToRgb(bgHex), fg = hexToRgb(fgHex);
-                    if(!bg||!fg) return 0;
-                    const L1 = Math.max(relLum(bg), relLum(fg));
-                    const L2 = Math.min(relLum(bg), relLum(fg));
-                    return (L1 + 0.05) / (L2 + 0.05);
-                }
-
-                function weekDays(){
-                    const today = new Date();
-                    const day = today.getDay(); // 0 = Sun
-                    const sunday = new Date(today); sunday.setDate(today.getDate() - day);
-                    const out = [];
+                const days = weekDays();
+                const rails = [
+                    { key:'ShiftMorning',   bgVar:'--shift-morning',   fg:'#1A1F2B' },
+                    { key:'ShiftAfternoon', bgVar:'--shift-afternoon', fg:'#1A1F2B' },
+                    { key:'ShiftNight',     bgVar:'--shift-night',     fg:'#FFFFFF' },
+                    { key:'ShiftHome',      bgVar:'--shift-home',      fg:'#1A1F2B' },
+                    { key:'OnDuty',         bgVar:'--onduty',          fg:'#1A1F2B' },
+                    { key:'Chore',          bgVar:'--chore',           fg:'#1A1F2B' },
+                    { key:'Vacation',       bgVar:'--vacation',        fg:'#1A1F2B' },
+                ];
+                let html = '<div class="palette-preview__grid"><div></div>';
+                for(let i=0;i<7;i++) html += `<div class="palette-preview__header">${PALETTE_I18N.days[i]} ${days[i].getDate()}</div>`;
+                for(const r of rails){
+                    const label = PALETTE_I18N.badges[r.key] || r.key;
+                    html += `<div class="palette-preview__rail">${label}</div>`;
                     for(let i=0;i<7;i++){
-                        const d = new Date(sunday); d.setDate(sunday.getDate()+i);
-                        out.push(d);
+                        const show = (i + r.key.length) % 3 !== 0;
+                        html += '<div class="palette-preview__cell">';
+                        if(show) html += `<span class="palette-preview__badge" style="background:var(${r.bgVar});color:${r.fg};">${label}</span>`;
+                        html += '</div>';
                     }
-                    return out;
                 }
+                html += '</div>';
+                preview.innerHTML = html;
+            };
 
-                window.updatePalettePreview = function(){
-                    const preview = document.getElementById('palette-preview');
-                    if(!preview) return;
-
-                    const darkOn = document.getElementById('preview-dark').checked;
-                    const rtlOn  = document.getElementById('preview-rtl').checked;
-                    preview.setAttribute('data-theme', darkOn ? 'dark' : 'light');
-                    preview.setAttribute('dir', rtlOn ? 'rtl' : 'ltr');
-
-                    // Read current values from color pickers + apply as CSS vars on preview container.
-                    const values = {};
-                    slots.forEach(s => {
-                        const v = document.querySelector(`input[type=color][name="${s}"]`)?.value;
-                        if(v){
-                            values[s] = v;
-                            preview.style.setProperty(tokenMap[s], v);
-                        }
-                    });
-                    // shift-hakam mirrors onduty.
-                    if(values.OnDuty) preview.style.setProperty('--shift-hakam', values.OnDuty);
-
-                    // Contrast indicators — use the actual --{slot}-text token from tokens.css.
-                    // Synced 2026-04-16: most palette slots use dark text (#1A1F2B) for AA pass.
-                    const fgFor = {
-                        ShiftMorning:   '#1A1F2B',
-                        ShiftAfternoon: '#1A1F2B',
-                        ShiftNight:     '#FFFFFF',
-                        ShiftHome:      '#1A1F2B',
-                        OnDuty:         '#1A1F2B',
-                        Chore:          '#1A1F2B',
-                        Vacation:       '#1A1F2B',
-                    };
-                    slots.forEach(s => {
-                        const badge = document.querySelector(`[data-contrast-indicator="${s}"]`);
-                        if(!badge) return;
-                        const ratio = contrast(values[s] || '#000', fgFor[s]);
-                        const pass = ratio >= 4.5;
-                        const label = pass ? PALETTE_I18N.contrastPass : PALETTE_I18N.contrastFail;
-                        badge.textContent = `${label} ${ratio.toFixed(1)}:1`;
-                        badge.className = pass ? 'contrast-ok' : 'contrast-bad';
-                    });
-
-                    // Render mini-calendar — labels come from server-injected i18n bundle.
-                    const days = weekDays();
-                    const dayLabels = PALETTE_I18N.days;
-                    const rails = [
-                        { key:'ShiftMorning',   bgVar:'--shift-morning',   fg:'#1A1F2B' },
-                        { key:'ShiftAfternoon', bgVar:'--shift-afternoon', fg:'#1A1F2B' },
-                        { key:'ShiftNight',     bgVar:'--shift-night',     fg:'#FFFFFF' },
-                        { key:'ShiftHome',      bgVar:'--shift-home',      fg:'#1A1F2B' },
-                        { key:'OnDuty',         bgVar:'--onduty',          fg:'#1A1F2B' },
-                        { key:'Chore',          bgVar:'--chore',           fg:'#1A1F2B' },
-                        { key:'Vacation',       bgVar:'--vacation',        fg:'#1A1F2B' },
-                    ];
-                    let html = '<div class="palette-preview__grid">';
-                    html += '<div></div>';
-                    for(let i=0;i<7;i++){
-                        html += `<div class="palette-preview__header">${dayLabels[i]} ${days[i].getDate()}</div>`;
-                    }
-                    for(const r of rails){
-                        const label = PALETTE_I18N.badges[r.key] || r.key;
-                        html += `<div class="palette-preview__rail">${label}</div>`;
-                        for(let i=0;i<7;i++){
-                            // Show badge on ~3 of 7 cells so preview has white gaps too.
-                            const show = (i + r.key.length) % 3 !== 0;
-                            html += '<div class="palette-preview__cell">';
-                            if(show){
-                                html += `<span class="palette-preview__badge" style="background:var(${r.bgVar});color:${r.fg};">${label}</span>`;
-                            }
-                            html += '</div>';
-                        }
-                    }
-                    html += '</div>';
-                    preview.innerHTML = html;
-                };
-
-                window.resetSlot = function(slot, defaultHex){
-                    const picker = document.querySelector(`input[type=color][name="${slot}"]`);
-                    const hex = document.querySelector(`[data-slot-hex="${slot}"]`);
-                    if(picker) picker.value = defaultHex;
-                    if(hex) hex.value = defaultHex;
-                    window.updatePalettePreview();
-                };
-
-                // Initial paint.
+            window.resetSlot = function(slot, defaultHex){
+                const picker = document.querySelector(`input[type=color][name="${slot}"]`);
+                const hex = document.querySelector(`[data-slot-hex="${slot}"]`);
+                if(picker) picker.value = defaultHex;
+                if(hex) hex.value = defaultHex;
                 window.updatePalettePreview();
-            })();
-        </script>
-    }
-</div>
+            };
+
+            window.updatePalettePreview();
+        })();
+    </script>
+}

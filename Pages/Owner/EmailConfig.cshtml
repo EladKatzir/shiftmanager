@@ -114,7 +114,7 @@
                     </div>
                     <div class="form-group">
                         <label asp-for="GlobalEmailApiUrl"><loc key="Owner_EmailConfig_ApiUrl" /></label>
-                        <input asp-for="GlobalEmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" />
+                        <input asp-for="GlobalEmailApiUrl" class="form-control" loc-placeholder="Placeholder_EmailApiUrl" />
                     </div>
                     <div class="form-group">
                         <label asp-for="GlobalEmailApiKey"><loc key="Owner_EmailConfig_ApiKey" /></label>
@@ -126,7 +126,7 @@
                     </div>
                     <div class="form-group">
                         <label asp-for="GlobalEmailFromAddress"><loc key="Owner_EmailConfig_FromAddress" /></label>
-                        <input asp-for="GlobalEmailFromAddress" class="form-control" placeholder="noreply@example.com" />
+                        <input asp-for="GlobalEmailFromAddress" class="form-control" loc-placeholder="Placeholder_EmailFromAddress" />
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <loc key="Owner_EmailConfig_SaveGlobal">Save Global Configuration</loc>
@@ -235,7 +235,7 @@
                                     <icon name="help-circle" />
                                 </button>
                             </div>
-                            <input asp-for="EmailApiUrl" class="form-control" placeholder="https://api.yourcompany.com/v1/mail/send" id="email-url-input" onblur="validateUrl(this)" />
+                            <input asp-for="EmailApiUrl" class="form-control" loc-placeholder="Placeholder_EmailApiUrl" id="email-url-input" onblur="validateUrl(this)" />
                             <small class="form-text"><loc key="Owner_EmailConfig_ApiUrl_Help" /></small>
 
                             <div class="context-panel" id="email-url-help" style="display: none;">
@@ -309,7 +309,7 @@
                                     <icon name="help-circle" />
                                 </button>
                             </div>
-                            <input asp-for="EmailFromAddress" type="email" class="form-control" placeholder="noreply@example.com" id="email-from-input" onblur="validateEmail(this)" />
+                            <input asp-for="EmailFromAddress" type="email" class="form-control" loc-placeholder="Placeholder_EmailFromAddress" id="email-from-input" onblur="validateEmail(this)" />
                             <small class="form-text"><loc key="Owner_EmailConfig_FromAddress_Help" /></small>
 
                             <div class="context-panel" id="email-from-help" style="display: none;">
@@ -350,7 +350,7 @@
                 <form method="post" asp-page-handler="SendTest">
                     <div class="form-group">
                         <label for="testEmail"><loc key="Owner_EmailConfig_RecipientEmail" /></label>
-                        <input type="email" name="testEmail" class="form-control" placeholder="test@example.com" required />
+                        <input type="email" name="testEmail" class="form-control" loc-placeholder="Placeholder_TestEmail" required />
                     </div>
                     <button type="submit" class="btn btn-secondary"><icon name="mail" /> <loc key="Owner_EmailConfig_SendTestEmail" /></button>
                 </form>

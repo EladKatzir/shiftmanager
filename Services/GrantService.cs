@@ -48,6 +48,57 @@ public class GrantService : IGrantService
             || await HasGrantAsync(userId, "EditOnCallCalendar");
     }
 
+    public async Task<bool> HasCalendarNotePermissionAsync(int userId)
+    {
+        return await HasGrantAsync(userId, "WriteOverviewNotes")
+            || await HasCalendarEditPermissionAsync(userId);
+    }
+
+    public async Task<bool> CanReachUserForNoteAsync(int callerId, int targetUserId)
+    {
+        // Self-target is always allowed — every user can note their own row.
+        if (callerId == targetUserId) return true;
+
+        var targetUser = await _db.Users.IgnoreQueryFilters()
+            .Where(u => u.Id == targetUserId && u.IsActive)
+            .Select(u => new { u.CompanyId })
+            .FirstOrDefaultAsync();
+        if (targetUser == null) return false;
+
+        // Non-self writes require an actual assign grant — Employees/Trainees (note-only tier)
+        // can only write on their own row. EditOnCallCalendar (grant 131) is explicitly NOT
+        // counted here: it's a scoped on-call editing grant, not a general note-write elevator.
+        if (!await HasAnyAssignGrantAsync(callerId)) return false;
+
+        // Assigner/Lead/BRDirector/Director/MoleculeAdmin/AreaAdmin/Owner tier:
+        // accessible-company set from their actual assign grants decides cross-company reach.
+        var assignGrantKeys = new[]
+        {
+            "AssignAlhutShifts", "AssignTextShifts", "AssignBRShifts", "AssignTechShifts",
+            "AssignChores", "ManageOnDuty"
+        };
+        var accessibleCompanies = new HashSet<int>();
+        foreach (var key in assignGrantKeys)
+        {
+            var companies = await GetAccessibleCompanyIdsForGrantAsync(callerId, key);
+            foreach (var c in companies) accessibleCompanies.Add(c);
+        }
+        return accessibleCompanies.Contains(targetUser.CompanyId);
+    }
+
+    // Private helper: true if user has any actual assignment grant (not just EditOnCallCalendar).
+    // Used as the manager-tier gate for note-writing scope.
+    private async Task<bool> HasAnyAssignGrantAsync(int userId)
+    {
+        return await HasGrantAsync(userId, "AdminAccess")
+            || await HasGrantAsync(userId, "AssignAlhutShifts")
+            || await HasGrantAsync(userId, "AssignTextShifts")
+            || await HasGrantAsync(userId, "AssignBRShifts")
+            || await HasGrantAsync(userId, "AssignTechShifts")
+            || await HasGrantAsync(userId, "AssignChores")
+            || await HasGrantAsync(userId, "ManageOnDuty");
+    }
+
     public async Task<bool> HasGrantAsync(int userId, string grantKey, GrantScope scope)
     {
         return await HasGrantWithScopeAsync(userId, grantKey,

@@ -139,7 +139,7 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label class="form-label">@Localizer["Name"] <span class="form-label-required">*</span></label>
-                    <input class="form-input" asp-for="ChoreTypeName" placeholder="chore-type-key" required maxlength="100" />
+                    <input class="form-input" asp-for="ChoreTypeName" loc-placeholder="Placeholder_ChoreTypeKey" required maxlength="100" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">@Localizer["DisplayName"] <span class="form-label-required">*</span></label>
@@ -147,11 +147,11 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">@Localizer["NameEnglish"]</label>
-                    <input class="form-input" asp-for="ChoreTypeNameEn" placeholder="e.g. Cleaning" maxlength="100" />
+                    <input class="form-input" asp-for="ChoreTypeNameEn" loc-placeholder="Placeholder_ChoreTypeNameEn" maxlength="100" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">@Localizer["NameHebrew"]</label>
-                    <input class="form-input" asp-for="ChoreTypeNameHe" placeholder="e.g. ניקיון" maxlength="100" />
+                    <input class="form-input" asp-for="ChoreTypeNameHe" loc-placeholder="Placeholder_ChoreTypeNameHe" maxlength="100" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">@Localizer["Color"]</label>

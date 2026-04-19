@@ -17,6 +17,21 @@ public interface IGrantService
     /// </summary>
     Task<bool> HasCalendarEditPermissionAsync(int userId);
 
+    /// <summary>
+    /// Gate for free-text QuickEntry creation/deletion on calendar cells. Broader than
+    /// HasCalendarEditPermissionAsync: also accepts WriteOverviewNotes (grant 110) which every
+    /// role has. Assignment actions still use HasCalendarEditPermissionAsync.
+    /// </summary>
+    Task<bool> HasCalendarNotePermissionAsync(int userId);
+
+    /// <summary>
+    /// Verifies note-writing access to the target user's company.
+    /// Manager tier (any assign grant) → accessible-company set from assign grants (may be cross-company within molecule).
+    /// Note-only tier (WriteOverviewNotes alone) → caller's own company only.
+    /// Self-target (callerId == targetUserId) always allowed.
+    /// </summary>
+    Task<bool> CanReachUserForNoteAsync(int callerId, int targetUserId);
+
     // Grant queries
     Task<List<Grant>> GetUserGrantsAsync(int userId);
     Task<List<Grant>> GetUserGrantsByTypeAsync(int userId, int grantTypeId);

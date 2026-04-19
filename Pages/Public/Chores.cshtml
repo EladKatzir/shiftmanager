@@ -521,6 +521,10 @@
 // Busy users data per date (serialized from server)
 const busyUsersByDate = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BusyUsersByDate));
 
+// Localized strings (injected at render time — anonymous Hebrew visitors hit this page)
+const L_BUSY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Public_Busy"].Value));
+const L_INVALID_CHORE_ID = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Public_InvalidChoreId"].Value));
+
 const canEdit = @canEdit.ToString().ToLower();
 let currentDetailsChoreId = null;
 
@@ -587,7 +591,7 @@ function confirmDelete(choreId, choreTitle) {
     const choreIdNum = parseInt(choreId);
     if (isNaN(choreIdNum) || choreIdNum <= 0) {
         console.error('Invalid choreId:', choreId);
-        alert('Invalid chore ID: ' + choreId);
+        alert(L_INVALID_CHORE_ID.replace('{0}', choreId));
         return;
     }
 
@@ -659,8 +663,12 @@ function updateBusyIndicators() {
     options.forEach(opt => {
         opt.classList.remove('busy-vacation', 'busy-shift', 'busy-chore');
         const userId = opt.getAttribute('data-id');
-        const userName = opt.getAttribute('data-name');
-        opt.textContent = opt.textContent.replace(/ \(Busy:.*?\)/, ''); // Remove previous busy text
+        // Cache the original un-annotated label once — the localized "(Busy: ...)" suffix
+        // varies per language, so we can't rely on a regex to strip it reliably.
+        if (!opt.dataset.originalText) {
+            opt.dataset.originalText = opt.textContent.trim();
+        }
+        opt.textContent = opt.dataset.originalText;
 
         // Check if this user is busy on the selected date
         if (busyUsersByDate[selectedDate] && busyUsersByDate[selectedDate][userId]) {
@@ -673,8 +681,7 @@ function updateBusyIndicators() {
 
             // Update text to show busy status
             if (busyStatus.DisplayText) {
-                const originalText = opt.textContent.trim();
-                opt.textContent = `${originalText} (Busy: ${busyStatus.DisplayText})`;
+                opt.textContent = `${opt.dataset.originalText} (${L_BUSY}: ${busyStatus.DisplayText})`;
             }
         }
     });

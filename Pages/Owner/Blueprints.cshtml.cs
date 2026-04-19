@@ -246,8 +246,9 @@ public class BlueprintsModel : PageModel
             if (shiftType == null)
                 return new JsonResult(new { success = false, error = "Shift type not found" });
 
-            if (!await HasEditGrantForShiftType(userId, shiftType))
-                return new JsonResult(new { success = false, error = "Insufficient permissions" }) { StatusCode = 403 };
+            var (allowed, errorMessage) = await CheckEditGrantForShiftTypeAsync(userId, shiftType);
+            if (!allowed)
+                return new JsonResult(new { success = false, error = errorMessage }) { StatusCode = 403 };
 
             // Update names directly on ShiftType
             shiftType.NameEn = request.NameEn?.Trim();
@@ -284,8 +285,9 @@ public class BlueprintsModel : PageModel
             if (shiftType == null)
                 return new JsonResult(new { success = false, error = "Shift type not found" });
 
-            if (!await HasEditGrantForShiftType(userId, shiftType))
-                return new JsonResult(new { success = false, error = "Insufficient permissions" }) { StatusCode = 403 };
+            var (allowed, errorMessage) = await CheckEditGrantForShiftTypeAsync(userId, shiftType);
+            if (!allowed)
+                return new JsonResult(new { success = false, error = errorMessage }) { StatusCode = 403 };
 
             if (!TimeOnly.TryParse(request.StartTime, out var start) || !TimeOnly.TryParse(request.EndTime, out var end))
                 return new JsonResult(new { success = false, error = "Invalid time format" });
@@ -331,8 +333,9 @@ public class BlueprintsModel : PageModel
             if (shiftType == null)
                 return RedirectToPage(new { error = "Shift type not found" });
 
-            if (!await HasEditGrantForShiftType(userId, shiftType))
-                return RedirectToPage(new { error = "Insufficient permissions" });
+            var (allowed, errorMessage) = await CheckEditGrantForShiftTypeAsync(userId, shiftType);
+            if (!allowed)
+                return RedirectToPage(new { error = errorMessage });
 
             var companyId = _tenantResolver.GetCurrentTenantId();
             var localizedName = await _localizationService.ResolveShiftTypeNameAsync(shiftType, companyId, CultureInfo.CurrentUICulture.Name);
@@ -377,9 +380,20 @@ public class BlueprintsModel : PageModel
     private int GetCurrentUserId()
         => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
-    private async Task<bool> HasEditGrantForShiftType(int userId, ShiftType shiftType)
+    /// <summary>
+     /// Authorization check for editing a ShiftType. Returns (allowed, errorMessage).
+    /// Two-step logic:
+    ///   1. Scope check — user must have an EditShiftTypes grant that covers the shift's scope
+    ///      (Area / Molecule / Company). Fails => SCOPE error.
+    ///   2. JobType check — for shifts with a specific JobTypeId, the user must hold at least one
+    ///      EditShiftTypes grant whose JobTypeId is null (cross-JobType, e.g. קב"ר) OR equals the
+    ///      shift's JobTypeId. Global shifts (ShiftType.JobTypeId == null) bypass this step so any
+    ///      role with the scope grant can edit them. Fails => JOBTYPE error carrying the shift's
+    ///      JobType name for a "This isn't a {JobType} shift" message.
+    /// </summary>
+    private async Task<(bool Allowed, string? ErrorMessage)> CheckEditGrantForShiftTypeAsync(int userId, ShiftType shiftType)
     {
-        return shiftType.Scope switch
+        bool hasScopeGrant = shiftType.Scope switch
         {
             ShiftScope.Area => shiftType.AreaId.HasValue &&
                 await _grantService.HasGrantWithScopeAsync(userId, "EditShiftTypes", areaId: shiftType.AreaId),
@@ -389,7 +403,43 @@ public class BlueprintsModel : PageModel
                 companyId: shiftType.CompanyId ?? _tenantResolver.GetCurrentTenantId()),
             _ => false
         };
+
+        if (!hasScopeGrant)
+            return (false, InsufficientPermissionsMessage());
+
+        // Global shifts (no JobType binding) — any holder of the scope grant may edit
+        if (!shiftType.JobTypeId.HasValue)
+            return (true, null);
+
+        // JobType-specific shift — look up the user's EditShiftTypes grants and verify at least one
+        // covers this JobType (either cross-JobType via JobTypeId=null, or an exact match).
+        // Note: HasGrantWithScopeAsync's Molecule/Area/Project branches do not enforce grant.JobTypeId,
+        // so this explicit check is where useOwnJobType actually gates behavior for Lead/Director.
+        var grantType = await _grantService.GetGrantTypeByKeyAsync("EditShiftTypes");
+        if (grantType == null)
+            return (false, InsufficientPermissionsMessage());
+
+        var userGrants = await _grantService.GetUserGrantsByTypeAsync(userId, grantType.Id);
+        bool hasJobTypeAccess = userGrants.Any(g => g.CanOwn &&
+            (!g.JobTypeId.HasValue || g.JobTypeId == shiftType.JobTypeId));
+        if (hasJobTypeAccess)
+            return (true, null);
+
+        var jobType = await _db.JobTypes.FirstOrDefaultAsync(jt => jt.Id == shiftType.JobTypeId);
+        var name = !string.IsNullOrWhiteSpace(jobType?.DisplayName) ? jobType!.DisplayName
+                 : !string.IsNullOrWhiteSpace(jobType?.Name) ? jobType!.Name
+                 : (IsHebrewUi() ? "זה" : "this");
+        var msg = IsHebrewUi()
+            ? $"זו אינה משמרת {name} — אין לך הרשאה לערוך משמרות מסוג אחר"
+            : $"This isn't a {name} shift — you don't have permission to edit shifts of a different JobType";
+        return (false, msg);
     }
+
+    private static string InsufficientPermissionsMessage()
+        => IsHebrewUi() ? "אין לך הרשאה לערוך את סוג המשמרת הזה" : "Insufficient permissions";
+
+    private static bool IsHebrewUi()
+        => CultureInfo.CurrentUICulture.Name.StartsWith("he", StringComparison.OrdinalIgnoreCase);
 
     private void InvalidateCachesForShiftType(ShiftType shiftType)
     {

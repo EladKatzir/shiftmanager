@@ -497,8 +497,17 @@
             const nameEn = document.getElementById('editNameEn').value;
             const nameHe = document.getElementById('editNameHe').value;
 
+            // Helper: prefer the shared acknowledgment modal; fall back to alert if not loaded.
+            function showError(msg) {
+                if (window.FeedbackModal && typeof window.FeedbackModal.show === 'function') {
+                    window.FeedbackModal.show('error', msg);
+                } else {
+                    alert(msg);
+                }
+            }
+
             if (!nameEn || !nameHe) {
-                alert('@Localizer["Error_BothNamesRequired"].Value.Trim()');
+                showError('@Localizer["Error_BothNamesRequired"].Value.Trim()');
                 return;
             }
 
@@ -512,21 +521,23 @@
                     body: JSON.stringify({ shiftTypeId: shiftId, nameEn, nameHe })
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Request failed: ${response.status}`);
-                }
+                // Try to read the server's JSON body even on non-2xx so the specific reason
+                // (e.g. "This isn't a BR shift") reaches the user instead of a generic fallback.
+                let result = null;
+                try { result = await response.json(); } catch (e) { /* non-JSON body */ }
 
-                const result = await response.json();
-
-                if (result.success) {
+                if (response.ok && result && result.success) {
                     closeEditNameModal();
                     location.reload(); // Refresh to show updated names
-                } else {
-                    alert('@Localizer["Error_Prefix"].Value.Trim()' + (result.error || '@Localizer["Error_FailedToUpdate"].Value.Trim()'));
+                    return;
                 }
+
+                const serverError = result && result.error ? result.error : null;
+                const fallback = '@Localizer["Error_FailedToUpdate"].Value.Trim()';
+                showError(serverError || fallback);
             } catch (err) {
                 console.error('Failed to save shift name', err);
-                alert('@Localizer["Error_FailedToSaveShiftName"].Value.Trim()');
+                showError('@Localizer["Error_FailedToSaveShiftName"].Value.Trim()');
             }
         }
 

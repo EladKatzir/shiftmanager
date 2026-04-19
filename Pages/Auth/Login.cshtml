@@ -40,11 +40,11 @@
             <!-- Auth Controls (Language + Theme Toggle) -->
             <div class="auth-controls">
                 <button class="auth-control-btn" id="authLanguageToggle" aria-label="@Localizer["ToggleLanguage"]" title="@Localizer["ToggleLanguage"]">
-                    <span class="auth-control-icon">🌐</span>
+                    <span class="auth-control-icon"><icon name="globe" /></span>
                     <span class="auth-control-text">@(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "he" ? "En" : "עב")</span>
                 </button>
                 <button class="auth-control-btn" id="authThemeToggle" aria-label="@Localizer["ToggleTheme"]" title="@Localizer["ToggleTheme"]">
-                    <span class="auth-control-icon">🌓</span>
+                    <span class="auth-control-icon"><icon name="moon" /></span>
                 </button>
             </div>
             <div class="auth-form-container">
@@ -199,6 +199,9 @@
                     const expires = new Date();
                     expires.setFullYear(expires.getFullYear() + 1);
                     document.cookie = `.AspNetCore.Culture=c=${newLang}|uic=${newLang}; expires=${expires.toUTCString()}; path=/`;
+                    // Dual-write marker: records deliberate intent. Mirror of the write in
+                    // Pages/Shared/Components/LanguageToggle/Default.cshtml — keep both in sync.
+                    document.cookie = `.culture_explicit=v2; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
                     window.location.reload();
                 });
             }

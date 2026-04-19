@@ -1717,7 +1717,7 @@
                                             @if (originalProgramId.HasValue)
                                             {
                                                 <button class="reset-program-btn" onclick="resetToProgram(@instanceId, event)" loc-title="Title_ResetToProgram">
-                                                    🔄 Reset
+                                                    <icon name="refresh-cw" size="sm" /> Reset
                                                 </button>
                                             }
                                         }
@@ -1811,7 +1811,7 @@
         <span><loc key="RemoveTrainee" /></span>
     </div>
     <div class="action-menu-item" role="menuitem" onclick="showChangeUserMenu(event)">
-        <span>🔄</span>
+        <span><icon name="refresh-cw" size="sm" /></span>
         <span><loc key="ChangePrimaryUser" /></span>
     </div>
     <div class="action-menu-item danger" role="menuitem" onclick="removeUser(event)">
@@ -1875,7 +1875,7 @@
             </div>
 
             <div class="fill-option-item" data-mode="program" onclick="selectFillOption('program')" style="display: none;">
-                <div class="fill-option-title">🔄 <loc key="Calendar_ApplyProgramDefaults" /></div>
+                <div class="fill-option-title"><icon name="refresh-cw" size="sm" /> <loc key="Calendar_ApplyProgramDefaults" /></div>
                 <div class="fill-option-desc"><loc key="Calendar_ApplyProgramDefaultsDesc" /></div>
             </div>
         </div>

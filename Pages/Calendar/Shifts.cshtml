@@ -136,9 +136,10 @@
                 </a>
             </div>
 
-            @if (Model.CanEdit)
+            @if (Model.CanWriteNote)
             {
                 <button type="button" id="quickEntryToggle" class="btn btn-ghost quick-entry-toggle"
+                        data-can-assign="@Model.CanEdit.ToString().ToLowerInvariant()"
                         onclick="window.CalendarQuickEntry && window.CalendarQuickEntry.toggle()"
                         title="@Localizer["QuickEntry_Toggle"]">
                     <span class="btn-icon"><icon name="zap" /></span>

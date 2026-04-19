@@ -2468,12 +2468,13 @@ public class UsersModel : LocalizedPageModel
 
         return roleTemplateKey switch
         {
-            // Company-scoped templates
-            "BRDirector" => GrantScope.Company(companyId),
-            "Employee" => GrantScope.Company(companyId),
+            // Company-scoped templates — include MoleculeId so ETM grants resolve correctly
+            // (DetermineEffectiveScope pulls roleScope.MoleculeId for ExpandToMolecule mode).
+            "BRDirector" => new GrantScope(CompanyId: companyId, MoleculeId: company.MoleculeId),
+            "Employee" => new GrantScope(CompanyId: companyId, MoleculeId: company.MoleculeId),
 
-            // Lead — CompanyJobType scope (need CompanyId + JobTypeId)
-            "Lead" => new GrantScope(CompanyId: companyId, JobTypeId: jobTypeId),
+            // Lead — CompanyJobType scope (need CompanyId + JobTypeId + MoleculeId for ETM-mode grants)
+            "Lead" => new GrantScope(CompanyId: companyId, MoleculeId: company.MoleculeId, JobTypeId: jobTypeId),
 
             // Molecule-scoped templates
             "MoleculeAdmin" or "Assigner" => company.MoleculeId.HasValue

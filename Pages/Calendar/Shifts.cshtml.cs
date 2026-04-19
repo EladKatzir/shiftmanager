@@ -88,6 +88,10 @@ public class ShiftsModel : PageModel
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
     public bool CanEdit { get; set; }
+    // Controls visibility of the quick-entry toggle button. True if user can assign (CanEdit) OR has
+    // WriteOverviewNotes grant (company-scoped, every role has it). Lets non-assigning roles type
+    // free-text notes on calendar cells. Slash commands still require CanEdit via data-can-assign.
+    public bool CanWriteNote { get; set; }
     public List<Molecule> AvailableMolecules { get; set; } = new();
     public List<JobType> AvailableJobTypes { get; set; } = new();
     public Molecule? SelectedMolecule { get; set; }
@@ -191,6 +195,10 @@ public class ShiftsModel : PageModel
                   await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTextShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId) ||
                   await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignBRShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId) ||
                   await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTechShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId);
+
+        // Note-writing is broader than assignment: any user with WriteOverviewNotes (every role has it)
+        // can type free-text on calendar cells. Check is unscoped — grant 110 is company-wide by default.
+        CanWriteNote = CanEdit || await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
 
         // Build calendar data based on mode
         // JobTypeId may be null for Tech molecules — service handles nullable jobTypeId

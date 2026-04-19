@@ -50,7 +50,9 @@
     var modal = getOrCreateModal();
     var backdrop = document.getElementById(MODAL_ID + '-backdrop');
 
-    modal.querySelector('#' + MODAL_ID + '-title').textContent = title || 'Confirm';
+    // Use pre-baked AppLocalizer keys (Cancel, Confirm are in _LocalizationScript.cshtml)
+    var L = window.AppLocalizer || {};
+    modal.querySelector('#' + MODAL_ID + '-title').textContent = title || L.Confirm || 'Confirm';
     modal.querySelector('#' + MODAL_ID + '-body').textContent = message || '';
 
     // C-1 fix: select close and cancel buttons independently
@@ -58,9 +60,9 @@
     var cancelBtn = modal.querySelector('[data-action="cancel"]');
     var confirmBtn = modal.querySelector('[data-action="confirm"]');
 
-    // Localize cancel text based on page language; close button keeps its × character
-    cancelBtn.textContent = document.documentElement.lang === 'he' ? '\u05d1\u05d9\u05d8\u05d5\u05dc' : 'Cancel';
-    confirmBtn.textContent = action || 'Confirm';
+    // AppLocalizer already resolves to the active culture; drops the fragile lang sniff.
+    cancelBtn.textContent = L.Cancel || 'Cancel';
+    confirmBtn.textContent = action || L.Confirm || 'Confirm';
 
     // M-2 fix: support danger/warning/primary severity levels
     var btnClass = 'btn-primary';

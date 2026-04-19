@@ -1459,7 +1459,7 @@ public class MailService : IMailService
     public async Task<bool> SendTraineeAddedEmailAsync(string recipientEmail, string employeeName,
         string traineeName, string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime)
     {
-        var subject = $"Trainee Added: {shiftTypeName} on {_localization.FormatMediumDate(shiftDate)}";
+        var subject = string.Format(_localizer["Email_TraineeAdded_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
 
         var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -1477,26 +1477,26 @@ public class MailService : IMailService
 <body>
     <div class='container'>
         <div class='header'>
-            <h2>👤 Trainee Added to Your Shift</h2>
+            <h2>{_localizer["Email_TraineeAdded_Title"]}</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{WebUtility.HtmlEncode(employeeName)}</strong>,</p>
-            <p>A trainee has been added to your shift assignment:</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{_localizer["Email_TraineeAdded_Body"]}</p>
 
             <div class='highlight'>
-                <strong>{WebUtility.HtmlEncode(traineeName)}</strong> will be joining you as a trainee
+                {string.Format(_localizer["Email_TraineeAdded_Highlight"], $"<strong>{WebUtility.HtmlEncode(traineeName)}</strong>")}
             </div>
 
             <div class='details'>
-                <p><strong>Shift Type:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
-                <p><strong>Date:</strong> {_localization.FormatMediumDate(shiftDate)}</p>
-                <p><strong>Time:</strong> {_localization.FormatTime(startTime)} - {_localization.FormatTime(endTime)}</p>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatMediumDate(shiftDate)}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {_localization.FormatTime(startTime)} - {_localization.FormatTime(endTime)}</p>
             </div>
 
-            <p>Please help guide and mentor your trainee during this shift.</p>
+            <p>{_localizer["Email_TraineeAdded_Guidance"]}</p>
         </div>
         <div class='footer'>
-            <p>This is an automated notification from ShiftManager.</p>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
         </div>
     </div>
 </body>
@@ -1508,7 +1508,7 @@ public class MailService : IMailService
     public async Task<bool> SendSlotRemovedEmailAsync(string recipientEmail, string employeeName,
         string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime, string reason)
     {
-        var subject = $"Shift Removed: {shiftTypeName} on {_localization.FormatMediumDate(shiftDate)}";
+        var subject = string.Format(_localizer["Email_SlotRemoved_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
 
         var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -1526,26 +1526,26 @@ public class MailService : IMailService
 <body>
     <div class='container'>
         <div class='header'>
-            <h2>⚠️ Shift Assignment Removed</h2>
+            <h2>{_localizer["Email_SlotRemoved_Title"]}</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{WebUtility.HtmlEncode(employeeName)}</strong>,</p>
-            <p>Your shift assignment has been removed from the schedule:</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{_localizer["Email_SlotRemoved_Body"]}</p>
 
             <div class='details'>
-                <p><strong>Shift Type:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
-                <p><strong>Date:</strong> {_localization.FormatMediumDate(shiftDate)}</p>
-                <p><strong>Time:</strong> {_localization.FormatTime(startTime)} - {_localization.FormatTime(endTime)}</p>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatMediumDate(shiftDate)}</p>
+                <p><strong>{_localizer["Time"]}:</strong> {_localization.FormatTime(startTime)} - {_localization.FormatTime(endTime)}</p>
             </div>
 
             <div class='alert-box'>
-                <p><strong>Reason:</strong> {WebUtility.HtmlEncode(reason)}</p>
+                <p><strong>{_localizer["Email_SlotRemoved_Reason"]}:</strong> {WebUtility.HtmlEncode(reason)}</p>
             </div>
 
-            <p>If you have any questions about this change, please contact your manager.</p>
+            <p>{_localizer["Email_SlotRemoved_ContactManager"]}</p>
         </div>
         <div class='footer'>
-            <p>This is an automated notification from ShiftManager.</p>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
         </div>
     </div>
 </body>
@@ -1557,7 +1557,7 @@ public class MailService : IMailService
     public async Task<bool> SendShiftModifiedEmailAsync(string recipientEmail, string employeeName,
         string shiftTypeName, DateOnly shiftDate, string changeDescription)
     {
-        var subject = $"Shift Modified: {shiftTypeName} on {_localization.FormatMediumDate(shiftDate)}";
+        var subject = string.Format(_localizer["Email_ShiftModified_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
 
         var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -1575,25 +1575,25 @@ public class MailService : IMailService
 <body>
     <div class='container'>
         <div class='header'>
-            <h2>🔄 Your Shift Has Been Modified</h2>
+            <h2>{_localizer["Email_ShiftModified_Title"]}</h2>
         </div>
         <div class='content'>
-            <p>Hello <strong>{WebUtility.HtmlEncode(employeeName)}</strong>,</p>
-            <p>Your shift assignment has been updated:</p>
+            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{_localizer["Email_ShiftModified_Body"]}</p>
 
             <div class='details'>
-                <p><strong>Shift Type:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
-                <p><strong>Date:</strong> {_localization.FormatMediumDate(shiftDate)}</p>
+                <p><strong>{_localizer["Email_ShiftType"]}:</strong> {WebUtility.HtmlEncode(shiftTypeName)}</p>
+                <p><strong>{_localizer["Date"]}:</strong> {_localization.FormatMediumDate(shiftDate)}</p>
             </div>
 
             <div class='change-box'>
-                <p><strong>Changes:</strong> {WebUtility.HtmlEncode(changeDescription)}</p>
+                <p><strong>{_localizer["Email_ShiftModified_Changes"]}:</strong> {WebUtility.HtmlEncode(changeDescription)}</p>
             </div>
 
-            <p>Please review the updated shift details and contact your manager if you have any questions.</p>
+            <p>{_localizer["Email_ShiftModified_ReviewPrompt"]}</p>
         </div>
         <div class='footer'>
-            <p>This is an automated notification from ShiftManager.</p>
+            <p>{_localizer["Email_AutomatedMessage"]}</p>
         </div>
     </div>
 </body>

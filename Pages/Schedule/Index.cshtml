@@ -4,6 +4,7 @@
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
 @{
+    Layout = "_Layout";
     ViewData["Title"] = Localizer["Schedule"];
 }
 
@@ -52,11 +53,11 @@
                 @* View Mode Toggle (Calendar/Table) *@
                 <div class="view-mode-toggle">
                     <button class="view-mode-btn active" data-mode="calendar" id="btn-calendar">
-                        <span>📅</span>
+                        <span><icon name="calendar" size="sm" /></span>
                         <span><loc key="Calendar" /></span>
                     </button>
                     <button class="view-mode-btn" data-mode="table" id="btn-table">
-                        <span>📊</span>
+                        <span><icon name="bar-chart-2" size="sm" /></span>
                         <span><loc key="Table" /></span>
                     </button>
                 </div>
@@ -80,14 +81,14 @@
                 @if (!Model.IsAdmin)
                 {
                     <a href="/My/Requests" class="btn btn-primary">
-                        <span>📝</span>
+                        <span><icon name="pencil" size="sm" /></span>
                         <span><loc key="RequestTimeOff" /></span>
                     </a>
                 }
                 else
                 {
                     <button class="btn btn-primary" id="btn-assign-shifts">
-                        <span>➕</span>
+                        <span><icon name="plus" size="sm" /></span>
                         <span><loc key="AssignShifts" /></span>
                     </button>
                 }

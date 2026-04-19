@@ -84,7 +84,7 @@ public class NotificationCenterModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                return BadRequest("Invalid user claim");
+                return BadRequest(_localizer["Error_InvalidUserClaim"].Value);
             }
             var notification = await _db.UserNotifications
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
@@ -117,7 +117,7 @@ public class NotificationCenterModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                return BadRequest("Invalid user claim");
+                return BadRequest(_localizer["Error_InvalidUserClaim"].Value);
             }
             var unreadNotifications = await _db.UserNotifications
                 .Where(n => n.UserId == userId && !n.IsRead)
@@ -155,7 +155,7 @@ public class NotificationCenterModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                return BadRequest("Invalid user claim");
+                return BadRequest(_localizer["Error_InvalidUserClaim"].Value);
             }
             var notification = await _db.UserNotifications
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);

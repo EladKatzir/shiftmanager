@@ -144,7 +144,7 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
                                     aria-selected="@(option.Id == Model.CurrentContext?.Id ? "true" : "false")">
                                 <span class="context-switcher__option-icon" aria-hidden="true"><icon name="building-2" /></span>
                                 <span class="context-switcher__option-name">@option.DisplayName</span>
-                                <span class="context-switcher__option-check" aria-hidden="true">✓</span>
+                                <span class="context-switcher__option-check" aria-hidden="true"><icon name="check" size="sm" /></span>
                             </button>
                         }
                     </div>

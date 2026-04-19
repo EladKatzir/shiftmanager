@@ -29,6 +29,15 @@ public class TelemetryModel : PageModel
     private const int MaxTrackedIps = 1000;
     private static DateTime _lastCleanup = DateTime.UtcNow;
 
+    // Telemetry is intentionally tolerant: it must accept any client that can serialize JSON,
+    // including clients whose Content-Type header was stripped by a proxy, mobile carrier,
+    // browser extension, or legacy fetch wrapper. Dropping observability data because a
+    // header is missing would defeat the feature's purpose (capturing bad-state-of-the-world).
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     public TelemetryModel(IClientTelemetryService telemetryService, ILogger<TelemetryModel> logger)
     {
         _telemetryService = telemetryService;
@@ -39,13 +48,14 @@ public class TelemetryModel : PageModel
     /// POST /Api/Telemetry?handler=Event
     /// Logs a single analytics event.
     /// </summary>
-    public async Task<IActionResult> OnPostEventAsync([FromBody] AnalyticsEventDto dto)
+    public async Task<IActionResult> OnPostEventAsync()
     {
         if (!IsRateLimitAllowed())
         {
             return new JsonResult(new { error = "Rate limit exceeded" }) { StatusCode = 429 };
         }
 
+        var dto = await TryReadJsonBodyAsync<AnalyticsEventDto>();
         if (dto == null || string.IsNullOrEmpty(dto.EventType))
         {
             return BadRequest(new { error = "Event type is required" });
@@ -77,13 +87,14 @@ public class TelemetryModel : PageModel
     /// POST /Api/Telemetry?handler=EventBatch
     /// Logs a batch of analytics events.
     /// </summary>
-    public async Task<IActionResult> OnPostEventBatchAsync([FromBody] List<AnalyticsEventDto> dtos)
+    public async Task<IActionResult> OnPostEventBatchAsync()
     {
         if (!IsRateLimitAllowed())
         {
             return new JsonResult(new { error = "Rate limit exceeded" }) { StatusCode = 429 };
         }
 
+        var dtos = await TryReadJsonBodyAsync<List<AnalyticsEventDto>>();
         if (dtos == null || !dtos.Any())
         {
             return BadRequest(new { error = "Events array is required" });
@@ -118,13 +129,14 @@ public class TelemetryModel : PageModel
     /// POST /Api/Telemetry?handler=Error
     /// Logs a single client-side error.
     /// </summary>
-    public async Task<IActionResult> OnPostErrorAsync([FromBody] ClientErrorDto dto)
+    public async Task<IActionResult> OnPostErrorAsync()
     {
         if (!IsRateLimitAllowed())
         {
             return new JsonResult(new { error = "Rate limit exceeded" }) { StatusCode = 429 };
         }
 
+        var dto = await TryReadJsonBodyAsync<ClientErrorDto>();
         if (dto == null || string.IsNullOrEmpty(dto.Message))
         {
             return BadRequest(new { error = "Error message is required" });
@@ -161,13 +173,14 @@ public class TelemetryModel : PageModel
     /// POST /Api/Telemetry?handler=ErrorBatch
     /// Logs a batch of client-side errors.
     /// </summary>
-    public async Task<IActionResult> OnPostErrorBatchAsync([FromBody] List<ClientErrorDto> dtos)
+    public async Task<IActionResult> OnPostErrorBatchAsync()
     {
         if (!IsRateLimitAllowed())
         {
             return new JsonResult(new { error = "Rate limit exceeded" }) { StatusCode = 429 };
         }
 
+        var dtos = await TryReadJsonBodyAsync<List<ClientErrorDto>>();
         if (dtos == null || !dtos.Any())
         {
             return BadRequest(new { error = "Errors array is required" });
@@ -207,13 +220,14 @@ public class TelemetryModel : PageModel
     /// POST /Api/Telemetry?handler=Performance
     /// Logs a single performance metric.
     /// </summary>
-    public async Task<IActionResult> OnPostPerformanceAsync([FromBody] PerformanceMetricDto dto)
+    public async Task<IActionResult> OnPostPerformanceAsync()
     {
         if (!IsRateLimitAllowed())
         {
             return new JsonResult(new { error = "Rate limit exceeded" }) { StatusCode = 429 };
         }
 
+        var dto = await TryReadJsonBodyAsync<PerformanceMetricDto>();
         if (dto == null || string.IsNullOrEmpty(dto.MetricName))
         {
             return BadRequest(new { error = "Metric name is required" });
@@ -248,13 +262,14 @@ public class TelemetryModel : PageModel
     /// POST /Api/Telemetry?handler=PerformanceBatch
     /// Logs a batch of performance metrics.
     /// </summary>
-    public async Task<IActionResult> OnPostPerformanceBatchAsync([FromBody] List<PerformanceMetricDto> dtos)
+    public async Task<IActionResult> OnPostPerformanceBatchAsync()
     {
         if (!IsRateLimitAllowed())
         {
             return new JsonResult(new { error = "Rate limit exceeded" }) { StatusCode = 429 };
         }
 
+        var dtos = await TryReadJsonBodyAsync<List<PerformanceMetricDto>>();
         if (dtos == null || !dtos.Any())
         {
             return BadRequest(new { error = "Metrics array is required" });
@@ -344,6 +359,26 @@ public class TelemetryModel : PageModel
 
             queue.Enqueue(now);
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Reads and deserializes the request body as JSON, regardless of the Content-Type header.
+    /// Returns null on empty body, malformed JSON, or any read error — callers treat null
+    /// the same as they previously treated a null [FromBody] parameter.
+    /// </summary>
+    private async Task<T?> TryReadJsonBodyAsync<T>() where T : class
+    {
+        try
+        {
+            using var reader = new StreamReader(Request.Body);
+            var json = await reader.ReadToEndAsync();
+            if (string.IsNullOrWhiteSpace(json)) return null;
+            return JsonSerializer.Deserialize<T>(json, _jsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
         }
     }
 

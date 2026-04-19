@@ -1,0 +1,886 @@
+@page
+@model ShiftManager.Pages.Owner.Hub.PermissionSimulatorModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["PermSim_Title"].Value;
+}
+
+@Html.AntiForgeryToken()
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["OwnerHub_Title"], Url = "/Owner/Hub" },
+    new BreadcrumbItem { Label = Localizer["PermSim_Title"], IsActive = true }
+})
+
+<div class="permsim-container">
+    <div class="page-header">
+        <h1>
+            <span class="page-icon">&#x1F50D;</span>
+            <loc key="PermSim_Title">Permission Simulator</loc>
+        </h1>
+        <p class="page-subtitle"><loc key="PermSim_Subtitle">Test any user or role against any grant at any scope</loc></p>
+    </div>
+
+    @* ── WHO ── *@
+    <div class="section-card permsim-who">
+        <div class="section-header"><span><loc key="PermSim_Who">Who</loc></span></div>
+
+        <div class="mode-switch" role="tablist" aria-label="Simulation mode">
+            <button role="tab" aria-selected="true"  data-mode="user" class="mode-btn active" onclick="switchMode('user')">
+                <loc key="PermSim_RealUser">Real User</loc>
+            </button>
+            <button role="tab" aria-selected="false" data-mode="role" class="mode-btn" onclick="switchMode('role')">
+                <loc key="PermSim_HypotheticalRole">Hypothetical Role</loc>
+            </button>
+        </div>
+
+        @* Real User panel *@
+        <div id="panel-user" class="mode-panel">
+            <div class="typeahead-wrap">
+                <input type="text" id="userSearchInput" class="form-input"
+                       loc-placeholder="PermSim_SearchUser"
+                       placeholder="@Localizer["PermSim_SearchUser"]"
+                       autocomplete="off"
+                       oninput="onUserSearchInput(this.value)" />
+                <div id="userDropdown" class="typeahead-dropdown" hidden></div>
+            </div>
+            <div id="userCard" class="user-card" hidden>
+                <div class="user-card-info">
+                    <strong id="ucName"></strong>
+                    <span id="ucEmail" class="user-card-email"></span>
+                    <span id="ucCompany" class="user-card-company"></span>
+                </div>
+                <div class="hierarchy-trail" id="hierarchyTrail" aria-label="User hierarchy"></div>
+            </div>
+        </div>
+
+        @* Role panel *@
+        <div id="panel-role" class="mode-panel" hidden>
+            <div class="permsim-role-grid">
+                <div class="form-group">
+                    <label class="form-label"><loc key="PermSim_SelectRole">Role Template</loc></label>
+                    <select id="roleSelect" class="form-select">
+                        <option value="">— <loc key="PermSim_SelectRole">select role</loc> —</option>
+                        @foreach (var rt in Model.RoleTemplates)
+                        {
+                            <option value="@rt.Id">@rt.Key (@rt.NameKey)</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="PermSim_RoleScopeArea">Role Area</loc></label>
+                    <select id="roleScopeArea" class="form-select">
+                        <option value="">— <loc key="PermSim_Any">any</loc> —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="PermSim_RoleScopeMolecule">Role Molecule</loc></label>
+                    <select id="roleScopeMolecule" class="form-select" disabled>
+                        <option value="">— <loc key="PermSim_Any">any</loc> —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="PermSim_RoleScopeCompany">Role Company</loc></label>
+                    <select id="roleScopeCompany" class="form-select" disabled>
+                        <option value="">— <loc key="PermSim_Any">any</loc> —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="PermSim_RoleScopeJobType">Role JobType</loc></label>
+                    <select id="roleScopeJobType" class="form-select" disabled>
+                        <option value="">— <loc key="PermSim_Any">any</loc> —</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── WORKBENCH: WHAT+WHERE | RESULT ── *@
+    <div class="permsim-workbench">
+
+        @* Left: WHAT + WHERE *@
+        <div class="permsim-left">
+
+            @* WHAT — Grant combobox *@
+            <div class="section-card">
+                <div class="section-header"><span><loc key="PermSim_WhatGrant">What (Grant)</loc></span></div>
+                <div class="grant-combobox-wrap">
+                    <input type="text" id="grantSearch" class="form-input"
+                           placeholder="@Localizer["PermSim_SearchGrant"]"
+                           autocomplete="off"
+                           oninput="filterGrants(this.value)"
+                           onfocus="showGrantDropdown()"
+                           onblur="hideGrantDropdownDelayed()" />
+                    <div id="grantDropdown" class="grant-dropdown" hidden>
+                        @foreach (var group in Model.GrantTypeGroups)
+                        {
+                            <div class="grant-group-header">@group.Category</div>
+                            @foreach (var gt in group.Items)
+                            {
+                                <div class="grant-option" data-key="@gt.Key" data-namekey="@gt.NameKey"
+                                     onclick="selectGrant('@gt.Key', '@gt.NameKey')">
+                                    <code>@gt.Key</code>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+                <input type="hidden" id="selectedGrantKey" />
+            </div>
+
+            @* WHERE — Target Scope *@
+            <div class="section-card">
+                <div class="section-header">
+                    <span><loc key="PermSim_WhereScope">Where (Target Scope)</loc></span>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyFromUser" onclick="copyFromUser()" disabled>
+                        <loc key="PermSim_CopyFromUser">Copy scope from selected user ↑</loc>
+                    </button>
+                </div>
+
+                <div class="scope-cascade">
+                    <select id="scopeProject" class="form-select scope-node" onchange="onScopeProjectChange(this.value)">
+                        <option value="">— <loc key="PermSim_ScopeProject">Project</loc> —</option>
+                        @foreach (var p in Model.Projects)
+                        {
+                            <option value="@p.Id">@p.Name</option>
+                        }
+                    </select>
+                    <span class="cascade-arrow" aria-hidden="true">›</span>
+                    <select id="scopeArea" class="form-select scope-node" disabled onchange="onScopeAreaChange(this.value)">
+                        <option value="">— <loc key="PermSim_ScopeArea">Area</loc> —</option>
+                    </select>
+                    <span class="cascade-arrow" aria-hidden="true">›</span>
+                    <select id="scopeMolecule" class="form-select scope-node" disabled onchange="onScopeMoleculeChange(this.value)">
+                        <option value="">— <loc key="PermSim_ScopeMolecule">Molecule</loc> —</option>
+                    </select>
+                    <span class="cascade-arrow" aria-hidden="true">›</span>
+                    <select id="scopeCompany" class="form-select scope-node" disabled>
+                        <option value="">— <loc key="PermSim_ScopeCompany">Company</loc> —</option>
+                    </select>
+                </div>
+
+                <div class="scope-row">
+                    <div class="form-group">
+                        <label class="form-label" for="scopeJobType"><loc key="PermSim_ScopeJobType">Job Type</loc></label>
+                        <select id="scopeJobType" class="form-select" disabled>
+                            <option value="">— <loc key="PermSim_Any">any</loc> —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="scopeDept"><loc key="PermSim_ScopeDept">Department ID</loc></label>
+                        <input type="number" id="scopeDept" class="form-input" min="1" placeholder="optional" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="targetUserId"><loc key="PermSim_TargetUserId">Target User ID</loc></label>
+                        <input type="number" id="targetUserId" class="form-input" min="1" placeholder="optional" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="permsim-actions">
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                    <loc key="PermSim_Reset">Reset</loc>
+                </button>
+                <button type="button" class="btn btn-primary" id="btnRun" onclick="runSimulation()">
+                    <loc key="PermSim_Run">▶ Run</loc>
+                </button>
+            </div>
+        </div>
+
+        @* Right: RESULT *@
+        <div class="permsim-right">
+            <div class="section-card" id="resultPanel">
+                <div class="section-header"><span><loc key="PermSim_Result">Result</loc></span></div>
+
+                @* Empty state *@
+                <div id="resultEmpty" class="permsim-empty-state">
+                    <span class="empty-icon">&#x1F50D;</span>
+                    <p><loc key="PermSim_EmptyState">Configure the simulation and click Run</loc></p>
+                </div>
+
+                @* Loading state *@
+                <div id="resultLoading" class="permsim-loading" hidden>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line"></div>
+                </div>
+
+                @* Result content (populated by JS) *@
+                <div id="resultContent" hidden>
+                    <div id="verdictBanner" class="verdict-banner" role="status" aria-live="polite"></div>
+                    <div id="fixCallout" class="fix-callout" hidden></div>
+                    <div id="matchedGrantCard" class="matched-grant-card" hidden></div>
+                    <details id="traceDetails" class="trace-details" hidden>
+                        <summary id="traceSummary"></summary>
+                        <div id="traceTableWrap"></div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.permsim-container { max-width: 1600px; }
+.permsim-who { margin-bottom: 1.5rem; }
+
+.mode-switch {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+    width: fit-content;
+    margin-bottom: 1rem;
+}
+.mode-btn {
+    padding: .4rem 1.2rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: .9rem;
+    color: var(--text-secondary);
+    transition: background .15s;
+}
+.mode-btn.active {
+    background: var(--primary);
+    color: var(--primary-contrast) !important;
+    font-weight: 600;
+}
+.mode-btn:not(.active):hover { background: var(--surface-hover); }
+
+.permsim-workbench {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+@@media (max-width: 1200px) {
+    .permsim-workbench { grid-template-columns: 1fr; }
+}
+
+.permsim-left { display: flex; flex-direction: column; gap: 1rem; }
+.permsim-actions { display: flex; gap: .75rem; justify-content: flex-end; }
+
+/* Typeahead */
+.typeahead-wrap { position: relative; }
+.typeahead-dropdown {
+    position: absolute;
+    top: 100%; inset-inline-start: 0;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    z-index: 50;
+    max-height: 260px;
+    overflow-y: auto;
+}
+.typeahead-option {
+    padding: .5rem .75rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color-light);
+}
+.typeahead-option:hover { background: var(--surface-hover); }
+.typeahead-opt-name { font-weight: 600; font-size: .9rem; }
+.typeahead-opt-meta { font-size: .78rem; color: var(--text-secondary); }
+
+/* User card */
+.user-card {
+    margin-top: .75rem;
+    padding: .75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background: var(--surface-alt);
+}
+.user-card-email, .user-card-company { display: block; font-size: .8rem; color: var(--text-secondary); }
+
+.hierarchy-trail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .2rem;
+    align-items: center;
+    margin-top: .5rem;
+}
+.trail-node {
+    font-size: .78rem;
+    padding: .15rem .45rem;
+    border-radius: calc(var(--radius) / 2);
+    background: var(--surface);
+    border: 1px solid var(--border-color-light);
+}
+.trail-sep { color: var(--text-secondary); font-size: .8rem; }
+
+/* Scope cascade */
+.scope-cascade {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex-wrap: wrap;
+    margin-bottom: .75rem;
+}
+.scope-cascade .scope-node { min-width: 120px; flex: 1; }
+.cascade-arrow { color: var(--text-secondary); font-size: 1.1rem; flex-shrink: 0; }
+.scope-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .75rem;
+}
+@@media (max-width: 700px) { .scope-row { grid-template-columns: 1fr; } }
+
+/* Grant combobox */
+.grant-combobox-wrap { position: relative; }
+.grant-dropdown {
+    position: absolute;
+    top: 100%; inset-inline-start: 0;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    z-index: 50;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.grant-group-header {
+    padding: .3rem .75rem;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-secondary);
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--border-color-light);
+    position: sticky;
+    top: 0;
+}
+.grant-option {
+    padding: .4rem .75rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color-light);
+}
+.grant-option:hover { background: var(--surface-hover); }
+.grant-option[data-selected="true"] { background: var(--primary-soft); }
+.grant-option code { font-size: .82rem; }
+
+/* Role scope grid */
+.permsim-role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: .75rem;
+}
+
+/* Result */
+.permsim-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 1rem;
+    color: var(--text-secondary);
+    gap: .5rem;
+}
+.empty-icon { font-size: 2.5rem; }
+
+.permsim-loading { padding: 1.5rem; }
+.skeleton-line {
+    height: 16px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--surface-alt) 25%, var(--surface-hover) 50%, var(--surface-alt) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    margin-bottom: .75rem;
+}
+.skeleton-line:nth-child(2) { width: 75%; }
+.skeleton-line:nth-child(3) { width: 55%; }
+@@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+.verdict-banner {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    border-inline-start: 4px solid transparent;
+}
+.verdict-granted {
+    background: var(--success-soft, #d4edda);
+    border-inline-start-color: var(--success, #28a745);
+    color: var(--success-text, #155724);
+}
+.verdict-denied {
+    background: var(--danger-soft, #f8d7da);
+    border-inline-start-color: var(--danger, #dc3545);
+    color: var(--danger-text, #721c24);
+}
+.verdict-icon { font-size: 1.4rem; }
+
+.fix-callout {
+    background: var(--warning-soft, #fff3cd);
+    border: 1px solid var(--warning, #ffc107);
+    border-radius: var(--radius);
+    padding: .75rem 1rem;
+    margin-bottom: 1rem;
+}
+.fix-callout-header { font-weight: 700; margin-bottom: .4rem; }
+.fix-callout-actions { display: flex; gap: .5rem; margin-top: .6rem; flex-wrap: wrap; }
+
+.matched-grant-card {
+    border: 1px solid var(--success, #28a745);
+    border-radius: var(--radius);
+    padding: .75rem 1rem;
+    margin-bottom: 1rem;
+}
+.matched-grant-card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .25rem .75rem; }
+.matched-grant-card dt { font-weight: 600; color: var(--text-secondary); font-size: .85rem; }
+.matched-grant-card dd { margin: 0; font-size: .9rem; }
+
+.trace-details { margin-top: .5rem; }
+.trace-details summary {
+    cursor: pointer;
+    font-size: .88rem;
+    color: var(--text-secondary);
+    padding: .3rem 0;
+}
+.diag-table { width: 100%; border-collapse: collapse; font-size: .82rem; margin-top: .5rem; }
+.diag-table th, .diag-table td {
+    padding: .4rem .6rem;
+    border: 1px solid var(--border-color-light);
+    text-align: start;
+}
+.diag-table th { background: var(--surface-alt); font-weight: 600; }
+.diag-table tr.trace-matched { background: var(--success-soft, #d4edda); }
+.diag-table tr.trace-failed  { background: var(--danger-soft, #f8d7da); }
+</style>
+
+<script>
+// ── State ──
+let currentMode     = 'user';
+let selectedUser    = null;  // { id, displayName, email, companyId, companyName, projectId, projectName, areaId, areaName, moleculeId, moleculeName, jobTypeId, jobTypeName }
+let selectedGrantKey = '';
+let userSearchTimer  = null;
+
+// ── Mode switch ──
+function switchMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => {
+        const active = b.dataset.mode === mode;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-selected', String(active));
+    });
+    document.getElementById('panel-user').hidden = mode !== 'user';
+    document.getElementById('panel-role').hidden = mode !== 'role';
+    loadRoleScopeAreas();
+}
+
+// ── User typeahead ──
+function onUserSearchInput(val) {
+    clearTimeout(userSearchTimer);
+    if (val.length < 2) { document.getElementById('userDropdown').hidden = true; return; }
+    userSearchTimer = setTimeout(() => fetchUsers(val), 300);
+}
+
+async function fetchUsers(q) {
+    const res  = await fetch(`?handler=SearchUsers&query=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    const drop = document.getElementById('userDropdown');
+    drop.innerHTML = '';
+    if (data.length === 0) {
+        drop.innerHTML = '<div class="typeahead-option" style="color:var(--text-secondary)">No users found</div>';
+    } else {
+        data.forEach(u => {
+            const el = document.createElement('div');
+            el.className = 'typeahead-option';
+            el.innerHTML = `<div class="typeahead-opt-name">${escHtml(u.displayName)}</div>
+                            <div class="typeahead-opt-meta">${escHtml(u.email)} · ${escHtml(u.companyName || '')}</div>`;
+            el.onclick = () => selectUser(u);
+            drop.appendChild(el);
+        });
+    }
+    drop.hidden = false;
+}
+
+async function selectUser(u) {
+    document.getElementById('userDropdown').hidden = true;
+    document.getElementById('userSearchInput').value = u.displayName;
+
+    const ctx = await fetch(`?handler=UserContext&userId=${u.id}`).then(r => r.json());
+    selectedUser = { ...u, ...ctx };
+
+    const card = document.getElementById('userCard');
+    document.getElementById('ucName').textContent    = ctx.displayName;
+    document.getElementById('ucEmail').textContent   = ctx.email;
+    document.getElementById('ucCompany').textContent = ctx.companyName || '';
+
+    const trail = document.getElementById('hierarchyTrail');
+    trail.innerHTML = '';
+    const nodes = [
+        ctx.projectName  && { label: ctx.projectName  },
+        ctx.areaName     && { label: ctx.areaName     },
+        ctx.moleculeName && { label: ctx.moleculeName },
+        ctx.companyName  && { label: ctx.companyName  },
+        ctx.jobTypeName  && { label: ctx.jobTypeName  },
+    ].filter(Boolean);
+
+    nodes.forEach((n, i) => {
+        const span = document.createElement('span');
+        span.className = 'trail-node';
+        span.textContent = n.label;
+        trail.appendChild(span);
+        if (i < nodes.length - 1) {
+            const sep = document.createElement('span');
+            sep.className = 'trail-sep';
+            sep.setAttribute('aria-hidden', 'true');
+            sep.textContent = '›';
+            trail.appendChild(sep);
+        }
+    });
+
+    card.hidden = false;
+    document.getElementById('btnCopyFromUser').disabled = false;
+}
+
+// ── Copy scope from user ──
+async function copyFromUser() {
+    if (!selectedUser) return;
+    const u = selectedUser;
+
+    const projSel = document.getElementById('scopeProject');
+    projSel.value = u.projectId || '';
+    await onScopeProjectChange(projSel.value);
+
+    if (u.areaId) {
+        const areaSel = document.getElementById('scopeArea');
+        areaSel.value = u.areaId;
+        await onScopeAreaChange(areaSel.value);
+    }
+
+    if (u.moleculeId) {
+        const molSel = document.getElementById('scopeMolecule');
+        molSel.value = u.moleculeId;
+        await onScopeMoleculeChange(molSel.value);
+    }
+
+    if (u.companyId) {
+        const coSel = document.getElementById('scopeCompany');
+        coSel.value = u.companyId;
+    }
+
+    if (u.jobTypeId) {
+        const jtSel = document.getElementById('scopeJobType');
+        // load area jobTypes first if not loaded
+        if (u.areaId && jtSel.options.length <= 1) {
+            await loadChildren('jobtype', u.areaId, 'scopeJobType', true);
+        }
+        jtSel.value = u.jobTypeId;
+    }
+}
+
+// ── Scope cascade ──
+async function onScopeProjectChange(val) {
+    resetSelect('scopeArea', true);
+    resetSelect('scopeMolecule', true);
+    resetSelect('scopeCompany', true);
+    resetSelect('scopeJobType', true);
+    if (!val) return;
+    await loadChildren('area', val, 'scopeArea', false);
+}
+
+async function onScopeAreaChange(val) {
+    resetSelect('scopeMolecule', true);
+    resetSelect('scopeCompany', true);
+    if (!val) { resetSelect('scopeJobType', true); return; }
+    await loadChildren('molecule', val, 'scopeMolecule', false);
+    await loadChildren('jobtype', val, 'scopeJobType', false);
+}
+
+async function onScopeMoleculeChange(val) {
+    resetSelect('scopeCompany', true);
+    if (!val) return;
+    await loadChildren('company', val, 'scopeCompany', false);
+}
+
+async function loadChildren(level, parentId, selectId, keepDisabled) {
+    const sel = document.getElementById(selectId);
+    sel.disabled = true;
+    const items = await fetch(`?handler=HierarchyChildren&level=${level}&parentId=${parentId}`).then(r => r.json());
+    sel.innerHTML = '<option value="">— any —</option>';
+    items.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = item.name;
+        sel.appendChild(opt);
+    });
+    if (!keepDisabled) sel.disabled = false;
+}
+
+function resetSelect(id, disable) {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">— any —</option>';
+    sel.disabled = disable;
+    sel.value = '';
+}
+
+// ── Role scope areas init ──
+async function loadRoleScopeAreas() {
+    const projects = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Projects.Select(p => new { p.Id, p.Name }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+    const areaSel = document.getElementById('roleScopeArea');
+    areaSel.innerHTML = '<option value="">— any —</option>';
+    // Load all areas (no project filter needed for role scope — just pick any area)
+    const allAreas = await Promise.all(
+        projects.map(p => fetch(`?handler=HierarchyChildren&level=area&parentId=${p.id}`).then(r => r.json()).then(items => items))
+    );
+    allAreas.flat().forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.name;
+        areaSel.appendChild(opt);
+    });
+    areaSel.onchange = async () => {
+        resetSelect('roleScopeMolecule', true);
+        resetSelect('roleScopeCompany', true);
+        resetSelect('roleScopeJobType', true);
+        if (!areaSel.value) return;
+        await loadChildren('molecule', areaSel.value, 'roleScopeMolecule', false);
+        await loadChildren('jobtype', areaSel.value, 'roleScopeJobType', false);
+        document.getElementById('roleScopeMolecule').onchange = async () => {
+            resetSelect('roleScopeCompany', true);
+            if (!document.getElementById('roleScopeMolecule').value) return;
+            await loadChildren('company', document.getElementById('roleScopeMolecule').value, 'roleScopeCompany', false);
+        };
+    };
+}
+
+// ── Grant combobox ──
+function filterGrants(val) {
+    const q = val.toLowerCase();
+    document.querySelectorAll('.grant-option').forEach(el => {
+        const key     = (el.dataset.key     || '').toLowerCase();
+        const namekey = (el.dataset.namekey || '').toLowerCase();
+        el.hidden = q.length > 0 && !key.includes(q) && !namekey.includes(q);
+    });
+}
+
+function showGrantDropdown() {
+    document.getElementById('grantDropdown').hidden = false;
+    filterGrants(document.getElementById('grantSearch').value);
+}
+
+function hideGrantDropdownDelayed() {
+    setTimeout(() => { document.getElementById('grantDropdown').hidden = true; }, 200);
+}
+
+function selectGrant(key, nameKey) {
+    selectedGrantKey = key;
+    document.getElementById('selectedGrantKey').value = key;
+    document.getElementById('grantSearch').value = key;
+    document.getElementById('grantDropdown').hidden = true;
+    document.querySelectorAll('.grant-option').forEach(el => {
+        el.dataset.selected = String(el.dataset.key === key);
+    });
+}
+
+// ── Reset ──
+function resetForm() {
+    selectedUser = null;
+    selectedGrantKey = '';
+    document.getElementById('userSearchInput').value = '';
+    document.getElementById('userCard').hidden = true;
+    document.getElementById('userDropdown').hidden = true;
+    document.getElementById('grantSearch').value = '';
+    document.getElementById('selectedGrantKey').value = '';
+    document.getElementById('btnCopyFromUser').disabled = true;
+    ['scopeProject','scopeArea','scopeMolecule','scopeCompany','scopeJobType'].forEach(id => resetSelect(id, id !== 'scopeProject'));
+    document.getElementById('scopeDept').value = '';
+    document.getElementById('targetUserId').value = '';
+    showEmpty();
+}
+
+// ── Run ──
+async function runSimulation() {
+    const grantKey = document.getElementById('selectedGrantKey').value;
+    if (!grantKey) { alert('Select a grant key first.'); return; }
+
+    const isRoleMode = currentMode === 'role';
+    if (!isRoleMode && !selectedUser) { alert('Select a user first.'); return; }
+    if (isRoleMode && !document.getElementById('roleSelect').value) { alert('Select a role template first.'); return; }
+
+    const body = {
+        isRoleMode,
+        userId:               isRoleMode ? null : selectedUser?.id,
+        roleTemplateId:       isRoleMode ? intOrNull('roleSelect') : null,
+        simulatedScopeJobTypeId: isRoleMode ? intOrNull('roleScopeJobType') : null,
+        simulatedScopeCompanyId: isRoleMode ? intOrNull('roleScopeCompany') : null,
+        simulatedScopeMoleculeId: isRoleMode ? intOrNull('roleScopeMolecule') : null,
+        simulatedScopeAreaId: isRoleMode ? intOrNull('roleScopeArea') : null,
+        grantKey,
+        targetProjectId:  intOrNull('scopeProject'),
+        targetAreaId:     intOrNull('scopeArea'),
+        targetMoleculeId: intOrNull('scopeMolecule'),
+        targetCompanyId:  intOrNull('scopeCompany'),
+        targetDepartmentId: intOrNull('scopeDept'),
+        targetJobTypeId:  intOrNull('scopeJobType'),
+        targetUserId:     intOrNull('targetUserId'),
+    };
+
+    setRunning(true);
+    try {
+        const res = await fetch('?handler=Simulate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || `Server error ${res.status}`); return; }
+        renderResult(data);
+    } catch (e) {
+        showError(e.message);
+    } finally {
+        setRunning(false);
+    }
+}
+
+function intOrNull(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const v = el.value ? parseInt(el.value, 10) : null;
+    return (v && !isNaN(v)) ? v : null;
+}
+
+// ── Result rendering ──
+function renderResult(data) {
+    const content = document.getElementById('resultContent');
+    document.getElementById('resultEmpty').hidden   = true;
+    document.getElementById('resultLoading').hidden = true;
+    content.hidden = false;
+
+    const banner = document.getElementById('verdictBanner');
+    if (data.isGranted) {
+        banner.className = 'verdict-banner verdict-granted';
+        banner.innerHTML = '<span class="verdict-icon">✅</span><span class="verdict-label">GRANTED</span>';
+    } else {
+        banner.className = 'verdict-banner verdict-denied';
+        banner.innerHTML = '<span class="verdict-icon">❌</span><span class="verdict-label">DENIED</span>';
+        if (data.failureReason) {
+            banner.innerHTML += `<span style="font-size:.85rem;font-weight:400;margin-inline-start:.5rem">${escHtml(data.failureReason)}</span>`;
+        }
+    }
+
+    // Fix callout (DENIED only)
+    const fix = document.getElementById('fixCallout');
+    if (!data.isGranted && data.suggestionToFix) {
+        fix.hidden = false;
+        fix.innerHTML = `
+            <div class="fix-callout-header">💡 How to fix</div>
+            <p class="fix-callout-body" style="margin:.25rem 0">${escHtml(data.suggestionToFix)}</p>
+            <div class="fix-callout-actions">
+                <button class="btn btn-ghost btn-sm" onclick="copyText('${escAttr(data.suggestionToFix)}')">Copy</button>
+                ${data.userId ? `<a class="btn btn-ghost btn-sm" href="/Owner/Hub/Grants?userId=${escHtml(String(data.userId))}&grantKey=${encodeURIComponent(data.missingGrantKey||'')}">Open in Grants →</a>` : ''}
+            </div>`;
+    } else {
+        fix.hidden = true;
+    }
+
+    // Matched grant card (GRANTED only)
+    const matchedCard = document.getElementById('matchedGrantCard');
+    if (data.isGranted && data.matchedTrace) {
+        const t = data.matchedTrace;
+        matchedCard.hidden = false;
+        matchedCard.innerHTML = `
+            <div style="font-weight:600;margin-bottom:.5rem">✅ Matched Grant</div>
+            <dl>
+                <dt>Grant ID</dt><dd>#${t.grantId}</dd>
+                <dt>Scope</dt><dd><code>${escHtml(t.scopeLabel)}</code></dd>
+                <dt>Source</dt><dd>${escHtml(t.grantSource)}</dd>
+                <dt>Can Give</dt><dd>${t.canGive ? '✅ Yes' : '—'}</dd>
+            </dl>`;
+    } else {
+        matchedCard.hidden = true;
+    }
+
+    // Trace
+    const traceDetails = document.getElementById('traceDetails');
+    if (data.evaluatedGrants && data.evaluatedGrants.length > 0) {
+        traceDetails.hidden = false;
+        document.getElementById('traceSummary').textContent = `Evaluated ${data.evaluatedGrants.length} grant(s) — click to expand`;
+        const rows = data.evaluatedGrants.map(t => `
+            <tr class="${t.matched ? 'trace-matched' : 'trace-failed'}">
+                <td>#${t.grantId}</td>
+                <td><code style="font-size:.8rem">${escHtml(t.scopeLabel)}</code></td>
+                <td>${escHtml(t.grantSource)}</td>
+                <td>${t.matched ? '✅' : '❌'}</td>
+                <td style="font-size:.8rem;color:var(--text-secondary)">${t.failReason ? escHtml(t.failReason) : '—'}</td>
+            </tr>`).join('');
+        document.getElementById('traceTableWrap').innerHTML = `
+            <table class="diag-table">
+                <thead><tr><th>ID</th><th>Scope</th><th>Source</th><th>Match</th><th>Reason</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    } else {
+        traceDetails.hidden = true;
+    }
+}
+
+function showError(msg) {
+    document.getElementById('resultEmpty').hidden = true;
+    document.getElementById('resultLoading').hidden = true;
+    const content = document.getElementById('resultContent');
+    content.hidden = false;
+    document.getElementById('verdictBanner').className = 'verdict-banner verdict-denied';
+    document.getElementById('verdictBanner').innerHTML = `<span class="verdict-icon">⚠️</span><span>${escHtml(msg)}</span>`;
+    document.getElementById('fixCallout').hidden = true;
+    document.getElementById('matchedGrantCard').hidden = true;
+    document.getElementById('traceDetails').hidden = true;
+}
+
+function showEmpty() {
+    document.getElementById('resultEmpty').hidden = false;
+    document.getElementById('resultLoading').hidden = true;
+    document.getElementById('resultContent').hidden = true;
+}
+
+function setRunning(isRunning) {
+    const btn = document.getElementById('btnRun');
+    if (isRunning) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="btn-spinner"></span> Running...';
+        document.getElementById('resultEmpty').hidden = true;
+        document.getElementById('resultLoading').hidden = false;
+        document.getElementById('resultContent').hidden = true;
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = '▶ Run';
+    }
+}
+
+// ── Utilities ──
+function getAntiForgeryToken() {
+    return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+}
+
+function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escAttr(str) { return escHtml(str).replace(/'/g, '&#39;'); }
+
+function copyText(txt) {
+    navigator.clipboard?.writeText(txt).catch(() => {});
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    loadRoleScopeAreas();
+});
+</script>

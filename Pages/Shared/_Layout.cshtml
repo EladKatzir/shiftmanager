@@ -51,7 +51,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@(string.IsNullOrEmpty(firstName) ? (isHebrew ? "השיפטי שלך" : "your shifty") : (isHebrew ? $"השיפטי של {firstName}" : $"{firstName}'s shifty"))</title>
+    <title>@(string.IsNullOrEmpty(firstName) ? Localizer["PageTitle_NoName"].Value : string.Format(Localizer["PageTitle_WithName"].Value, firstName))</title>
 
     <!-- Favicon and App Icons (B-014) -->
     <link rel="icon" type="image/svg+xml" href="~/favicon.svg">
@@ -454,6 +454,9 @@
         {
         @* Sidebar Navigation - UI Overhaul v3.0 *@
         <aside class="app-sidebar" id="appSidebar">
+            @* Scrollable content wrapper — overflow-y:auto lives here so the aside itself
+               stays overflow:visible, keeping the toggle button's pointer events unclipped. *@
+            <div class="sidebar-scroll">
             @* Brand Section *@
             <a href="/Home" class="sidebar-brand">
                 <div class="sidebar-brand__logo">
@@ -726,7 +729,11 @@
                 }
             </div>
 
-            @* Sidebar Toggle Button (A-002: Accessible keyboard toggle) *@
+            </div>@* end .sidebar-scroll *@
+
+            @* Sidebar Toggle Button (A-002) — outside .sidebar-scroll so overflow-y:auto
+               on the scroll wrapper does NOT clip its pointer events when it protrudes
+               12px past the sidebar edge via position:absolute right:-12px *@
             <button class="sidebar-toggle"
                     id="sidebarToggle"
                     type="button"
@@ -779,7 +786,7 @@
 
                         @* Theme Toggle *@
                         <button class="action-btn" id="themeToggle" loc-aria-label="ToggleDarkMode">
-                            <span>🌓</span>
+                            <span><icon name="moon" /></span>
                         </button>
 
                         @* Logout *@
@@ -788,7 +795,7 @@
                             <form method="post" asp-page="/Auth/Logout" style="display:inline; margin: 0;">
                                 @Html.AntiForgeryToken()
                                 <button class="action-btn" type="submit" style="background: var(--danger); color: var(--danger-text);">
-                                    <span>🚪</span>
+                                    <span><icon name="log-out" /></span>
                                     <span><loc key="Logout" /></span>
                                 </button>
                             </form>
@@ -830,22 +837,34 @@
             @if (User?.Identity?.IsAuthenticated == true && FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.WidgetsEnabled))
             {
                 <div class="bottom-dock" id="bottomDock">
-                    <div style="display: flex;">
+                    <div class="bottom-dock__header">
                         <span class="bottom-dock__drag-handle" id="bottomDockDragHandle" title="@Localizer["DragToMove"]">⋮⋮</span>
                         <button class="bottom-dock__toggle"
                                 id="bottomDockToggle"
                                 type="button"
                                 aria-expanded="false"
                                 aria-controls="bottomDockContent"
-                                title="@Localizer["BottomDock_Toggle"]"
-                                style="flex: 1;">
+                                title="@Localizer["BottomDock_Toggle"]">
                             <span class="bottom-dock__toggle-icon">▼</span>
                             <loc key="Widget_QuickInfo" />
                         </button>
+                        <button class="bottom-dock__minimize"
+                                id="bottomDockMinimize"
+                                type="button"
+                                aria-label="@Localizer["BottomDock_Minimize"]"
+                                title="@Localizer["BottomDock_Minimize"]">−</button>
                     </div>
                     <div class="bottom-dock__content" id="bottomDockContent">
                         @await Component.InvokeAsync("OnCallWidget", new { showInSidebar = false })
                     </div>
+                    <button class="bottom-dock__pill"
+                            id="bottomDockPill"
+                            type="button"
+                            aria-label="@Localizer["BottomDock_Restore"]"
+                            title="@Localizer["BottomDock_Restore"]"
+                            hidden>
+                        <icon name="phone" />
+                    </button>
                 </div>
             }
         </div>
@@ -898,6 +917,7 @@
         var isCollapsed = document.documentElement.classList.contains('sidebar-initially-collapsed');
         if (isCollapsed) {
             sidebar.classList.add('is-collapsed');
+            document.documentElement.classList.remove('sidebar-initially-collapsed');
         }
 
         // Update toggle button ARIA state to match current collapsed state
@@ -1024,37 +1044,94 @@
     })();
     </script>
 
-    @* Bottom Dock Toggle Script *@
+    @* Bottom Dock Toggle Script — three-state: full | collapsed | mini *@
     <script>
     (function() {
         'use strict';
-        var DOCK_COLLAPSED_KEY = 'shifty_bottom_dock_collapsed';
-        var dock = document.getElementById('bottomDock');
-        var dockToggle = document.getElementById('bottomDockToggle');
 
-        if (!dock || !dockToggle) return;
+        var STATE_KEY  = 'shifty_bottom_dock_state';
+        var PREV_KEY   = 'shifty_bottom_dock_prev_state';
+        var LEGACY_KEY = 'shifty_bottom_dock_collapsed';
+        var POS_KEY    = 'shifty_bottom_dock_position';
 
-        // Restore collapsed state — default to collapsed for new users
-        var savedState = localStorage.getItem(DOCK_COLLAPSED_KEY);
-        if (savedState !== 'false') {
-            dock.classList.add('is-collapsed');
-            dockToggle.setAttribute('aria-expanded', 'false');
+        var dock     = document.getElementById('bottomDock');
+        var toggle   = document.getElementById('bottomDockToggle');
+        var minimize = document.getElementById('bottomDockMinimize');
+        var pill     = document.getElementById('bottomDockPill');
+        if (!dock || !toggle || !minimize || !pill) return;
+
+        // Re-anchor the dock to its CSS default (bottom-right) by clearing any
+        // inline left/top/right/bottom left behind by the drag IIFE, and also
+        // wiping the persisted drag position so the snap is permanent until
+        // the user drags again. Used by the toggle only — minimize/pill keep
+        // the dragged position intentionally (Mini is a "tuck away").
+        function resetDockAnchor() {
+            dock.style.left = '';
+            dock.style.top = '';
+            dock.style.right = '';
+            dock.style.bottom = '';
+            localStorage.removeItem(POS_KEY);
         }
 
-        // Toggle handler
-        dockToggle.addEventListener('click', function() {
-            var isCollapsed = dock.classList.toggle('is-collapsed');
-            dockToggle.setAttribute('aria-expanded', !isCollapsed);
-            localStorage.setItem(DOCK_COLLAPSED_KEY, isCollapsed);
+        // Migration from legacy boolean key (pre-mini-mode)
+        var legacy = localStorage.getItem(LEGACY_KEY);
+        if (legacy !== null && localStorage.getItem(STATE_KEY) === null) {
+            localStorage.setItem(STATE_KEY, legacy === 'false' ? 'full' : 'collapsed');
+            localStorage.removeItem(LEGACY_KEY);
+        }
+
+        var state = localStorage.getItem(STATE_KEY) || 'collapsed';
+        applyState(state);
+
+        function applyState(next) {
+            dock.classList.remove('is-collapsed', 'is-mini');
+            pill.hidden = true;
+
+            if (next === 'collapsed') {
+                dock.classList.add('is-collapsed');
+                toggle.setAttribute('aria-expanded', 'false');
+                dock.removeAttribute('aria-hidden');
+            } else if (next === 'mini') {
+                dock.classList.add('is-mini');
+                pill.hidden = false;
+                dock.setAttribute('aria-hidden', 'true');
+            } else {
+                toggle.setAttribute('aria-expanded', 'true');
+                dock.removeAttribute('aria-hidden');
+            }
+
+            state = next;
+            localStorage.setItem(STATE_KEY, next);
+        }
+
+        // Toggle: Full <-> Collapsed (no-op in Mini; button is not focusable there)
+        // Also re-anchors the dock to its CSS default bottom-right: prevents
+        // expanded content from overflowing below the viewport when the user
+        // had dragged the dock low, and gives a consistent "home" position on
+        // collapse.
+        toggle.addEventListener('click', function() {
+            if (state === 'mini') return;
+            resetDockAnchor();
+            applyState(state === 'collapsed' ? 'full' : 'collapsed');
         });
 
-        // Close on Escape when expanded
+        // Minimize: enter Mini, remember prior state for restore
+        minimize.addEventListener('click', function() {
+            if (state === 'mini') return;
+            localStorage.setItem(PREV_KEY, state);
+            applyState('mini');
+        });
+
+        // Pill: exit Mini back to previous state
+        pill.addEventListener('click', function() {
+            var prev = localStorage.getItem(PREV_KEY);
+            if (prev !== 'full' && prev !== 'collapsed') prev = 'collapsed';
+            applyState(prev);
+        });
+
+        // Escape closes Full -> Collapsed (unchanged from prior behaviour); no-op in Mini
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && !dock.classList.contains('is-collapsed')) {
-                dock.classList.add('is-collapsed');
-                dockToggle.setAttribute('aria-expanded', 'false');
-                localStorage.setItem(DOCK_COLLAPSED_KEY, 'true');
-            }
+            if (e.key === 'Escape' && state === 'full') applyState('collapsed');
         });
     })();
 

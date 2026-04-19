@@ -67,6 +67,8 @@ public class OnCallModel : PageModel
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
     public bool CanEdit { get; set; }
+    // See Shifts.cshtml.cs for rationale: quick-entry toggle visible to any user with WriteOverviewNotes.
+    public bool CanWriteNote { get; set; }
     public List<Area> AvailableAreas { get; set; } = new();
     public Area? SelectedArea { get; set; }
     public List<DutyTypeInfo> DutyTypes { get; set; } = new();
@@ -150,6 +152,7 @@ public class OnCallModel : PageModel
             || await _grantService.HasGrantAsync(currentUserId, "AssignHakamDuties")
             || await _grantService.HasGrantAsync(currentUserId, "AssignKatzinDuties")
             || await _grantService.HasGrantAsync(currentUserId, "EditOnCallCalendar");
+        CanWriteNote = CanEdit || await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
 
         // Build calendar data (duty types as rows, dates as columns)
         await BuildDutyTypeBasedCalendarAsync();
@@ -403,7 +406,8 @@ public class OnCallModel : PageModel
             var row = new ExcelCalendarRow
             {
                 Id = $"dutytype-{dutyType.TypeValue}",
-                Label = $"{dutyType.Icon} {dutyType.Name}",
+                Label = dutyType.Name,
+                Icon = dutyType.Icon,
                 Color = dutyType.Color
             };
 
@@ -446,7 +450,10 @@ public class OnCallModel : PageModel
                 Id = o.Id,
                 Name = o.User?.DisplayName ?? _localizer["Unknown"],
                 Role = o.Notes, // Use notes as additional info
-                UserId = o.UserId
+                UserId = o.UserId,
+                AssignmentTooltip = o.Creator != null
+                    ? string.Format(_localizer["OnDuty_AssignedByTooltip"].Value, o.Creator.DisplayName, o.CreatedAt.ToString("d"))
+                    : null
             }).ToList();
 
             // Text entry overlay badge: show 📝 if any assigned user has text entries
