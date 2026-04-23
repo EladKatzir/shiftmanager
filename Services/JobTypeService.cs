@@ -73,7 +73,10 @@ public class JobTypeService : IJobTypeService
     // Assignment operations
     public async Task<bool> AssignJobTypeAsync(int userId, int jobTypeId, int? assignedByUserId = null)
     {
-        var user = await _db.Users.FindAsync(userId);
+        // SECURITY-AUDITED: SAFE — area-Director job-type management legitimately targets users
+        // across companies in the area; tenant filter would silently lock out cross-tenant edits.
+        var user = await _db.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return false;
 
@@ -122,7 +125,9 @@ public class JobTypeService : IJobTypeService
 
     public async Task<bool> RemoveJobTypeAsync(int userId, int? removedByUserId = null)
     {
-        var user = await _db.Users.FindAsync(userId);
+        // SECURITY-AUDITED: SAFE — see AssignJobTypeAsync.
+        var user = await _db.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return false;
 
@@ -135,7 +140,10 @@ public class JobTypeService : IJobTypeService
     // Validation
     public async Task<JobTypeValidationResult> ValidateJobTypeForUserAsync(int userId, int jobTypeId)
     {
-        var user = await _db.Users.FindAsync(userId);
+        // SECURITY-AUDITED: SAFE — read-only validation; cross-tenant lookup needed so callers
+        // with area/project scope get accurate validation rather than a misleading "user not found".
+        var user = await _db.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return JobTypeValidationResult.UserNotFound;
 

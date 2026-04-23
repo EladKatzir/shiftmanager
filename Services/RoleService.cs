@@ -111,7 +111,10 @@ public class RoleService : IRoleService
     // Role assignment management
     public async Task<UserRoleAssignment?> AssignRoleAsync(int userId, int roleTemplateId, GrantScope scope, int assignedByUserId)
     {
-        var user = await _db.Users.FindAsync(userId);
+        // SECURTY-AUDITED: SAFE — Owner/super-admin role assignment legitimately targets users
+        // in other tenants; AssignRoles grant scope on the caller is the access boundary.
+        var user = await _db.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return null;
 

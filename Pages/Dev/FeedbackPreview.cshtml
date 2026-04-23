@@ -1,0 +1,348 @@
+@page
+@model ShiftManager.Pages.Dev.FeedbackPreviewModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["FP_PageTitle"];
+}
+
+@section Styles {
+    <style>
+        .fp-wrap { max-width: 1280px; margin: 0 auto; padding: 1.5rem; color: var(--text); }
+        .fp-intro { background: var(--surface-soft); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+        .fp-intro h1 { margin: 0 0 0.5rem 0; font-size: 1.5rem; }
+        .fp-intro p { margin: 0.25rem 0; color: var(--text-muted); }
+
+        .fp-legend { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+        .fp-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; border: 1px solid var(--border); background: var(--surface); }
+        .fp-chip--good { border-color: var(--success); color: var(--success); }
+        .fp-chip--warn { border-color: var(--warning); color: var(--warning); }
+        .fp-chip--bad  { border-color: var(--danger);  color: var(--danger);  }
+        .fp-chip--target { border-color: var(--info); color: var(--info); }
+
+        .fp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 1.25rem; }
+        .fp-card { background: var(--surface); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .fp-card h3 { margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .fp-meta { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+        .fp-meta code { background: var(--surface-soft); padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.75rem; }
+
+        .fp-stage { background: var(--surface-soft); border: 1px dashed var(--border); border-radius: 0.5rem; padding: 1rem; min-height: 80px; display: flex; flex-direction: column; gap: 0.5rem; position: relative; overflow: hidden; }
+        .fp-stage-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.25rem; }
+
+        .fp-triggers { display: flex; flex-wrap: wrap; gap: 0.4rem; padding-top: 0.25rem; border-top: 1px dashed var(--border); }
+        .fp-triggers .btn { font-size: 0.8rem; }
+
+        .fp-src { font-family: ui-monospace, monospace; font-size: 0.7rem; color: var(--text-muted); background: var(--surface-soft); padding: 0.4rem 0.6rem; border-radius: 4px; word-break: break-all; }
+
+        .fp-stage .toast { position: static; animation: none; box-shadow: var(--shadow-md); }
+        .fp-stage .toast-undo { position: static; animation: none; box-shadow: var(--shadow-md); }
+
+        .fp-native-alert { font-family: system-ui, sans-serif; background: #f3f3f3; color: #111; border: 1px solid #999; border-radius: 6px; padding: 1rem 1.25rem; max-width: 340px; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
+        .fp-native-alert__title { font-weight: 600; margin: 0 0 0.5rem; font-size: 0.9rem; }
+        .fp-native-alert__body { margin: 0 0 0.75rem; font-size: 0.85rem; }
+        .fp-native-alert__btn { padding: 0.3rem 1rem; border: 1px solid #999; background: #e5e5e5; border-radius: 3px; font-size: 0.85rem; cursor: default; }
+
+        .fp-recommend { margin-top: 2rem; padding: 1.25rem 1.5rem; background: var(--success-soft); border: 2px solid var(--success); border-radius: 0.75rem; }
+        .fp-recommend h2 { color: var(--success); margin-top: 0; }
+        .fp-recommend ul { margin: 0.5rem 0 0 1.25rem; }
+        .fp-recommend li { margin-bottom: 0.5rem; }
+    </style>
+}
+
+<div class="fp-wrap">
+    <div class="fp-intro">
+        <h1>@Localizer["FP_PageTitle"]</h1>
+        <p>@Localizer["FP_Intro_Description"]</p>
+        <p>@Localizer["FP_Intro_Usage"]</p>
+        <div class="fp-legend">
+            <span class="fp-chip fp-chip--target">@Localizer["FP_Chip_Target"]</span>
+            <span class="fp-chip fp-chip--good">@Localizer["FP_Chip_Good"]</span>
+            <span class="fp-chip fp-chip--warn">@Localizer["FP_Chip_Warn"]</span>
+            <span class="fp-chip fp-chip--bad">@Localizer["FP_Chip_Bad"]</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-success" style="margin-bottom: 1rem; padding: 1rem; background: var(--success); color: var(--success-contrast, white); border-radius: 0.5rem;">
+            @Model.Message
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger" style="margin-bottom: 1rem; padding: 1rem; background: var(--danger); color: var(--danger-contrast, white); border-radius: 0.5rem;">
+            @Model.Error
+        </div>
+    }
+
+    <div class="fp-grid">
+
+        @* Pattern 3 — unified toast (target) *@
+        <div class="fp-card">
+            <h3>@Localizer["FP_Pattern3_Title"] <span class="fp-chip fp-chip--target">@Localizer["FP_Chip_Target"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern3_Desc"]</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="toast toast-undo toast-undo--warning show">
+                    <span class="toast-undo__text">@Localizer["FP_Sample_ChoreDeleted"]</span>
+                    <button type="button" class="toast-undo__btn" data-item-id="4">@Localizer["FP_Btn_Undo"]</button>
+                    <span class="toast-undo__timer">5</span>
+                </div>
+                <div class="toast toast-undo toast-undo--success show">
+                    <span class="toast-undo__text">@Localizer["FP_Sample_ShiftSaved"]</span>
+                    <button type="button" class="toast-undo__btn" data-action="dismiss">@Localizer["FP_Btn_Dismiss"]</button>
+                    <span class="toast-undo__timer">5</span>
+                </div>
+                <div class="toast toast-undo toast-undo--danger show">
+                    <span class="toast-undo__text">@Localizer["FP_Sample_ServerUnreachable"]</span>
+                    <button type="button" class="toast-undo__btn" data-action="dismiss">@Localizer["FP_Btn_Dismiss"]</button>
+                    <span class="toast-undo__timer"></span>
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <button type="button" class="btn btn--sm btn--primary" onclick="fpTriggerUndoToast()">@Localizer["FP_Pattern3_Trigger"]</button>
+                <button type="button" class="btn btn--sm btn--primary" onclick="Toast.success('@Localizer["FP_Sample_ShiftSaved"].Value.Replace("'", "\\'")','@Localizer["FP_Btn_Success"].Value.Replace("'", "\\'")')">@Localizer["FP_Btn_Success"]</button>
+                <button type="button" class="btn btn--sm btn--danger" onclick="Toast.error('@Localizer["FP_Sample_ServerUnreachable"].Value.Replace("'", "\\'")','@Localizer["FP_Btn_Error"].Value.Replace("'", "\\'")')">@Localizer["FP_Btn_Error"]</button>
+                <button type="button" class="btn btn--sm btn--ghost" onclick="Toast.warning('@Localizer["FP_Sample_SelectScope"].Value.Replace("'", "\\'")','@Localizer["FP_Btn_Warning"].Value.Replace("'", "\\'")')">@Localizer["FP_Btn_Warning"]</button>
+                <button type="button" class="btn btn--sm btn--ghost" onclick="Toast.info('@Localizer["FP_Sample_ItemCreated"].Value.Replace("'", "\\'")','@Localizer["FP_Btn_Info"].Value.Replace("'", "\\'")')">@Localizer["FP_Btn_Info"]</button>
+            </div>
+            <div class="fp-src">@Localizer["FP_Pattern3_Src"]</div>
+        </div>
+
+        @* Pattern 4 — FeedbackModal *@
+        <div class="fp-card">
+            <h3>@Localizer["FP_Pattern4_Title"] <span class="fp-chip fp-chip--good">@Localizer["FP_Chip_Good"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern4_Desc"]</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="modal modal--sm modal--feedback modal--feedback-success" role="dialog" aria-modal="true" style="position: relative; inset: auto; transform: none; margin: 0 auto; box-shadow: var(--shadow-lg);">
+                    <div class="modal__header"><h2 class="modal__title">@Localizer["FP_Btn_Success"]</h2></div>
+                    <div class="modal__body">
+                        <div class="feedback-icon"><icon name="check-circle" /></div>
+                        <div class="feedback-message">@Localizer["FP_Sample_ItemCreated"]</div>
+                    </div>
+                    <div class="modal__footer"><button class="btn btn-primary" data-action="ok">@Localizer["FP_NativeAlert_Ok"]</button></div>
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <button type="button" class="btn btn--sm btn--primary" onclick="FeedbackModal.show('success','@Localizer["FP_Sample_ItemCreated"].Value.Replace("'", "\\'")')">@Localizer["FP_Btn_ClientSuccess"]</button>
+                <button type="button" class="btn btn--sm btn--danger" onclick="FeedbackModal.show('error','@Localizer["FP_Sample_ItemFailed"].Value.Replace("'", "\\'")')">@Localizer["FP_Btn_ClientError"]</button>
+                <form method="post" asp-page-handler="TriggerTempDataSuccess" style="display:inline;">
+                    <button class="btn btn--sm btn--ghost" type="submit">@Localizer["FP_Btn_ServerSuccess"]</button>
+                </form>
+                <form method="post" asp-page-handler="TriggerTempDataError" style="display:inline;">
+                    <button class="btn btn--sm btn--ghost" type="submit">@Localizer["FP_Btn_ServerError"]</button>
+                </form>
+            </div>
+            <div class="fp-src">@Localizer["FP_Pattern4_Src"]</div>
+        </div>
+
+        @* Pattern 2 — ErrorStates *@
+        <div class="fp-card">
+            <h3>@Localizer["FP_Pattern2_Title"] <span class="fp-chip fp-chip--good">@Localizer["FP_Chip_Good"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern2_Desc"]</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_OfflineBanner"]</span>
+                <div class="network-banner" role="alert" aria-live="assertive" style="position: static;">
+                    <span class="network-banner__icon"><icon name="wifi-off" /></span>
+                    <span class="network-banner__message">@Localizer["FP_Sample_Offline"]</span>
+                    <button type="button" class="btn btn--sm btn--ghost network-banner__retry">@Localizer["FP_Btn_Retry"]</button>
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <button type="button" class="btn btn--sm btn--ghost" onclick="document.dispatchEvent(new CustomEvent('api:networkerror'))">@Localizer["FP_Btn_SimulateNetworkError"]</button>
+                <button type="button" class="btn btn--sm btn--ghost" onclick="document.dispatchEvent(new CustomEvent('api:timeout'))">@Localizer["FP_Btn_SimulateTimeout"]</button>
+                <button type="button" class="btn btn--sm btn--ghost" onclick="document.dispatchEvent(new CustomEvent('api:accessdenied'))">@Localizer["FP_Btn_Simulate403"]</button>
+            </div>
+            <div class="fp-src">error-states.js · events: api:networkerror / api:timeout / api:accessdenied / api:servererror</div>
+        </div>
+
+        @* Pattern 6 — ErrorBanner *@
+        <div class="fp-card">
+            <h3>@Localizer["FP_Pattern6_Title"] <span class="fp-chip fp-chip--good">@Localizer["FP_Chip_Good"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern6_Desc"]</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="error-banner error-banner--error" role="alert" aria-live="polite">
+                    <div class="error-banner__icon"><icon name="alert-octagon" /></div>
+                    <div class="error-banner__content">
+                        <div class="error-banner__title">@Localizer["FP_Sample_ServerError_Title"]</div>
+                        <div class="error-banner__message">@Localizer["FP_Sample_ServerError_Msg"]</div>
+                    </div>
+                    <div class="error-banner__actions">
+                        <button type="button" class="btn btn--sm btn--secondary error-banner__retry">@Localizer["FP_Btn_Retry"]</button>
+                        <button type="button" class="error-banner__close" aria-label="@Localizer["FP_Btn_Dismiss"]">&times;</button>
+                    </div>
+                </div>
+            </div>
+            <div class="fp-src">components.css L1995-2112 · Pages/Shared/Components/ErrorBanner</div>
+        </div>
+
+        @* Pattern 7 — ConfirmModal *@
+        <div class="fp-card">
+            <h3>@Localizer["FP_Pattern7_Title"] <span class="fp-chip fp-chip--good">@Localizer["FP_Chip_Good"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern7_Desc"]</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="modal modal--sm" role="dialog" aria-modal="true" style="position: relative; inset: auto; transform: none; margin: 0 auto;">
+                    <div class="modal__header"><h2 class="modal__title">@Localizer["FP_Sample_DeleteShift"]</h2></div>
+                    <div class="modal__body">@Localizer["FP_Sample_Irreversible"]</div>
+                    <div class="modal__footer" style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                        <button class="btn btn--secondary">@Localizer["FP_Btn_Cancel"]</button>
+                        <button class="btn btn--danger">@Localizer["FP_Btn_Delete"]</button>
+                    </div>
+                </div>
+            </div>
+            <div class="fp-src">wwwroot/js/confirm-modal.js · data-confirm-modal</div>
+        </div>
+
+        @* Pattern 8 — Inline TempData *@
+        <div class="fp-card">
+            <h3>@Localizer["FP_Pattern8_Title"] <span class="fp-chip fp-chip--warn">@Localizer["FP_Chip_Warn"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern8_Desc"]</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="alert alert-success" style="padding: 1rem; background: var(--success); color: white; border-radius: 0.5rem;">
+                    @Localizer["FP_Sample_ApiKeyOk"]
+                </div>
+                <div class="alert alert-danger" style="padding: 1rem; background: var(--danger); color: white; border-radius: 0.5rem;">
+                    @Localizer["FP_Sample_SelectScope"]
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <form method="post" asp-page-handler="TriggerInlineSuccess" style="display:inline;">
+                    <button class="btn btn--sm btn--ghost" type="submit">@Localizer["FP_Btn_ServerInlineSuccess"]</button>
+                </form>
+                <form method="post" asp-page-handler="TriggerInlineError" style="display:inline;">
+                    <button class="btn btn--sm btn--ghost" type="submit">@Localizer["FP_Btn_ServerInlineError"]</button>
+                </form>
+            </div>
+            <div class="fp-src">My/ApiKeys.cshtml L28, My/Requests.cshtml L28, …</div>
+        </div>
+
+        @* Pattern 9 — Context switch *@
+        <div class="fp-card">
+            <h3>@Localizer["FP_Pattern9_Title"] <span class="fp-chip fp-chip--warn">@Localizer["FP_Chip_Warn"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern9_Desc"]</div>
+            <div class="fp-stage" style="min-height:60px;">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div style="background: var(--primary); color: var(--primary-contrast, #fff); padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-size: 0.9rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: inline-block;">
+                    @Localizer["FP_Sample_ContextSwitch"]
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <form method="post" asp-page-handler="TriggerContextSwitch" style="display:inline;">
+                    <button class="btn btn--sm btn--ghost" type="submit">@Localizer["FP_Btn_TriggerContextSwitch"]</button>
+                </form>
+            </div>
+            <div class="fp-src">_Layout.cshtml L361-368 · TempData["ContextSwitchMessage"]</div>
+        </div>
+
+        @* Pattern 10 — Chore conflict *@
+        <div class="fp-card">
+            <h3>@Localizer["FP_Pattern10_Title"] <span class="fp-chip fp-chip--warn">@Localizer["FP_Chip_Warn"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern10_Desc"]</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; max-width: 320px;">
+                    <b>@Localizer["FP_Sample_ChoreConflict_Title"]</b>
+                    <p style="margin: 0.5rem 0; font-size: 0.85rem; color: var(--text-muted);">@Localizer["FP_Sample_ChoreConflict_Msg"]</p>
+                    <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                        <button class="btn btn--sm btn--ghost">@Localizer["FP_Btn_Cancel"]</button>
+                        <button class="btn btn--sm btn--primary">@Localizer["FP_Btn_Replace"]</button>
+                    </div>
+                </div>
+            </div>
+            <div class="fp-src">Chores/Calendar.cshtml L452 · Public/Chores.cshtml L496</div>
+        </div>
+
+        @* Pattern 11 — ModelState *@
+        <div class="fp-card">
+            <h3>@Localizer["FP_Pattern11_Title"] <span class="fp-chip fp-chip--good">@Localizer["FP_Chip_Good"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern11_Desc"]</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div>
+                    <label style="display:block; margin-bottom:0.25rem;">@Localizer["FP_Sample_EndDateLabel"]</label>
+                    <input type="date" disabled style="padding:0.4rem; border:1px solid var(--danger); border-radius:4px;" />
+                    <span style="color: var(--danger); display:block; margin-top:0.25rem; font-size:0.8rem;">@Localizer["FP_Sample_EndDateError"]</span>
+                </div>
+            </div>
+            <div class="fp-src">Pages/My/Requests.cshtml.cs L228, L327</div>
+        </div>
+
+        @* Pattern 5 — migrated *@
+        <div class="fp-card" style="border-color: var(--success); border-width: 2px;">
+            <h3>@Localizer["FP_Pattern5_Title"] <span class="fp-chip fp-chip--bad">@Localizer["FP_Chip_Bad"]</span></h3>
+            <div class="fp-meta">@Localizer["FP_Pattern5_Desc"]</div>
+            <div class="fp-stage" style="align-items:center; justify-content:center;">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="fp-native-alert">
+                    <p class="fp-native-alert__title">@Localizer["FP_NativeAlert_Host"]</p>
+                    <p class="fp-native-alert__body">@Localizer["FP_NativeAlert_Body"]</p>
+                    <button class="fp-native-alert__btn">@Localizer["FP_NativeAlert_Ok"]</button>
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <button type="button" class="btn btn--sm btn--danger" onclick="alert('@Localizer["FP_NativeAlert_Body"].Value.Replace("'", "\\'")')">@Localizer["FP_Btn_TriggerAlert"]</button>
+            </div>
+            <div class="fp-src">Historical reference · production call-sites: 0</div>
+        </div>
+
+    </div>
+
+    <div class="fp-recommend">
+        <h2>@Localizer["FP_Recommend_Title"]</h2>
+        <p>@Localizer["FP_Recommend_Summary"]</p>
+        <ul>
+            <li>@Localizer["FP_Recommend_Toast"]</li>
+            <li>@Localizer["FP_Recommend_Alert"]</li>
+            <li>@Localizer["FP_Recommend_Residual"]</li>
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function fpTriggerUndoToast() {
+            var existing = document.querySelector('.toast-undo.fp-floating');
+            if (existing) existing.remove();
+
+            var toast = document.createElement('div');
+            toast.className = 'toast toast-undo toast-undo--warning show fp-floating';
+            toast.style.position = 'fixed';
+            toast.style.bottom = '1.5rem';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.zIndex = '9999';
+
+            toast.innerHTML =
+                '<span class="toast-undo__text">@Html.Raw(Localizer["FP_Sample_ChoreDeleted"].Value.Replace("'", "\\'"))</span>' +
+                '<button type="button" class="toast-undo__btn" data-item-id="99">@Html.Raw(Localizer["FP_Btn_Undo"].Value.Replace("'", "\\'"))</button>' +
+                '<span class="toast-undo__timer">5</span>';
+
+            document.body.appendChild(toast);
+
+            var timer = toast.querySelector('.toast-undo__timer');
+            var btn = toast.querySelector('.toast-undo__btn');
+            var remaining = 5;
+            var tick = setInterval(function () {
+                remaining -= 1;
+                if (remaining <= 0) {
+                    clearInterval(tick);
+                    toast.remove();
+                } else {
+                    timer.textContent = String(remaining);
+                }
+            }, 1000);
+
+            btn.addEventListener('click', function () {
+                clearInterval(tick);
+                btn.disabled = true;
+                setTimeout(function () { toast.remove(); }, 800);
+            });
+        }
+    </script>
+}

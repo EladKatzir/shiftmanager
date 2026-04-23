@@ -123,7 +123,7 @@
                     window.AppLocalizer?.LoadingFailedTitle || 'Loading Failed'
                 );
             } else {
-                alert(window.AppLocalizer?.FailedToLoadContent || 'Failed to load content. Please try again.');
+                window.FeedbackModal.show('error', window.AppLocalizer?.FailedToLoadContent || 'Failed to load content. Please try again.');
             }
         } finally {
             // Reset trigger state

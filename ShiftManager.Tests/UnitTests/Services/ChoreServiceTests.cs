@@ -187,19 +187,23 @@ public class ChoreServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateChoreAsync_DirectorAssignee_ReturnsPermissionError()
+    public async Task CreateChoreAsync_DirectorAssignee_SucceedsWhenGrantPresent()
     {
+        // Director assignees are no longer blocked at the service layer; authorization is
+        // grant-based, so any role can be a recipient when the caller has AssignChores for
+        // the assignee's company.
         SetupGrantPermissions();
-        // Grant allows managing chores, but CanUserManageChoreForAssigneeAsync rejects Directors
         _grantServiceMock.Setup(g => g.HasGrantForCompanyAsync(CurrentUserId, "AssignChores", It.IsAny<int>()))
             .ReturnsAsync(true);
         await SeedAssigneeAsync(id: 1, role: UserRole.Director);
 
-        var (success, message, _) = await _service.CreateChoreAsync(
+        var (success, message, chore) = await _service.CreateChoreAsync(
             assigneeId: 1, date: new DateOnly(2026, 3, 15), title: "Guard Duty");
 
-        success.Should().BeFalse();
-        message.Should().Contain("cannot assign chores to this user");
+        success.Should().BeTrue();
+        message.Should().Contain("created");
+        chore.Should().NotBeNull();
+        chore!.UserId.Should().Be(1);
     }
 
     [Fact]

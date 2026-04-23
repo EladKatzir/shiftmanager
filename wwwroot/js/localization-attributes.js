@@ -206,7 +206,7 @@
         }
 
         if (attributes.length === 0) {
-            alert(L('LocAttrs_NoAttributes'));
+            window.FeedbackModal.show('warning', L('LocAttrs_NoAttributes'));
             return;
         }
 
@@ -269,7 +269,7 @@
             const updatedMsg = attributes.length === 1
                 ? L('LocAttrs_UpdatedOne')
                 : fmt(L('LocAttrs_UpdatedMany'), attributes.length);
-            alert(updatedMsg);
+            window.FeedbackModal.show('success', updatedMsg);
             closeModal();
         });
 

@@ -277,8 +277,8 @@ public class GetSignupOptionsModel : PageModel
                 {
                     // Use ValidateAndGetClaimsAsync (has 2h cache) instead of ValidateTokenAsync (no cache)
                     // to avoid live Griffin API calls on every cascading dropdown request
-                    var claims = await griffinService.ValidateAndGetClaimsAsync(griffinToken, config.BaseUrl, config.TimeoutSeconds);
-                    if (claims != null) return true;
+                    var claimsResult = await griffinService.ValidateAndGetClaimsAsync(griffinToken, config.BaseUrl, config.TimeoutSeconds);
+                    if (claimsResult.Success && claimsResult.Value != null) return true;
                 }
             }
         }

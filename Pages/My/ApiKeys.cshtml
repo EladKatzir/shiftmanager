@@ -616,7 +616,7 @@
 
     function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(function() {
-            alert('@Localizer["CopiedToClipboard"].Value.Trim()');
+            window.FeedbackModal.show('success', '@Localizer["CopiedToClipboard"].Value.Trim()');
         }, function(err) {
             console.error('Failed to copy: ', err);
         });

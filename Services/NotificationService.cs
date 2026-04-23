@@ -46,8 +46,13 @@ public interface INotificationService
     Task CreateShiftModifiedNotificationAsync(List<int> assignedUserIds, string shiftTypeName, DateOnly date, string changeDescription);
 }
 
-// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE — used only in NotifyOwnersOfAccessRequestAsync
-// to find Owner users across companies when no tenant context exists (anonymous signup flow); scoped by Role filter
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE on two paths:
+//   1) NotifyOwnersOfAccessRequestAsync — finds Owners across companies during anonymous signup
+//      flow (no tenant context); scoped by Role filter.
+//   2) GetRecipientAcrossTenantsAsync — looks up the recipient of a notification/email so cross-
+//      tenant assignments (Owner/Director/AreaAdmin acting outside their own company) actually
+//      reach the assignee. Authorization for the action that triggered the notification has
+//      already been enforced upstream by the caller.
 public class NotificationService : INotificationService
 {
     private readonly AppDbContext _db;
@@ -58,6 +63,14 @@ public class NotificationService : INotificationService
     private readonly IConfiguration _configuration;
     private readonly ILocalizationService _localization;
     private readonly ICompanyLocalizationService _companyLocalizationService;
+
+    /// <summary>
+    /// Look up a notification recipient across tenants. The tenant query filter on AppUser would
+    /// otherwise hide users in other companies from a manager acting on a cross-tenant grant
+    /// (Owner/Director/AreaAdmin), silently dropping notification emails. Read-only by design.
+    /// </summary>
+    private Task<AppUser?> GetRecipientAcrossTenantsAsync(int userId)
+        => _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
 
     public NotificationService(AppDbContext db, ILogger<NotificationService> logger, ITenantResolver tenantResolver, IMailService mailService, IStringLocalizer<SharedResources> localizer, IConfiguration configuration, ILocalizationService localization, ICompanyLocalizationService companyLocalizationService)
     {
@@ -123,7 +136,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 await _mailService.SendShiftAssignedEmailAsync(
@@ -156,7 +169,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 await _mailService.SendShiftDeletedEmailAsync(
@@ -196,7 +209,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 if (status == RequestStatus.Approved)
@@ -241,7 +254,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 if (status == RequestStatus.Approved)
@@ -279,7 +292,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 await _mailService.SendChoreAssignedEmailAsync(
@@ -308,7 +321,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 await _mailService.SendChoreCanceledEmailAsync(
@@ -341,7 +354,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 await _mailService.SendOnDutyAssignedEmailAsync(
@@ -374,7 +387,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 await _mailService.SendOnDutyCanceledEmailAsync(
@@ -404,7 +417,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 await _mailService.SendTimeOffDeletedEmailAsync(
@@ -568,7 +581,7 @@ public class NotificationService : INotificationService
     {
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user == null || string.IsNullOrWhiteSpace(user.Email))
             {
                 _logger.LogWarning("User {UserId} not found or has no email address", userId);
@@ -877,7 +890,7 @@ public class NotificationService : INotificationService
         try
         {
             // Get user
-            var user = await _db.Users.FindAsync(userId);
+            var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user == null || string.IsNullOrWhiteSpace(user.Email))
             {
                 _logger.LogWarning("User {UserId} not found or has no email", userId);
@@ -1057,7 +1070,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(primaryUserId);
+            var user = await GetRecipientAcrossTenantsAsync(primaryUserId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 await _mailService.SendTraineeAddedEmailAsync(
@@ -1122,7 +1135,7 @@ public class NotificationService : INotificationService
         // Send email notification
         try
         {
-            var user = await _db.Users.FindAsync(affectedUserId);
+            var user = await GetRecipientAcrossTenantsAsync(affectedUserId);
             if (user != null && !string.IsNullOrWhiteSpace(user.Email))
             {
                 await _mailService.SendSlotRemovedEmailAsync(
@@ -1157,7 +1170,7 @@ public class NotificationService : INotificationService
             // Send email notification
             try
             {
-                var user = await _db.Users.FindAsync(userId);
+                var user = await GetRecipientAcrossTenantsAsync(userId);
                 if (user != null && !string.IsNullOrWhiteSpace(user.Email))
                 {
                     await _mailService.SendShiftModifiedEmailAsync(

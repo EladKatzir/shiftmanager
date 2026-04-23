@@ -1549,7 +1549,7 @@ async function toggleDelegation(grantId, canGive) {
     if (result.success) {
         await loadUserGrants(selectedUserId);
     } else {
-        alert(result.error);
+        window.FeedbackModal.show('error', result.error);
     }
 }
 
@@ -1566,7 +1566,7 @@ async function revokeGrant(grantId) {
     if (result.success) {
         await loadUserGrants(selectedUserId);
     } else {
-        alert(result.error);
+        window.FeedbackModal.show('error', result.error);
     }
 }
 
@@ -1666,7 +1666,7 @@ async function submitAddGrant() {
     };
 
     if (!data.grantTypeId) {
-        alert('@Localizer["PleaseSelectGrantType"].Value.Trim()');
+        window.FeedbackModal.show('warning', '@Localizer["PleaseSelectGrantType"].Value.Trim()');
         return;
     }
 
@@ -1681,7 +1681,7 @@ async function submitAddGrant() {
         closeModal('add-grant-modal');
         await loadUserGrants(selectedUserId);
     } else {
-        alert(result.error);
+        window.FeedbackModal.show('error', result.error);
     }
 }
 
@@ -1814,7 +1814,7 @@ async function submitRoleTemplateGrant() {
             closeModal('role-grant-modal');
             await selectRoleTemplate(selectedRoleTemplateId);
         } else {
-            alert(result.error);
+            window.FeedbackModal.show('error', result.error);
         }
     } else {
         const data = {
@@ -1835,7 +1835,7 @@ async function submitRoleTemplateGrant() {
             closeModal('role-grant-modal');
             await selectRoleTemplate(selectedRoleTemplateId);
         } else {
-            alert(result.error);
+            window.FeedbackModal.show('error', result.error);
         }
     }
 }
@@ -1855,7 +1855,7 @@ async function removeRoleTemplateGrant() {
         closeModal('role-grant-modal');
         await selectRoleTemplate(selectedRoleTemplateId);
     } else {
-        alert(result.error);
+        window.FeedbackModal.show('error', result.error);
     }
 }
 

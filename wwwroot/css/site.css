@@ -4692,11 +4692,20 @@ code {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border-left: 4px solid var(--warning, #F59E0B);
+  border-inline-start: 4px solid var(--warning, #F59E0B);
+  background: var(--surface);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
 }
+
+.toast-undo--success { border-inline-start-color: var(--success, #22C55E); }
+.toast-undo--danger  { border-inline-start-color: var(--danger,  #EF4444); }
+.toast-undo--warning { border-inline-start-color: var(--warning, #F59E0B); }
+.toast-undo--info    { border-inline-start-color: var(--info,    #3B82F6); }
 
 .toast-undo__text {
   flex: 1;
+  color: var(--text);
 }
 
 .toast-undo__btn {

@@ -497,13 +497,9 @@
             const nameEn = document.getElementById('editNameEn').value;
             const nameHe = document.getElementById('editNameHe').value;
 
-            // Helper: prefer the shared acknowledgment modal; fall back to alert if not loaded.
+            // FeedbackModal is globally loaded by _Layout.cshtml.
             function showError(msg) {
-                if (window.FeedbackModal && typeof window.FeedbackModal.show === 'function') {
-                    window.FeedbackModal.show('error', msg);
-                } else {
-                    alert(msg);
-                }
+                window.FeedbackModal.show('error', msg);
             }
 
             if (!nameEn || !nameHe) {
@@ -570,7 +566,7 @@
             const endTime = document.getElementById('editEndTime').value;
 
             if (!startTime || !endTime) {
-                alert('@Localizer["Error_BothTimesRequired"].Value.Trim()');
+                window.FeedbackModal.show('warning', '@Localizer["Error_BothTimesRequired"].Value.Trim()');
                 return;
             }
 
@@ -594,11 +590,11 @@
                     closeEditTimeModal();
                     location.reload(); // Refresh to show updated times
                 } else {
-                    alert('@Localizer["Error_Prefix"].Value.Trim()' + (result.error || '@Localizer["Error_FailedToUpdate"].Value.Trim()'));
+                    window.FeedbackModal.show('error', '@Localizer["Error_Prefix"].Value.Trim()' + (result.error || '@Localizer["Error_FailedToUpdate"].Value.Trim()'));
                 }
             } catch (err) {
                 console.error('Failed to save shift times', err);
-                alert('@Localizer["Error_FailedToSaveShiftTimes"].Value.Trim()');
+                window.FeedbackModal.show('error', '@Localizer["Error_FailedToSaveShiftTimes"].Value.Trim()');
             }
         }
 

@@ -619,7 +619,7 @@ function confirmDelete(onDutyId, onDutyTitle) {
     const onDutyIdNum = parseInt(onDutyId);
     if (isNaN(onDutyIdNum) || onDutyIdNum <= 0) {
         console.error('Invalid onDutyId:', onDutyId);
-        alert(L_INVALID_ONDUTY_ID.replace('{0}', onDutyId));
+        window.FeedbackModal.show('error', L_INVALID_ONDUTY_ID.replace('{0}', onDutyId));
         return;
     }
 

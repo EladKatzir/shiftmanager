@@ -75,6 +75,7 @@ public class LanguageManagementModel : PageModel
     // Messages
     [TempData]
     public string? Success { get; set; }
+    [TempData]
     public string? Error { get; set; }
 
     public async Task OnGetAsync(string? searchTerm = null, string? filterCulture = null)

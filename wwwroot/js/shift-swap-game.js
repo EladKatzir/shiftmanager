@@ -171,7 +171,7 @@
         // Load configuration and localization
         const configLoaded = await loadGameConfiguration();
         if (!configLoaded) {
-            alert(window.AppLocalizer?.Game_CurrentlyDisabled || 'The game is currently disabled.');
+            window.FeedbackModal.show('warning', window.AppLocalizer?.Game_CurrentlyDisabled || 'The game is currently disabled.');
             return;
         }
 

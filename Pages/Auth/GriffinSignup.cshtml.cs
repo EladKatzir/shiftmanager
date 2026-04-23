@@ -150,13 +150,16 @@ public class GriffinSignupModel : LocalizedPageModel
 
         // Validate token AND get claims — needed to cross-check submitted email against token identity.
         // Hidden form fields are client-side and trivially editable; we must verify the email matches the token.
-        var griffinClaims = await _griffinService.ValidateAndGetClaimsAsync(griffinToken, griffinConfig.BaseUrl, griffinConfig.TimeoutSeconds);
-        if (griffinClaims == null)
+        var claimsResult = await _griffinService.ValidateAndGetClaimsAsync(griffinToken, griffinConfig.BaseUrl, griffinConfig.TimeoutSeconds);
+        if (!claimsResult.Success || claimsResult.Value == null)
         {
+            _logger.LogWarning("Griffin signup: token validation failed [{ErrorToken}]",
+                claimsResult.Error?.ErrorToken ?? "GRIFFIN-UNKNOWN");
             Error = _localizer["Error_GriffinTokenExpired"].Value;
             Response.Cookies.Delete("griffin.token");
             return Page();
         }
+        var griffinClaims = claimsResult.Value;
 
         // Cross-check submitted email against token claims to prevent hidden field tampering
         if (!string.Equals(Email, griffinClaims.EmailAddress, StringComparison.OrdinalIgnoreCase))

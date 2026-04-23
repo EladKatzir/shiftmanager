@@ -101,6 +101,29 @@ function handleApiError(response, error = null) {
 }
 
 /**
+ * Show an error the user must acknowledge via the global FeedbackModal.
+ * FeedbackModal is loaded in _Layout.cshtml so it is always available.
+ */
+function showAcknowledgedError(message) {
+    window.FeedbackModal.show('error', message);
+}
+
+/**
+ * Extract the server's localized `message` from a fetch Response and show it as
+ * an acknowledged error. Falls back to the supplied generic text on parse failure.
+ */
+async function showServerErrorAsync(response, fallbackMessage) {
+    var serverMessage = null;
+    try {
+        var parsed = await response.clone().json();
+        if (parsed && typeof parsed.message === 'string' && parsed.message.length > 0) {
+            serverMessage = parsed.message;
+        }
+    } catch (e) { /* non-JSON body — fall back */ }
+    showAcknowledgedError(serverMessage || fallbackMessage);
+}
+
+/**
  * Quick-add a chore
  * @param {string} date - Date in yyyy-MM-dd format
  * @param {number} assigneeId - User ID to assign the chore to
@@ -171,7 +194,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
                         });
 
                         if (!retryResponse.ok) {
-                            showToast(window.AppLocalizer.ErrorCreatingChore, 'error');
+                            await showServerErrorAsync(retryResponse, window.AppLocalizer.ErrorCreatingChore);
                             return;
                         }
                         const retryResult = await retryResponse.json();
@@ -191,18 +214,20 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
                                 triggerCalendarRefresh();
                             }
                         } else {
-                            showToast(retryResult.message || window.AppLocalizer.ErrorCreatingChore, 'error');
+                            showAcknowledgedError(retryResult.message || window.AppLocalizer.ErrorCreatingChore);
                         }
                     }
                 } else {
-                    // Shift conflict or other conflict
-                    showToast(result.message || window.AppLocalizer.ConflictDetected, 'error');
+                    // Shift conflict or other conflict — surface server's localized message in a
+                    // blocking modal so the user can read why the assignment failed.
+                    showAcknowledgedError(result.message || window.AppLocalizer.ConflictDetected);
                 }
                 return;
             }
 
-            // Other error (400, 500, etc.)
-            showToast(window.AppLocalizer.ErrorCreatingChore, 'error');
+            // Other error (400, 500, etc.) — surface the server's localized message via the
+            // shared feedback modal so the user must acknowledge it (matches quickAddOnDuty).
+            await showServerErrorAsync(response, window.AppLocalizer.ErrorCreatingChore);
             return;
         }
 
@@ -213,7 +238,7 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
             // Refresh calendar in-place to show the new chore
             triggerCalendarRefresh();
         } else {
-            showToast(result.message || window.AppLocalizer.ErrorCreatingChore, 'error');
+            showAcknowledgedError(result.message || window.AppLocalizer.ErrorCreatingChore);
         }
     } catch (error) {
         handleApiError(null, error);
@@ -335,13 +360,7 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false,
             } catch (e) { /* non-JSON body — fall back to generic message */ }
 
             var errorText = serverMessage || window.AppLocalizer.ErrorCreatingOnDuty;
-            if (window.FeedbackModal && typeof window.FeedbackModal.show === 'function') {
-                window.FeedbackModal.show('error', errorText);
-            } else {
-                // Fallback: blocking alert preserves the "must acknowledge" semantics if the modal
-                // script failed to load for any reason.
-                alert(errorText);
-            }
+            window.FeedbackModal.show('error', errorText);
             return;
         }
 
@@ -804,7 +823,7 @@ async function submitQuickAdd(date) {
 
     // Validate assignee
     if (!assigneeId) {
-        alert(window.AppLocalizer.PleaseSelectAssignee);
+        window.FeedbackModal.show('warning', window.AppLocalizer.PleaseSelectAssignee);
         return;
     }
 
@@ -814,12 +833,12 @@ async function submitQuickAdd(date) {
 
         // Validate title
         if (!title) {
-            alert(window.AppLocalizer.PleaseEnterTitle);
+            window.FeedbackModal.show('warning', window.AppLocalizer.PleaseEnterTitle);
             return;
         }
 
         if (title.length > 200) {
-            alert(window.AppLocalizer.TitleMaxLengthExceeded);
+            window.FeedbackModal.show('warning', window.AppLocalizer.TitleMaxLengthExceeded);
             return;
         }
 

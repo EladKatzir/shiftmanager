@@ -298,11 +298,11 @@
                     closeNoteModal();
                     location.reload(); // Refresh to show updated note
                 } else {
-                    alert('@Localizer["SaveNoteFailed"].Value.Trim(): ' + (result.error || '@Localizer["UnknownError"].Value.Trim()'));
+                    window.FeedbackModal.show('error', '@Localizer["SaveNoteFailed"].Value.Trim(): ' + (result.error || '@Localizer["UnknownError"].Value.Trim()'));
                 }
             } catch (err) {
                 console.error('Error saving note:', err);
-                alert('@Localizer["SaveNoteFailed"].Value.Trim()');
+                window.FeedbackModal.show('error', '@Localizer["SaveNoteFailed"].Value.Trim()');
             }
         }
 

@@ -14899,4 +14899,107 @@
   <data name="PermSim_Result" xml:space="preserve"><value>תוצאה</value></data>
   <data name="PermSim_EmptyState" xml:space="preserve"><value>הגדר את הסימולציה ולחץ הרץ</value></data>
   <data name="PermSim_Open" xml:space="preserve"><value>פתח סימולטור</value></data>
+  <data name="Auth_GriffinError_Title" xml:space="preserve">
+    <value>אימות ADFS נכשל</value>
+    <comment>Heading on the Griffin callback error page</comment>
+  </data>
+  <data name="Auth_GriffinError_RemediationLabel" xml:space="preserve">
+    <value>מה לעשות</value>
+    <comment>Label before the remediation hint on the Griffin callback error page</comment>
+  </data>
+  <data name="Auth_GriffinError_CodeHelp" xml:space="preserve">
+    <value>ציין את קוד השגיאה הזה למנהל המערכת.</value>
+  </data>
+  <data name="Auth_GriffinError_Remediation_CheckConfig" xml:space="preserve">
+    <value>בקש ממנהל המערכת לאמת את הגדרות Griffin בעמוד /Owner/GriffinConfig ולבדוק קישוריות רשת אל שרת ה-ADFS.</value>
+  </data>
+  <data name="Auth_GriffinError_Remediation_Retry" xml:space="preserve">
+    <value>נסה להתחבר שוב. אם התקלה חוזרת, פנה אל מנהל המערכת.</value>
+  </data>
+  <data name="Auth_GriffinError_Remediation_ContactAdfsAdmin" xml:space="preserve">
+    <value>פנה אל מנהל שרת ה-ADFS. הבעיה היא בצד ה-ADFS ולא ב-ShiftManager.</value>
+  </data>
+  <data name="Auth_GriffinError_Remediation_ContactSysAdmin" xml:space="preserve">
+    <value>פנה אל מנהל המערכת של ShiftManager.</value>
+  </data>
+  <!-- Feedback Pattern Preview (admin-only dev tool at /Dev/FeedbackPreview) -->
+  <data name="FP_PageTitle" xml:space="preserve"><value>תצוגה מקדימה של דפוסי משוב</value></data>
+  <data name="FP_Intro_Description" xml:space="preserve"><value>כל דפוסי ההצלחה / השגיאה / המשוב הייחודיים הקיימים במערכת, מוצגים זה לצד זה.</value></data>
+  <data name="FP_Intro_Usage" xml:space="preserve"><value>השתמש בדף זה כמקור האמת החזותי היחיד בעת החלטה באיזה דפוס לאחד.</value></data>
+  <data name="FP_Chip_Target" xml:space="preserve"><value>דפוס יעד (טוסט מאוחד)</value></data>
+  <data name="FP_Chip_Good" xml:space="preserve"><value>מקובל / מודרני</value></data>
+  <data name="FP_Chip_Warn" xml:space="preserve"><value>לא עקבי / יתיר</value></data>
+  <data name="FP_Chip_Bad" xml:space="preserve"><value>בעייתי בעבר (הועבר)</value></data>
+  <data name="FP_Label_Rendered" xml:space="preserve"><value>מוצג</value></data>
+  <data name="FP_Pattern3_Title" xml:space="preserve"><value>דפוס 3 — טוסט מאוחד (toast-undo)</value></data>
+  <data name="FP_Pattern3_Desc" xml:space="preserve"><value>טוסט מאוחד המשמש לכל סוגי ההצלחה / השגיאה / האזהרה / המידע. טיימר יורד; כפתור סגירה (או ביטול לפעולות ניתנות לביטול) תמיד נוכח.</value></data>
+  <data name="FP_Pattern3_Src" xml:space="preserve"><value>CSS: wwwroot/css/site.css L4691-4735 · JS: wwwroot/js/toast-notifications.js, wwwroot/js/calendar-inline-edit.js</value></data>
+  <data name="FP_Pattern3_Trigger" xml:space="preserve"><value>הצג טוסט עם ביטול</value></data>
+  <data name="FP_Sample_ChoreDeleted" xml:space="preserve"><value>המשימה נמחקה.</value></data>
+  <data name="FP_Sample_ShiftSaved" xml:space="preserve"><value>המשמרת נשמרה בהצלחה.</value></data>
+  <data name="FP_Sample_ServerUnreachable" xml:space="preserve"><value>לא ניתן להגיע לשרת.</value></data>
+  <data name="FP_Btn_Undo" xml:space="preserve"><value>בטל</value></data>
+  <data name="FP_Btn_Dismiss" xml:space="preserve"><value>סגור</value></data>
+  <data name="FP_Btn_Success" xml:space="preserve"><value>הצלחה</value></data>
+  <data name="FP_Btn_Error" xml:space="preserve"><value>שגיאה</value></data>
+  <data name="FP_Btn_Warning" xml:space="preserve"><value>אזהרה</value></data>
+  <data name="FP_Btn_Info" xml:space="preserve"><value>מידע</value></data>
+  <data name="FP_Pattern4_Title" xml:space="preserve"><value>דפוס 4 — FeedbackModal (חוסם)</value></data>
+  <data name="FP_Pattern4_Desc" xml:space="preserve"><value>מודל חוסם עם כפתור אישור; מונע על-ידי TempData["SuccessMessage"] / TempData["ErrorMessage"] דרך _Layout.cshtml. משמש לאישור לאחר הפניה ולכל שגיאות האימות שטופלו בעבר על-ידי alert().</value></data>
+  <data name="FP_Pattern4_Src" xml:space="preserve"><value>103 × SuccessMessage + 285 × ErrorMessage במודלי הדפים, ועוד כל מופע alert() שהועבר.</value></data>
+  <data name="FP_Sample_ItemCreated" xml:space="preserve"><value>הפריט נוצר.</value></data>
+  <data name="FP_Sample_ItemFailed" xml:space="preserve"><value>לא ניתן היה ליצור את הפריט.</value></data>
+  <data name="FP_Btn_ClientSuccess" xml:space="preserve"><value>לקוח: הצלחה</value></data>
+  <data name="FP_Btn_ClientError" xml:space="preserve"><value>לקוח: שגיאה</value></data>
+  <data name="FP_Btn_ServerSuccess" xml:space="preserve"><value>שרת: TempData הצלחה</value></data>
+  <data name="FP_Btn_ServerError" xml:space="preserve"><value>שרת: TempData שגיאה</value></data>
+  <data name="FP_Pattern2_Title" xml:space="preserve"><value>דפוס 2 — ErrorStates (רשת / ניסיון חוזר)</value></data>
+  <data name="FP_Pattern2_Desc" xml:space="preserve"><value>משטח שגיאות רשת ייעודי: באנר לא-מקוון מתמיד, טוסט עם ניסיון חוזר, דיאלוג התנגשויות.</value></data>
+  <data name="FP_Label_OfflineBanner" xml:space="preserve"><value>מוצג (באנר לא מקוון)</value></data>
+  <data name="FP_Sample_Offline" xml:space="preserve"><value>אתה כרגע לא מקוון. חלק מהיכולות עשויות להיות לא זמינות.</value></data>
+  <data name="FP_Btn_SimulateNetworkError" xml:space="preserve"><value>הדמה שגיאת רשת</value></data>
+  <data name="FP_Btn_SimulateTimeout" xml:space="preserve"><value>הדמה פקיעה</value></data>
+  <data name="FP_Btn_Simulate403" xml:space="preserve"><value>הדמה 403</value></data>
+  <data name="FP_Pattern6_Title" xml:space="preserve"><value>דפוס 6 — ErrorBanner (מתמיד)</value></data>
+  <data name="FP_Pattern6_Desc" xml:space="preserve"><value>התראה מתמידה בזרימה עם אפשרות ניסיון חוזר. נשארת עד שנסגרת ידנית. נבדלת מטוסט סביבתי.</value></data>
+  <data name="FP_Sample_ServerError_Title" xml:space="preserve"><value>שגיאת שרת</value></data>
+  <data name="FP_Sample_ServerError_Msg" xml:space="preserve"><value>טעינת הנתונים נכשלה. נסה שוב.</value></data>
+  <data name="FP_Btn_Retry" xml:space="preserve"><value>נסה שוב</value></data>
+  <data name="FP_Pattern7_Title" xml:space="preserve"><value>דפוס 7 — ConfirmModal (לפני פעולה)</value></data>
+  <data name="FP_Pattern7_Desc" xml:space="preserve"><value>החלפה דקלרטיבית ל-window.confirm(). מצורף דרך data-confirm-modal לטפסים / כפתורים.</value></data>
+  <data name="FP_Sample_DeleteShift" xml:space="preserve"><value>למחוק את המשמרת?</value></data>
+  <data name="FP_Sample_Irreversible" xml:space="preserve"><value>לא ניתן לבטל פעולה זו.</value></data>
+  <data name="FP_Btn_Cancel" xml:space="preserve"><value>בטל</value></data>
+  <data name="FP_Btn_Delete" xml:space="preserve"><value>מחק</value></data>
+  <data name="FP_Pattern8_Title" xml:space="preserve"><value>דפוס 8 — התראת TempData מוטבעת</value></data>
+  <data name="FP_Pattern8_Desc" xml:space="preserve"><value>באנר לכל דף. 26 דפים עוקפים את ה-FeedbackModal הגלובלי בדפוס זה, עם מוסכמות class לא עקביות וסגנונות מוטבעים.</value></data>
+  <data name="FP_Sample_ApiKeyOk" xml:space="preserve"><value>בקשת מפתח API נשלחה.</value></data>
+  <data name="FP_Sample_SelectScope" xml:space="preserve"><value>יש לבחור היקף תחילה.</value></data>
+  <data name="FP_Btn_ServerInlineSuccess" xml:space="preserve"><value>שרת: הצלחה מוטבעת</value></data>
+  <data name="FP_Btn_ServerInlineError" xml:space="preserve"><value>שרת: שגיאה מוטבעת</value></data>
+  <data name="FP_Pattern9_Title" xml:space="preserve"><value>דפוס 9 — טוסט החלפת הקשר</value></data>
+  <data name="FP_Pattern9_Desc" xml:space="preserve"><value>גלולה במיקום קבוע שנעלמת אוטומטית אחרי 3 שניות. מקודדת ידנית ב-_Layout.cshtml. רק 2 כותבים.</value></data>
+  <data name="FP_Sample_ContextSwitch" xml:space="preserve"><value>ההקשר הוחלף ל"חברת אלף"</value></data>
+  <data name="FP_Btn_TriggerContextSwitch" xml:space="preserve"><value>הצג טוסט החלפת הקשר</value></data>
+  <data name="FP_Pattern10_Title" xml:space="preserve"><value>דפוס 10 — דיאלוג התנגשות (משימות)</value></data>
+  <data name="FP_Pattern10_Desc" xml:space="preserve"><value>מודל מקומי לדף מונע-TempData להתנגשויות יצירת משימה. לא בשימוש חוזר.</value></data>
+  <data name="FP_Sample_ChoreConflict_Title" xml:space="preserve"><value>התנגשות משימה</value></data>
+  <data name="FP_Sample_ChoreConflict_Msg" xml:space="preserve"><value>למשמרת זו כבר יש משימה. להחליף?</value></data>
+  <data name="FP_Btn_Replace" xml:space="preserve"><value>החלף</value></data>
+  <data name="FP_Pattern11_Title" xml:space="preserve"><value>דפוס 11 — אימות ModelState</value></data>
+  <data name="FP_Pattern11_Desc" xml:space="preserve"><value>אימות שדה סטנדרטי של ASP.NET. רק 2 מופעים בפרויקט.</value></data>
+  <data name="FP_Sample_EndDateLabel" xml:space="preserve"><value>תאריך סיום</value></data>
+  <data name="FP_Sample_EndDateError" xml:space="preserve"><value>תאריך הסיום לא יכול להיות לפני תאריך ההתחלה.</value></data>
+  <data name="FP_Pattern5_Title" xml:space="preserve"><value>דפוס 5 — alert() מקורי (הועבר)</value></data>
+  <data name="FP_Pattern5_Desc" xml:space="preserve"><value>בעבר 59 מופעים של alert() חוסם, לא מעוצב, לא נגיש. כל המופעים בפרודקשן הועברו ל-FeedbackModal. נשמר כאן להשוואה היסטורית בלבד.</value></data>
+  <data name="FP_NativeAlert_Host" xml:space="preserve"><value>‎localhost אומר</value></data>
+  <data name="FP_NativeAlert_Body" xml:space="preserve"><value>מחיקת המשמרת נכשלה. נסה שוב.</value></data>
+  <data name="FP_NativeAlert_Ok" xml:space="preserve"><value>אישור</value></data>
+  <data name="FP_Btn_TriggerAlert" xml:space="preserve"><value>הצג alert() אמיתי (להדגמה בלבד)</value></data>
+  <data name="FP_Recommend_Title" xml:space="preserve"><value>סטטוס המעבר</value></data>
+  <data name="FP_Recommend_Summary" xml:space="preserve"><value>דפוס 1 (API טוסט ישן) עבר רפקטור להפקת DOM של toast-undo מאוחד, ודפוס 5 (alert מקורי) הועבר במלואו ל-FeedbackModal.show(type, msg). הדף שלמעלה משקף את המצב לאחר המעבר.</value></data>
+  <data name="FP_Recommend_Toast" xml:space="preserve"><value>ה-Toast API עבר רפקטור ב-wwwroot/js/toast-notifications.js: כל קריאת Toast.success/.error/.warning/.info כעת מפיקה את DOM ה-toast-undo עם טיימר וכפתור סגירה. כל 80+ המופעים ללא שינוי.</value></data>
+  <data name="FP_Recommend_Alert" xml:space="preserve"><value>כל קריאת alert() בפרודקשן ב-22 קבצים הוחלפה ב-window.FeedbackModal.show(type, msg). תוצאת grep ריקה מוכיחה שהמעבר הושלם.</value></data>
+  <data name="FP_Recommend_Residual" xml:space="preserve"><value>ניקוי שאריות אפשרי: דפוס 8 (divs של התראות TempData מוטבעות ב-26 דפים) — עדיין לא עקבי, אבל קוסמטי, לא נכונות UX.</value></data>
+  <data name="OwnerHub_FeedbackPreview" xml:space="preserve"><value>תצוגת משוב</value></data>
 </root>

@@ -284,7 +284,7 @@
             const newValue = input.value.trim();
 
             if (!newValue) {
-                alert(L('LangEdit_EmptyValue'));
+                window.FeedbackModal.show('warning', L('LangEdit_EmptyValue'));
                 return;
             }
 
@@ -365,7 +365,7 @@
         const draftKeys = Object.keys(drafts);
 
         if (draftKeys.length === 0) {
-            alert(L('LangEdit_NoDraftChanges'));
+            window.FeedbackModal.show('info', L('LangEdit_NoDraftChanges'));
             return;
         }
 
@@ -456,16 +456,16 @@
                 const successMsg = draftKeys.length === 1
                     ? L('LangEdit_SaveOneSuccess')
                     : fmt(L('LangEdit_SaveManySuccess'), draftKeys.length);
-                alert(successMsg);
+                window.FeedbackModal.show('success', successMsg);
                 clearDrafts();
                 exitEditMode();
                 window.location.href = '/Owner/LanguageManagement';
             } else {
-                alert(fmt(L('LangEdit_SaveError'), result.message || L('LangEdit_SaveFallback')));
+                window.FeedbackModal.show('error', fmt(L('LangEdit_SaveError'), result.message || L('LangEdit_SaveFallback')));
             }
         } catch (error) {
             Logger.error('LangEdit', 'Save failed:', error);
-            alert(fmt(L('LangEdit_SaveFailed'), error.message));
+            window.FeedbackModal.show('error', fmt(L('LangEdit_SaveFailed'), error.message));
         }
     }
 

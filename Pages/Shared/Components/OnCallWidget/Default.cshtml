@@ -285,10 +285,10 @@
                     // Reload page to reflect new config
                     window.location.reload();
                 } else {
-                    alert(result.message || '@Localizer["Error_Generic"]');
+                    window.FeedbackModal.show('error', result.message || '@Localizer["Error_Generic"]');
                 }
             } catch (err) {
-                alert('@Localizer["Error_Generic"]');
+                window.FeedbackModal.show('error', '@Localizer["Error_Generic"]');
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.classList.remove('is-loading');

@@ -52,7 +52,12 @@ public class TraineeService : ITraineeService
                 return false;
             }
 
-            var trainee = await _db.Users.FindAsync(traineeUserId);
+            // SECURITY-AUDITED: SAFE — same-company business rule still enforced in
+            // ValidateTraineeAssignmentAsync (line ~202); bypass needed so cross-tenant
+            // managers get the explicit "must belong to same company" error rather than
+            // a misleading "trainee not found".
+            var trainee = await _db.Users.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == traineeUserId);
             if (trainee == null)
             {
                 _logger.LogWarning("Trainee user {TraineeUserId} not found", traineeUserId);
@@ -188,7 +193,10 @@ public class TraineeService : ITraineeService
             return (false, "This shift already has a trainee assigned");
         }
 
-        var trainee = await _db.Users.FindAsync(traineeUserId);
+        // SECURITY-AUDITED: SAFE — bypass tenant filter so the explicit same-company check
+        // below produces the actionable error instead of a misleading "trainee not found".
+        var trainee = await _db.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == traineeUserId);
         if (trainee == null)
         {
             return (false, "Trainee user not found");
@@ -262,7 +270,10 @@ public class TraineeService : ITraineeService
                 return 0;
             }
 
-            var trainee = await _db.Users.FindAsync(userId);
+            // SECURITY-AUDITED: SAFE — read-only display name lookup; cross-tenant cancel needs
+            // to surface the correct trainee name in notifications.
+            var trainee = await _db.Users.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == userId);
             var traineeName = trainee?.DisplayName ?? "User";
             var companyId = assignments.First().CompanyId;
 

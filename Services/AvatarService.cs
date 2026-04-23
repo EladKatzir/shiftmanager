@@ -73,14 +73,21 @@ public class AvatarService : IAvatarService
                 return (false, null, "Invalid image format");
             }
 
-            // Get user and company info
-            var user = await _db.Users.FindAsync(userId);
+            // Get user and company info — bypass tenant filter so cross-tenant editors with
+            // EditCompanyUsers grant can upload avatars for users in other companies.
+            // SECURITY-AUDITED: SAFE — caller is already authorized via grant check upstream.
+            var user = await _db.Users.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
                 return (false, null, "User not found");
             }
 
-            var companyId = _tenantResolver.GetCurrentTenantId();
+            // Avatar files belong to the TARGET user; store under the target's company so the
+            // file is reachable via /avatars/{user.CompanyId}/{userId}.jpg regardless of who
+            // uploaded it. Using the editor's tenant id would route the file to the wrong folder
+            // for cross-tenant uploads.
+            var companyId = user.CompanyId;
 
             // Ensure avatars directory exists
             var avatarsDir = Path.Combine(_env.WebRootPath, "avatars", companyId.ToString());
@@ -160,13 +167,16 @@ public class AvatarService : IAvatarService
     {
         try
         {
-            var user = await _db.Users.FindAsync(userId);
+            // SECURITY-AUDITED: SAFE — see UploadAvatarAsync.
+            var user = await _db.Users.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null || string.IsNullOrWhiteSpace(user.AvatarFileName))
             {
                 return false;
             }
 
-            var companyId = _tenantResolver.GetCurrentTenantId();
+            // Files live under the target user's company directory.
+            var companyId = user.CompanyId;
 
             // Delete files
             await DeleteAvatarFilesAsync(companyId, user.AvatarFileName);

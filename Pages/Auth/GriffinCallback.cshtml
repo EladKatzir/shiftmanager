@@ -1,5 +1,8 @@
 @page
 @model ShiftManager.Pages.Auth.GriffinCallbackModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> _localizer
 @{
     ViewData["Title"] = "Griffin ADFS Authentication";
 }
@@ -15,8 +18,24 @@ if (window.location.hash && !window.location.search.includes('token=') && !windo
 }
 </script>
 <div class="container mt-5">
-    @if (!string.IsNullOrEmpty(Model.Error))
+    @if (!string.IsNullOrEmpty(Model.FailureErrorToken))
     {
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">@Model.FailureTitle</h4>
+            <p class="mb-2">@Model.FailureDetail</p>
+            <p class="mb-2"><strong>@_localizer["Auth_GriffinError_RemediationLabel"]:</strong> @Model.FailureRemediation</p>
+            <hr>
+            <p class="mb-2">
+                <code>@Model.FailureErrorToken</code>
+                <br />
+                <small class="text-muted">@_localizer["Auth_GriffinError_CodeHelp"]</small>
+            </p>
+            <a href="/Auth/Login" class="btn btn-primary"><loc key="Button_ReturnToLogin">Return to Login</loc></a>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(Model.Error))
+    {
+        @* Fallback — GriffinNotEnabled and other non-classified errors still go through the old Error channel *@
         <div class="alert alert-danger" role="alert">
             <h4 class="alert-heading"><loc key="Auth_AuthenticationFailed">Authentication Failed</loc></h4>
             <p>@Model.Error</p>

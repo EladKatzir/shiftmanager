@@ -614,7 +614,7 @@
                             }, 3000);
                         }
                     } else {
-                        alert('@Localizer["Error_PleaseUploadValidImage"].Value.Trim()');
+                        window.FeedbackModal.show('error', '@Localizer["Error_PleaseUploadValidImage"].Value.Trim()');
                     }
                 }
             }

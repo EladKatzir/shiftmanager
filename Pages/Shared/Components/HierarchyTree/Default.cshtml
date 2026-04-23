@@ -387,7 +387,7 @@
         const newName = input.value.trim();
 
         if (!newName) {
-            alert('@Localizer["NameRequired"].Value.Trim()');
+            window.FeedbackModal.show('warning', '@Localizer["NameRequired"].Value.Trim()');
             return;
         }
 
@@ -405,12 +405,12 @@
                     }
                     cancelInlineEdit();
                 } else {
-                    alert(result.message || '@Localizer["ErrorSaving"].Value.Trim()');
+                    window.FeedbackModal.show('error', result.message || '@Localizer["ErrorSaving"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error saving:', err);
-                alert('@Localizer["ErrorSaving"].Value.Trim()');
+                window.FeedbackModal.show('error', '@Localizer["ErrorSaving"].Value.Trim()');
             });
     }
 
@@ -483,12 +483,12 @@
                     if (evt.oldIndex !== evt.newIndex) {
                         evt.from.insertBefore(node, evt.from.children[evt.oldIndex]);
                     }
-                    alert(result.message || '@Localizer["ErrorReordering"].Value.Trim()');
+                    window.FeedbackModal.show('error', result.message || '@Localizer["ErrorReordering"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error reordering:', err);
-                alert('@Localizer["ErrorReordering"].Value.Trim()');
+                window.FeedbackModal.show('error', '@Localizer["ErrorReordering"].Value.Trim()');
             });
     }
 
@@ -530,12 +530,12 @@
                     // Reload the page to show new entity
                     window.location.reload();
                 } else {
-                    alert(result.message || '@Localizer["ErrorCreating"].Value.Trim()');
+                    window.FeedbackModal.show('error', result.message || '@Localizer["ErrorCreating"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error creating:', err);
-                alert('@Localizer["ErrorCreating"].Value.Trim()');
+                window.FeedbackModal.show('error', '@Localizer["ErrorCreating"].Value.Trim()');
             });
     }
 
@@ -548,12 +548,12 @@
                 if (result.success) {
                     window.location.reload();
                 } else {
-                    alert(result.message || '@Localizer["ErrorCreating"].Value.Trim()');
+                    window.FeedbackModal.show('error', result.message || '@Localizer["ErrorCreating"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error creating:', err);
-                alert('@Localizer["ErrorCreating"].Value.Trim()');
+                window.FeedbackModal.show('error', '@Localizer["ErrorCreating"].Value.Trim()');
             });
     };
 
@@ -573,12 +573,12 @@
                 if (result.success) {
                     node.remove();
                 } else {
-                    alert(result.message || '@Localizer["ErrorDeleting"].Value.Trim()');
+                    window.FeedbackModal.show('error', result.message || '@Localizer["ErrorDeleting"].Value.Trim()');
                 }
             })
             .catch(err => {
                 console.error('Error deleting:', err);
-                alert('@Localizer["ErrorDeleting"].Value.Trim()');
+                window.FeedbackModal.show('error', '@Localizer["ErrorDeleting"].Value.Trim()');
             });
     }
 
@@ -609,7 +609,7 @@
                                     if (result.success) {
                                         window.location.reload();
                                     } else {
-                                        alert(result.message || '@Localizer["ErrorMoving"].Value.Trim()');
+                                        window.FeedbackModal.show('error', result.message || '@Localizer["ErrorMoving"].Value.Trim()');
                                     }
                                 });
                         };

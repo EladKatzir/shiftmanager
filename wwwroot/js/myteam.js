@@ -152,7 +152,7 @@ async function apiCall(url, options = {}) {
         return await response.json();
     } catch (error) {
         Logger.error('MyTeam', 'API Error:', error);
-        alert(error.message || window.AppLocalizer.AnErrorOccurred);
+        window.FeedbackModal.show('error', error.message || window.AppLocalizer.AnErrorOccurred);
         throw error;
     }
 }
@@ -490,12 +490,12 @@ async function saveCalendar() {
     const name = inputEl ? inputEl.value.trim() : '';
 
     if (!name) {
-        alert(window.MyTeamLocalization.pleaseEnterCalendarName);
+        window.FeedbackModal.show('warning', window.MyTeamLocalization.pleaseEnterCalendarName);
         return;
     }
 
     if (name.length > 60) {
-        alert(window.MyTeamLocalization.calendarNameMaxLength);
+        window.FeedbackModal.show('warning', window.MyTeamLocalization.calendarNameMaxLength);
         return;
     }
 
@@ -528,7 +528,7 @@ async function saveCalendar() {
             }
 
             closeModal('modalCalendarForm');
-            alert(window.MyTeamLocalization.calendarRenamedSuccessfully);
+            window.FeedbackModal.show('success', window.MyTeamLocalization.calendarRenamedSuccessfully);
         }
     } catch (error) {
         // Error already shown by apiCall
@@ -560,7 +560,7 @@ async function confirmDeleteCalendar() {
         }
 
         closeModal('modalDeleteConfirm');
-        alert(window.MyTeamLocalization.calendarDeletedSuccessfully);
+        window.FeedbackModal.show('success', window.MyTeamLocalization.calendarDeletedSuccessfully);
     } catch (error) {
         // Error already shown by apiCall
     }
@@ -570,7 +570,7 @@ async function confirmDeleteCalendar() {
 
 async function openConfigureMembersModal() {
     if (!currentCalendarId) {
-        alert(window.MyTeamLocalization.pleaseSelectCalendar);
+        window.FeedbackModal.show('warning', window.MyTeamLocalization.pleaseSelectCalendar);
         return;
     }
 
@@ -684,7 +684,7 @@ async function saveMembers() {
 
         closeModal('modalConfigureMembers');
         loadWeekView();
-        alert(window.MyTeamLocalization.membersUpdatedSuccessfully);
+        window.FeedbackModal.show('success', window.MyTeamLocalization.membersUpdatedSuccessfully);
     } catch (error) {
         // Error already shown by apiCall
     }

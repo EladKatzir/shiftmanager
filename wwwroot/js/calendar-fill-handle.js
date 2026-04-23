@@ -405,8 +405,10 @@
             return window.showToast(message, type);
         }
 
+        // Global Toast is loaded in _Layout.cshtml; fall back to the blocking FeedbackModal
+        // if for any reason toast-notifications.js hasn't run yet.
         Logger.log('FillHandle', `[Toast ${type}]`, message);
-        alert(message);
+        window.FeedbackModal.show(type === 'success' ? 'success' : (type === 'warning' ? 'warning' : 'error'), message);
         return null;
     }
 

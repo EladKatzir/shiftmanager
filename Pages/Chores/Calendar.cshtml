@@ -514,7 +514,7 @@ function confirmDelete(choreId, choreTitle) {
     const choreIdNum = parseInt(choreId);
     if (isNaN(choreIdNum) || choreIdNum <= 0) {
         console.error('Invalid choreId:', choreId);
-        alert('Invalid chore ID: ' + choreId);
+        window.FeedbackModal.show('error', 'Invalid chore ID: ' + choreId);
         return;
     }
 

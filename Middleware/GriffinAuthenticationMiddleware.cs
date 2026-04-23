@@ -65,24 +65,28 @@ public class GriffinAuthenticationMiddleware
         try
         {
             var ipAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            var principal = await griffinService.AuthenticateUserAsync(token, griffinConfig, ipAddress);
+            var authResult = await griffinService.AuthenticateUserAsync(token, griffinConfig, ipAddress);
 
-            if (principal != null)
+            if (authResult.Success && authResult.Value != null)
             {
-                context.User = principal;
+                context.User = authResult.Value;
                 _logger.LogDebug("Griffin authentication successful for user {UserId}",
-                    principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                    authResult.Value.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             }
             else
             {
-                // Invalid token - clear cookie
+                // Invalid / expired / otherwise unusable token — clear the cookie so the
+                // next request falls back to the anonymous flow and the user gets bounced
+                // to /Auth/Login instead of looping on a dead token.
                 context.Response.Cookies.Delete("griffin.token");
-                _logger.LogWarning("Invalid Griffin token, cookie cleared");
+                _logger.LogWarning("Griffin token rejected [{ErrorToken}]: {Detail}. Cookie cleared.",
+                    authResult.Error?.ErrorToken ?? "GRIFFIN-UNKNOWN",
+                    authResult.Error?.TechnicalDetail ?? "(no error detail)");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Griffin authentication failed");
+            _logger.LogError(ex, "Griffin authentication threw unexpectedly");
             context.Response.Cookies.Delete("griffin.token");
         }
 

@@ -345,6 +345,8 @@
     </script>
     <!-- Figma capture script removed: external CDN not available in air-gapped deployment -->
 </head>
+@* FeedbackModal bridge: any PageModel may set TempData["SuccessMessage" | "ErrorMessage" | "WarningMessage" | "InfoMessage"]
+   and the script block at the bottom of this layout will open a blocking FeedbackModal on page load. *@
 <body data-role="@role" data-role-template="@roleTemplateKey"
   data-toast-success="@(TempData["SuccessMessage"])"
   data-toast-error="@(TempData["ErrorMessage"])"

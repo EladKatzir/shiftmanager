@@ -706,11 +706,11 @@ function resetForm() {
 // ── Run ──
 async function runSimulation() {
     const grantKey = document.getElementById('selectedGrantKey').value;
-    if (!grantKey) { alert('Select a grant key first.'); return; }
+    if (!grantKey) { window.FeedbackModal.show('warning', 'Select a grant key first.'); return; }
 
     const isRoleMode = currentMode === 'role';
-    if (!isRoleMode && !selectedUser) { alert('Select a user first.'); return; }
-    if (isRoleMode && !document.getElementById('roleSelect').value) { alert('Select a role template first.'); return; }
+    if (!isRoleMode && !selectedUser) { window.FeedbackModal.show('warning', 'Select a user first.'); return; }
+    if (isRoleMode && !document.getElementById('roleSelect').value) { window.FeedbackModal.show('warning', 'Select a role template first.'); return; }
 
     const body = {
         isRoleMode,

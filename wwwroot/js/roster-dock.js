@@ -432,9 +432,9 @@
             return;
         }
 
-        // Fallback: console log
+        // Fallback: FeedbackModal is globally loaded by _Layout.cshtml.
         Logger.log('RosterDock', `[Toast ${type}]`, message);
-        alert(message);
+        window.FeedbackModal.show(type === 'success' ? 'success' : (type === 'warning' ? 'warning' : 'error'), message);
     }
 
     // Initialize when DOM is ready

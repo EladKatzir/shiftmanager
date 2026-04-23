@@ -14933,4 +14933,108 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="PermSim_Result" xml:space="preserve"><value>Result</value></data>
   <data name="PermSim_EmptyState" xml:space="preserve"><value>Configure the simulation and click Run</value></data>
   <data name="PermSim_Open" xml:space="preserve"><value>Open Simulator</value></data>
+  <data name="Auth_GriffinError_Title" xml:space="preserve">
+    <value>ADFS authentication failed</value>
+    <comment>Heading on the Griffin callback error page</comment>
+  </data>
+  <data name="Auth_GriffinError_RemediationLabel" xml:space="preserve">
+    <value>What to do</value>
+    <comment>Label before the remediation hint on the Griffin callback error page</comment>
+  </data>
+  <data name="Auth_GriffinError_CodeHelp" xml:space="preserve">
+    <value>Quote this error code to your administrator.</value>
+    <comment>Helper text under the error code token</comment>
+  </data>
+  <data name="Auth_GriffinError_Remediation_CheckConfig" xml:space="preserve">
+    <value>Ask your administrator to verify the Griffin configuration at /Owner/GriffinConfig and check network connectivity to the ADFS server.</value>
+  </data>
+  <data name="Auth_GriffinError_Remediation_Retry" xml:space="preserve">
+    <value>Try signing in again. If this keeps happening, contact your system administrator.</value>
+  </data>
+  <data name="Auth_GriffinError_Remediation_ContactAdfsAdmin" xml:space="preserve">
+    <value>Contact the ADFS administrator. The issue is on the ADFS side, not in ShiftManager.</value>
+  </data>
+  <data name="Auth_GriffinError_Remediation_ContactSysAdmin" xml:space="preserve">
+    <value>Contact your ShiftManager system administrator.</value>
+  </data>
+  <!-- Feedback Pattern Preview (admin-only dev tool at /Dev/FeedbackPreview) -->
+  <data name="FP_PageTitle" xml:space="preserve"><value>Feedback Pattern Preview</value></data>
+  <data name="FP_Intro_Description" xml:space="preserve"><value>Every distinct success / error / feedback pattern currently shipping in the codebase, shown side-by-side.</value></data>
+  <data name="FP_Intro_Usage" xml:space="preserve"><value>Use this page as the single source of visual truth when deciding which pattern to consolidate onto.</value></data>
+  <data name="FP_Chip_Target" xml:space="preserve"><value>TARGET pattern (unified toast)</value></data>
+  <data name="FP_Chip_Good" xml:space="preserve"><value>Acceptable / modern</value></data>
+  <data name="FP_Chip_Warn" xml:space="preserve"><value>Inconsistent / redundant</value></data>
+  <data name="FP_Chip_Bad" xml:space="preserve"><value>Previously problematic (migrated)</value></data>
+  <data name="FP_Label_Rendered" xml:space="preserve"><value>Rendered</value></data>
+  <data name="FP_Pattern3_Title" xml:space="preserve"><value>Pattern 3 — Unified toast (toast-undo)</value></data>
+  <data name="FP_Pattern3_Desc" xml:space="preserve"><value>Unified toast visual used across all success / error / warning / info types. Timer counts down; Dismiss button (or Undo for reversible actions) always present.</value></data>
+  <data name="FP_Pattern3_Src" xml:space="preserve"><value>CSS: wwwroot/css/site.css L4691-4735 · JS: wwwroot/js/toast-notifications.js, wwwroot/js/calendar-inline-edit.js</value></data>
+  <data name="FP_Pattern3_Trigger" xml:space="preserve"><value>Trigger floating undo-toast</value></data>
+  <data name="FP_Sample_ChoreDeleted" xml:space="preserve"><value>Chore deleted.</value></data>
+  <data name="FP_Sample_ShiftSaved" xml:space="preserve"><value>Shift saved successfully.</value></data>
+  <data name="FP_Sample_ServerUnreachable" xml:space="preserve"><value>Could not reach the server.</value></data>
+  <data name="FP_Btn_Undo" xml:space="preserve"><value>Undo</value></data>
+  <data name="FP_Btn_Dismiss" xml:space="preserve"><value>Dismiss</value></data>
+  <data name="FP_Btn_Success" xml:space="preserve"><value>Success</value></data>
+  <data name="FP_Btn_Error" xml:space="preserve"><value>Error</value></data>
+  <data name="FP_Btn_Warning" xml:space="preserve"><value>Warning</value></data>
+  <data name="FP_Btn_Info" xml:space="preserve"><value>Info</value></data>
+  <data name="FP_Pattern4_Title" xml:space="preserve"><value>Pattern 4 — FeedbackModal (blocking)</value></data>
+  <data name="FP_Pattern4_Desc" xml:space="preserve"><value>Blocking modal with OK button; driven by TempData["SuccessMessage"] / TempData["ErrorMessage"] via _Layout.cshtml. Used for post-redirect acknowledgement and for all user-facing validation / error surfaces previously handled by alert().</value></data>
+  <data name="FP_Pattern4_Src" xml:space="preserve"><value>103 × SuccessMessage + 285 × ErrorMessage writes across the PageModels, plus every migrated alert() call-site.</value></data>
+  <data name="FP_Sample_ItemCreated" xml:space="preserve"><value>The item was created.</value></data>
+  <data name="FP_Sample_ItemFailed" xml:space="preserve"><value>The item could not be created.</value></data>
+  <data name="FP_Btn_ClientSuccess" xml:space="preserve"><value>Client: success</value></data>
+  <data name="FP_Btn_ClientError" xml:space="preserve"><value>Client: error</value></data>
+  <data name="FP_Btn_ServerSuccess" xml:space="preserve"><value>Server: TempData success</value></data>
+  <data name="FP_Btn_ServerError" xml:space="preserve"><value>Server: TempData error</value></data>
+  <data name="FP_Pattern2_Title" xml:space="preserve"><value>Pattern 2 — ErrorStates (network / retry)</value></data>
+  <data name="FP_Pattern2_Desc" xml:space="preserve"><value>Purpose-built network / API error surface: persistent offline banner, retryable toast, concurrency-conflict dialog.</value></data>
+  <data name="FP_Label_OfflineBanner" xml:space="preserve"><value>Rendered (offline banner)</value></data>
+  <data name="FP_Sample_Offline" xml:space="preserve"><value>You are currently offline. Some features may be unavailable.</value></data>
+  <data name="FP_Btn_SimulateNetworkError" xml:space="preserve"><value>Simulate network error</value></data>
+  <data name="FP_Btn_SimulateTimeout" xml:space="preserve"><value>Simulate timeout</value></data>
+  <data name="FP_Btn_Simulate403" xml:space="preserve"><value>Simulate 403</value></data>
+  <data name="FP_Pattern6_Title" xml:space="preserve"><value>Pattern 6 — ErrorBanner (persistent)</value></data>
+  <data name="FP_Pattern6_Desc" xml:space="preserve"><value>In-flow persistent alert with optional Retry. Stays until manually dismissed. Distinct from ambient toast.</value></data>
+  <data name="FP_Sample_ServerError_Title" xml:space="preserve"><value>Server Error</value></data>
+  <data name="FP_Sample_ServerError_Msg" xml:space="preserve"><value>Failed to load data. Please try again.</value></data>
+  <data name="FP_Btn_Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="FP_Pattern7_Title" xml:space="preserve"><value>Pattern 7 — ConfirmModal (pre-action)</value></data>
+  <data name="FP_Pattern7_Desc" xml:space="preserve"><value>Declarative replacement for window.confirm(). Attached via data-confirm-modal on forms / buttons.</value></data>
+  <data name="FP_Sample_DeleteShift" xml:space="preserve"><value>Delete shift?</value></data>
+  <data name="FP_Sample_Irreversible" xml:space="preserve"><value>This cannot be undone.</value></data>
+  <data name="FP_Btn_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="FP_Btn_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="FP_Pattern8_Title" xml:space="preserve"><value>Pattern 8 — Inline TempData alert</value></data>
+  <data name="FP_Pattern8_Desc" xml:space="preserve"><value>Per-page banner. 26 pages bypass the global FeedbackModal with this, mixing .alert-success vs .alert--success class conventions with hard-coded inline styles.</value></data>
+  <data name="FP_Sample_ApiKeyOk" xml:space="preserve"><value>API key request submitted.</value></data>
+  <data name="FP_Sample_SelectScope" xml:space="preserve"><value>Please select a scope first.</value></data>
+  <data name="FP_Btn_ServerInlineSuccess" xml:space="preserve"><value>Server: inline success</value></data>
+  <data name="FP_Btn_ServerInlineError" xml:space="preserve"><value>Server: inline error</value></data>
+  <data name="FP_Pattern9_Title" xml:space="preserve"><value>Pattern 9 — Context-switch toast</value></data>
+  <data name="FP_Pattern9_Desc" xml:space="preserve"><value>Fixed-position pill that auto-fades after 3 seconds. Hand-rolled in _Layout.cshtml. Only 2 writers.</value></data>
+  <data name="FP_Sample_ContextSwitch" xml:space="preserve"><value>Context switched to "Alef Company"</value></data>
+  <data name="FP_Btn_TriggerContextSwitch" xml:space="preserve"><value>Trigger context-switch toast</value></data>
+  <data name="FP_Pattern10_Title" xml:space="preserve"><value>Pattern 10 — Conflict dialog (Chores)</value></data>
+  <data name="FP_Pattern10_Desc" xml:space="preserve"><value>Page-local TempData-driven modal for chore-creation conflicts. Not reused elsewhere.</value></data>
+  <data name="FP_Sample_ChoreConflict_Title" xml:space="preserve"><value>Chore conflict</value></data>
+  <data name="FP_Sample_ChoreConflict_Msg" xml:space="preserve"><value>This shift already has a chore. Replace?</value></data>
+  <data name="FP_Btn_Replace" xml:space="preserve"><value>Replace</value></data>
+  <data name="FP_Pattern11_Title" xml:space="preserve"><value>Pattern 11 — ModelState validation</value></data>
+  <data name="FP_Pattern11_Desc" xml:space="preserve"><value>Standard ASP.NET inline field-validation. Only 2 call-sites in the project.</value></data>
+  <data name="FP_Sample_EndDateLabel" xml:space="preserve"><value>End date</value></data>
+  <data name="FP_Sample_EndDateError" xml:space="preserve"><value>End date cannot be before start date.</value></data>
+  <data name="FP_Pattern5_Title" xml:space="preserve"><value>Pattern 5 — Native alert() (migrated)</value></data>
+  <data name="FP_Pattern5_Desc" xml:space="preserve"><value>Previously 59 call-sites of blocking, unstyled, non-a11y browser alert(). All production call-sites have been migrated to FeedbackModal. Kept here as a historical comparison so the visual gap is obvious.</value></data>
+  <data name="FP_NativeAlert_Host" xml:space="preserve"><value>localhost says</value></data>
+  <data name="FP_NativeAlert_Body" xml:space="preserve"><value>Failed to delete shift. Please try again.</value></data>
+  <data name="FP_NativeAlert_Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="FP_Btn_TriggerAlert" xml:space="preserve"><value>Trigger real alert() (demo only)</value></data>
+  <data name="FP_Recommend_Title" xml:space="preserve"><value>Migration status</value></data>
+  <data name="FP_Recommend_Summary" xml:space="preserve"><value>Pattern 1 (legacy Toast API) has been refactored to emit the unified toast-undo DOM, and Pattern 5 (native alert) has been entirely migrated to FeedbackModal.show(type, msg). The preview page above reflects the post-migration state.</value></data>
+  <data name="FP_Recommend_Toast" xml:space="preserve"><value>Toast API was refactored in wwwroot/js/toast-notifications.js: every Toast.success/.error/.warning/.info call now emits the toast-undo DOM shape with a countdown timer and Dismiss button. All 80+ call-sites are unchanged.</value></data>
+  <data name="FP_Recommend_Alert" xml:space="preserve"><value>Every production alert() call across 22 files (JavaScript and Razor inline scripts) has been replaced with window.FeedbackModal.show(type, msg). The zero-match grep proves the migration is complete.</value></data>
+  <data name="FP_Recommend_Residual" xml:space="preserve"><value>Residual cleanup worth considering: Pattern 8 (inline TempData alert divs in 26 pages) — still inconsistent, but cosmetic, not UX-correctness.</value></data>
+  <data name="OwnerHub_FeedbackPreview" xml:space="preserve"><value>Feedback Preview</value></data>
 </root>
