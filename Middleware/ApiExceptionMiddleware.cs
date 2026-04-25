@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using ShiftManager.Models;
 
 namespace ShiftManager.Middleware;
@@ -58,6 +60,7 @@ public class ApiExceptionMiddleware
         context.Response.ContentType = "application/json";
 
         var (statusCode, response) = MapExceptionToResponse(exception, correlationId);
+        response.WithCorrelationId(correlationId);
 
         context.Response.StatusCode = statusCode;
 
@@ -111,6 +114,20 @@ public class ApiExceptionMiddleware
                 ApiErrorResponse.ConcurrencyConflict(
                     ex.Entries.FirstOrDefault()?.Entity?.GetType().Name ?? "Unknown")),
 
+            // Persistence failure (non-concurrency). Surface SQLite extended-error-code in details
+            // so ops can correlate with database constraints; the user-facing message stays generic.
+            DbUpdateException dbEx => (
+                StatusCodes.Status500InternalServerError,
+                ApiErrorResponse.Create(
+                    "DB_UPDATE_FAILED",
+                    "Saving the change failed. Please try again; if the problem persists, quote the error ID to support.",
+                    new
+                    {
+                        entityType = dbEx.Entries.FirstOrDefault()?.Entity?.GetType().Name,
+                        sqliteExtendedErrorCode = (dbEx.InnerException as SqliteException)?.SqliteExtendedErrorCode,
+                        sqliteErrorCode = (dbEx.InnerException as SqliteException)?.SqliteErrorCode
+                    })),
+
             // Operation Cancelled (client disconnected)
             OperationCanceledException => (
                 499, // Client Closed Request - Non-standard code used by nginx
@@ -120,6 +137,11 @@ public class ApiExceptionMiddleware
             TimeoutException => (
                 StatusCodes.Status504GatewayTimeout,
                 ApiErrorResponse.Create("TIMEOUT", "The operation timed out")),
+
+            // Not Implemented (caught a feature-gap regression in audit)
+            NotImplementedException => (
+                StatusCodes.Status501NotImplemented,
+                ApiErrorResponse.Create("NOT_IMPLEMENTED", "This feature is not yet implemented")),
 
             // Default - Internal Server Error
             // Never expose stack traces or internal exception details

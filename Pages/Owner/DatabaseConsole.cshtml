@@ -24,19 +24,7 @@
         <p class="page-subtitle"><loc key="Owner_DatabaseConsole_Subtitle" /></p>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-error">
-            <strong><icon name="x" /> Error:</strong> @Model.Error
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.QueryResult))
-    {
-        <div class="alert alert-success">
-            <strong><icon name="check" /> Success:</strong> @Model.QueryResult
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     <div class="console-layout">
         <div class="console-sidebar">

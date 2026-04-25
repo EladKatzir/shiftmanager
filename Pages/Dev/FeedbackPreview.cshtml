@@ -139,6 +139,105 @@
             <div class="fp-src">@Localizer["FP_Pattern4_Src"]</div>
         </div>
 
+        @* Pattern 4b — Enhanced FeedbackModal (errorId + copy) — for 500 server errors *@
+        <div class="fp-card">
+            <h3>Pattern 4b — Enhanced FeedbackModal: errorId + copy <span class="fp-chip fp-chip--target">@Localizer["FP_Chip_Target"]</span></h3>
+            <div class="fp-meta">Adds a copyable correlation ID (X-Correlation-Id) to the modal so users can quote it to support. Used for 500 errors and any unhandled-server-error path.</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="modal modal--sm modal--feedback modal--feedback-error" role="dialog" aria-modal="true" style="position: relative; inset: auto; transform: none; margin: 0 auto; box-shadow: var(--shadow-lg);">
+                    <div class="modal__header"><h2 class="modal__title">@Localizer["Feedback_TypeLabel_Error"]</h2></div>
+                    <div class="modal__body">
+                        <div class="feedback-icon"><icon name="alert-octagon" /></div>
+                        <div class="feedback-message">An unexpected error occurred. Quote the error ID to support if the problem persists.</div>
+                        <div class="feedback-error-id">
+                            <span class="feedback-error-id__label">@Localizer["Feedback_ErrorId"]:</span>
+                            <code class="feedback-error-id__value">a1b2c3d4-e5f6-7890</code>
+                            <button type="button" class="feedback-error-id__copy btn btn-sm">@Localizer["Feedback_CopyErrorId"]</button>
+                        </div>
+                    </div>
+                    <div class="modal__footer"><button class="btn btn-primary" data-action="ok">@Localizer["FP_NativeAlert_Ok"]</button></div>
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <button type="button" class="btn btn--sm btn--danger" onclick="FeedbackModal.show('error','An unexpected error occurred. Quote the error ID to support if the problem persists.',{errorId:'a1b2c3d4-e5f6-7890'})">Trigger 500 with errorId</button>
+            </div>
+            <div class="fp-src">FeedbackModal.show(type, msg, { errorId })</div>
+        </div>
+
+        @* Pattern 4c — Enhanced FeedbackModal (concurrency conflict 409) with detail panel *@
+        <div class="fp-card">
+            <h3>Pattern 4c — Enhanced FeedbackModal: detail panel <span class="fp-chip fp-chip--target">@Localizer["FP_Chip_Target"]</span></h3>
+            <div class="fp-meta">Collapsible detail panel for multi-line context (validation issue list, concurrency conflict diagnostics, dev-only stack trace).</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="modal modal--sm modal--feedback modal--feedback-error" role="dialog" aria-modal="true" style="position: relative; inset: auto; transform: none; margin: 0 auto; box-shadow: var(--shadow-lg);">
+                    <div class="modal__header"><h2 class="modal__title">@Localizer["Feedback_TypeLabel_Error"]</h2></div>
+                    <div class="modal__body">
+                        <div class="feedback-icon"><icon name="git-merge" /></div>
+                        <div class="feedback-message">This record was modified by another user. Please reload and try again.</div>
+                        <details class="feedback-detail">
+                            <summary class="feedback-detail__summary">@Localizer["Feedback_ShowDetails"]</summary>
+                            <pre class="feedback-detail__content">entityType: Shift
+entityId: 4127
+conflictType: concurrent_edit
+modifiedBy: m.cohen@@shifty.test
+modifiedAt: 2026-04-25T13:42:11Z</pre>
+                        </details>
+                    </div>
+                    <div class="modal__footer"><button class="btn btn-primary" data-action="ok">@Localizer["FP_NativeAlert_Ok"]</button></div>
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <button type="button" class="btn btn--sm btn--danger" onclick="FeedbackModal.show('error','This record was modified by another user. Please reload and try again.',{detail:'entityType: Shift\nentityId: 4127\nconflictType: concurrent_edit\nmodifiedBy: m.cohen@@shifty.test\nmodifiedAt: 2026-04-25T13:42:11Z',errorId:'conflict-9f3c'})">Trigger 409 with detail</button>
+            </div>
+            <div class="fp-src">FeedbackModal.show(type, msg, { detail, errorId })</div>
+        </div>
+
+        @* Pattern 4d — Enhanced FeedbackModal (rate-limit 429) with retry callback *@
+        <div class="fp-card">
+            <h3>Pattern 4d — Enhanced FeedbackModal: retry callback <span class="fp-chip fp-chip--target">@Localizer["FP_Chip_Target"]</span></h3>
+            <div class="fp-meta">Optional retry button — closes the modal and invokes the supplied callback. Used for 429 rate-limit responses with retryAfter, and for transient network failures.</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="modal modal--sm modal--feedback modal--feedback-warning" role="dialog" aria-modal="true" style="position: relative; inset: auto; transform: none; margin: 0 auto; box-shadow: var(--shadow-lg);">
+                    <div class="modal__header"><h2 class="modal__title">@Localizer["FP_Btn_Warning"]</h2></div>
+                    <div class="modal__body">
+                        <div class="feedback-icon"><icon name="clock" /></div>
+                        <div class="feedback-message">Rate limit exceeded. Retry after 30 seconds.</div>
+                    </div>
+                    <div class="modal__footer">
+                        <button class="btn btn-secondary" data-action="retry">@Localizer["Feedback_Retry"]</button>
+                        <button class="btn btn-primary" data-action="ok">@Localizer["FP_NativeAlert_Ok"]</button>
+                    </div>
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <button type="button" class="btn btn--sm btn--ghost" onclick="FeedbackModal.show('warning','Rate limit exceeded. Retry after 30 seconds.',{retry:function(){Toast.info('Retry callback invoked');}})">Trigger 429 with retry</button>
+            </div>
+            <div class="fp-src">FeedbackModal.show(type, msg, { retry: function() { ... } })</div>
+        </div>
+
+        @* Pattern 4e — Toast with errorId — for ambient error notifications *@
+        <div class="fp-card">
+            <h3>Pattern 4e — Toast with errorId <span class="fp-chip fp-chip--target">@Localizer["FP_Chip_Target"]</span></h3>
+            <div class="fp-meta">Ambient toast variant carrying a correlation ID inline. Use for non-blocking errors where the user can keep working but might want to report the failure later.</div>
+            <div class="fp-stage">
+                <span class="fp-stage-label">@Localizer["FP_Label_Rendered"]</span>
+                <div class="toast toast-undo toast-undo--danger show">
+                    <span class="toast-undo__text">Partial load: 3 of 12 widgets failed to refresh.</span>
+                    <span class="toast-undo__error-id" title="@Localizer["Feedback_ErrorId"]">partial-load-7e2a</span>
+                    <button type="button" class="toast-undo__btn" data-action="dismiss">@Localizer["FP_Btn_Dismiss"]</button>
+                    <span class="toast-undo__timer"></span>
+                </div>
+            </div>
+            <div class="fp-triggers">
+                <button type="button" class="btn btn--sm btn--ghost" onclick="Toast.error('Partial load: 3 of 12 widgets failed to refresh.',{errorId:'partial-load-7e2a'})">Trigger toast with errorId</button>
+                <button type="button" class="btn btn--sm btn--ghost" onclick="Toast.warning('Network slower than usual.',{title:'Network',errorId:'net-3f9b'})">Toast with title + errorId</button>
+            </div>
+            <div class="fp-src">Toast.error(msg, { errorId }) / Toast.error(msg, { title, errorId })</div>
+        </div>
+
         @* Pattern 2 — ErrorStates *@
         <div class="fp-card">
             <h3>@Localizer["FP_Pattern2_Title"] <span class="fp-chip fp-chip--good">@Localizer["FP_Chip_Good"]</span></h3>

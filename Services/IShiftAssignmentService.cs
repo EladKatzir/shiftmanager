@@ -1,24 +1,9 @@
 namespace ShiftManager.Services;
 
-/// <summary>
-/// Severity of a validation issue.
-/// Errors are hard blocks; Warnings can be overridden with a signed token.
-/// </summary>
-public enum ValidationSeverity { Error, Warning }
-
-/// <summary>
-/// Category of validation check for UI grouping and override scoping.
-/// </summary>
-public enum ValidationCategory { JobType, ShiftGrouping, WeeklyHours, RestHours, Trainee, Concurrency, TechShift, Overlap, TimeOff, ChoreConflict, OnDutyConflict, HomeConflict }
-
-/// <summary>
-/// A single validation issue found during shift assignment checks.
-/// </summary>
-public record ValidationIssue(
-    string Key,                    // e.g. "JOB_TYPE_MISMATCH"
-    string Message,                // localized display message
-    ValidationSeverity Severity,
-    ValidationCategory Category);
+// ValidationIssue, ValidationSeverity, and ValidationCategory previously lived here.
+// They were promoted to ShiftManager.Models.Validation as part of the project-wide
+// error-handling overhaul so non-shift services can use them. The types are still
+// usable here unqualified thanks to the global using in GlobalUsings.cs.
 
 /// <summary>
 /// Result of validating a shift assignment.

@@ -1,4 +1,5 @@
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
 
 namespace ShiftManager.Services;
 
@@ -73,4 +74,49 @@ public interface IFeatureFlagService
     /// This ensures the sync IsEnabled() method has data to work with immediately.
     /// </summary>
     Task WarmCacheAsync();
+
+    // ==================== Diagnostic (OperationResult) variants ====================
+    //
+    // These methods are ADDITIVE companions to the Task<bool> APIs above. They wrap
+    // the same underlying flag-resolution logic but return a structured
+    // <see cref="OperationResult{T}"/> so callers can distinguish "flag is off" from
+    // "we could not check the flag because the database is down".
+    //
+    // The audit flagged FeatureFlagService for "silent fallback to false on DB error".
+    // Routine flag checks (30+ callers) intentionally keep the bool contract because
+    // flags are inherently on/off — a false on transient DB failure is acceptable for
+    // gate logic. Admin and diagnostic surfaces, however, need to surface the error
+    // so operators know flags are degraded. Those surfaces use the Try* methods below.
+
+    /// <summary>
+    /// Diagnostic variant of <see cref="IsEnabledAsync"/> that returns a structured
+    /// <see cref="OperationResult{T}"/>.
+    /// <list type="bullet">
+    ///   <item><c>Ok(true)</c> / <c>Ok(false)</c> on a successful resolution.</item>
+    ///   <item><c>Fail("Error_FeatureFlagService_DatabaseError", ...)</c> when the
+    ///   underlying database query throws. The non-diagnostic <see cref="IsEnabledAsync"/>
+    ///   silently treats the flag as disabled in that case; this method makes the
+    ///   failure visible to admin/diagnostic callers.</item>
+    /// </list>
+    /// </summary>
+    /// <param name="flagName">The name of the feature flag (e.g., "FF_WIDGETS_ENABLED")</param>
+    /// <param name="userId">Optional user ID for user-specific check</param>
+    /// <param name="companyId">Optional company ID for company-specific check</param>
+    Task<OperationResult<bool>> TryIsEnabledAsync(string flagName, int? userId = null, int? companyId = null);
+
+    /// <summary>
+    /// Company-scoped diagnostic variant of <see cref="IsEnabledAsync"/>. Same semantics
+    /// as <see cref="TryIsEnabledAsync"/>, but pre-binds <paramref name="companyId"/> for
+    /// admin pages that already have a company context.
+    /// </summary>
+    Task<OperationResult<bool>> TryIsEnabledForCompanyAsync(string flagName, int companyId);
+
+    /// <summary>
+    /// Diagnostic variant of <see cref="GetAllFlagsAsync"/> intended for admin pages.
+    /// Returns <c>Ok(list)</c> on success, or
+    /// <c>Fail("Error_FeatureFlagService_DatabaseError", ...)</c> if the underlying
+    /// database query throws. Unlike <see cref="GetAllFlagsAsync"/>, callers can
+    /// distinguish "no flags configured" from "could not load flags".
+    /// </summary>
+    Task<OperationResult<List<FeatureFlag>>> TryListAllFlagsAsync();
 }

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
+using ShiftManager.Models;
 using System.Net;
 
 namespace ShiftManager.Middleware;
@@ -165,7 +166,9 @@ public class RateLimitingMiddleware
     }
 
     /// <summary>
-    /// Writes a 429 Too Many Requests response with rate limit details.
+    /// Writes a standardized 429 Too Many Requests response using the project-native
+    /// ApiErrorResponse envelope. Carries correlation ID, retry-after seconds, and the
+    /// existing rate-limit headers so clients can implement smart back-off.
     /// </summary>
     private async Task WriteRateLimitResponse(HttpContext context, int limit, int remaining,
         long resetTimestamp, int retryAfterSeconds)
@@ -179,15 +182,9 @@ public class RateLimitingMiddleware
         context.Response.Headers["X-RateLimit-Remaining"] = remaining.ToString();
         context.Response.Headers["X-RateLimit-Reset"] = resetTimestamp.ToString();
 
-        var response = new
-        {
-            error = new
-            {
-                code = "RATE_LIMIT_EXCEEDED",
-                message = "Too many requests. Please try again later.",
-                retryAfter = retryAfterSeconds
-            }
-        };
+        var correlationId = context.Items["CorrelationId"]?.ToString() ?? context.TraceIdentifier;
+        var response = ApiErrorResponse.RateLimitExceeded(retryAfterSeconds)
+            .WithCorrelationId(correlationId);
 
         await context.Response.WriteAsJsonAsync(response);
     }

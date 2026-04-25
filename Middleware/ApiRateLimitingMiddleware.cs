@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using ShiftManager.Models;
 using ShiftManager.Models.Api;
 
 namespace ShiftManager.Middleware;
@@ -65,16 +66,19 @@ public class ApiRateLimitingMiddleware
     }
 
     /// <summary>
-    /// Writes a 429 Too Many Requests response
+    /// Writes a standardized 429 Too Many Requests response using the project-native
+    /// ApiErrorResponse envelope with correlation ID for support handoffs.
     /// </summary>
     private async Task WriteRateLimitResponse(HttpContext context, int retryAfterSeconds)
     {
         context.Response.StatusCode = 429;
-        context.Response.ContentType = "application/problem+json";
+        context.Response.ContentType = "application/json";
         context.Response.Headers["Retry-After"] = retryAfterSeconds.ToString();
 
-        var problem = ApiProblemDetails.RateLimitExceeded(retryAfterSeconds, context.Request.Path);
-        await context.Response.WriteAsJsonAsync(problem);
+        var correlationId = context.Items["CorrelationId"]?.ToString() ?? context.TraceIdentifier;
+        var response = ApiErrorResponse.RateLimitExceeded(retryAfterSeconds)
+            .WithCorrelationId(correlationId);
+        await context.Response.WriteAsJsonAsync(response);
     }
 
     /// <summary>

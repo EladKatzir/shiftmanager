@@ -82,8 +82,7 @@ public class ProfileModel : LocalizedPageModel
 
     public string? AvatarUrl { get; set; }
     public string? InitialsForAvatar { get; set; }
-    public string? SuccessMessage { get; set; }
-    public string? ErrorMessage { get; set; }
+    // SuccessMessage / ErrorMessage removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
 
     public List<string> SkillsList { get; set; } = new();
     public List<string> CertificationsList { get; set; } = new();
@@ -132,70 +131,70 @@ public class ProfileModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (string.IsNullOrWhiteSpace(DisplayName))
         {
-            ErrorMessage = _localizer["Profile_Error_DisplayNameRequired"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_DisplayNameRequired"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
 
         if (DisplayName.Length > 200)
         {
-            ErrorMessage = _localizer["Profile_Error_DisplayNameTooLong"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_DisplayNameTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(PreferredName) && PreferredName.Length > 100)
         {
-            ErrorMessage = _localizer["Profile_Error_PreferredNameTooLong"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_PreferredNameTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(Phone) && Phone.Length > 50)
         {
-            ErrorMessage = _localizer["Profile_Error_PhoneTooLong"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_PhoneTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(City) && City.Length > 100)
         {
-            ErrorMessage = _localizer["Profile_Error_CityTooLong"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_CityTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(Skills) && Skills.Length > 5000)
         {
-            ErrorMessage = _localizer["Profile_Error_SkillsTooLong"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_SkillsTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(Certifications) && Certifications.Length > 5000)
         {
-            ErrorMessage = _localizer["Profile_Error_CertificationsTooLong"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_CertificationsTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactName) && EmergencyContactName.Length > 200)
         {
-            ErrorMessage = _localizer["Profile_Error_EmergencyContactNameTooLong"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_EmergencyContactNameTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactPhone) && EmergencyContactPhone.Length > 50)
         {
-            ErrorMessage = _localizer["Profile_Error_EmergencyContactPhoneTooLong"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_EmergencyContactPhoneTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
 
         if (!string.IsNullOrWhiteSpace(EmergencyContactRelation) && EmergencyContactRelation.Length > 100)
         {
-            ErrorMessage = _localizer["Profile_Error_EmergencyContactRelationTooLong"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_EmergencyContactRelationTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
@@ -206,7 +205,7 @@ public class ProfileModel : LocalizedPageModel
             var (success, fileName, error) = await _avatarService.UploadAvatarAsync(userId, AvatarFile);
             if (!success)
             {
-                ErrorMessage = error;
+                TempData["ErrorMessage"] = error; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await LoadUserDataAsync(user);
                 return Page();
             }
@@ -218,7 +217,7 @@ public class ProfileModel : LocalizedPageModel
         // Validate HireDate for Owner
         if (isOwner && HireDate.HasValue && HireDate.Value > DateOnly.FromDateTime(DateTime.Today))
         {
-            ErrorMessage = _localizer["Profile_Error_HireDateFuture"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_HireDateFuture"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
@@ -250,7 +249,7 @@ public class ProfileModel : LocalizedPageModel
 
         if (!updateSuccess)
         {
-            ErrorMessage = updateError;
+            TempData["ErrorMessage"] = updateError; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadUserDataAsync(user);
             return Page();
         }
@@ -258,9 +257,9 @@ public class ProfileModel : LocalizedPageModel
         await _auditLogService.LogAsync("ProfileUpdated", "User", userId,
             $"Updated profile for user '{DisplayName}'");
 
-        SuccessMessage = isOwner && HireDate != user.HireDate
+        TempData["SuccessMessage"] = (isOwner && HireDate != user.HireDate
             ? _localizer["Profile_Success_UpdatedWithProfessionalInfo"]
-            : _localizer["Profile_Success_Updated"];
+            : _localizer["Profile_Success_Updated"]).Value;
 
         // Reload user data
         user = await _db.Users.FindAsync(userId);
@@ -281,11 +280,11 @@ public class ProfileModel : LocalizedPageModel
 
         if (success)
         {
-            SuccessMessage = _localizer["Profile_Success_AvatarDeleted"];
+            TempData["SuccessMessage"] = _localizer["Profile_Success_AvatarDeleted"].Value;
         }
         else
         {
-            ErrorMessage = _localizer["Profile_Error_AvatarDeleteFailed"];
+            TempData["ErrorMessage"] = _localizer["Profile_Error_AvatarDeleteFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
 
         var user = await _db.Users.FindAsync(userId);

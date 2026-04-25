@@ -39,8 +39,7 @@ public class BackupModel : PageModel
 
     public List<BackupFileInfo> Backups { get; set; } = new();
     public List<BackupFileInfo> SystemBackups { get; set; } = new();
-    public string? Success { get; set; }
-    public string? Error { get; set; }
+    // Success / Error properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
     public ExportManifest? LastExportInfo { get; set; }
     public bool ShowRestoreBanner { get; set; }
 
@@ -93,7 +92,7 @@ public class BackupModel : PageModel
 
             if (!System.IO.File.Exists(dbPath))
             {
-                Error = "Database file not found.";
+                TempData["ErrorMessage"] = "Database file not found."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 LoadBackups();
                 return Page();
             }
@@ -115,7 +114,7 @@ public class BackupModel : PageModel
                 $"Database backup created: {backupFileName}",
                 null);
 
-            Success = $"Backup created successfully: {backupFileName}";
+            TempData["SuccessMessage"] = $"Backup created successfully: {backupFileName}";
             _logger.LogInformation("Database backup created: {FileName}", backupFileName);
 
             LoadBackups();
@@ -124,7 +123,7 @@ public class BackupModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating database backup");
-            Error = "An unexpected error occurred. Please try again.";
+            TempData["ErrorMessage"] = "An unexpected error occurred. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             LoadBackups();
             return Page();
         }
@@ -141,20 +140,21 @@ public class BackupModel : PageModel
 
             if (result.Success)
             {
-                Success = $"Deployment export created successfully. Database: {result.Manifest!.Database.SizeBytes / 1024}KB, " +
+                TempData["SuccessMessage"] = $"Deployment export created successfully. Database: {result.Manifest!.Database.SizeBytes / 1024}KB, " +
                           $"Avatars: {result.Manifest.AvatarCount}, Feedback images: {result.Manifest.FeedbackImageCount}, " +
                           $"DataProtection keys: {result.Manifest.DataProtectionKeyCount}. " +
                           $"Export saved to {DeploymentExportService.ExportPath}";
             }
             else
             {
-                Error = result.ErrorMessage ?? "Export failed.";
+                TempData["ErrorMessage"] = result.ErrorMessage ?? "Export failed.";
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating deployment export");
-            Error = "An unexpected error occurred during export.";
+            TempData["ErrorMessage"] = "An unexpected error occurred during export."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
 
         LoadBackups();
@@ -170,7 +170,7 @@ public class BackupModel : PageModel
 
             if (string.IsNullOrWhiteSpace(backupFileName))
             {
-                Error = "Please specify a backup file.";
+                TempData["ErrorMessage"] = "Please specify a backup file."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 LoadBackups();
                 return Page();
             }
@@ -178,7 +178,7 @@ public class BackupModel : PageModel
             var backupFilePath = GetValidatedBackupPath(backupFileName);
             if (backupFilePath == null || !System.IO.File.Exists(backupFilePath))
             {
-                Error = "Backup file not found.";
+                TempData["ErrorMessage"] = "Backup file not found."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 LoadBackups();
                 return Page();
             }
@@ -245,7 +245,7 @@ public class BackupModel : PageModel
                 $"Database restored from backup: {backupFileName}",
                 $"Pre-restore backup saved as: {Path.GetFileName(preRestoreBackup)}");
 
-            Success = $"Database restored from backup: {backupFileName}. IMPORTANT: Restart the application now — recycle the IIS App Pool or restart the service (or stop and restart 'dotnet run' in development).";
+            TempData["SuccessMessage"] = $"Database restored from backup: {backupFileName}. IMPORTANT: Restart the application now — recycle the IIS App Pool or restart the service (or stop and restart 'dotnet run' in development).";
             _logger.LogWarning("Database restored from backup: {FileName}. Application restart required.", backupFileName);
 
             LoadBackups();
@@ -254,7 +254,7 @@ public class BackupModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error restoring database backup");
-            Error = "An unexpected error occurred. Please try again.";
+            TempData["ErrorMessage"] = "An unexpected error occurred. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             LoadBackups();
             return Page();
         }
@@ -268,7 +268,7 @@ public class BackupModel : PageModel
 
             if (string.IsNullOrWhiteSpace(backupFileName))
             {
-                Error = "Please specify a backup file.";
+                TempData["ErrorMessage"] = "Please specify a backup file."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 LoadBackups();
                 return Page();
             }
@@ -276,7 +276,7 @@ public class BackupModel : PageModel
             var backupFilePath = GetValidatedBackupPath(backupFileName);
             if (backupFilePath == null || !System.IO.File.Exists(backupFilePath))
             {
-                Error = "Backup file not found.";
+                TempData["ErrorMessage"] = "Backup file not found."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 LoadBackups();
                 return Page();
             }
@@ -292,7 +292,7 @@ public class BackupModel : PageModel
                 $"Backup deleted: {backupFileName}",
                 null);
 
-            Success = $"Backup deleted: {backupFileName}";
+            TempData["SuccessMessage"] = $"Backup deleted: {backupFileName}";
             _logger.LogInformation("Backup deleted: {FileName}", backupFileName);
 
             LoadBackups();
@@ -301,7 +301,7 @@ public class BackupModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting backup");
-            Error = "An unexpected error occurred. Please try again.";
+            TempData["ErrorMessage"] = "An unexpected error occurred. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             LoadBackups();
             return Page();
         }

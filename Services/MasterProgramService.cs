@@ -1,13 +1,20 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
+using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
 /// <summary>
 /// Service for managing MasterPrograms (collections of Programs).
 /// Orchestrates ShiftProgramService to generate shifts from multiple Programs at once.
+///
+/// Migrated to <see cref="OperationResult"/> / <see cref="OperationResult{T}"/> as part of the
+/// project-wide error-handling overhaul. All errors return localized messages via
+/// <see cref="IStringLocalizer{SharedResources}"/> with keys <c>Error_MasterProgramService_*</c>.
 /// </summary>
 public class MasterProgramService : IMasterProgramService
 {
@@ -16,24 +23,27 @@ public class MasterProgramService : IMasterProgramService
     private readonly ITenantResolver _tenantResolver;
     private readonly IShiftProgramService _shiftProgramService;
     private readonly ICompanyLocalizationService _localizationService;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public MasterProgramService(
         AppDbContext db,
         ILogger<MasterProgramService> logger,
         ITenantResolver tenantResolver,
         IShiftProgramService shiftProgramService,
-        ICompanyLocalizationService localizationService)
+        ICompanyLocalizationService localizationService,
+        IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _logger = logger;
         _tenantResolver = tenantResolver;
         _shiftProgramService = shiftProgramService;
         _localizationService = localizationService;
+        _localizer = localizer;
     }
 
     // ==================== CRUD Operations ====================
 
-    public async Task<MasterProgram> CreateMasterProgramAsync(
+    public async Task<OperationResult<MasterProgram>> CreateMasterProgramAsync(
         int companyId,
         string name,
         string? description,
@@ -42,26 +52,33 @@ public class MasterProgramService : IMasterProgramService
     {
         _logger.LogInformation(
             "Creating MasterProgram '{Name}' with {Count} Programs in Company {CompanyId}",
-            name, programIds.Count, companyId);
+            name, programIds?.Count ?? 0, companyId);
 
-        // Validate at least one Program
-        if (programIds == null || programIds.Count == 0)
+        if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentException("At least one Program must be included", nameof(programIds));
+            return OperationResult<MasterProgram>.Fail(
+                "Error_MasterProgramService_NameRequired",
+                _localizer["Error_MasterProgramService_NameRequired"].Value);
         }
 
-        // Validate all Programs exist and belong to company
+        if (programIds == null || programIds.Count == 0)
+        {
+            return OperationResult<MasterProgram>.Fail(
+                "Error_MasterProgramService_NoPrograms",
+                _localizer["Error_MasterProgramService_NoPrograms"].Value);
+        }
+
         var programs = await _db.ShiftPrograms
             .Where(p => programIds.Contains(p.Id) && p.CompanyId == companyId)
             .ToListAsync();
 
         if (programs.Count != programIds.Count)
         {
-            throw new InvalidOperationException(
-                $"One or more Programs not found or do not belong to Company {companyId}");
+            return OperationResult<MasterProgram>.Fail(
+                "Error_MasterProgramService_ProgramsNotInCompany",
+                _localizer["Error_MasterProgramService_ProgramsNotInCompany"].Value);
         }
 
-        // Create MasterProgram
         var masterProgram = new MasterProgram
         {
             CompanyId = companyId,
@@ -75,9 +92,8 @@ public class MasterProgramService : IMasterProgramService
         };
 
         _db.MasterPrograms.Add(masterProgram);
-        await _db.SaveChangesAsync(); // Get ID
+        await _db.SaveChangesAsync();
 
-        // Create MasterProgramItems (with sort order based on input order)
         for (int i = 0; i < programIds.Count; i++)
         {
             var item = new MasterProgramItem
@@ -91,8 +107,8 @@ public class MasterProgramService : IMasterProgramService
 
         await _db.SaveChangesAsync();
 
-        // Reload with navigation properties
-        return await GetMasterProgramAsync(masterProgram.Id) ?? masterProgram;
+        var reloaded = await GetMasterProgramAsync(masterProgram.Id) ?? masterProgram;
+        return OperationResult<MasterProgram>.Ok(reloaded);
     }
 
     public async Task<MasterProgram?> GetMasterProgramAsync(int masterProgramId)
@@ -125,7 +141,7 @@ public class MasterProgramService : IMasterProgramService
             .ToListAsync();
     }
 
-    public async Task UpdateMasterProgramAsync(
+    public async Task<OperationResult> UpdateMasterProgramAsync(
         int masterProgramId,
         string name,
         string? description,
@@ -134,39 +150,47 @@ public class MasterProgramService : IMasterProgramService
     {
         _logger.LogInformation("Updating MasterProgram {MasterProgramId}", masterProgramId);
 
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return OperationResult.Fail(
+                "Error_MasterProgramService_NameRequired",
+                _localizer["Error_MasterProgramService_NameRequired"].Value);
+        }
+
         var masterProgram = await _db.MasterPrograms
             .Include(mp => mp.Items)
             .FirstOrDefaultAsync(mp => mp.Id == masterProgramId);
 
         if (masterProgram == null)
         {
-            throw new InvalidOperationException($"MasterProgram {masterProgramId} not found");
+            return OperationResult.Fail(
+                "Error_MasterProgramService_NotFound",
+                _localizer["Error_MasterProgramService_NotFound"].Value);
         }
 
-        // Validate at least one Program
         if (programIds == null || programIds.Count == 0)
         {
-            throw new ArgumentException("At least one Program must be included", nameof(programIds));
+            return OperationResult.Fail(
+                "Error_MasterProgramService_NoPrograms",
+                _localizer["Error_MasterProgramService_NoPrograms"].Value);
         }
 
-        // Validate all Programs exist and belong to same company
         var programs = await _db.ShiftPrograms
             .Where(p => programIds.Contains(p.Id) && p.CompanyId == masterProgram.CompanyId)
             .ToListAsync();
 
         if (programs.Count != programIds.Count)
         {
-            throw new InvalidOperationException(
-                $"One or more Programs not found or do not belong to Company {masterProgram.CompanyId}");
+            return OperationResult.Fail(
+                "Error_MasterProgramService_ProgramsNotInCompany",
+                _localizer["Error_MasterProgramService_ProgramsNotInCompany"].Value);
         }
 
-        // Update fields
         masterProgram.Name = name;
         masterProgram.Description = description;
         masterProgram.UpdatedAt = DateTime.UtcNow;
         masterProgram.UpdatedBy = userId;
 
-        // Replace Items (remove old, add new)
         _db.MasterProgramItems.RemoveRange(masterProgram.Items);
 
         for (int i = 0; i < programIds.Count; i++)
@@ -181,9 +205,10 @@ public class MasterProgramService : IMasterProgramService
         }
 
         await _db.SaveChangesAsync();
+        return OperationResult.Ok();
     }
 
-    public async Task DeleteMasterProgramAsync(int masterProgramId, int userId)
+    public async Task<OperationResult> DeleteMasterProgramAsync(int masterProgramId, int userId)
     {
         _logger.LogInformation("Soft-deleting MasterProgram {MasterProgramId} by User {UserId}", masterProgramId, userId);
 
@@ -191,7 +216,9 @@ public class MasterProgramService : IMasterProgramService
 
         if (masterProgram == null)
         {
-            throw new InvalidOperationException($"MasterProgram {masterProgramId} not found");
+            return OperationResult.Fail(
+                "Error_MasterProgramService_NotFound",
+                _localizer["Error_MasterProgramService_NotFound"].Value);
         }
 
         masterProgram.IsActive = false;
@@ -201,17 +228,17 @@ public class MasterProgramService : IMasterProgramService
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("MasterProgram {MasterProgramId} marked as inactive", masterProgramId);
+        return OperationResult.Ok();
     }
 
     // ==================== Instance Generation ====================
 
-    public async Task<Dictionary<int, List<ShiftInstance>>> GenerateFromMasterProgramAsync(
+    public async Task<OperationResult<Dictionary<int, List<ShiftInstance>>>> GenerateFromMasterProgramAsync(
         int masterProgramId,
         DateOnly startDate,
         DateOnly endDate,
         bool overwriteExisting = false)
     {
-        // Skip past dates — only generate for today and future (fixes A-12)
         var today = DateOnly.FromDateTime(DateTime.Today);
         if (startDate < today)
         {
@@ -226,7 +253,7 @@ public class MasterProgramService : IMasterProgramService
             _logger.LogInformation(
                 "MasterProgram {MasterProgramId}: no future dates to generate (start {Start} > end {End})",
                 masterProgramId, startDate, endDate);
-            return new Dictionary<int, List<ShiftInstance>>();
+            return OperationResult<Dictionary<int, List<ShiftInstance>>>.Ok(new Dictionary<int, List<ShiftInstance>>());
         }
 
         _logger.LogInformation(
@@ -237,18 +264,21 @@ public class MasterProgramService : IMasterProgramService
 
         if (masterProgram == null)
         {
-            throw new InvalidOperationException($"MasterProgram {masterProgramId} not found");
+            return OperationResult<Dictionary<int, List<ShiftInstance>>>.Fail(
+                "Error_MasterProgramService_NotFound",
+                _localizer["Error_MasterProgramService_NotFound"].Value);
         }
 
         if (masterProgram.Items.Count == 0)
         {
-            _logger.LogWarning("MasterProgram {MasterProgramId} has no Programs", masterProgramId);
-            return new Dictionary<int, List<ShiftInstance>>();
+            return OperationResult<Dictionary<int, List<ShiftInstance>>>.Fail(
+                "Error_MasterProgramService_NoProgramsInMaster",
+                _localizer["Error_MasterProgramService_NoProgramsInMaster"].Value);
         }
 
         var result = new Dictionary<int, List<ShiftInstance>>();
+        var failures = new List<ValidationIssue>();
 
-        // Generate instances for each Program in the MasterProgram
         foreach (var item in masterProgram.Items.OrderBy(i => i.SortOrder))
         {
             _logger.LogDebug(
@@ -257,45 +287,67 @@ public class MasterProgramService : IMasterProgramService
 
             try
             {
-                var instances = await _shiftProgramService.GenerateInstancesAsync(
+                var genResult = await _shiftProgramService.GenerateInstancesAsync(
                     item.ProgramId,
                     startDate,
                     endDate,
                     overwriteExisting);
 
-                result[item.ProgramId] = instances;
-
-                _logger.LogDebug(
-                    "Generated {Count} instances for Program {ProgramId}",
-                    instances.Count, item.ProgramId);
+                if (genResult.Success && genResult.Value != null)
+                {
+                    result[item.ProgramId] = genResult.Value;
+                    _logger.LogDebug(
+                        "Generated {Count} instances for Program {ProgramId}",
+                        genResult.Value.Count, item.ProgramId);
+                }
+                else
+                {
+                    result[item.ProgramId] = new List<ShiftInstance>();
+                    failures.Add(new ValidationIssue(
+                        genResult.ErrorKey ?? $"Error_MasterProgramService_GenerateFailed_Program_{item.ProgramId}",
+                        $"{item.Program.Name}: {genResult.ErrorMessage ?? "Unknown failure"}",
+                        ValidationSeverity.Warning,
+                        ValidationCategory.Persistence));
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Failed to generate instances for Program {ProgramId} in MasterProgram {MasterProgramId}",
+                    "Unexpected exception generating instances for Program {ProgramId} in MasterProgram {MasterProgramId}",
                     item.ProgramId, masterProgramId);
 
-                // Add empty list for this Program but continue with others
                 result[item.ProgramId] = new List<ShiftInstance>();
+                failures.Add(new ValidationIssue(
+                    $"Error_MasterProgramService_GenerateFailed_Program_{item.ProgramId}",
+                    $"{item.Program.Name}: {ex.Message}",
+                    ValidationSeverity.Warning,
+                    ValidationCategory.Persistence));
             }
         }
 
         var totalInstances = result.Values.Sum(list => list.Count);
         _logger.LogInformation(
-            "Generated {TotalInstances} total instances from MasterProgram {MasterProgramId} across {ProgramCount} Programs",
-            totalInstances, masterProgramId, result.Count);
+            "Generated {TotalInstances} total instances from MasterProgram {MasterProgramId} across {ProgramCount} Programs ({FailureCount} program failures)",
+            totalInstances, masterProgramId, result.Count, failures.Count);
 
-        return result;
+        return new OperationResult<Dictionary<int, List<ShiftInstance>>>(
+            Success: true,
+            Value: result,
+            ErrorKey: failures.Count > 0 ? "Error_MasterProgramService_GenerateFailed" : null,
+            ErrorMessage: failures.Count > 0 ? _localizer["Error_MasterProgramService_GenerateFailed"].Value : null,
+            Issues: failures);
     }
 
-    public async Task<MasterProgramSummary> GetMasterProgramSummaryAsync(int masterProgramId)
+    public async Task<OperationResult<MasterProgramSummary>> GetMasterProgramSummaryAsync(int masterProgramId)
     {
         var masterProgram = await GetMasterProgramAsync(masterProgramId);
 
         if (masterProgram == null)
         {
-            throw new InvalidOperationException($"MasterProgram {masterProgramId} not found");
+            return OperationResult<MasterProgramSummary>.Fail(
+                "Error_MasterProgramService_NotFound",
+                _localizer["Error_MasterProgramService_NotFound"].Value);
         }
 
         var companyId = _tenantResolver.GetCurrentTenantId();
@@ -317,6 +369,6 @@ public class MasterProgramService : IMasterProgramService
             ShiftTypeNames = shiftTypeNameSet.OrderBy(name => name).ToList()
         };
 
-        return summary;
+        return OperationResult<MasterProgramSummary>.Ok(summary);
     }
 }

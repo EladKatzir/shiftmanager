@@ -28,19 +28,7 @@
         <p class="page-subtitle"><loc key="Owner_DataLifecycle_Subtitle" /></p>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.Success))
-    {
-        <div class="alert alert-success">
-            <strong><icon name="check" /> @Localizer["Success"]:</strong> @Model.Success
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-danger">
-            <strong><icon name="x" /> @Localizer["Error"]:</strong> @Model.Error
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     @* Latest Archive Info *@
     @if (Model.LatestArchiveMetadata != null)

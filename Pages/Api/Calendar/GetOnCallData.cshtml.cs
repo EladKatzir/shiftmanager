@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 
@@ -20,15 +22,18 @@ public class GetOnCallDataModel : PageModel
     private readonly IScopeFilterService _scopeFilterService;
     private readonly AppDbContext _db;
     private readonly ILogger<GetOnCallDataModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public GetOnCallDataModel(
         IScopeFilterService scopeFilterService,
         AppDbContext db,
-        ILogger<GetOnCallDataModel> logger)
+        ILogger<GetOnCallDataModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _scopeFilterService = scopeFilterService;
         _db = db;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnGetAsync(
@@ -141,7 +146,12 @@ public class GetOnCallDataModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetOnCallData");
-            return new JsonResult(new { success = false, message = "An error occurred" }) { StatusCode = 500 };
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_CALENDAR_GET_ONCALL_FAILED",
+                    _localizer["Error_CalendarApi_GetOnCallFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 500 };
         }
     }
 }

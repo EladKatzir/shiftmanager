@@ -124,7 +124,7 @@ public class ProgramsModel : PageModel
             }
 
             // Create Program
-            var program = await _programService.CreateProgramAsync(
+            var createResult = await _programService.CreateProgramAsync(
                 companyId,
                 ShiftTypeId,
                 ProgramName,
@@ -133,6 +133,12 @@ public class ProgramsModel : PageModel
                 perDayStaffing.Count > 0 ? perDayStaffing : null,
                 userId);
 
+            if (!createResult.Success)
+            {
+                return RedirectToPage(new { error = createResult.ErrorMessage });
+            }
+
+            var program = createResult.Value!;
             // Audit log
 
             _logger.LogInformation(
@@ -276,12 +282,18 @@ public class ProgramsModel : PageModel
             }
 
             // Generate instances
-            var count = await _programService.ApplyProgramToDateRangeAsync(
+            var applyResult = await _programService.ApplyProgramToDateRangeAsync(
                 GenerateProgramId,
                 GenerateStartDate,
                 GenerateEndDate,
                 OverwriteExisting);
 
+            if (!applyResult.Success)
+            {
+                return RedirectToPage(new { error = applyResult.ErrorMessage });
+            }
+
+            var count = applyResult.Value;
             // Audit log
             var program = await _programService.GetProgramAsync(GenerateProgramId);
 

@@ -1,9 +1,23 @@
 @page
 @model ErrorModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
 @{
     Layout = "_Layout";
 }
 <div class="card">
     <h2><loc key="SomethingWentWrong" /></h2>
     <p><loc key="UnexpectedErrorOccurred" /></p>
+
+    @if (!string.IsNullOrEmpty(Model.RequestId))
+    {
+        <div class="feedback-error-id" style="margin-top: var(--space-4);">
+            <span class="feedback-error-id__label">@Localizer["Feedback_ErrorId"]:</span>
+            <code class="feedback-error-id__value" id="error-page-request-id">@Model.RequestId</code>
+            <button type="button"
+                    class="feedback-error-id__copy btn btn-sm"
+                    onclick="(function(b){var t=document.getElementById('error-page-request-id').textContent;var done=function(ok){if(!ok)return;var o=b.textContent;b.textContent='@(Localizer["Feedback_CopiedErrorId"].Value.Replace("'","\\'"))';b.disabled=true;setTimeout(function(){b.textContent=o;b.disabled=false;},1500);};if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(function(){done(true);},function(){done(false);});}else{var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){}document.body.removeChild(ta);done(ok);}})(this)">@Localizer["Feedback_CopyErrorId"]</button>
+        </div>
+    }
 </div>

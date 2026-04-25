@@ -27,26 +27,7 @@
         <p class="page-subtitle"><loc key="GameConfig_Subtitle" /></p>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.Success))
-    {
-        <div class="alert alert-success">
-            <strong><icon name="check" /> Success:</strong> @Model.Success
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-danger">
-            <strong><icon name="x" /> Error:</strong> @Model.Error
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Warning))
-    {
-        <div class="alert alert-warning">
-            <strong><icon name="alert-triangle" /> Warning:</strong> @Model.Warning
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     <form method="post">
         @* Game Status *@

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
@@ -50,7 +51,7 @@ public class NotificationServiceTests : IDisposable
         _loggerMock = new Mock<ILogger<NotificationService>>();
         _mailServiceMock = new Mock<IMailService>();
         _mailServiceMock.Setup(x => x.SendMailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
 
         _localizerMock = new Mock<IStringLocalizer<SharedResources>>();
         // Return the key itself as the localized value (common test pattern)

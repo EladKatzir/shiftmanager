@@ -4346,6 +4346,12 @@
   <data name="Error_FailedToSendTestEmail" xml:space="preserve">
     <value>נכשל לשלוח אימייל בדיקה: {0}</value>
   </data>
+  <data name="Error_FeatureFlagService_NotFound" xml:space="preserve">
+    <value>דגל התכונה לא נמצא.</value>
+  </data>
+  <data name="Error_FeatureFlagService_DatabaseError" xml:space="preserve">
+    <value>לא ניתן לבדוק את דגל התכונה (שגיאת בסיס נתונים). הדגל טופל ככבוי.</value>
+  </data>
 
   
   <data name="Dir" xml:space="preserve">
@@ -7755,6 +7761,180 @@
   </data>
   <data name="Feedback_Error_ImageSaveFailed" xml:space="preserve">
     <value>שגיאה בשמירת תמונה. נסה שנית.</value>
+  </data>
+  <data name="Feedback_ShowDetails" xml:space="preserve">
+    <value>הצג פרטים</value>
+  </data>
+  <data name="Feedback_HideDetails" xml:space="preserve">
+    <value>הסתר פרטים</value>
+  </data>
+  <data name="Feedback_ErrorId" xml:space="preserve">
+    <value>מזהה שגיאה</value>
+  </data>
+  <data name="Feedback_CopyErrorId" xml:space="preserve">
+    <value>העתק</value>
+  </data>
+  <data name="Feedback_CopiedErrorId" xml:space="preserve">
+    <value>הועתק</value>
+  </data>
+  <data name="Feedback_Retry" xml:space="preserve">
+    <value>נסה שוב</value>
+  </data>
+  <data name="Error_CalendarApi_GetChoresFailed" xml:space="preserve">
+    <value>טעינת המשימות נכשלה. אם הבעיה ממשיכה, ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_CalendarApi_GetShiftsFailed" xml:space="preserve">
+    <value>טעינת המשמרות נכשלה. אם הבעיה ממשיכה, ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_CalendarApi_GetOnCallFailed" xml:space="preserve">
+    <value>טעינת נתוני התורנויות נכשלה. אם הבעיה ממשיכה, ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_CalendarApi_GetOverviewFailed" xml:space="preserve">
+    <value>טעינת הסקירה נכשלה. אם הבעיה ממשיכה, ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_CalendarApi_GetEligibleUsersFailed" xml:space="preserve">
+    <value>טעינת המשתמשים הזכאים למשמרת נכשלה. אם הבעיה ממשיכה, ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_CalendarApi_CreateTextEntryFailed" xml:space="preserve">
+    <value>יצירת ההערה נכשלה. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_CalendarApi_DeleteOnDutyFailed" xml:space="preserve">
+    <value>מחיקת התורנות נכשלה. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_CalendarApi_RestoreChoreFailed" xml:space="preserve">
+    <value>שחזור המשימה נכשל. ייתכן שחלון הביטול פג - רעננו לראות את המצב העדכני.</value>
+  </data>
+  <data name="Error_HierarchyApi_CreateFailed" xml:space="preserve">
+    <value>יצירת הערך החדש נכשלה. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_HierarchyApi_DeleteFailed" xml:space="preserve">
+    <value>מחיקת הערך נכשלה. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_HierarchyApi_MoveFailed" xml:space="preserve">
+    <value>העברת הערך נכשלה. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_HierarchyApi_GetMoveTargetsFailed" xml:space="preserve">
+    <value>טעינת היעדים האפשריים נכשלה. אם הבעיה ממשיכה, ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_HierarchyApi_RenameFailed" xml:space="preserve">
+    <value>שינוי שם הערך נכשל. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_HierarchyApi_ReorderFailed" xml:space="preserve">
+    <value>סידור מחדש של הערכים נכשל. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_OnDutyApi_GetEligibleUsersFailed" xml:space="preserve">
+    <value>טעינת המשתמשים הזכאים לתורנות נכשלה. אם הבעיה ממשיכה, ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_FriendsApi_GetIdsFailed" xml:space="preserve">
+    <value>טעינת רשימת החברים נכשלה. אם הבעיה ממשיכה, ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_WidgetApi_LoadConfigFailed" xml:space="preserve">
+    <value>טעינת הגדרות הווידג'ט נכשלה. אם הבעיה ממשיכה, ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_WidgetApi_SaveConfigFailed" xml:space="preserve">
+    <value>שמירת הגדרות הווידג'ט נכשלה. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_MasterProgramService_NotFound" xml:space="preserve">
+    <value>תוכנית האב לא נמצאה. ייתכן שהיא נמחקה על ידי משתמש אחר.</value>
+  </data>
+  <data name="Error_MasterProgramService_NoPrograms" xml:space="preserve">
+    <value>תוכנית אב חייבת לכלול לפחות תוכנית אחת.</value>
+  </data>
+  <data name="Error_MasterProgramService_ProgramsNotInCompany" xml:space="preserve">
+    <value>תוכנית אחת או יותר שנבחרו לא נמצאו או אינן שייכות לחברה שלכם.</value>
+  </data>
+  <data name="Error_MasterProgramService_NoProgramsInMaster" xml:space="preserve">
+    <value>לתוכנית אב זו אין תוכניות מוגדרות. הוסיפו לפחות תוכנית אחת לפני יצירת משמרות.</value>
+  </data>
+  <data name="Error_MasterProgramService_GenerateFailed" xml:space="preserve">
+    <value>יצירת משמרות מתוכנית האב נכשלה עבור תוכנית אחת או יותר. בדקו את הלוגים וציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_MasterProgramService_NameRequired" xml:space="preserve">
+    <value>שם תוכנית האב הוא שדה חובה.</value>
+  </data>
+  <data name="Error_MasterProgramService_DateRangeInvalid" xml:space="preserve">
+    <value>תאריך הסיום חייב להיות באותו יום או אחרי תאריך ההתחלה.</value>
+  </data>
+  <data name="Error_MasterProgramService_DateRangeTooLarge" xml:space="preserve">
+    <value>טווח התאריכים לא יכול לעלות על שנה.</value>
+  </data>
+  <data name="Error_ShiftProgramService_NotFound" xml:space="preserve">
+    <value>התוכנית לא נמצאה. ייתכן שהיא נמחקה על ידי משתמש אחר.</value>
+  </data>
+  <data name="Error_ShiftProgramService_NoDays" xml:space="preserve">
+    <value>יש לבחור לפחות יום אחד לתוכנית.</value>
+  </data>
+  <data name="Error_ShiftProgramService_NameRequired" xml:space="preserve">
+    <value>שם התוכנית הוא שדה חובה.</value>
+  </data>
+  <data name="Error_ShiftProgramService_ShiftTypeNotInMolecule" xml:space="preserve">
+    <value>סוג המשמרת שנבחר אינו זמין עבור החברה שלכם.</value>
+  </data>
+  <data name="Error_ShiftProgramService_InstanceNotFound" xml:space="preserve">
+    <value>מופע המשמרת לא נמצא.</value>
+  </data>
+  <data name="Error_ShiftProgramService_InstanceNotFromProgram" xml:space="preserve">
+    <value>משמרת זו לא נוצרה מתוכנית ולא ניתן לאפס אותה לברירות המחדל של התוכנית.</value>
+  </data>
+  <data name="Error_ShiftProgramService_ProgramDoesNotRunOnDay" xml:space="preserve">
+    <value>התוכנית כבר לא רצה ביום זה בשבוע, ולכן לא ניתן לאפס את המשמרת.</value>
+  </data>
+  <data name="Error_ShiftProgramService_InvalidOverrideType" xml:space="preserve">
+    <value>סיבת ניתוק המשמרת לא זוהתה. השתמשו ב-'Staffing', 'Time' או 'Name'.</value>
+  </data>
+  <data name="Error_MailService_NotConfigured" xml:space="preserve">
+    <value>הדואר האלקטרוני אינו מוגדר עבור סביבה זו.</value>
+  </data>
+  <data name="Error_MailService_DisabledByFlag" xml:space="preserve">
+    <value>שליחת דואר אלקטרוני מושבתת בדגל תכונה או בתצורה.</value>
+  </data>
+  <data name="Error_MailService_InvalidRecipient" xml:space="preserve">
+    <value>כתובת הדוא״ל של הנמען חסרה או לא תקינה.</value>
+  </data>
+  <data name="Error_MailService_MissingApiUrl" xml:space="preserve">
+    <value>כתובת ה-API של הדואר חסרה או לא תקינה.</value>
+  </data>
+  <data name="Error_MailService_MissingApiKey" xml:space="preserve">
+    <value>מפתח ה-API של הדואר חסר.</value>
+  </data>
+  <data name="Error_MailService_SendFailed" xml:space="preserve">
+    <value>שליחת הדואר האלקטרוני נכשלה. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_NotificationService_DispatchFailed" xml:space="preserve">
+    <value>שליחת ההודעה נכשלה. נסו שוב, ואם הבעיה ממשיכה ציינו את מזהה השגיאה לתמיכה.</value>
+  </data>
+  <data name="Error_NotificationService_RecipientNotFound" xml:space="preserve">
+    <value>נמען ההודעה לא נמצא.</value>
+  </data>
+  <data name="Error_NotificationService_TemplateMissing" xml:space="preserve">
+    <value>תבנית ההודעה חסרה או לא תקינה.</value>
+  </data>
+  <data name="Error_JobTypeService_UserNotFound" xml:space="preserve">
+    <value>המשתמש לא נמצא.</value>
+  </data>
+  <data name="Error_JobTypeService_NotFound" xml:space="preserve">
+    <value>סוג המשרה לא נמצא.</value>
+  </data>
+  <data name="Error_JobTypeService_NameRequired" xml:space="preserve">
+    <value>שם סוג המשרה הוא שדה חובה.</value>
+  </data>
+  <data name="Error_JobTypeService_AreaMismatch" xml:space="preserve">
+    <value>סוג המשרה אינו זמין באזור של המשתמש.</value>
+  </data>
+  <data name="Error_JobTypeService_MoleculeMismatch" xml:space="preserve">
+    <value>סוג המשרה שייך למולקולה אחרת מהחברה של המשתמש.</value>
+  </data>
+  <data name="Error_JobTypeService_ValidationFailed" xml:space="preserve">
+    <value>המשתמש אינו זכאי לסוג משרה זה.</value>
+  </data>
+  <data name="Error_RoleService_UserNotFound" xml:space="preserve">
+    <value>המשתמש לא נמצא.</value>
+  </data>
+  <data name="Error_RoleService_TemplateNotFound" xml:space="preserve">
+    <value>תבנית התפקיד לא נמצאה או אינה פעילה.</value>
+  </data>
+  <data name="Error_RoleService_AssignmentNotFound" xml:space="preserve">
+    <value>הקצאת התפקיד לא נמצאה. ייתכן שהיא הוסרה על ידי משתמש אחר.</value>
   </data>
   <data name="Feedback_TypeLabel_Error" xml:space="preserve">
     <value>שגיאה</value>

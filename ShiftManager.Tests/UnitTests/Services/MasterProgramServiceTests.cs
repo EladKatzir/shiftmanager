@@ -1,15 +1,23 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Tests.UnitTests.Services;
 
+// Updated 2026-04-25: MasterProgramService migrated to OperationResult<T> — error paths
+// no longer throw, they return Fail(errorKey, message). Tests assert Success / ErrorKey
+// instead of catching exceptions, and unwrap result.Value when accessing the payload.
+// IShiftProgramService mock returns OperationResult<List<ShiftInstance>>.Ok(...) since the
+// dependency interface was migrated too.
 public class MasterProgramServiceTests : IDisposable
 {
     private readonly AppDbContext _db;
@@ -32,12 +40,17 @@ public class MasterProgramServiceTests : IDisposable
         localizationMock.Setup(l => l.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
             .ReturnsAsync((ShiftType st, int _, string _) => st.Name);
 
+        var localizerMock = new Mock<IStringLocalizer<SharedResources>>();
+        localizerMock.Setup(l => l[It.IsAny<string>()])
+            .Returns((string k) => new LocalizedString(k, k));
+
         _service = new MasterProgramService(
             _db,
             Mock.Of<ILogger<MasterProgramService>>(),
             Mock.Of<ITenantResolver>(),
             _shiftProgramServiceMock.Object,
-            localizationMock.Object);
+            localizationMock.Object,
+            localizerMock.Object);
 
         // Seed company and shift type for programs
         _db.Companies.Add(new Company { Id = TestCompanyId, MoleculeId = 1, Name = "TestCo", DisplayName = "Test Co" });
@@ -87,14 +100,15 @@ public class MasterProgramServiceTests : IDisposable
         var result = await _service.CreateMasterProgramAsync(
             TestCompanyId, "Standard Week", "Default schedule", new List<int> { 1, 2 }, userId: 1);
 
-        result.Should().NotBeNull();
-        result.Name.Should().Be("Standard Week");
-        result.Description.Should().Be("Default schedule");
-        result.CompanyId.Should().Be(TestCompanyId);
-        result.IsActive.Should().BeTrue();
+        result.Success.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Name.Should().Be("Standard Week");
+        result.Value.Description.Should().Be("Default schedule");
+        result.Value.CompanyId.Should().Be(TestCompanyId);
+        result.Value.IsActive.Should().BeTrue();
 
         var items = await _db.MasterProgramItems
-            .Where(i => i.MasterProgramId == result.Id)
+            .Where(i => i.MasterProgramId == result.Value.Id)
             .OrderBy(i => i.SortOrder)
             .ToListAsync();
         items.Should().HaveCount(2);
@@ -105,35 +119,35 @@ public class MasterProgramServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateMasterProgramAsync_EmptyProgramIds_ThrowsArgumentException()
+    public async Task CreateMasterProgramAsync_EmptyProgramIds_ReturnsFail()
     {
-        var act = async () => await _service.CreateMasterProgramAsync(
+        var result = await _service.CreateMasterProgramAsync(
             TestCompanyId, "Empty", null, new List<int>(), userId: 1);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*At least one Program*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_MasterProgramService_NoPrograms");
     }
 
     [Fact]
-    public async Task CreateMasterProgramAsync_NullProgramIds_Throws()
+    public async Task CreateMasterProgramAsync_NullProgramIds_ReturnsFail()
     {
-        var act = async () => await _service.CreateMasterProgramAsync(
+        var result = await _service.CreateMasterProgramAsync(
             TestCompanyId, "Null", null, null!, userId: 1);
 
-        // Implementation accesses programIds.Count before null guard, so NullReferenceException is thrown
-        await act.Should().ThrowAsync<NullReferenceException>();
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_MasterProgramService_NoPrograms");
     }
 
     [Fact]
-    public async Task CreateMasterProgramAsync_ProgramNotInCompany_ThrowsInvalidOperationException()
+    public async Task CreateMasterProgramAsync_ProgramNotInCompany_ReturnsFail()
     {
         await SeedProgramAsync(1, "Program 1");
 
-        var act = async () => await _service.CreateMasterProgramAsync(
+        var result = await _service.CreateMasterProgramAsync(
             TestCompanyId, "Bad", null, new List<int> { 1, 999 }, userId: 1);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_MasterProgramService_ProgramsNotInCompany");
     }
 
     // --- GetMasterProgramAsync ---
@@ -219,7 +233,8 @@ public class MasterProgramServiceTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        await _service.UpdateMasterProgramAsync(1, "New Name", "Description", new List<int> { 2 }, userId: 2);
+        var result = await _service.UpdateMasterProgramAsync(1, "New Name", "Description", new List<int> { 2 }, userId: 2);
+        result.Success.Should().BeTrue();
 
         var mp = await _db.MasterPrograms.FindAsync(1);
         mp!.Name.Should().Be("New Name");
@@ -232,16 +247,16 @@ public class MasterProgramServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateMasterProgramAsync_NotFound_ThrowsInvalidOperationException()
+    public async Task UpdateMasterProgramAsync_NotFound_ReturnsFail()
     {
-        var act = async () => await _service.UpdateMasterProgramAsync(999, "X", null, new List<int> { 1 }, 1);
+        var result = await _service.UpdateMasterProgramAsync(999, "X", null, new List<int> { 1 }, 1);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_MasterProgramService_NotFound");
     }
 
     [Fact]
-    public async Task UpdateMasterProgramAsync_EmptyProgramIds_ThrowsArgumentException()
+    public async Task UpdateMasterProgramAsync_EmptyProgramIds_ReturnsFail()
     {
         _db.MasterPrograms.Add(new MasterProgram
         {
@@ -250,9 +265,10 @@ public class MasterProgramServiceTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        var act = async () => await _service.UpdateMasterProgramAsync(1, "X", null, new List<int>(), 1);
+        var result = await _service.UpdateMasterProgramAsync(1, "X", null, new List<int>(), 1);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_MasterProgramService_NoPrograms");
     }
 
     // --- DeleteMasterProgramAsync ---
@@ -267,7 +283,8 @@ public class MasterProgramServiceTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        await _service.DeleteMasterProgramAsync(1, userId: 2);
+        var result = await _service.DeleteMasterProgramAsync(1, userId: 2);
+        result.Success.Should().BeTrue();
 
         var mp = await _db.MasterPrograms.FindAsync(1);
         mp.Should().NotBeNull();
@@ -276,28 +293,31 @@ public class MasterProgramServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task DeleteMasterProgramAsync_NotFound_ThrowsInvalidOperationException()
+    public async Task DeleteMasterProgramAsync_NotFound_ReturnsFail()
     {
-        var act = async () => await _service.DeleteMasterProgramAsync(999, 1);
+        var result = await _service.DeleteMasterProgramAsync(999, 1);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_MasterProgramService_NotFound");
     }
 
     // --- GenerateFromMasterProgramAsync ---
 
     [Fact]
-    public async Task GenerateFromMasterProgramAsync_NotFound_ThrowsInvalidOperationException()
+    public async Task GenerateFromMasterProgramAsync_NotFound_ReturnsFail()
     {
-        var act = async () => await _service.GenerateFromMasterProgramAsync(
+        var result = await _service.GenerateFromMasterProgramAsync(
             999, DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today.AddDays(7)));
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_MasterProgramService_NotFound");
     }
 
     [Fact]
-    public async Task GenerateFromMasterProgramAsync_NoItems_ReturnsEmptyDict()
+    public async Task GenerateFromMasterProgramAsync_NoItems_ReturnsFail()
     {
+        // Service treats an empty MasterProgram as a configuration error rather than silently
+        // returning an empty dict — surfaces the misconfiguration to the caller.
         _db.MasterPrograms.Add(new MasterProgram
         {
             Id = 1, CompanyId = TestCompanyId, Name = "Empty Master", IsActive = true,
@@ -308,7 +328,8 @@ public class MasterProgramServiceTests : IDisposable
         var today = DateOnly.FromDateTime(DateTime.Today);
         var result = await _service.GenerateFromMasterProgramAsync(1, today, today.AddDays(7));
 
-        result.Should().BeEmpty();
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_MasterProgramService_NoProgramsInMaster");
     }
 
     [Fact]
@@ -330,12 +351,13 @@ public class MasterProgramServiceTests : IDisposable
 
         _shiftProgramServiceMock
             .Setup(s => s.GenerateInstancesAsync(It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), false))
-            .ReturnsAsync(new List<ShiftInstance>());
+            .ReturnsAsync(OperationResult<List<ShiftInstance>>.Ok(new List<ShiftInstance>()));
 
         var today = DateOnly.FromDateTime(DateTime.Today);
         var result = await _service.GenerateFromMasterProgramAsync(1, today, today.AddDays(7));
 
-        result.Should().HaveCount(2);
+        result.Success.Should().BeTrue();
+        result.Value.Should().HaveCount(2);
         _shiftProgramServiceMock.Verify(
             s => s.GenerateInstancesAsync(1, It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), false), Times.Once);
         _shiftProgramServiceMock.Verify(
@@ -362,11 +384,12 @@ public class MasterProgramServiceTests : IDisposable
         _shiftProgramServiceMock
             .Setup(s => s.GenerateInstancesAsync(1, It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), false))
             .Callback((int _, DateOnly start, DateOnly _, bool _) => capturedStart = start)
-            .ReturnsAsync(new List<ShiftInstance>());
+            .ReturnsAsync(OperationResult<List<ShiftInstance>>.Ok(new List<ShiftInstance>()));
 
         var pastDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-30));
         var futureDate = DateOnly.FromDateTime(DateTime.Today.AddDays(7));
-        await _service.GenerateFromMasterProgramAsync(1, pastDate, futureDate);
+        var result = await _service.GenerateFromMasterProgramAsync(1, pastDate, futureDate);
+        result.Success.Should().BeTrue();
 
         capturedStart.Should().Be(DateOnly.FromDateTime(DateTime.Today));
     }
@@ -387,7 +410,8 @@ public class MasterProgramServiceTests : IDisposable
         var pastEnd = DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
         var result = await _service.GenerateFromMasterProgramAsync(1, pastDate, pastEnd);
 
-        result.Should().BeEmpty();
+        result.Success.Should().BeTrue();
+        result.Value.Should().BeEmpty();
         _shiftProgramServiceMock.Verify(
             s => s.GenerateInstancesAsync(It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<bool>()),
             Times.Never);
@@ -421,17 +445,20 @@ public class MasterProgramServiceTests : IDisposable
 
         var result = await _service.GetMasterProgramSummaryAsync(1);
 
-        result.TotalPrograms.Should().Be(2);
-        result.UniqueShiftTypes.Should().Be(2);
-        result.TotalProgramDays.Should().Be(3);
-        result.ShiftTypeNames.Should().HaveCount(2);
+        result.Success.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.TotalPrograms.Should().Be(2);
+        result.Value.UniqueShiftTypes.Should().Be(2);
+        result.Value.TotalProgramDays.Should().Be(3);
+        result.Value.ShiftTypeNames.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task GetMasterProgramSummaryAsync_NotFound_ThrowsInvalidOperationException()
+    public async Task GetMasterProgramSummaryAsync_NotFound_ReturnsFail()
     {
-        var act = async () => await _service.GetMasterProgramSummaryAsync(999);
+        var result = await _service.GetMasterProgramSummaryAsync(999);
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_MasterProgramService_NotFound");
     }
 }

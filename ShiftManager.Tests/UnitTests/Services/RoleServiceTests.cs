@@ -1,9 +1,14 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Tests.UnitTests.Services;
@@ -23,7 +28,11 @@ public class RoleServiceTests : IDisposable
         _db = new AppDbContext(options);
         _grantServiceMock = new Mock<IGrantService>();
 
-        _service = new RoleService(_db, _grantServiceMock.Object);
+        var localizer = new StringLocalizer<SharedResources>(
+            new ResourceManagerStringLocalizerFactory(
+                Options.Create(new LocalizationOptions { ResourcesPath = "Resources" }),
+                NullLoggerFactory.Instance));
+        _service = new RoleService(_db, _grantServiceMock.Object, NullLogger<RoleService>.Instance, localizer);
     }
 
     public void Dispose()
@@ -182,9 +191,11 @@ public class RoleServiceTests : IDisposable
         var (user, template) = await SeedUserAndTemplateAsync();
         var scope = GrantScope.Company(1);
 
-        var result = await _service.AssignRoleAsync(
+        var opResult = await _service.AssignRoleAsync(
             userId: user.Id, roleTemplateId: template.Id, scope: scope, assignedByUserId: 99);
 
+        opResult.Success.Should().BeTrue();
+        var result = opResult.Value;
         result.Should().NotBeNull();
         result!.UserId.Should().Be(user.Id);
         result.RoleTemplateId.Should().Be(template.Id);
@@ -197,25 +208,29 @@ public class RoleServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task AssignRoleAsync_ReturnsNull_WhenUserNotFound()
+    public async Task AssignRoleAsync_ReturnsFailure_WhenUserNotFound()
     {
         var (_, template) = await SeedUserAndTemplateAsync();
 
         var result = await _service.AssignRoleAsync(
             userId: 999, roleTemplateId: template.Id, scope: GrantScope.Company(1), assignedByUserId: 99);
 
-        result.Should().BeNull();
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_RoleService_UserNotFound");
+        result.Value.Should().BeNull();
     }
 
     [Fact]
-    public async Task AssignRoleAsync_ReturnsNull_WhenTemplateNotFound()
+    public async Task AssignRoleAsync_ReturnsFailure_WhenTemplateNotFound()
     {
         var (user, _) = await SeedUserAndTemplateAsync();
 
         var result = await _service.AssignRoleAsync(
             userId: user.Id, roleTemplateId: 999, scope: GrantScope.Company(1), assignedByUserId: 99);
 
-        result.Should().BeNull();
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_RoleService_TemplateNotFound");
+        result.Value.Should().BeNull();
     }
 
     [Fact]
@@ -225,11 +240,11 @@ public class RoleServiceTests : IDisposable
         var scope = GrantScope.Company(1);
 
         // Assign first time
-        var first = await _service.AssignRoleAsync(user.Id, template.Id, scope, 99);
+        var first = (await _service.AssignRoleAsync(user.Id, template.Id, scope, 99)).Value;
         first.Should().NotBeNull();
 
         // Assign again with same scope
-        var second = await _service.AssignRoleAsync(user.Id, template.Id, scope, 99);
+        var second = (await _service.AssignRoleAsync(user.Id, template.Id, scope, 99)).Value;
 
         second.Should().NotBeNull();
         second!.Id.Should().Be(first!.Id); // Returns existing, not a new one
@@ -246,12 +261,12 @@ public class RoleServiceTests : IDisposable
         var (user, template) = await SeedUserAndTemplateAsync();
         var scope = GrantScope.Company(1);
 
-        var assignment = await _service.AssignRoleAsync(user.Id, template.Id, scope, 99);
+        var assignment = (await _service.AssignRoleAsync(user.Id, template.Id, scope, 99)).Value;
         assignment.Should().NotBeNull();
 
         var result = await _service.RemoveRoleAsync(assignment!.Id, removedByUserId: 99);
 
-        result.Should().BeTrue();
+        result.Success.Should().BeTrue();
 
         // Verify it's deactivated in the database
         var savedAssignment = await _db.UserRoleAssignments.FindAsync(assignment.Id);
@@ -262,11 +277,12 @@ public class RoleServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task RemoveRoleAsync_ReturnsFalse_WhenNotFound()
+    public async Task RemoveRoleAsync_ReturnsFailure_WhenNotFound()
     {
         var result = await _service.RemoveRoleAsync(999);
 
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_RoleService_AssignmentNotFound");
     }
 
     // --- RemoveAllUserRolesAsync ---
@@ -291,7 +307,7 @@ public class RoleServiceTests : IDisposable
 
         var result = await _service.RemoveAllUserRolesAsync(user.Id);
 
-        result.Should().BeTrue();
+        result.Success.Should().BeTrue();
 
         // Verify all roles are deactivated
         var activeRoles = await _db.UserRoleAssignments

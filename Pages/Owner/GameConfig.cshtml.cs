@@ -46,9 +46,7 @@ public class GameConfigModel : PageModel
     [BindProperty] public int GridSize { get; set; }
     [BindProperty] public string Milestones { get; set; } = string.Empty;
 
-    public string? Success { get; set; }
-    public string? Error { get; set; }
-    public string? Warning { get; set; }
+    // Success / Error / Warning properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
 
     public async Task OnGetAsync()
     {
@@ -69,7 +67,7 @@ public class GameConfigModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading game configuration");
-            Error = "Failed to load game configuration.";
+            TempData["ErrorMessage"] = "Failed to load game configuration."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
     }
 
@@ -81,7 +79,7 @@ public class GameConfigModel : PageModel
             var validationError = ValidateInputs();
             if (validationError != null)
             {
-                Error = validationError;
+                TempData["ErrorMessage"] = validationError; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return Page();
             }
 
@@ -111,12 +109,12 @@ public class GameConfigModel : PageModel
                 "Game configuration updated",
                 $"Enabled={GameEnabled}, GridSize={GridSize}, 3Match={PointsPer3Match}, 4Match={PointsPer4Match}, 5Match={PointsPer5PlusMatch}, MegaMultiplier={MegaComboMultiplier}");
 
-            Success = "Game configuration saved successfully. Changes will apply to new game sessions.";
+            TempData["SuccessMessage"] = "Game configuration saved successfully. Changes will apply to new game sessions.";
 
             // Add warning if grid size is not 6
             if (GridSize != 6)
             {
-                Warning = "Warning: Grid size has been changed from the default (6). This may require JavaScript updates.";
+                TempData["WarningMessage"] = "Warning: Grid size has been changed from the default (6). This may require JavaScript updates.";
             }
 
             return Page();
@@ -124,7 +122,7 @@ public class GameConfigModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving game configuration");
-            Error = "Failed to save game configuration.";
+            TempData["ErrorMessage"] = "Failed to save game configuration."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return Page();
         }
     }

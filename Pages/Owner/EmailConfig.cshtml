@@ -76,19 +76,7 @@
         </form>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.Success))
-    {
-        <div class="alert alert-success">
-            <strong><icon name="check" /> Success:</strong> @Model.Success
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-error">
-            <strong><icon name="x" /> Error:</strong> @Model.Error
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     @* Global Email Config — Owner only *@
     @if (Model.IsOwner)

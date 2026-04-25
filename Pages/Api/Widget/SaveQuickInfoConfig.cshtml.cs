@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Globalization;
 using System.Security.Claims;
@@ -24,17 +26,20 @@ public class SaveQuickInfoConfigModel : PageModel
     private readonly AppDbContext _db;
     private readonly ILogger<SaveQuickInfoConfigModel> _logger;
     private readonly IAuditLogService _auditLogService;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public SaveQuickInfoConfigModel(
         IQuickInfoConfigService configService,
         AppDbContext db,
         ILogger<SaveQuickInfoConfigModel> logger,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IStringLocalizer<SharedResources> localizer)
     {
         _configService = configService;
         _db = db;
         _logger = logger;
         _auditLogService = auditLogService;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnGetAsync(int moleculeId)
@@ -122,7 +127,11 @@ public class SaveQuickInfoConfigModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading QuickInfoConfig for molecule {MoleculeId}", moleculeId);
-            return new JsonResult(new { success = false, message = "An error occurred while loading configuration" })
+            return new JsonResult(
+                ApiErrorResponse.Create(
+                    "ERROR_WIDGET_LOAD_CONFIG_FAILED",
+                    _localizer["Error_WidgetApi_LoadConfigFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
             {
                 StatusCode = 500
             };
@@ -209,7 +218,11 @@ public class SaveQuickInfoConfigModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving QuickInfoConfig");
-            return new JsonResult(new { success = false, message = "An error occurred while saving configuration" })
+            return new JsonResult(
+                ApiErrorResponse.Create(
+                    "ERROR_WIDGET_SAVE_CONFIG_FAILED",
+                    _localizer["Error_WidgetApi_SaveConfigFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
             {
                 StatusCode = 500
             };

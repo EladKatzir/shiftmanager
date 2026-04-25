@@ -16,6 +16,7 @@ using ShiftManager.Middleware;
 using ShiftManager.Authorization;
 using ShiftManager.Hubs;
 using ShiftManager.Data.SeedData;
+using Serilog;
 
 // F-01: Top-level try-catch for IIS deployment diagnostics.
 // When the app crashes during startup under IIS (HTTP 500.30), stdout may not be captured.
@@ -29,63 +30,16 @@ DeploymentExportService.RestoreConfigAndKeys();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// B-022: Logging Configuration
-// - Clean console output in development for better readability
-// - JSON structured format in production for log aggregation
-builder.Logging.ClearProviders();
-
-if (builder.Environment.IsDevelopment())
-{
-    // Development: Simple, readable console output
-    builder.Logging.AddSimpleConsole(options =>
-    {
-        options.SingleLine = false;
-        options.TimestampFormat = "HH:mm:ss ";
-        options.IncludeScopes = false;
-    });
-    
-    // Reduce noise from EF Core and ASP.NET in development
-    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
-    builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
-    builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting", LogLevel.Information);
-    builder.Logging.AddFilter("Microsoft.Extensions.Hosting.Internal.Host", LogLevel.Information);
-}
-else
-{
-    // Production: JSON structured logging for log aggregation systems
-    builder.Logging.AddJsonConsole(options =>
-    {
-        options.JsonWriterOptions = new System.Text.Json.JsonWriterOptions
-        {
-            Indented = false // Compact JSON for log aggregation
-        };
-        options.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ"; // ISO 8601 format
-        options.UseUtcTimestamp = true;
-    });
-
-    // F-01/F-02: Write critical events to Windows Event Log for IIS monitoring
-    if (OperatingSystem.IsWindows())
-    {
-#pragma warning disable CA1416 // Platform compatibility — guarded by IsWindows()
-        try
-        {
-            builder.Logging.AddEventLog(settings =>
-            {
-                settings.SourceName = "ShiftManager";
-                settings.LogName = "Application";
-                settings.Filter = (category, level) => level >= LogLevel.Warning;
-            });
-        }
-        catch (Exception)
-        {
-            // EventLog source creation requires admin privileges which IIS app pool identity
-            // may not have. Swallow and continue — stdout/file logging is sufficient.
-        }
-#pragma warning restore CA1416
-    }
-}
-
-builder.Logging.AddDebug();
+// Logging: Serilog reads its full configuration from appsettings.json ("Serilog" section).
+// Sinks configured there: Console (always), File (rolling daily, 14-day retention, 50MB cap),
+// EventLog (production only, Warning+). Air-gap-safe — all sinks are pure-managed.
+// Replaces the previous AddSimpleConsole / AddJsonConsole / AddEventLog / AddDebug stack.
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "ShiftManager")
+    .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName));
 
 
 
@@ -1508,6 +1462,83 @@ using (var scope = app.Services.CreateScope())
             logger.LogError(ex, "An error occurred while re-provisioning grants for existing users");
         }
     }
+
+    // ============================================================
+    // ROLE GRANT SCOPE MIGRATION
+    // Per the Kabar/Lead/Assigner chore-policy update:
+    //   - BRDirector / קב"ר: AssignChores + ManageOnDuty SAR → ETM (molecule-wide)
+    //   - Lead / מפ"צ: AssignChores SAR → ETM (molecule-wide)
+    //   - Assigner: AssignChores + ViewAllUsers ETM → ETA (area-wide, chores only)
+    // The standard re-provisioning path (RepairUserGrantsAsync) only ADDS missing grants —
+    // it does not change the SCOPE of grants already provisioned for existing users. This
+    // migration finds Grant rows that still match the OLD scope shape, removes them, and
+    // re-runs RepairUserGrantsAsync so the new template scope is applied. Idempotent: after
+    // the first successful run there are no old-shape grants left, so subsequent runs no-op.
+    try
+    {
+        var grantService = scope.ServiceProvider.GetRequiredService<IGrantService>();
+
+        // (RoleTemplateId, GrantTypeId, predicate that detects the OLD scope shape)
+        var policyChanges = new (int RoleTemplateId, int GrantTypeId, Func<ShiftManager.Models.Grant, bool> IsOldShape)[]
+        {
+            // Target = ETM (Molecule). Old-shape: anything narrower than Molecule
+            // (covers SAR/Company-only AND legacy all-null self-scoped grants).
+            (2,  17, g => !g.MoleculeId.HasValue && !g.AreaId.HasValue && !g.ProjectId.HasValue),
+            (2, 122, g => !g.MoleculeId.HasValue && !g.AreaId.HasValue && !g.ProjectId.HasValue),
+            (3,  17, g => !g.MoleculeId.HasValue && !g.AreaId.HasValue && !g.ProjectId.HasValue),
+            (3,   2, g => !g.MoleculeId.HasValue && !g.AreaId.HasValue && !g.ProjectId.HasValue),
+            // Target = ETA (Area). Old-shape: anything narrower than Area
+            // (covers ETM/Molecule, SAR/Company, AND all-null self-scoped).
+            (8,  17, g => !g.AreaId.HasValue && !g.ProjectId.HasValue),
+            (8,  34, g => !g.AreaId.HasValue && !g.ProjectId.HasValue),
+        };
+
+        var affectedUserIds = new HashSet<int>();
+        foreach (var change in policyChanges)
+        {
+            // Role assignment lives on User.RoleTemplateId in this codebase; the
+            // UserRoleAssignments table is unused at the moment but we union the two for safety
+            // in case it is populated by future code paths.
+            var userIds = await db.Users.IgnoreQueryFilters()
+                .Where(u => u.IsActive && u.RoleTemplateId == change.RoleTemplateId)
+                .Select(u => u.Id)
+                .Union(db.UserRoleAssignments.IgnoreQueryFilters()
+                    .Where(ura => ura.RoleTemplateId == change.RoleTemplateId && ura.IsActive)
+                    .Select(ura => ura.UserId))
+                .Distinct()
+                .ToListAsync();
+
+            if (userIds.Count == 0) continue;
+
+            var oldGrants = await db.Grants
+                .Where(g => userIds.Contains(g.UserId) && g.GrantTypeId == change.GrantTypeId)
+                .ToListAsync();
+
+            var toRemove = oldGrants.Where(change.IsOldShape).ToList();
+            if (toRemove.Count == 0) continue;
+
+            db.Grants.RemoveRange(toRemove);
+            foreach (var g in toRemove) affectedUserIds.Add(g.UserId);
+        }
+
+        if (affectedUserIds.Count > 0)
+        {
+            await db.SaveChangesAsync();
+            var totalRepaired = 0;
+            foreach (var uid in affectedUserIds)
+            {
+                totalRepaired += await grantService.RepairUserGrantsAsync(uid);
+            }
+            logger.LogInformation(
+                "Role-scope migration: re-provisioned {GrantCount} grants for {UserCount} users (Kabar/Lead/Assigner chore+on-duty scope expansion)",
+                totalRepaired, affectedUserIds.Count);
+        }
+
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Role-scope migration failed (Kabar/Lead/Assigner chore policy)");
+    }
 }
 
 // ============================================================
@@ -1653,6 +1684,12 @@ app.UseRouting();
 
 // Add request logging middleware (must be after routing, before auth)
 app.UseRequestLogging();
+
+// UI-route exception bridge. MUST be registered BEFORE ApiExceptionMiddleware so that, in
+// invocation order, this middleware sits OUTSIDE ApiExc and catches non-API exceptions that
+// ApiExc deliberately re-throws. For /api/* and /Api/* paths this middleware is a no-op
+// (its catch filter excludes them) and ApiExc handles the JSON response instead.
+app.UseMiddleware<ShiftManager.Middleware.PageExceptionMiddleware>();
 
 // Add request localization middleware
 // Must run BEFORE UseRequestLocalization so that deleting the legacy cookie causes

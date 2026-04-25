@@ -6,6 +6,19 @@ namespace ShiftManager.Models.Api;
 /// RFC-7807 Problem Details for HTTP APIs
 /// https://datatracker.ietf.org/doc/html/rfc7807
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>Deprecated</b> as part of the project-wide error-handling overhaul.
+/// New code should use <see cref="ShiftManager.Models.ApiErrorResponse"/>, which is the
+/// canonical project-native API error envelope (used by ApiExceptionMiddleware and
+/// supports correlation IDs out of the box).
+/// </para>
+/// <para>
+/// This class is kept as a backward-compatibility shim for one release so existing
+/// V1 controllers can migrate incrementally. Scheduled for removal in the next release.
+/// </para>
+/// </remarks>
+[Obsolete("Use ShiftManager.Models.ApiErrorResponse. Removal scheduled for next release.")]
 public class ApiProblemDetails
 {
     /// <summary>

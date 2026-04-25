@@ -24,19 +24,7 @@
         <p class="page-subtitle"><loc key="FeatureFlags_Subtitle" /></p>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.Message))
-    {
-        <div class="alert alert-success">
-            @Model.Message
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-danger">
-            @Model.Error
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     <form method="post">
         @foreach (var category in Model.FlagsByCategory)

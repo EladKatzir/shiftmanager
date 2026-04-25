@@ -6,6 +6,7 @@ using FluentAssertions;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
@@ -58,54 +59,54 @@ public class NotificationServiceTests : IDisposable
         _mailService.Setup(m => m.SendShiftAssignedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<DateOnly>(), It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendShiftDeletedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<DateOnly>(), It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendTimeOffApprovedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendTimeOffDeclinedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendTimeOffDeletedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendSwapRequestApprovedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendSwapRequestDeclinedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendChoreAssignedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendChoreCanceledEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendOnDutyAssignedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendOnDutyCanceledEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendAccessRequestSubmittedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendTraineeAddedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendSlotRemovedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<DateOnly>(), It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
         _mailService.Setup(m => m.SendShiftModifiedEmailAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<DateOnly>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(OperationResult.Ok());
 
         // Localizer returns key as value (same pattern as SignupFlowTests)
         _localizer = new Mock<IStringLocalizer<SharedResources>>();

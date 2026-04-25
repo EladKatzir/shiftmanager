@@ -65,8 +65,7 @@ public class CalendarModel : LocalizedPageModel
     [BindProperty]
     public string? ConflictAction { get; set; }
 
-    public string? Message { get; set; }
-    public string? ErrorMessage { get; set; }
+    // Message / ErrorMessage removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
 
     private int GetCurrentUserId()
     {
@@ -123,48 +122,48 @@ public class CalendarModel : LocalizedPageModel
             // ✅ SECURITY FIX: Input validation
             if (!ModelState.IsValid)
             {
-                ErrorMessage = _localizer["Chore_Error_FillRequiredFields"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_FillRequiredFields"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
             if (string.IsNullOrWhiteSpace(ChoreTitle))
             {
-                ErrorMessage = _localizer["Chore_Error_TitleRequired"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_TitleRequired"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
             // Validate title length (prevent DoS and database errors)
             if (ChoreTitle.Length > 200)
             {
-                ErrorMessage = _localizer["Chore_Error_TitleTooLong"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_TitleTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
             // Validate notes length
             if (!string.IsNullOrWhiteSpace(ChoreNotes) && ChoreNotes.Length > 1000)
             {
-                ErrorMessage = _localizer["Chore_Error_NotesTooLong"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_NotesTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
             // Validate assignee ID
             if (AssigneeId <= 0)
             {
-                ErrorMessage = _localizer["Chore_Error_InvalidAssignee"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_InvalidAssignee"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
             // Validate date (prevent far future dates)
             if (ChoreDate > DateOnly.FromDateTime(DateTime.Today.AddYears(2)))
             {
-                ErrorMessage = _localizer["Chore_Error_DateTooFarFuture"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_DateTooFarFuture"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
             // Validate date (prevent past dates)
             if (ChoreDate < DateOnly.FromDateTime(DateTime.Today))
             {
-                ErrorMessage = _localizer["Chore_Error_DateInPast"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_DateInPast"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
@@ -172,14 +171,14 @@ public class CalendarModel : LocalizedPageModel
             var currentUserId = GetCurrentUserId();
             if (!await _choreService.CanUserManageChoresAsync(currentUserId))
             {
-                ErrorMessage = _localizer["Chore_Error_NoPermissionCreate"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_NoPermissionCreate"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
             // Check if assignee is valid
             if (!await _choreService.CanUserManageChoreForAssigneeAsync(currentUserId, AssigneeId))
             {
-                ErrorMessage = _localizer["Chore_Error_CannotAssignToUser"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_CannotAssignToUser"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
@@ -205,16 +204,16 @@ public class CalendarModel : LocalizedPageModel
                         TempData["ConflictDate"] = ChoreDate.ToString("yyyy-MM-dd");
                         TempData["ConflictTitle"] = ChoreTitle;
                         TempData["ConflictNotes"] = ChoreNotes;
-                        ErrorMessage = _localizer["Chore_Error_ShiftConflictReplace"];
+                        TempData["ErrorMessage"] = _localizer["Chore_Error_ShiftConflictReplace"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                     }
                     else
                     {
-                        ErrorMessage = _localizer["Chore_Error_ShiftConflict"];
+                        TempData["ErrorMessage"] = _localizer["Chore_Error_ShiftConflict"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                     }
                 }
                 else
                 {
-                    ErrorMessage = result.Message;
+                    TempData["ErrorMessage"] = result.Message; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 }
                 return await OnGetAsync(ChoreDate.Year, ChoreDate.Month);
             }
@@ -233,13 +232,13 @@ public class CalendarModel : LocalizedPageModel
                 description: $"Created chore '{ChoreTitle}' for user {AssigneeId} on {ChoreDate:yyyy-MM-dd}",
                 details: JsonSerializer.Serialize(new { ChoreId = result.Chore.Id, AssigneeId, ChoreDate, ChoreTitle, ChoreNotes }));
 
-            Message = _localizer["Chore_Success_Created", ChoreTitle];
-            return RedirectToPage(new { year = ChoreDate.Year, month = ChoreDate.Month, message = Message });
+            TempData["SuccessMessage"] = _localizer["Chore_Success_Created", ChoreTitle].Value;
+            return RedirectToPage(new { year = ChoreDate.Year, month = ChoreDate.Month });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating chore");
-            ErrorMessage = _localizer["Chore_Error_CreatingFailed"];
+            TempData["ErrorMessage"] = _localizer["Chore_Error_CreatingFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return await OnGetAsync();
         }
     }
@@ -251,21 +250,21 @@ public class CalendarModel : LocalizedPageModel
             // ✅ SECURITY FIX: Input validation
             if (ShiftAssignmentId <= 0 || string.IsNullOrWhiteSpace(ChoreTitle))
             {
-                ErrorMessage = _localizer["Chore_Error_InvalidRequest"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_InvalidRequest"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
             // Validate title length
             if (ChoreTitle.Length > 200)
             {
-                ErrorMessage = _localizer["Chore_Error_TitleTooLong"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_TitleTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
             // Validate notes length
             if (!string.IsNullOrWhiteSpace(ChoreNotes) && ChoreNotes.Length > 1000)
             {
-                ErrorMessage = _localizer["Chore_Error_NotesTooLong"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_NotesTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
@@ -273,7 +272,7 @@ public class CalendarModel : LocalizedPageModel
             var currentUserId = GetCurrentUserId();
             if (!await _choreService.CanUserManageChoresAsync(currentUserId))
             {
-                ErrorMessage = _localizer["Chore_Error_NoPermissionReplaceShifts"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_NoPermissionReplaceShifts"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
@@ -284,7 +283,7 @@ public class CalendarModel : LocalizedPageModel
 
             if (!result.Success)
             {
-                ErrorMessage = result.Message;
+                TempData["ErrorMessage"] = result.Message; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
@@ -305,13 +304,13 @@ public class CalendarModel : LocalizedPageModel
                 description: $"Replaced shift {ShiftAssignmentId} with chore '{ChoreTitle}' for user {chore.UserId} on {chore.Date:yyyy-MM-dd}",
                 details: JsonSerializer.Serialize(new { ChoreId = chore.Id, ShiftAssignmentId, ChoreTitle, ChoreNotes }));
 
-            Message = _localizer["Chore_Success_ShiftReplaced", ChoreTitle];
-            return RedirectToPage(new { year = chore.Date.Year, month = chore.Date.Month, message = Message });
+            TempData["SuccessMessage"] = _localizer["Chore_Success_ShiftReplaced", ChoreTitle].Value;
+            return RedirectToPage(new { year = chore.Date.Year, month = chore.Date.Month });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error replacing shift with chore");
-            ErrorMessage = _localizer["Chore_Error_ReplacingShiftFailed"];
+            TempData["ErrorMessage"] = _localizer["Chore_Error_ReplacingShiftFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return await OnGetAsync();
         }
     }
@@ -326,7 +325,7 @@ public class CalendarModel : LocalizedPageModel
 
             if (!int.TryParse(choreIdString, out var choreId) || choreId <= 0)
             {
-                ErrorMessage = _localizer["Chore_Error_InvalidId"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_InvalidId"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
@@ -338,7 +337,7 @@ public class CalendarModel : LocalizedPageModel
             if (!await _choreService.CanUserManageChoresAsync(currentUserId))
             {
                 _logger.LogWarning("SECURITY: User {UserId} attempted to cancel chore {ChoreId} without permission", currentUserId, ChoreId);
-                ErrorMessage = _localizer["Chore_Error_NoPermissionCancel"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_NoPermissionCancel"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
@@ -346,7 +345,7 @@ public class CalendarModel : LocalizedPageModel
             var chore = await _choreService.GetChoreByIdAsync(ChoreId);
             if (chore == null)
             {
-                ErrorMessage = _localizer["Chore_Error_NotFound"];
+                TempData["ErrorMessage"] = _localizer["Chore_Error_NotFound"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
@@ -354,7 +353,7 @@ public class CalendarModel : LocalizedPageModel
 
             if (!result.Success)
             {
-                ErrorMessage = result.Message;
+                TempData["ErrorMessage"] = result.Message; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return await OnGetAsync();
             }
 
@@ -372,13 +371,13 @@ public class CalendarModel : LocalizedPageModel
                 description: $"Canceled chore '{chore.Title}' for user {chore.UserId} on {chore.Date:yyyy-MM-dd}",
                 details: JsonSerializer.Serialize(new { ChoreId, ChoreTitle = chore.Title, UserId = chore.UserId, ChoreDate = chore.Date }));
 
-            Message = _localizer["Chore_Success_Canceled", chore.Title];
-            return RedirectToPage(new { year = chore.Date.Year, month = chore.Date.Month, message = Message });
+            TempData["SuccessMessage"] = _localizer["Chore_Success_Canceled", chore.Title].Value;
+            return RedirectToPage(new { year = chore.Date.Year, month = chore.Date.Month });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error canceling chore");
-            ErrorMessage = _localizer["Chore_Error_CancelingFailed"];
+            TempData["ErrorMessage"] = _localizer["Chore_Error_CancelingFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return await OnGetAsync();
         }
     }

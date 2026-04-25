@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -26,17 +28,20 @@ public class CreateModel : PageModel
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<CreateModel> _logger;
     private readonly ISetupTaskService _setupTaskService;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public CreateModel(
         AppDbContext db,
         IAuditLogService auditLogService,
         ILogger<CreateModel> logger,
-        ISetupTaskService setupTaskService)
+        ISetupTaskService setupTaskService,
+        IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _auditLogService = auditLogService;
         _logger = logger;
         _setupTaskService = setupTaskService;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -224,12 +229,22 @@ public class CreateModel : PageModel
                 || sqliteEx.SqliteExtendedErrorCode == 1555 /* SQLITE_CONSTRAINT_PRIMARYKEY */))
         {
             _logger.LogWarning(dbEx, "Duplicate hierarchy entity creation attempted");
-            return new JsonResult(new { success = false, message = "An item with this name already exists." }) { StatusCode = 409 };
+            return new JsonResult(
+                ApiErrorResponse.Create(
+                    "ERROR_HIERARCHY_DUPLICATE_NAME",
+                    _localizer["Error_HierarchyApi_DuplicateName"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 409 };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing hierarchy create request");
-            return new JsonResult(new { success = false, message = "An error occurred" }) { StatusCode = 500 };
+            return new JsonResult(
+                ApiErrorResponse.Create(
+                    "ERROR_HIERARCHY_CREATE_FAILED",
+                    _localizer["Error_HierarchyApi_CreateFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 500 };
         }
     }
 

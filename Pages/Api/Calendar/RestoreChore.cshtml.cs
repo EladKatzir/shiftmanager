@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Text.Json;
 
@@ -13,12 +15,14 @@ public class RestoreChoreModel : PageModel
     private readonly IChoreService _choreService;
     private readonly ILogger<RestoreChoreModel> _logger;
     private readonly IAuditLogService _auditLogService;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
-    public RestoreChoreModel(IChoreService choreService, ILogger<RestoreChoreModel> logger, IAuditLogService auditLogService)
+    public RestoreChoreModel(IChoreService choreService, ILogger<RestoreChoreModel> logger, IAuditLogService auditLogService, IStringLocalizer<SharedResources> localizer)
     {
         _choreService = choreService;
         _logger = logger;
         _auditLogService = auditLogService;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -59,7 +63,11 @@ public class RestoreChoreModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error restoring chore via undo");
-            return new JsonResult(new { success = false, message = "An error occurred" })
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_CALENDAR_RESTORE_CHORE_FAILED",
+                    _localizer["Error_CalendarApi_RestoreChoreFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
                 { StatusCode = 500 };
         }
     }

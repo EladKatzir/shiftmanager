@@ -1,12 +1,37 @@
+using ShiftManager.Models.Results;
+
 namespace ShiftManager.Models;
 
 /// <summary>
 /// Standardized API error response format (B-028)
-/// All API errors return: { "error": { "code": "string", "message": "string", "details": {} } }
+/// All API errors return: { "error": { "code": "string", "message": "string", "details": {}, "correlationId": "..." } }
 /// </summary>
 public class ApiErrorResponse
 {
     public ApiError Error { get; set; } = new();
+
+    /// <summary>
+    /// Attach the request correlation ID so the user can quote it to support.
+    /// Mutates and returns the same instance for fluent chaining.
+    /// </summary>
+    public ApiErrorResponse WithCorrelationId(string correlationId)
+    {
+        Error.CorrelationId = correlationId;
+        return this;
+    }
+
+    /// <summary>
+    /// Build an ApiErrorResponse from a failed <see cref="OperationResult"/>.
+    /// The caller chooses the API error <paramref name="code"/> (typically the result's <c>ErrorKey</c>
+    /// or a route-specific override). All issues are surfaced under <c>details.issues</c>.
+    /// </summary>
+    public static ApiErrorResponse FromOperationResult(OperationResult result, string code)
+    {
+        return Create(
+            code,
+            result.ErrorMessage ?? "Operation failed",
+            result.Issues.Count > 0 ? (object)new { issues = result.Issues } : null);
+    }
 
     /// <summary>
     /// Creates a new API error response with the specified code, message, and optional details.
@@ -143,4 +168,11 @@ public class ApiError
     /// Optional additional details (validation errors, conflict info, etc.)
     /// </summary>
     public object? Details { get; set; }
+
+    /// <summary>
+    /// Request correlation ID (X-Correlation-Id). Surfaced to users in the FeedbackModal/Toast
+    /// so they can quote it to support, and recorded in the structured log scope for any
+    /// log entries produced while serving the request.
+    /// </summary>
+    public string? CorrelationId { get; set; }
 }

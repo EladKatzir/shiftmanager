@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -75,7 +77,14 @@ public class UserLifecycleTests : MasterTestBase
 
         var auditLogService = Mock.Of<IAuditLogService>();
         var grantService = new GrantService(db, hierarchyMock.Object, auditLogService);
-        return new RoleService(db, grantService);
+        return new RoleService(
+            db,
+            grantService,
+            Mock.Of<ILogger<RoleService>>(),
+            new Microsoft.Extensions.Localization.StringLocalizer<ShiftManager.Resources.SharedResources>(
+                new Microsoft.Extensions.Localization.ResourceManagerStringLocalizerFactory(
+                    Microsoft.Extensions.Options.Options.Create(new Microsoft.Extensions.Localization.LocalizationOptions { ResourcesPath = "Resources" }),
+                    Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance)));
     }
 
     // ================================================================
@@ -123,8 +132,8 @@ public class UserLifecycleTests : MasterTestBase
         var scope = new GrantScope(CompanyId: tzafona.Id, JobTypeId: alhut.Id);
 
         var roleService = CreateRoleServiceWithDb(db);
-        var assignment = await roleService.AssignRoleAsync(
-            user.Id, employeeTemplate.Id, scope, user.Id);
+        var assignment = (await roleService.AssignRoleAsync(
+            user.Id, employeeTemplate.Id, scope, user.Id)).Value;
 
         assignment.Should().NotBeNull("AssignRoleAsync should return a role assignment");
 
@@ -156,8 +165,8 @@ public class UserLifecycleTests : MasterTestBase
         var scope = new GrantScope(CompanyId: tzafona.Id, JobTypeId: alhut.Id);
 
         var roleService = CreateRoleServiceWithDb(db);
-        var assignment = await roleService.AssignRoleAsync(
-            user.Id, employeeTemplate.Id, scope, user.Id);
+        var assignment = (await roleService.AssignRoleAsync(
+            user.Id, employeeTemplate.Id, scope, user.Id)).Value;
         assignment.Should().NotBeNull();
 
         var grantsBefore = await db.Grants
@@ -166,7 +175,7 @@ public class UserLifecycleTests : MasterTestBase
         grantsBefore.Should().BeGreaterThan(0);
 
         var removed = await roleService.RemoveRoleAsync(assignment!.Id, user.Id);
-        removed.Should().BeTrue();
+        removed.Success.Should().BeTrue();
 
         var grantsAfter = await db.Grants
             .Where(g => g.UserId == user.Id && g.IsAutoGrant)
@@ -199,14 +208,14 @@ public class UserLifecycleTests : MasterTestBase
 
         var roleService = CreateRoleServiceWithDb(db);
 
-        var empAssignment = await roleService.AssignRoleAsync(
-            user.Id, employeeTemplate.Id, scope, user.Id);
+        var empAssignment = (await roleService.AssignRoleAsync(
+            user.Id, employeeTemplate.Id, scope, user.Id)).Value;
         empAssignment.Should().NotBeNull();
 
         await roleService.RemoveRoleAsync(empAssignment!.Id, user.Id);
 
-        var leadAssignment = await roleService.AssignRoleAsync(
-            user.Id, leadTemplate.Id, scope, user.Id);
+        var leadAssignment = (await roleService.AssignRoleAsync(
+            user.Id, leadTemplate.Id, scope, user.Id)).Value;
         leadAssignment.Should().NotBeNull();
 
         var leadGrantKeys = await db.Grants
@@ -305,20 +314,20 @@ public class UserLifecycleTests : MasterTestBase
 
         var roleService = CreateRoleServiceWithDb(db);
 
-        var empAssignment = await roleService.AssignRoleAsync(
+        var empAssignment = (await roleService.AssignRoleAsync(
             user.Id, employeeTemplate.Id,
             new GrantScope(CompanyId: tzafona.Id, JobTypeId: alhut.Id),
-            user.Id);
+            user.Id)).Value;
         empAssignment.Should().NotBeNull();
 
         var grantsAfterEmployee = await db.Grants
             .Where(g => g.UserId == user.Id && g.IsAutoGrant)
             .CountAsync();
 
-        var assignerAssignment = await roleService.AssignRoleAsync(
+        var assignerAssignment = (await roleService.AssignRoleAsync(
             user.Id, assignerTemplate.Id,
             new GrantScope(CompanyId: tzafona.Id),
-            user.Id);
+            user.Id)).Value;
         assignerAssignment.Should().NotBeNull();
 
         var grantsAfterBoth = await db.Grants
@@ -356,12 +365,12 @@ public class UserLifecycleTests : MasterTestBase
 
         var roleService = CreateRoleServiceWithDb(db);
 
-        var first = await roleService.AssignRoleAsync(
-            user.Id, employeeTemplate.Id, scope, user.Id);
+        var first = (await roleService.AssignRoleAsync(
+            user.Id, employeeTemplate.Id, scope, user.Id)).Value;
         first.Should().NotBeNull();
 
-        var second = await roleService.AssignRoleAsync(
-            user.Id, employeeTemplate.Id, scope, user.Id);
+        var second = (await roleService.AssignRoleAsync(
+            user.Id, employeeTemplate.Id, scope, user.Id)).Value;
 
         second.Should().NotBeNull();
         second!.Id.Should().Be(first!.Id,
@@ -426,8 +435,8 @@ public class UserLifecycleTests : MasterTestBase
 
         var beforeAssign = DateTime.UtcNow;
         var roleService = CreateRoleServiceWithDb(db);
-        var assignment = await roleService.AssignRoleAsync(
-            user.Id, employeeTemplate.Id, scope, assigner.Id);
+        var assignment = (await roleService.AssignRoleAsync(
+            user.Id, employeeTemplate.Id, scope, assigner.Id)).Value;
 
         assignment.Should().NotBeNull();
 

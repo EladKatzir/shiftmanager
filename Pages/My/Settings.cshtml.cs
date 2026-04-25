@@ -75,8 +75,7 @@ public class SettingsModel : PageModel
 
     public List<SelectListItem> RankOptions { get; set; } = new();
 
-    public string? SuccessMessage { get; set; }
-    public string? ErrorMessage { get; set; }
+    // SuccessMessage / ErrorMessage removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
     public bool HasExistingPreference { get; set; }
 
     /// <summary>
@@ -204,7 +203,7 @@ public class SettingsModel : PageModel
         // Validate enum value
         if (!Enum.IsDefined(typeof(MilitaryRank), Rank))
         {
-            ErrorMessage = _localizer["Error_InvalidRank"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidRank"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             PopulateRankOptions();
             await LoadAvailableOnDutyTypesAsync();
             return Page();
@@ -259,7 +258,7 @@ public class SettingsModel : PageModel
             var user = await _db.Users.FindAsync(userId);
             if (user == null)
             {
-                ErrorMessage = _localizer["Error_UserNotFound"];
+                TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 PopulateRankOptions();
                 await LoadAvailableOnDutyTypesAsync();
                 return Page();
@@ -275,7 +274,7 @@ public class SettingsModel : PageModel
                 $"Updated notification settings and preferences",
                 $"DailyDigest={ReceiveDailyDigest}, Rank={Rank}");
 
-            SuccessMessage = _localizer["SettingsSavedSuccess"];
+            TempData["SuccessMessage"] = _localizer["SettingsSavedSuccess"].Value;
             HasExistingPreference = true;
 
             // Repopulate options for page display
@@ -287,7 +286,7 @@ public class SettingsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving user settings");
-            ErrorMessage = _localizer["Error_SavingSettings"];
+            TempData["ErrorMessage"] = _localizer["Error_SavingSettings"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             PopulateRankOptions();
             await LoadAvailableOnDutyTypesAsync();
             return Page();

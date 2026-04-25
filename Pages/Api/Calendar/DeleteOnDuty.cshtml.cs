@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -21,17 +23,20 @@ public class DeleteOnDutyModel : PageModel
     private readonly INotificationService _notificationService;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<DeleteOnDutyModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public DeleteOnDutyModel(
         IOnDutyService onDutyService,
         INotificationService notificationService,
         IAuditLogService auditLogService,
-        ILogger<DeleteOnDutyModel> logger)
+        ILogger<DeleteOnDutyModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _onDutyService = onDutyService;
         _notificationService = notificationService;
         _auditLogService = auditLogService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -138,7 +143,11 @@ public class DeleteOnDutyModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting on-duty via quick-delete");
-            return new JsonResult(new { success = false, message = "An error occurred while deleting the on-duty assignment" })
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_CALENDAR_DELETE_ONDUTY_FAILED",
+                    _localizer["Error_CalendarApi_DeleteOnDutyFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
             {
                 StatusCode = 500
             };

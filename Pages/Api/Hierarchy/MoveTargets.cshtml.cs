@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Resources;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Api.Hierarchy;
@@ -18,13 +20,16 @@ public class MoveTargetsModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<MoveTargetsModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public MoveTargetsModel(
         AppDbContext db,
-        ILogger<MoveTargetsModel> logger)
+        ILogger<MoveTargetsModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnGetAsync(string entityType, int entityId)
@@ -113,7 +118,13 @@ public class MoveTargetsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting move targets for {EntityType} {EntityId}", entityType, entityId);
-            return new JsonResult(new { success = false, message = "An error occurred", targets = new List<object>() }) { StatusCode = 500 };
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_HIERARCHY_GET_MOVE_TARGETS_FAILED",
+                    _localizer["Error_HierarchyApi_GetMoveTargetsFailed"].Value,
+                    new { targets = new List<object>() })
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 500 };
         }
     }
 

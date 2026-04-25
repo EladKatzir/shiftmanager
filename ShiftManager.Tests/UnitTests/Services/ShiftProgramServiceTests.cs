@@ -1,14 +1,19 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Tests.UnitTests.Services;
 
+// Updated 2026-04-25: ShiftProgramService migrated to OperationResult<T> — error paths
+// no longer throw, they return Fail(errorKey, message). Tests assert Success / ErrorKey
+// instead of catching exceptions, and unwrap result.Value when accessing the payload.
 public class ShiftProgramServiceTests : IDisposable
 {
     private readonly AppDbContext _db;
@@ -29,10 +34,15 @@ public class ShiftProgramServiceTests : IDisposable
 
         _db = new AppDbContext(options);
 
+        var localizerMock = new Mock<IStringLocalizer<SharedResources>>();
+        localizerMock.Setup(l => l[It.IsAny<string>()])
+            .Returns((string k) => new LocalizedString(k, k));
+
         _service = new ShiftProgramService(
             _db,
             Mock.Of<ILogger<ShiftProgramService>>(),
-            Mock.Of<ITenantResolver>());
+            Mock.Of<ITenantResolver>(),
+            localizerMock.Object);
 
         SeedBaseData();
     }
@@ -65,14 +75,15 @@ public class ShiftProgramServiceTests : IDisposable
         var result = await _service.CreateProgramAsync(
             CompanyId, ShiftTypeId, "Morning Mon-Wed", days, defaultStaffing: 3, perDayStaffing: null, UserId);
 
-        result.Should().NotBeNull();
-        result.Name.Should().Be("Morning Mon-Wed");
-        result.CompanyId.Should().Be(CompanyId);
-        result.ShiftTypeId.Should().Be(ShiftTypeId);
-        result.DefaultStaffingRequired.Should().Be(3);
-        result.IsActive.Should().BeTrue();
-        result.CreatedBy.Should().Be(UserId);
-        result.ProgramDays.Should().HaveCount(3);
+        result.Success.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Name.Should().Be("Morning Mon-Wed");
+        result.Value.CompanyId.Should().Be(CompanyId);
+        result.Value.ShiftTypeId.Should().Be(ShiftTypeId);
+        result.Value.DefaultStaffingRequired.Should().Be(3);
+        result.Value.IsActive.Should().BeTrue();
+        result.Value.CreatedBy.Should().Be(UserId);
+        result.Value.ProgramDays.Should().HaveCount(3);
     }
 
     [Fact]
@@ -87,31 +98,32 @@ public class ShiftProgramServiceTests : IDisposable
         var result = await _service.CreateProgramAsync(
             CompanyId, ShiftTypeId, "Test", days, defaultStaffing: 2, perDayStaffing, UserId);
 
-        var sundayDay = result.ProgramDays.First(pd => pd.DayOfWeek == DayOfWeek.Sunday);
-        var mondayDay = result.ProgramDays.First(pd => pd.DayOfWeek == DayOfWeek.Monday);
+        result.Success.Should().BeTrue();
+        var sundayDay = result.Value!.ProgramDays.First(pd => pd.DayOfWeek == DayOfWeek.Sunday);
+        var mondayDay = result.Value.ProgramDays.First(pd => pd.DayOfWeek == DayOfWeek.Monday);
 
         sundayDay.StaffingRequired.Should().Be(5);
         mondayDay.StaffingRequired.Should().BeNull(); // Uses default
     }
 
     [Fact]
-    public async Task CreateProgramAsync_InvalidShiftType_Throws()
+    public async Task CreateProgramAsync_InvalidShiftType_ReturnsFail()
     {
         var days = new List<DayOfWeek> { DayOfWeek.Sunday };
 
-        var act = () => _service.CreateProgramAsync(CompanyId, 999, "Bad", days, 1, null, UserId);
+        var result = await _service.CreateProgramAsync(CompanyId, 999, "Bad", days, 1, null, UserId);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_ShiftTypeNotInMolecule");
     }
 
     [Fact]
-    public async Task CreateProgramAsync_EmptyDays_Throws()
+    public async Task CreateProgramAsync_EmptyDays_ReturnsFail()
     {
-        var act = () => _service.CreateProgramAsync(CompanyId, ShiftTypeId, "Bad", new List<DayOfWeek>(), 1, null, UserId);
+        var result = await _service.CreateProgramAsync(CompanyId, ShiftTypeId, "Bad", new List<DayOfWeek>(), 1, null, UserId);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*At least one day*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_NoDays");
     }
 
     // --- GetProgramAsync ---
@@ -143,7 +155,7 @@ public class ShiftProgramServiceTests : IDisposable
     {
         await CreateTestProgram("Active Program");
         var inactive = await CreateTestProgram("Inactive Program");
-        await _service.DeleteProgramAsync(inactive.Id, UserId);
+        (await _service.DeleteProgramAsync(inactive.Id, UserId)).Success.Should().BeTrue();
 
         var result = await _service.GetCompanyProgramsAsync(CompanyId);
 
@@ -156,7 +168,7 @@ public class ShiftProgramServiceTests : IDisposable
     {
         await CreateTestProgram("Active Program");
         var inactive = await CreateTestProgram("Inactive Program");
-        await _service.DeleteProgramAsync(inactive.Id, UserId);
+        (await _service.DeleteProgramAsync(inactive.Id, UserId)).Success.Should().BeTrue();
 
         var result = await _service.GetCompanyProgramsAsync(CompanyId, includeInactive: true);
 
@@ -171,7 +183,8 @@ public class ShiftProgramServiceTests : IDisposable
         var program = await CreateTestProgram();
 
         var newDays = new List<DayOfWeek> { DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
-        await _service.UpdateProgramAsync(program.Id, "Updated Name", newDays, 5, null, UserId);
+        var update = await _service.UpdateProgramAsync(program.Id, "Updated Name", newDays, 5, null, UserId);
+        update.Success.Should().BeTrue();
 
         var updated = await _service.GetProgramAsync(program.Id);
         updated!.Name.Should().Be("Updated Name");
@@ -183,23 +196,23 @@ public class ShiftProgramServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateProgramAsync_NonExistent_Throws()
+    public async Task UpdateProgramAsync_NonExistent_ReturnsFail()
     {
-        var act = () => _service.UpdateProgramAsync(999, "Bad", new List<DayOfWeek> { DayOfWeek.Sunday }, 1, null, UserId);
+        var result = await _service.UpdateProgramAsync(999, "Bad", new List<DayOfWeek> { DayOfWeek.Sunday }, 1, null, UserId);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_NotFound");
     }
 
     [Fact]
-    public async Task UpdateProgramAsync_EmptyDays_Throws()
+    public async Task UpdateProgramAsync_EmptyDays_ReturnsFail()
     {
         var program = await CreateTestProgram();
 
-        var act = () => _service.UpdateProgramAsync(program.Id, "Bad", new List<DayOfWeek>(), 1, null, UserId);
+        var result = await _service.UpdateProgramAsync(program.Id, "Bad", new List<DayOfWeek>(), 1, null, UserId);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*At least one day*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_NoDays");
     }
 
     // --- DeleteProgramAsync ---
@@ -209,7 +222,8 @@ public class ShiftProgramServiceTests : IDisposable
     {
         var program = await CreateTestProgram();
 
-        await _service.DeleteProgramAsync(program.Id, UserId);
+        var result = await _service.DeleteProgramAsync(program.Id, UserId);
+        result.Success.Should().BeTrue();
 
         var deleted = await _service.GetProgramAsync(program.Id);
         deleted!.IsActive.Should().BeFalse();
@@ -217,12 +231,12 @@ public class ShiftProgramServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task DeleteProgramAsync_NonExistent_Throws()
+    public async Task DeleteProgramAsync_NonExistent_ReturnsFail()
     {
-        var act = () => _service.DeleteProgramAsync(999, UserId);
+        var result = await _service.DeleteProgramAsync(999, UserId);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_NotFound");
     }
 
     // --- GenerateInstancesAsync ---
@@ -238,9 +252,10 @@ public class ShiftProgramServiceTests : IDisposable
 
         var result = await _service.GenerateInstancesAsync(program.Id, startDate, endDate);
 
+        result.Success.Should().BeTrue();
         // Sunday 3/1, Monday 3/2, Tuesday 3/3 match
-        result.Should().HaveCount(3);
-        result.Should().OnlyContain(i => i.CompanyId == CompanyId && i.ShiftTypeId == ShiftTypeId);
+        result.Value.Should().HaveCount(3);
+        result.Value!.Should().OnlyContain(i => i.CompanyId == CompanyId && i.ShiftTypeId == ShiftTypeId);
     }
 
     [Fact]
@@ -253,8 +268,9 @@ public class ShiftProgramServiceTests : IDisposable
 
         var result = await _service.GenerateInstancesAsync(program.Id, startDate, endDate);
 
-        result.Should().HaveCount(1);
-        var assignments = await _db.ShiftAssignments.Where(a => a.ShiftInstanceId == result[0].Id).ToListAsync();
+        result.Success.Should().BeTrue();
+        result.Value.Should().HaveCount(1);
+        var assignments = await _db.ShiftAssignments.Where(a => a.ShiftInstanceId == result.Value![0].Id).ToListAsync();
         assignments.Should().HaveCount(2);
         assignments.Should().OnlyContain(a => a.UserId == null); // Empty slots
     }
@@ -267,12 +283,13 @@ public class ShiftProgramServiceTests : IDisposable
         var date = new DateOnly(2026, 3, 1); // Sunday
 
         // Generate first time
-        await _service.GenerateInstancesAsync(program.Id, date, date);
+        (await _service.GenerateInstancesAsync(program.Id, date, date)).Success.Should().BeTrue();
 
         // Generate again — should skip
         var result = await _service.GenerateInstancesAsync(program.Id, date, date, overwriteExisting: false);
 
-        result.Should().BeEmpty();
+        result.Success.Should().BeTrue();
+        result.Value.Should().BeEmpty();
         var instanceCount = await _db.ShiftInstances.CountAsync(i => i.WorkDate == date);
         instanceCount.Should().Be(1); // Only one instance exists
     }
@@ -285,17 +302,18 @@ public class ShiftProgramServiceTests : IDisposable
         var date = new DateOnly(2026, 3, 1); // Sunday
 
         // Generate first time
-        await _service.GenerateInstancesAsync(program.Id, date, date);
+        (await _service.GenerateInstancesAsync(program.Id, date, date)).Success.Should().BeTrue();
 
         // Update program staffing, then regenerate with overwrite
-        await _service.UpdateProgramAsync(program.Id, program.Name,
+        (await _service.UpdateProgramAsync(program.Id, program.Name,
             new List<DayOfWeek> { DayOfWeek.Sunday, DayOfWeek.Monday, DayOfWeek.Tuesday },
-            3, null, UserId);
+            3, null, UserId)).Success.Should().BeTrue();
 
         var result = await _service.GenerateInstancesAsync(program.Id, date, date, overwriteExisting: true);
 
-        result.Should().HaveCount(1);
-        result[0].StaffingRequired.Should().Be(3);
+        result.Success.Should().BeTrue();
+        result.Value.Should().HaveCount(1);
+        result.Value![0].StaffingRequired.Should().Be(3);
     }
 
     [Fact]
@@ -309,16 +327,17 @@ public class ShiftProgramServiceTests : IDisposable
 
         var result = await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 7));
 
-        result.Should().BeEmpty();
+        result.Success.Should().BeTrue();
+        result.Value.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task GenerateInstancesAsync_NonExistentProgram_Throws()
+    public async Task GenerateInstancesAsync_NonExistentProgram_ReturnsFail()
     {
-        var act = () => _service.GenerateInstancesAsync(999, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 7));
+        var result = await _service.GenerateInstancesAsync(999, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 7));
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_NotFound");
     }
 
     // --- ApplyProgramToDateRangeAsync ---
@@ -328,11 +347,12 @@ public class ShiftProgramServiceTests : IDisposable
     {
         var program = await CreateTestProgram();
 
-        var count = await _service.ApplyProgramToDateRangeAsync(program.Id,
+        var result = await _service.ApplyProgramToDateRangeAsync(program.Id,
             new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 7));
 
+        result.Success.Should().BeTrue();
         // Sun, Mon, Tue = 3 instances
-        count.Should().Be(3);
+        result.Value.Should().Be(3);
     }
 
     // --- DetachInstanceAsync ---
@@ -341,10 +361,12 @@ public class ShiftProgramServiceTests : IDisposable
     public async Task DetachInstanceAsync_SetsDetachedAndOverride()
     {
         var program = await CreateTestProgram();
-        var instances = await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 1));
-        var instanceId = instances[0].Id;
+        var generated = await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 1));
+        generated.Success.Should().BeTrue();
+        var instanceId = generated.Value![0].Id;
 
-        await _service.DetachInstanceAsync(instanceId, "staffing");
+        var detach = await _service.DetachInstanceAsync(instanceId, "staffing");
+        detach.Success.Should().BeTrue();
 
         var instance = await _db.ShiftInstances.FindAsync(instanceId);
         instance!.IsDetached.Should().BeTrue();
@@ -355,11 +377,12 @@ public class ShiftProgramServiceTests : IDisposable
     public async Task DetachInstanceAsync_MultipleOverrides_AccumulatesFlags()
     {
         var program = await CreateTestProgram();
-        var instances = await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 1));
-        var instanceId = instances[0].Id;
+        var generated = await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 1));
+        generated.Success.Should().BeTrue();
+        var instanceId = generated.Value![0].Id;
 
-        await _service.DetachInstanceAsync(instanceId, "staffing");
-        await _service.DetachInstanceAsync(instanceId, "name");
+        (await _service.DetachInstanceAsync(instanceId, "staffing")).Success.Should().BeTrue();
+        (await _service.DetachInstanceAsync(instanceId, "name")).Success.Should().BeTrue();
 
         var instance = await _db.ShiftInstances.FindAsync(instanceId);
         instance!.OverriddenFields.Should().Contain("Staffing");
@@ -367,24 +390,25 @@ public class ShiftProgramServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task DetachInstanceAsync_InvalidOverrideType_Throws()
+    public async Task DetachInstanceAsync_InvalidOverrideType_ReturnsFail()
     {
         var program = await CreateTestProgram();
-        var instances = await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 1));
+        var generated = await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 1));
+        generated.Success.Should().BeTrue();
 
-        var act = () => _service.DetachInstanceAsync(instances[0].Id, "invalid");
+        var result = await _service.DetachInstanceAsync(generated.Value![0].Id, "invalid");
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*Invalid override type*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_InvalidOverrideType");
     }
 
     [Fact]
-    public async Task DetachInstanceAsync_NonExistentInstance_Throws()
+    public async Task DetachInstanceAsync_NonExistentInstance_ReturnsFail()
     {
-        var act = () => _service.DetachInstanceAsync(999, "staffing");
+        var result = await _service.DetachInstanceAsync(999, "staffing");
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_InstanceNotFound");
     }
 
     // --- ResetInstanceToProgramAsync ---
@@ -393,18 +417,19 @@ public class ShiftProgramServiceTests : IDisposable
     public async Task ResetInstanceToProgramAsync_RestoresDefaults()
     {
         var program = await CreateTestProgram(defaultStaffing: 2);
-        var instances = await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 1));
-        var instanceId = instances[0].Id;
+        var generated = await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 1));
+        generated.Success.Should().BeTrue();
+        var instanceId = generated.Value![0].Id;
 
         // Detach and modify
-        await _service.DetachInstanceAsync(instanceId, "staffing");
+        (await _service.DetachInstanceAsync(instanceId, "staffing")).Success.Should().BeTrue();
         var instance = await _db.ShiftInstances.FindAsync(instanceId);
         instance!.StaffingRequired = 10;
         instance.Name = "Custom Name";
         await _db.SaveChangesAsync();
 
         // Reset
-        await _service.ResetInstanceToProgramAsync(instanceId);
+        (await _service.ResetInstanceToProgramAsync(instanceId)).Success.Should().BeTrue();
 
         var reset = await _db.ShiftInstances.FindAsync(instanceId);
         reset!.StaffingRequired.Should().Be(2);
@@ -414,16 +439,16 @@ public class ShiftProgramServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task ResetInstanceToProgramAsync_NonExistentInstance_Throws()
+    public async Task ResetInstanceToProgramAsync_NonExistentInstance_ReturnsFail()
     {
-        var act = () => _service.ResetInstanceToProgramAsync(999);
+        var result = await _service.ResetInstanceToProgramAsync(999);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_InstanceNotFound");
     }
 
     [Fact]
-    public async Task ResetInstanceToProgramAsync_NoProgramLink_Throws()
+    public async Task ResetInstanceToProgramAsync_NoProgramLink_ReturnsFail()
     {
         // Create an instance manually without a program
         var instance = new ShiftInstance
@@ -434,10 +459,10 @@ public class ShiftProgramServiceTests : IDisposable
         _db.ShiftInstances.Add(instance);
         await _db.SaveChangesAsync();
 
-        var act = () => _service.ResetInstanceToProgramAsync(instance.Id);
+        var result = await _service.ResetInstanceToProgramAsync(instance.Id);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not generated from a Program*");
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().Be("Error_ShiftProgramService_InstanceNotFromProgram");
     }
 
     // --- GetInstancesFromProgramAsync ---
@@ -446,7 +471,7 @@ public class ShiftProgramServiceTests : IDisposable
     public async Task GetInstancesFromProgramAsync_ReturnsAllInstances()
     {
         var program = await CreateTestProgram();
-        await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 7));
+        (await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 7))).Success.Should().BeTrue();
 
         var result = await _service.GetInstancesFromProgramAsync(program.Id);
 
@@ -458,7 +483,7 @@ public class ShiftProgramServiceTests : IDisposable
     public async Task GetInstancesFromProgramAsync_WithDateFilter_FiltersCorrectly()
     {
         var program = await CreateTestProgram();
-        await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 7));
+        (await _service.GenerateInstancesAsync(program.Id, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 7))).Success.Should().BeTrue();
 
         var result = await _service.GetInstancesFromProgramAsync(program.Id,
             startDate: new DateOnly(2026, 3, 2), endDate: new DateOnly(2026, 3, 3));
@@ -472,6 +497,8 @@ public class ShiftProgramServiceTests : IDisposable
     private async Task<ShiftProgram> CreateTestProgram(string name = "Test Program", int defaultStaffing = 1)
     {
         var days = new List<DayOfWeek> { DayOfWeek.Sunday, DayOfWeek.Monday, DayOfWeek.Tuesday };
-        return await _service.CreateProgramAsync(CompanyId, ShiftTypeId, name, days, defaultStaffing, null, UserId);
+        var result = await _service.CreateProgramAsync(CompanyId, ShiftTypeId, name, days, defaultStaffing, null, UserId);
+        result.Success.Should().BeTrue("test setup requires CreateProgramAsync to succeed: {0}", result.ErrorMessage);
+        return result.Value!;
     }
 }

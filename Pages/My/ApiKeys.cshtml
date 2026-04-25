@@ -24,19 +24,9 @@
         </button>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.Message))
-    {
-        <div class="alert alert-success" style="margin-bottom: 2rem; padding: 1rem; background: var(--success); color: var(--success-text); border-radius: 0.5rem;">
-            @Model.Message
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-danger" style="margin-bottom: 2rem; padding: 1rem; background: var(--danger); color: var(--danger-text); border-radius: 0.5rem;">
-            @Model.Error
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge:
+       handlers set TempData["SuccessMessage"] / TempData["ErrorMessage"] (+ TempData["ErrorId"]),
+       and a blocking FeedbackModal opens on the next page load. *@
 
     @if (!string.IsNullOrEmpty(Model.GeneratedApiKey))
     {

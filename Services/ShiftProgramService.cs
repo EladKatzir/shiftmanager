@@ -1,33 +1,43 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
 /// <summary>
 /// Service for managing ShiftPrograms (weekly templates) and generating ShiftInstances.
 /// Implements the "Blueprints → Programs → Operations" architecture.
+///
+/// Migrated to <see cref="OperationResult"/> / <see cref="OperationResult{T}"/> as part of the
+/// project-wide error-handling overhaul. All errors return localized messages keyed under
+/// <c>Error_ShiftProgramService_*</c>.
 /// </summary>
 public class ShiftProgramService : IShiftProgramService
 {
     private readonly AppDbContext _db;
     private readonly ILogger<ShiftProgramService> _logger;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public ShiftProgramService(
         AppDbContext db,
         ILogger<ShiftProgramService> logger,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _logger = logger;
         _tenantResolver = tenantResolver;
+        _localizer = localizer;
     }
 
     // ==================== CRUD Operations ====================
 
-    public async Task<ShiftProgram> CreateProgramAsync(
+    public async Task<OperationResult<ShiftProgram>> CreateProgramAsync(
         int companyId,
         int shiftTypeId,
         string name,
@@ -40,6 +50,13 @@ public class ShiftProgramService : IShiftProgramService
             "Creating Program '{Name}' for ShiftType {ShiftTypeId} in Company {CompanyId}",
             name, shiftTypeId, companyId);
 
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return OperationResult<ShiftProgram>.Fail(
+                "Error_ShiftProgramService_NameRequired",
+                _localizer["Error_ShiftProgramService_NameRequired"].Value);
+        }
+
         // Validate ShiftType exists and is accessible from this company's molecule
         var companyMoleculeId = await _db.Companies
             .Where(c => c.Id == companyId)
@@ -50,13 +67,16 @@ public class ShiftProgramService : IShiftProgramService
 
         if (shiftType == null)
         {
-            throw new InvalidOperationException($"ShiftType {shiftTypeId} not found or not accessible from Company {companyId}");
+            return OperationResult<ShiftProgram>.Fail(
+                "Error_ShiftProgramService_ShiftTypeNotInMolecule",
+                _localizer["Error_ShiftProgramService_ShiftTypeNotInMolecule"].Value);
         }
 
-        // Validate at least one day selected
         if (days == null || days.Count == 0)
         {
-            throw new ArgumentException("At least one day must be selected for the Program", nameof(days));
+            return OperationResult<ShiftProgram>.Fail(
+                "Error_ShiftProgramService_NoDays",
+                _localizer["Error_ShiftProgramService_NoDays"].Value);
         }
 
         // Create Program
@@ -91,7 +111,8 @@ public class ShiftProgramService : IShiftProgramService
         await _db.SaveChangesAsync();
 
         // Reload with navigation properties
-        return await GetProgramAsync(program.Id) ?? program;
+        var reloaded = await GetProgramAsync(program.Id) ?? program;
+        return OperationResult<ShiftProgram>.Ok(reloaded);
     }
 
     public async Task<ShiftProgram?> GetProgramAsync(int programId)
@@ -122,7 +143,7 @@ public class ShiftProgramService : IShiftProgramService
             .ToList();
     }
 
-    public async Task UpdateProgramAsync(
+    public async Task<OperationResult> UpdateProgramAsync(
         int programId,
         string name,
         List<DayOfWeek> days,
@@ -132,19 +153,29 @@ public class ShiftProgramService : IShiftProgramService
     {
         _logger.LogInformation("Updating Program {ProgramId}", programId);
 
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return OperationResult.Fail(
+                "Error_ShiftProgramService_NameRequired",
+                _localizer["Error_ShiftProgramService_NameRequired"].Value);
+        }
+
         var program = await _db.ShiftPrograms
             .Include(p => p.ProgramDays)
             .FirstOrDefaultAsync(p => p.Id == programId);
 
         if (program == null)
         {
-            throw new InvalidOperationException($"Program {programId} not found");
+            return OperationResult.Fail(
+                "Error_ShiftProgramService_NotFound",
+                _localizer["Error_ShiftProgramService_NotFound"].Value);
         }
 
-        // Validate at least one day
         if (days == null || days.Count == 0)
         {
-            throw new ArgumentException("At least one day must be selected", nameof(days));
+            return OperationResult.Fail(
+                "Error_ShiftProgramService_NoDays",
+                _localizer["Error_ShiftProgramService_NoDays"].Value);
         }
 
         // Update Program fields
@@ -168,9 +199,10 @@ public class ShiftProgramService : IShiftProgramService
         }
 
         await _db.SaveChangesAsync();
+        return OperationResult.Ok();
     }
 
-    public async Task DeleteProgramAsync(int programId, int userId)
+    public async Task<OperationResult> DeleteProgramAsync(int programId, int userId)
     {
         _logger.LogInformation("Soft-deleting Program {ProgramId} by User {UserId}", programId, userId);
 
@@ -178,7 +210,9 @@ public class ShiftProgramService : IShiftProgramService
 
         if (program == null)
         {
-            throw new InvalidOperationException($"Program {programId} not found");
+            return OperationResult.Fail(
+                "Error_ShiftProgramService_NotFound",
+                _localizer["Error_ShiftProgramService_NotFound"].Value);
         }
 
         program.IsActive = false;
@@ -188,11 +222,12 @@ public class ShiftProgramService : IShiftProgramService
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Program {ProgramId} marked as inactive", programId);
+        return OperationResult.Ok();
     }
 
     // ==================== Instance Generation ====================
 
-    public async Task<List<ShiftInstance>> GenerateInstancesAsync(
+    public async Task<OperationResult<List<ShiftInstance>>> GenerateInstancesAsync(
         int programId,
         DateOnly startDate,
         DateOnly endDate,
@@ -209,13 +244,15 @@ public class ShiftProgramService : IShiftProgramService
 
         if (program == null)
         {
-            throw new InvalidOperationException($"Program {programId} not found");
+            return OperationResult<List<ShiftInstance>>.Fail(
+                "Error_ShiftProgramService_NotFound",
+                _localizer["Error_ShiftProgramService_NotFound"].Value);
         }
 
         if (program.ProgramDays.Count == 0)
         {
             _logger.LogWarning("Program {ProgramId} has no ProgramDays configured", programId);
-            return new List<ShiftInstance>();
+            return OperationResult<List<ShiftInstance>>.Ok(new List<ShiftInstance>());
         }
 
         var createdInstances = new List<ShiftInstance>();
@@ -376,22 +413,28 @@ public class ShiftProgramService : IShiftProgramService
             _logger.LogInformation("No new instances created for Program {ProgramId}", programId);
         }
 
-        return createdInstances;
+        return OperationResult<List<ShiftInstance>>.Ok(createdInstances);
     }
 
-    public async Task<int> ApplyProgramToDateRangeAsync(
+    public async Task<OperationResult<int>> ApplyProgramToDateRangeAsync(
         int programId,
         DateOnly startDate,
         DateOnly endDate,
         bool overwriteExisting = false)
     {
-        var instances = await GenerateInstancesAsync(programId, startDate, endDate, overwriteExisting);
-        return instances.Count;
+        var genResult = await GenerateInstancesAsync(programId, startDate, endDate, overwriteExisting);
+        if (!genResult.Success)
+        {
+            return OperationResult<int>.Fail(
+                genResult.ErrorKey ?? "Error_ShiftProgramService_NotFound",
+                genResult.ErrorMessage ?? _localizer["Error_ShiftProgramService_NotFound"].Value);
+        }
+        return OperationResult<int>.Ok(genResult.Value?.Count ?? 0);
     }
 
     // ==================== Detachment & Reset ====================
 
-    public async Task DetachInstanceAsync(int instanceId, string overrideType)
+    public async Task<OperationResult> DetachInstanceAsync(int instanceId, string overrideType)
     {
         _logger.LogInformation("Detaching ShiftInstance {InstanceId} (override: {Type})", instanceId, overrideType);
 
@@ -399,14 +442,16 @@ public class ShiftProgramService : IShiftProgramService
 
         if (instance == null)
         {
-            throw new InvalidOperationException($"ShiftInstance {instanceId} not found");
+            return OperationResult.Fail(
+                "Error_ShiftProgramService_InstanceNotFound",
+                _localizer["Error_ShiftProgramService_InstanceNotFound"].Value);
         }
 
         // Parse existing overrides
         var overrides = ShiftInstanceOverride.Parse(instance.OverriddenFields);
 
         // Set the specific override flag
-        switch (overrideType.ToLowerInvariant())
+        switch (overrideType?.ToLowerInvariant())
         {
             case "staffing":
                 overrides.Staffing = true;
@@ -418,7 +463,9 @@ public class ShiftProgramService : IShiftProgramService
                 overrides.Name = true;
                 break;
             default:
-                throw new ArgumentException($"Invalid override type: {overrideType}", nameof(overrideType));
+                return OperationResult.Fail(
+                    "Error_ShiftProgramService_InvalidOverrideType",
+                    _localizer["Error_ShiftProgramService_InvalidOverrideType"].Value);
         }
 
         // Update instance
@@ -429,9 +476,10 @@ public class ShiftProgramService : IShiftProgramService
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("ShiftInstance {InstanceId} marked as detached", instanceId);
+        return OperationResult.Ok();
     }
 
-    public async Task ResetInstanceToProgramAsync(int instanceId)
+    public async Task<OperationResult> ResetInstanceToProgramAsync(int instanceId)
     {
         _logger.LogInformation("Resetting ShiftInstance {InstanceId} to Program defaults", instanceId);
 
@@ -442,12 +490,16 @@ public class ShiftProgramService : IShiftProgramService
 
         if (instance == null)
         {
-            throw new InvalidOperationException($"ShiftInstance {instanceId} not found");
+            return OperationResult.Fail(
+                "Error_ShiftProgramService_InstanceNotFound",
+                _localizer["Error_ShiftProgramService_InstanceNotFound"].Value);
         }
 
         if (instance.OriginalProgramId == null || instance.OriginalProgram == null)
         {
-            throw new InvalidOperationException($"ShiftInstance {instanceId} was not generated from a Program");
+            return OperationResult.Fail(
+                "Error_ShiftProgramService_InstanceNotFromProgram",
+                _localizer["Error_ShiftProgramService_InstanceNotFromProgram"].Value);
         }
 
         var program = instance.OriginalProgram;
@@ -458,8 +510,9 @@ public class ShiftProgramService : IShiftProgramService
 
         if (programDay == null)
         {
-            throw new InvalidOperationException(
-                $"Program {program.Id} no longer runs on {dayOfWeek} - cannot reset instance");
+            return OperationResult.Fail(
+                "Error_ShiftProgramService_ProgramDoesNotRunOnDay",
+                _localizer["Error_ShiftProgramService_ProgramDoesNotRunOnDay"].Value);
         }
 
         // Restore staffing to Program defaults
@@ -476,6 +529,7 @@ public class ShiftProgramService : IShiftProgramService
         _logger.LogInformation(
             "ShiftInstance {InstanceId} reset to Program {ProgramId} defaults (staffing={Staffing})",
             instanceId, program.Id, originalStaffing);
+        return OperationResult.Ok();
     }
 
     public async Task<List<ShiftInstance>> GetInstancesFromProgramAsync(

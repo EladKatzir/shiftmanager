@@ -4521,6 +4521,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_FailedToSendTestEmail" xml:space="preserve">
     <value>Failed to send test email: {0}</value>
   </data>
+  <data name="Error_FeatureFlagService_NotFound" xml:space="preserve">
+    <value>The feature flag was not found.</value>
+  </data>
+  <data name="Error_FeatureFlagService_DatabaseError" xml:space="preserve">
+    <value>Could not check the feature flag (database error). The flag was treated as disabled.</value>
+  </data>
 
   
   <data name="Dir" xml:space="preserve">
@@ -8267,6 +8273,180 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Feedback_Error_ImageSaveFailed" xml:space="preserve">
     <value>Error saving image. Please try again.</value>
+  </data>
+  <data name="Feedback_ShowDetails" xml:space="preserve">
+    <value>Show details</value>
+  </data>
+  <data name="Feedback_HideDetails" xml:space="preserve">
+    <value>Hide details</value>
+  </data>
+  <data name="Feedback_ErrorId" xml:space="preserve">
+    <value>Error ID</value>
+  </data>
+  <data name="Feedback_CopyErrorId" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Feedback_CopiedErrorId" xml:space="preserve">
+    <value>Copied</value>
+  </data>
+  <data name="Feedback_Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="Error_CalendarApi_GetChoresFailed" xml:space="preserve">
+    <value>Loading chores failed. If the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_CalendarApi_GetShiftsFailed" xml:space="preserve">
+    <value>Loading shifts failed. If the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_CalendarApi_GetOnCallFailed" xml:space="preserve">
+    <value>Loading on-call data failed. If the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_CalendarApi_GetOverviewFailed" xml:space="preserve">
+    <value>Loading the overview failed. If the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_CalendarApi_GetEligibleUsersFailed" xml:space="preserve">
+    <value>Loading eligible users for this shift failed. If the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_CalendarApi_CreateTextEntryFailed" xml:space="preserve">
+    <value>Creating the note failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_CalendarApi_DeleteOnDutyFailed" xml:space="preserve">
+    <value>Deleting the on-duty assignment failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_CalendarApi_RestoreChoreFailed" xml:space="preserve">
+    <value>Restoring the chore failed. The undo window may have expired - reload to see the current state.</value>
+  </data>
+  <data name="Error_HierarchyApi_CreateFailed" xml:space="preserve">
+    <value>Creating the new entry failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_HierarchyApi_DeleteFailed" xml:space="preserve">
+    <value>Deleting the entry failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_HierarchyApi_MoveFailed" xml:space="preserve">
+    <value>Moving the entry failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_HierarchyApi_GetMoveTargetsFailed" xml:space="preserve">
+    <value>Loading possible destinations failed. If the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_HierarchyApi_RenameFailed" xml:space="preserve">
+    <value>Renaming the entry failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_HierarchyApi_ReorderFailed" xml:space="preserve">
+    <value>Reordering the entries failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_OnDutyApi_GetEligibleUsersFailed" xml:space="preserve">
+    <value>Loading eligible users for this duty failed. If the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_FriendsApi_GetIdsFailed" xml:space="preserve">
+    <value>Loading your friends list failed. If the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_WidgetApi_LoadConfigFailed" xml:space="preserve">
+    <value>Loading the widget configuration failed. If the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_WidgetApi_SaveConfigFailed" xml:space="preserve">
+    <value>Saving the widget configuration failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_MasterProgramService_NotFound" xml:space="preserve">
+    <value>The master program was not found. It may have been deleted by another user.</value>
+  </data>
+  <data name="Error_MasterProgramService_NoPrograms" xml:space="preserve">
+    <value>A master program must include at least one program.</value>
+  </data>
+  <data name="Error_MasterProgramService_ProgramsNotInCompany" xml:space="preserve">
+    <value>One or more selected programs were not found or do not belong to your company.</value>
+  </data>
+  <data name="Error_MasterProgramService_NoProgramsInMaster" xml:space="preserve">
+    <value>This master program has no programs configured. Add at least one program before generating shifts.</value>
+  </data>
+  <data name="Error_MasterProgramService_GenerateFailed" xml:space="preserve">
+    <value>Generating shifts from the master program failed for one or more programs. Check the logs and quote the error ID to support.</value>
+  </data>
+  <data name="Error_MasterProgramService_NameRequired" xml:space="preserve">
+    <value>The master program name is required.</value>
+  </data>
+  <data name="Error_MasterProgramService_DateRangeInvalid" xml:space="preserve">
+    <value>The end date must be on or after the start date.</value>
+  </data>
+  <data name="Error_MasterProgramService_DateRangeTooLarge" xml:space="preserve">
+    <value>The date range cannot exceed one year.</value>
+  </data>
+  <data name="Error_ShiftProgramService_NotFound" xml:space="preserve">
+    <value>The program was not found. It may have been deleted by another user.</value>
+  </data>
+  <data name="Error_ShiftProgramService_NoDays" xml:space="preserve">
+    <value>At least one day must be selected for the program.</value>
+  </data>
+  <data name="Error_ShiftProgramService_NameRequired" xml:space="preserve">
+    <value>The program name is required.</value>
+  </data>
+  <data name="Error_ShiftProgramService_ShiftTypeNotInMolecule" xml:space="preserve">
+    <value>The selected shift type is not available for your company.</value>
+  </data>
+  <data name="Error_ShiftProgramService_InstanceNotFound" xml:space="preserve">
+    <value>The shift instance was not found.</value>
+  </data>
+  <data name="Error_ShiftProgramService_InstanceNotFromProgram" xml:space="preserve">
+    <value>This shift was not generated from a program and cannot be reset to program defaults.</value>
+  </data>
+  <data name="Error_ShiftProgramService_ProgramDoesNotRunOnDay" xml:space="preserve">
+    <value>The program no longer runs on this day of the week, so the shift cannot be reset.</value>
+  </data>
+  <data name="Error_ShiftProgramService_InvalidOverrideType" xml:space="preserve">
+    <value>The shift detach reason was not recognized. Use 'Staffing', 'Time', or 'Name'.</value>
+  </data>
+  <data name="Error_MailService_NotConfigured" xml:space="preserve">
+    <value>Email is not configured for this environment.</value>
+  </data>
+  <data name="Error_MailService_DisabledByFlag" xml:space="preserve">
+    <value>Email sending is disabled by feature flag or configuration.</value>
+  </data>
+  <data name="Error_MailService_InvalidRecipient" xml:space="preserve">
+    <value>Recipient email address is missing or invalid.</value>
+  </data>
+  <data name="Error_MailService_MissingApiUrl" xml:space="preserve">
+    <value>Email API URL is missing or invalid.</value>
+  </data>
+  <data name="Error_MailService_MissingApiKey" xml:space="preserve">
+    <value>Email API key is missing.</value>
+  </data>
+  <data name="Error_MailService_SendFailed" xml:space="preserve">
+    <value>Sending the email failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_NotificationService_DispatchFailed" xml:space="preserve">
+    <value>Sending the notification failed. Try again, and if the problem persists, quote the error ID to support.</value>
+  </data>
+  <data name="Error_NotificationService_RecipientNotFound" xml:space="preserve">
+    <value>The notification recipient was not found.</value>
+  </data>
+  <data name="Error_NotificationService_TemplateMissing" xml:space="preserve">
+    <value>The notification template is missing or invalid.</value>
+  </data>
+  <data name="Error_JobTypeService_UserNotFound" xml:space="preserve">
+    <value>The user was not found.</value>
+  </data>
+  <data name="Error_JobTypeService_NotFound" xml:space="preserve">
+    <value>The job type was not found.</value>
+  </data>
+  <data name="Error_JobTypeService_NameRequired" xml:space="preserve">
+    <value>The job type name is required.</value>
+  </data>
+  <data name="Error_JobTypeService_AreaMismatch" xml:space="preserve">
+    <value>The job type is not available in the user's area.</value>
+  </data>
+  <data name="Error_JobTypeService_MoleculeMismatch" xml:space="preserve">
+    <value>The job type belongs to a different molecule than the user's company.</value>
+  </data>
+  <data name="Error_JobTypeService_ValidationFailed" xml:space="preserve">
+    <value>The user is not eligible for this job type.</value>
+  </data>
+  <data name="Error_RoleService_UserNotFound" xml:space="preserve">
+    <value>The user was not found.</value>
+  </data>
+  <data name="Error_RoleService_TemplateNotFound" xml:space="preserve">
+    <value>The role template was not found or is inactive.</value>
+  </data>
+  <data name="Error_RoleService_AssignmentNotFound" xml:space="preserve">
+    <value>The role assignment was not found. It may have been removed by another user.</value>
   </data>
   <data name="Feedback_TypeLabel_Error" xml:space="preserve">
     <value>Error</value>

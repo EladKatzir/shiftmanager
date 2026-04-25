@@ -161,13 +161,21 @@ public class IndexModel : LocalizedPageModel
             }
         }
 
-        var jobType = await _jobTypeService.CreateJobTypeAsync(
+        var createResult = await _jobTypeService.CreateJobTypeAsync(
             JobTypeName.Trim(),
             SelectedAreaId,
             TimeOnly.MinValue,
             TimeOnly.MinValue,
             isActive: true);
 
+        if (!createResult.Success)
+        {
+            TempData["ErrorMessage"] = createResult.ErrorMessage;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage();
+        }
+
+        var jobType = createResult.Value!;
         // Update additional properties not covered by CreateJobTypeAsync
         jobType.DisplayName = string.IsNullOrWhiteSpace(JobTypeDisplayName) ? JobTypeName.Trim() : JobTypeDisplayName.Trim();
         jobType.Color = string.IsNullOrWhiteSpace(JobTypeColor) ? null : JobTypeColor.Trim();
@@ -241,10 +249,11 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var success = await _jobTypeService.ToggleActiveAsync(id);
-        if (!success)
+        var toggleResult = await _jobTypeService.ToggleActiveAsync(id);
+        if (!toggleResult.Success)
         {
-            TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"].Value;
+            TempData["ErrorMessage"] = toggleResult.ErrorMessage ?? _localizer["Error_JobTypeNotFound"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return RedirectToPage();
         }
 
@@ -278,10 +287,11 @@ public class IndexModel : LocalizedPageModel
         var allJobTypes = await _jobTypeService.GetAllJobTypesWithAreaAsync();
         var jobTypeInfo = allJobTypes.FirstOrDefault(jt => jt.Id == id);
 
-        var success = await _jobTypeService.DeleteJobTypeAsync(id);
-        if (!success)
+        var deleteResult = await _jobTypeService.DeleteJobTypeAsync(id);
+        if (!deleteResult.Success)
         {
-            TempData["ErrorMessage"] = _localizer["Error_JobTypeNotFound"].Value;
+            TempData["ErrorMessage"] = deleteResult.ErrorMessage ?? _localizer["Error_JobTypeNotFound"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return RedirectToPage();
         }
 

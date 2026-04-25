@@ -39,11 +39,9 @@ public class ApiKeysModel : LocalizedPageModel
     public bool IsAdmin { get; set; }
     public bool IsOwner { get; set; }
 
-    [TempData]
-    public string? Message { get; set; }
-
-    [TempData]
-    public new string? Error { get; set; }
+    // Message / Error inline-alert properties removed - migrated to the unified feedback surface.
+    // Handlers now set TempData["SuccessMessage"] / TempData["ErrorMessage"] (+ TempData["ErrorId"])
+    // directly; the _Layout.cshtml bridge opens a FeedbackModal on the next page load.
 
     [TempData]
     public string? GeneratedApiKey { get; set; }
@@ -66,8 +64,11 @@ public class ApiKeysModel : LocalizedPageModel
         if (!int.TryParse(User.FindFirstValue("CompanyId"), out var companyId) ||
             !int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
-            Error = _localizer["Error_AuthenticationError"];
-            return Page();
+            // Defense-in-depth: [Authorize] passed but the claims are malformed/missing.
+            // Bounce to Home with a feedback toast rather than rendering an empty page.
+            TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage("/Home/Index");
         }
 
         // Grant-based access checks
@@ -101,7 +102,8 @@ public class ApiKeysModel : LocalizedPageModel
         // Validate scopes
         if (scopes == null || scopes.Length == 0)
         {
-            Error = _localizer["ApiKey_Error_SelectScope"];
+            TempData["ErrorMessage"] = _localizer["ApiKey_Error_SelectScope"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return RedirectToPage();
         }
 
@@ -116,11 +118,12 @@ public class ApiKeysModel : LocalizedPageModel
 
         if (error != null)
         {
-            Error = error;
+            TempData["ErrorMessage"] = error;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
         else
         {
-            Message = _localizer["ApiKey_Success_Submitted"];
+            TempData["SuccessMessage"] = _localizer["ApiKey_Success_Submitted"].Value;
         }
 
         return RedirectToPage();
@@ -135,11 +138,12 @@ public class ApiKeysModel : LocalizedPageModel
 
         if (error != null)
         {
-            Error = error;
+            TempData["ErrorMessage"] = error;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
         else
         {
-            Message = _localizer["ApiKey_Success_Revoked", key!.Name];
+            TempData["SuccessMessage"] = _localizer["ApiKey_Success_Revoked", key!.Name].Value;
         }
 
         return RedirectToPage();
@@ -154,12 +158,13 @@ public class ApiKeysModel : LocalizedPageModel
 
         if (error != null)
         {
-            Error = error;
+            TempData["ErrorMessage"] = error;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
         else
         {
             GeneratedApiKey = newApiKey;
-            Message = _localizer["ApiKey_Success_Refreshed"];
+            TempData["SuccessMessage"] = _localizer["ApiKey_Success_Refreshed"].Value;
         }
 
         return RedirectToPage();
@@ -178,7 +183,8 @@ public class ApiKeysModel : LocalizedPageModel
 
         if (!await CheckIsAdminAsync(reviewerId))
         {
-            Error = _localizer["ApiKey_Error_Unauthorized"];
+            TempData["ErrorMessage"] = _localizer["ApiKey_Error_Unauthorized"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return RedirectToPage();
         }
 
@@ -196,12 +202,13 @@ public class ApiKeysModel : LocalizedPageModel
 
         if (error != null)
         {
-            Error = error;
+            TempData["ErrorMessage"] = error;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
         else
         {
             GeneratedApiKey = apiKey;
-            Message = _localizer["ApiKey_Success_Approved", request!.RequestedByUser?.DisplayName ?? ""];
+            TempData["SuccessMessage"] = _localizer["ApiKey_Success_Approved", request!.RequestedByUser?.DisplayName ?? ""].Value;
         }
 
         return RedirectToPage();
@@ -214,7 +221,8 @@ public class ApiKeysModel : LocalizedPageModel
 
         if (!await CheckIsAdminAsync(reviewerId))
         {
-            Error = _localizer["ApiKey_Error_Unauthorized"];
+            TempData["ErrorMessage"] = _localizer["ApiKey_Error_Unauthorized"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return RedirectToPage();
         }
 
@@ -222,11 +230,12 @@ public class ApiKeysModel : LocalizedPageModel
 
         if (error != null)
         {
-            Error = error;
+            TempData["ErrorMessage"] = error;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
         else
         {
-            Message = _localizer["ApiKey_Success_Rejected", request!.RequestedByUser?.DisplayName ?? ""];
+            TempData["SuccessMessage"] = _localizer["ApiKey_Success_Rejected", request!.RequestedByUser?.DisplayName ?? ""].Value;
         }
 
         return RedirectToPage();
@@ -239,7 +248,8 @@ public class ApiKeysModel : LocalizedPageModel
 
         if (!await CheckIsAdminAsync(reviewerId))
         {
-            Error = _localizer["ApiKey_Error_Unauthorized"];
+            TempData["ErrorMessage"] = _localizer["ApiKey_Error_Unauthorized"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return RedirectToPage();
         }
 
@@ -247,11 +257,12 @@ public class ApiKeysModel : LocalizedPageModel
 
         if (error != null)
         {
-            Error = error;
+            TempData["ErrorMessage"] = error;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
         else
         {
-            Message = _localizer["ApiKey_Success_AdminRevoked", key!.Name];
+            TempData["SuccessMessage"] = _localizer["ApiKey_Success_AdminRevoked", key!.Name].Value;
         }
 
         return RedirectToPage();

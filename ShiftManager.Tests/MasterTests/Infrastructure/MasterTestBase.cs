@@ -207,7 +207,14 @@ public abstract class MasterTestBase : IAsyncLifetime
     protected RoleService CreateRoleService()
     {
         var grantService = CreateGrantServiceWithHierarchy();
-        return new RoleService(Db, grantService);
+        return new RoleService(
+            Db,
+            grantService,
+            Mock.Of<ILogger<RoleService>>(),
+            new Microsoft.Extensions.Localization.StringLocalizer<ShiftManager.Resources.SharedResources>(
+                new Microsoft.Extensions.Localization.ResourceManagerStringLocalizerFactory(
+                    Microsoft.Extensions.Options.Options.Create(new Microsoft.Extensions.Localization.LocalizationOptions { ResourcesPath = "Resources" }),
+                    Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance)));
     }
 
     /// <summary>

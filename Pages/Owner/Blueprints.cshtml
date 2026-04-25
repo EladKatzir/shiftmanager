@@ -56,19 +56,7 @@
         <p class="page-subtitle"><loc key="Blueprints_Subtitle">Manage shift type definitions with bilingual names</loc></p>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.Success))
-    {
-        <div class="alert alert-success">
-            <strong>@Localizer["Alert_Success"]</strong> @Model.Success
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-danger">
-            <strong>@Localizer["Alert_Error"]</strong> @Model.Error
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     @* MIGRATION HELPER: Populate NameKeys (one-time after OpsConsoleScheduler migration) *@
     @if (Model.ShiftTypes.Any(st => string.IsNullOrWhiteSpace(st.NameKey)))

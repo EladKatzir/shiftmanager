@@ -29,6 +29,8 @@ public class MailServiceTests
         _emailConfigServiceMock = new Mock<IEmailConfigService>();
         _emailApiLogServiceMock = new Mock<IEmailApiLogService>();
         _localizerMock = new Mock<IStringLocalizer<SharedResources>>();
+        _localizerMock.Setup(l => l[It.IsAny<string>()])
+            .Returns((string k) => new LocalizedString(k, k));
         _emailTemplateServiceMock = new Mock<IEmailTemplateService>();
         _localizationMock = new Mock<ILocalizationService>();
         _tenantResolverMock = new Mock<ITenantResolver>();
@@ -83,7 +85,7 @@ public class MailServiceTests
 
         var result = await service.SendMailAsync(null!, "Subject", "<p>Body</p>");
 
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
     }
 
     [Fact]
@@ -93,7 +95,7 @@ public class MailServiceTests
 
         var result = await service.SendMailAsync("  ", "Subject", "<p>Body</p>");
 
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
     }
 
     [Fact]
@@ -103,7 +105,7 @@ public class MailServiceTests
 
         var result = await service.SendMailAsync("user@test.com", null!, "<p>Body</p>");
 
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
     }
 
     [Fact]
@@ -113,7 +115,7 @@ public class MailServiceTests
 
         var result = await service.SendMailAsync("user@test.com", "   ", "<p>Body</p>");
 
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
     }
 
     [Fact]
@@ -123,7 +125,7 @@ public class MailServiceTests
 
         var result = await service.SendMailAsync("user@test.com", "Hello", "<p>World</p>");
 
-        result.Should().BeTrue();
+        result.Success.Should().BeTrue();
 
         var queued = TryReadFromQueue();
         queued.Should().NotBeNull();
@@ -178,7 +180,7 @@ public class MailServiceTests
 
         var result = await service.SendMailDirectAsync(null!, "Subject", "<p>Body</p>");
 
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
     }
 
     [Fact]
@@ -188,13 +190,13 @@ public class MailServiceTests
 
         var result = await service.SendMailDirectAsync("user@test.com", "  ", "<p>Body</p>");
 
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
     }
 
     [Fact]
-    public async Task SendMailDirectAsync_EmailDisabled_ReturnsTrue()
+    public async Task SendMailDirectAsync_EmailDisabled_ReturnsFail_WithNotConfiguredKey()
     {
-        // Email is disabled in config by default
+        // Email is disabled (no DB config record + GlobalEnabled defaults to true but no apiKey/url)
         _emailConfigServiceMock.Setup(e => e.GetEmailConfigAsync()).ReturnsAsync((EmailConfig?)null);
         _emailApiLogServiceMock.Setup(l => l.LogEmailApiCallAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(),
@@ -205,10 +207,12 @@ public class MailServiceTests
 
         var service = CreateService();
 
-        // Returns true because email is disabled — no blocking of workflow
+        // Post-OperationResult migration: disabled email is now Fail (caller knows nothing was sent),
+        // not silent success. The error key is one of the disabled-/unconfigured-mail keys.
         var result = await service.SendMailDirectAsync("user@test.com", "Hello", "<p>World</p>");
 
-        result.Should().BeTrue();
+        result.Success.Should().BeFalse();
+        result.ErrorKey.Should().BeOneOf("Error_MailService_NotConfigured", "Error_MailService_DisabledByFlag");
     }
 
     // --- SendShiftAssignedEmailAsync ---
@@ -222,7 +226,7 @@ public class MailServiceTests
             "", "John", "Morning", new DateOnly(2026, 3, 15),
             new TimeOnly(7, 0), new TimeOnly(15, 0));
 
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
     }
 
     // --- Constructor validation ---

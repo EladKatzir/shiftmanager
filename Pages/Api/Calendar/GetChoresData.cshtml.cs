@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 
@@ -21,17 +23,20 @@ public class GetChoresDataModel : PageModel
     private readonly IScopeFilterService _scopeFilterService;
     private readonly AppDbContext _db;
     private readonly ILogger<GetChoresDataModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public GetChoresDataModel(
         IChoreTypeService choreTypeService,
         IScopeFilterService scopeFilterService,
         AppDbContext db,
-        ILogger<GetChoresDataModel> logger)
+        ILogger<GetChoresDataModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _choreTypeService = choreTypeService;
         _scopeFilterService = scopeFilterService;
         _db = db;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnGetAsync(
@@ -140,7 +145,12 @@ public class GetChoresDataModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetChoresData");
-            return new JsonResult(new { success = false, message = "An error occurred" }) { StatusCode = 500 };
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_CALENDAR_GET_CHORES_FAILED",
+                    _localizer["Error_CalendarApi_GetChoresFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 500 };
         }
     }
 

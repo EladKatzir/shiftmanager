@@ -116,7 +116,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading DataLifecycle page");
-            Error = "Failed to load page data.";
+            TempData["ErrorMessage"] = "Failed to load page data."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
     }
 
@@ -138,7 +138,7 @@ public class DataLifecycleModel : LocalizedPageModel
                 $"Previewed archive: {Preview.Counts.Values.Sum()} records before {ArchiveCutoffDate}",
                 JsonSerializer.Serialize(Preview));
 
-            Success = $"Preview generated: {Preview.Counts.Values.Sum()} total records, approximately {FormatBytes(Preview.EstimatedSizeBytes)}";
+            TempData["SuccessMessage"] = $"Preview generated: {Preview.Counts.Values.Sum()} total records, approximately {FormatBytes(Preview.EstimatedSizeBytes)}";
             ActiveTab = "archive";
             await OnGetAsync();
             return Page();
@@ -146,7 +146,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating preview");
-            Error = "Failed to generate preview. Please try again.";
+            TempData["ErrorMessage"] = "Failed to generate preview. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             ActiveTab = "archive";
             await OnGetAsync();
             return Page();
@@ -168,11 +168,11 @@ public class DataLifecycleModel : LocalizedPageModel
 
             if (LastArchive.Success)
             {
-                Success = $"Archive created successfully! CSV: {FormatBytes(LastArchive.CsvZipSizeBytes)}, Re-importable: {FormatBytes(LastArchive.NdjsonZipSizeBytes)}";
+                TempData["SuccessMessage"] = $"Archive created successfully! CSV: {FormatBytes(LastArchive.CsvZipSizeBytes)}, Re-importable: {FormatBytes(LastArchive.NdjsonZipSizeBytes)}";
             }
             else
             {
-                Error = $"Archive creation failed: {LastArchive.Error}";
+                TempData["ErrorMessage"] = $"Archive creation failed: {LastArchive.Error}"; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
 
             ActiveTab = "archive";
@@ -182,7 +182,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating archive");
-            Error = "Failed to create archive. Please try again.";
+            TempData["ErrorMessage"] = "Failed to create archive. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             ActiveTab = "archive";
             await OnGetAsync();
             return Page();
@@ -221,7 +221,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error downloading CSV archive");
-            Error = "Failed to download archive. Please try again.";
+            TempData["ErrorMessage"] = "Failed to download archive. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             ActiveTab = "archive";
             await OnGetAsync();
             return Page();
@@ -260,7 +260,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error downloading NDJSON archive");
-            Error = "Failed to download archive. Please try again.";
+            TempData["ErrorMessage"] = "Failed to download archive. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             ActiveTab = "archive";
             await OnGetAsync();
             return Page();
@@ -293,11 +293,11 @@ public class DataLifecycleModel : LocalizedPageModel
                 var totalDeleted = LastPurgeResult.DeletedCounts.Values.Sum();
                 var sizeSaved = LastPurgeResult.DbSizeBeforeBytes - LastPurgeResult.DbSizeAfterBytes;
 
-                Success = $"Purge completed! Deleted {totalDeleted} records. Database size reduced by {FormatBytes(sizeSaved)}. Backup: {Path.GetFileName(LastPurgeResult.BackupPath)}";
+                TempData["SuccessMessage"] = $"Purge completed! Deleted {totalDeleted} records. Database size reduced by {FormatBytes(sizeSaved)}. Backup: {Path.GetFileName(LastPurgeResult.BackupPath)}";
             }
             else
             {
-                Error = $"Purge failed: {LastPurgeResult.Error}";
+                TempData["ErrorMessage"] = $"Purge failed: {LastPurgeResult.Error}"; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
 
             ActiveTab = "purge";
@@ -307,7 +307,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during purge");
-            Error = "Purge failed. Please try again.";
+            TempData["ErrorMessage"] = "Purge failed. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             ActiveTab = "purge";
             await OnGetAsync();
             return Page();
@@ -324,7 +324,7 @@ public class DataLifecycleModel : LocalizedPageModel
         {
             if (UploadedArchive == null || UploadedArchive.Length == 0)
             {
-                Error = "Please select an archive file to upload.";
+                TempData["ErrorMessage"] = "Please select an archive file to upload."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 ActiveTab = "import";
                 await OnGetAsync();
                 return Page();
@@ -357,11 +357,11 @@ public class DataLifecycleModel : LocalizedPageModel
 
             if (ValidationResult.IsValid)
             {
-                Success = $"Archive validated successfully! {ValidationResult.Warnings.Count} warning(s).";
+                TempData["SuccessMessage"] = $"Archive validated successfully! {ValidationResult.Warnings.Count} warning(s).";
             }
             else
             {
-                Error = $"Archive validation failed: {string.Join("; ", ValidationResult.Errors)}";
+                TempData["ErrorMessage"] = $"Archive validation failed: {string.Join("; ", ValidationResult.Errors)}"; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
 
             // Store uploaded file path in TempData for import
@@ -375,7 +375,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating archive");
-            Error = "Failed to validate archive. Please try again.";
+            TempData["ErrorMessage"] = "Failed to validate archive. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             ActiveTab = "import";
             await OnGetAsync();
             return Page();
@@ -390,7 +390,7 @@ public class DataLifecycleModel : LocalizedPageModel
             var uploadedFilePath = TempData["UploadedFilePath"]?.ToString();
             if (string.IsNullOrEmpty(uploadedFilePath) || !System.IO.File.Exists(uploadedFilePath))
             {
-                Error = "No validated archive found. Please validate the archive first.";
+                TempData["ErrorMessage"] = "No validated archive found. Please validate the archive first."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 ActiveTab = "import";
                 await OnGetAsync();
                 return Page();
@@ -418,11 +418,11 @@ public class DataLifecycleModel : LocalizedPageModel
                 var totalSkipped = LastImportResult.Stats.Values.Sum(s => s.Skipped);
                 var totalFailed = LastImportResult.Stats.Values.Sum(s => s.Failed);
 
-                Success = $"Import completed! Inserted: {totalInserted}, Skipped: {totalSkipped}, Failed: {totalFailed}. Duration: {LastImportResult.Duration.TotalSeconds:F1}s";
+                TempData["SuccessMessage"] = $"Import completed! Inserted: {totalInserted}, Skipped: {totalSkipped}, Failed: {totalFailed}. Duration: {LastImportResult.Duration.TotalSeconds:F1}s";
             }
             else
             {
-                Error = $"Import failed: {LastImportResult.Error}";
+                TempData["ErrorMessage"] = $"Import failed: {LastImportResult.Error}"; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
 
             // Clean up temporary file
@@ -445,7 +445,7 @@ public class DataLifecycleModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during import");
-            Error = "Import failed. Please try again.";
+            TempData["ErrorMessage"] = "Import failed. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             ActiveTab = "import";
             await OnGetAsync();
             return Page();

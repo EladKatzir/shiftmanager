@@ -181,13 +181,13 @@ public class ForgotPasswordModel : LocalizedPageModel
 </body>
 </html>";
 
-            var emailSent = await _mailService.SendMailAsync(
+            var emailResult = await _mailService.SendMailAsync(
                 recipient: user.Email,
                 subject: emailSubject,
                 htmlBody: emailBody
             );
 
-            if (emailSent)
+            if (emailResult.Success)
             {
                 Success = _localizer["Success_TemporaryPasswordSent"];
                 _logger.LogInformation("Password recovery email sent to user: {Email}", RedactEmail(user.Email));
@@ -205,7 +205,8 @@ public class ForgotPasswordModel : LocalizedPageModel
             {
                 // I-01: In air-gapped environments without email, display temp password on screen
                 // as the only viable recovery path. Log this as a security event.
-                _logger.LogWarning("Email delivery failed for password recovery (user: {Email}). Falling back to on-screen display.", RedactEmail(user.Email));
+                _logger.LogWarning("Email delivery failed for password recovery (user: {Email}): [{Key}] {Reason}. Falling back to on-screen display.",
+                    RedactEmail(user.Email), emailResult.ErrorKey, emailResult.ErrorMessage);
                 GeneratedTempPassword = temporaryPassword;
                 Success = _localizer["Error_FailedToSendRecoveryEmail_FallbackDisplayed"];
                 return Page();

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Configuration;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 
@@ -44,6 +45,33 @@ public interface INotificationService
 
     // Ops Console Scheduler: Shift Modification Notifications
     Task CreateShiftModifiedNotificationAsync(List<int> assignedUserIds, string shiftTypeName, DateOnly date, string changeDescription);
+
+    // ========================================
+    // Diagnostic / Admin helpers (additive — return OperationResult so callers can
+    // surface structured failure reasons in admin/test UIs).
+    //
+    // The 30+ existing CreateXxxNotificationAsync methods intentionally swallow failures
+    // (a bad notification must not block the underlying business action). These wrappers
+    // exist for diagnostic surfaces ("send me a test notification" buttons, admin tools)
+    // that DO need to know whether dispatch succeeded and why it failed.
+    // ========================================
+
+    /// <summary>
+    /// Diagnostic variant of <see cref="CreateNotificationAsync(int, NotificationType, string, string, int?, string?)"/>
+    /// that returns a structured <see cref="OperationResult"/> so callers can render the
+    /// failure reason (recipient missing, DB error, etc.) instead of silently returning
+    /// <c>false</c>. Suitable for admin diagnostic pages — NOT a replacement for the
+    /// fire-and-forget creators used by business code.
+    /// </summary>
+    Task<Models.Results.OperationResult> TryCreateNotificationWithDiagnosticsAsync(
+        int recipientUserId, string title, string body, string? linkUrl = null);
+
+    /// <summary>
+    /// Send a test notification to <paramref name="recipientUserId"/> so an admin can verify
+    /// that the notification pipeline reaches a user. Returns a structured
+    /// <see cref="OperationResult"/> with a localized error message on failure.
+    /// </summary>
+    Task<Models.Results.OperationResult> TrySendTestNotificationAsync(int recipientUserId);
 }
 
 // SECURITY-AUDITED: IgnoreQueryFilters() in this class is SAFE on two paths:
@@ -86,12 +114,24 @@ public class NotificationService : INotificationService
 
     public async Task<bool> CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null)
     {
+        int? companyId = null;
         try
         {
-            var companyId = _tenantResolver.GetCurrentTenantId(); // Multitenancy Phase 2
+            // Look up the recipient first so the notification is stored under THEIR tenant.
+            // Using the caller's tenant here would persist notifications under the acting manager's
+            // CompanyId for cross-tenant actions (Owner/Director with project/area-wide grants),
+            // and the UserNotifications query filter would then hide them from the assignee.
+            var recipient = await GetRecipientAcrossTenantsAsync(userId);
+            if (recipient == null)
+            {
+                _logger.LogWarning("CreateNotificationAsync: recipient {UserId} not found", userId);
+                return false;
+            }
+            companyId = recipient.CompanyId;
+
             var notification = new UserNotification
             {
-                CompanyId = companyId,
+                CompanyId = companyId.Value,
                 UserId = userId,
                 Type = type,
                 Title = title,
@@ -111,13 +151,13 @@ public class NotificationService : INotificationService
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error creating notification. CompanyId={CompanyId}, Type={Type}, UserId={UserId}, Title={Title}",
-                _tenantResolver.GetCurrentTenantId(), type, userId, title);
+                companyId, type, userId, title);
             return false;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error creating notification. CompanyId={CompanyId}, Type={Type}, UserId={UserId}, Title={Title}",
-                _tenantResolver.GetCurrentTenantId(), type, userId, title);
+                companyId, type, userId, title);
             return false;
         }
     }
@@ -862,18 +902,18 @@ public class NotificationService : INotificationService
 
             var subject = string.Format(_localizer["Email_DailyDigestSubject"], _localization.FormatMediumDate(today));
 
-            var success = await _mailService.SendMailAsync(user.Email, subject, emailBody);
+            var sendResult = await _mailService.SendMailAsync(user.Email, subject, emailBody);
 
-            if (success)
+            if (sendResult.Success)
             {
                 _logger.LogInformation("Successfully sent daily digest to user {UserId} ({Email})", userId, user.Email);
             }
             else
             {
-                _logger.LogWarning("Failed to send daily digest to user {UserId} ({Email})", userId, user.Email);
+                _logger.LogWarning("Failed to send daily digest to user {UserId} ({Email}): {Reason}", userId, user.Email, sendResult.ErrorMessage);
             }
 
-            return success;
+            return sendResult.Success;
         }
         catch (Exception ex)
         {
@@ -1040,15 +1080,15 @@ public class NotificationService : INotificationService
 
             var subject = string.Format(_localizer["Email_ReminderSubject"], _localization.FormatMediumDate(tomorrow));
 
-            var success = await _mailService.SendMailAsync(user.Email, subject, emailBody);
+            var sendResult = await _mailService.SendMailAsync(user.Email, subject, emailBody);
 
-            if (success)
+            if (sendResult.Success)
             {
                 _logger.LogInformation("Successfully sent day-before reminders to user {UserId} ({Email})", userId, user.Email);
             }
             else
             {
-                _logger.LogWarning("Failed to send day-before reminders to user {UserId} ({Email})", userId, user.Email);
+                _logger.LogWarning("Failed to send day-before reminders to user {UserId} ({Email}): {Reason}", userId, user.Email, sendResult.ErrorMessage);
             }
         }
         catch (Exception ex)
@@ -1187,5 +1227,110 @@ public class NotificationService : INotificationService
                 // Don't throw - email failure should not block notification creation
             }
         }
+    }
+
+    // ========================================
+    // Diagnostic / Admin helpers (additive — see interface XML docs).
+    //
+    // These methods reuse the same persistence path as CreateNotificationAsync but
+    // map known failure modes (recipient missing, DB error) to localized
+    // OperationResult.Fail outcomes. They MUST NOT be wired into the 30+ existing
+    // fire-and-forget callers — those still want bool/void semantics so a notification
+    // failure cannot block a shift assignment / chore / on-duty action.
+    // ========================================
+
+    /// <inheritdoc />
+    public async Task<OperationResult> TryCreateNotificationWithDiagnosticsAsync(
+        int recipientUserId, string title, string body, string? linkUrl = null)
+    {
+        // Treat blank title/body as a "template missing" condition — these are the
+        // two fields that MUST be populated for a notification row to be meaningful.
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(body))
+        {
+            _logger.LogWarning(
+                "TryCreateNotificationWithDiagnosticsAsync: missing title/body for recipient {UserId}",
+                recipientUserId);
+            return OperationResult.Fail(
+                "Error_NotificationService_TemplateMissing",
+                _localizer["Error_NotificationService_TemplateMissing"].Value);
+        }
+
+        int? companyId = null;
+        try
+        {
+            // Same cross-tenant lookup as CreateNotificationAsync — see the SECURITY-AUDITED
+            // note above the class for why IgnoreQueryFilters is safe here.
+            var recipient = await GetRecipientAcrossTenantsAsync(recipientUserId);
+            if (recipient == null)
+            {
+                _logger.LogWarning(
+                    "TryCreateNotificationWithDiagnosticsAsync: recipient {UserId} not found",
+                    recipientUserId);
+                return OperationResult.Fail(
+                    "Error_NotificationService_RecipientNotFound",
+                    _localizer["Error_NotificationService_RecipientNotFound"].Value);
+            }
+            companyId = recipient.CompanyId;
+
+            // linkUrl is stored in RelatedEntityType so the in-app notification UI can
+            // surface a click-through target without an entity lookup. This mirrors the
+            // free-form usage of RelatedEntityType in the existing creators (e.g. "Chore",
+            // "ShiftAssignment") — diagnostic notifications are not tied to a domain entity.
+            var notification = new UserNotification
+            {
+                CompanyId = companyId.Value,
+                UserId = recipientUserId,
+                Type = NotificationType.ShiftAdded, // closest neutral type; see TrySendTest below
+                Title = title,
+                Message = body,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                RelatedEntityId = null,
+                RelatedEntityType = string.IsNullOrWhiteSpace(linkUrl) ? null : linkUrl
+            };
+
+            _db.UserNotifications.Add(notification);
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Diagnostic notification created for user {UserId} (CompanyId={CompanyId}): {Title}",
+                recipientUserId, companyId, title);
+            return OperationResult.Ok();
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex,
+                "TryCreateNotificationWithDiagnosticsAsync: DB error for recipient {UserId} (CompanyId={CompanyId})",
+                recipientUserId, companyId);
+            return OperationResult.Fail(
+                "Error_NotificationService_DispatchFailed",
+                _localizer["Error_NotificationService_DispatchFailed"].Value);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "TryCreateNotificationWithDiagnosticsAsync: unexpected error for recipient {UserId} (CompanyId={CompanyId})",
+                recipientUserId, companyId);
+            return OperationResult.Fail(
+                "Error_NotificationService_DispatchFailed",
+                _localizer["Error_NotificationService_DispatchFailed"].Value);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<OperationResult> TrySendTestNotificationAsync(int recipientUserId)
+    {
+        // Reuse the localized "Notification_Test*" pair if present, otherwise fall back to
+        // hard-coded English strings — these are admin-tool labels, not end-user content.
+        // The localizer returns the key name itself when a key is missing, so we explicitly
+        // check ResourceNotFound to provide a sensible default.
+        var titleEntry = _localizer["Notification_Test_Title"];
+        var messageEntry = _localizer["Notification_Test_Message"];
+        var title = titleEntry.ResourceNotFound ? "Test notification" : titleEntry.Value;
+        var body = messageEntry.ResourceNotFound
+            ? "This is a test notification confirming that your account can receive notifications from ShiftManager."
+            : messageEntry.Value;
+
+        return await TryCreateNotificationWithDiagnosticsAsync(recipientUserId, title, body);
     }
 }

@@ -82,19 +82,7 @@
         </form>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
-    {
-        <div class="alert alert-success">
-            <strong><icon name="check" /> <loc key="Success" />:</strong> @Model.SuccessMessage
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-error">
-            <strong><icon name="x" /> <loc key="Error" />:</strong> @Model.ErrorMessage
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     @if (Model.TestConnectionResult != null)
     {

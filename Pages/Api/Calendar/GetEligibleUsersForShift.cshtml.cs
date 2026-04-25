@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 
@@ -21,17 +23,20 @@ public class GetEligibleUsersForShiftModel : PageModel
     private readonly IScopeFilterService _scopeFilterService;
     private readonly AppDbContext _db;
     private readonly ILogger<GetEligibleUsersForShiftModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public GetEligibleUsersForShiftModel(
         IShiftCalendarService shiftCalendarService,
         IScopeFilterService scopeFilterService,
         AppDbContext db,
-        ILogger<GetEligibleUsersForShiftModel> logger)
+        ILogger<GetEligibleUsersForShiftModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _shiftCalendarService = shiftCalendarService;
         _scopeFilterService = scopeFilterService;
         _db = db;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnGetAsync(
@@ -79,7 +84,12 @@ public class GetEligibleUsersForShiftModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetEligibleUsersForShift");
-            return new JsonResult(new { success = false, message = "An error occurred" }) { StatusCode = 500 };
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_CALENDAR_GET_ELIGIBLE_USERS_FAILED",
+                    _localizer["Error_CalendarApi_GetEligibleUsersFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 500 };
         }
     }
 }

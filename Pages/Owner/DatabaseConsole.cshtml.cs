@@ -33,10 +33,9 @@ public class DatabaseConsoleModel : PageModel
     public string Query { get; set; } = string.Empty;
 
     public List<string> Tables { get; set; } = new();
-    public string? QueryResult { get; set; }
+    // QueryResult / Error properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
     public List<Dictionary<string, object?>> ResultRows { get; set; } = new();
     public List<string> ResultColumns { get; set; } = new();
-    public string? Error { get; set; }
     public int RowsAffected { get; set; }
     public bool IsResultTruncated { get; set; }
 
@@ -53,7 +52,7 @@ public class DatabaseConsoleModel : PageModel
 
             if (string.IsNullOrWhiteSpace(Query))
             {
-                Error = "Please enter a SQL query.";
+                TempData["ErrorMessage"] = "Please enter a SQL query."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return Page();
             }
 
@@ -63,14 +62,14 @@ public class DatabaseConsoleModel : PageModel
 
             if (!upperQuery.StartsWith("SELECT"))
             {
-                Error = "For safety, only SELECT queries are allowed in the console.";
+                TempData["ErrorMessage"] = "For safety, only SELECT queries are allowed in the console."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return Page();
             }
 
             // Security: Reject multi-statement queries (prevents "SELECT 1; DROP TABLE x" injection)
             if (trimmedQuery.Contains(';'))
             {
-                Error = "For safety, queries containing semicolons are not allowed. Please use a single SELECT statement.";
+                TempData["ErrorMessage"] = "For safety, queries containing semicolons are not allowed. Please use a single SELECT statement."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return Page();
             }
 
@@ -78,7 +77,7 @@ public class DatabaseConsoleModel : PageModel
             var connString = _configuration.GetConnectionString("Default");
             if (string.IsNullOrEmpty(connString))
             {
-                Error = "Database connection string not configured.";
+                TempData["ErrorMessage"] = "Database connection string not configured."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return Page();
             }
 
@@ -130,7 +129,7 @@ public class DatabaseConsoleModel : PageModel
             }
 
             var truncatedNote = IsResultTruncated ? $" (limited to {maxRows:N0} rows)" : "";
-            QueryResult = $"Query executed successfully. {ResultRows.Count} rows returned{truncatedNote}.";
+            TempData["SuccessMessage"] = $"Query executed successfully. {ResultRows.Count} rows returned{truncatedNote}.";
             _logger.LogInformation("Database query executed: {Query}, Rows: {RowCount}, Truncated: {Truncated}",
                 trimmedQuery.Substring(0, Math.Min(trimmedQuery.Length, 100)), ResultRows.Count, IsResultTruncated);
 
@@ -139,7 +138,7 @@ public class DatabaseConsoleModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing database query");
-            Error = $"Error executing query: {ex.Message}";
+            TempData["ErrorMessage"] = $"Error executing query: {ex.Message}"; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return Page();
         }
     }

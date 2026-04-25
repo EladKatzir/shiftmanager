@@ -37,7 +37,7 @@ public class FeatureFlagsModel : LocalizedPageModel
     /// </summary>
     public Dictionary<string, List<FeatureFlag>> FlagsByCategory { get; set; } = new();
 
-    public string? Message { get; set; }
+    // Message property removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
 
     public async Task OnGetAsync()
     {
@@ -78,11 +78,11 @@ public class FeatureFlagsModel : LocalizedPageModel
                     $"Toggled {changed} feature flag(s)",
                     string.Join(", ", changedFlags));
 
-                Message = $"{changed} flag(s) updated. Changes take effect immediately.";
+                TempData["SuccessMessage"] = $"{changed} flag(s) updated. Changes take effect immediately.";
             }
             else
             {
-                Message = "No changes detected.";
+                TempData["InfoMessage"] = "No changes detected.";
             }
 
             await LoadFlagsAsync();
@@ -91,7 +91,8 @@ public class FeatureFlagsModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving feature flags");
-            Error = _localizer["Error_SavingFeatureFlags"].Value;
+            TempData["ErrorMessage"] = _localizer["Error_SavingFeatureFlags"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadFlagsAsync();
             return Page();
         }

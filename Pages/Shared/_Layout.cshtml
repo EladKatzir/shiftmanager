@@ -346,12 +346,18 @@
     <!-- Figma capture script removed: external CDN not available in air-gapped deployment -->
 </head>
 @* FeedbackModal bridge: any PageModel may set TempData["SuccessMessage" | "ErrorMessage" | "WarningMessage" | "InfoMessage"]
-   and the script block at the bottom of this layout will open a blocking FeedbackModal on page load. *@
+   and the script block at the bottom of this layout will open a blocking FeedbackModal on page load.
+
+   Optional companion keys (read by the same script block):
+     TempData["ErrorDetail"]  - secondary text rendered in the modal's collapsible <details> panel.
+     TempData["ErrorId"]      - request/correlation ID rendered monospace with a copy button. *@
 <body data-role="@role" data-role-template="@roleTemplateKey"
   data-toast-success="@(TempData["SuccessMessage"])"
   data-toast-error="@(TempData["ErrorMessage"])"
   data-toast-warning="@(TempData["WarningMessage"])"
-  data-toast-info="@(TempData["InfoMessage"])">
+  data-toast-info="@(TempData["InfoMessage"])"
+  data-toast-error-detail="@(TempData["ErrorDetail"])"
+  data-toast-error-id="@(TempData["ErrorId"])">
     @* B-02: noscript fallback for JS-disabled browsers - Critical for air-gapped military networks *@
     <noscript>
         <div style="background-color:#FFC107;background-image:linear-gradient(135deg,#FFD700 0%,#FFA500 100%);color:#333333;padding:1.5rem 1rem;text-align:center;font-size:1rem;font-weight:bold;border-bottom:3px solid #FF8C00;direction:auto;box-shadow:0 2px 4px rgba(0,0,0,0.15);">
@@ -1212,7 +1218,9 @@
         handle.addEventListener('pointerup', onPointerUp);
     })();
     </script>
-    @* Feedback Consolidation: TempData → acknowledgment modal. Runs after DOMContentLoaded so deferred feedback-modal.js has executed. *@
+    @* Feedback Consolidation: TempData → acknowledgment modal. Runs after DOMContentLoaded so deferred feedback-modal.js has executed.
+       Errors additionally honor data-toast-error-detail and data-toast-error-id, which expand the modal with a
+       collapsible detail panel and a copyable correlation ID respectively. *@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof FeedbackModal === 'undefined') return;
@@ -1221,7 +1229,14 @@
         var w = b.dataset.toastWarning;
         var s = b.dataset.toastSuccess;
         var i = b.dataset.toastInfo;
-        if (e) FeedbackModal.show('error', e);
+        var errDetail = b.dataset.toastErrorDetail;
+        var errId = b.dataset.toastErrorId;
+        if (e) {
+            var opts = {};
+            if (errDetail) opts.detail = errDetail;
+            if (errId) opts.errorId = errId;
+            FeedbackModal.show('error', e, opts);
+        }
         else if (w) FeedbackModal.show('warning', w);
         else if (s) FeedbackModal.show('success', s);
         else if (i) FeedbackModal.show('info', i);

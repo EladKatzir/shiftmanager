@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using ShiftManager.Models.Results;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 
@@ -195,18 +196,18 @@ public class MailService : IMailService
     /// Enqueue an email for background delivery. Returns immediately without blocking the HTTP request.
     /// Uses backpressure-aware EnqueueAsync that waits briefly if the queue is full.
     /// </summary>
-    public async Task<bool> SendMailAsync(string recipient, string subject, string htmlBody)
+    public async Task<OperationResult> SendMailAsync(string recipient, string subject, string htmlBody)
     {
         if (string.IsNullOrWhiteSpace(recipient))
         {
             _logger.LogWarning("Cannot queue email: recipient is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         if (string.IsNullOrWhiteSpace(subject))
         {
             _logger.LogWarning("Cannot queue email to {Recipient}: subject is null or empty", recipient);
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         // Capture CompanyId from tenant context at enqueue time (HTTP request context is available here).
@@ -220,16 +221,19 @@ public class MailService : IMailService
         if (queued)
         {
             _logger.LogDebug("Email queued for background delivery to {Recipient}", recipient);
+            return OperationResult.Ok();
         }
 
-        return queued;
+        // Queue full / unavailable — surface as a generic send failure
+        _logger.LogWarning("Failed to enqueue email to {Recipient}: queue full or unavailable", recipient);
+        return OperationResult.Fail("Error_MailService_SendFailed", _localizer["Error_MailService_SendFailed"].Value);
     }
 
     /// <summary>
     /// Send an email directly via HTTP call. Called by EmailBackgroundProcessor.
     /// Do not call from HTTP request handlers — use SendMailAsync instead.
     /// </summary>
-    public async Task<bool> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0)
+    public async Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0)
     {
         // Start timing for diagnostics
         var stopwatch = Stopwatch.StartNew();
@@ -245,19 +249,27 @@ public class MailService : IMailService
         string? errorMessage = null;
         List<string>? validationErrors = null;
 
+        // Tracks the structured failure key so the finally-block diagnostic log and the returned
+        // OperationResult stay in sync. Null = no failure yet (or success).
+        string? failureKey = null;
+
         try
         {
             // Validate inputs
             if (string.IsNullOrWhiteSpace(recipient))
             {
                 _logger.LogWarning("Cannot send email: recipient is null or empty");
-                return false;
+                failureKey = "Error_MailService_InvalidRecipient";
+                errorMessage = _localizer["Error_MailService_InvalidRecipient"].Value;
+                return OperationResult.Fail(failureKey, errorMessage);
             }
 
             if (string.IsNullOrWhiteSpace(subject))
             {
                 _logger.LogWarning("Cannot send email to {Recipient}: subject is null or empty", recipient);
-                return false;
+                failureKey = "Error_MailService_InvalidRecipient";
+                errorMessage = _localizer["Error_MailService_InvalidRecipient"].Value;
+                return OperationResult.Fail(failureKey, errorMessage);
             }
 
             // Load configuration (database first, then fallback to appsettings.json)
@@ -269,7 +281,13 @@ public class MailService : IMailService
             {
                 _logger.LogInformation("Email service disabled (source: {Source}). Skipping email to {Recipient} with subject: {Subject}",
                     source, recipient, subject);
-                return true; // Return true to avoid blocking workflow
+                // Distinguish kill-switch (feature flag / Email:GlobalEnabled=false) from "no config record at all"
+                // via the source string returned by LoadConfigurationAsync.
+                if (source == "feature-flag-disabled" || source == "global-disabled")
+                {
+                    return OperationResult.Fail("Error_MailService_DisabledByFlag", _localizer["Error_MailService_DisabledByFlag"].Value);
+                }
+                return OperationResult.Fail("Error_MailService_NotConfigured", _localizer["Error_MailService_NotConfigured"].Value);
             }
 
             // Validate configuration BEFORE attempting to send
@@ -278,6 +296,25 @@ public class MailService : IMailService
             {
                 errorMessage = string.Join("; ", validationErrors);
                 _logger.LogError("Email configuration validation failed: {Errors}", errorMessage);
+
+                // Pick the most-specific structured key based on which validation entry tripped.
+                // Order: missing API URL > missing API key > invalid recipient (anything else falls back to SendFailed).
+                if (string.IsNullOrWhiteSpace(apiUrl))
+                {
+                    failureKey = "Error_MailService_MissingApiUrl";
+                }
+                else if (string.IsNullOrWhiteSpace(apiKey))
+                {
+                    failureKey = "Error_MailService_MissingApiKey";
+                }
+                else if (validationErrors.Any(e => e.Contains("Recipient", StringComparison.OrdinalIgnoreCase)))
+                {
+                    failureKey = "Error_MailService_InvalidRecipient";
+                }
+                else
+                {
+                    failureKey = "Error_MailService_SendFailed";
+                }
 
                 // Log validation failure to database
                 stopwatch.Stop();
@@ -297,7 +334,8 @@ public class MailService : IMailService
                     validationErrors: validationErrors,
                     companyId: companyId);
 
-                return false;
+                // Surface localized friendly message but keep the diagnostic detail in errorMessage for the log.
+                return OperationResult.Fail(failureKey, _localizer[failureKey].Value);
             }
 
             // Create HTTP client from factory (best practice for performance and connection pooling)
@@ -365,6 +403,7 @@ public class MailService : IMailService
             {
                 success = false;
                 errorMessage = GetUserFriendlyHttpError(responseStatusCode.Value, responseBody);
+                failureKey = "Error_MailService_SendFailed";
                 _logger.LogError("Failed to send email to {Recipient}. Status: {StatusCode}, Error: {Error}",
                     recipient, responseStatusCode, errorMessage);
             }
@@ -373,6 +412,7 @@ public class MailService : IMailService
         {
             success = false;
             errorMessage = $"Network error: {httpEx.Message}";
+            failureKey = "Error_MailService_SendFailed";
             _logger.LogError(httpEx, "HTTP error while sending email to {Recipient}: {Message}",
                 recipient, httpEx.Message);
         }
@@ -380,6 +420,7 @@ public class MailService : IMailService
         {
             success = false;
             errorMessage = "Request timeout (30s exceeded)";
+            failureKey = "Error_MailService_SendFailed";
             _logger.LogError(tcEx, "Email request to {Recipient} timed out: {Message}",
                 recipient, tcEx.Message);
         }
@@ -387,6 +428,7 @@ public class MailService : IMailService
         {
             success = false;
             errorMessage = $"Unexpected error: {ex.Message}";
+            failureKey = "Error_MailService_SendFailed";
             _logger.LogError(ex, "Unexpected error while sending email to {Recipient}: {Message}",
                 recipient, ex.Message);
         }
@@ -411,13 +453,21 @@ public class MailService : IMailService
                 companyId: companyId);
         }
 
-        return success;
+        if (success)
+        {
+            return OperationResult.Ok();
+        }
+
+        // Surface the underlying HTTP/network error verbatim so admins see what actually went wrong
+        // (the localized SendFailed key is a fallback when the diagnostic message is unavailable).
+        var key = failureKey ?? "Error_MailService_SendFailed";
+        return OperationResult.Fail(key, errorMessage ?? _localizer[key].Value);
     }
 
     /// <summary>
     /// Send shift assignment notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendShiftAssignedEmailAsync(
+    public async Task<OperationResult> SendShiftAssignedEmailAsync(
         string recipientEmail,
         string employeeName,
         string shiftTypeName,
@@ -428,7 +478,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send shift assigned email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -480,7 +530,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send shift change notification email with change description.
     /// </summary>
-    public async Task<bool> SendShiftChangedEmailAsync(
+    public async Task<OperationResult> SendShiftChangedEmailAsync(
         string recipientEmail,
         string employeeName,
         string shiftTypeName,
@@ -492,7 +542,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send shift changed email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -549,7 +599,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send shift deletion notification email.
     /// </summary>
-    public async Task<bool> SendShiftDeletedEmailAsync(
+    public async Task<OperationResult> SendShiftDeletedEmailAsync(
         string recipientEmail,
         string employeeName,
         string shiftTypeName,
@@ -560,7 +610,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send shift deleted email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -612,7 +662,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send chore assignment notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendChoreAssignedEmailAsync(
+    public async Task<OperationResult> SendChoreAssignedEmailAsync(
         string recipientEmail,
         string employeeName,
         string choreTitle,
@@ -621,7 +671,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send chore assigned email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -672,7 +722,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send chore cancellation notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendChoreCanceledEmailAsync(
+    public async Task<OperationResult> SendChoreCanceledEmailAsync(
         string recipientEmail,
         string employeeName,
         string choreTitle,
@@ -681,7 +731,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send chore canceled email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -733,7 +783,7 @@ public class MailService : IMailService
     /// Send account approval notification email with formatted HTML template.
     /// Notifies users when their join request has been approved by an administrator.
     /// </summary>
-    public async Task<bool> SendAccountApprovedEmailAsync(
+    public async Task<OperationResult> SendAccountApprovedEmailAsync(
         string recipientEmail,
         string userName,
         string assignedRole,
@@ -742,7 +792,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send account approved email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -819,7 +869,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send time-off request approved notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendTimeOffApprovedEmailAsync(
+    public async Task<OperationResult> SendTimeOffApprovedEmailAsync(
         string recipientEmail,
         string employeeName,
         DateOnly startDate,
@@ -828,7 +878,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send time-off approved email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -901,7 +951,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send time-off request declined notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendTimeOffDeclinedEmailAsync(
+    public async Task<OperationResult> SendTimeOffDeclinedEmailAsync(
         string recipientEmail,
         string employeeName,
         DateOnly startDate,
@@ -910,7 +960,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send time-off declined email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -983,7 +1033,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send time-off request deleted notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendTimeOffDeletedEmailAsync(
+    public async Task<OperationResult> SendTimeOffDeletedEmailAsync(
         string recipientEmail,
         string employeeName,
         DateOnly startDate,
@@ -992,7 +1042,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send time-off deleted email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -1064,7 +1114,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send swap request approved notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendSwapRequestApprovedEmailAsync(
+    public async Task<OperationResult> SendSwapRequestApprovedEmailAsync(
         string recipientEmail,
         string employeeName,
         string shiftInfo)
@@ -1072,7 +1122,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send swap request approved email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -1140,7 +1190,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send swap request declined notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendSwapRequestDeclinedEmailAsync(
+    public async Task<OperationResult> SendSwapRequestDeclinedEmailAsync(
         string recipientEmail,
         string employeeName,
         string shiftInfo)
@@ -1148,7 +1198,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send swap request declined email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -1216,7 +1266,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send on-duty assignment notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendOnDutyAssignedEmailAsync(
+    public async Task<OperationResult> SendOnDutyAssignedEmailAsync(
         string recipientEmail,
         string employeeName,
         string onDutyTypeName,
@@ -1225,7 +1275,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send on-duty assigned email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -1294,7 +1344,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send on-duty cancellation notification email with formatted HTML template.
     /// </summary>
-    public async Task<bool> SendOnDutyCanceledEmailAsync(
+    public async Task<OperationResult> SendOnDutyCanceledEmailAsync(
         string recipientEmail,
         string employeeName,
         string onDutyTypeName,
@@ -1303,7 +1353,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send on-duty canceled email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -1372,7 +1422,7 @@ public class MailService : IMailService
     /// <summary>
     /// Send access request submitted notification email to owners.
     /// </summary>
-    public async Task<bool> SendAccessRequestSubmittedEmailAsync(
+    public async Task<OperationResult> SendAccessRequestSubmittedEmailAsync(
         string recipientEmail,
         string ownerName,
         string requesterName,
@@ -1382,7 +1432,7 @@ public class MailService : IMailService
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
             _logger.LogWarning("Cannot send access request submitted email: recipient email is null or empty");
-            return false;
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
@@ -1456,7 +1506,7 @@ public class MailService : IMailService
 
     // ============= Ops Console Scheduler: New Email Templates =============
 
-    public async Task<bool> SendTraineeAddedEmailAsync(string recipientEmail, string employeeName,
+    public async Task<OperationResult> SendTraineeAddedEmailAsync(string recipientEmail, string employeeName,
         string traineeName, string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime)
     {
         var subject = string.Format(_localizer["Email_TraineeAdded_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
@@ -1505,7 +1555,7 @@ public class MailService : IMailService
         return await SendMailAsync(recipientEmail, subject, htmlBody);
     }
 
-    public async Task<bool> SendSlotRemovedEmailAsync(string recipientEmail, string employeeName,
+    public async Task<OperationResult> SendSlotRemovedEmailAsync(string recipientEmail, string employeeName,
         string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime, string reason)
     {
         var subject = string.Format(_localizer["Email_SlotRemoved_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
@@ -1554,7 +1604,7 @@ public class MailService : IMailService
         return await SendMailAsync(recipientEmail, subject, htmlBody);
     }
 
-    public async Task<bool> SendShiftModifiedEmailAsync(string recipientEmail, string employeeName,
+    public async Task<OperationResult> SendShiftModifiedEmailAsync(string recipientEmail, string employeeName,
         string shiftTypeName, DateOnly shiftDate, string changeDescription)
     {
         var subject = string.Format(_localizer["Email_ShiftModified_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));

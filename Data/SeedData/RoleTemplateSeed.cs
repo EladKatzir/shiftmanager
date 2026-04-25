@@ -276,9 +276,11 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 66, SAR, useOwnJobType: true));
         grants.Add(G(8, 67, SAR, useOwnJobType: true));
         grants.Add(G(8, 68, SAR, useOwnJobType: true));
-        // Assigner extra: molecule-wide chore assignment
-        grants.Add(G(8, 17, ETM));   // AssignChores (ETM — only this grant is molecule-scoped)
-        grants.Add(G(8, 34, ETM));   // GAP fix: ViewAllUsers (ETM) — 17 AssignChores at ETM was unusable without molecule-wide user visibility
+        // Assigner extra: AREA-wide chore assignment (chore-only; other Assigner grants stay SAR).
+        // Per product policy: Assigner needs to assign chores across the whole area, but no other
+        // mutating grant — kept at SAR to keep blast radius limited to chores.
+        grants.Add(G(8, 17, ETA));   // AssignChores (ETA — area-wide chore assignment)
+        grants.Add(G(8, 34, ETA));   // ViewAllUsers (ETA — area-wide visibility for the assignees they can now reach)
 
         // ============================================
         // LEAD (Template 3) — 48 grants
@@ -306,7 +308,7 @@ public static class RoleTemplateSeed
         // Lead-specific grants
         grants.Add(G(3, 3, ETM, useOwnJobType: true));    // AssignAlhutShifts (ETM, OWN)
         grants.Add(G(3, 4, ETM, useOwnJobType: true));    // AssignTextShifts (ETM, OWN)
-        grants.Add(G(3, 2, SAR));    // ViewAllShifts
+        grants.Add(G(3, 2, ETM));    // ViewAllShifts (ETM — Lead/מפ"צ sees shifts across all companies in their molecule, matches AssignAlhut/AssignText molecule scope)
         grants.Add(G(3, 7, SAR, useOwnJobType: true));    // EditShiftPrograms (OWN)
         grants.Add(G(3, 8, SAR, useOwnJobType: true));    // CreateShiftPrograms (OWN)
         grants.Add(G(3, 9, SAR, useOwnJobType: true));    // DeleteShiftPrograms (OWN)
@@ -317,7 +319,7 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 71, SAR, useOwnJobType: true));   // ManageTextBlueprints (OWN)
         grants.Add(G(3, 72, SAR, useOwnJobType: true));   // ManageTextPrograms (OWN)
         grants.Add(G(3, 109, SAR, useOwnJobType: true));  // ManageShiftCapacity (OWN)
-        grants.Add(G(3, 17, SAR));   // AssignChores
+        grants.Add(G(3, 17, ETM));   // AssignChores (ETM — Lead/מפ"צ assigns chores across all companies in their molecule; cross-molecule still blocked)
         grants.Add(G(3, 22, SAR, useOwnJobType: true));   // ApproveVacations (OWN)
         grants.Add(G(3, 26, SAR, useOwnJobType: true));   // ApproveSwaps (OWN)
         grants.Add(G(3, 28, SAR));   // ViewUsers
@@ -376,7 +378,7 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 75, SAR));   // ManageHakamBlueprints (ALL — BR manages Hakam)
         grants.Add(G(2, 76, SAR));   // ManageHakamPrograms (ALL)
         grants.Add(G(2, 109, SAR, useOwnJobType: true));
-        grants.Add(G(2, 17, SAR));   // AssignChores
+        grants.Add(G(2, 17, ETM));   // AssignChores (ETM — Kabar/קב"ר assigns chores across all companies in their molecule; cross-molecule still blocked)
         grants.Add(G(2, 22, SAR, targetJobTypeId: JT_SENTINEL_BR));     // ApproveVacations (BR)
         grants.Add(G(2, 22, SAR, targetJobTypeId: JT_SENTINEL_HAKAM));  // ApproveVacations (Hakam)
         grants.Add(G(2, 23, SAR));   // OverrideVacationLimits
@@ -974,7 +976,7 @@ public static class RoleTemplateSeed
         // EditChoreTypes (ID 18) — grant to Lead, BRDirector, MoleculeAdmin
         grants.Add(G(3, 18, SAR));    // Lead — EditChoreTypes at SameAsRole (company+jobtype)
         grants.Add(G(2, 18, SAR));    // BRDirector — EditChoreTypes at SameAsRole (company)
-        grants.Add(G(2, 122, SAR));   // ManageOnDuty — Kabar can assign on-duty
+        grants.Add(G(2, 122, ETM));   // ManageOnDuty (ETM — Kabar can assign on-duty across all companies in their molecule)
         grants.Add(G(2, 113, SAR));   // DirectorHubAccess (GAP fix: BRDirector/קב״ר peer to Director — needs hub visibility)
         // NOTE: G(7, 18, ETM) removed here — duplicate of line ~514 (seed dedupe 2026-04-15).
 

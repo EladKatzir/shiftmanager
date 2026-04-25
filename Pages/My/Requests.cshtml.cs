@@ -55,8 +55,8 @@ public class RequestsModel : LocalizedPageModel
     public List<AvailableShift> AvailableShifts { get; set; } = new();
     public List<ManagerUser> AvailableApprovers { get; set; } = new();
 
-    [TempData]
-    public string? Message { get; set; }
+    // Message property removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
+    // Error property is inherited from LocalizedPageModel; we no longer assign to it.
 
     public async Task OnGetAsync()
     {
@@ -68,7 +68,7 @@ public class RequestsModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = _localizer["Error_AuthenticationError"];
+                TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return;
             }
             _logger.LogInformation("User ID: {UserId}", userId);
@@ -203,7 +203,7 @@ public class RequestsModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in OnGetAsync for requests page");
-            Error = _localizer["Error_LoadingRequestsFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_LoadingRequestsFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
     }
 
@@ -241,7 +241,7 @@ public class RequestsModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = _localizer["Error_AuthenticationError"];
+                TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await OnGetAsync();
                 return Page();
             }
@@ -253,7 +253,7 @@ public class RequestsModel : LocalizedPageModel
                 var approver = await _db.Users.FindAsync(TimeOffRequest.ApproverId.Value);
                 if (approver == null || !approver.IsActive)
                 {
-                    Error = _localizer["Error_InvalidApproverSelected"];
+                    TempData["ErrorMessage"] = _localizer["Error_InvalidApproverSelected"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                     await OnGetAsync();
                     return Page();
                 }
@@ -268,7 +268,7 @@ public class RequestsModel : LocalizedPageModel
                     companyId: requestingUser?.CompanyId, jobTypeId: requestingUser?.JobTypeId);
                 if (!hasApproveVacations && !hasApproveExtendedLeave)
                 {
-                    Error = _localizer["Error_InvalidApproverSelected"];
+                    TempData["ErrorMessage"] = _localizer["Error_InvalidApproverSelected"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                     await OnGetAsync();
                     return Page();
                 }
@@ -300,13 +300,13 @@ public class RequestsModel : LocalizedPageModel
                     request.Id, success, approvalMessage);
             }
 
-            Message = _localizer["Success_TimeOffRequestSubmitted"];
+            TempData["SuccessMessage"] = _localizer["Success_TimeOffRequestSubmitted"].Value;
             return RedirectToPage();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error submitting time off request");
-            Error = _localizer["Error_SubmittingRequestFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_SubmittingRequestFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await OnGetAsync();
             return Page();
         }
@@ -339,7 +339,7 @@ public class RequestsModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = _localizer["Error_AuthenticationError"];
+                TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await OnGetAsync();
                 return Page();
             }
@@ -352,7 +352,7 @@ public class RequestsModel : LocalizedPageModel
             if (assignment == null)
             {
                 _logger.LogWarning("Assignment {ShiftId} not found for user {UserId}", SwapRequest.ShiftId, userId);
-                Error = _localizer["Error_NotAssignedToShift"];
+                TempData["ErrorMessage"] = _localizer["Error_NotAssignedToShift"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await OnGetAsync();
                 return Page();
             }
@@ -364,7 +364,7 @@ public class RequestsModel : LocalizedPageModel
             if (currentUser == null)
             {
                 _logger.LogError("User {UserId} not found", userId);
-                Error = _localizer["Error_UserNotFound"];
+                TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await OnGetAsync();
                 return Page();
             }
@@ -383,13 +383,13 @@ public class RequestsModel : LocalizedPageModel
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Swap request {RequestId} submitted successfully for assignment {AssignmentId}", swapRequest.Id, assignment.Id);
-            Message = _localizer["Success_SwapRequestSubmitted"];
+            TempData["SuccessMessage"] = _localizer["Success_SwapRequestSubmitted"].Value;
             return RedirectToPage();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error submitting swap request");
-            Error = _localizer["Error_SubmittingSwapRequestFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_SubmittingSwapRequestFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await OnGetAsync();
             return Page();
         }
@@ -404,7 +404,7 @@ public class RequestsModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = _localizer["Error_AuthenticationError"];
+                TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return RedirectToPage();
             }
 
@@ -415,14 +415,14 @@ public class RequestsModel : LocalizedPageModel
             if (request == null)
             {
                 _logger.LogWarning("Cancel request: TimeOffRequest {RequestId} not found for user {UserId}", requestId, userId);
-                Error = _localizer["Error_RequestNotFound"];
+                TempData["ErrorMessage"] = _localizer["Error_RequestNotFound"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return RedirectToPage();
             }
 
             if (request.Status != RequestStatus.Pending)
             {
                 _logger.LogWarning("Cancel request: TimeOffRequest {RequestId} is not pending (status={Status})", requestId, request.Status);
-                Error = _localizer["Error_RequestAlreadyProcessed"];
+                TempData["ErrorMessage"] = _localizer["Error_RequestAlreadyProcessed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return RedirectToPage();
             }
 
@@ -431,12 +431,12 @@ public class RequestsModel : LocalizedPageModel
             if (success)
             {
                 _logger.LogInformation("TimeOffRequest {RequestId} canceled by user {UserId}", requestId, userId);
-                Message = _localizer["RequestCanceled"];
+                TempData["SuccessMessage"] = _localizer["RequestCanceled"].Value;
             }
             else
             {
                 _logger.LogWarning("Failed to cancel TimeOffRequest {RequestId}: {Message}", requestId, message);
-                Error = _localizer["Error_CancelRequestFailed"];
+                TempData["ErrorMessage"] = _localizer["Error_CancelRequestFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
 
             return RedirectToPage();
@@ -444,7 +444,7 @@ public class RequestsModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error canceling time off request {RequestId}", requestId);
-            Error = _localizer["Error_CancelRequestFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_CancelRequestFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return RedirectToPage();
         }
     }

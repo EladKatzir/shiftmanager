@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -22,15 +24,18 @@ public class RenameModel : PageModel
     private readonly AppDbContext _db;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<RenameModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public RenameModel(
         AppDbContext db,
         IAuditLogService auditLogService,
-        ILogger<RenameModel> logger)
+        ILogger<RenameModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _auditLogService = auditLogService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -148,7 +153,12 @@ public class RenameModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing hierarchy rename request");
-            return new JsonResult(new { success = false, message = "An error occurred" }) { StatusCode = 500 };
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_HIERARCHY_RENAME_FAILED",
+                    _localizer["Error_HierarchyApi_RenameFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 500 };
         }
     }
 

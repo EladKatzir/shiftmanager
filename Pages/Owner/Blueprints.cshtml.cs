@@ -52,8 +52,7 @@ public class BlueprintsModel : PageModel
     }
 
     public List<ShiftType> ShiftTypes { get; set; } = new();
-    public string? Success { get; set; }
-    public string? Error { get; set; }
+    // Success / Error properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
 
     // Molecule selector
     [BindProperty(SupportsGet = true)] public int? SelectedMoleculeId { get; set; }
@@ -75,11 +74,8 @@ public class BlueprintsModel : PageModel
     public bool CanCreateAreaScope { get; set; }
     public bool CanCreateMoleculeScope { get; set; }
 
-    public async Task OnGetAsync(string? success = null, string? error = null)
+    public async Task OnGetAsync()
     {
-        Success = success;
-        Error = error;
-
         var companyId = _tenantResolver.GetCurrentTenantId();
         var userId = GetCurrentUserId();
 
@@ -151,7 +147,11 @@ public class BlueprintsModel : PageModel
             var userId = GetCurrentUserId();
 
             if (string.IsNullOrWhiteSpace(NewShiftNameEn) || string.IsNullOrWhiteSpace(NewShiftNameHe))
-                return RedirectToPage(new { error = "Both English and Hebrew names are required" });
+            {
+                TempData["ErrorMessage"] = "Both English and Hebrew names are required";
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                return RedirectToPage();
+            }
 
             // Resolve scope parameters
             var company = await _db.Companies.Include(c => c.Molecule)
@@ -177,7 +177,11 @@ public class BlueprintsModel : PageModel
             }
 
             if (!hasGrant)
-                return RedirectToPage(new { error = "You don't have permission to create shift types at this scope" });
+            {
+                TempData["ErrorMessage"] = "You don't have permission to create shift types at this scope";
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                return RedirectToPage();
+            }
 
             // Auto-generate key
             NewShiftKey = "CUSTOM_" + System.Text.RegularExpressions.Regex.Replace(
@@ -212,7 +216,11 @@ public class BlueprintsModel : PageModel
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
                 () => _db.SaveChangesAsync(), "ShiftType");
             if (!saveResult.Success)
-                return RedirectToPage(new { error = "A concurrency conflict occurred. Please try again." });
+            {
+                TempData["ErrorMessage"] = "A concurrency conflict occurred. Please try again.";
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                return RedirectToPage();
+            }
 
             // Invalidate caches
             if (shiftType.MoleculeId.HasValue)
@@ -228,12 +236,15 @@ public class BlueprintsModel : PageModel
             }
 
             _logger.LogInformation("Created ShiftType {Key} (Scope={Scope}) by User {UserId}", NewShiftKey, NewShiftScope, userId);
-            return RedirectToPage(new { success = $"Shift type '{NewShiftNameEn}' created successfully", selectedMoleculeId = NewShiftMoleculeId });
+            TempData["SuccessMessage"] = $"Shift type '{NewShiftNameEn}' created successfully";
+            return RedirectToPage(new { selectedMoleculeId = NewShiftMoleculeId });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create ShiftType");
-            return RedirectToPage(new { error = "Failed to create shift type" });
+            TempData["ErrorMessage"] = "Failed to create shift type";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage();
         }
     }
 
@@ -331,22 +342,38 @@ public class BlueprintsModel : PageModel
             var userId = GetCurrentUserId();
             var shiftType = await _db.ShiftTypes.FindAsync(shiftTypeId);
             if (shiftType == null)
-                return RedirectToPage(new { error = "Shift type not found" });
+            {
+                TempData["ErrorMessage"] = "Shift type not found";
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                return RedirectToPage();
+            }
 
             var (allowed, errorMessage) = await CheckEditGrantForShiftTypeAsync(userId, shiftType);
             if (!allowed)
-                return RedirectToPage(new { error = errorMessage });
+            {
+                TempData["ErrorMessage"] = errorMessage;
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                return RedirectToPage();
+            }
 
             var companyId = _tenantResolver.GetCurrentTenantId();
             var localizedName = await _localizationService.ResolveShiftTypeNameAsync(shiftType, companyId, CultureInfo.CurrentUICulture.Name);
 
             // Check if used by Programs
             if (await _db.ShiftPrograms.AnyAsync(p => p.ShiftTypeId == shiftTypeId))
-                return RedirectToPage(new { error = $"Cannot delete '{localizedName}' - it is used by Programs. Remove from Programs first." });
+            {
+                TempData["ErrorMessage"] = $"Cannot delete '{localizedName}' - it is used by Programs. Remove from Programs first.";
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                return RedirectToPage();
+            }
 
             var instanceCount = await _db.ShiftInstances.Where(si => si.ShiftTypeId == shiftTypeId).CountAsync();
             if (instanceCount > 0 && !confirmed)
-                return RedirectToPage(new { error = $"Please confirm deletion of '{localizedName}' ({instanceCount} shift instances)" });
+            {
+                TempData["ErrorMessage"] = $"Please confirm deletion of '{localizedName}' ({instanceCount} shift instances)";
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                return RedirectToPage();
+            }
 
             // Capture for cache invalidation
             var mol = shiftType.MoleculeId;
@@ -357,7 +384,11 @@ public class BlueprintsModel : PageModel
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
                 () => _db.SaveChangesAsync(), "ShiftType", shiftTypeId);
             if (!saveResult.Success)
-                return RedirectToPage(new { error = "A concurrency conflict occurred." });
+            {
+                TempData["ErrorMessage"] = "A concurrency conflict occurred.";
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                return RedirectToPage();
+            }
 
             if (mol.HasValue) _shiftTypeCache.InvalidateMoleculeCache(mol.Value, jt);
             if (area.HasValue) _shiftTypeCache.InvalidateAreaCache(area.Value, jt);
@@ -366,12 +397,15 @@ public class BlueprintsModel : PageModel
                 $"Deleted ShiftType '{shiftType.Key}' (Scope: {shiftType.Scope}).");
 
             _logger.LogInformation("Deleted ShiftType {Key} (Scope={Scope}) by User {UserId}", shiftType.Key, shiftType.Scope, userId);
-            return RedirectToPage(new { success = $"Shift type '{localizedName}' deleted", selectedMoleculeId = mol });
+            TempData["SuccessMessage"] = $"Shift type '{localizedName}' deleted";
+            return RedirectToPage(new { selectedMoleculeId = mol });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete ShiftType");
-            return RedirectToPage(new { error = "Failed to delete shift type" });
+            TempData["ErrorMessage"] = "Failed to delete shift type";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage();
         }
     }
 

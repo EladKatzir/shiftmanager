@@ -1,10 +1,12 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Tests.UnitTests.Services;
@@ -33,8 +35,11 @@ public class FeatureFlagServiceTests : IDisposable
 
         _cache = new MemoryCache(new MemoryCacheOptions());
         var loggerMock = new Mock<ILogger<FeatureFlagService>>();
+        var localizerMock = new Mock<IStringLocalizer<SharedResources>>();
+        localizerMock.Setup(l => l[It.IsAny<string>()])
+            .Returns((string k) => new LocalizedString(k, k));
 
-        _service = new FeatureFlagService(_db, _cache, loggerMock.Object);
+        _service = new FeatureFlagService(_db, _cache, loggerMock.Object, localizerMock.Object);
     }
 
     public void Dispose()

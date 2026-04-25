@@ -373,22 +373,7 @@
     <p class="page-subtitle"><loc key="ManageYourPersonalAndProfessionalInformation" /></p>
 </div>
 
-<!-- Success/Error Messages -->
-@if (!string.IsNullOrEmpty(Model.SuccessMessage))
-{
-    <div class="alert alert-success">
-        <span class="alert-icon"><icon name="check" /></span>
-        <span>@Model.SuccessMessage</span>
-    </div>
-}
-
-@if (!string.IsNullOrEmpty(Model.ErrorMessage))
-{
-    <div class="alert alert-error">
-        <span class="alert-icon"><icon name="x" /></span>
-        <span>@Model.ErrorMessage</span>
-    </div>
-}
+@* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
 <form method="post" enctype="multipart/form-data">
     <!-- Avatar Section -->

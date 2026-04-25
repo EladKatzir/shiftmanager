@@ -126,6 +126,33 @@ public class GrantService : IGrantService
             .Where(g => g.UserId == userId && g.GrantTypeId == grantType.Id && g.CanOwn)
             .ToListAsync();
 
+        // Pre-resolve the REQUESTED scope's hierarchy so each grant in the loop can do proper
+        // cascade matching (e.g., grant at Area X covers a moleculeId Y when Y is in X). Without
+        // this, callers had to fall back to brittle user-own-path equality checks that mishandled
+        // cross-molecule queries.
+        int? requestedMoleculeArea = null;
+        int? requestedCompanyMolecule = null;
+        int? requestedCompanyArea = null;
+        if (moleculeId.HasValue)
+        {
+            requestedMoleculeArea = await _db.Molecules.IgnoreQueryFilters()
+                .Where(m => m.Id == moleculeId.Value)
+                .Select(m => (int?)m.AreaId)
+                .FirstOrDefaultAsync();
+        }
+        if (companyId.HasValue)
+        {
+            var cmp = await _db.Companies.IgnoreQueryFilters()
+                .Where(c => c.Id == companyId.Value && c.Molecule != null)
+                .Select(c => new { c.MoleculeId, AreaId = (int?)c.Molecule!.AreaId })
+                .FirstOrDefaultAsync();
+            if (cmp != null)
+            {
+                requestedCompanyMolecule = cmp.MoleculeId;
+                requestedCompanyArea = cmp.AreaId;
+            }
+        }
+
         foreach (var grant in grants)
         {
             // A-10: Self scope — match when target user equals the requesting user
@@ -159,21 +186,37 @@ public class GrantService : IGrantService
                     return true;
             }
 
-            // Area scope covers molecules, companies, departments below
+            // Area scope: explicit area match, OR cascade — the requested moleculeId/companyId
+            // belongs to this area (verified via the pre-resolved hierarchy lookup above), OR
+            // the grant is in the user's own area and no narrower scope was requested.
+            // Bug-fix 2026-04-25: previously the user-path fallback ran unconditionally,
+            // letting Lead/Director/Kabar at area X be reported as having grants for any
+            // sibling molecule Y in area X regardless of which molecule the caller asked about.
             if (grant.AreaId.HasValue)
             {
                 if (areaId.HasValue && grant.AreaId == areaId)
                     return true;
-                if (userContext != null && grant.AreaId == userContext.Path.Area.Id)
+                if (requestedMoleculeArea.HasValue && grant.AreaId == requestedMoleculeArea)
+                    return true;
+                if (requestedCompanyArea.HasValue && grant.AreaId == requestedCompanyArea)
+                    return true;
+                if (userContext != null && grant.AreaId == userContext.Path.Area.Id
+                    && !areaId.HasValue && !moleculeId.HasValue
+                    && !companyId.HasValue && !departmentId.HasValue && !jobTypeId.HasValue)
                     return true;
             }
 
-            // Molecule scope covers companies/departments below
+            // Molecule scope: explicit molecule match, OR cascade — the requested companyId
+            // belongs to this molecule, OR no narrower scope and grant is at user's own molecule.
             if (grant.MoleculeId.HasValue)
             {
                 if (moleculeId.HasValue && grant.MoleculeId == moleculeId)
                     return true;
-                if (userContext != null && grant.MoleculeId == userContext.Path.Molecule.Id)
+                if (requestedCompanyMolecule.HasValue && grant.MoleculeId == requestedCompanyMolecule)
+                    return true;
+                if (userContext != null && grant.MoleculeId == userContext.Path.Molecule.Id
+                    && !moleculeId.HasValue
+                    && !companyId.HasValue && !departmentId.HasValue && !jobTypeId.HasValue)
                     return true;
             }
 

@@ -1,10 +1,15 @@
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
 
 namespace ShiftManager.Services;
 
 /// <summary>
 /// Service for managing MasterPrograms (collections of Programs forming complete weekly schedules).
 /// A MasterProgram is a convenience wrapper for applying multiple Programs at once.
+///
+/// All write operations return <see cref="OperationResult"/> / <see cref="OperationResult{T}"/>
+/// with localized error messages keyed under <c>Error_MasterProgramService_*</c>. Read operations
+/// return nullable / list types directly (null = not found is acceptable for reads).
 /// </summary>
 public interface IMasterProgramService
 {
@@ -13,13 +18,7 @@ public interface IMasterProgramService
     /// <summary>
     /// Creates a new MasterProgram containing multiple Programs.
     /// </summary>
-    /// <param name="companyId">Company ID</param>
-    /// <param name="name">Display name (e.g., "Standard Week Schedule")</param>
-    /// <param name="description">Optional description</param>
-    /// <param name="programIds">List of Program IDs to include</param>
-    /// <param name="userId">User creating the MasterProgram</param>
-    /// <returns>The created MasterProgram with Items included</returns>
-    Task<MasterProgram> CreateMasterProgramAsync(
+    Task<OperationResult<MasterProgram>> CreateMasterProgramAsync(
         int companyId,
         string name,
         string? description,
@@ -28,25 +27,19 @@ public interface IMasterProgramService
 
     /// <summary>
     /// Gets a single MasterProgram by ID with Items and nested Programs included.
+    /// Returns null if not found.
     /// </summary>
     Task<MasterProgram?> GetMasterProgramAsync(int masterProgramId);
 
     /// <summary>
     /// Gets all MasterPrograms for a company.
     /// </summary>
-    /// <param name="companyId">Company ID</param>
-    /// <param name="includeInactive">If false, only returns active MasterPrograms</param>
     Task<List<MasterProgram>> GetCompanyMasterProgramsAsync(int companyId, bool includeInactive = false);
 
     /// <summary>
     /// Updates a MasterProgram's name, description, and included Programs.
     /// </summary>
-    /// <param name="masterProgramId">MasterProgram ID</param>
-    /// <param name="name">New name</param>
-    /// <param name="description">New description</param>
-    /// <param name="programIds">New list of Program IDs (replaces existing)</param>
-    /// <param name="userId">User making the update</param>
-    Task UpdateMasterProgramAsync(
+    Task<OperationResult> UpdateMasterProgramAsync(
         int masterProgramId,
         string name,
         string? description,
@@ -57,20 +50,18 @@ public interface IMasterProgramService
     /// Soft deletes a MasterProgram (sets IsActive = false).
     /// Does NOT delete the Programs or ShiftInstances.
     /// </summary>
-    Task DeleteMasterProgramAsync(int masterProgramId, int userId);
+    Task<OperationResult> DeleteMasterProgramAsync(int masterProgramId, int userId);
 
     // ==================== Instance Generation ====================
 
     /// <summary>
     /// Generates ShiftInstances for ALL Programs in this MasterProgram.
-    /// Calls ShiftProgramService.GenerateInstancesAsync() for each Program.
+    /// Returns the per-program instance lists on success. Partial failures (one program
+    /// failing while others succeed) are recorded as <see cref="ValidationSeverity.Warning"/>
+    /// issues on the result with the per-program key in the message; <c>Success</c> is true
+    /// as long as the master program itself was found.
     /// </summary>
-    /// <param name="masterProgramId">MasterProgram ID</param>
-    /// <param name="startDate">Start date (inclusive)</param>
-    /// <param name="endDate">End date (inclusive)</param>
-    /// <param name="overwriteExisting">If true, updates existing instances</param>
-    /// <returns>Dictionary mapping ProgramId → List of created ShiftInstances</returns>
-    Task<Dictionary<int, List<ShiftInstance>>> GenerateFromMasterProgramAsync(
+    Task<OperationResult<Dictionary<int, List<ShiftInstance>>>> GenerateFromMasterProgramAsync(
         int masterProgramId,
         DateOnly startDate,
         DateOnly endDate,
@@ -79,8 +70,7 @@ public interface IMasterProgramService
     /// <summary>
     /// Gets summary statistics for a MasterProgram.
     /// </summary>
-    /// <returns>Total Programs, Total unique ShiftTypes, Total ProgramDays across all Programs</returns>
-    Task<MasterProgramSummary> GetMasterProgramSummaryAsync(int masterProgramId);
+    Task<OperationResult<MasterProgramSummary>> GetMasterProgramSummaryAsync(int masterProgramId);
 }
 
 /// <summary>

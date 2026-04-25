@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
+using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
@@ -16,6 +19,7 @@ public class FeatureFlagService : IFeatureFlagService
     private readonly AppDbContext _context;
     private readonly IMemoryCache _cache;
     private readonly ILogger<FeatureFlagService> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     // Cache settings
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(1);
@@ -27,11 +31,13 @@ public class FeatureFlagService : IFeatureFlagService
     public FeatureFlagService(
         AppDbContext context,
         IMemoryCache cache,
-        ILogger<FeatureFlagService> logger)
+        ILogger<FeatureFlagService> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _context = context;
         _cache = cache;
         _logger = logger;
+        _localizer = localizer;
     }
 
     /// <inheritdoc/>
@@ -351,5 +357,72 @@ public class FeatureFlagService : IFeatureFlagService
     private static string BuildCacheKey(string flagName, int? userId, int? companyId)
     {
         return $"{CacheKeyPrefix}{flagName}_U{userId ?? 0}_C{companyId ?? 0}";
+    }
+
+    // ==================== Diagnostic (OperationResult) variants ====================
+    //
+    // ADDITIVE diagnostic surface — see IFeatureFlagService for design rationale.
+    // These methods exist alongside (not in place of) the Task<bool> methods so
+    // routine flag checks keep their ergonomic on/off contract while admin and
+    // diagnostic pages can distinguish "flag is off" from "DB lookup failed".
+
+    /// <inheritdoc/>
+    public async Task<OperationResult<bool>> TryIsEnabledAsync(string flagName, int? userId = null, int? companyId = null)
+    {
+        try
+        {
+            var enabled = await IsEnabledAsync(flagName, userId, companyId);
+            return OperationResult<bool>.Ok(enabled);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "TryIsEnabledAsync: failed to resolve feature flag {FlagName} (User: {UserId}, Company: {CompanyId}); reporting as disabled with database-error key",
+                flagName, userId, companyId);
+
+            return OperationResult<bool>.Fail(
+                "Error_FeatureFlagService_DatabaseError",
+                _localizer["Error_FeatureFlagService_DatabaseError"].Value);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<OperationResult<bool>> TryIsEnabledForCompanyAsync(string flagName, int companyId)
+    {
+        try
+        {
+            var enabled = await IsEnabledAsync(flagName, userId: null, companyId: companyId);
+            return OperationResult<bool>.Ok(enabled);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "TryIsEnabledForCompanyAsync: failed to resolve feature flag {FlagName} for Company {CompanyId}; reporting as disabled with database-error key",
+                flagName, companyId);
+
+            return OperationResult<bool>.Fail(
+                "Error_FeatureFlagService_DatabaseError",
+                _localizer["Error_FeatureFlagService_DatabaseError"].Value);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<OperationResult<List<FeatureFlag>>> TryListAllFlagsAsync()
+    {
+        try
+        {
+            var flags = await GetAllFlagsAsync(companyId: null);
+            return OperationResult<List<FeatureFlag>>.Ok(flags.ToList());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "TryListAllFlagsAsync: failed to load feature flags from database");
+
+            return OperationResult<List<FeatureFlag>>.Fail(
+                "Error_FeatureFlagService_DatabaseError",
+                _localizer["Error_FeatureFlagService_DatabaseError"].Value);
+        }
     }
 }

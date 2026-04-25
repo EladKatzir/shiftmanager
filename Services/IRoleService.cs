@@ -1,4 +1,5 @@
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
 
 namespace ShiftManager.Services;
 
@@ -17,10 +18,11 @@ public interface IRoleService
     Task<bool> UserHasRoleAsync(int userId, string roleKey);
     Task<bool> UserHasRoleAsync(int userId, int roleTemplateId);
 
-    // Role assignment management
-    Task<UserRoleAssignment?> AssignRoleAsync(int userId, int roleTemplateId, GrantScope scope, int assignedByUserId);
-    Task<bool> RemoveRoleAsync(int userRoleId, int? removedByUserId = null);
-    Task<bool> RemoveAllUserRolesAsync(int userId);
+    // Role assignment management — migrated to OperationResult to eliminate silent
+    // null/false failures that the audit flagged. ErrorKeys: Error_RoleService_*.
+    Task<OperationResult<UserRoleAssignment>> AssignRoleAsync(int userId, int roleTemplateId, GrantScope scope, int assignedByUserId);
+    Task<OperationResult> RemoveRoleAsync(int userRoleId, int? removedByUserId = null);
+    Task<OperationResult> RemoveAllUserRolesAsync(int userId);
 
     // Queries for role holders
     Task<List<AppUser>> GetUsersWithRoleAsync(int roleTemplateId);

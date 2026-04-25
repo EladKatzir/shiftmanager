@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 
@@ -22,19 +24,22 @@ public class GetOverviewDataModel : PageModel
     private readonly IScopeFilterService _scopeFilterService;
     private readonly AppDbContext _db;
     private readonly ILogger<GetOverviewDataModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public GetOverviewDataModel(
         ICalendarTextEntryService textEntryService,
         ICompanyContext companyContext,
         IScopeFilterService scopeFilterService,
         AppDbContext db,
-        ILogger<GetOverviewDataModel> logger)
+        ILogger<GetOverviewDataModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _textEntryService = textEntryService;
         _companyContext = companyContext;
         _scopeFilterService = scopeFilterService;
         _db = db;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnGetAsync(
@@ -209,7 +214,12 @@ public class GetOverviewDataModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetOverviewData");
-            return new JsonResult(new { success = false, message = "An error occurred" }) { StatusCode = 500 };
+            return new JsonResult(
+                ApiErrorResponse.Create(
+                    "ERROR_CALENDAR_GET_OVERVIEW_FAILED",
+                    _localizer["Error_CalendarApi_GetOverviewFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 500 };
         }
     }
 }

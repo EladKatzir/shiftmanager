@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Results;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
@@ -9,11 +12,19 @@ public class RoleService : IRoleService
 {
     private readonly AppDbContext _db;
     private readonly IGrantService _grantService;
+    private readonly ILogger<RoleService> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
-    public RoleService(AppDbContext db, IGrantService grantService)
+    public RoleService(
+        AppDbContext db,
+        IGrantService grantService,
+        ILogger<RoleService> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _grantService = grantService;
+        _logger = logger;
+        _localizer = localizer;
     }
 
     // Role template queries
@@ -109,18 +120,31 @@ public class RoleService : IRoleService
     }
 
     // Role assignment management
-    public async Task<UserRoleAssignment?> AssignRoleAsync(int userId, int roleTemplateId, GrantScope scope, int assignedByUserId)
+    public async Task<OperationResult<UserRoleAssignment>> AssignRoleAsync(int userId, int roleTemplateId, GrantScope scope, int assignedByUserId)
     {
-        // SECURTY-AUDITED: SAFE — Owner/super-admin role assignment legitimately targets users
-        // in other tenants; AssignRoles grant scope on the caller is the access boundary.
+        // SECURITY-AUDITED: SAFE — Owner/super-admin role assignment legitimately targets users
+        // in other tenants. The access boundary is enforced UPSTREAM by the caller:
+        //   Pages/Admin/Organization/Roles/Assign.cshtml.cs gates with the AssignRoles grant.
+        // IRoleService is internal-only; any new caller MUST enforce an equivalent grant check
+        // before invoking this method, otherwise a cross-tenant IDOR is introduced here.
         var user = await _db.Users.IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
-            return null;
+        {
+            _logger.LogWarning("AssignRoleAsync: user {UserId} not found", userId);
+            return OperationResult<UserRoleAssignment>.Fail(
+                "Error_RoleService_UserNotFound",
+                _localizer["Error_RoleService_UserNotFound"].Value);
+        }
 
         var roleTemplate = await GetRoleTemplateAsync(roleTemplateId);
         if (roleTemplate == null)
-            return null;
+        {
+            _logger.LogWarning("AssignRoleAsync: roleTemplate {RoleTemplateId} not found or inactive", roleTemplateId);
+            return OperationResult<UserRoleAssignment>.Fail(
+                "Error_RoleService_TemplateNotFound",
+                _localizer["Error_RoleService_TemplateNotFound"].Value);
+        }
 
         // Check if user already has this role with the same scope
         var existingRole = await _db.UserRoleAssignments.IgnoreQueryFilters()
@@ -130,7 +154,7 @@ public class RoleService : IRoleService
                 ura.JobTypeId == scope.JobTypeId && ura.IsActive);
 
         if (existingRole != null)
-            return existingRole; // Already has this role
+            return OperationResult<UserRoleAssignment>.Ok(existingRole); // Already has this role
 
         // Create role assignment
         var roleAssignment = new UserRoleAssignment
@@ -153,17 +177,25 @@ public class RoleService : IRoleService
         // Apply auto-grants from the role template
         await _grantService.ApplyAutoGrantsAsync(userId, roleTemplateId, scope);
 
-        return roleAssignment;
+        _logger.LogInformation(
+            "Assigned role {RoleTemplateId} to user {UserId} (assignmentId {AssignmentId}) by {AssignedBy}",
+            roleTemplateId, userId, roleAssignment.Id, assignedByUserId);
+        return OperationResult<UserRoleAssignment>.Ok(roleAssignment);
     }
 
-    public async Task<bool> RemoveRoleAsync(int userRoleId, int? removedByUserId = null)
+    public async Task<OperationResult> RemoveRoleAsync(int userRoleId, int? removedByUserId = null)
     {
         var roleAssignment = await _db.UserRoleAssignments.IgnoreQueryFilters()
             .Include(ura => ura.RoleTemplate)
             .FirstOrDefaultAsync(ura => ura.Id == userRoleId);
 
         if (roleAssignment == null)
-            return false;
+        {
+            _logger.LogWarning("RemoveRoleAsync: assignment {UserRoleId} not found", userRoleId);
+            return OperationResult.Fail(
+                "Error_RoleService_AssignmentNotFound",
+                _localizer["Error_RoleService_AssignmentNotFound"].Value);
+        }
 
         var roleTemplateId = roleAssignment.RoleTemplateId;
         var userId = roleAssignment.UserId;
@@ -175,10 +207,13 @@ public class RoleService : IRoleService
         // Remove auto-grants from this role
         await _grantService.RemoveAutoGrantsAsync(userId, roleTemplateId);
 
-        return true;
+        _logger.LogInformation(
+            "Removed role assignment {UserRoleId} (user {UserId} role {RoleTemplateId}) by {RemovedBy}",
+            userRoleId, userId, roleTemplateId, removedByUserId);
+        return OperationResult.Ok();
     }
 
-    public async Task<bool> RemoveAllUserRolesAsync(int userId)
+    public async Task<OperationResult> RemoveAllUserRolesAsync(int userId)
     {
         var roles = await _db.UserRoleAssignments.IgnoreQueryFilters()
             .Where(ura => ura.UserId == userId && ura.IsActive)
@@ -191,7 +226,8 @@ public class RoleService : IRoleService
         }
 
         await _db.SaveChangesAsync();
-        return true;
+        _logger.LogInformation("Removed all {Count} active roles for user {UserId}", roles.Count, userId);
+        return OperationResult.Ok();
     }
 
     // Queries for role holders

@@ -209,15 +209,7 @@
 }
 </style>
 
-@if (!string.IsNullOrEmpty(Model.Message))
-{
-    <div class="alert alert-success">@Model.Message</div>
-}
-
-@if (!string.IsNullOrEmpty(Model.ErrorMessage))
-{
-    <div class="alert alert-danger">@Model.ErrorMessage</div>
-}
+@* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
 <div class="chores-calendar">
     <div class="calendar-header">

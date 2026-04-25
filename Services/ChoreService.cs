@@ -24,8 +24,14 @@ public interface IChoreService
     Task<List<AppUser>> GetEligibleAssigneesAsync();
 }
 
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — chore queries are molecule-scoped by design;
-// lookups scoped by explicit moleculeId/userId parameters; called only from authorized endpoints
+// SECURITY-AUDITED: IgnoreQueryFilters() in this class is used in three distinct, intentional ways:
+//   1) Chore queries scoped by explicit moleculeId/userId parameters (molecule-scoped by design;
+//      tenant filter would hide chores in sibling companies under the same molecule).
+//   2) Cross-tenant user lookups (assignee, current user) followed by HasGrantForCompanyAsync —
+//      the grant check is the access boundary, not the tenant filter.
+//   3) Cross-tenant chore lookups (CancelChoreAsync, RestoreChoreAsync, ReplaceChoreWithShiftAsync,
+//      GetChoreByIdAsync) where each call site re-authorizes via HasGrantForCompanyAsync before
+//      mutating state.
 public class ChoreService : IChoreService
 {
     private readonly AppDbContext _db;
@@ -596,6 +602,21 @@ public class ChoreService : IChoreService
                 return (false, "You do not have permission to replace this chore.");
             }
 
+            // Verify the target shift instance belongs to the chore's company so we don't
+            // smuggle a cross-tenant FK reference (a ShiftAssignment row whose CompanyId
+            // disagrees with its ShiftInstance.CompanyId would be a tenancy invariant break).
+            // SECURITY-AUDITED: SAFE — read-only validation before persistence.
+            var shiftInstance = await _db.ShiftInstances.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(si => si.Id == shiftInstanceId);
+            if (shiftInstance == null)
+            {
+                return (false, "Shift instance not found.");
+            }
+            if (shiftInstance.CompanyId != chore.CompanyId)
+            {
+                return (false, "Cannot replace a chore with a shift in a different company.");
+            }
+
             // Cancel the chore
             chore.CanceledAt = DateTime.UtcNow;
             chore.CanceledBy = currentUserId;
@@ -684,11 +705,15 @@ public class ChoreService : IChoreService
     }
 
     /// <summary>
-    /// Get a chore by ID
+    /// Get a chore by ID. Bypasses the tenant query filter so cross-tenant chores are visible
+    /// to authorized callers (Owner/Director/AreaAdmin acting on grants that span companies).
     /// </summary>
     public async Task<Chore?> GetChoreByIdAsync(int choreId)
     {
-        return await _db.Chores
+        // SECURITY-AUDITED: SAFE — read-only lookup. Callers that act on the result must
+        // re-authorize via HasGrantForCompanyAsync (CancelChoreAsync / RestoreChoreAsync /
+        // ReplaceChoreWithShiftAsync all do this internally before mutating state).
+        return await _db.Chores.IgnoreQueryFilters()
             .Include(c => c.User)
             .Include(c => c.Creator)
             .Include(c => c.Canceler)

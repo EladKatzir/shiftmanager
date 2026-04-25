@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="ShiftManager.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Exclude ALL item types from output/build/temp directories to prevent
          .cs files in publish output (e.g. Data/SeedData/) from being compiled -->
     <Compile Remove="Backups/**" />
@@ -79,5 +83,11 @@
     <!-- Schedule Export & Print feature -->
     <PackageReference Include="QuestPDF" Version="2024.10.0" />
     <PackageReference Include="ClosedXML" Version="0.102.2" />
+    <!-- Project-wide error-handling overhaul: structured logging with rolling-file persistence
+         for air-gapped IIS deployments. Console + EventLog providers retained via Serilog sinks. -->
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.EventLog" Version="4.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.4" />
   </ItemGroup>
 </Project>

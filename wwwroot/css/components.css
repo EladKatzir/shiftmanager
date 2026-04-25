@@ -2299,6 +2299,100 @@ select.form-field__input {
 .modal--feedback-info .modal__header { border-bottom-color: var(--info); }
 
 /* ========================================
+   23a. FEEDBACK MODAL EXTENSIONS
+   Detail panel + correlation-ID display for the
+   project-wide error-handling overhaul.
+   ======================================== */
+
+/* Correlation/error-ID block — rendered below the message in error modals.
+   text-align:start keeps the label leading in both LTR and RTL. */
+.feedback-error-id {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  text-align: start;
+}
+
+.feedback-error-id__label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.feedback-error-id__value {
+  font-family: var(--font-mono, ui-monospace, "SFMono-Regular", monospace);
+  font-size: var(--text-xs);
+  color: var(--text);
+  background: transparent;
+  user-select: all;
+  word-break: break-all;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.feedback-error-id__copy {
+  flex: 0 0 auto;
+}
+
+/* Collapsible detail panel — semantic <details> element keyboard handling
+   and aria-expanded come from the browser, no JS needed for those. */
+.feedback-detail {
+  margin-top: var(--space-4);
+  text-align: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.feedback-detail__summary {
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-weight: 600;
+  user-select: none;
+  outline-offset: 2px;
+}
+
+.feedback-detail__summary:hover {
+  color: var(--text);
+}
+
+.feedback-detail__content {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-mono, ui-monospace, "SFMono-Regular", monospace);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+/* Toast variant: inline correlation-ID badge between message text and dismiss button.
+   margin-inline keeps spacing correct in both LTR (left/right) and RTL (right/left). */
+.toast-undo__error-id {
+  font-family: var(--font-mono, ui-monospace, "SFMono-Regular", monospace);
+  font-size: 0.75em;
+  color: var(--text-muted);
+  background: var(--surface-soft);
+  padding: 0 0.4em;
+  border-radius: 3px;
+  user-select: all;
+  margin-inline: 0.4em;
+}
+
+/* ========================================
    24. MODAL FOCUS MANAGEMENT (B-013)
    Enhanced modal styles for accessibility
    ======================================== */

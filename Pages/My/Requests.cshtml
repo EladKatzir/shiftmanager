@@ -23,22 +23,7 @@
         <p class="page-subtitle"><loc key="ManageYourTimeOffAndShiftSwaps" /></p>
     </div>
 
-    @* Success/Error Messages *@
-    @if (!string.IsNullOrEmpty(Model.Message))
-    {
-        <div class="alert alert-success">
-            <span class="alert-icon"><icon name="check" /></span>
-            <span>@Model.Message</span>
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-error">
-            <span class="alert-icon"><icon name="x-circle" size="sm" /></span>
-            <span>@Model.Error</span>
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     @* Request Forms Section *@
     <div class="forms-section" style="margin-bottom: 3rem;">

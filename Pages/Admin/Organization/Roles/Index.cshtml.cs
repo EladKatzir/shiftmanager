@@ -153,7 +153,13 @@ public class IndexModel : LocalizedPageModel
         var userName = assignment.User.DisplayName;
 
         // Soft delete via service (also removes auto-grants)
-        await _roleService.RemoveRoleAsync(id);
+        var removeResult = await _roleService.RemoveRoleAsync(id);
+        if (!removeResult.Success)
+        {
+            TempData["ErrorMessage"] = removeResult.ErrorMessage;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { ViewMode = "assignments" });
+        }
 
         _logger.LogInformation("Revoked role assignment {AssignmentId} ({Role}) from user {UserId}",
             id, roleKey, userId);

@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Hubs;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -20,6 +22,7 @@ public class QuickAddTextEntryModel : PageModel
     private readonly ICalendarNotificationService _notificationService;
     private readonly AppDbContext _db;
     private readonly ILogger<QuickAddTextEntryModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public QuickAddTextEntryModel(
         ICalendarTextEntryService textEntryService,
@@ -27,7 +30,8 @@ public class QuickAddTextEntryModel : PageModel
         IGrantService grantService,
         ICalendarNotificationService notificationService,
         AppDbContext db,
-        ILogger<QuickAddTextEntryModel> logger)
+        ILogger<QuickAddTextEntryModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _textEntryService = textEntryService;
         _auditLogService = auditLogService;
@@ -35,6 +39,7 @@ public class QuickAddTextEntryModel : PageModel
         _notificationService = notificationService;
         _db = db;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -158,7 +163,11 @@ public class QuickAddTextEntryModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating text entry via Quick Entry");
-            return new JsonResult(new { success = false, message = "An error occurred" })
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_CALENDAR_CREATE_TEXT_ENTRY_FAILED",
+                    _localizer["Error_CalendarApi_CreateTextEntryFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
                 { StatusCode = 500 };
         }
     }

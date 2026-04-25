@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 
@@ -24,6 +26,7 @@ public class GetShiftsDataModel : PageModel
     private readonly ILogger<GetShiftsDataModel> _logger;
     private readonly ICompanyLocalizationService _companyLocalizationService;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public GetShiftsDataModel(
         IShiftCalendarService shiftCalendarService,
@@ -31,7 +34,8 @@ public class GetShiftsDataModel : PageModel
         AppDbContext db,
         ILogger<GetShiftsDataModel> logger,
         ICompanyLocalizationService companyLocalizationService,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        IStringLocalizer<SharedResources> localizer)
     {
         _shiftCalendarService = shiftCalendarService;
         _scopeFilterService = scopeFilterService;
@@ -39,6 +43,7 @@ public class GetShiftsDataModel : PageModel
         _logger = logger;
         _companyLocalizationService = companyLocalizationService;
         _tenantResolver = tenantResolver;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnGetAsync(
@@ -181,7 +186,12 @@ public class GetShiftsDataModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in GetShiftsData");
-            return new JsonResult(new { success = false, message = "An error occurred" }) { StatusCode = 500 };
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_CALENDAR_GET_SHIFTS_FAILED",
+                    _localizer["Error_CalendarApi_GetShiftsFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 500 };
         }
     }
 }

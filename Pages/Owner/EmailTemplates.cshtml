@@ -28,13 +28,7 @@
         <p class="page-subtitle"><loc key="EmailTemplates_Subtitle" /></p>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.Error))
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @Model.Error
-            <button type="button" class="btn-close" onclick="this.parentElement.remove()" loc-aria-label="Aria_CloseButton"></button>
-        </div>
-    }
+    @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     <div class="info-box mb-4">
         <div class="info-icon">ℹ️</div>

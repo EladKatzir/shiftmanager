@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages.Api.OnDuty;
@@ -16,13 +18,16 @@ public class GetEligibleUsersModel : PageModel
 {
     private readonly IOnDutyService _onDutyService;
     private readonly ILogger<GetEligibleUsersModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public GetEligibleUsersModel(
         IOnDutyService onDutyService,
-        ILogger<GetEligibleUsersModel> logger)
+        ILogger<GetEligibleUsersModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _onDutyService = onDutyService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnGetAsync(int? dutyType)
@@ -89,7 +94,11 @@ public class GetEligibleUsersModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching eligible users for duty type {DutyType}", dutyType);
-            return new JsonResult(new { success = false, message = "An error occurred" })
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_ONDUTY_GET_ELIGIBLE_USERS_FAILED",
+                    _localizer["Error_OnDutyApi_GetEligibleUsersFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
             {
                 StatusCode = 500
             };

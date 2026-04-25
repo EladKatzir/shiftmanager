@@ -128,7 +128,7 @@ public class EmailConfigModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading email configuration");
-            Error = _localizer["Error_FailedToLoadEmailConfig"];
+            TempData["ErrorMessage"] = _localizer["Error_FailedToLoadEmailConfig"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
     }
 
@@ -156,7 +156,7 @@ public class EmailConfigModel : LocalizedPageModel
                 "Email configuration updated",
                 $"Enabled={EmailEnabled}, Url={EmailApiUrl}, From={EmailFromAddress}");
 
-            Success = _localizer["Success_EmailConfigSaved"];
+            TempData["SuccessMessage"] = _localizer["Success_EmailConfigSaved"].Value;
             HasExistingKey = !string.IsNullOrWhiteSpace(EmailApiKey) || HasExistingKey;
 
             // Reload the page data
@@ -166,7 +166,7 @@ public class EmailConfigModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving email configuration");
-            Error = _localizer["Error_SavingEmailConfigFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_SavingEmailConfigFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await OnGetAsync();
             return Page();
         }
@@ -200,14 +200,14 @@ public class EmailConfigModel : LocalizedPageModel
                 "Global email configuration updated",
                 $"Enabled={GlobalEmailEnabled}, Url={GlobalEmailApiUrl}, From={GlobalEmailFromAddress}");
 
-            Success = _localizer["Success_EmailConfigSaved"];
+            TempData["SuccessMessage"] = _localizer["Success_EmailConfigSaved"].Value;
             await OnGetAsync();
             return Page();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving global email configuration");
-            Error = _localizer["Error_SavingEmailConfigFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_SavingEmailConfigFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await OnGetAsync();
             return Page();
         }
@@ -225,7 +225,7 @@ public class EmailConfigModel : LocalizedPageModel
                     currentUserId, "CompanyEmailOverrideRemoved", "EmailConfig", null,
                     "Company email config override removed — now using global config");
 
-                Success = _localizer["Success_EmailConfigSaved"];
+                TempData["SuccessMessage"] = _localizer["Success_EmailConfigSaved"].Value;
             }
 
             await OnGetAsync();
@@ -234,7 +234,7 @@ public class EmailConfigModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing company email override");
-            Error = _localizer["Error_SavingEmailConfigFailed"];
+            TempData["ErrorMessage"] = _localizer["Error_SavingEmailConfigFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await OnGetAsync();
             return Page();
         }
@@ -246,7 +246,7 @@ public class EmailConfigModel : LocalizedPageModel
         {
             if (string.IsNullOrWhiteSpace(testEmail))
             {
-                Error = _localizer["Error_ProvideValidEmail"];
+                TempData["ErrorMessage"] = _localizer["Error_ProvideValidEmail"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await OnGetAsync();
                 return Page();
             }
@@ -264,25 +264,35 @@ public class EmailConfigModel : LocalizedPageModel
             // enqueues for background delivery, causing a race condition where the
             // log isn't written yet when we try to read it.
             var companyId = int.TryParse(User.FindFirst("CompanyId")?.Value, out var cid) ? cid : 0;
-            bool success = await _mailService.SendMailDirectAsync(testEmail, testSubject, testBody, companyId);
+            var sendResult = await _mailService.SendMailDirectAsync(testEmail, testSubject, testBody, companyId);
 
             // Fetch most recent log — now available immediately because SendMailDirectAsync is synchronous
             var recentLogs = await _emailApiLogService.GetRecentLogsAsync(1);
             LastTestResult = recentLogs.FirstOrDefault();
 
-            if (success && LastTestResult != null)
+            if (sendResult.Success && LastTestResult != null)
             {
                 TestDiagnostics = FormatDiagnostics(LastTestResult);
-                Success = string.Format(_localizer["Success_TestEmailSent"], testEmail);
+                TempData["SuccessMessage"] = string.Format(_localizer["Success_TestEmailSent"].Value, testEmail);
             }
-            else if (LastTestResult != null)
+            else if (!sendResult.Success)
             {
-                TestDiagnostics = FormatDiagnostics(LastTestResult);
-                Error = string.Format(_localizer["Error_TestEmailFailed"], LastTestResult.ErrorMessage);
+                // Prefer the structured failure message from the OperationResult — it carries the localized
+                // reason key (e.g. Error_MailService_MissingApiKey) which is more actionable than the raw
+                // log row. Fall back to the EmailApiLog details when available.
+                if (LastTestResult != null)
+                {
+                    TestDiagnostics = FormatDiagnostics(LastTestResult);
+                }
+                var diagnosticDetail = sendResult.ErrorMessage
+                    ?? LastTestResult?.ErrorMessage
+                    ?? _localizer["Error_TestEmailFailedNoDiagnostics"].Value;
+                TempData["ErrorMessage"] = string.Format(_localizer["Error_TestEmailFailed"].Value, diagnosticDetail);
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
             else
             {
-                Error = _localizer["Error_TestEmailFailedNoDiagnostics"];
+                TempData["ErrorMessage"] = _localizer["Error_TestEmailFailedNoDiagnostics"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
 
             // Log audit
@@ -292,7 +302,7 @@ public class EmailConfigModel : LocalizedPageModel
                 "EmailConfig",
                 null,
                 $"Test email sent to {testEmail}",
-                $"Success: {success}");
+                $"Success: {sendResult.Success}; Reason: {sendResult.ErrorKey ?? "none"}");
 
             await OnGetAsync();
             return Page();
@@ -300,7 +310,7 @@ public class EmailConfigModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending test email");
-            Error = "Failed to send test email. Please check your configuration and try again.";
+            TempData["ErrorMessage"] = "Failed to send test email. Please check your configuration and try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await OnGetAsync();
             return Page();
         }

@@ -989,17 +989,18 @@ public class AssignerRoleTests : IDisposable
         assignerGrants.Should().HaveCount(employeeGrants.Count + 2,
             "Assigner = Employee + AssignChores + ViewAllUsers");
 
-        // AssignChores (grant ID 17) should be molecule-scoped
+        // AssignChores (grant ID 17) should be area-scoped (2026-04-25 policy expansion:
+        // Assigner reaches across the whole area to assign chores; other Assigner grants stay SAR)
         var assignChoresGrant = assignerGrants.FirstOrDefault(g => g.GrantTypeId == 17);
         assignChoresGrant.Should().NotBeNull("Assigner should have AssignChores grant");
-        assignChoresGrant!.ScopeMode.Should().Be(GrantScopeMode.ExpandToMolecule,
-            "Assigner's AssignChores should be molecule-scoped");
+        assignChoresGrant!.ScopeMode.Should().Be(GrantScopeMode.ExpandToArea,
+            "Assigner's AssignChores should be area-scoped");
 
-        // ViewAllUsers (grant ID 34) should also be molecule-scoped
+        // ViewAllUsers (grant ID 34) should also be area-scoped to match AssignChores reach
         var viewAllUsersGrant = assignerGrants.FirstOrDefault(g => g.GrantTypeId == 34);
         viewAllUsersGrant.Should().NotBeNull("Assigner should have ViewAllUsers grant (gap fix for cross-company chore assignment)");
-        viewAllUsersGrant!.ScopeMode.Should().Be(GrantScopeMode.ExpandToMolecule,
-            "Assigner's ViewAllUsers should be molecule-scoped");
+        viewAllUsersGrant!.ScopeMode.Should().Be(GrantScopeMode.ExpandToArea,
+            "Assigner's ViewAllUsers should be area-scoped to match AssignChores reach");
 
         // All inherited (non-assigner-specific) grants should be SAR (not widened)
         var inheritedGrants = assignerGrants.Where(g => g.GrantTypeId != 17 && g.GrantTypeId != 34).ToList();

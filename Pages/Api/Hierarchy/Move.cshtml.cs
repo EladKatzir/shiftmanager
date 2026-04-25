@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
 using System.Text.Json;
@@ -22,15 +24,18 @@ public class MoveModel : PageModel
     private readonly AppDbContext _db;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<MoveModel> _logger;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public MoveModel(
         AppDbContext db,
         IAuditLogService auditLogService,
-        ILogger<MoveModel> logger)
+        ILogger<MoveModel> logger,
+        IStringLocalizer<SharedResources> localizer)
     {
         _db = db;
         _auditLogService = auditLogService;
         _logger = logger;
+        _localizer = localizer;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -167,7 +172,12 @@ public class MoveModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing hierarchy move request");
-            return new JsonResult(new { success = false, message = "An error occurred" }) { StatusCode = 500 };
+            return new JsonResult(
+                ShiftManager.Models.ApiErrorResponse.Create(
+                    "ERROR_HIERARCHY_MOVE_FAILED",
+                    _localizer["Error_HierarchyApi_MoveFailed"].Value)
+                .WithCorrelationId(HttpContext.TraceIdentifier))
+            { StatusCode = 500 };
         }
     }
 

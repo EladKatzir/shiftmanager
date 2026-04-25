@@ -148,18 +148,20 @@ public class AssignModel : LocalizedPageModel
             JobTypeId: ScopeJobTypeId
         );
 
-        var assignment = await _roleService.AssignRoleAsync(
+        var assignResult = await _roleService.AssignRoleAsync(
             SelectedUserId,
             SelectedRoleId,
             scope,
             currentUserId > 0 ? currentUserId : 1);
 
-        if (assignment == null)
+        if (!assignResult.Success || assignResult.Value == null)
         {
-            Error = _localizer["Error_RoleAssignmentFailed"];
+            Error = assignResult.ErrorMessage ?? _localizer["Error_RoleAssignmentFailed"].Value;
             await LoadDropdownOptionsAsync();
             return Page();
         }
+
+        var assignment = assignResult.Value;
 
         _logger.LogInformation("Assigned role {Role} to user {UserId} by {AssignedBy}",
             roleTemplate.Key, SelectedUserId, currentUserId);

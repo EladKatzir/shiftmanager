@@ -84,7 +84,7 @@ public class EmailTemplatesModel : LocalizedPageModel
     {
         if (!ModelState.IsValid)
         {
-            Error = _localizer["Error_InvalidInput"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadTemplatesAsync();
             return Page();
         }
@@ -92,7 +92,7 @@ public class EmailTemplatesModel : LocalizedPageModel
         // Validate message length
         if (CustomMessage.Length > 2000)
         {
-            Error = _localizer["Error_EmailTemplate_MessageTooLong"];
+            TempData["ErrorMessage"] = _localizer["Error_EmailTemplate_MessageTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadTemplatesAsync();
             return Page();
         }
@@ -102,7 +102,7 @@ public class EmailTemplatesModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                Error = "Invalid user claim";
+                TempData["ErrorMessage"] = "Invalid user claim"; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await LoadTemplatesAsync();
                 return Page();
             }
@@ -119,7 +119,7 @@ public class EmailTemplatesModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving email template {TemplateType}", EditingTemplateType);
-            Error = _localizer["Error_SavingEmailTemplate"];
+            TempData["ErrorMessage"] = _localizer["Error_SavingEmailTemplate"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadTemplatesAsync();
             return Page();
         }
@@ -132,7 +132,7 @@ public class EmailTemplatesModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                Error = "Invalid user claim";
+                TempData["ErrorMessage"] = "Invalid user claim"; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await LoadTemplatesAsync();
                 return Page();
             }
@@ -150,7 +150,7 @@ public class EmailTemplatesModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error resetting email template {TemplateType}", templateType);
-            Error = _localizer["Error_ResettingEmailTemplate"];
+            TempData["ErrorMessage"] = _localizer["Error_ResettingEmailTemplate"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadTemplatesAsync();
             return Page();
         }
@@ -164,14 +164,14 @@ public class EmailTemplatesModel : LocalizedPageModel
     {
         if (!ModelState.IsValid)
         {
-            Error = _localizer["Error_InvalidInput"];
+            TempData["ErrorMessage"] = _localizer["Error_InvalidInput"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadTemplatesAsync();
             return Page();
         }
 
         if (CustomMessage.Length > 2000)
         {
-            Error = _localizer["Error_EmailTemplate_MessageTooLong"];
+            TempData["ErrorMessage"] = _localizer["Error_EmailTemplate_MessageTooLong"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadTemplatesAsync();
             return Page();
         }
@@ -181,7 +181,7 @@ public class EmailTemplatesModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                Error = "Invalid user claim";
+                TempData["ErrorMessage"] = "Invalid user claim"; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await LoadTemplatesAsync();
                 return Page();
             }
@@ -238,7 +238,7 @@ public class EmailTemplatesModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error applying email template {TemplateType} to all companies", EditingTemplateType);
-            Error = _localizer["Error_SavingEmailTemplate"];
+            TempData["ErrorMessage"] = _localizer["Error_SavingEmailTemplate"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await LoadTemplatesAsync();
             return Page();
         }

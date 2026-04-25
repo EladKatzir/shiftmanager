@@ -26,8 +26,7 @@ public class NotificationCenterModel : LocalizedPageModel
 
     public List<NotificationViewModel> Notifications { get; set; } = new();
     public int UnreadCount { get; set; }
-    public string? Message { get; set; }
-    public new string? Error { get; set; }
+    // Message / Error properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
 
     public async Task OnGetAsync()
     {
@@ -38,7 +37,7 @@ public class NotificationCenterModel : LocalizedPageModel
             if (!int.TryParse(userIdClaim, out var userId))
             {
                 _logger.LogError("Invalid or missing NameIdentifier claim");
-                Error = _localizer["Notification_Error_AuthenticationError"];
+                TempData["ErrorMessage"] = _localizer["Notification_Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return;
             }
             _logger.LogInformation("Loading notifications for user {UserId}", userId);
@@ -71,7 +70,7 @@ public class NotificationCenterModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading notifications");
-            Error = _localizer["Notification_Error_LoadingFailed"];
+            TempData["ErrorMessage"] = _localizer["Notification_Error_LoadingFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
     }
 
@@ -96,13 +95,13 @@ public class NotificationCenterModel : LocalizedPageModel
                 await _db.SaveChangesAsync();
 
                 _logger.LogInformation("Marked notification {NotificationId} as read for user {UserId}", id, userId);
-                Message = _localizer["Notification_MarkedAsRead"];
+                TempData["SuccessMessage"] = _localizer["Notification_MarkedAsRead"].Value;
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking notification {NotificationId} as read", id);
-            Error = _localizer["Notification_Error_UpdateFailed"];
+            TempData["ErrorMessage"] = _localizer["Notification_Error_UpdateFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
 
         return RedirectToPage();
@@ -134,13 +133,13 @@ public class NotificationCenterModel : LocalizedPageModel
 
                 await _db.SaveChangesAsync();
                 _logger.LogInformation("Marked {Count} notifications as read for user {UserId}", unreadNotifications.Count, userId);
-                Message = _localizer["Notification_MarkedAllAsRead", unreadNotifications.Count];
+                TempData["SuccessMessage"] = _localizer["Notification_MarkedAllAsRead", unreadNotifications.Count].Value;
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking all notifications as read");
-            Error = _localizer["Notification_Error_MarkAllFailed"];
+            TempData["ErrorMessage"] = _localizer["Notification_Error_MarkAllFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
 
         return RedirectToPage();
@@ -166,13 +165,13 @@ public class NotificationCenterModel : LocalizedPageModel
                 await _db.SaveChangesAsync();
 
                 _logger.LogInformation("Deleted notification {NotificationId} for user {UserId}", id, userId);
-                Message = _localizer["Notification_Deleted"];
+                TempData["SuccessMessage"] = _localizer["Notification_Deleted"].Value;
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting notification {NotificationId}", id);
-            Error = _localizer["Notification_Error_DeleteFailed"];
+            TempData["ErrorMessage"] = _localizer["Notification_Error_DeleteFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
 
         return RedirectToPage();

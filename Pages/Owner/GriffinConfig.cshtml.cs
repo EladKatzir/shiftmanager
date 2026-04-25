@@ -34,8 +34,7 @@ public class GriffinConfigModel : LocalizedPageModel
     [BindProperty] public int? DefaultProvisionedRoleTemplateId { get; set; }
     [BindProperty] public int TimeoutSeconds { get; set; } = 10;
 
-    public string? SuccessMessage { get; set; }
-    public string? ErrorMessage { get; set; }
+    // SuccessMessage / ErrorMessage properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
     public bool? TestConnectionResult { get; set; }
 
     // Diagnostic properties
@@ -82,7 +81,8 @@ public class GriffinConfigModel : LocalizedPageModel
         var validationError = ValidateInputs();
         if (!string.IsNullOrEmpty(validationError))
         {
-            ErrorMessage = validationError;
+            TempData["ErrorMessage"] = validationError;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return Page();
         }
 
@@ -100,7 +100,7 @@ public class GriffinConfigModel : LocalizedPageModel
                 TimeoutSeconds,
                 userName);
 
-            SuccessMessage = _localizer["Success_GriffinConfigSaved"].Value;
+            TempData["SuccessMessage"] = _localizer["Success_GriffinConfigSaved"].Value;
 
             // Audit log
             await _auditLogService.LogUserActionAsync(
@@ -116,7 +116,8 @@ public class GriffinConfigModel : LocalizedPageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save Griffin configuration");
-            ErrorMessage = _localizer["Error_FailedToSaveGriffinConfig"].Value;
+            TempData["ErrorMessage"] = _localizer["Error_FailedToSaveGriffinConfig"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
 
         return Page();
@@ -131,7 +132,8 @@ public class GriffinConfigModel : LocalizedPageModel
         var validationError = ValidateInputs();
         if (!string.IsNullOrEmpty(validationError))
         {
-            ErrorMessage = validationError;
+            TempData["ErrorMessage"] = validationError;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return Page();
         }
 
@@ -158,7 +160,8 @@ public class GriffinConfigModel : LocalizedPageModel
 
             if (savedConfig == null || string.IsNullOrWhiteSpace(savedConfig.BaseUrl))
             {
-                ErrorMessage = _localizer["Error_FailedToLoadGriffinConfig"].Value;
+                TempData["ErrorMessage"] = _localizer["Error_FailedToLoadGriffinConfig"].Value;
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return Page();
             }
 
@@ -176,7 +179,7 @@ public class GriffinConfigModel : LocalizedPageModel
 
             if (result.Success)
             {
-                SuccessMessage = $"Configuration saved and connection successful! Griffin responded with HTTP {result.StatusCode} in {result.DurationMs}ms. Login with ADFS will now work with these settings.";
+                TempData["SuccessMessage"] = $"Configuration saved and connection successful! Griffin responded with HTTP {result.StatusCode} in {result.DurationMs}ms. Login with ADFS will now work with these settings.";
 
                 // Audit log
                 await _auditLogService.LogUserActionAsync(
@@ -189,7 +192,8 @@ public class GriffinConfigModel : LocalizedPageModel
             }
             else
             {
-                ErrorMessage = $"Configuration saved, but connection test failed: {result.ErrorMessage}. Please verify the Base URL and ensure the Griffin server is reachable.";
+                TempData["ErrorMessage"] = $"Configuration saved, but connection test failed: {result.ErrorMessage}. Please verify the Base URL and ensure the Griffin server is reachable.";
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
 
             // Reload logs to show the new test result
@@ -201,7 +205,8 @@ public class GriffinConfigModel : LocalizedPageModel
             TestConnectionResult = false;
             LastTestSuccess = false;
             LastTestError = "An unexpected error occurred during the connection test.";
-            ErrorMessage = "Connection test failed. Please check your configuration and try again.";
+            TempData["ErrorMessage"] = "Connection test failed. Please check your configuration and try again.";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
 
         return Page();
