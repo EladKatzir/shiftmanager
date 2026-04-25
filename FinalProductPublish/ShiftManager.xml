@@ -1454,7 +1454,8 @@
         </member>
         <member name="M:ShiftManager.Middleware.ApiRateLimitingMiddleware.WriteRateLimitResponse(Microsoft.AspNetCore.Http.HttpContext,System.Int32)">
             <summary>
-            Writes a 429 Too Many Requests response
+            Writes a standardized 429 Too Many Requests response using the project-native
+            ApiErrorResponse envelope with correlation ID for support handoffs.
             </summary>
         </member>
         <member name="T:ShiftManager.Middleware.ApiRateLimitingMiddleware.RateLimitBucket">
@@ -1538,6 +1539,30 @@
             <c>Request.Cookies</c> in-place. ASP.NET's default impl is internal and sealed.
             </summary>
         </member>
+        <member name="T:ShiftManager.Middleware.PageExceptionMiddleware">
+             <summary>
+             UI-route counterpart to <see cref="T:ShiftManager.Middleware.ApiExceptionMiddleware"/>.
+            
+             <para>
+             Catches unhandled exceptions on non-/api routes, logs them with the request correlation ID,
+             stores a user-facing message + correlation ID in TempData (consumed by the layout's
+             <c>FeedbackModal</c> bridge on the next request), and 302s back to the same-origin Referer
+             (or <c>/Error</c> if no safe Referer exists).
+             </para>
+             <para>
+             In Development, the raw exception type + message + stack trace is also written to
+             <c>TempData["ErrorDetail"]</c> so the FeedbackModal can render it in its collapsible
+             detail panel. Production never exposes raw exception text.
+             </para>
+             <para>
+             <b>Pipeline ordering matters:</b> this middleware MUST be registered <i>before</i>
+             <see cref="T:ShiftManager.Middleware.ApiExceptionMiddleware"/>. ASP.NET invokes middleware in registration order
+             (so PageException is the OUTER), but exceptions propagate the other direction (innermost
+             first). This means ApiExc catches API requests and emits JSON; for non-API requests its
+             filter passes through, and the re-thrown exception lands here.
+             </para>
+             </summary>
+        </member>
         <member name="T:ShiftManager.Middleware.RateLimitingMiddleware">
              <summary>
              Rate limits UI API requests based on endpoint path and user identity.
@@ -1578,7 +1603,9 @@
         </member>
         <member name="M:ShiftManager.Middleware.RateLimitingMiddleware.WriteRateLimitResponse(Microsoft.AspNetCore.Http.HttpContext,System.Int32,System.Int32,System.Int64,System.Int32)">
             <summary>
-            Writes a 429 Too Many Requests response with rate limit details.
+            Writes a standardized 429 Too Many Requests response using the project-native
+            ApiErrorResponse envelope. Carries correlation ID, retry-after seconds, and the
+            existing rate-limit headers so clients can implement smart back-off.
             </summary>
         </member>
         <member name="T:ShiftManager.Middleware.RateLimitingMiddleware.RateLimitBucket">
@@ -2725,7 +2752,20 @@
         <member name="T:ShiftManager.Models.ApiErrorResponse">
             <summary>
             Standardized API error response format (B-028)
-            All API errors return: { "error": { "code": "string", "message": "string", "details": {} } }
+            All API errors return: { "error": { "code": "string", "message": "string", "details": {}, "correlationId": "..." } }
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.ApiErrorResponse.WithCorrelationId(System.String)">
+            <summary>
+            Attach the request correlation ID so the user can quote it to support.
+            Mutates and returns the same instance for fluent chaining.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.ApiErrorResponse.FromOperationResult(ShiftManager.Models.Results.OperationResult,System.String)">
+            <summary>
+            Build an ApiErrorResponse from a failed <see cref="T:ShiftManager.Models.Results.OperationResult"/>.
+            The caller chooses the API error <paramref name="code"/> (typically the result's <c>ErrorKey</c>
+            or a route-specific override). All issues are surfaced under <c>details.issues</c>.
             </summary>
         </member>
         <member name="M:ShiftManager.Models.ApiErrorResponse.Create(System.String,System.String,System.Object)">
@@ -2826,6 +2866,13 @@
         <member name="P:ShiftManager.Models.ApiError.Details">
             <summary>
             Optional additional details (validation errors, conflict info, etc.)
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ApiError.CorrelationId">
+            <summary>
+            Request correlation ID (X-Correlation-Id). Surfaced to users in the FeedbackModal/Toast
+            so they can quote it to support, and recorded in the structured log scope for any
+            log entries produced while serving the request.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.Api.ApiKey">
@@ -3284,6 +3331,18 @@
             RFC-7807 Problem Details for HTTP APIs
             https://datatracker.ietf.org/doc/html/rfc7807
             </summary>
+            <remarks>
+            <para>
+            <b>Deprecated</b> as part of the project-wide error-handling overhaul.
+            New code should use <see cref="T:ShiftManager.Models.ApiErrorResponse"/>, which is the
+            canonical project-native API error envelope (used by ApiExceptionMiddleware and
+            supports correlation IDs out of the box).
+            </para>
+            <para>
+            This class is kept as a backward-compatibility shim for one release so existing
+            V1 controllers can migrate incrementally. Scheduled for removal in the next release.
+            </para>
+            </remarks>
         </member>
         <member name="P:ShiftManager.Models.Api.ApiProblemDetails.Type">
             <summary>
@@ -4432,6 +4491,76 @@
             Service MUST always scope queries by moleculeId explicitly.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.Results.OperationResult">
+             <summary>
+             Project-wide operation result for service methods that do not return a value.
+            
+             <para>
+             Use <see cref="M:ShiftManager.Models.Results.OperationResult.Ok"/> for success. Use <see cref="M:ShiftManager.Models.Results.OperationResult.Fail(System.String,System.String,ShiftManager.Models.Validation.ValidationIssue[])"/> when the operation failed
+             for a known, named reason (always with a localized message). Use
+             <see cref="M:ShiftManager.Models.Results.OperationResult.FromIssues(System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue})"/> when validation produced a structured list of issues.
+             </para>
+             <para>
+             The shift-assignment domain retains its own <c>ShiftAssignmentResult</c> /
+             <c>ShiftAssignmentValidation</c> records because they carry domain-specific fields
+             (e.g. <c>AssignmentId</c>). The two coexist; OperationResult is for everything else.
+             </para>
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Results.OperationResult.#ctor(System.Boolean,System.String,System.String,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue})">
+             <summary>
+             Project-wide operation result for service methods that do not return a value.
+            
+             <para>
+             Use <see cref="M:ShiftManager.Models.Results.OperationResult.Ok"/> for success. Use <see cref="M:ShiftManager.Models.Results.OperationResult.Fail(System.String,System.String,ShiftManager.Models.Validation.ValidationIssue[])"/> when the operation failed
+             for a known, named reason (always with a localized message). Use
+             <see cref="M:ShiftManager.Models.Results.OperationResult.FromIssues(System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue})"/> when validation produced a structured list of issues.
+             </para>
+             <para>
+             The shift-assignment domain retains its own <c>ShiftAssignmentResult</c> /
+             <c>ShiftAssignmentValidation</c> records because they carry domain-specific fields
+             (e.g. <c>AssignmentId</c>). The two coexist; OperationResult is for everything else.
+             </para>
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Results.OperationResult.Ok">
+            <summary>Successful result with no issues.</summary>
+        </member>
+        <member name="M:ShiftManager.Models.Results.OperationResult.Fail(System.String,System.String,ShiftManager.Models.Validation.ValidationIssue[])">
+            <summary>
+            Failure with a single named reason. <paramref name="key"/> is a stable error code
+            (e.g. <c>"Error_RoleService_UserNotFound"</c>); <paramref name="message"/> is the
+            localized user-facing string.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Results.OperationResult.FromIssues(System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue})">
+            <summary>
+            Build a result from a pre-collected list of <see cref="T:ShiftManager.Models.Validation.ValidationIssue"/>.
+            Success is inferred from the absence of <see cref="F:ShiftManager.Models.Validation.ValidationSeverity.Error"/> entries.
+            The first error issue (if any) populates <see cref="P:ShiftManager.Models.Results.OperationResult.ErrorKey"/> / <see cref="P:ShiftManager.Models.Results.OperationResult.ErrorMessage"/>.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Results.OperationResult`1">
+            <summary>
+            Project-wide operation result that carries a value on success.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Results.OperationResult`1.#ctor(System.Boolean,`0,System.String,System.String,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue})">
+            <summary>
+            Project-wide operation result that carries a value on success.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Results.OperationResult`1.Ok(`0)">
+            <summary>Successful result carrying <paramref name="value"/>.</summary>
+        </member>
+        <member name="M:ShiftManager.Models.Results.OperationResult`1.Fail(System.String,System.String,ShiftManager.Models.Validation.ValidationIssue[])">
+            <summary>Failure with a named reason; <see cref="P:ShiftManager.Models.Results.OperationResult`1.Value"/> is <c>default</c>.</summary>
+        </member>
+        <member name="M:ShiftManager.Models.Results.OperationResult`1.FromResult(ShiftManager.Models.Results.OperationResult,`0)">
+            <summary>
+            Lift a non-generic <see cref="T:ShiftManager.Models.Results.OperationResult"/> into a typed one, optionally attaching a value.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.RoleTemplate.DerivedUserRole">
             <summary>
             Maps template to business tier (Employee, Manager, Director, Trainee, Owner, Assigner, AreaAdmin).
@@ -4623,6 +4752,59 @@
             <summary>
             Defines the organizational scope at which a ShiftType is defined and managed.
             Ordered narrowest→broadest to enable safe comparison (scope >= ShiftScope.Molecule = "at least molecule-wide").
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.GriffinStage">
+            <summary>
+            Which stage of the Griffin ADFS flow failed. Part of the stable error token
+            we show to the user so an admin can quickly identify which HTTP call broke.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.GriffinErrorCode">
+            <summary>
+            Classification of every way a Griffin call can fail. Codes are stable; do
+            not renumber. Gaps are intentional — groups follow 1xx/2xx/... for quick
+            triage (1xx = network, 2xx = HTTP status, 3xx = body parsing, 4xx = claims,
+            5xx = user mapping, 9xx = unhandled).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.GriffinApiError">
+            <summary>
+            Structured description of a Griffin failure. TechnicalDetail is for logs
+            only — never show it raw to end users because it can contain response
+            bodies that may leak tokens or server identifiers.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Support.GriffinApiError.#ctor(ShiftManager.Models.Support.GriffinStage,ShiftManager.Models.Support.GriffinErrorCode,System.String,System.String,System.Nullable{System.Int32},System.String)">
+            <summary>
+            Structured description of a Griffin failure. TechnicalDetail is for logs
+            only — never show it raw to end users because it can contain response
+            bodies that may leak tokens or server identifiers.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Support.GriffinApiError.ErrorToken">
+            <summary>
+            Stable identifier the user can quote to an admin. Format is
+            "GRIFFIN-{STAGE}-{CODE}" where STAGE is uppercase enum name and CODE is
+            the numeric <see cref="T:ShiftManager.Models.Support.GriffinErrorCode"/> value.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.GriffinApiResult`1">
+            <summary>
+            Result wrapper. Exactly one of Value/Error is populated. Callers check
+            <see cref="P:ShiftManager.Models.Support.GriffinApiResult`1.Success"/> first, then read Value or Error accordingly.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Support.GriffinApiResult`1.#ctor(`0,ShiftManager.Models.Support.GriffinApiError)">
+            <summary>
+            Result wrapper. Exactly one of Value/Error is populated. Callers check
+            <see cref="P:ShiftManager.Models.Support.GriffinApiResult`1.Success"/> first, then read Value or Error accordingly.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Support.GriffinApiResult`1.FailFrom``1(ShiftManager.Models.Support.GriffinApiResult{``0})">
+            <summary>
+            Rewraps an error from a different T into this T. Useful for propagating
+            errors up a chain of typed calls.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.Support.GriffinConnectionTestResult">
@@ -5113,6 +5295,53 @@
             <summary>
             Authentication method used to create this request: "Local" (password signup) or "Griffin" (ADFS SSO).
             Null for requests created before this field was added.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Validation.ValidationCategory">
+             <summary>
+             Category of validation check for UI grouping, override scoping, and cross-service classification.
+            
+             Categories starting with shift-domain values (JobType ... HomeConflict) originated from
+             ShiftAssignmentService and are kept stable for backward compatibility.
+            
+             Cross-cutting categories (Authorization ... Quota) were added as part of the project-wide
+             error-handling overhaul to support the OperationResult pattern in non-shift services.
+             </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Validation.ValidationIssue">
+             <summary>
+             A single validation issue produced by a service operation.
+            
+             <para>
+             <b>Key</b> is a stable, machine-readable identifier (e.g. "JOB_TYPE_MISMATCH",
+             "Error_RoleService_UserNotFound"). UI clients may switch on this value to
+             render specific affordances (retry buttons, override flows, link to settings).
+             </para>
+             <para>
+             <b>Message</b> is a fully-localized, user-facing string. Producers MUST resolve this
+             via <c>IStringLocalizer&lt;SharedResource&gt;</c> before constructing the issue.
+             </para>
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Validation.ValidationIssue.#ctor(System.String,System.String,ShiftManager.Models.Validation.ValidationSeverity,ShiftManager.Models.Validation.ValidationCategory)">
+             <summary>
+             A single validation issue produced by a service operation.
+            
+             <para>
+             <b>Key</b> is a stable, machine-readable identifier (e.g. "JOB_TYPE_MISMATCH",
+             "Error_RoleService_UserNotFound"). UI clients may switch on this value to
+             render specific affordances (retry buttons, override flows, link to settings).
+             </para>
+             <para>
+             <b>Message</b> is a fully-localized, user-facing string. Producers MUST resolve this
+             via <c>IStringLocalizer&lt;SharedResource&gt;</c> before constructing the issue.
+             </para>
+             </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Validation.ValidationSeverity">
+            <summary>
+            Severity of a validation issue.
+            Errors are hard blocks; Warnings can be overridden with a signed token (where supported by the consuming service).
             </summary>
         </member>
         <member name="T:ShiftManager.Models.ViewModels.CalendarItemViewModel">
@@ -6199,27 +6428,8 @@
             <summary>
             Master Programs - Manage collections of Programs (complete weekly schedules).
             A MasterProgram is a convenience wrapper for applying multiple Programs at once.
-            ✅ P1-3: Expanded access from Owner-only to Manager+Director+Owner
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.MasterProgramsModel.OnPostCreateMasterProgramAsync">
-            <summary>
-            Creates a new MasterProgram.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.MasterProgramsModel.OnPostUpdateMasterProgramAsync">
-            <summary>
-            Updates an existing MasterProgram.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.MasterProgramsModel.OnPostDeleteMasterProgramAsync(System.Int32)">
-            <summary>
-            Deletes a MasterProgram (soft delete).
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Owner.MasterProgramsModel.OnPostGenerateFromMasterAsync">
-            <summary>
-            Generates ShiftInstances from all Programs in a MasterProgram.
+            Migrated to OperationResult-based service calls; structured errors flow through
+            the query-string success/error pattern that the existing view consumes.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Owner.PermissionsModel">
@@ -6755,15 +6965,14 @@
         <member name="M:ShiftManager.Services.ChoreService.CanUserManageChoreForAssigneeAsync(System.Int32,System.Int32)">
             <summary>
             Check if manager can assign chore to a specific assignee.
-            ✅ Grant-based: Uses AssignChores grant with company scope instead of role checks.
-            Business rule: Directors cannot be assigned chores (enforced separately).
+            Grant-based: Uses AssignChores grant with company scope. Authorization is the only gate;
+            any user role (including Director) can be the recipient if the caller has the grant.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ChoreService.GetEligibleAssigneesAsync">
             <summary>
             Get list of users eligible for chore assignment.
-            ✅ Grant-based: Uses AssignChores grant scope to determine visible users.
-            Business rule "Directors cannot be assigned chores" is enforced at assignment time in CanUserManageChoreForAssigneeAsync.
+            Grant-based: Uses AssignChores grant scope to determine visible users.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ChoreService.HasActiveChoreOnDateAsync(System.Int32,System.DateOnly)">
@@ -6820,7 +7029,8 @@
         </member>
         <member name="M:ShiftManager.Services.ChoreService.GetChoreByIdAsync(System.Int32)">
             <summary>
-            Get a chore by ID
+            Get a chore by ID. Bypasses the tenant query filter so cross-tenant chores are visible
+            to authorized callers (Owner/Director/AreaAdmin acting on grants that span companies).
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ClientTelemetryService">
@@ -7191,6 +7401,15 @@
             Builds a cache key for a specific flag/scope combination.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.FeatureFlagService.TryIsEnabledAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <inheritdoc/>
+        </member>
+        <member name="M:ShiftManager.Services.FeatureFlagService.TryIsEnabledForCompanyAsync(System.String,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:ShiftManager.Services.FeatureFlagService.TryListAllFlagsAsync">
+            <inheritdoc/>
+        </member>
         <member name="T:ShiftManager.Services.GracefulShutdownService">
             <summary>
             Handles graceful shutdown to prevent SQLite corruption during IIS app pool recycling.
@@ -7284,11 +7503,17 @@
             Returns null if serialization fails.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.GriffinService.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole,System.String)">
-            <summary>
-            Maps legacy UserRole + JobType to RoleTemplate key for login-time backfill.
-            Delegates to centralized RoleTemplateMapper to ensure consistency across codebase.
-            </summary>
+        <member name="T:ShiftManager.Services.GriffinErrorMessages">
+             <summary>
+             Turns a <see cref="T:ShiftManager.Models.Support.GriffinApiError"/> into a three-part user-facing message
+             (title / detail / remediation) plus the stable error token the user should
+             quote to an admin. Title and remediation are localized via .resx; detail
+             is admin-facing English because it names HTTP statuses, hostnames and
+             stages that don't translate meaningfully.
+            
+             This is the ONLY place that maps error codes to strings — keep it here so
+             the callback page view stays a dumb display of already-formatted text.
+             </summary>
         </member>
         <member name="T:ShiftManager.Services.DiskSpaceHealthCheck">
             <summary>
@@ -8018,6 +8243,38 @@
             This ensures the sync IsEnabled() method has data to work with immediately.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IFeatureFlagService.TryIsEnabledAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <summary>
+            Diagnostic variant of <see cref="M:ShiftManager.Services.IFeatureFlagService.IsEnabledAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})"/> that returns a structured
+            <see cref="T:ShiftManager.Models.Results.OperationResult`1"/>.
+            <list type="bullet">
+              <item><c>Ok(true)</c> / <c>Ok(false)</c> on a successful resolution.</item>
+              <item><c>Fail("Error_FeatureFlagService_DatabaseError", ...)</c> when the
+              underlying database query throws. The non-diagnostic <see cref="M:ShiftManager.Services.IFeatureFlagService.IsEnabledAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})"/>
+              silently treats the flag as disabled in that case; this method makes the
+              failure visible to admin/diagnostic callers.</item>
+            </list>
+            </summary>
+            <param name="flagName">The name of the feature flag (e.g., "FF_WIDGETS_ENABLED")</param>
+            <param name="userId">Optional user ID for user-specific check</param>
+            <param name="companyId">Optional company ID for company-specific check</param>
+        </member>
+        <member name="M:ShiftManager.Services.IFeatureFlagService.TryIsEnabledForCompanyAsync(System.String,System.Int32)">
+            <summary>
+            Company-scoped diagnostic variant of <see cref="M:ShiftManager.Services.IFeatureFlagService.IsEnabledAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})"/>. Same semantics
+            as <see cref="M:ShiftManager.Services.IFeatureFlagService.TryIsEnabledAsync(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})"/>, but pre-binds <paramref name="companyId"/> for
+            admin pages that already have a company context.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IFeatureFlagService.TryListAllFlagsAsync">
+            <summary>
+            Diagnostic variant of <see cref="M:ShiftManager.Services.IFeatureFlagService.GetAllFlagsAsync(System.Nullable{System.Int32})"/> intended for admin pages.
+            Returns <c>Ok(list)</c> on success, or
+            <c>Fail("Error_FeatureFlagService_DatabaseError", ...)</c> if the underlying
+            database query throws. Unlike <see cref="M:ShiftManager.Services.IFeatureFlagService.GetAllFlagsAsync(System.Nullable{System.Int32})"/>, callers can
+            distinguish "no flags configured" from "could not load flags".
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.IFriendshipService.GetFriendsAsync(System.Int32)">
             <summary>
             Gets all friends for a user (accepted friendships).
@@ -8246,37 +8503,48 @@
         </member>
         <member name="T:ShiftManager.Services.IGriffinService">
             <summary>
-            Service for interacting with Griffin ADFS HTTP APIs
+            Service for interacting with Griffin ADFS HTTP APIs.
+            All HTTP-facing methods return <see cref="T:ShiftManager.Models.Support.GriffinApiResult`1"/> so callers
+            can surface a specific, stable error token to the user without needing
+            server logs (required for air-gapped deployments).
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGriffinService.BuildAuthenticationUrl(System.String,System.String)">
             <summary>
-            Builds the redirect URL for initiating Griffin ADFS authentication
+            Builds the redirect URL for initiating Griffin ADFS authentication.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGriffinService.ExchangeTokenAsync(System.String,System.String,System.Int32)">
             <summary>
-            Exchanges a hashed token (A) for a real token (B) by calling /authentication/claimToken
+            Exchanges a hashed token (A, from Griffin callback) for a JWT (B) by
+            calling /authentication/claimToken. The response body may be a raw JWT,
+            a JSON-quoted string, or a JSON object containing a token/jwt field —
+            all three shapes are tolerated.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGriffinService.ValidateTokenAsync(System.String,System.String,System.Int32)">
             <summary>
-            Validates a Griffin token by calling /authorization/validate
+            Validates a Griffin JWT by calling /authorization/validate.
+            A successful call with Value=false is a normal negative response
+            (expired token) — not a failure. Failure means the call couldn't complete.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGriffinService.GetClaimsAsync(System.String,System.String,System.Int32)">
             <summary>
-            Retrieves user claims from Griffin by calling /authorization/getClaims
+            Retrieves user claims from Griffin by calling /authorization/getClaims.
+            Fails with MissingEmailAddress / MissingUniqueId when those fields are
+            absent — those are treated as hard failures since auth cannot continue.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGriffinService.ValidateAndGetClaimsAsync(System.String,System.String,System.Int32)">
             <summary>
-            Combined: validates token and gets claims (with caching)
+            Combined: validates token and gets claims (with caching). Claims are
+            cached by SHA-256(token) for 2 hours; failures are NOT cached.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGriffinService.AuthenticateUserAsync(System.String,ShiftManager.Models.GriffinConfig,System.String)">
             <summary>
-            Full authentication flow: validate token, get claims, lookup/provision user, build ClaimsPrincipal
+            Full authentication flow: validate token, get claims, lookup/provision user, build ClaimsPrincipal.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.HierarchyPath">
@@ -8384,6 +8652,12 @@
             NDJSON record structure
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.JobTypeValidationResult">
+            <summary>
+            Result of a JobType validation check. Kept as a structured enum (rather than
+            migrated to OperationResult) because callers branch on specific outcomes for UX.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.IJobTypeService.GetJobTypesForMoleculeAsync(System.Int32)">
             <summary>
             Returns job types applicable to a specific molecule: molecule-specific ones plus
@@ -8414,20 +8688,33 @@
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IMailService">
-            <summary>
-            Service interface for sending email notifications via company mail API.
-            Used to notify users about shift assignments, changes, and deletions.
-            </summary>
+             <summary>
+             Service interface for sending email notifications via company mail API.
+             Used to notify users about shift assignments, changes, and deletions.
+            
+             <para>
+             Migrated to <see cref="T:ShiftManager.Models.Results.OperationResult"/> as part of the project-wide error-handling overhaul.
+             Previously these methods returned <c>bool</c> with no diagnostic context — admins setting up email
+             config or troubleshooting failed sends had no structured error information. Now each method returns
+             an <see cref="T:ShiftManager.Models.Results.OperationResult"/> with a stable <c>Error_MailService_*</c> key plus a localized message
+             (see <c>SharedResources.resx</c>) so admin/diagnostic callers can surface specific failure reasons.
+             Fire-and-forget callers (most notification handlers) continue to work unchanged because awaiting a
+             <c>Task&lt;OperationResult&gt;</c> without capturing the result is valid.
+             </para>
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.IMailService.SendMailAsync(System.String,System.String,System.String)">
             <summary>
-            Enqueue an email for background delivery.
-            Returns true if successfully queued, false if the queue is full.
+            Enqueue an email for background delivery. Returns immediately without blocking the HTTP request.
             </summary>
             <param name="recipient">Email address of the recipient</param>
             <param name="subject">Email subject line</param>
             <param name="htmlBody">HTML-formatted email body</param>
-            <returns>True if email queued successfully, false otherwise</returns>
+            <returns>
+            <see cref="M:ShiftManager.Models.Results.OperationResult.Ok"/> if the email was successfully enqueued; otherwise a failure
+            result keyed under <c>Error_MailService_InvalidRecipient</c> (validation) or
+            <c>Error_MailService_SendFailed</c> (queue full / unavailable).
+            </returns>
         </member>
         <member name="M:ShiftManager.Services.IMailService.SendMailDirectAsync(System.String,System.String,System.String,System.Int32)">
             <summary>
@@ -8435,6 +8722,12 @@
             Do not call from HTTP request handlers — use SendMailAsync instead.
             Optional companyId (from QueuedEmail) enables EmailApiLog persistence from background services.
             </summary>
+            <returns>
+            <see cref="M:ShiftManager.Models.Results.OperationResult.Ok"/> on a successful HTTP 2xx response, otherwise a failure result
+            keyed under one of <c>Error_MailService_DisabledByFlag</c>, <c>Error_MailService_NotConfigured</c>,
+            <c>Error_MailService_MissingApiUrl</c>, <c>Error_MailService_MissingApiKey</c>,
+            <c>Error_MailService_InvalidRecipient</c>, or <c>Error_MailService_SendFailed</c>.
+            </returns>
         </member>
         <member name="M:ShiftManager.Services.IMailService.SendShiftAssignedEmailAsync(System.String,System.String,System.String,System.DateOnly,System.TimeOnly,System.TimeOnly)">
             <summary>
@@ -8536,43 +8829,35 @@
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IMasterProgramService">
-            <summary>
-            Service for managing MasterPrograms (collections of Programs forming complete weekly schedules).
-            A MasterProgram is a convenience wrapper for applying multiple Programs at once.
-            </summary>
+             <summary>
+             Service for managing MasterPrograms (collections of Programs forming complete weekly schedules).
+             A MasterProgram is a convenience wrapper for applying multiple Programs at once.
+            
+             All write operations return <see cref="T:ShiftManager.Models.Results.OperationResult"/> / <see cref="T:ShiftManager.Models.Results.OperationResult`1"/>
+             with localized error messages keyed under <c>Error_MasterProgramService_*</c>. Read operations
+             return nullable / list types directly (null = not found is acceptable for reads).
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.IMasterProgramService.CreateMasterProgramAsync(System.Int32,System.String,System.String,System.Collections.Generic.List{System.Int32},System.Int32)">
             <summary>
             Creates a new MasterProgram containing multiple Programs.
             </summary>
-            <param name="companyId">Company ID</param>
-            <param name="name">Display name (e.g., "Standard Week Schedule")</param>
-            <param name="description">Optional description</param>
-            <param name="programIds">List of Program IDs to include</param>
-            <param name="userId">User creating the MasterProgram</param>
-            <returns>The created MasterProgram with Items included</returns>
         </member>
         <member name="M:ShiftManager.Services.IMasterProgramService.GetMasterProgramAsync(System.Int32)">
             <summary>
             Gets a single MasterProgram by ID with Items and nested Programs included.
+            Returns null if not found.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IMasterProgramService.GetCompanyMasterProgramsAsync(System.Int32,System.Boolean)">
             <summary>
             Gets all MasterPrograms for a company.
             </summary>
-            <param name="companyId">Company ID</param>
-            <param name="includeInactive">If false, only returns active MasterPrograms</param>
         </member>
         <member name="M:ShiftManager.Services.IMasterProgramService.UpdateMasterProgramAsync(System.Int32,System.String,System.String,System.Collections.Generic.List{System.Int32},System.Int32)">
             <summary>
             Updates a MasterProgram's name, description, and included Programs.
             </summary>
-            <param name="masterProgramId">MasterProgram ID</param>
-            <param name="name">New name</param>
-            <param name="description">New description</param>
-            <param name="programIds">New list of Program IDs (replaces existing)</param>
-            <param name="userId">User making the update</param>
         </member>
         <member name="M:ShiftManager.Services.IMasterProgramService.DeleteMasterProgramAsync(System.Int32,System.Int32)">
             <summary>
@@ -8583,19 +8868,16 @@
         <member name="M:ShiftManager.Services.IMasterProgramService.GenerateFromMasterProgramAsync(System.Int32,System.DateOnly,System.DateOnly,System.Boolean)">
             <summary>
             Generates ShiftInstances for ALL Programs in this MasterProgram.
-            Calls ShiftProgramService.GenerateInstancesAsync() for each Program.
+            Returns the per-program instance lists on success. Partial failures (one program
+            failing while others succeed) are recorded as <see cref="F:ShiftManager.Models.Validation.ValidationSeverity.Warning"/>
+            issues on the result with the per-program key in the message; <c>Success</c> is true
+            as long as the master program itself was found.
             </summary>
-            <param name="masterProgramId">MasterProgram ID</param>
-            <param name="startDate">Start date (inclusive)</param>
-            <param name="endDate">End date (inclusive)</param>
-            <param name="overwriteExisting">If true, updates existing instances</param>
-            <returns>Dictionary mapping ProgramId → List of created ShiftInstances</returns>
         </member>
         <member name="M:ShiftManager.Services.IMasterProgramService.GetMasterProgramSummaryAsync(System.Int32)">
             <summary>
             Gets summary statistics for a MasterProgram.
             </summary>
-            <returns>Total Programs, Total unique ShiftTypes, Total ProgramDays across all Programs</returns>
         </member>
         <member name="T:ShiftManager.Services.MasterProgramSummary">
             <summary>
@@ -8906,34 +9188,13 @@
             Updates task status.
             </summary>
         </member>
-        <member name="T:ShiftManager.Services.ValidationSeverity">
-            <summary>
-            Severity of a validation issue.
-            Errors are hard blocks; Warnings can be overridden with a signed token.
-            </summary>
-        </member>
-        <member name="T:ShiftManager.Services.ValidationCategory">
-            <summary>
-            Category of validation check for UI grouping and override scoping.
-            </summary>
-        </member>
-        <member name="T:ShiftManager.Services.ValidationIssue">
-            <summary>
-            A single validation issue found during shift assignment checks.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.ValidationIssue.#ctor(System.String,System.String,ShiftManager.Services.ValidationSeverity,ShiftManager.Services.ValidationCategory)">
-            <summary>
-            A single validation issue found during shift assignment checks.
-            </summary>
-        </member>
         <member name="T:ShiftManager.Services.ShiftAssignmentValidation">
             <summary>
             Result of validating a shift assignment.
             CanAssign is true only if there are no Errors (warnings alone don't block).
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.ShiftAssignmentValidation.#ctor(System.Boolean,System.Collections.Generic.IReadOnlyList{ShiftManager.Services.ValidationIssue},System.Collections.Generic.IReadOnlyList{ShiftManager.Services.ValidationIssue})">
+        <member name="M:ShiftManager.Services.ShiftAssignmentValidation.#ctor(System.Boolean,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue},System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue})">
             <summary>
             Result of validating a shift assignment.
             CanAssign is true only if there are no Errors (warnings alone don't block).
@@ -9021,90 +9282,15 @@
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IShiftProgramService">
-            <summary>
-            Service for managing ShiftPrograms (weekly templates) and generating ShiftInstances.
-            Programs define WHEN a specific shift type runs (weekly mask) and DEFAULT staffing.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.CreateProgramAsync(System.Int32,System.Int32,System.String,System.Collections.Generic.List{System.DayOfWeek},System.Int32,System.Collections.Generic.Dictionary{System.DayOfWeek,System.Int32},System.Int32)">
-            <summary>
-            Creates a new Program with weekly mask and default staffing.
-            </summary>
-            <param name="companyId">Company ID</param>
-            <param name="shiftTypeId">ShiftType this Program applies to</param>
-            <param name="name">Display name for the Program (e.g., "Morning Shifts Mon-Fri")</param>
-            <param name="days">List of days of the week this Program runs (0=Sunday, 6=Saturday)</param>
-            <param name="defaultStaffing">Default number of people required per shift</param>
-            <param name="perDayStaffing">Optional per-day staffing overrides (null for day = use default)</param>
-            <param name="userId">User creating the Program</param>
-            <returns>The created ShiftProgram with ProgramDays included</returns>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.GetProgramAsync(System.Int32)">
-            <summary>
-            Gets a single Program by ID with ShiftType and ProgramDays included.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.GetCompanyProgramsAsync(System.Int32,System.Boolean)">
-            <summary>
-            Gets all Programs for a company, with ShiftTypes and ProgramDays included.
-            </summary>
-            <param name="companyId">Company ID</param>
-            <param name="includeInactive">If false, only returns active Programs</param>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.UpdateProgramAsync(System.Int32,System.String,System.Collections.Generic.List{System.DayOfWeek},System.Int32,System.Collections.Generic.Dictionary{System.DayOfWeek,System.Int32},System.Int32)">
-            <summary>
-            Updates a Program's name, weekly mask, and staffing settings.
-            </summary>
-            <param name="programId">Program ID to update</param>
-            <param name="name">New name</param>
-            <param name="days">New weekly mask (replaces existing ProgramDays)</param>
-            <param name="defaultStaffing">New default staffing</param>
-            <param name="perDayStaffing">Optional per-day overrides (null = use default)</param>
-            <param name="userId">User making the update</param>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.DeleteProgramAsync(System.Int32,System.Int32)">
-            <summary>
-            Soft deletes a Program (sets IsActive = false).
-            Does NOT delete existing ShiftInstances generated from this Program.
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.GenerateInstancesAsync(System.Int32,System.DateOnly,System.DateOnly,System.Boolean)">
-            <summary>
-            Generates ShiftInstances for all days in range that match the Program's weekly mask.
-            Sets OriginalProgramId on each instance for "Reset to Program" functionality.
-            </summary>
-            <param name="programId">Program ID to generate from</param>
-            <param name="startDate">Start date (inclusive)</param>
-            <param name="endDate">End date (inclusive)</param>
-            <param name="overwriteExisting">If true, updates existing instances; if false, skips existing</param>
-            <returns>List of created/updated ShiftInstances</returns>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.ApplyProgramToDateRangeAsync(System.Int32,System.DateOnly,System.DateOnly,System.Boolean)">
-            <summary>
-            Higher-level method: applies Program to date range and returns count of created instances.
-            </summary>
-            <returns>Number of ShiftInstances created (or updated if overwriteExisting = true)</returns>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.DetachInstanceAsync(System.Int32,System.String)">
-            <summary>
-            Marks a ShiftInstance as detached from its Program.
-            Called when a user edits staffing, time, or name on an Operation.
-            </summary>
-            <param name="instanceId">ShiftInstance ID</param>
-            <param name="overrideType">Which field was overridden: "Staffing", "Time", or "Name"</param>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.ResetInstanceToProgramAsync(System.Int32)">
-            <summary>
-            Resets a detached ShiftInstance back to its Program's defaults.
-            Restores staffing, clears overrides, sets IsDetached = false.
-            </summary>
-            <param name="instanceId">ShiftInstance ID to reset</param>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftProgramService.GetInstancesFromProgramAsync(System.Int32,System.Nullable{System.DateOnly},System.Nullable{System.DateOnly})">
-            <summary>
-            Gets all ShiftInstances that were generated from a specific Program.
-            Used for "Show all Operations from this Program" view.
-            </summary>
+             <summary>
+             Service for managing ShiftPrograms (weekly templates) and generating ShiftInstances.
+             Programs define WHEN a specific shift type runs (weekly mask) and DEFAULT staffing.
+            
+             Migrated to <see cref="T:ShiftManager.Models.Results.OperationResult"/> / <see cref="T:ShiftManager.Models.Results.OperationResult`1"/> as part of the
+             project-wide error-handling overhaul. Fire-and-forget callers (those that ignore the
+             return value) remain source-compatible because <c>await Task&lt;T&gt;</c> compiles whether or
+             not the value is captured.
+             </summary>
         </member>
         <member name="T:ShiftManager.Services.IShiftTypeSeedService">
             <summary>
@@ -9286,6 +9472,15 @@
             Get the company name being viewed as manager
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.JobTypeService">
+             <summary>
+             Manages JobType definitions and user-to-job-type assignments.
+            
+             Migrated to OperationResult as part of the project-wide error-handling overhaul.
+             Previously this service had silent <c>return false</c> failures with no logging — those
+             are now structured failures with localized messages keyed under <c>Error_JobTypeService_*</c>.
+             </summary>
+        </member>
         <member name="T:ShiftManager.Services.LanguageManagementService">
             <summary>
             Service for managing company language settings.
@@ -9404,9 +9599,36 @@
             </summary>
         </member>
         <member name="T:ShiftManager.Services.MasterProgramService">
+             <summary>
+             Service for managing MasterPrograms (collections of Programs).
+             Orchestrates ShiftProgramService to generate shifts from multiple Programs at once.
+            
+             Migrated to <see cref="T:ShiftManager.Models.Results.OperationResult"/> / <see cref="T:ShiftManager.Models.Results.OperationResult`1"/> as part of the
+             project-wide error-handling overhaul. All errors return localized messages via
+             <see cref="T:Microsoft.Extensions.Localization.IStringLocalizer`1"/> with keys <c>Error_MasterProgramService_*</c>.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationService.TryCreateNotificationWithDiagnosticsAsync(System.Int32,System.String,System.String,System.String)">
             <summary>
-            Service for managing MasterPrograms (collections of Programs).
-            Orchestrates ShiftProgramService to generate shifts from multiple Programs at once.
+            Diagnostic variant of <see cref="M:ShiftManager.Services.INotificationService.CreateNotificationAsync(System.Int32,ShiftManager.Models.Support.NotificationType,System.String,System.String,System.Nullable{System.Int32},System.String)"/>
+            that returns a structured <see cref="T:ShiftManager.Models.Results.OperationResult"/> so callers can render the
+            failure reason (recipient missing, DB error, etc.) instead of silently returning
+            <c>false</c>. Suitable for admin diagnostic pages — NOT a replacement for the
+            fire-and-forget creators used by business code.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationService.TrySendTestNotificationAsync(System.Int32)">
+            <summary>
+            Send a test notification to <paramref name="recipientUserId"/> so an admin can verify
+            that the notification pipeline reaches a user. Returns a structured
+            <see cref="T:ShiftManager.Models.Results.OperationResult"/> with a localized error message on failure.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.NotificationService.GetRecipientAcrossTenantsAsync(System.Int32)">
+            <summary>
+            Look up a notification recipient across tenants. The tenant query filter on AppUser would
+            otherwise hide users in other companies from a manager acting on a cross-tenant grant
+            (Owner/Director/AreaAdmin), silently dropping notification emails. Read-only by design.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.NotificationService.NotifyOwnersOfAccessRequestAsync(System.String,System.String,System.String,System.Int32,System.Int32)">
@@ -9434,6 +9656,12 @@
             <summary>
             Phase 6 Extension: Send day-before reminders for upcoming shifts, chores, and on-duty assignments
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.NotificationService.TryCreateNotificationWithDiagnosticsAsync(System.Int32,System.String,System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.NotificationService.TrySendTestNotificationAsync(System.Int32)">
+            <inheritdoc />
         </member>
         <member name="T:ShiftManager.Services.IOnDutyService">
              <summary>
@@ -9733,10 +9961,14 @@
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ShiftProgramService">
-            <summary>
-            Service for managing ShiftPrograms (weekly templates) and generating ShiftInstances.
-            Implements the "Blueprints → Programs → Operations" architecture.
-            </summary>
+             <summary>
+             Service for managing ShiftPrograms (weekly templates) and generating ShiftInstances.
+             Implements the "Blueprints → Programs → Operations" architecture.
+            
+             Migrated to <see cref="T:ShiftManager.Models.Results.OperationResult"/> / <see cref="T:ShiftManager.Models.Results.OperationResult`1"/> as part of the
+             project-wide error-handling overhaul. All errors return localized messages keyed under
+             <c>Error_ShiftProgramService_*</c>.
+             </summary>
         </member>
         <member name="T:ShiftManager.Services.IShiftTypeCacheService">
             <summary>
@@ -10754,6 +10986,13 @@
             F-07: Shows critical system alerts as a banner on admin/owner pages.
             Checks for: disk space, backup failures, notification failures, security warnings.
             Results are cached for 15 minutes to avoid per-request overhead.
+            </summary>
+        </member>
+        <member name="P:ErrorModel.RequestId">
+            <summary>
+            Request correlation ID surfaced to the user. Prefers W3C Trace Context Activity.Id
+            (which CorrelationIdMiddleware seeds from X-Correlation-Id) and falls back to
+            HttpContext.TraceIdentifier so the page always has something to display.
             </summary>
         </member>
     </members>

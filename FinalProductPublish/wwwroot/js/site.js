@@ -922,7 +922,7 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
         });
 
         if (!response.ok) {
-            alert(window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
+            window.FeedbackModal.show('error', window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
             return;
         }
 
@@ -932,11 +932,11 @@ async function confirmDeleteShiftInstance(pageUrl, instanceId, event) {
             // Reload page to show updated state
             location.reload();
         } else {
-            alert((window.AppLocalizer?.Error_Prefix || 'Error: ') + result.error);
+            window.FeedbackModal.show('error', (window.AppLocalizer?.Error_Prefix || 'Error: ') + result.error);
         }
     } catch (error) {
         Logger.error('Site', 'Error deleting shift instance:', error);
-        alert(window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
+        window.FeedbackModal.show('error', window.AppLocalizer?.Error_FailedToDeleteShift || 'Failed to delete shift. Please try again.');
     }
 }
 

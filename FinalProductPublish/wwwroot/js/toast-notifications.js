@@ -1,93 +1,75 @@
 /**
- * Toast/Alert Pattern Standardization (B-052)
+ * Toast Notifications - unified on the toast-undo visual pattern.
  *
- * Notification Patterns:
- * - Toast: Transient success messages (auto-dismiss 5s, max 1 visible, queue others)
- * - Alert/Banner: Persistent warnings/errors (dismiss manually)
- * - Modal: Blocking actions that require user decision
+ * All variants (success / info / warning / error) render the same DOM shape:
+ *   <div class="toast toast-undo toast-undo--{variant} show" role="status|alert">
+ *     <span class="toast-undo__text">...</span>
+ *     <span class="toast-undo__error-id">abc123</span>          (optional)
+ *     <button type="button" class="toast-undo__btn" data-action="dismiss">Dismiss</button>
+ *     <span class="toast-undo__timer">5</span>
+ *   </div>
  *
  * Usage:
- *   // Show success toast (auto-dismisses)
  *   Toast.success('Shift saved successfully');
- *   Toast.success('Changes saved', 'Success');
- *
- *   // Show info toast
+ *   Toast.error('Could not reach the server');
+ *   Toast.error('Could not reach the server', 'Network');           // legacy: title as 2nd arg
+ *   Toast.error('Could not reach the server', { errorId: 'abc' });  // new: options object as 2nd arg
+ *   Toast.error('Could not reach the server', { title: 'Network', errorId: 'abc' });
  *   Toast.info('Processing your request...');
- *
- *   // For errors/warnings, prefer ErrorBanner component or ErrorStates API
- *   // Toasts are for TRANSIENT SUCCESS messages only
- *
- * When to use each pattern:
- * - Toast: "Shift saved", "Profile updated", "Email sent" (success confirmations)
- * - Alert/Banner: "Network offline", "Session expiring", "API error" (persistent issues)
- * - Modal: "Delete this item?", "Discard changes?", "Session timeout" (blocking decisions)
+ *   Toast.warning('Heads up.');
  */
 
 (function() {
     'use strict';
 
-    // Configuration
     const CONFIG = {
-        autoDismissMs: 5000,      // Default fallback (5 seconds)
-        maxVisible: 1,            // Only 1 toast visible at a time
-        animationDurationMs: 300, // Animation duration
-        position: 'top-right'     // Toast position
+        autoDismissMs: 5000,
+        maxVisible: 1,
+        animationDurationMs: 300,
+        position: 'top-right'
     };
 
-    // Severity-based auto-dismiss timing
+    // Severity-based auto-dismiss timing. 0 = manual dismiss only.
     const AUTO_DISMISS_BY_TYPE = {
-        success: 5000,   // Brief confirmation (was 4s)
-        info:    10000,  // Allow time to read details (was 6s)
-        warning: 15000,  // Important, needs attention (was 10s)
-        error:   0       // Manual dismiss only — user must acknowledge
+        success: 5000,
+        info:    10000,
+        warning: 15000,
+        error:   0
     };
 
-    // Toast queue - only show one at a time
     const toastQueue = [];
     let activeToast = null;
     let toastContainer = null;
 
-    // Localized messages (fallbacks)
     const MESSAGES = {
         'en-US': {
             dismiss: 'Dismiss',
-            close: 'Close notification'
+            close: 'Close notification',
+            errorId: 'Error ID'
         },
         'he-IL': {
             dismiss: 'סגור',
-            close: 'סגור התראה'
+            close: 'סגור התראה',
+            errorId: 'מזהה שגיאה'
         }
     };
 
-    /**
-     * Get current culture from HTML lang attribute
-     */
     function getCurrentCulture() {
         const htmlLang = document.documentElement.lang || 'en-US';
         return htmlLang.startsWith('he') ? 'he-IL' : 'en-US';
     }
 
-    /**
-     * Get localized message
-     */
     function getMessage(key) {
         const culture = getCurrentCulture();
         return MESSAGES[culture]?.[key] || MESSAGES['en-US'][key] || key;
     }
 
-    /**
-     * Check for reduced motion preference (B-001 accessibility)
-     */
     function prefersReducedMotion() {
         return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
 
-    /**
-     * Get or create toast container
-     */
     function getToastContainer() {
         if (!toastContainer || !document.body.contains(toastContainer)) {
-            // Remove any existing containers
             const existing = document.querySelector('.toast-container');
             if (existing) {
                 toastContainer = existing;
@@ -103,22 +85,6 @@
         return toastContainer;
     }
 
-    /**
-     * Get icon SVG for toast type
-     */
-    function getToastIcon(type) {
-        const icons = {
-            success: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
-            info: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
-            warning: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
-            error: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>'
-        };
-        return icons[type] || icons.info;
-    }
-
-    /**
-     * Escape HTML to prevent XSS
-     */
     function escapeHtml(str) {
         if (typeof str !== 'string') return str;
         const div = document.createElement('div');
@@ -126,118 +92,124 @@
         return div.innerHTML.replace(/'/g, '&#39;');
     }
 
-    /**
-     * Create toast element
-     */
+    // Map 'error' -> 'danger' for the CSS modifier, keep others as-is.
+    function variantClass(type) {
+        return type === 'error' ? 'toast-undo--danger' : `toast-undo--${type}`;
+    }
+
     function createToastElement(options) {
-        const { type, message, title } = options;
+        const { type, message, title, errorId } = options;
         const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-        // Map type to CSS class (success maps to success, others follow pattern)
-        const typeClass = type === 'error' ? 'toast--danger' : `toast--${type}`;
+        const dismissMs = AUTO_DISMISS_BY_TYPE[type] ?? CONFIG.autoDismissMs;
+        const hasTimer = dismissMs > 0;
+        const initialSeconds = hasTimer ? Math.ceil(dismissMs / 1000) : 0;
+
+        // Merge title+message into a single text span - toast-undo has only one text slot.
+        const text = title ? `${title}: ${message}` : message;
 
         const toast = document.createElement('div');
         toast.id = toastId;
-        toast.className = `toast ${typeClass} toast--with-progress`;
-        toast.setAttribute('role', 'status');
+        toast.className = `toast toast-undo ${variantClass(type)} show`;
+        toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
         toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
         toast.setAttribute('aria-atomic', 'true');
 
-        toast.innerHTML = `
-            <div class="toast__icon">
-                ${getToastIcon(type)}
-            </div>
-            <div class="toast__content">
-                ${title ? `<div class="toast__title">${escapeHtml(title)}</div>` : ''}
-                <div class="toast__message">${escapeHtml(message)}</div>
-            </div>
-            <button type="button" class="toast__close" aria-label="${getMessage('close')}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-            <div class="toast__progress" style="animation-duration: ${AUTO_DISMISS_BY_TYPE[type] ?? CONFIG.autoDismissMs}ms;${(AUTO_DISMISS_BY_TYPE[type] === 0) ? ' display: none;' : ''}"></div>
-        `;
+        let html = `<span class="toast-undo__text">${escapeHtml(text)}</span>`;
+        if (errorId) {
+            // Monospace inline correlation ID. Title attribute exposes the full label for
+            // hover/screen-reader context without enlarging the toast layout.
+            html += `<span class="toast-undo__error-id" title="${escapeHtml(getMessage('errorId'))}">${escapeHtml(errorId)}</span>`;
+        }
+        html += `<button type="button" class="toast-undo__btn" data-action="dismiss" aria-label="${escapeHtml(getMessage('close'))}">${escapeHtml(getMessage('dismiss'))}</button>`;
+        html += `<span class="toast-undo__timer" aria-hidden="true">${hasTimer ? initialSeconds : ''}</span>`;
 
+        toast.innerHTML = html;
         return toast;
     }
 
-    /**
-     * Display the next toast in the queue
-     */
     function displayNextToast() {
-        // If there's an active toast or queue is empty, do nothing
-        if (activeToast || toastQueue.length === 0) {
-            return;
-        }
+        if (activeToast || toastQueue.length === 0) return;
 
         const options = toastQueue.shift();
         const container = getToastContainer();
         const toast = createToastElement(options);
 
-        // Add to container
         container.appendChild(toast);
         activeToast = toast;
 
-        // Set up close button
-        const closeBtn = toast.querySelector('.toast__close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => dismissToast(toast));
+        const dismissBtn = toast.querySelector('.toast-undo__btn');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', () => dismissToast(toast));
         }
 
-        // Auto-dismiss based on severity (0 = manual dismiss only)
         const dismissMs = AUTO_DISMISS_BY_TYPE[options.type] ?? CONFIG.autoDismissMs;
-        let autoDismissTimer = null;
         if (dismissMs > 0) {
-            autoDismissTimer = setTimeout(() => {
-                dismissToast(toast);
-            }, dismissMs);
+            startCountdown(toast, dismissMs);
         }
 
-        // Store timer reference for manual dismiss
-        toast._autoDismissTimer = autoDismissTimer;
-
-        // Pause auto-dismiss on hover (with elapsed time tracking)
-        if (dismissMs > 0) {
-            let startTime = Date.now();
-            let elapsedMs = 0;
-
-            toast.addEventListener('mouseenter', function() {
-                elapsedMs += Date.now() - startTime;
-                if (toast._autoDismissTimer) {
-                    clearTimeout(toast._autoDismissTimer);
-                    toast._autoDismissTimer = null;
-                }
-            });
-
-            toast.addEventListener('mouseleave', function() {
-                if (toast.classList.contains('toast--dismissing')) return;
-                var remainingMs = dismissMs - elapsedMs;
-                if (remainingMs > 0) {
-                    startTime = Date.now();
-                    toast._autoDismissTimer = setTimeout(function() {
-                        dismissToast(toast);
-                    }, remainingMs);
-                } else {
-                    dismissToast(toast);
-                }
-            });
-        }
-
-        // Announce to screen readers
         announceToScreenReader(options.message, options.title);
     }
 
     /**
-     * Announce toast to screen readers
+     * Start the visible countdown + auto-dismiss. Supports pause-on-hover via
+     * elapsed/remaining bookkeeping that applies to both the interval and the
+     * auto-dismiss timeout.
      */
+    function startCountdown(toast, dismissMs) {
+        const timerSpan = toast.querySelector('.toast-undo__timer');
+        let remainingMs = dismissMs;
+        let tickStart = Date.now();
+
+        function renderSeconds() {
+            if (!timerSpan) return;
+            timerSpan.textContent = String(Math.max(0, Math.ceil(remainingMs / 1000)));
+        }
+
+        function scheduleTick() {
+            const msToNextSecond = remainingMs % 1000 || 1000;
+            toast._tickTimer = setTimeout(function tick() {
+                const elapsed = Date.now() - tickStart;
+                remainingMs = Math.max(0, remainingMs - elapsed);
+                tickStart = Date.now();
+                renderSeconds();
+                if (remainingMs <= 0) {
+                    dismissToast(toast);
+                    return;
+                }
+                toast._tickTimer = setTimeout(tick, 1000);
+            }, msToNextSecond);
+        }
+
+        renderSeconds();
+        scheduleTick();
+
+        toast.addEventListener('mouseenter', function() {
+            if (toast._tickTimer) {
+                const elapsed = Date.now() - tickStart;
+                remainingMs = Math.max(0, remainingMs - elapsed);
+                clearTimeout(toast._tickTimer);
+                toast._tickTimer = null;
+                renderSeconds();
+            }
+        });
+
+        toast.addEventListener('mouseleave', function() {
+            if (toast.classList.contains('toast--dismissing')) return;
+            if (remainingMs <= 0) {
+                dismissToast(toast);
+                return;
+            }
+            if (!toast._tickTimer) {
+                tickStart = Date.now();
+                scheduleTick();
+            }
+        });
+    }
+
     function announceToScreenReader(message, title) {
-        // The toast container has aria-live, so content will be announced
-        // This is a backup for more reliable announcement
         const announcement = title ? `${title}: ${message}` : message;
 
-        // Create a temporary live region if needed
         let liveRegion = document.getElementById('toast-sr-announcer');
         if (!liveRegion) {
             liveRegion = document.createElement('div');
@@ -248,16 +220,10 @@
             document.body.appendChild(liveRegion);
         }
 
-        // Update content to trigger announcement
         liveRegion.textContent = '';
-        setTimeout(() => {
-            liveRegion.textContent = announcement;
-        }, 100);
+        setTimeout(() => { liveRegion.textContent = announcement; }, 100);
     }
 
-    /**
-     * Dismiss a toast with animation
-     */
     function dismissToast(toast) {
         if (!toast || !toast.parentElement) {
             activeToast = null;
@@ -265,136 +231,63 @@
             return;
         }
 
-        // Clear auto-dismiss timer
-        if (toast._autoDismissTimer) {
-            clearTimeout(toast._autoDismissTimer);
+        if (toast._tickTimer) {
+            clearTimeout(toast._tickTimer);
+            toast._tickTimer = null;
         }
 
-        // Respect reduced motion preference
         const animationTime = prefersReducedMotion() ? 0 : CONFIG.animationDurationMs;
-
-        // Add dismissing class for animation
         toast.classList.add('toast--dismissing');
 
         setTimeout(() => {
-            if (toast.parentElement) {
-                toast.remove();
-            }
+            if (toast.parentElement) toast.remove();
             activeToast = null;
-
-            // Show next toast in queue
             displayNextToast();
         }, animationTime);
     }
 
     /**
-     * Show a toast notification
-     * @param {string} message - The toast message
-     * @param {string} type - Toast type: 'success', 'info', 'warning', 'error'
-     * @param {string} [title] - Optional title
+     * Normalize the third argument of the public Toast.* methods.
+     * Accepts either a legacy title string OR an options object {title?, errorId?}.
      */
-    function showToast(message, type = 'success', title = null) {
-        // Add to queue
-        toastQueue.push({ message, type, title });
+    function normalizeOptions(titleOrOptions) {
+        if (titleOrOptions && typeof titleOrOptions === 'object') {
+            return {
+                title: titleOrOptions.title || null,
+                errorId: titleOrOptions.errorId || null
+            };
+        }
+        return { title: titleOrOptions || null, errorId: null };
+    }
 
-        // Try to display (will only work if no active toast)
+    function showToast(message, type = 'success', titleOrOptions = null) {
+        const opts = normalizeOptions(titleOrOptions);
+        toastQueue.push({ message, type, title: opts.title, errorId: opts.errorId });
         displayNextToast();
     }
 
-    /**
-     * Clear all pending toasts
-     */
-    function clearQueue() {
-        toastQueue.length = 0;
-    }
+    function clearQueue() { toastQueue.length = 0; }
 
-    /**
-     * Dismiss active toast immediately
-     */
     function dismissActiveToast() {
-        if (activeToast) {
-            dismissToast(activeToast);
-        }
+        if (activeToast) dismissToast(activeToast);
     }
 
-    // Public API
     const Toast = {
-        /**
-         * Show success toast (primary use case for toasts)
-         * @param {string} message - Success message
-         * @param {string} [title] - Optional title
-         */
-        success: function(message, title) {
-            showToast(message, 'success', title);
-        },
-
-        /**
-         * Show info toast
-         * @param {string} message - Info message
-         * @param {string} [title] - Optional title
-         */
-        info: function(message, title) {
-            showToast(message, 'info', title);
-        },
-
-        /**
-         * Show warning toast (consider using Alert/Banner for persistent warnings)
-         * @param {string} message - Warning message
-         * @param {string} [title] - Optional title
-         */
-        warning: function(message, title) {
-            showToast(message, 'warning', title);
-        },
-
-        /**
-         * Show error toast (consider using Alert/Banner for persistent errors)
-         * @param {string} message - Error message
-         * @param {string} [title] - Optional title
-         */
-        error: function(message, title) {
-            showToast(message, 'error', title);
-        },
-
-        /**
-         * Generic show method
-         * @param {string} message - Toast message
-         * @param {string} type - Type: 'success', 'info', 'warning', 'error'
-         * @param {string} [title] - Optional title
-         */
-        show: function(message, type, title) {
-            showToast(message, type, title);
-        },
-
-        /**
-         * Dismiss the active toast
-         */
+        success: function(message, titleOrOptions) { showToast(message, 'success', titleOrOptions); },
+        info:    function(message, titleOrOptions) { showToast(message, 'info',    titleOrOptions); },
+        warning: function(message, titleOrOptions) { showToast(message, 'warning', titleOrOptions); },
+        error:   function(message, titleOrOptions) { showToast(message, 'error',   titleOrOptions); },
+        show:    function(message, type, titleOrOptions) { showToast(message, type, titleOrOptions); },
         dismiss: dismissActiveToast,
-
-        /**
-         * Clear all pending toasts from queue
-         */
         clearQueue: clearQueue,
-
-        /**
-         * Get queue length (for debugging/testing)
-         */
-        getQueueLength: function() {
-            return toastQueue.length;
-        },
-
-        /**
-         * Configuration
-         */
+        getQueueLength: function() { return toastQueue.length; },
         config: CONFIG
     };
 
-    // Expose globally
     window.Toast = Toast;
 
-    // Also expose as showToast for backward compatibility with existing code
-    // This wraps the new Toast API
+    // Backward-compatible wrapper - some legacy code calls window.showToast(message, type).
     window.showToast = function(message, type) {
-        // Map legacy types
         const typeMap = {
             'success': 'success',
             'info': 'info',
@@ -406,11 +299,8 @@
         showToast(message, mappedType);
     };
 
-    // Initialize on DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            getToastContainer(); // Pre-create container
-        });
+        document.addEventListener('DOMContentLoaded', function() { getToastContainer(); });
     } else {
         getToastContainer();
     }
