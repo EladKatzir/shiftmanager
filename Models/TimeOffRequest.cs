@@ -22,6 +22,12 @@ public class TimeOffRequest : IBelongsToCompany
     /// </summary>
     public int? ApproverId { get; set; }
 
+    /// <summary>
+    /// When true, this time-off request is visible only to the chosen approver (ApproverId).
+    /// When false (default), it follows standard primary+fallback approver routing.
+    /// </summary>
+    public bool Private { get; set; } = false;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
