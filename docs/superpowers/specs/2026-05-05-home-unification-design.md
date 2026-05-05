@@ -100,6 +100,53 @@ No new columns. The redesign uses the same `HomeType` and `HomeTypeOverride` row
 
 These fields exist on the model but are never read. Migration removes them. (Verified: zero callers in the repo.)
 
+### 5.6 `DerivedRotationRule.Anchor` — fixed cycle origin (NEW, required for §7.3)
+
+The current `GenerateDatesFromRule` algorithm (`HomeTypeService.cs:465-487`) computes the cycle origin from the query's `start` parameter:
+
+```csharp
+var startMonday = start.AddDays(-(((int)start.DayOfWeek + 6) % 7));  // BUG
+var weekNum = (date.DayNumber - startMonday.DayNumber) / 7;
+var cycleWeek = weekNum % rule.CycleWeeks;
+```
+
+This makes the cycle phase **dependent on which date range you ask for**. Concretely: re-running the algorithm to restore rotation HOME on a date range that doesn't align with the original generation produces phantom matches/misses. §7.3 (rotation auto-restore on vacation cancel) cannot work reliably without a fixed anchor.
+
+**Schema change:** extend the `DerivedRotationRule` record (currently in `Services/IHomeTypeService.cs:11-17`):
+
+```csharp
+public record DerivedRotationRule(
+    int CycleWeeks,
+    List<DayOfWeek> HomeDays,
+    List<int> WeekOffsets,
+    DateOnly Anchor,           // NEW — Monday of week 1 of the cycle
+    TimeOnly? StartTime,
+    TimeOnly? EndTime
+);
+```
+
+The rule editor (§10.1) writes `Anchor` from the user's "Anchor date" input, normalised to the Monday of that week. Anchor is set once at HomeType creation and is editable.
+
+**Algorithm change in `GenerateDatesFromRule`:**
+
+```csharp
+// OLD: var startMonday = start.AddDays(-(((int)start.DayOfWeek + 6) % 7));
+// NEW:
+var anchorMonday = rule.Anchor;  // already normalised to a Monday at save-time
+
+for (var date = start; date <= end; date = date.AddDays(1)) {
+    if (!homeDaySet.Contains(date.DayOfWeek)) continue;
+    var weekNum = (date.DayNumber - anchorMonday.DayNumber) / 7;
+    if (weekNum < 0) continue;  // before anchor → no rotation
+    var cycleWeek = weekNum % rule.CycleWeeks;
+    if (rule.WeekOffsets.Contains(cycleWeek)) dates.Add(date);
+}
+```
+
+**Backfill for existing HomeTypes:** during the deployment migration, for each `HomeType` row with a non-null `DerivedRule` JSON, set `Anchor = Monday of earliest painted date in PatternJson`, or `2026-01-05` (a known Monday in the project's active period) if PatternJson is empty.
+
+This change makes the rule **truly deterministic** — `GenerateDatesFromRule(rule, X, Y)` returns the same dates within `[X, Y]` regardless of the size of `[X, Y]` or how many times the function has been called.
+
 ## 6. Approval flow
 
 ### 6.1 Approver pool by requester
@@ -235,9 +282,11 @@ The algorithm is idempotent: re-running on the same request reaches the same sta
 When a vacation overlaps existing rotation HOME rows (rule from Q13-B):
 
 - On vacation approval: rotation HOME rows in the vacation's date range are **deleted** (not just marked). The new vacation HOME rows take their place.
-- On vacation cancel/decline: the materialiser re-runs the rotation rule for the affected user across the formerly-covered date range and **re-creates** the rotation HOME rows. The deterministic rule makes this safe.
+- On vacation cancel/decline: the materialiser re-runs the rotation rule for the affected user across the formerly-covered date range and **re-creates** the rotation HOME rows.
 
-To make rotation auto-restoration possible, the rotation rule must be re-derivable from `HomeType`. This already works (`HomeTypeService.GenerateDatesFromRule`).
+**This requires §5.6's fixed-anchor `DerivedRotationRule.Anchor`.** The current `GenerateDatesFromRule` is *not* deterministic — its cycle phase depends on the query's `start` parameter — and would produce phantom rotation HOME rows on cancellation. Concretely: with cycle=3, weekOffsets=[0], anchor Mar 30, vacation May 1-12 cancellation: the current algorithm with `start=May 5` computes startMonday=May 4 and reports May 5 as a rotation HOME (cycleWeek 0), but the original Generate for April produced rotation HOME on Apr 5 only and would NOT have produced May 5 (cycleWeek 2). Restore would phantom-create May 5.
+
+The fix is §5.6: `Anchor` becomes a stored field of the rule, and the algorithm uses `rule.Anchor` instead of `start`-derived. With that change, `GenerateDatesFromRule(rule, X, Y)` is fully deterministic over `[X, Y]` and §7.3 works.
 
 ### 7.4 HOME_AM dedup with rotation HOME
 
@@ -376,6 +425,7 @@ These are not new behaviour; they are gaps the new design closes:
 - `AddMoleculeApprovalSettings` — creates the new table with default rows (DualApprovalDayThreshold = 7) for every existing molecule.
 - `RemoveHomeTypeDefaultTimes` — drops `DefaultStartTime` and `DefaultEndTime` columns from `HomeTypes`.
 - `AddLastGeneratedAtToHomeTypes` — adds `LastGeneratedAt DateTime NULL` to `HomeTypes` (backs §10.4 banner).
+- `AddAnchorToDerivedRotationRules` — backfill all existing `HomeType.DerivedRule` JSONs with an `Anchor` field (Monday of earliest painted date in `PatternJson`, or `2026-01-05` if empty). Code-only change for new rules going forward; migration only touches stored JSON for legacy data. Required for §7.3 to function correctly.
 
 ### 13.1.1 Code-only changes (no migration)
 
@@ -425,16 +475,17 @@ The whole change is gated behind a single feature flag: `FF_HOME_UNIFICATION`. W
 
 The brainstorming phase intentionally stops here; the writing-plans skill takes this design and decomposes it into ordered steps. As a sketch:
 
-1. Schema migrations and seed updates (3 ShiftType variants, ShiftAssignment column, MoleculeApprovalSettings).
-2. `IsHome` flag generalisation (one-line change with broad downstream effects — must land before any HOME-variant rows exist).
-3. Materialisation service + integration into `IVacationApprovalService`.
-4. Approval pool / dual-approval rule / `MoleculeApprovalSettings` admin UI.
-5. Calendar rendering: chip composition, partial-day widths, surface coverage.
-6. HomeType rule-first UI.
-7. X-button cancel-or-shorten dialog.
-8. SignalR injections and broadcasts.
-9. Backfill of existing approved requests.
-10. Removal of `/Requests/TimeOff/Create`.
+1. Schema migrations and seed updates (3 ShiftType variants, ShiftAssignment column, MoleculeApprovalSettings, TimeOffRequest dual-approval and Private columns, HomeType.LastGeneratedAt).
+2. **`DerivedRotationRule.Anchor` introduction + algorithm fix** (§5.6). Add the field to the record, update `GenerateDatesFromRule` to use `rule.Anchor` instead of `start`-derived. Backfill existing `HomeType.DerivedRule` JSONs. Without this, §7.3 (rotation auto-restore) is broken. **This must land before the materialiser is wired up.**
+3. `IsHome` flag generalisation (one-line change with broad downstream effects — must land before any HOME-variant rows exist).
+4. Materialisation service + integration into `IVacationApprovalService`.
+5. Approval pool / dual-approval rule / `MoleculeApprovalSettings` admin UI.
+6. Calendar rendering: chip composition, partial-day widths, surface coverage.
+7. HomeType rule-first UI.
+8. X-button cancel-or-shorten dialog.
+9. SignalR injections and broadcasts.
+10. Backfill of existing approved requests.
+11. Removal of `/Requests/TimeOff/Create`.
 
 ## 16. Out of scope (acknowledged but deferred)
 
