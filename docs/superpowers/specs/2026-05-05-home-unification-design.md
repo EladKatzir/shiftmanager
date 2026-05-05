@@ -114,23 +114,33 @@ Pool is computed from the requester's JobType + Molecule:
 | Text  | `Lead` users with JobTypeId = Text,  **or** `Director` users with JobTypeId = Text |
 | Hakam, BR, Other | `BRDirector` users (no JobType filter) **or** `MoleculeAdmin` users |
 
+**Implementation notes for the pool query:**
+
+- `User` has no direct `MoleculeId`. The molecule is derived: `User.CompanyId → Company.MoleculeId`.
+- `User.RoleTemplateId` is the FK to `RoleTemplates`; we resolve to `RoleTemplates.Key`.
+- `User.JobTypeId` is the FK to `JobTypes` (Id 1=Alhut, 2=BR, 3=Text, 4=Hakam, 5=ProjectManager). The pool rule branches on the numeric Id of the requester's JobType.
+
 Pool query (logical):
 
 ```
-SELECT u.Id FROM Users u
-WHERE u.MoleculeId = requester.MoleculeId
-  AND (
-    (requester.JobTypeId IN ('Alhut', 'Text') AND
-     u.RoleTemplate.Key IN ('Lead', 'Director') AND u.JobTypeId = requester.JobTypeId)
-    OR
-    (requester.JobTypeId NOT IN ('Alhut', 'Text') AND
-     u.RoleTemplate.Key IN ('BRDirector', 'MoleculeAdmin'))
-  )
+SELECT u.Id
+FROM Users u
+JOIN Companies c ON c.Id = u.CompanyId
+JOIN RoleTemplates rt ON rt.Id = u.RoleTemplateId
+WHERE c.MoleculeId = requesterMoleculeId
   AND u.IsActive = 1
-  AND u.Id != requester.Id
+  AND u.Id != requesterUserId
+  AND (
+    (requesterJobTypeId IN (1, 3)            -- Alhut, Text
+     AND rt.Key IN ('Lead', 'Director')
+     AND u.JobTypeId = requesterJobTypeId)
+    OR
+    (requesterJobTypeId NOT IN (1, 3)
+     AND rt.Key IN ('BRDirector', 'MoleculeAdmin'))
+  )
 ```
 
-Self-exclusion at the pool level (`u.Id != requester.Id`) is the first line of self-approval defence; the existing self-approval check in `ApproveAsync` is the second.
+Self-exclusion at the pool level (`u.Id != requesterUserId`) is the first line of self-approval defence; the existing self-approval check in `ApproveAsync` is the second.
 
 ### 6.2 Routing default
 
@@ -153,6 +163,13 @@ Dual-approval rule: **parallel** (both approvers see it the moment it's submitte
 | Hakam, BR, Other | `BRDirector` users | `MoleculeAdmin` users |
 
 The two pools are disjoint by template. Either pool's approval is independent. Both approvals must arrive before the request transitions to `Approved`; any decline immediately fails the request.
+
+**TimeOffRequest field additions for dual approval.** Existing `ApproverId` keeps its meaning: the *chosen* primary at submission time. Two new nullable fields track who actually acted at each tier:
+
+- `FirstApprovalActorId int?`, `FirstApprovalActedAt DateTime?` — first tier's recorded approval (Lead pool, or BRDirector pool for non-alhut/non-text)
+- `SecondApprovalActorId int?`, `SecondApprovalActedAt DateTime?` — second tier's approval (Director pool, or MoleculeAdmin pool)
+
+In single-approval cases (vacation ≤ threshold or any After), only `FirstApprovalActorId` is set on approval; `SecondApprovalActorId` stays null. The pre-existing `ApproverId` field stays as the chosen-at-submission value for fallback routing logic.
 
 **Status state-machine for dual approval.** Add an enum value `RequestStatus.PendingSecondApproval` (between `Pending` and `Approved`). Transitions:
 
@@ -307,17 +324,21 @@ A new section on the same page: "Per-user overrides". For each user assigned to 
 
 ### 10.4 Generation timing
 
-Stay on-demand. When the rule is edited, when users are added or removed, or when a HomeTypeOverride is changed, a **persistent banner** appears at the top of `/Admin/HomeTypes` for that HomeType:
+Stay on-demand. To detect "pattern was edited but generation hasn't run yet," add a `LastGeneratedAt DateTime?` column on `HomeType`. The materialiser sets it on every successful Generate. The banner condition is simply `HomeType.UpdatedAt > LastGeneratedAt OR LastGeneratedAt IS NULL`.
+
+When the rule is edited, when users are added/removed, or when a HomeTypeOverride is changed, a **persistent banner** appears at the top of `/Admin/HomeTypes` for that HomeType:
 
 > ⚠ This HomeType has 12 users with HOME shifts generated through 2026-08-31. Your changes won't apply until you regenerate.
 >
 > [ Regenerate ]
 
-The banner does not auto-dismiss; it disappears only when the admin clicks Regenerate (and the regen succeeds).
+The banner does not auto-dismiss; it disappears only when the admin clicks Regenerate and the regen succeeds (which sets `LastGeneratedAt = now`). Adding/removing a user, editing a HomeTypeOverride, and editing the rule all set `UpdatedAt = now` so the banner naturally resurfaces.
+
+This adds one more migration: `AddLastGeneratedAtToHomeTypes`.
 
 ### 10.5 SignalR broadcast on Generate
 
-`HomeTypeService` gets `IHubContext<ShiftHub>` injected. After a successful Generate, the service broadcasts `shifts-{moleculeId}-{jobTypeId}` events for every (moleculeId, jobTypeId) pair affected by the generated rows. Open calendars hear the event and refetch.
+`HomeTypeService` gets `IHubContext<CalendarHub>` injected. After a successful Generate, the service broadcasts `shifts-{moleculeId}-{jobTypeId}` events for every (moleculeId, jobTypeId) pair affected by the generated rows. Open calendars hear the event and refetch.
 
 ## 11. X-button semantics on HOME chips
 
@@ -348,10 +369,19 @@ These are not new behaviour; they are gaps the new design closes:
 
 ### 13.1 Schema migrations
 
-- `AddSourceTimeOffRequestIdToShiftAssignments` — adds the nullable FK column and index.
+- `AddSourceTimeOffRequestIdToShiftAssignments` — adds the nullable FK column and index on `ShiftAssignments`.
+- `AddPrivateToTimeOffRequests` — adds `Private BIT NOT NULL DEFAULT 0` column to `TimeOffRequests` (backs §6.3 privacy escape).
+- `AddDualApprovalTrackingToTimeOffRequests` — adds `FirstApprovalActorId int NULL`, `FirstApprovalActedAt DateTime NULL`, `SecondApprovalActorId int NULL`, `SecondApprovalActedAt DateTime NULL` columns. FKs to Users; SetNull on delete (preserves history if approver deactivates).
 - `SeedHomePartialShiftTypes` — inserts `HOME_PM` and `HOME_AM` rows for every existing molecule that has a `HOME` row.
 - `AddMoleculeApprovalSettings` — creates the new table with default rows (DualApprovalDayThreshold = 7) for every existing molecule.
 - `RemoveHomeTypeDefaultTimes` — drops `DefaultStartTime` and `DefaultEndTime` columns from `HomeTypes`.
+- `AddLastGeneratedAtToHomeTypes` — adds `LastGeneratedAt DateTime NULL` to `HomeTypes` (backs §10.4 banner).
+
+### 13.1.1 Code-only changes (no migration)
+
+- Extend `RequestStatus` enum (in `Models/Support/Enums.cs`) with `PendingSecondApproval = 4` (preserving existing values: Pending=0, Approved=1, Declined=2, Canceled=3). Persisted as int — adding an enum value doesn't require a DDL migration; existing rows keep their current values.
+- Update `ShiftType.IsHome` (`[NotMapped]`) from `Key == KEY_HOME` to `Key == KEY_HOME || Key == KEY_HOME_PM || Key == KEY_HOME_AM`. Add the two new constants.
+- Update every existing `Key == KEY_HOME` literal across the codebase (per the audit: `BusyService.cs:102, 408-409`, `HomeTypeService.cs:275, 352, 359`, `AnalyticsService.cs:425`) to use `IsHome` instead — guarantees HOME_PM and HOME_AM inherit every existing exemption.
 
 ### 13.2 Data backfill
 
