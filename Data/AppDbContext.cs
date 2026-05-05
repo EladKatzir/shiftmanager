@@ -261,6 +261,18 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShiftAssignment>()
             .HasIndex(a => new { a.CompanyId, a.ShiftInstanceId, a.UserId }).IsUnique();
 
+        // HOME Unification: Link shifts to their source TimeOffRequest
+        modelBuilder.Entity<ShiftAssignment>()
+            .HasOne(sa => sa.SourceTimeOffRequest)
+            .WithMany()
+            .HasForeignKey(sa => sa.SourceTimeOffRequestId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ShiftAssignment>()
+            .HasIndex(sa => sa.SourceTimeOffRequestId)
+            .HasDatabaseName("IX_ShiftAssignments_SourceTimeOffRequestId")
+            .HasFilter("[SourceTimeOffRequestId] IS NOT NULL");
+
         // Multitenancy Phase 1: Add composite index for TimeOffRequests
         modelBuilder.Entity<TimeOffRequest>()
             .HasIndex(t => new { t.CompanyId, t.UserId, t.StartDate });

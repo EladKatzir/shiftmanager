@@ -30,6 +30,14 @@ public class ShiftAssignment : IBelongsToCompany
     [System.ComponentModel.DataAnnotations.MaxLength(500)]
     public string? Note { get; set; }
 
+    /// <summary>
+    /// Links this shift assignment to its source TimeOffRequest (vacation/after).
+    /// Set when materializing vacation or after shifts from approved requests.
+    /// Used for diff-and-sync when the request is canceled or dates change.
+    /// </summary>
+    public int? SourceTimeOffRequestId { get; set; }
+    public TimeOffRequest? SourceTimeOffRequest { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
