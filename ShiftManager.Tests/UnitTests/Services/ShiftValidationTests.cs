@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -64,7 +65,8 @@ public class ShiftValidationTests : IDisposable
 
         _service = new ShiftAssignmentService(
             _db, localizer.Object, logger, hierarchySettingsMock.Object,
-            auditLogService, configMock.Object, _configCacheMock.Object);
+            auditLogService, configMock.Object, _configCacheMock.Object,
+            BusyServiceMockFactory.Real(_db, configMock.Object, restHours: 8, weeklyCap: 56));
     }
 
     public void Dispose()

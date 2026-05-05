@@ -2706,7 +2706,7 @@
     <comment>Phase 18 - Notification message: {0}=dateRange</comment>
   </data>
   <data name="OnDutyTypeHakam" xml:space="preserve">
-    <value>חק״מכו</value>
+    <value>חק"מ</value>
     <comment>Phase 18 - On-Duty type name</comment>
   </data>
   <data name="OnDutyTypeLead" xml:space="preserve">
@@ -14899,6 +14899,86 @@
   <data name="Grant_EditOnCallCalendar_Desc" xml:space="preserve"><value>מאפשר הקצאה, ביטול הקצאה והוספת הערות בלוח התורנויות — עריכה משותפת לכל המורשים לתורנות חק"ם.</value></data>
   <data name="Grant_EditAreaCalendarPalette" xml:space="preserve"><value>עריכת פלטת לוח שנה למרחב</value></data>
   <data name="Grant_EditAreaCalendarPalette_Desc" xml:space="preserve"><value>מאפשר התאמה אישית של צבעי משמרות / תורנות / מטלות / חופשות עבור המרחב.</value></data>
+  <!-- Justice Analytics — added 2026-05-03 -->
+  <data name="Grant_ViewJusticeTable" xml:space="preserve"><value>צפייה בניתוח צדק העומס</value></data>
+  <data name="Grant_ViewJusticeTable_Desc" xml:space="preserve"><value>מאפשר צפייה בעמוד צדק העומס שמשווה את חלוקת העומס בין משתמשים, חברות ומולקולות.</value></data>
+  <data name="Grant_EditJusticeTargets" xml:space="preserve"><value>עריכת יעדי צדק</value></data>
+  <data name="Grant_EditJusticeTargets_Desc" xml:space="preserve"><value>מאפשר עריכת יעדי הציפייה לפי (סוג עבודה, היקף) שמזינים את חישוב הסטייה.</value></data>
+  <data name="Justice_PageTitle" xml:space="preserve"><value>צדק — חלוקת עומס</value></data>
+  <data name="Justice_Subtitle" xml:space="preserve"><value>תמיכה בקבלת החלטות לשיבוץ הוגן יותר בין משתמשים, חברות ומולקולות.</value></data>
+  <data name="Justice_Targets" xml:space="preserve"><value>יעדים</value></data>
+  <data name="Justice_Targets_ComingPhase2" xml:space="preserve"><value>חלון ההגדרות מגיע בשלב 2</value></data>
+  <data name="Justice_ExportCsv" xml:space="preserve"><value>ייצוא CSV</value></data>
+  <data name="Justice_Level" xml:space="preserve"><value>תצוגה</value></data>
+  <data name="Justice_Level_UsersInCompany" xml:space="preserve"><value>משתמשים בחברה</value></data>
+  <data name="Justice_Level_CompaniesInMolecule" xml:space="preserve"><value>חברות במולקולה</value></data>
+  <data name="Justice_Level_MoleculesInArea" xml:space="preserve"><value>מולקולות במרחב</value></data>
+  <data name="Justice_Pick_Company" xml:space="preserve"><value>חברה</value></data>
+  <data name="Justice_Pick_Molecule" xml:space="preserve"><value>מולקולה</value></data>
+  <data name="Justice_Pick_Area" xml:space="preserve"><value>מרחב</value></data>
+  <data name="Justice_Pick_None" xml:space="preserve"><value>(אין הרשאה)</value></data>
+  <data name="Justice_PeriodStart" xml:space="preserve"><value>מתאריך</value></data>
+  <data name="Justice_PeriodEnd" xml:space="preserve"><value>עד תאריך</value></data>
+  <data name="Justice_WorkType" xml:space="preserve"><value>סוג עבודה</value></data>
+  <data name="Justice_WorkType_All" xml:space="preserve"><value>הכול</value></data>
+  <data name="Justice_WorkType_Shift" xml:space="preserve"><value>משמרות</value></data>
+  <data name="Justice_WorkType_Chore" xml:space="preserve"><value>מטלות</value></data>
+  <data name="Justice_WorkType_OnDuty" xml:space="preserve"><value>תורנויות</value></data>
+  <data name="Justice_ExcludeExempt" xml:space="preserve"><value>אל תכלול משמרות בית / לא מחובר</value></data>
+  <data name="Justice_Apply" xml:space="preserve"><value>החל</value></data>
+  <data name="Justice_Verdict_Heading" xml:space="preserve"><value>פסק דין</value></data>
+  <data name="Justice_MostOver" xml:space="preserve"><value>העמוס ביותר</value></data>
+  <data name="Justice_MostUnder" xml:space="preserve"><value>הפחות עמוס</value></data>
+  <data name="Justice_None" xml:space="preserve"><value>אין</value></data>
+  <data name="Justice_Spread_Excellent" xml:space="preserve"><value>מצוין — מאוזן היטב</value></data>
+  <data name="Justice_Spread_Good" xml:space="preserve"><value>טוב — שונות מועטה</value></data>
+  <data name="Justice_Spread_Moderate" xml:space="preserve"><value>בינוני — לא אחיד</value></data>
+  <data name="Justice_Spread_Uneven" xml:space="preserve"><value>לא אחיד — דורש התייחסות</value></data>
+  <data name="Justice_Spread_Severe" xml:space="preserve"><value>חמור — חלוקה מחדש מיידית</value></data>
+  <data name="Justice_EquityRibbon_Aria" xml:space="preserve"><value>סרגל שוויון: כל פס מציג את חלקה של ישות אחת בעבודה שהושלמה; פסים שווים פירושם עומס מאוזן.</value></data>
+  <data name="Justice_Table_Heading" xml:space="preserve"><value>טבלת צדק</value></data>
+  <data name="Justice_Rows" xml:space="preserve"><value>שורות</value></data>
+  <data name="Justice_NothingToBalance" xml:space="preserve"><value>אין מה לאזן — עדיין לא הושלמה עבודה בהיקף זה.</value></data>
+  <data name="Justice_Col_Name" xml:space="preserve"><value>שם</value></data>
+  <data name="Justice_Col_Actual" xml:space="preserve"><value>בפועל</value></data>
+  <data name="Justice_Col_Expected" xml:space="preserve"><value>צפוי</value></data>
+  <data name="Justice_Col_Deviation" xml:space="preserve"><value>סטייה</value></data>
+  <data name="Justice_Col_Bar" xml:space="preserve"><value>פיזור</value></data>
+  <data name="Justice_NoTarget" xml:space="preserve"><value>אין יעד</value></data>
+  <data name="Justice_Empty_PickScope" xml:space="preserve"><value>בחרו היקף כדי להתחיל</value></data>
+  <data name="Justice_Empty_PickScope_Hint" xml:space="preserve"><value>בחרו רמה וישות מהמסננים למעלה לטעינת חלוקת העומס.</value></data>
+  <data name="Justice_Error_LoadFailed" xml:space="preserve"><value>טעינת נתוני הצדק נכשלה — נסו שוב או פנו למנהל המערכת.</value></data>
+  <!-- Justice in-context calendar drawer (Phase 2) — added 2026-05-04 -->
+  <data name="Justice_Panel_Button" xml:space="preserve"><value>צדק</value></data>
+  <data name="Justice_Panel_Title" xml:space="preserve"><value>צדק</value></data>
+  <data name="Justice_Panel_Close" xml:space="preserve"><value>סגור</value></data>
+  <data name="Justice_Panel_WhereToFocus" xml:space="preserve"><value>היכן להתמקד</value></data>
+  <data name="Justice_Panel_OpenFullView" xml:space="preserve"><value>פתח תצוגת צדק מלאה</value></data>
+  <data name="Justice_Panel_NoHoles" xml:space="preserve"><value>הכול מאויש — אין חורים לטיפול.</value></data>
+  <data name="Justice_Panel_NoHolesChores" xml:space="preserve"><value>למטלות אין חורים לאיוש — הן משובצות או טרם נוצרו.</value></data>
+  <data name="Justice_Panel_NoHolesOnDuty" xml:space="preserve"><value>לתורנויות אין חורים לאיוש — הן נוצרות עם משתמש או טרם תוכננו.</value></data>
+  <data name="Justice_Panel_Retry" xml:space="preserve"><value>נסה שוב</value></data>
+  <data name="Justice_Eligibility_VacationOverlap" xml:space="preserve"><value>חופפת לחופשה</value></data>
+  <!-- Phase 2b/2c — eligibility ranking + what-if preview (added 2026-05-05) -->
+  <data name="Justice_Panel_BackToOverview" xml:space="preserve"><value>חזור</value></data>
+  <data name="Justice_Panel_NoCandidates" xml:space="preserve"><value>אין מועמדים זמינים לחור זה.</value></data>
+  <data name="Justice_Panel_Blocked" xml:space="preserve"><value>חסום</value></data>
+  <data name="Justice_Panel_Spread" xml:space="preserve"><value>פיזור</value></data>
+  <data name="Justice_Panel_Actual" xml:space="preserve"><value>בפועל</value></data>
+  <data name="Justice_Panel_MakeItReal" xml:space="preserve"><value>הפוך למציאות</value></data>
+  <data name="Justice_Panel_Better" xml:space="preserve"><value>טוב יותר</value></data>
+  <data name="Justice_Panel_Worse" xml:space="preserve"><value>גרוע יותר</value></data>
+  <data name="Justice_Panel_Unchanged" xml:space="preserve"><value>ללא שינוי</value></data>
+  <data name="Justice_Panel_OpenOnCalendar" xml:space="preserve"><value>פתח את התא בלוח השנה לשיבוץ.</value></data>
+  <!-- Phase 2d — chore-form labels + onduty fallback (added 2026-05-05) -->
+  <data name="Justice_Panel_ChoreTypeLabel" xml:space="preserve"><value>סוג מטלה</value></data>
+  <data name="Justice_Panel_ChoreTypeNone" xml:space="preserve"><value>(ללא סוג)</value></data>
+  <data name="Justice_Panel_ChoreTitleLabel" xml:space="preserve"><value>כותרת המטלה</value></data>
+  <data name="Justice_Panel_ChoreTitlePlaceholder" xml:space="preserve"><value>כותרת…</value></data>
+  <data name="Justice_Panel_MissingDutyType" xml:space="preserve"><value>סוג תורנות לא זמין — פתח את התא בלוח השנה.</value></data>
+  <data name="Justice_Panel_LoadFailed" xml:space="preserve"><value>לא ניתן לטעון נתוני צדק.</value></data>
+  <data name="Justice_Panel_PreviewLoadFailed" xml:space="preserve"><value>לא ניתן לחשב תצוגה מקדימה.</value></data>
+  <data name="Justice_Panel_CandidatesLoadFailed" xml:space="preserve"><value>לא ניתן לטעון מועמדים.</value></data>
   <data name="AreaPalette_PreviewBadge_Morning" xml:space="preserve"><value>בוקר</value></data>
   <data name="AreaPalette_PreviewBadge_Afternoon" xml:space="preserve"><value>צהריים</value></data>
   <data name="AreaPalette_PreviewBadge_Night" xml:space="preserve"><value>לילה</value></data>
@@ -15182,4 +15262,39 @@
   <data name="FP_Recommend_Alert" xml:space="preserve"><value>כל קריאת alert() בפרודקשן ב-22 קבצים הוחלפה ב-window.FeedbackModal.show(type, msg). תוצאת grep ריקה מוכיחה שהמעבר הושלם.</value></data>
   <data name="FP_Recommend_Residual" xml:space="preserve"><value>ניקוי שאריות אפשרי: דפוס 8 (divs של התראות TempData מוטבעות ב-26 דפים) — עדיין לא עקבי, אבל קוסמטי, לא נכונות UX.</value></data>
   <data name="OwnerHub_FeedbackPreview" xml:space="preserve"><value>תצוגת משוב</value></data>
+  <data name="Conflict_BusyAtAssignment_WithTime" xml:space="preserve">
+    <value>המשתמש עסוק ב{0} בתאריך {1}, {2}</value>
+    <comment>{0}=resource label, {1}=date, {2}=time window</comment>
+  </data>
+  <data name="Conflict_BusyAtAssignment_AllDay" xml:space="preserve">
+    <value>המשתמש עסוק ב{0} בתאריך {1}</value>
+    <comment>{0}=resource label, {1}=date</comment>
+  </data>
+  <data name="Conflict_ProceedAnyway" xml:space="preserve">
+    <value>להמשיך בכל זאת?</value>
+  </data>
+  <data name="Conflict_Title_Warnings" xml:space="preserve">
+    <value>יש אזהרות לשיבוץ</value>
+  </data>
+  <data name="Conflict_Cancel" xml:space="preserve">
+    <value>ביטול</value>
+  </data>
+  <data name="Conflict_ProceedButton" xml:space="preserve">
+    <value>המשך בכל זאת</value>
+  </data>
+  <data name="Conflict_Resource_Shift" xml:space="preserve">
+    <value>משמרת {0}</value>
+  </data>
+  <data name="Conflict_Resource_Chore" xml:space="preserve">
+    <value>המטלה "{0}"</value>
+  </data>
+  <data name="Conflict_Resource_OnDuty" xml:space="preserve">
+    <value>{0} כוננות</value>
+  </data>
+  <data name="Conflict_Resource_Home" xml:space="preserve">
+    <value>יום בית</value>
+  </data>
+  <data name="Conflict_Resource_Vacation" xml:space="preserve">
+    <value>חופשה מאושרת</value>
+  </data>
 </root>

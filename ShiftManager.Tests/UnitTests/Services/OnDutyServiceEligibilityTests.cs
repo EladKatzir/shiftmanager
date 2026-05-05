@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -24,7 +25,7 @@ public class OnDutyServiceEligibilityTests : IDisposable
         _db = new AppDbContext(options);
         var mockFeatureFlagService = new Mock<IFeatureFlagService>();
         var mockGrantService = new Mock<IGrantService>();
-        _service = new OnDutyService(_db, null!, null!, mockGrantService.Object, NullLogger<OnDutyService>.Instance, mockFeatureFlagService.Object);
+        _service = new OnDutyService(_db, null!, null!, mockGrantService.Object, NullLogger<OnDutyService>.Instance, mockFeatureFlagService.Object, BusyServiceMockFactory.NoOp());
 
         // Seed test users with explicit Email values
         _db.Users.AddRange(

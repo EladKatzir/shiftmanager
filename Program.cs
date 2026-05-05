@@ -267,6 +267,7 @@ builder.Services.AddScoped<IOwnerCompanySelectorService, OwnerCompanySelectorSer
 builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>(); // ✅ PHASE 20: User preference service
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IJusticeService, JusticeService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IChoreService, ChoreService>();
@@ -375,6 +376,10 @@ builder.Services.AddScoped<IHierarchySettingsService, HierarchySettingsService>(
 
 // Shift Assignment Service — JobType/ShiftGrouping-aware assignment + validation
 builder.Services.AddScoped<IShiftAssignmentService, ShiftAssignmentService>();
+
+// Busy Service — single source of truth for "is user busy on date?" used by
+// shift, chore, on-duty, swap, and fill-range flows. See plan in docs/superpowers/specs.
+builder.Services.AddScoped<IBusyService, BusyService>();
 
 // Setup Task Service — onboarding/setup task tracking
 builder.Services.AddScoped<ISetupTaskService, SetupTaskService>();
@@ -1305,7 +1310,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Seed Owner user's grants - GODMODE: ALL 132 grants at Project level
+    // Seed Owner user's grants - GODMODE: ALL 134 grants at Project level
     var ownerUserForGrants = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Role == UserRole.Owner);
     if (ownerUserForGrants != null)
     {

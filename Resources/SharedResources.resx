@@ -2881,7 +2881,7 @@ Are you absolutely sure you want to delete this user?</value>
     <comment>Phase 18 - Notification message: {0}=dateRange</comment>
   </data>
   <data name="OnDutyTypeHakam" xml:space="preserve">
-    <value>Hakamco</value>
+    <value>Hakam</value>
     <comment>Phase 18 - On-Duty type name</comment>
   </data>
   <data name="OnDutyTypeLead" xml:space="preserve">
@@ -14933,6 +14933,86 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Grant_EditOnCallCalendar_Desc" xml:space="preserve"><value>Allows assigning, unassigning, and adding text notes on the On-Call calendar — collaborative editing for hakam-eligible users.</value></data>
   <data name="Grant_EditAreaCalendarPalette" xml:space="preserve"><value>Edit Area Calendar Palette</value></data>
   <data name="Grant_EditAreaCalendarPalette_Desc" xml:space="preserve"><value>Allows customizing the shift / on-duty / chore / vacation colors per area.</value></data>
+  <!-- Justice Analytics — added 2026-05-03 -->
+  <data name="Grant_ViewJusticeTable" xml:space="preserve"><value>View Justice Analytics</value></data>
+  <data name="Grant_ViewJusticeTable_Desc" xml:space="preserve"><value>Allows viewing the Justice analytics page that compares workload distribution across users, companies, and molecules.</value></data>
+  <data name="Grant_EditJusticeTargets" xml:space="preserve"><value>Edit Justice Targets</value></data>
+  <data name="Grant_EditJusticeTargets_Desc" xml:space="preserve"><value>Allows editing the configurable per-(work-type, scope) expected counts that drive the Justice deviation math.</value></data>
+  <data name="Justice_PageTitle" xml:space="preserve"><value>Justice — Workload Distribution</value></data>
+  <data name="Justice_Subtitle" xml:space="preserve"><value>Decision support for fairer assignments across users, companies, and molecules.</value></data>
+  <data name="Justice_Targets" xml:space="preserve"><value>Targets</value></data>
+  <data name="Justice_Targets_ComingPhase2" xml:space="preserve"><value>Settings modal lands in Phase 2</value></data>
+  <data name="Justice_ExportCsv" xml:space="preserve"><value>Export CSV</value></data>
+  <data name="Justice_Level" xml:space="preserve"><value>View</value></data>
+  <data name="Justice_Level_UsersInCompany" xml:space="preserve"><value>Users in a company</value></data>
+  <data name="Justice_Level_CompaniesInMolecule" xml:space="preserve"><value>Companies in a molecule</value></data>
+  <data name="Justice_Level_MoleculesInArea" xml:space="preserve"><value>Molecules in an area</value></data>
+  <data name="Justice_Pick_Company" xml:space="preserve"><value>Company</value></data>
+  <data name="Justice_Pick_Molecule" xml:space="preserve"><value>Molecule</value></data>
+  <data name="Justice_Pick_Area" xml:space="preserve"><value>Area</value></data>
+  <data name="Justice_Pick_None" xml:space="preserve"><value>(none accessible)</value></data>
+  <data name="Justice_PeriodStart" xml:space="preserve"><value>From</value></data>
+  <data name="Justice_PeriodEnd" xml:space="preserve"><value>To</value></data>
+  <data name="Justice_WorkType" xml:space="preserve"><value>Work type</value></data>
+  <data name="Justice_WorkType_All" xml:space="preserve"><value>All</value></data>
+  <data name="Justice_WorkType_Shift" xml:space="preserve"><value>Shifts</value></data>
+  <data name="Justice_WorkType_Chore" xml:space="preserve"><value>Chores</value></data>
+  <data name="Justice_WorkType_OnDuty" xml:space="preserve"><value>On-Duty</value></data>
+  <data name="Justice_ExcludeExempt" xml:space="preserve"><value>Exclude HOME / OFFLINE shifts</value></data>
+  <data name="Justice_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="Justice_Verdict_Heading" xml:space="preserve"><value>Verdict</value></data>
+  <data name="Justice_MostOver" xml:space="preserve"><value>Most over-loaded</value></data>
+  <data name="Justice_MostUnder" xml:space="preserve"><value>Most under-loaded</value></data>
+  <data name="Justice_None" xml:space="preserve"><value>None</value></data>
+  <data name="Justice_Spread_Excellent" xml:space="preserve"><value>Excellent — well balanced</value></data>
+  <data name="Justice_Spread_Good" xml:space="preserve"><value>Good — minor variation</value></data>
+  <data name="Justice_Spread_Moderate" xml:space="preserve"><value>Moderate — uneven</value></data>
+  <data name="Justice_Spread_Uneven" xml:space="preserve"><value>Uneven — needs attention</value></data>
+  <data name="Justice_Spread_Severe" xml:space="preserve"><value>Severe — redistribute now</value></data>
+  <data name="Justice_EquityRibbon_Aria" xml:space="preserve"><value>Equity ribbon: each segment shows one entity's share of completed work; even segments mean balanced workload.</value></data>
+  <data name="Justice_Table_Heading" xml:space="preserve"><value>Justice Table</value></data>
+  <data name="Justice_Rows" xml:space="preserve"><value>rows</value></data>
+  <data name="Justice_NothingToBalance" xml:space="preserve"><value>Nothing to balance — no completed work in this scope yet.</value></data>
+  <data name="Justice_Col_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Justice_Col_Actual" xml:space="preserve"><value>Actual</value></data>
+  <data name="Justice_Col_Expected" xml:space="preserve"><value>Expected</value></data>
+  <data name="Justice_Col_Deviation" xml:space="preserve"><value>Deviation</value></data>
+  <data name="Justice_Col_Bar" xml:space="preserve"><value>Distribution</value></data>
+  <data name="Justice_NoTarget" xml:space="preserve"><value>no target</value></data>
+  <data name="Justice_Empty_PickScope" xml:space="preserve"><value>Pick a scope to begin</value></data>
+  <data name="Justice_Empty_PickScope_Hint" xml:space="preserve"><value>Choose a level and an entity from the filters above to load workload distribution.</value></data>
+  <data name="Justice_Error_LoadFailed" xml:space="preserve"><value>Couldn't load Justice data — please try again or contact an administrator.</value></data>
+  <!-- Justice in-context calendar drawer (Phase 2) — added 2026-05-04 -->
+  <data name="Justice_Panel_Button" xml:space="preserve"><value>Justice</value></data>
+  <data name="Justice_Panel_Title" xml:space="preserve"><value>Justice</value></data>
+  <data name="Justice_Panel_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Justice_Panel_WhereToFocus" xml:space="preserve"><value>Where to focus</value></data>
+  <data name="Justice_Panel_OpenFullView" xml:space="preserve"><value>Open full Justice view</value></data>
+  <data name="Justice_Panel_NoHoles" xml:space="preserve"><value>Everything's filled — no holes to focus on.</value></data>
+  <data name="Justice_Panel_NoHolesChores" xml:space="preserve"><value>Chores have no unfilled holes — they're either assigned or not yet created.</value></data>
+  <data name="Justice_Panel_NoHolesOnDuty" xml:space="preserve"><value>On-duty has no unfilled holes — assignments are either created with a user or not yet planned.</value></data>
+  <data name="Justice_Panel_Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="Justice_Eligibility_VacationOverlap" xml:space="preserve"><value>Vacation overlap</value></data>
+  <!-- Phase 2b/2c — eligibility ranking + what-if preview (added 2026-05-05) -->
+  <data name="Justice_Panel_BackToOverview" xml:space="preserve"><value>Back</value></data>
+  <data name="Justice_Panel_NoCandidates" xml:space="preserve"><value>No eligible candidates for this hole.</value></data>
+  <data name="Justice_Panel_Blocked" xml:space="preserve"><value>Blocked</value></data>
+  <data name="Justice_Panel_Spread" xml:space="preserve"><value>Spread</value></data>
+  <data name="Justice_Panel_Actual" xml:space="preserve"><value>Actual</value></data>
+  <data name="Justice_Panel_MakeItReal" xml:space="preserve"><value>Make it real</value></data>
+  <data name="Justice_Panel_Better" xml:space="preserve"><value>better</value></data>
+  <data name="Justice_Panel_Worse" xml:space="preserve"><value>worse</value></data>
+  <data name="Justice_Panel_Unchanged" xml:space="preserve"><value>unchanged</value></data>
+  <data name="Justice_Panel_OpenOnCalendar" xml:space="preserve"><value>Open this cell on the calendar to assign.</value></data>
+  <!-- Phase 2d — chore-form labels + onduty fallback (added 2026-05-05) -->
+  <data name="Justice_Panel_ChoreTypeLabel" xml:space="preserve"><value>Chore Type</value></data>
+  <data name="Justice_Panel_ChoreTypeNone" xml:space="preserve"><value>(no type)</value></data>
+  <data name="Justice_Panel_ChoreTitleLabel" xml:space="preserve"><value>Chore Title</value></data>
+  <data name="Justice_Panel_ChoreTitlePlaceholder" xml:space="preserve"><value>Title…</value></data>
+  <data name="Justice_Panel_MissingDutyType" xml:space="preserve"><value>Duty type unavailable — open this cell on the calendar.</value></data>
+  <data name="Justice_Panel_LoadFailed" xml:space="preserve"><value>Couldn't load Justice data.</value></data>
+  <data name="Justice_Panel_PreviewLoadFailed" xml:space="preserve"><value>Couldn't compute preview.</value></data>
+  <data name="Justice_Panel_CandidatesLoadFailed" xml:space="preserve"><value>Couldn't load candidates.</value></data>
   <data name="AreaPalette_PreviewBadge_Morning" xml:space="preserve"><value>Morning</value></data>
   <data name="AreaPalette_PreviewBadge_Afternoon" xml:space="preserve"><value>Afternoon</value></data>
   <data name="AreaPalette_PreviewBadge_Night" xml:space="preserve"><value>Night</value></data>
@@ -15217,4 +15297,42 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="FP_Recommend_Alert" xml:space="preserve"><value>Every production alert() call across 22 files (JavaScript and Razor inline scripts) has been replaced with window.FeedbackModal.show(type, msg). The zero-match grep proves the migration is complete.</value></data>
   <data name="FP_Recommend_Residual" xml:space="preserve"><value>Residual cleanup worth considering: Pattern 8 (inline TempData alert divs in 26 pages) — still inconsistent, but cosmetic, not UX-correctness.</value></data>
   <data name="OwnerHub_FeedbackPreview" xml:space="preserve"><value>Feedback Preview</value></data>
+  <data name="Conflict_BusyAtAssignment_WithTime" xml:space="preserve">
+    <value>User is busy at {0} on {1}, {2}</value>
+    <comment>{0}=resource label, {1}=date, {2}=time window. Used to compose warning rows in FeedbackModal.confirm.</comment>
+  </data>
+  <data name="Conflict_BusyAtAssignment_AllDay" xml:space="preserve">
+    <value>User is busy at {0} on {1}</value>
+    <comment>{0}=resource label, {1}=date. Used for all-day resources (chores, on-duty, vacation, home).</comment>
+  </data>
+  <data name="Conflict_ProceedAnyway" xml:space="preserve">
+    <value>Proceed anyway?</value>
+  </data>
+  <data name="Conflict_Title_Warnings" xml:space="preserve">
+    <value>Assignment has warnings</value>
+  </data>
+  <data name="Conflict_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Conflict_ProceedButton" xml:space="preserve">
+    <value>Proceed anyway</value>
+  </data>
+  <data name="Conflict_Resource_Shift" xml:space="preserve">
+    <value>the shift {0}</value>
+    <comment>{0}=shift type name (e.g., Morning Shift)</comment>
+  </data>
+  <data name="Conflict_Resource_Chore" xml:space="preserve">
+    <value>the chore "{0}"</value>
+    <comment>{0}=chore title</comment>
+  </data>
+  <data name="Conflict_Resource_OnDuty" xml:space="preserve">
+    <value>{0} on-duty</value>
+    <comment>{0}=on-duty type name (e.g., Hakam)</comment>
+  </data>
+  <data name="Conflict_Resource_Home" xml:space="preserve">
+    <value>home day</value>
+  </data>
+  <data name="Conflict_Resource_Vacation" xml:space="preserve">
+    <value>approved vacation</value>
+  </data>
 </root>

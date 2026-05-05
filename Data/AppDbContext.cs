@@ -50,6 +50,10 @@ public class AppDbContext : DbContext
     public DbSet<HomeType> HomeTypes => Set<HomeType>();
     public DbSet<HomeTypeOverride> HomeTypeOverrides => Set<HomeTypeOverride>();
 
+    // Justice Analytics (2026-05-03): configurable per-(work-type, scope) workload targets
+    // for the Analytics page. CompanyId nullable; tenant filter follows EmailConfig pattern.
+    public DbSet<JusticeTarget> JusticeTargets => Set<JusticeTarget>();
+
     // Language Management (tenant-scoped)
     public DbSet<CompanyLanguageSettings> CompanyLanguageSettings => Set<CompanyLanguageSettings>();
     public DbSet<CompanyLocalizationOverride> CompanyLocalizationOverrides => Set<CompanyLocalizationOverride>();
@@ -94,7 +98,7 @@ public class AppDbContext : DbContext
     public DbSet<ShiftGroupingCompany> ShiftGroupingCompanies => Set<ShiftGroupingCompany>();
     public DbSet<ShiftGroupingJobType> ShiftGroupingJobTypes => Set<ShiftGroupingJobType>();
 
-    // Grant System (132 built-in grants as of 2026-04-15, 12 role templates)
+    // Grant System (134 built-in grants as of 2026-05-03, 12 role templates)
     public DbSet<GrantType> GrantTypes => Set<GrantType>();
     public DbSet<Grant> Grants => Set<Grant>();
     public DbSet<RoleTemplate> RoleTemplates => Set<RoleTemplate>();
@@ -664,6 +668,11 @@ public class AppDbContext : DbContext
 
             // EmailConfig: custom filter includes BOTH global (CompanyId = null) AND tenant-scoped configs
             modelBuilder.Entity<EmailConfig>()
+                .HasQueryFilter(e => e.CompanyId == null || e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            // JusticeTarget: same pattern as EmailConfig — Global/Area/Molecule rows have CompanyId = null
+            // and must remain visible to every tenant; Company-scoped overrides match the active tenant.
+            modelBuilder.Entity<JusticeTarget>()
                 .HasQueryFilter(e => e.CompanyId == null || e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             modelBuilder.Entity<Feedback>()
@@ -1726,6 +1735,34 @@ public class AppDbContext : DbContext
             b.Property(p => p.Chore).HasMaxLength(7);
             b.Property(p => p.Vacation).HasMaxLength(7);
         });
+
+        // ============================================
+        // Justice Analytics (2026-05-03)
+        // ============================================
+        // JusticeTarget: configurable expected workload per (WorkType, ScopeKind, ScopeId).
+        // - Unique on the triple so settings upserts can rely on it.
+        // - CompanyId is intentionally optional; the query filter (added above when tenantResolver
+        //   is available) handles the "global row visible to every tenant" case.
+        // - decimal(7,2) gives us up to 99,999.99 expected items per period (more than enough).
+        modelBuilder.Entity<JusticeTarget>(b =>
+        {
+            b.HasIndex(t => new { t.WorkType, t.ScopeKind, t.ScopeId }).IsUnique();
+            b.HasIndex(t => new { t.ScopeKind, t.ScopeId });
+            b.Property(t => t.ExpectedCount).HasPrecision(7, 2);
+            b.Property(t => t.Note).HasMaxLength(200);
+        });
+
+        // Justice indexes on existing tables — added 2026-05-03 to support cross-molecule
+        // / cross-area workload aggregation queries.
+        // OnDuty is a global table (no CompanyId, no query filter); these indexes support the
+        // per-user and date-range aggregations the Justice Service runs.
+        modelBuilder.Entity<OnDuty>()
+            .HasIndex(od => new { od.Date, od.UserId });
+        modelBuilder.Entity<OnDuty>()
+            .HasIndex(od => new { od.Date, od.CanceledAt });
+        // ShiftInstance has no MoleculeId column (molecule scoping happens via ShiftType.MoleculeId
+        // join or via a list of CompanyIds in the molecule). The existing (CompanyId, WorkDate) index
+        // already covers the dominant query path. No new ShiftInstance index needed for Phase 1.
 
         base.OnModelCreating(modelBuilder);
     }

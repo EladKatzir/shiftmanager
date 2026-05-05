@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Api.Dto;
+using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services.Api;
 
@@ -13,12 +14,32 @@ public class ChoreApiService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<ChoreApiService> _logger;
+    private readonly IBusyService _busyService;
 
-    public ChoreApiService(AppDbContext context, ILogger<ChoreApiService> logger)
+    public ChoreApiService(AppDbContext context, ILogger<ChoreApiService> logger, IBusyService busyService)
     {
         _context = context;
         _logger = logger;
+        _busyService = busyService;
     }
+
+    // V1 callers (external integrators) have historically received English-language conflict
+    // strings. The unified BusyService returns stable Keys instead. Map known keys back to the
+    // V1 strings to keep backward-compat for existing API consumers; fall through to the key
+    // for any new severity-policy outcomes V1 hadn't seen before.
+    private static string MapBusyKeyToV1Message(string key) => key switch
+    {
+        "USER_NOT_FOUND"        => "User not found",
+        "USER_INACTIVE"         => "User is inactive",
+        "USER_NOT_IN_MOLECULE"  => "User is not in this molecule",
+        "CHORE_CONFLICT"        => "User already has an active chore on this date",
+        "DUPLICATE_CHORE"       => "User already has an active chore on this date",
+        "SHIFT_EXISTS_CONFLICT" => "User already has a shift assignment on this date. Chores and shifts are mutually exclusive.",
+        "ONDUTY_CONFLICT"       => "User already has an on-duty assignment on this date",
+        "VACATION_CONFLICT"     => "User is on approved vacation on this date",
+        "PAST_DATE"             => "Cannot create chore for a past date",
+        _ => key
+    };
 
     /// <summary>
     /// Lists chores with pagination and filtering.
@@ -135,29 +156,39 @@ public class ChoreApiService
             return (null, "Title is required");
         }
 
-        // Check for conflict with existing shift assignment on the same day
-        var hasShiftOnDate = await _context.ShiftAssignments
-            .Include(a => a.ShiftInstance)
-            .AnyAsync(a => a.UserId == dto.UserId &&
-                          a.ShiftInstance.WorkDate == date &&
-                          a.CompanyId == companyId);
-
-        if (hasShiftOnDate)
+        // Resolve the user's molecule so BusyService can run its cross-tenant predicate.
+        // Pre-refactor, V1's inline checks were tenant-scoped — silently missing conflicts
+        // in sibling companies of the same molecule. BusyService closes that gap.
+        var company = await _context.Companies
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+        if (company == null)
         {
-            return (null, "User already has a shift assignment on this date. Chores and shifts are mutually exclusive.");
+            return (null, "Company not found");
+        }
+        if (!company.MoleculeId.HasValue)
+        {
+            // Misconfigured company — busy detection requires a molecule for cross-tenant scope.
+            return (null, "Company is not assigned to a molecule");
         }
 
-        // Check for existing active chore on the same day
-        var existingChore = await _context.Chores
-            .Where(c => c.CompanyId == companyId &&
-                       c.UserId == dto.UserId &&
-                       c.Date == date &&
-                       c.CanceledAt == null)
-            .FirstOrDefaultAsync();
+        var validation = await _busyService.ValidateAsync(
+            new BusyTarget.Chore(date, company.MoleculeId.Value),
+            userId: dto.UserId,
+            actorUserId: creatorId);
 
-        if (existingChore != null)
+        if (!validation.CanProceed)
         {
-            return (null, "User already has an active chore on this date");
+            var firstErr = validation.Errors.FirstOrDefault();
+            return (null, firstErr != null ? MapBusyKeyToV1Message(firstErr.Key) : "Validation failed");
+        }
+
+        // V1 has no override mechanism (no UI), so any warning blocks the create.
+        // External integrators that need to bypass should resolve the conflict before retry.
+        if (validation.Warnings.Count > 0)
+        {
+            var firstWarn = validation.Warnings.First();
+            return (null, MapBusyKeyToV1Message(firstWarn.Key));
         }
 
         // Create chore

@@ -588,6 +588,21 @@
                                 <span>@s.ToUser</span>
                             </div>
                         </div>
+
+                        @if (s.WarningsAtCreation.Count > 0)
+                        {
+                            <div class="request-reason" style="border-left-color: var(--warning); background: var(--warning-soft, #fff3cd);">
+                                <strong style="color: var(--warning);">
+                                    <icon name="alert-triangle" size="sm" /> <loc key="Conflict_Title_Warnings" />
+                                </strong>
+                                <ul style="margin: 0.5rem 0 0; padding-inline-start: 1.25rem;">
+                                    @foreach (var w in s.WarningsAtCreation)
+                                    {
+                                        <li style="font-size: 0.875rem;">@w</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
                     </div>
 
                     @if (Model.IsManager)

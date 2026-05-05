@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -145,7 +146,8 @@ public class MilitaryRankIntegrationTests : IDisposable
             _mockDirectorService.Object,
             _mockGrantService.Object,
             NullLogger<OnDutyService>.Instance,
-            _mockFeatureFlagService.Object);
+            _mockFeatureFlagService.Object,
+            BusyServiceMockFactory.NoOp());
     }
 
     #region Katzin (Lead) Assignment Tests

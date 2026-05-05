@@ -321,6 +321,17 @@ public static class GrantTypeSeed
         // ============================================
         grants.Add(new GrantType { Id = id++, Key = "EditAreaCalendarPalette", NameKey = "Grant_EditAreaCalendarPalette", DescriptionKey = "Grant_EditAreaCalendarPalette_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Area, IsSystem = true });
 
+        // ============================================
+        // Justice Analytics page (2026-05-03)
+        // ViewJusticeTable: read access to the workload-distribution analytics page.
+        // EditJusticeTargets: change the configurable per-(work-type, scope) expected counts that
+        // drive the deviation math. Owner/AreaAdmin only by default; the upsert handler still
+        // verifies scope-level authorization to prevent IDOR (e.g., a BRDirector setting an override
+        // for a company outside their molecule).
+        // ============================================
+        grants.Add(new GrantType { Id = id++, Key = "ViewJusticeTable", NameKey = "Grant_ViewJusticeTable", DescriptionKey = "Grant_ViewJusticeTable_Desc", Category = GrantCategory.Analytics, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+        grants.Add(new GrantType { Id = id++, Key = "EditJusticeTargets", NameKey = "Grant_EditJusticeTargets", DescriptionKey = "Grant_EditJusticeTargets_Desc", Category = GrantCategory.Analytics, DefaultScope = GrantScopeLevel.Project, IsSystem = true });
+
         return grants;
     }
 }

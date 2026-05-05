@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -43,7 +44,7 @@ public class ShiftAssignmentServiceTests : IDisposable
         var configMock = new Mock<IConfiguration>();
         configMock.Setup(c => c["ApiKeyHmacSecret"]).Returns("test-hmac-secret-for-unit-tests");
         var configCacheMock = Mock.Of<IAppConfigCacheService>();
-        _service = new ShiftAssignmentService(_db, localizer, logger, hierarchySettingsServiceMock.Object, auditLogService, configMock.Object, configCacheMock);
+        _service = new ShiftAssignmentService(_db, localizer, logger, hierarchySettingsServiceMock.Object, auditLogService, configMock.Object, configCacheMock, BusyServiceMockFactory.Real(_db, configMock.Object, restHours: 11, weeklyCap: 48));
     }
 
     public void Dispose()

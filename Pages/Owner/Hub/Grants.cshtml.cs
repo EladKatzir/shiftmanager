@@ -15,7 +15,7 @@ namespace ShiftManager.Pages.Owner.Hub;
 /// Grant Management UI - Unified page for managing grant types, role templates, and user grants.
 /// Supports CanGive delegation with depth limiting.
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner grant management requires Grant:AdminAccess (all ~132 grants; exact count: _db.GrantTypes.CountAsync(gt => gt.IsActive))
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner grant management requires Grant:AdminAccess (all ~134 grants; exact count: _db.GrantTypes.CountAsync(gt => gt.IsActive))
 [Authorize(Policy = "Grant:AdminAccess")]
 public class GrantsModel : PageModel
 {

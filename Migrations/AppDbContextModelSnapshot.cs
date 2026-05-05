@@ -1781,6 +1781,51 @@ namespace ShiftManager.Migrations
                     b.ToTable("JobTypes");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.JusticeTarget", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("ExpectedCount")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PeriodKind")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ScopeId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ScopeKind")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("WorkType")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScopeKind", "ScopeId");
+
+                    b.HasIndex("WorkType", "ScopeKind", "ScopeId")
+                        .IsUnique();
+
+                    b.ToTable("JusticeTargets");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.MasterProgram", b =>
                 {
                     b.Property<int>("Id")
@@ -1954,7 +1999,11 @@ namespace ShiftManager.Migrations
 
                     b.HasIndex("Date");
 
+                    b.HasIndex("Date", "CanceledAt");
+
                     b.HasIndex("Date", "Type");
+
+                    b.HasIndex("Date", "UserId");
 
                     b.HasIndex("UserId", "Date");
 
@@ -2863,6 +2912,9 @@ namespace ShiftManager.Migrations
 
                     b.Property<int?>("ToUserId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("WarningsAtCreation")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

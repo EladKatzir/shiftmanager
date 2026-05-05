@@ -31,6 +31,7 @@ public class ChoresModel : PageModel
     private readonly ILogger<ChoresModel> _logger;
     private readonly ICalendarTextEntryService _textEntryService;
     private readonly IShiftCalendarService _calendarService;
+    private readonly IJusticeService _justiceService;
 
     public ChoresModel(
         AppDbContext db,
@@ -41,7 +42,8 @@ public class ChoresModel : PageModel
         IStringLocalizer<SharedResources> localizer,
         ILogger<ChoresModel> logger,
         ICalendarTextEntryService textEntryService,
-        IShiftCalendarService calendarService)
+        IShiftCalendarService calendarService,
+        IJusticeService justiceService)
     {
         _db = db;
         _choreService = choreService;
@@ -52,6 +54,7 @@ public class ChoresModel : PageModel
         _logger = logger;
         _textEntryService = textEntryService;
         _calendarService = calendarService;
+        _justiceService = justiceService;
     }
 
     // Query parameters
@@ -412,4 +415,263 @@ public class ChoresModel : PageModel
 
     private static string LocalizeChoreTypeName(ChoreType ct, bool isHebrew) =>
         isHebrew && !string.IsNullOrWhiteSpace(ct.NameHe) ? ct.NameHe : ct.NameEn ?? ct.DisplayName;
+
+    // ===============================================================================
+    // Justice analytics — in-context drawer (Phase 2)
+    // ===============================================================================
+
+    public async Task<IActionResult> OnGetJusticeAsync(CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+            return Forbid();
+
+        if (!MoleculeId.HasValue)
+            return new JsonResult(new { error = "no_scope" });
+
+        var allowedMoleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(currentUserId, "ViewJusticeTable");
+        if (!allowedMoleculeIds.Contains(MoleculeId.Value))
+            return Forbid();
+
+        // Period: 30-day window centered on the calendar's anchor.
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var anchor = today;
+        if (!string.IsNullOrEmpty(Start) && DateOnly.TryParse(Start, out var parsed)) anchor = parsed;
+        var periodStart = anchor.AddDays(-15);
+        var periodEnd = anchor.AddDays(15);
+
+        var query = new JusticeQuery(
+            Scope: JusticeScope.Molecule,
+            ScopeId: MoleculeId,
+            PeriodStart: periodStart,
+            PeriodEnd: periodEnd,
+            WorkType: JusticeWorkType.Chore,
+            ExcludeExemptShifts: false,                  // chores have no exempt analogue
+            Level: JusticeLevel.CompaniesInMolecule);
+
+        var view = await _justiceService.GetInContextViewAsync(query, ct);
+        return new JsonResult(BuildJusticeJson(view));
+    }
+
+    private object BuildJusticeJson(InContextJusticeViewModel view)
+    {
+        return new
+        {
+            query = new
+            {
+                scope = view.Query.Scope.ToString(),
+                scopeId = view.Query.ScopeId,
+                level = view.Query.Level.ToString(),
+                workType = view.Query.WorkType.ToString(),
+                periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd"),
+                periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd")
+            },
+            spreadIndex = view.SpreadIndex,
+            spreadSeverity = view.SpreadSeverity,
+            spreadLabel = _localizer[view.SpreadLabelKey].Value,
+            mostOver = view.MostOver is null ? null : new { name = view.MostOver.Name, deviationPercent = view.MostOver.DeviationPercent },
+            mostUnder = view.MostUnder is null ? null : new { name = view.MostUnder.Name, deviationPercent = view.MostUnder.DeviationPercent },
+            rows = view.Rows.Select(r => new { id = r.Id, name = r.Name, actual = r.Actual, expected = r.Expected, deviationPercent = r.DeviationPercent, band = r.Band.ToString() }),
+            maxRibbonValue = view.MaxRibbonValue,
+            whereToFocus = view.WhereToFocus.Select(h => new { kind = h.Kind, shiftInstanceId = h.ShiftInstanceId, date = h.Date.ToString("yyyy-MM-dd"), label = h.Label, deficit = h.Deficit, companyId = h.CompanyId, jobTypeId = h.JobTypeId, dutyTypeValue = h.DutyTypeValue, userId = h.UserId, moleculeId = MoleculeId }),
+            fullViewUrl = view.FullViewUrl,
+            noneLabel = _localizer["Justice_None"].Value,
+            noHolesLabel = _localizer["Justice_Panel_NoHolesChores"].Value
+        };
+    }
+
+    // Phase 2d helper: row IDs on chore/onduty calendars are prefixed strings ("user-42", "dutytype-0").
+    // The eligibility handler accepts the raw value to keep frontend semantics simple; this helper
+    // strips the prefix server-side and rejects mismatches with a 400 to prevent cross-row-kind probes.
+    private static bool TryParseRowId(string? raw, string expectedPrefix, out int id)
+    {
+        id = 0;
+        if (string.IsNullOrEmpty(raw)) return false;
+        var prefix = expectedPrefix + "-";
+        if (!raw.StartsWith(prefix, StringComparison.Ordinal)) return false;
+        return int.TryParse(raw.AsSpan(prefix.Length), out id);
+    }
+
+    /// <summary>
+    /// Phase 2d — JSON endpoint that ranks candidate users to fill a specific chore hole.
+    /// Inputs: <paramref name="rowId"/> is the Chore-calendar row identifier ("user-{userId}"),
+    /// <paramref name="date"/> is the target date.
+    /// SECURITY-AUDITED: MoleculeId is page-model-only — never accepted from query string here
+    /// because that would be an IDOR vector (caller could probe unauthorized molecules).
+    /// </summary>
+    public async Task<IActionResult> OnGetJusticeEligibilityAsync(string? rowId, string? date, CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+            return Forbid();
+
+        if (!MoleculeId.HasValue)
+            return new JsonResult(new { error = "no_scope" });
+
+        var allowedMoleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(currentUserId, "ViewJusticeTable");
+        if (!allowedMoleculeIds.Contains(MoleculeId.Value))
+            return Forbid();
+
+        if (!TryParseRowId(rowId, "user", out var targetUserId))
+            return BadRequest(new { error = "invalid_row_id" });
+
+        if (string.IsNullOrEmpty(date) || !DateOnly.TryParse(date, out var workDate))
+            return BadRequest(new { error = "invalid_date" });
+
+        // Defense-in-depth: verify the target user's company is in this molecule.
+        // SECURITY-AUDITED: Chore.MoleculeId is direct on the entity; this join confirms the
+        // candidate user belongs to the requested molecule. MoleculeId is sourced from the page
+        // model — never from user input.
+        var targetCompanyId = await _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.Id == targetUserId)
+            .Select(u => (int?)u.CompanyId)
+            .FirstOrDefaultAsync(ct);
+        if (targetCompanyId is null) return BadRequest(new { error = "invalid_user" });
+
+        var targetMoleculeId = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.Id == targetCompanyId.Value)
+            .Select(c => c.MoleculeId)
+            .FirstOrDefaultAsync(ct);
+        if (targetMoleculeId != MoleculeId.Value)
+            return Forbid();
+
+        DateOnly periodStart, periodEnd;
+        ResolveJusticePeriod(out periodStart, out periodEnd);
+
+        var parentScope = new JusticeQuery(
+            Scope: JusticeScope.Company,
+            ScopeId: targetCompanyId.Value,
+            PeriodStart: periodStart,
+            PeriodEnd: periodEnd,
+            WorkType: JusticeWorkType.Chore,
+            ExcludeExemptShifts: false,
+            Level: JusticeLevel.UsersInCompany);
+
+        var hole = new HoleSelector(
+            Kind: "chore",
+            ShiftInstanceId: null,
+            Date: workDate,
+            CompanyId: targetCompanyId.Value,
+            JobTypeId: null,
+            DutyTypeValue: null,
+            MoleculeId: MoleculeId.Value,
+            ParentScope: parentScope);
+
+        var result = await _justiceService.GetEligibleCandidatesAsync(hole, ct);
+        return new JsonResult(BuildChoreEligibilityJson(result, workDate, targetUserId));
+    }
+
+    /// <summary>
+    /// Phase 2d — JSON endpoint previewing impact of a hypothetical chore assignment.
+    /// </summary>
+    public async Task<IActionResult> OnGetJusticePreviewAsync(int userId, string? date, CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+            return Forbid();
+
+        if (!MoleculeId.HasValue)
+            return new JsonResult(new { error = "no_scope" });
+
+        var allowedMoleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(currentUserId, "ViewJusticeTable");
+        if (!allowedMoleculeIds.Contains(MoleculeId.Value))
+            return Forbid();
+
+        if (string.IsNullOrEmpty(date) || !DateOnly.TryParse(date, out var workDate))
+            return BadRequest(new { error = "invalid_date" });
+
+        var targetCompanyId = await _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.Id == userId)
+            .Select(u => (int?)u.CompanyId)
+            .FirstOrDefaultAsync(ct);
+        if (targetCompanyId is null) return BadRequest(new { error = "invalid_user" });
+
+        var targetMoleculeId = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.Id == targetCompanyId.Value)
+            .Select(c => c.MoleculeId)
+            .FirstOrDefaultAsync(ct);
+        if (targetMoleculeId != MoleculeId.Value)
+            return Forbid();
+
+        DateOnly periodStart, periodEnd;
+        ResolveJusticePeriod(out periodStart, out periodEnd);
+
+        var parentScope = new JusticeQuery(
+            Scope: JusticeScope.Company,
+            ScopeId: targetCompanyId.Value,
+            PeriodStart: periodStart,
+            PeriodEnd: periodEnd,
+            WorkType: JusticeWorkType.Chore,
+            ExcludeExemptShifts: false,
+            Level: JusticeLevel.UsersInCompany);
+
+        var hole = new HoleSelector(
+            Kind: "chore",
+            ShiftInstanceId: null,
+            Date: workDate,
+            CompanyId: targetCompanyId.Value,
+            JobTypeId: null,
+            DutyTypeValue: null,
+            MoleculeId: MoleculeId.Value,
+            ParentScope: parentScope);
+
+        var preview = await _justiceService.PreviewImpactAsync(new SimulatedAssignment(userId, hole), ct);
+        return new JsonResult(BuildPreviewJson(preview));
+    }
+
+    private void ResolveJusticePeriod(out DateOnly start, out DateOnly end)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var anchor = today;
+        if (!string.IsNullOrEmpty(Start) && DateOnly.TryParse(Start, out var parsed)) anchor = parsed;
+        start = anchor.AddDays(-15);
+        end = anchor.AddDays(15);
+    }
+
+    private object BuildChoreEligibilityJson(EligibleCandidatesViewModel result, DateOnly date, int targetUserId)
+    {
+        return new
+        {
+            kind = "chore",
+            date = date.ToString("yyyy-MM-dd"),
+            moleculeId = MoleculeId,
+            targetUserId,
+            candidates = result.Candidates.Select(c => new
+            {
+                userId = c.UserId,
+                displayName = c.DisplayName,
+                avatarUrl = c.AvatarUrl,
+                actual = c.Actual,
+                expected = c.Expected,
+                deviationPercent = c.DeviationPercent,
+                band = c.Band.ToString(),
+                isHardBlocked = c.Eligibility.IsHardBlocked,
+                warnings = c.Eligibility.WarningKeys
+            }),
+            hardBlocked = result.HardBlocked.Select(c => new
+            {
+                userId = c.UserId,
+                displayName = c.DisplayName,
+                avatarUrl = c.AvatarUrl,
+                band = c.Band.ToString(),
+                hardBlockReason = c.Eligibility.HardBlockReason
+            })
+        };
+    }
+
+    private static object BuildPreviewJson(ImpactPreviewViewModel p) => new
+    {
+        spreadIndexBefore = p.SpreadIndexBefore,
+        spreadSeverityBefore = p.SpreadSeverityBefore,
+        spreadIndexAfter = p.SpreadIndexAfter,
+        spreadSeverityAfter = p.SpreadSeverityAfter,
+        candidateActualBefore = p.CandidateActualBefore,
+        candidateActualAfter = p.CandidateActualAfter,
+        candidateDeviationBefore = p.CandidateDeviationBefore,
+        candidateDeviationAfter = p.CandidateDeviationAfter
+    };
 }

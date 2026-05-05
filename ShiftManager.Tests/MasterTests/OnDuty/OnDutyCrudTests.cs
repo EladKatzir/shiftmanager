@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -51,7 +52,8 @@ public class OnDutyCrudTests : MasterTestBase
 
         return new OnDutyService(
             Db, httpContextMock, directorService,
-            grantMock.Object, logger, featureFlagMock.Object);
+            grantMock.Object, logger, featureFlagMock.Object,
+            BusyServiceMockFactory.Real(Db));
     }
 
     // ================================================================
@@ -66,7 +68,7 @@ public class OnDutyCrudTests : MasterTestBase
         var service = CreateOnDutyServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(50));
 
-        var (success, message, onDuty) = await service.CreateOnDutyAsync(
+        var (success, message, onDuty, _, _) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Hakam);
 
         success.Should().BeTrue(message);
@@ -88,7 +90,7 @@ public class OnDutyCrudTests : MasterTestBase
         var service = CreateOnDutyServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(51));
 
-        var (success, _, onDuty) = await service.CreateOnDutyAsync(
+        var (success, _, onDuty, _, _) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Lead);
 
         success.Should().BeTrue();
@@ -105,7 +107,7 @@ public class OnDutyCrudTests : MasterTestBase
         var service = CreateOnDutyServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(52));
 
-        var (success, _, onDuty) = await service.CreateOnDutyAsync(
+        var (success, _, onDuty, _, _) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Hakam, notes: "Special instructions");
 
         success.Should().BeTrue();
@@ -126,7 +128,7 @@ public class OnDutyCrudTests : MasterTestBase
         var service = CreateOnDutyServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(53));
 
-        var (_, _, onDuty) = await service.CreateOnDutyAsync(
+        var (_, _, onDuty, _, _) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Hakam);
         TrackEntity(onDuty!);
 
@@ -147,7 +149,7 @@ public class OnDutyCrudTests : MasterTestBase
         var service = CreateOnDutyServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(54));
 
-        var (_, _, onDuty) = await service.CreateOnDutyAsync(
+        var (_, _, onDuty, _, _) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Hakam);
         TrackEntity(onDuty!);
 
@@ -169,7 +171,7 @@ public class OnDutyCrudTests : MasterTestBase
         var service = CreateOnDutyServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(55));
 
-        var (_, _, onDuty) = await service.CreateOnDutyAsync(
+        var (_, _, onDuty, _, _) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Hakam);
         TrackEntity(onDuty!);
 
@@ -179,39 +181,46 @@ public class OnDutyCrudTests : MasterTestBase
     }
 
     [Fact]
-    public async Task CreateOnDuty_DuplicateOnSameDateAndType_Fails()
+    public async Task CreateOnDuty_DuplicateOnSameDateAndType_ReturnsOverrideableWarning()
     {
+        // Severity policy (2026-05-03): same-resource duplicate is an overrideable warning
+        // (not a hard error). Without an override token the call returns BUSY_OVERRIDE_REQUIRED.
         var lead = GetTestUser("Tzafona", "Lead");
         var employee = GetTestUser("Tzafona", "Employee");
         var service = CreateOnDutyServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(56));
 
-        var (success1, _, onDuty1) = await service.CreateOnDutyAsync(
+        var (success1, _, onDuty1, _, _) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Hakam);
         TrackEntity(onDuty1!);
 
-        var (success2, message, _) = await service.CreateOnDutyAsync(
+        var (success2, message, _, validation, overrideToken) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Hakam);
 
         success1.Should().BeTrue();
         success2.Should().BeFalse();
-        message.Should().Contain("already has an active");
+        message.Should().Be("BUSY_OVERRIDE_REQUIRED");
+        validation!.Warnings.Should().Contain(w => w.Key == "DUPLICATE_ONDUTY");
+        overrideToken.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
-    public async Task CreateOnDuty_SameDateDifferentType_Succeeds()
+    public async Task CreateOnDuty_SameDateDifferentType_SucceedsWithForceAssign()
     {
+        // Per the 2026-05-03 severity policy, same-day cross-type assignments emit an
+        // overrideable ONDUTY_CONFLICT. forceAssign: true preserves the original
+        // "two on-duty types same day are allowed" intent under explicit operator override.
         var lead = GetTestUser("Tzafona", "Lead");
         var employee = GetTestUser("Tzafona", "Employee");
         var service = CreateOnDutyServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(57));
 
-        var (success1, _, onDuty1) = await service.CreateOnDutyAsync(
+        var (success1, _, onDuty1, _, _) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Hakam);
         TrackEntity(onDuty1!);
 
-        var (success2, _, onDuty2) = await service.CreateOnDutyAsync(
-            employee.Id, date, OnDutyType.Lead);
+        var (success2, _, onDuty2, _, _) = await service.CreateOnDutyAsync(
+            employee.Id, date, OnDutyType.Lead, forceAssign: true);
         if (onDuty2 != null) TrackEntity(onDuty2);
 
         success1.Should().BeTrue();
@@ -231,7 +240,7 @@ public class OnDutyCrudTests : MasterTestBase
             canManageHakam: false, canManageKatzin: false);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(58));
 
-        var (success, message, _) = await service.CreateOnDutyAsync(
+        var (success, message, _, _, _) = await service.CreateOnDutyAsync(
             employee.Id, date, OnDutyType.Hakam);
 
         success.Should().BeFalse();
@@ -245,10 +254,11 @@ public class OnDutyCrudTests : MasterTestBase
         var service = CreateOnDutyServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(59));
 
-        var (success, message, _) = await service.CreateOnDutyAsync(
+        var (success, message, _, validation, _) = await service.CreateOnDutyAsync(
             99999, date, OnDutyType.Hakam);
 
         success.Should().BeFalse();
-        message.Should().Contain("not found");
+        message.Should().Be("USER_NOT_FOUND");
+        validation!.Errors.Should().Contain(e => e.Key == "USER_NOT_FOUND");
     }
 }

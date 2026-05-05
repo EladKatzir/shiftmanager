@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -54,7 +55,8 @@ public class OnDutyServiceTests : IDisposable
             directorServiceMock.Object,
             _grantServiceMock.Object,
             loggerMock,
-            _featureFlagMock.Object);
+            _featureFlagMock.Object,
+            BusyServiceMockFactory.Real(_db));
 
         // Seed current user
         _db.Users.Add(new AppUser
@@ -123,7 +125,7 @@ public class OnDutyServiceTests : IDisposable
         await SeedAssigneeAsync(id: 1);
         var date = new DateOnly(2026, 3, 15);
 
-        var (success, message, onDuty) = await _service.CreateOnDutyAsync(
+        var (success, message, onDuty, _, _) = await _service.CreateOnDutyAsync(
             assigneeId: 1, date: date, type: OnDutyType.Hakam, notes: "Test notes");
 
         success.Should().BeTrue();
@@ -138,13 +140,14 @@ public class OnDutyServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateOnDutyAsync_DuplicateSameUserDateType_ReturnsError()
+    public async Task CreateOnDutyAsync_DuplicateSameUserDateType_ReturnsOverrideableWarning()
     {
+        // Severity policy (2026-05-03): same-resource duplicates are overrideable warnings
+        // — no override token supplied means the call returns BUSY_OVERRIDE_REQUIRED.
         SetupHakamGrantPermissions();
         await SeedAssigneeAsync(id: 1);
         var date = new DateOnly(2026, 3, 15);
 
-        // Seed existing on-duty
         _db.OnDuties.Add(new OnDuty
         {
             Id = 1, UserId = 1, Date = date, Type = OnDutyType.Hakam,
@@ -152,21 +155,27 @@ public class OnDutyServiceTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        var (success, message, _) = await _service.CreateOnDutyAsync(
+        var (success, message, _, validation, overrideToken) = await _service.CreateOnDutyAsync(
             assigneeId: 1, date: date, type: OnDutyType.Hakam);
 
         success.Should().BeFalse();
-        message.Should().Contain("already has an active");
+        message.Should().Be("BUSY_OVERRIDE_REQUIRED");
+        validation.Should().NotBeNull();
+        validation!.Warnings.Should().Contain(w => w.Key == "DUPLICATE_ONDUTY");
+        overrideToken.Should().NotBeNullOrEmpty("a token is issued so the caller can retry with override");
     }
 
     [Fact]
-    public async Task CreateOnDutyAsync_SameUserDifferentType_Succeeds()
+    public async Task CreateOnDutyAsync_SameUserDifferentType_SucceedsWithForceAssign()
     {
+        // Per the 2026-05-03 severity policy, ANY same-day on-duty (even of a different type)
+        // emits an overrideable ONDUTY_CONFLICT warning. The cross-type assignment is still
+        // allowed when the caller forces (forceAssign: true) — equivalent to the operator
+        // explicitly acknowledging the conflict in the UI.
         SetupAllDutyGrantPermissions();
         await SeedAssigneeAsync(id: 1, rank: MilitaryRank.Seren); // Officer rank for Lead
         var date = new DateOnly(2026, 3, 15);
 
-        // Existing Hakam
         _db.OnDuties.Add(new OnDuty
         {
             Id = 1, UserId = 1, Date = date, Type = OnDutyType.Hakam,
@@ -174,9 +183,8 @@ public class OnDutyServiceTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        // Create Lead on same date
-        var (success, _, onDuty) = await _service.CreateOnDutyAsync(
-            assigneeId: 1, date: date, type: OnDutyType.Lead);
+        var (success, _, onDuty, _, _) = await _service.CreateOnDutyAsync(
+            assigneeId: 1, date: date, type: OnDutyType.Lead, forceAssign: true);
 
         success.Should().BeTrue();
         onDuty.Should().NotBeNull();
@@ -198,7 +206,7 @@ public class OnDutyServiceTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        var (success, _, onDuty) = await _service.CreateOnDutyAsync(
+        var (success, _, onDuty, _, _) = await _service.CreateOnDutyAsync(
             assigneeId: 1, date: date, type: OnDutyType.Hakam);
 
         success.Should().BeTrue();
@@ -206,28 +214,32 @@ public class OnDutyServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateOnDutyAsync_InactiveAssignee_ReturnsError()
+    public async Task CreateOnDutyAsync_InactiveAssignee_ReturnsHardError()
     {
         SetupHakamGrantPermissions();
         await SeedAssigneeAsync(id: 1, isActive: false);
 
-        var (success, message, _) = await _service.CreateOnDutyAsync(
+        var (success, message, _, validation, _) = await _service.CreateOnDutyAsync(
             assigneeId: 1, date: new DateOnly(2026, 3, 15), type: OnDutyType.Hakam);
 
         success.Should().BeFalse();
-        message.Should().Contain("inactive");
+        message.Should().Be("USER_INACTIVE");
+        validation.Should().NotBeNull();
+        validation!.Errors.Should().Contain(e => e.Key == "USER_INACTIVE");
     }
 
     [Fact]
-    public async Task CreateOnDutyAsync_AssigneeNotFound_ReturnsError()
+    public async Task CreateOnDutyAsync_AssigneeNotFound_ReturnsHardError()
     {
         SetupHakamGrantPermissions();
 
-        var (success, message, _) = await _service.CreateOnDutyAsync(
+        var (success, message, _, validation, _) = await _service.CreateOnDutyAsync(
             assigneeId: 999, date: new DateOnly(2026, 3, 15), type: OnDutyType.Hakam);
 
         success.Should().BeFalse();
-        message.Should().Contain("not found");
+        message.Should().Be("USER_NOT_FOUND");
+        validation.Should().NotBeNull();
+        validation!.Errors.Should().Contain(e => e.Key == "USER_NOT_FOUND");
     }
 
     [Fact]
@@ -236,7 +248,7 @@ public class OnDutyServiceTests : IDisposable
         SetupHakamGrantPermissions(canManage: false);
         await SeedAssigneeAsync(id: 1);
 
-        var (success, message, _) = await _service.CreateOnDutyAsync(
+        var (success, message, _, _, _) = await _service.CreateOnDutyAsync(
             assigneeId: 1, date: new DateOnly(2026, 3, 15), type: OnDutyType.Hakam);
 
         success.Should().BeFalse();
@@ -249,7 +261,7 @@ public class OnDutyServiceTests : IDisposable
         SetupHakamGrantPermissions();
         await SeedAssigneeAsync(id: 1);
 
-        var (_, _, onDuty) = await _service.CreateOnDutyAsync(
+        var (_, _, onDuty, _, _) = await _service.CreateOnDutyAsync(
             assigneeId: 1, date: new DateOnly(2026, 3, 15), type: OnDutyType.Hakam,
             notes: "  some notes  ");
 

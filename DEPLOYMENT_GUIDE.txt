@@ -252,10 +252,24 @@ Kestrel:Endpoints:Http:Url
   â€¢ Change for network access: "http://*:5000"
   â€¢ Change port: "http://localhost:8080"
 
-Logging:LogLevel
+Serilog:MinimumLevel:Default
   â€¢ Default: "Information"
-  â€¢ Options: Trace, Debug, Information, Warning, Error, Critical
-  â€¢ Production: "Warning" or "Error"
+  â€¢ Options: Verbose, Debug, Information, Warning, Error, Fatal
+  â€¢ Production: "Information" (already set)
+  â€¢ NOTE: This project uses Serilog (configured via UseSerilog in Program.cs).
+    The Microsoft.Extensions.Logging "Logging" section is REPLACED at runtime
+    and any "Logging:LogLevel" entries are ignored. Edit "Serilog" instead.
+
+Serilog:MinimumLevel:Override:<CategoryName>
+  â€¢ Purpose: Quiet (or amplify) a specific log source without changing Default
+  â€¢ Matching: Longest-prefix match on SourceContext
+  â€¢ Examples:
+      "Microsoft": "Warning"                       (umbrella; deny by default)
+      "Microsoft.EntityFrameworkCore": "Warning"   (no per-query SQL spam)
+      "Microsoft.AspNetCore": "Warning"            (no routing/middleware noise)
+      "ShiftManager": "Information"                (your own app logs)
+  â€¢ To temporarily debug a category, raise just that one to "Debug"
+    (e.g. set "Microsoft.EntityFrameworkCore": "Information" to see SQL)
 
 ConnectionStrings:DefaultConnection
   â€¢ Default: "Data Source=app.db"

@@ -790,7 +790,19 @@
         var rowId = cellData.rowId;
         var date = cellData.date;
 
-        var qeConfirm = function (msg) {
+        var qeConfirm = function (warningsOrMessage) {
+            if (window.FeedbackModal && typeof window.FeedbackModal.confirm === 'function') {
+                var opts = Array.isArray(warningsOrMessage)
+                    ? { warnings: warningsOrMessage }
+                    : { message: typeof warningsOrMessage === 'string' ? warningsOrMessage : '' };
+                return window.FeedbackModal.confirm('warning', opts);
+            }
+            // Fallback to inline prompt if feedback-modal.js failed to load
+            var msg = typeof warningsOrMessage === 'string'
+                ? warningsOrMessage
+                : (Array.isArray(warningsOrMessage)
+                    ? warningsOrMessage.map(function (w) { return w.message || w.key || ''; }).join('\n')
+                    : '');
             return new Promise(function (resolve) {
                 showInlinePrompt(msg, resolve);
             });
@@ -812,7 +824,7 @@
                 var ctFilter = document.getElementById('choreTypeSelect');
                 var dcChoreTypeId = (ctFilter && ctFilter.value) ? parseInt(ctFilter.value, 10) : null;
                 closeInput();
-                var dcPromise = window.quickAddChore(date, dcUserId, item.text, false, dcChoreTypeId, qeConfirm);
+                var dcPromise = window.quickAddChore(date, dcUserId, item.text, dcChoreTypeId, qeConfirm);
                 if (dcPromise && typeof dcPromise.then === 'function') {
                     dcPromise.then(function () {
                         if (doAdvanceDC) advanceToNextCell(currentCellDC);
@@ -861,7 +873,10 @@
             promise = window.quickAddShift(parseInt(item.id, 10), date, parseInt(userId, 10), qeConfirm);
         } else if (item.type === 'duty') {
             var dutyUserId = rowId.replace('user-', '');
-            promise = window.quickAddOnDuty(date, parseInt(dutyUserId, 10), parseInt(item.id, 10), false, qeConfirm);
+            // Phase 2d: quickAddOnDuty signature now takes moleculeId before confirmHandler.
+            // Quick-entry has no molecule context; pass undefined so server falls back to
+            // assignee-company resolution.
+            promise = window.quickAddOnDuty(date, parseInt(dutyUserId, 10), parseInt(item.id, 10), undefined, qeConfirm);
         }
 
         if (promise && typeof promise.then === 'function') {
@@ -922,14 +937,26 @@
         var userId = rowId.replace('user-', '');
         var choreTypeId = choreTypeForTitle.id;
 
-        var qeConfirm = function (msg) {
+        var qeConfirm = function (warningsOrMessage) {
+            if (window.FeedbackModal && typeof window.FeedbackModal.confirm === 'function') {
+                var opts = Array.isArray(warningsOrMessage)
+                    ? { warnings: warningsOrMessage }
+                    : { message: typeof warningsOrMessage === 'string' ? warningsOrMessage : '' };
+                return window.FeedbackModal.confirm('warning', opts);
+            }
+            // Fallback to inline prompt if feedback-modal.js failed to load
+            var msg = typeof warningsOrMessage === 'string'
+                ? warningsOrMessage
+                : (Array.isArray(warningsOrMessage)
+                    ? warningsOrMessage.map(function (w) { return w.message || w.key || ''; }).join('\n')
+                    : '');
             return new Promise(function (resolve) {
                 showInlinePrompt(msg, resolve);
             });
         };
 
         choreTypeForTitle = null;
-        window.quickAddChore(date, parseInt(userId, 10), title, false, parseInt(choreTypeId, 10), qeConfirm);
+        window.quickAddChore(date, parseInt(userId, 10), title, parseInt(choreTypeId, 10), qeConfirm);
         closeInput();
     }
 

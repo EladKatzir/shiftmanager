@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
@@ -151,51 +152,68 @@ public class QuickAddOnDutyModel : PageModel
                 };
             }
 
-            // Attempt to create the on-duty assignment
+            // SECURITY-AUDITED: MoleculeId for token scoping. Authority order:
+            //   1) Explicit POST body field — Justice "Make it real" supplies this so the HMAC
+            //      override-token canonical (BusyService.TargetCanonical for OnDuty) matches what
+            //      Justice's eligibility handler signed. Without this, override flow silently fails
+            //      because the token's canonical includes moleculeId.
+            //   2) Assignee's company → molecule (fallback for callers without molecule context, e.g.
+            //      bottom sheet, quick entry).
+            // The moleculeId value does NOT control any data access — it is used ONLY as a
+            // token-scoping parameter for HMAC validation. The OnDuty entity has no MoleculeId column.
+            int? moleculeId = data.MoleculeId;
+            if (moleculeId == null)
+            {
+                try
+                {
+                    using var scope = HttpContext.RequestServices.CreateScope();
+                    var db = scope.ServiceProvider.GetRequiredService<ShiftManager.Data.AppDbContext>();
+                    var assignee = await db.Users.AsNoTracking()
+                        .Where(u => u.Id == data.AssigneeId)
+                        .Select(u => new { u.CompanyId })
+                        .FirstOrDefaultAsync();
+                    if (assignee != null)
+                    {
+                        var company = await db.Companies.AsNoTracking()
+                            .Where(c => c.Id == assignee.CompanyId)
+                            .Select(c => new { c.MoleculeId })
+                            .FirstOrDefaultAsync();
+                        moleculeId = company?.MoleculeId;
+                    }
+                }
+                catch { /* moleculeId stays null; OnDuty target accepts 0 */ }
+            }
+
+            // Attempt to create the on-duty assignment via unified envelope
             var result = await _onDutyService.CreateOnDutyAsync(
                 assigneeId: data.AssigneeId,
                 date: onDutyDate,
                 type: onDutyType,
                 notes: data.Notes,
-                forceAssign: data.ForceAssign);
+                forceAssign: false,
+                moleculeId: moleculeId,
+                overrideToken: data.OverrideToken);
 
             if (!result.Success)
             {
-                // Check if it's a vacation conflict
-                if (result.Message.StartsWith("VACATION_CONFLICT"))
+                if (result.Message == "BUSY_OVERRIDE_REQUIRED" && result.Validation != null)
                 {
-                    // Parse vacation details from message: "VACATION_CONFLICT|startDate|endDate|type"
-                    var parts = result.Message.Split('|');
-                    if (parts.Length == 4)
+                    return new JsonResult(new
                     {
-                        return new JsonResult(new
+                        success = false,
+                        requiresOverride = true,
+                        warnings = result.Validation.Warnings.Select(w => new
                         {
-                            success = false,
-                            conflictType = "vacation",
-                            message = _localizer["QuickAddOnDuty_VacationConflict"].Value,
-                            vacationStart = parts[1],
-                            vacationEnd = parts[2],
-                            vacationType = parts[3]
-                        })
-                        {
-                            StatusCode = 409 // Conflict
-                        };
-                    }
-                    else
-                    {
-                        return new JsonResult(new
-                        {
-                            success = false,
-                            conflictType = "vacation",
-                            message = _localizer["QuickAddOnDuty_VacationConflict"].Value
-                        })
-                        {
-                            StatusCode = 409 // Conflict
-                        };
-                    }
+                            w.Key,
+                            w.Message,
+                            Category = w.Category.ToString(),
+                            w.Detail
+                        }),
+                        overrideToken = result.OverrideToken
+                    });
                 }
-                // Check if it's an officer rank requirement error
-                else if (result.Message == "OFFICER_RANK_REQUIRED")
+
+                if (result.Message == "OFFICER_RANK_REQUIRED")
                 {
                     return new JsonResult(new
                     {
@@ -204,16 +222,14 @@ public class QuickAddOnDutyModel : PageModel
                         message = _localizer["QuickAddOnDuty_OfficerRankRequired"].Value
                     })
                     {
-                        StatusCode = 403 // Forbidden
+                        StatusCode = 403
                     };
                 }
-                else
+
+                return new JsonResult(new { success = false, message = result.Message })
                 {
-                    return new JsonResult(new { success = false, message = result.Message })
-                    {
-                        StatusCode = 400
-                    };
-                }
+                    StatusCode = 400
+                };
             }
 
             // Success - send notification and audit log
@@ -265,5 +281,10 @@ public class QuickAddOnDutyModel : PageModel
         public int OnDutyType { get; set; }
         public string? Notes { get; set; }
         public bool ForceAssign { get; set; } = false;
+        public string? OverrideToken { get; set; }
+
+        // Phase 2d: Justice "Make it real" supplies this so the override token canonical matches.
+        // Optional for non-Justice callers — they fall back to assignee-company resolution.
+        public int? MoleculeId { get; set; }
     }
 }

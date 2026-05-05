@@ -1,230 +1,306 @@
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
-using ShiftManager.Models.Analytics;
-using ShiftManager.Models.Support;
+using ShiftManager.Models;
 using ShiftManager.Resources;
 using ShiftManager.Services;
-using System.Text;
 
 namespace ShiftManager.Pages.Admin;
 
-[Authorize(Policy = "Grant:ManagerHomeAccess")]
+/// <summary>
+/// Justice — workload distribution analytics page (rewritten 2026-05-03).
+///
+/// Replaces the legacy retrospective dashboard that mixed HR process metrics with assignment
+/// decision support. Now focused exclusively on the latter: who is over/under-loaded across
+/// users, companies, and molecules; and what targets we expect each scope to deliver.
+///
+/// Phase 1 ships read-only views (Justice Table + verdict strip + equity ribbon + CSV export).
+/// Phase 2 adds the What-If simulator, settings modal, and decision-support widgets.
+/// </summary>
+[Authorize(Policy = "Grant:ViewJusticeTable")]
 public class AnalyticsModel : LocalizedPageModel
 {
-    private readonly IAnalyticsService _analyticsService;
-    private readonly ITenantResolver _tenantResolver;
+    private readonly IJusticeService _justiceService;
+    private readonly IGrantService _grantService;
     private readonly AppDbContext _db;
     private readonly ILogger<AnalyticsModel> _logger;
-    private readonly ICompanyCacheService _companyCacheService;
 
     public AnalyticsModel(
         IStringLocalizer<SharedResources> localizer,
-        IAnalyticsService analyticsService,
-        ITenantResolver tenantResolver,
+        IJusticeService justiceService,
+        IGrantService grantService,
         AppDbContext db,
-        ILogger<AnalyticsModel> logger,
-        ICompanyCacheService companyCacheService)
+        ILogger<AnalyticsModel> logger)
         : base(localizer)
     {
-        _analyticsService = analyticsService;
-        _tenantResolver = tenantResolver;
+        _justiceService = justiceService;
+        _grantService = grantService;
         _db = db;
         _logger = logger;
-        _companyCacheService = companyCacheService;
     }
 
-    [BindProperty(SupportsGet = true)]
-    public int DateRange { get; set; } = 30; // Default: last 30 days
+    // ----- query parameters (bound from query string) ------------------------------------
 
-    // Employee Analytics
-    public List<EmployeeHoursDto> EmployeeHours { get; set; } = new();
-    public List<EmployeeShiftCountDto> UpcomingShifts { get; set; } = new();
-    public List<BackToBackShiftDto> BackToBackShifts { get; set; } = new();
+    [BindProperty(SupportsGet = true, Name = "scope")] public JusticeScope Scope { get; set; } = JusticeScope.Molecule;
+    [BindProperty(SupportsGet = true, Name = "scopeId")] public int? ScopeId { get; set; }
+    [BindProperty(SupportsGet = true, Name = "level")] public JusticeLevel Level { get; set; } = JusticeLevel.CompaniesInMolecule;
+    [BindProperty(SupportsGet = true, Name = "workType")] public JusticeWorkType WorkType { get; set; } = JusticeWorkType.All;
+    [BindProperty(SupportsGet = true, Name = "excludeExempt")] public bool ExcludeExemptShifts { get; set; } = true;
+    [BindProperty(SupportsGet = true, Name = "from")] public DateOnly? PeriodStart { get; set; }
+    [BindProperty(SupportsGet = true, Name = "to")] public DateOnly? PeriodEnd { get; set; }
 
-    // Team Analytics
-    public Dictionary<UserRole, decimal> HoursByRole { get; set; } = new();
-    public List<StaffingIssueDto> UnderstaffingReport { get; set; } = new();
-    public List<StaffingIssueDto> OverstaffingReport { get; set; } = new();
-    public decimal CoverageRate { get; set; }
+    // ----- view model surface --------------------------------------------------------------
 
-    // Swap Analytics
-    public SwapStatsDto SwapStats { get; set; } = new();
-    public List<TopSwapperDto> TopSwappers { get; set; } = new();
-    public TimeSpan AverageSwapApprovalTime { get; set; }
+    public JusticeViewModel? View { get; private set; }
 
-    // Time-Off Analytics
-    public TimeOffStatsDto TimeOffStats { get; set; } = new();
-    public decimal AverageDaysOffPerEmployee { get; set; }
-    public Dictionary<string, int> TimeOffByMonth { get; set; } = new();
+    /// <summary>
+    /// Companies the current user can pick as the scope target. Populated for all levels but
+    /// only meaningful for UsersInCompany.
+    /// </summary>
+    public List<ScopeOption> CompanyOptions { get; private set; } = new();
 
-    // ✅ PHASE 18: Chores Analytics
-    public int ChoresCompletedThisWeek { get; set; }
-    public int ChoresPendingThisWeek { get; set; }
-    public int ChoresOverdue { get; set; }
+    /// <summary>
+    /// Molecules the current user can pick. Filled for Molecule and Area levels.
+    /// </summary>
+    public List<ScopeOption> MoleculeOptions { get; private set; } = new();
 
-    // ✅ PHASE 18: On-Duty Analytics
-    public int OnDutyAssignmentsThisWeek { get; set; }
-    public int DaysWithoutOnDuty { get; set; }
-    public decimal OnDutyCoverageRate { get; set; }
+    /// <summary>
+    /// Areas the current user can pick (drilled from molecules they can access).
+    /// </summary>
+    public List<ScopeOption> AreaOptions { get; private set; } = new();
 
-    public async Task OnGetAsync()
+    public DateOnly EffectivePeriodStart { get; private set; }
+    public DateOnly EffectivePeriodEnd { get; private set; }
+
+    public sealed record ScopeOption(int Id, string Name);
+
+    // ----- handlers ------------------------------------------------------------------------
+
+    public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Forbid();
+        }
+
+        await PopulateScopeOptionsAsync(userId, ct);
+
+        // Period defaults: current calendar month from the 1st to today.
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        EffectivePeriodStart = PeriodStart ?? new DateOnly(today.Year, today.Month, 1);
+        EffectivePeriodEnd = PeriodEnd ?? today;
+        if (EffectivePeriodEnd < EffectivePeriodStart)
+        {
+            EffectivePeriodEnd = EffectivePeriodStart;
+        }
+
+        // Normalize Scope <-> Level coupling. The page picker pairs each Level with one Scope kind;
+        // if the user landed without parameters or with a mismatched pair, snap to a sensible default.
+        NormalizeScopeAndLevelDefaults();
+
+        if (ScopeId is null)
+        {
+            View = null;
+            return Page();
+        }
+
+        // Authorization: confirm the requested ScopeId is within what the user can see.
+        if (!await UserCanAccessScopeAsync(userId, Scope, ScopeId.Value, ct))
+        {
+            _logger.LogWarning("Justice access denied for user {UserId} on scope {Scope} id {ScopeId}", userId, Scope, ScopeId);
+            return Forbid();
+        }
+
+        var query = new JusticeQuery(
+            Scope: Scope,
+            ScopeId: ScopeId,
+            PeriodStart: EffectivePeriodStart,
+            PeriodEnd: EffectivePeriodEnd,
+            WorkType: WorkType,
+            ExcludeExemptShifts: ExcludeExemptShifts,
+            Level: Level);
+
         try
         {
-            var endDate = DateOnly.FromDateTime(DateTime.Today);
-            var startDate = endDate.AddDays(-DateRange);
-
-            // Load all analytics data
-            EmployeeHours = await _analyticsService.GetEmployeeHoursAsync(startDate, endDate);
-            UpcomingShifts = await _analyticsService.GetUpcomingShiftsAsync(7);
-            BackToBackShifts = await _analyticsService.GetBackToBackShiftsAsync(DateRange);
-
-            HoursByRole = await _analyticsService.GetHoursByRoleAsync(startDate, endDate);
-            UnderstaffingReport = await _analyticsService.GetUnderstaffingReportAsync(startDate, endDate);
-            OverstaffingReport = await _analyticsService.GetOverstaffingReportAsync(startDate, endDate);
-            CoverageRate = await _analyticsService.GetCoverageRateAsync(startDate, endDate);
-
-            SwapStats = await _analyticsService.GetSwapStatsAsync(startDate, endDate);
-            TopSwappers = await _analyticsService.GetTopSwappersAsync(10, DateRange);
-            AverageSwapApprovalTime = await _analyticsService.GetAverageSwapApprovalTimeAsync(DateRange);
-
-            TimeOffStats = await _analyticsService.GetTimeOffStatsAsync(startDate, endDate);
-            AverageDaysOffPerEmployee = await _analyticsService.GetAverageDaysOffPerEmployeeAsync(DateRange);
-            TimeOffByMonth = await _analyticsService.GetTimeOffByMonthAsync(12);
-
-            // ✅ PHASE 18: Load Chores analytics
-            var weekStart = DateOnly.FromDateTime(DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek));
-            var weekEnd = weekStart.AddDays(6);
-            var today = DateOnly.FromDateTime(DateTime.Today);
-
-            // Chores completed this week (past dates that haven't been canceled)
-            ChoresCompletedThisWeek = await _db.Chores
-                .Where(c => c.Date >= weekStart && c.Date <= weekEnd && c.Date < today && c.CanceledAt == null)
-                .CountAsync();
-
-            // Chores pending this week (future/today dates, not canceled)
-            ChoresPendingThisWeek = await _db.Chores
-                .Where(c => c.Date >= today && c.Date <= weekEnd && c.CanceledAt == null)
-                .CountAsync();
-
-            // Chores overdue (before today, not canceled)
-            ChoresOverdue = await _db.Chores
-                .Where(c => c.Date < today && c.Date < weekStart && c.CanceledAt == null)
-                .CountAsync();
-
-            // ✅ PHASE 18: Load On-Duty analytics
-            // On-Duty assignments this week
-            OnDutyAssignmentsThisWeek = await _db.OnDuties
-                .Where(od => od.Date >= weekStart && od.Date <= weekEnd && od.CanceledAt == null)
-                .CountAsync();
-
-            // Days without On-Duty this week
-            var daysWithOnDuty = await _db.OnDuties
-                .Where(od => od.Date >= weekStart && od.Date <= weekEnd && od.CanceledAt == null)
-                .Select(od => od.Date)
-                .Distinct()
-                .CountAsync();
-            DaysWithoutOnDuty = 7 - daysWithOnDuty;
-
-            // On-Duty coverage rate (% of days with at least one assignment)
-            OnDutyCoverageRate = daysWithOnDuty > 0 ? (daysWithOnDuty / 7.0m) * 100 : 0;
+            View = await _justiceService.GetJusticeViewAsync(query, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading analytics data");
-            TempData["ErrorMessage"] = _localizer["Error_LoadingAnalyticsData"].Value;
+            _logger.LogError(ex, "Justice query failed for user {UserId}", userId);
+            Error = _localizer["Justice_Error_LoadFailed"].Value;
         }
+
+        return Page();
     }
 
-    public async Task<IActionResult> OnGetExportCsvAsync()
+    public async Task<IActionResult> OnGetExportCsvAsync(CancellationToken ct)
     {
-        try
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
-            var endDate = DateOnly.FromDateTime(DateTime.Today);
-            var startDate = endDate.AddDays(-DateRange);
-
-            var employeeHours = await _analyticsService.GetEmployeeHoursAsync(startDate, endDate);
-            var understaffing = await _analyticsService.GetUnderstaffingReportAsync(startDate, endDate);
-            var overstaffing = await _analyticsService.GetOverstaffingReportAsync(startDate, endDate);
-            var swapStats = await _analyticsService.GetSwapStatsAsync(startDate, endDate);
-            var timeOffStats = await _analyticsService.GetTimeOffStatsAsync(startDate, endDate);
-            var coverageRate = await _analyticsService.GetCoverageRateAsync(startDate, endDate);
-
-            var company = await _companyCacheService.GetCompanyAsync(_tenantResolver.GetCurrentTenantId());
-
-            var csv = new StringBuilder();
-            csv.AppendLine($"Analytics Report - {company?.Name ?? "Company"}");
-            csv.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-            csv.AppendLine($"Date Range: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
-            csv.AppendLine();
-
-            // Employee Hours
-            csv.AppendLine("Employee Hours");
-            csv.AppendLine("Employee,Total Hours,Avg Hours/Week,Shift Count");
-            foreach (var emp in employeeHours)
-            {
-                csv.AppendLine($"\"{emp.EmployeeName}\",{emp.TotalHours},{emp.AverageHoursPerWeek},{emp.ShiftCount}");
-            }
-            csv.AppendLine();
-
-            // Coverage Rate
-            csv.AppendLine("Coverage Metrics");
-            csv.AppendLine($"Overall Coverage Rate,{coverageRate:F2}%");
-            csv.AppendLine();
-
-            // Understaffing Report
-            csv.AppendLine("Understaffing Report");
-            csv.AppendLine("Date,Shift Type,Assigned,Required,Deficit");
-            foreach (var issue in understaffing)
-            {
-                csv.AppendLine($"{issue.WorkDate:yyyy-MM-dd},\"{issue.ShiftType}\",{issue.AssignedCount},{issue.RequiredCount},{issue.Difference}");
-            }
-            csv.AppendLine();
-
-            // Overstaffing Report
-            csv.AppendLine("Overstaffing Report");
-            csv.AppendLine("Date,Shift Type,Assigned,Required,Surplus");
-            foreach (var issue in overstaffing)
-            {
-                csv.AppendLine($"{issue.WorkDate:yyyy-MM-dd},\"{issue.ShiftType}\",{issue.AssignedCount},{issue.RequiredCount},{issue.Difference}");
-            }
-            csv.AppendLine();
-
-            // Swap Statistics
-            csv.AppendLine("Swap Request Statistics");
-            csv.AppendLine($"Total Requests,{swapStats.TotalRequests}");
-            csv.AppendLine($"Approved,{swapStats.ApprovedCount}");
-            csv.AppendLine($"Declined,{swapStats.DeclinedCount}");
-            csv.AppendLine($"Pending,{swapStats.PendingCount}");
-            csv.AppendLine($"Approval Rate,{swapStats.ApprovalRate:F2}%");
-            csv.AppendLine();
-
-            // Time-Off Statistics
-            csv.AppendLine("Time-Off Request Statistics");
-            csv.AppendLine($"Total Requests,{timeOffStats.TotalRequests}");
-            csv.AppendLine($"Approved,{timeOffStats.ApprovedCount}");
-            csv.AppendLine($"Declined,{timeOffStats.DeclinedCount}");
-            csv.AppendLine($"Pending,{timeOffStats.PendingCount}");
-            csv.AppendLine($"Approval Rate,{timeOffStats.ApprovalRate:F2}%");
-
-            var fileName = $"Analytics_Report_{company?.Name.Replace(" ", "_")}_{DateTime.UtcNow:yyyyMMdd}.csv";
-            // Add UTF-8 BOM for Hebrew Excel compatibility (fixes G-07)
-            var preamble = Encoding.UTF8.GetPreamble();
-            var csvBytes = Encoding.UTF8.GetBytes(csv.ToString());
-            var bomResult = new byte[preamble.Length + csvBytes.Length];
-            preamble.CopyTo(bomResult, 0);
-            csvBytes.CopyTo(bomResult, preamble.Length);
-            return File(bomResult, "text/csv", fileName);
+            return Forbid();
         }
-        catch (Exception ex)
+
+        // Re-run the same query the page is rendering. Keeps the export aligned with what the
+        // user sees on screen (same scope, same period, same toggle state).
+        await PopulateScopeOptionsAsync(userId, ct);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var start = PeriodStart ?? new DateOnly(today.Year, today.Month, 1);
+        var end = PeriodEnd ?? today;
+        NormalizeScopeAndLevelDefaults();
+        if (ScopeId is null)
         {
-            _logger.LogError(ex, "Error exporting analytics report");
-            TempData["ErrorMessage"] = _localizer["Error_ExportingReport"].Value;
             return RedirectToPage();
+        }
+        if (!await UserCanAccessScopeAsync(userId, Scope, ScopeId.Value, ct))
+        {
+            return Forbid();
+        }
+
+        var query = new JusticeQuery(Scope, ScopeId, start, end, WorkType, ExcludeExemptShifts, Level);
+        var view = await _justiceService.GetJusticeViewAsync(query, ct);
+
+        var csv = new StringBuilder();
+        csv.AppendLine($"Justice Report");
+        csv.AppendLine($"Generated,{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        csv.AppendLine($"Scope,{Scope}/{ScopeId}");
+        csv.AppendLine($"Level,{Level}");
+        csv.AppendLine($"Work Type,{WorkType}");
+        csv.AppendLine($"Period,{start:yyyy-MM-dd},{end:yyyy-MM-dd}");
+        csv.AppendLine($"Exclude Exempt Shifts,{ExcludeExemptShifts}");
+        csv.AppendLine($"Spread Index,{view.SpreadIndex:F2}");
+        csv.AppendLine();
+        csv.AppendLine("Name,Actual,Expected,Deviation %,Band");
+        foreach (var row in view.Rows)
+        {
+            var dev = row.DeviationPercent.HasValue ? $"{row.DeviationPercent.Value:F1}" : "";
+            csv.AppendLine($"\"{row.Name.Replace("\"", "\"\"")}\",{row.Actual:F0},{row.Expected:F2},{dev},{row.Band}");
+        }
+
+        var fileName = $"Justice_{Level}_{start:yyyyMMdd}_{end:yyyyMMdd}.csv";
+        // UTF-8 BOM for Hebrew Excel compatibility — same trick the legacy page used.
+        var preamble = Encoding.UTF8.GetPreamble();
+        var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+        var output = new byte[preamble.Length + bytes.Length];
+        preamble.CopyTo(output, 0);
+        bytes.CopyTo(output, preamble.Length);
+        return File(output, "text/csv", fileName);
+    }
+
+    // ----- scope option / authorization helpers --------------------------------------------
+
+    private async Task PopulateScopeOptionsAsync(int userId, CancellationToken ct)
+    {
+        // Pull the IDs the user can read for the Justice grant. Cascade: companies > molecules > areas.
+        var companyIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(userId, "ViewJusticeTable");
+        var moleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "ViewJusticeTable");
+
+        // SECURITY: IgnoreQueryFilters is required because Owner / AreaAdmin may have
+        // accessible companies/molecules outside their own tenant. The grant lookups above
+        // already gate which IDs the user is authorized to see.
+        if (companyIds.Count > 0)
+        {
+            CompanyOptions = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => companyIds.Contains(c.Id))
+                .OrderBy(c => c.Name)
+                .Select(c => new ScopeOption(c.Id, c.Name ?? $"#{c.Id}"))
+                .ToListAsync(ct);
+        }
+
+        if (moleculeIds.Count > 0)
+        {
+            MoleculeOptions = await _db.Molecules
+                .IgnoreQueryFilters()
+                .Where(m => moleculeIds.Contains(m.Id))
+                .OrderBy(m => m.Name)
+                .Select(m => new ScopeOption(m.Id, m.Name ?? $"#{m.Id}"))
+                .ToListAsync(ct);
+
+            // Areas reachable via the user's accessible molecules.
+            var areaIds = await _db.Molecules
+                .IgnoreQueryFilters()
+                .Where(m => moleculeIds.Contains(m.Id))
+                .Select(m => m.AreaId)
+                .Distinct()
+                .ToListAsync(ct);
+            if (areaIds.Count > 0)
+            {
+                AreaOptions = await _db.Areas
+                    .IgnoreQueryFilters()
+                    .Where(a => areaIds.Contains(a.Id))
+                    .OrderBy(a => a.Name)
+                    .Select(a => new ScopeOption(a.Id, a.Name ?? $"#{a.Id}"))
+                    .ToListAsync(ct);
+            }
+        }
+    }
+
+    private void NormalizeScopeAndLevelDefaults()
+    {
+        // Each level is paired with exactly one scope kind. If they conflict, prefer the level.
+        Scope = Level switch
+        {
+            JusticeLevel.UsersInCompany => JusticeScope.Company,
+            JusticeLevel.CompaniesInMolecule => JusticeScope.Molecule,
+            JusticeLevel.MoleculesInArea => JusticeScope.Area,
+            _ => Scope
+        };
+
+        // If no ScopeId set yet, pick the first accessible option for the chosen level.
+        if (ScopeId is null)
+        {
+            ScopeId = Level switch
+            {
+                JusticeLevel.UsersInCompany => CompanyOptions.FirstOrDefault()?.Id,
+                JusticeLevel.CompaniesInMolecule => MoleculeOptions.FirstOrDefault()?.Id,
+                JusticeLevel.MoleculesInArea => AreaOptions.FirstOrDefault()?.Id,
+                _ => null
+            };
+        }
+        else
+        {
+            // Validate the chosen ScopeId is in the accessible options for this level.
+            // If not, drop it and force the user back to the picker.
+            bool inOptions = Level switch
+            {
+                JusticeLevel.UsersInCompany => CompanyOptions.Any(o => o.Id == ScopeId),
+                JusticeLevel.CompaniesInMolecule => MoleculeOptions.Any(o => o.Id == ScopeId),
+                JusticeLevel.MoleculesInArea => AreaOptions.Any(o => o.Id == ScopeId),
+                _ => false
+            };
+            if (!inOptions) ScopeId = null;
+        }
+    }
+
+    private async Task<bool> UserCanAccessScopeAsync(int userId, JusticeScope scope, int scopeId, CancellationToken ct)
+    {
+        switch (scope)
+        {
+            case JusticeScope.Company:
+                {
+                    var ids = await _grantService.GetAccessibleCompanyIdsForGrantAsync(userId, "ViewJusticeTable");
+                    return ids.Contains(scopeId);
+                }
+            case JusticeScope.Molecule:
+                {
+                    var ids = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "ViewJusticeTable");
+                    return ids.Contains(scopeId);
+                }
+            case JusticeScope.Area:
+                {
+                    // Reachable area = an area that contains at least one accessible molecule.
+                    var moleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "ViewJusticeTable");
+                    if (moleculeIds.Count == 0) return false;
+                    return await _db.Molecules
+                        .IgnoreQueryFilters()
+                        .AnyAsync(m => moleculeIds.Contains(m.Id) && m.AreaId == scopeId, ct);
+                }
+            default:
+                return false;
         }
     }
 }

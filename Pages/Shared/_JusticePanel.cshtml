@@ -1,0 +1,183 @@
+@*
+    Justice slide-in drawer — Phase 2 in-context analytics for calendar pages.
+
+    Includes:
+      • Toolbar button (rendered where the host page places this partial — usage:
+        <partial name="_JusticePanel" model="@new JusticePanelModel { CalendarKind = "shifts", DataEndpoint = Url.Page(null, "Justice", new {...}) }" />)
+      • Drawer shell that's hidden by default and lazy-loads on click.
+      • Skeleton loading state and empty/error states.
+
+    The drawer's actual contents (verdict, rows, "Where to focus") are fetched via XHR
+    from the host page's OnGetJusticeAsync handler. justice-panel.js wires the events.
+
+    All text routed through <loc> so translations land in both resx files.
+*@
+
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@model ShiftManager.Pages.Shared.JusticePanelModel
+
+@{
+    var endpoint = Model?.DataEndpoint ?? string.Empty;
+    var kind = Model?.CalendarKind ?? "shifts";
+}
+
+@* Toolbar button — gated by the ViewJusticeTable grant. Host page positions this
+   inside its toolbar markup wherever it makes sense (Print button neighborhood). *@
+<require-grant key="ViewJusticeTable">
+    <button type="button"
+            class="btn btn-ghost cal-toolbar__justice-trigger"
+            data-justice-trigger
+            data-justice-endpoint="@endpoint"
+            data-justice-kind="@kind"
+            aria-controls="justice-panel-drawer"
+            aria-expanded="false"
+            title="@(Model?.ButtonTitle ?? "Justice")">
+        <span class="btn-icon" aria-hidden="true">⚖</span>
+        <span class="btn-text"><loc key="Justice_Panel_Button" /></span>
+    </button>
+</require-grant>
+
+@* Drawer shell — rendered once per page. Hidden until the trigger is clicked. *@
+<aside id="justice-panel-drawer"
+       class="justice-drawer"
+       data-justice-drawer
+       hidden
+       aria-hidden="true"
+       aria-labelledby="justice-drawer-title">
+
+    <header class="justice-drawer__header">
+        <h2 id="justice-drawer-title" class="justice-drawer__title">
+            <span aria-hidden="true">⚖</span>
+            <loc key="Justice_Panel_Title" />
+        </h2>
+        <button type="button"
+                class="justice-drawer__close btn btn-ghost"
+                data-justice-close
+                aria-label="@(Model?.CloseLabel ?? "Close")">
+            ✕
+        </button>
+    </header>
+
+    <div class="justice-drawer__scope" data-justice-scope-chip>
+        @* Filled by JS once the data loads. Empty state renders a skeleton chip. *@
+        <span class="justice-skeleton justice-skeleton--chip"></span>
+    </div>
+
+    <div class="justice-drawer__body" data-justice-body>
+        @* Skeleton — replaced by JS-rendered content on first successful fetch. *@
+        <div class="justice-drawer__skeleton" data-justice-loading>
+            <div class="justice-skeleton justice-skeleton--strip"></div>
+            <div class="justice-skeleton justice-skeleton--list">
+                <div class="justice-skeleton__line"></div>
+                <div class="justice-skeleton__line"></div>
+                <div class="justice-skeleton__line"></div>
+            </div>
+        </div>
+
+        <div class="justice-drawer__error" data-justice-error hidden>
+            <icon name="alert-triangle" size="md" />
+            <p data-justice-error-msg></p>
+            <button type="button" class="btn btn--secondary" data-justice-retry>
+                <loc key="Justice_Panel_Retry" />
+            </button>
+        </div>
+
+        @* === Phase 2b/2c: candidates view (toggled in/out by JS, replaces main content) === *@
+        <div class="justice-drawer__candidates" data-justice-candidates-view hidden>
+            <header class="justice-candidates__header">
+                <button type="button"
+                        class="btn btn-ghost justice-candidates__back"
+                        data-justice-candidates-back
+                        aria-label="@(Model?.CloseLabel ?? "Back")">
+                    <span aria-hidden="true">‹</span>
+                    <loc key="Justice_Panel_BackToOverview" />
+                </button>
+                <span class="justice-candidates__header-label" data-justice-candidates-header-label></span>
+            </header>
+
+            @* Phase 2d: chore-only inline form. JS shows it when holeContext.kind === 'chore' and
+               populates the chore-type select by cloning options from #choreTypeSelect-quickentry.
+               Title input is required for QuickAddChore POST; Make-it-real is disabled until non-empty. *@
+            <div class="justice-chore-form" data-justice-chore-form hidden>
+                <div class="justice-chore-form__field">
+                    <label class="justice-chore-form__label" for="justice-chore-type-select">
+                        <loc key="Justice_Panel_ChoreTypeLabel" />
+                    </label>
+                    <select id="justice-chore-type-select"
+                            class="form-select justice-chore-form__select"
+                            data-justice-chore-type-select>
+                        <option value=""><loc key="Justice_Panel_ChoreTypeNone" /></option>
+                    </select>
+                </div>
+                <div class="justice-chore-form__field">
+                    <label class="justice-chore-form__label" for="justice-chore-title-input">
+                        <loc key="Justice_Panel_ChoreTitleLabel" />
+                    </label>
+                    <input type="text"
+                           id="justice-chore-title-input"
+                           class="form-control justice-chore-form__input"
+                           data-justice-chore-title-input
+                           maxlength="200"
+                           placeholder="@(Localizer["Justice_Panel_ChoreTitlePlaceholder"].Value)"
+                           autocomplete="off"
+                           aria-required="true" />
+                </div>
+            </div>
+
+            <ul class="justice-candidates" data-justice-candidates-list>
+                @* JS-populated; one <li.justice-candidate> per ranked user. *@
+            </ul>
+        </div>
+
+        <div class="justice-drawer__content" data-justice-content hidden>
+            @* === Compact verdict strip === *@
+            <section class="justice-drawer__verdict">
+                <div class="justice-drawer__spread">
+                    <span class="justice-drawer__spread-num" data-justice-spread-num dir="ltr">—</span>
+                    <span class="justice-drawer__spread-glyph" aria-hidden="true" data-justice-spread-glyph>
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                    </span>
+                    <span class="justice-drawer__spread-label" data-justice-spread-label></span>
+                </div>
+                <div class="justice-drawer__callouts">
+                    <div class="callout callout--over">
+                        <span class="callout-label"><loc key="Justice_MostOver" /></span>
+                        <span class="callout-value" data-justice-most-over>—</span>
+                    </div>
+                    <div class="callout callout--under">
+                        <span class="callout-label"><loc key="Justice_MostUnder" /></span>
+                        <span class="callout-value" data-justice-most-under>—</span>
+                    </div>
+                </div>
+            </section>
+
+            @* === Where to focus === *@
+            <section class="justice-drawer__focus">
+                <h3 class="justice-drawer__section-title">
+                    <loc key="Justice_Panel_WhereToFocus" />
+                    <span class="justice-drawer__count" data-justice-focus-count>0</span>
+                </h3>
+                <ul class="justice-focus-list" data-justice-focus-list>
+                    @* JS populates. Empty/no-holes state rendered by JS as a success-state. *@
+                </ul>
+            </section>
+
+            @* === Compact equity ribbon (collapsed by default) === *@
+            <details class="justice-drawer__details">
+                <summary><loc key="Justice_Widget_EquityRibbon" /></summary>
+                <div class="equity-ribbon" data-justice-equity-ribbon role="img"
+                     aria-label="@(Model?.RibbonAria ?? "Equity ribbon")"></div>
+            </details>
+
+            @* === Footer link to /Admin/Analytics === *@
+            <footer class="justice-drawer__footer">
+                <a href="#" class="btn btn-ghost" data-justice-full-view target="_self">
+                    <loc key="Justice_Panel_OpenFullView" />
+                    <span aria-hidden="true">↗</span>
+                </a>
+            </footer>
+        </div>
+    </div>
+</aside>

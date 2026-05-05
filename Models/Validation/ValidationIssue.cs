@@ -1,3 +1,5 @@
+using ShiftManager.Models.Support;
+
 namespace ShiftManager.Models.Validation;
 
 /// <summary>
@@ -12,9 +14,15 @@ namespace ShiftManager.Models.Validation;
 /// <b>Message</b> is a fully-localized, user-facing string. Producers MUST resolve this
 /// via <c>IStringLocalizer&lt;SharedResource&gt;</c> before constructing the issue.
 /// </para>
+/// <para>
+/// <b>Detail</b> is an optional structured payload used by busy/conflict warnings to
+/// let the client render the localized "User is busy at X on Y" sentence without
+/// server-side string formatting. Null when not applicable.
+/// </para>
 /// </summary>
 public record ValidationIssue(
     string Key,
     string Message,
     ValidationSeverity Severity,
-    ValidationCategory Category);
+    ValidationCategory Category,
+    BusyConflictDetail? Detail = null);

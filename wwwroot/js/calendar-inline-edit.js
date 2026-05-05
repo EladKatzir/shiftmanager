@@ -41,8 +41,26 @@ function getCurrentCulture() {
     return htmlLang.startsWith('he') ? 'he-IL' : 'en-US';
 }
 
-// Default confirm handler — backward-compatible (bottom sheet still uses confirm())
-const defaultConfirm = (msg) => Promise.resolve(confirm(msg));
+// Default confirm handler routes through FeedbackModal.confirm so warnings render
+// with category-colored badges and a localized OK/Cancel button pair instead of a
+// native browser confirm() dialog. Accepts either:
+//   - an array of structured warnings ({key, category, resourceType, resourceName, date, startTime, endTime})
+//   - a plain string message (legacy callers; preserved during migration)
+const defaultConfirm = (warningsOrMessage) => {
+    if (window.FeedbackModal && typeof window.FeedbackModal.confirm === 'function') {
+        const opts = Array.isArray(warningsOrMessage)
+            ? { warnings: warningsOrMessage }
+            : { message: typeof warningsOrMessage === 'string' ? warningsOrMessage : '' };
+        return window.FeedbackModal.confirm('warning', opts);
+    }
+    // Fallback only fires if feedback-modal.js failed to load
+    const msg = typeof warningsOrMessage === 'string'
+        ? warningsOrMessage
+        : (Array.isArray(warningsOrMessage)
+            ? warningsOrMessage.map(w => w.message || w.key || '').join('\n')
+            : '');
+    return Promise.resolve(confirm(msg));
+};
 
 /**
  * Build fetch headers for Calendar/Table POST handlers (includes CSRF anti-forgery token).
@@ -124,109 +142,38 @@ async function showServerErrorAsync(response, fallbackMessage) {
 }
 
 /**
- * Quick-add a chore
- * @param {string} date - Date in yyyy-MM-dd format
- * @param {number} assigneeId - User ID to assign the chore to
- * @param {string} title - Chore title
- * @param {boolean} forceAssign - Force assignment despite vacation conflict
+ * Quick-add a chore. Uses the unified busy-validation envelope:
+ *   - success:true                                          → toast + refresh
+ *   - success:false, requiresOverride, warnings[], token    → show FeedbackModal.confirm; on OK retry with token
+ *   - success:false, message                                → blocking error modal
  */
-async function quickAddChore(date, assigneeId, title, forceAssign = false, choreTypeId = null, confirmHandler = defaultConfirm) {
+async function quickAddChore(date, assigneeId, title, choreTypeId = null, confirmHandler = defaultConfirm) {
+    async function postChore(body) {
+        return fetch('/Api/Calendar/QuickAddChore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify(body)
+        });
+    }
+
     try {
         var requestBody = {
             date: date,
             assigneeId: parseInt(assigneeId),
             title: title.trim(),
-            notes: null,
-            forceAssign: forceAssign
+            notes: null
         };
         if (choreTypeId != null) {
             requestBody.choreTypeId = parseInt(choreTypeId);
         }
-        const response = await fetch('/Api/Calendar/QuickAddChore', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify(requestBody)
-        });
+        const response = await postChore(requestBody);
 
-        // Check for auth/permission errors before parsing JSON
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
                 handleApiError(response);
                 return;
             }
-
-            // Handle 409 Conflict (shift conflict or vacation)
-            if (response.status === 409) {
-                const result = await response.json();
-
-                // Check if it's a vacation conflict
-                if (result.conflictType === 'vacation') {
-                    // Step 1: Ask if user wants to create anyway
-                    const culture = getCurrentCulture();
-                    const confirmMessage = culture === 'he-IL'
-                        ? 'למשתמש זה חופשה מאושרת בתאריך זה. האם ברצונך להקצות בכל זאת?'
-                        : 'This user has an approved vacation on this date. Do you want to assign anyway?';
-
-                    if (await confirmHandler(confirmMessage)) {
-                        // Retry with forceAssign=true
-                        var retryBody = {
-                            date: date,
-                            assigneeId: parseInt(assigneeId),
-                            title: title.trim(),
-                            notes: null,
-                            forceAssign: true
-                        };
-                        if (choreTypeId != null) {
-                            retryBody.choreTypeId = parseInt(choreTypeId);
-                        }
-                        const retryResponse = await fetch('/Api/Calendar/QuickAddChore', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify(retryBody)
-                        });
-
-                        if (!retryResponse.ok) {
-                            await showServerErrorAsync(retryResponse, window.AppLocalizer.ErrorCreatingChore);
-                            return;
-                        }
-                        const retryResult = await retryResponse.json();
-
-                        if (retryResult.success) {
-                            showToast(retryResult.message || window.AppLocalizer.ChoreCreatedSuccessfully, 'success');
-
-                            // Step 2: Ask if user wants to manage the conflicting vacation
-                            const manageMessage = culture === 'he-IL'
-                                ? 'האם ברצונך לנהל את החופשה המתנגשת?'
-                                : 'Do you want to manage the conflicting vacation?';
-
-                            if (await confirmHandler(manageMessage)) {
-                                window.location.href = '/Requests/Index#approved';
-                            } else {
-                                // Refresh calendar to show the new chore
-                                triggerCalendarRefresh();
-                            }
-                        } else {
-                            showAcknowledgedError(retryResult.message || window.AppLocalizer.ErrorCreatingChore);
-                        }
-                    }
-                } else {
-                    // Shift conflict or other conflict — surface server's localized message in a
-                    // blocking modal so the user can read why the assignment failed.
-                    showAcknowledgedError(result.message || window.AppLocalizer.ConflictDetected);
-                }
-                return;
-            }
-
-            // Other error (400, 500, etc.) — surface the server's localized message via the
-            // shared feedback modal so the user must acknowledge it (matches quickAddOnDuty).
             await showServerErrorAsync(response, window.AppLocalizer.ErrorCreatingChore);
             return;
         }
@@ -235,8 +182,24 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
 
         if (result.success) {
             showToast(result.message || window.AppLocalizer.ChoreCreatedSuccessfully, 'success');
-            // Refresh calendar in-place to show the new chore
             triggerCalendarRefresh();
+        } else if (result.requiresOverride) {
+            // Warnings — show structured confirm modal, retry with override token if accepted.
+            if (await confirmHandler(result.warnings || [])) {
+                var retryBody = Object.assign({}, requestBody, { overrideToken: result.overrideToken });
+                const retryResponse = await postChore(retryBody);
+                if (!retryResponse.ok) {
+                    await showServerErrorAsync(retryResponse, window.AppLocalizer.ErrorCreatingChore);
+                    return;
+                }
+                const retryResult = await retryResponse.json();
+                if (retryResult.success) {
+                    showToast(retryResult.message || window.AppLocalizer.ChoreCreatedSuccessfully, 'success');
+                    triggerCalendarRefresh();
+                } else {
+                    showAcknowledgedError(retryResult.message || window.AppLocalizer.ErrorCreatingChore);
+                }
+            }
         } else {
             showAcknowledgedError(result.message || window.AppLocalizer.ErrorCreatingChore);
         }
@@ -246,121 +209,54 @@ async function quickAddChore(date, assigneeId, title, forceAssign = false, chore
 }
 
 /**
- * Quick-add an on-duty assignment
+ * Quick-add an on-duty assignment.
  * @param {string} date - Date in yyyy-MM-dd format
  * @param {number} assigneeId - User ID to assign
  * @param {number} onDutyType - OnDutyType enum value (0=Hakam, 1=Lead, 2+=Custom)
- * @param {boolean} forceAssign - Force assignment despite vacation conflict
+ * @param {number|undefined} moleculeId - Optional molecule for HMAC override-token canonical
+ *   matching. Justice "Make it real" supplies this so the override token signed at
+ *   eligibility time validates at POST time. Other callers omit it and the server falls
+ *   back to assignee-company resolution.
+ * @param {Function|undefined} confirmHandler - Override confirmation handler.
  */
-async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false, confirmHandler = defaultConfirm) {
+async function quickAddOnDuty(date, assigneeId, onDutyType, moleculeId, confirmHandler = defaultConfirm) {
     try {
-        const response = await fetch('/Api/Calendar/QuickAddOnDuty', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                date: date,
-                assigneeId: parseInt(assigneeId),
-                onDutyType: parseInt(onDutyType),
-                notes: null,
-                forceAssign: forceAssign
-            })
-        });
+        async function postOnDuty(body) {
+            return fetch('/Api/Calendar/QuickAddOnDuty', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+                body: JSON.stringify(body)
+            });
+        }
 
-        // Check for auth/permission errors before parsing JSON
+        var requestBody = {
+            date: date,
+            assigneeId: parseInt(assigneeId),
+            onDutyType: parseInt(onDutyType),
+            notes: null
+        };
+        if (moleculeId != null && moleculeId !== undefined) {
+            requestBody.moleculeId = parseInt(moleculeId);
+        }
+
+        const response = await postOnDuty(requestBody);
+
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
-                // Check for specific error keys before generic handling
                 try {
                     var errorResult = await response.clone().json();
                     if (errorResult.error === 'OFFICER_RANK_REQUIRED') {
-                        var officerMsg = getCurrentCulture() === 'he-IL'
+                        showAcknowledgedError(errorResult.message || (getCurrentCulture() === 'he-IL'
                             ? 'סוג תורנות זה דורש דרגת קצין'
-                            : 'This duty type requires officer rank';
-                        showToast(officerMsg, 'error');
+                            : 'This duty type requires officer rank'));
                         return;
                     }
-                } catch (e) { /* fall through to generic handler */ }
+                } catch (e) { /* fall through */ }
                 handleApiError(response);
                 return;
             }
-
-            // Handle 409 Conflict (vacation conflict)
-            if (response.status === 409) {
-                const result = await response.json();
-
-                // Check if it's a vacation conflict
-                if (result.conflictType === 'vacation') {
-                    // Step 1: Ask if user wants to create anyway
-                    const culture = getCurrentCulture();
-                    const confirmMessage = culture === 'he-IL'
-                        ? 'למשתמש זה חופשה מאושרת בתאריך זה. האם ברצונך להקצות בכל זאת?'
-                        : 'This user has an approved vacation on this date. Do you want to assign anyway?';
-
-                    if (await confirmHandler(confirmMessage)) {
-                        // Retry with forceAssign=true
-                        const retryResponse = await fetch('/Api/Calendar/QuickAddOnDuty', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify({
-                                date: date,
-                                assigneeId: parseInt(assigneeId),
-                                onDutyType: parseInt(onDutyType),
-                                notes: null,
-                                forceAssign: true
-                            })
-                        });
-
-                        if (!retryResponse.ok) {
-                            showToast(window.AppLocalizer.ErrorCreatingOnDuty, 'error');
-                            return;
-                        }
-                        const retryResult = await retryResponse.json();
-
-                        if (retryResult.success) {
-                            showToast(retryResult.message || window.AppLocalizer.OnDutyCreatedSuccessfully, 'success');
-
-                            // Step 2: Ask if user wants to manage the conflicting vacation
-                            const manageMessage = culture === 'he-IL'
-                                ? 'האם ברצונך לנהל את החופשה המתנגשת?'
-                                : 'Do you want to manage the conflicting vacation?';
-
-                            if (await confirmHandler(manageMessage)) {
-                                window.location.href = '/Requests/Index#approved';
-                            } else {
-                                // Refresh calendar to show the new on-duty assignment
-                                triggerCalendarRefresh();
-                            }
-                        } else {
-                            showToast(retryResult.message || window.AppLocalizer.ErrorCreatingOnDuty, 'error');
-                        }
-                    }
-                } else {
-                    // Other conflict
-                    showToast(result.message || window.AppLocalizer.ConflictDetected, 'error');
-                }
-                return;
-            }
-
-            // Other error (400, 500, etc.) — surface the server's message via the shared feedback modal
-            // (globally loaded in _Layout.cshtml) so the user must press "אישור"/OK to dismiss.
-            var serverMessage = null;
-            try {
-                var parsed = await response.clone().json();
-                if (parsed && typeof parsed.message === 'string' && parsed.message.length > 0) {
-                    serverMessage = parsed.message;
-                }
-            } catch (e) { /* non-JSON body — fall back to generic message */ }
-
-            var errorText = serverMessage || window.AppLocalizer.ErrorCreatingOnDuty;
-            window.FeedbackModal.show('error', errorText);
+            await showServerErrorAsync(response, window.AppLocalizer.ErrorCreatingOnDuty);
             return;
         }
 
@@ -368,10 +264,25 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, forceAssign = false,
 
         if (result.success) {
             showToast(result.message || window.AppLocalizer.OnDutyCreatedSuccessfully, 'success');
-            // Refresh calendar in-place to show the new on-duty assignment
             triggerCalendarRefresh();
+        } else if (result.requiresOverride) {
+            if (await confirmHandler(result.warnings || [])) {
+                var retryBody = Object.assign({}, requestBody, { overrideToken: result.overrideToken });
+                const retryResponse = await postOnDuty(retryBody);
+                if (!retryResponse.ok) {
+                    await showServerErrorAsync(retryResponse, window.AppLocalizer.ErrorCreatingOnDuty);
+                    return;
+                }
+                const retryResult = await retryResponse.json();
+                if (retryResult.success) {
+                    showToast(retryResult.message || window.AppLocalizer.OnDutyCreatedSuccessfully, 'success');
+                    triggerCalendarRefresh();
+                } else {
+                    showAcknowledgedError(retryResult.message || window.AppLocalizer.ErrorCreatingOnDuty);
+                }
+            }
         } else {
-            showToast(result.message || window.AppLocalizer.ErrorCreatingOnDuty, 'error');
+            showAcknowledgedError(result.message || window.AppLocalizer.ErrorCreatingOnDuty);
         }
     } catch (error) {
         handleApiError(null, error);
@@ -422,11 +333,9 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
                 await expandCapacityAndRetry(shiftTypeId, date, assigneeId, confirmHandler);
             }
         } else if (result.requiresOverride) {
-            // Warnings require override — show them and ask to confirm
-            const msgs = (result.warnings || []).map(function(w) { return w.message; }).join('\n');
-            const culture = getCurrentCulture();
-            const confirmLabel = culture === 'he-IL' ? 'אישורים נדרשים:\n' : 'Warnings:\n';
-            if (await confirmHandler(confirmLabel + msgs)) {
+            // Warnings require override — pass the structured array so FeedbackModal.confirm
+            // renders one row per conflict with category-colored badge instead of \n-joined text.
+            if (await confirmHandler(result.warnings || [])) {
                 // Retry with override token
                 const retryResponse = await fetch('/Calendar/Table?handler=AssignEmployee', {
                     method: 'POST',
@@ -441,7 +350,8 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
                 });
                 const retryResult = await retryResponse.json();
                 if (retryResult.success) {
-                    const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
+                    const retryCulture = getCurrentCulture();
+                    const successMsg = retryCulture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
                     showToast(retryResult.message || successMsg, 'success');
                     triggerCalendarRefresh();
                 } else {
@@ -844,7 +754,7 @@ async function submitQuickAdd(date) {
 
         var choreTypeSelect = document.getElementById('choreTypeSelect');
         var choreTypeId = choreTypeSelect ? (choreTypeSelect.value || null) : null;
-        await quickAddChore(date, assigneeId, title, false, choreTypeId);
+        await quickAddChore(date, assigneeId, title, choreTypeId);
     } else if (type === 'onduty') {
         const typeSelect = document.getElementById(`ondutyType-${date}`);
         const onDutyType = typeSelect ? typeSelect.value : '0';

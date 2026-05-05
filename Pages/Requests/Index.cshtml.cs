@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Models.Validation;
 using ShiftManager.Resources;
 using ShiftManager.Data.SeedData;
 using ShiftManager.Services;
@@ -66,7 +67,7 @@ public class IndexModel : LocalizedPageModel
     public record TimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate, string? Reason);
     public List<TimeOffVM> TimeOff { get; set; } = new();
 
-    public record SwapVM(int Id, string FromUser, string When, string ToUser);
+    public record SwapVM(int Id, string FromUser, string When, string ToUser, IReadOnlyList<string> WarningsAtCreation);
     public List<SwapVM> Swaps { get; set; } = new();
 
     // ✅ Phase 18: Approved Time-Off (consolidated from Admin/TimeOff page)
@@ -118,7 +119,7 @@ public class IndexModel : LocalizedPageModel
                     .ToListAsync();
 
                 // IgnoreQueryFilters: need to join across tenant boundaries for swap request details
-                Swaps = await (from s in _db.SwapRequests.IgnoreQueryFilters()
+                var ownSwaps = await (from s in _db.SwapRequests.IgnoreQueryFilters()
                                join a in _db.ShiftAssignments.IgnoreQueryFilters() on s.FromAssignmentId equals a.Id
                                join si in _db.ShiftInstances.IgnoreQueryFilters() on a.ShiftInstanceId equals si.Id
                                join st in _db.ShiftTypes.IgnoreQueryFilters() on si.ShiftTypeId equals st.Id
@@ -126,9 +127,15 @@ public class IndexModel : LocalizedPageModel
                                from u2 in toUserJoin.DefaultIfEmpty()
                                where s.Status == RequestStatus.Pending && a.UserId == currentUserId
                                orderby s.CreatedAt
-                               select new SwapVM(s.Id, currentUser.DisplayName,
-                                   si.WorkDate.ToString("yyyy-MM-dd") + " " + st.Key,
-                                   u2 != null ? u2.DisplayName : "Open Request")).ToListAsync();
+                               select new
+                               {
+                                   s.Id,
+                                   When = si.WorkDate.ToString("yyyy-MM-dd") + " " + st.Key,
+                                   ToUser = u2 != null ? u2.DisplayName : "Open Request",
+                                   s.WarningsAtCreation
+                               }).ToListAsync();
+                Swaps = ownSwaps.Select(x => new SwapVM(x.Id, currentUser.DisplayName, x.When, x.ToUser,
+                    DeserializeWarnings(x.WarningsAtCreation))).ToList();
 
                 ApprovedTimeOffs = await _db.TimeOffRequests
                     .Where(r => r.UserId == currentUserId && r.Status == RequestStatus.Approved)
@@ -194,10 +201,12 @@ public class IndexModel : LocalizedPageModel
                                           s.Id,
                                           FromUser = u1.DisplayName,
                                           When = $"{si.WorkDate:yyyy-MM-dd} {st.Key}",
-                                          ToUser = u2 != null ? u2.DisplayName : "Open Request"
+                                          ToUser = u2 != null ? u2.DisplayName : "Open Request",
+                                          s.WarningsAtCreation
                                       }).ToListAsync();
 
-            Swaps = pendingSwaps.Select(x => new SwapVM(x.Id, x.FromUser, x.When, x.ToUser)).ToList();
+            Swaps = pendingSwaps.Select(x => new SwapVM(x.Id, x.FromUser, x.When, x.ToUser,
+                DeserializeWarnings(x.WarningsAtCreation))).ToList();
             _logger.LogInformation("Loaded {Count} pending swap requests", Swaps.Count);
 
             // Load approved time-off requests
@@ -217,6 +226,31 @@ public class IndexModel : LocalizedPageModel
         {
             _logger.LogError(ex, "Error loading admin requests page");
             Error = _localizer["Error_LoadingRequests"];
+        }
+    }
+
+    /// <summary>
+    /// Deserialize the JSON-persisted warnings written at swap-request creation time.
+    /// Returns the localized Message of each warning so the approver UI can render
+    /// them as a list. Failures are swallowed (return empty list) — a corrupted JSON
+    /// blob is non-blocking; the approver still sees the swap and can approve based
+    /// on the rest of the request data.
+    /// </summary>
+    private static IReadOnlyList<string> DeserializeWarnings(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return Array.Empty<string>();
+
+        try
+        {
+            var issues = System.Text.Json.JsonSerializer.Deserialize<List<ValidationIssue>>(json);
+            if (issues == null || issues.Count == 0)
+                return Array.Empty<string>();
+            return issues.Select(i => i.Message).ToList();
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return Array.Empty<string>();
         }
     }
 

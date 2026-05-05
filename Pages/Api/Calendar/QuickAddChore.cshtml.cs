@@ -157,70 +157,42 @@ public class QuickAddChoreModel : PageModel
                 };
             }
 
-            // Attempt to create the chore
+            // Attempt to create the chore — unified envelope: errors hard-block, warnings prompt
+            // for an HMAC override token (matches the shift assignment flow).
             var result = await _choreService.CreateChoreAsync(
                 assigneeId: data.AssigneeId,
                 date: choreDate,
                 title: data.Title,
                 notes: data.Notes,
-                forceAssign: data.ForceAssign,
+                forceAssign: false,
                 moleculeId: data.MoleculeId,
-                choreTypeId: data.ChoreTypeId);
+                choreTypeId: data.ChoreTypeId,
+                overrideToken: data.OverrideToken);
 
             if (!result.Success)
             {
-                // Check if it's a shift conflict
-                if (result.Message == "SHIFT_CONFLICT")
+                if (result.Message == "BUSY_OVERRIDE_REQUIRED" && result.Validation != null)
                 {
                     return new JsonResult(new
                     {
                         success = false,
-                        message = _localizer["QuickAddChore_ShiftConflict"].Value
-                    })
-                    {
-                        StatusCode = 409 // Conflict
-                    };
+                        requiresOverride = true,
+                        warnings = result.Validation.Warnings.Select(w => new
+                        {
+                            w.Key,
+                            w.Message,
+                            Category = w.Category.ToString(),
+                            w.Detail
+                        }),
+                        overrideToken = result.OverrideToken
+                    });
                 }
-                // Check if it's a vacation conflict
-                else if (result.Message.StartsWith("VACATION_CONFLICT"))
+
+                // Hard error
+                return new JsonResult(new { success = false, message = result.Message })
                 {
-                    // Parse vacation details from message: "VACATION_CONFLICT|startDate|endDate|type"
-                    var parts = result.Message.Split('|');
-                    if (parts.Length == 4)
-                    {
-                        return new JsonResult(new
-                        {
-                            success = false,
-                            conflictType = "vacation",
-                            message = _localizer["QuickAddChore_VacationConflict"].Value,
-                            vacationStart = parts[1],
-                            vacationEnd = parts[2],
-                            vacationType = parts[3]
-                        })
-                        {
-                            StatusCode = 409 // Conflict
-                        };
-                    }
-                    else
-                    {
-                        return new JsonResult(new
-                        {
-                            success = false,
-                            conflictType = "vacation",
-                            message = _localizer["QuickAddChore_VacationConflict"].Value
-                        })
-                        {
-                            StatusCode = 409 // Conflict
-                        };
-                    }
-                }
-                else
-                {
-                    return new JsonResult(new { success = false, message = result.Message })
-                    {
-                        StatusCode = 400
-                    };
-                }
+                    StatusCode = 400
+                };
             }
 
             // Success - send notification and audit log
@@ -274,5 +246,6 @@ public class QuickAddChoreModel : PageModel
         public bool ForceAssign { get; set; } = false;
         public int? MoleculeId { get; set; }
         public int? ChoreTypeId { get; set; }
+        public string? OverrideToken { get; set; }
     }
 }

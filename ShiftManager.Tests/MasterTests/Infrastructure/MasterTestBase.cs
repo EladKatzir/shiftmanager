@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
@@ -97,7 +98,8 @@ public abstract class MasterTestBase : IAsyncLifetime
 
         return new ShiftAssignmentService(
             Db, localizer, logger, hierarchySettingsMock.Object,
-            auditLogService, configMock.Object, configCacheMock);
+            auditLogService, configMock.Object, configCacheMock,
+            BusyServiceMockFactory.Real(Db, configMock.Object, restHours, weeklyCap));
     }
 
     /// <summary>
@@ -182,7 +184,8 @@ public abstract class MasterTestBase : IAsyncLifetime
 
         return new ChoreService(
             Db, tenantMock.Object, httpContextMock,
-            directorService, grantService, logger, companyCacheService);
+            directorService, grantService, logger, companyCacheService,
+            BusyServiceMockFactory.Real(Db));
     }
 
     /// <summary>
@@ -198,7 +201,8 @@ public abstract class MasterTestBase : IAsyncLifetime
 
         return new OnDutyService(
             Db, httpContextMock, directorService,
-            grantService, logger, featureFlagService);
+            grantService, logger, featureFlagService,
+            BusyServiceMockFactory.Real(Db));
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -53,7 +54,8 @@ public class ChoreServiceTests : IDisposable
             directorServiceMock.Object,
             _grantServiceMock.Object,
             loggerMock,
-            _companyCacheMock.Object);
+            _companyCacheMock.Object,
+            BusyServiceMockFactory.Real(_db));
 
         // Seed the current user
         _db.Users.Add(new AppUser
@@ -109,7 +111,7 @@ public class ChoreServiceTests : IDisposable
         await SeedAssigneeAsync(id: 1);
         var date = new DateOnly(2026, 3, 15);
 
-        var (success, message, chore) = await _service.CreateChoreAsync(
+        var (success, message, chore, _, _) = await _service.CreateChoreAsync(
             assigneeId: 1, date: date, title: "Guard Duty", notes: "North gate");
 
         success.Should().BeTrue();
@@ -129,7 +131,7 @@ public class ChoreServiceTests : IDisposable
         SetupGrantPermissions();
         await SeedAssigneeAsync(id: 1);
 
-        var (success, message, chore) = await _service.CreateChoreAsync(
+        var (success, message, chore, _, _) = await _service.CreateChoreAsync(
             assigneeId: 1, date: new DateOnly(2026, 3, 15), title: "  ");
 
         success.Should().BeFalse();
@@ -142,7 +144,7 @@ public class ChoreServiceTests : IDisposable
     {
         SetupGrantPermissions();
 
-        var (success, message, chore) = await _service.CreateChoreAsync(
+        var (success, message, chore, _, _) = await _service.CreateChoreAsync(
             assigneeId: 999, date: new DateOnly(2026, 3, 15), title: "Guard Duty");
 
         success.Should().BeFalse();
@@ -156,7 +158,7 @@ public class ChoreServiceTests : IDisposable
         SetupGrantPermissions(canManage: false);
         await SeedAssigneeAsync(id: 1);
 
-        var (success, message, chore) = await _service.CreateChoreAsync(
+        var (success, message, chore, _, _) = await _service.CreateChoreAsync(
             assigneeId: 1, date: new DateOnly(2026, 3, 15), title: "Guard Duty");
 
         success.Should().BeFalse();
@@ -165,13 +167,14 @@ public class ChoreServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateChoreAsync_DuplicateChoreOnSameDate_ReturnsError()
+    public async Task CreateChoreAsync_DuplicateChoreOnSameDate_ReturnsOverrideableWarning()
     {
+        // Severity policy (2026-05-03): a same-day duplicate chore is now an overrideable
+        // warning, not a hard error. The service returns BUSY_OVERRIDE_REQUIRED + token.
         SetupGrantPermissions();
         await SeedAssigneeAsync(id: 1);
         var date = new DateOnly(2026, 3, 15);
 
-        // Create first chore directly in DB
         _db.Chores.Add(new Chore
         {
             Id = 1, CompanyId = CurrentUserCompanyId, UserId = 1,
@@ -179,11 +182,14 @@ public class ChoreServiceTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        var (success, message, _) = await _service.CreateChoreAsync(
+        var (success, message, _, validation, overrideToken) = await _service.CreateChoreAsync(
             assigneeId: 1, date: date, title: "Second Chore");
 
         success.Should().BeFalse();
-        message.Should().Contain("already has an active chore");
+        message.Should().Be("BUSY_OVERRIDE_REQUIRED");
+        validation.Should().NotBeNull();
+        validation!.Warnings.Should().Contain(w => w.Key == "CHORE_CONFLICT");
+        overrideToken.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -197,7 +203,7 @@ public class ChoreServiceTests : IDisposable
             .ReturnsAsync(true);
         await SeedAssigneeAsync(id: 1, role: UserRole.Director);
 
-        var (success, message, chore) = await _service.CreateChoreAsync(
+        var (success, message, chore, _, _) = await _service.CreateChoreAsync(
             assigneeId: 1, date: new DateOnly(2026, 3, 15), title: "Guard Duty");
 
         success.Should().BeTrue();
@@ -212,7 +218,7 @@ public class ChoreServiceTests : IDisposable
         SetupGrantPermissions();
         await SeedAssigneeAsync(id: 1);
 
-        var (_, _, chore) = await _service.CreateChoreAsync(
+        var (_, _, chore, _, _) = await _service.CreateChoreAsync(
             assigneeId: 1, date: new DateOnly(2026, 3, 15),
             title: "  Guard Duty  ", notes: "  North gate  ");
 

@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +51,8 @@ public class ChoreCrudTests : MasterTestBase
 
         return new ChoreService(
             Db, tenantMock.Object, httpContextMock,
-            directorService, grantMock.Object, logger, companyCacheMock.Object);
+            directorService, grantMock.Object, logger, companyCacheMock.Object,
+            BusyServiceMockFactory.Real(Db));
     }
 
     // ================================================================
@@ -65,7 +67,7 @@ public class ChoreCrudTests : MasterTestBase
         var service = CreateChoreServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30));
 
-        var (success, message, chore) = await service.CreateChoreAsync(
+        var (success, message, chore, _, _) = await service.CreateChoreAsync(
             employee.Id, date, "Guard Duty");
 
         success.Should().BeTrue();
@@ -88,7 +90,7 @@ public class ChoreCrudTests : MasterTestBase
         var service = CreateChoreServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(31));
 
-        var (success, _, chore) = await service.CreateChoreAsync(
+        var (success, _, chore, _, _) = await service.CreateChoreAsync(
             employee.Id, date, "Patrol");
 
         success.Should().BeTrue();
@@ -105,7 +107,7 @@ public class ChoreCrudTests : MasterTestBase
         var service = CreateChoreServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(32));
 
-        var (success, _, chore) = await service.CreateChoreAsync(
+        var (success, _, chore, _, _) = await service.CreateChoreAsync(
             employee.Id, date, "Kitchen Duty", notes: "Morning shift only");
 
         success.Should().BeTrue();
@@ -122,7 +124,7 @@ public class ChoreCrudTests : MasterTestBase
         var service = CreateChoreServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(33));
 
-        var (success, message, _) = await service.CreateChoreAsync(
+        var (success, message, _, _, _) = await service.CreateChoreAsync(
             employee.Id, date, "  ");
 
         success.Should().BeFalse();
@@ -136,7 +138,7 @@ public class ChoreCrudTests : MasterTestBase
         var service = CreateChoreServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(34));
 
-        var (success, message, _) = await service.CreateChoreAsync(
+        var (success, message, _, _, _) = await service.CreateChoreAsync(
             99999, date, "Test Chore");
 
         success.Should().BeFalse();
@@ -155,7 +157,7 @@ public class ChoreCrudTests : MasterTestBase
         var service = CreateChoreServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(35));
 
-        var (_, _, chore) = await service.CreateChoreAsync(
+        var (_, _, chore, _, _) = await service.CreateChoreAsync(
             employee.Id, date, "Cleanup");
         TrackEntity(chore!);
 
@@ -176,7 +178,7 @@ public class ChoreCrudTests : MasterTestBase
         var service = CreateChoreServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(36));
 
-        var (_, _, chore) = await service.CreateChoreAsync(
+        var (_, _, chore, _, _) = await service.CreateChoreAsync(
             employee.Id, date, "Double Cancel Test");
         TrackEntity(chore!);
 
@@ -210,7 +212,7 @@ public class ChoreCrudTests : MasterTestBase
         var service = CreateChoreServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(37));
 
-        var (_, _, chore) = await service.CreateChoreAsync(
+        var (_, _, chore, _, _) = await service.CreateChoreAsync(
             employee.Id, date, "Conflict Detection Test");
         TrackEntity(chore!);
 
@@ -219,23 +221,27 @@ public class ChoreCrudTests : MasterTestBase
     }
 
     [Fact]
-    public async Task CreateChore_DuplicateOnSameDate_Fails()
+    public async Task CreateChore_DuplicateOnSameDate_ReturnsOverrideableWarning()
     {
+        // Severity policy (2026-05-03): same-day duplicate chore is an overrideable warning,
+        // not a hard error.
         var lead = GetTestUser("Tzafona", "Lead");
         var employee = GetTestUser("Tzafona", "Employee");
         var service = CreateChoreServiceWithGrants(lead.Id, lead.CompanyId);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(38));
 
-        var (success1, _, chore1) = await service.CreateChoreAsync(
+        var (success1, _, chore1, _, _) = await service.CreateChoreAsync(
             employee.Id, date, "First Chore");
         TrackEntity(chore1!);
 
-        var (success2, message, _) = await service.CreateChoreAsync(
+        var (success2, message, _, validation, overrideToken) = await service.CreateChoreAsync(
             employee.Id, date, "Second Chore");
 
         success1.Should().BeTrue();
         success2.Should().BeFalse();
-        message.Should().Contain("already has an active chore");
+        message.Should().Be("BUSY_OVERRIDE_REQUIRED");
+        validation!.Warnings.Should().Contain(w => w.Key == "CHORE_CONFLICT");
+        overrideToken.Should().NotBeNullOrEmpty();
     }
 
     // ================================================================
@@ -250,7 +256,7 @@ public class ChoreCrudTests : MasterTestBase
             employee.Id, employee.CompanyId, canManageChores: false);
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(39));
 
-        var (success, message, _) = await service.CreateChoreAsync(
+        var (success, message, _, _, _) = await service.CreateChoreAsync(
             employee.Id, date, "Unauthorized Chore");
 
         success.Should().BeFalse();

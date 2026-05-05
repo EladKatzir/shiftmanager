@@ -14,7 +14,7 @@ namespace ShiftManager.Services;
 /// </summary>
 public interface IOnDutyService
 {
-    Task<(bool Success, string Message, OnDuty? OnDuty)> CreateOnDutyAsync(int assigneeId, DateOnly date, OnDutyType type, string? notes = null, bool forceAssign = false);
+    Task<(bool Success, string Message, OnDuty? OnDuty, BusyValidation? Validation, string? OverrideToken)> CreateOnDutyAsync(int assigneeId, DateOnly date, OnDutyType type, string? notes = null, bool forceAssign = false, int? moleculeId = null, string? overrideToken = null);
     Task<(bool Success, string Message)> CancelOnDutyAsync(int onDutyId, string? reason = null);
     Task<List<OnDuty>> GetOnDutiesAsync(DateOnly? startDate = null, DateOnly? endDate = null, int? userId = null, OnDutyType? type = null, bool? includeCanceled = false);
     Task<OnDuty?> GetOnDutyByIdAsync(int onDutyId);
@@ -43,6 +43,21 @@ public interface IOnDutyService
     /// Check if a duty type value is valid (either a built-in enum or a custom OnDutyTypeConfig).
     /// </summary>
     Task<bool> IsValidDutyTypeAsync(int typeValue);
+
+    /// <summary>
+    /// Phase 2d: validate a hypothetical on-duty assignment without writing. Used by the Justice
+    /// drawer's eligibility ranking on the OnCall calendar. Delegates to <see cref="IBusyService.ValidateAsync"/>.
+    /// The <paramref name="moleculeId"/> is used only for HMAC token scoping — OnDuty is global by design
+    /// and has no MoleculeId column on the entity. The molecule boundary is gated at the page-handler
+    /// level via grant verification.
+    /// </summary>
+    Task<ShiftManager.Models.Validation.OnDutyAssignmentValidation> ValidateOnDutyAssignmentAsync(
+        int userId,
+        DateOnly date,
+        OnDutyType type,
+        int moleculeId,
+        string? overrideToken = null,
+        CancellationToken ct = default);
 }
 
 /// <summary>
@@ -70,6 +85,7 @@ public class OnDutyService : IOnDutyService
     private readonly IGrantService _grantService;
     private readonly ILogger<OnDutyService> _logger;
     private readonly IFeatureFlagService _featureFlagService;
+    private readonly IBusyService _busyService;
 
     public OnDutyService(
         AppDbContext db,
@@ -77,7 +93,8 @@ public class OnDutyService : IOnDutyService
         IDirectorService directorService,
         IGrantService grantService,
         ILogger<OnDutyService> logger,
-        IFeatureFlagService featureFlagService)
+        IFeatureFlagService featureFlagService,
+        IBusyService busyService)
     {
         _db = db;
         _httpContextAccessor = httpContextAccessor;
@@ -85,6 +102,7 @@ public class OnDutyService : IOnDutyService
         _grantService = grantService;
         _logger = logger;
         _featureFlagService = featureFlagService;
+        _busyService = busyService;
     }
 
     private int GetCurrentUserId()
@@ -228,12 +246,14 @@ public class OnDutyService : IOnDutyService
     /// <summary>
     /// Create a new on-duty assignment
     /// </summary>
-    public async Task<(bool Success, string Message, OnDuty? OnDuty)> CreateOnDutyAsync(
+    public async Task<(bool Success, string Message, OnDuty? OnDuty, BusyValidation? Validation, string? OverrideToken)> CreateOnDutyAsync(
         int assigneeId,
         DateOnly date,
         OnDutyType type,
         string? notes = null,
-        bool forceAssign = false)
+        bool forceAssign = false,
+        int? moleculeId = null,
+        string? overrideToken = null)
     {
         var currentUserId = GetCurrentUserId();
         int? companyId = null;
@@ -243,22 +263,12 @@ public class OnDutyService : IOnDutyService
             companyId = currentUser?.CompanyId;
 
             if (currentUser == null)
-            {
-                return (false, "User not authenticated.", null);
-            }
+                return (false, "User not authenticated.", null, null, null);
 
-            // Authorization: outer gate uses the collaborative-editing OR chain
-            // (AssignHakamDuties | AssignKatzinDuties | ManageOnDuty | EditOnCallCalendar).
-            // Previously a second, narrower check required AssignHakamDuties/AssignKatzinDuties
-            // specifically — inconsistent with the outer gate and broken for custom duty types
-            // (which were incorrectly mapped to AssignHakamDuties). Officer-rank enforcement for
-            // Katzin / officer-required custom types still happens via IsUserEligibleForDutyAsync below.
             if (!await CanUserManageOnDutyAsync(currentUserId))
-            {
-                return (false, "You do not have permission to create on-duty assignments.", null);
-            }
+                return (false, "You do not have permission to create on-duty assignments.", null, null, null);
 
-            // Check if duty type requires officer rank (only enforce when feature flag is enabled)
+            // Officer-rank enforcement (kept here — molecule/feature-flag gate is OnDutyService-specific)
             var enforceRankEligibility = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.EnforceRankEligibility);
             if (enforceRankEligibility)
             {
@@ -271,43 +281,26 @@ public class OnDutyService : IOnDutyService
                         _logger.LogWarning(
                             "User {UserId} is not eligible for duty type {DutyType} - officer rank required",
                             assigneeId, type);
-                        return (false, "OFFICER_RANK_REQUIRED", null);
+                        return (false, "OFFICER_RANK_REQUIRED", null, null, null);
                     }
                 }
             }
 
-            // Get assignee (must use IgnoreQueryFilters for cross-company access)
-            // SECURITY-AUDITED: SAFE — scoped by specific assigneeId; grant check performed above
-            var assignee = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == assigneeId);
-            if (assignee == null)
+            var target = new BusyTarget.OnDuty(date, type, moleculeId ?? 0);
+
+            var validation = await _busyService.ValidateAsync(target, assigneeId, currentUserId, overrideToken);
+            if (!validation.CanProceed)
             {
-                return (false, "Assignee not found.", null);
+                var firstErr = validation.Errors.FirstOrDefault();
+                return (false, firstErr?.Key ?? "VALIDATION_FAILED", null, validation, null);
+            }
+            if (validation.Warnings.Count > 0 && !forceAssign)
+            {
+                var token = _busyService.GenerateOverrideToken(
+                    target, assigneeId, validation.Warnings.Select(w => w.Key).ToList());
+                return (false, "BUSY_OVERRIDE_REQUIRED", null, validation, token);
             }
 
-            // Check if assignee is active
-            if (!assignee.IsActive)
-            {
-                return (false, "Cannot assign on-duty to inactive user.", null);
-            }
-
-            // Check if assignee already has an active on-duty on this date and type
-            if (await HasActiveOnDutyOnDateAsync(assigneeId, date, type))
-            {
-                return (false, $"This user already has an active {type} on-duty assignment on this date.", null);
-            }
-
-            // COLLISION RULE: Check for vacation conflict (unless force-assigning)
-            if (!forceAssign)
-            {
-                var (hasConflict, vacationStart, vacationEnd, vacationType) = await GetVacationConflictDetailsAsync(assigneeId, date);
-                if (hasConflict)
-                {
-                    // Return vacation details for UI to display in confirmation dialog
-                    return (false, $"VACATION_CONFLICT|{vacationStart}|{vacationEnd}|{vacationType}", null);
-                }
-            }
-
-            // Create the on-duty assignment
             var onDuty = new OnDuty
             {
                 UserId = assigneeId,
@@ -324,26 +317,25 @@ public class OnDutyService : IOnDutyService
             _logger.LogInformation("OnDuty {OnDutyId} ({Type}) created by user {CreatedBy} for user {UserId} on {Date}",
                 onDuty.Id, type, currentUserId, assigneeId, date);
 
-            // Audit log for force-assignments (bypassing vacation conflict)
-            if (forceAssign)
+            if (forceAssign || !string.IsNullOrEmpty(overrideToken))
             {
-                _logger.LogWarning("OnDuty {OnDutyId} was FORCE-ASSIGNED by user {CreatedBy} despite vacation conflict for user {UserId} on {Date}",
+                _logger.LogWarning("OnDuty {OnDutyId} was FORCE-ASSIGNED by user {CreatedBy} despite warnings for user {UserId} on {Date}",
                     onDuty.Id, currentUserId, assigneeId, date);
             }
 
-            return (true, "On-duty assignment created successfully.", onDuty);
+            return (true, "On-duty assignment created successfully.", onDuty, validation, null);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error creating on-duty. CompanyId={CompanyId}, CreatedBy={CreatedBy}, AssigneeId={AssigneeId}, Date={Date}, Type={Type}",
                 companyId, currentUserId, assigneeId, date, type);
-            return (false, "An error occurred while creating the on-duty assignment.", null);
+            return (false, "An error occurred while creating the on-duty assignment.", null, null, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error creating on-duty. CompanyId={CompanyId}, CreatedBy={CreatedBy}, AssigneeId={AssigneeId}, Date={Date}, Type={Type}",
                 companyId, currentUserId, assigneeId, date, type);
-            return (false, "An error occurred while creating the on-duty assignment.", null);
+            return (false, "An error occurred while creating the on-duty assignment.", null, null, null);
         }
     }
 
@@ -559,5 +551,23 @@ public class OnDutyService : IOnDutyService
             return false;
 
         return true;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ShiftManager.Models.Validation.OnDutyAssignmentValidation> ValidateOnDutyAssignmentAsync(
+        int userId,
+        DateOnly date,
+        OnDutyType type,
+        int moleculeId,
+        string? overrideToken = null,
+        CancellationToken ct = default)
+    {
+        // SECURITY-AUDITED: moleculeId is used ONLY for HMAC token scoping (BusyService.TargetCanonical
+        // encodes it for OnDuty), not for a boundary check. OnDuty is global by design — no MoleculeId
+        // column on the entity. The molecule boundary is enforced at the page-handler layer via
+        // grant verification (Justice eligibility handler resolves moleculeId from caller's company).
+        var target = new BusyTarget.OnDuty(date, type, moleculeId);
+        var v = await _busyService.ValidateAsync(target, userId, actorUserId: 0, overrideToken);
+        return new ShiftManager.Models.Validation.OnDutyAssignmentValidation(v.CanProceed, v.Errors, v.Warnings);
     }
 }

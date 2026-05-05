@@ -2,12 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Models.Validation;
 
 namespace ShiftManager.Services;
 
 public interface IChoreService
 {
-    Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false, int? moleculeId = null, int? choreTypeId = null);
+    Task<(bool Success, string Message, Chore? Chore, BusyValidation? Validation, string? OverrideToken)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false, int? moleculeId = null, int? choreTypeId = null, string? overrideToken = null);
     Task<(bool Success, string Message)> CancelChoreAsync(int choreId, string? reason = null);
     Task<(bool Success, string Message)> RestoreChoreAsync(int choreId);
     Task<(bool Success, string Message, Chore? Chore)> ReplaceShiftWithChoreAsync(int shiftAssignmentId, string title, string? notes = null);
@@ -22,6 +23,20 @@ public interface IChoreService
     Task<bool> CanUserManageChoresAsync(int userId);
     Task<bool> CanUserManageChoreForAssigneeAsync(int managerId, int assigneeId);
     Task<List<AppUser>> GetEligibleAssigneesAsync();
+
+    /// <summary>
+    /// Phase 2d: validate a hypothetical chore assignment without writing. Used by the Justice
+    /// drawer's eligibility ranking on the Chores calendar. Delegates to <see cref="IBusyService.ValidateAsync"/>
+    /// with a <c>BusyTarget.Chore</c>; the existing busy logic enforces molecule boundary,
+    /// vacation overlap, cross-resource conflicts, and duplicate-chore detection.
+    /// </summary>
+    Task<ChoreAssignmentValidation> ValidateChoreAssignmentAsync(
+        int userId,
+        DateOnly date,
+        int moleculeId,
+        int? choreTypeId = null,
+        string? overrideToken = null,
+        CancellationToken ct = default);
 }
 
 // SECURITY-AUDITED: IgnoreQueryFilters() in this class is used in three distinct, intentional ways:
@@ -42,6 +57,7 @@ public class ChoreService : IChoreService
     private readonly ILogger<ChoreService> _logger;
 
     private readonly ICompanyCacheService _companyCacheService;
+    private readonly IBusyService _busyService;
 
     public ChoreService(
         AppDbContext db,
@@ -50,7 +66,8 @@ public class ChoreService : IChoreService
         IDirectorService directorService,
         IGrantService grantService,
         ILogger<ChoreService> logger,
-        ICompanyCacheService companyCacheService)
+        ICompanyCacheService companyCacheService,
+        IBusyService busyService)
     {
         _db = db;
         _tenantResolver = tenantResolver;
@@ -58,6 +75,7 @@ public class ChoreService : IChoreService
         _directorService = directorService;
         _grantService = grantService;
         _logger = logger;
+        _busyService = busyService;
         _companyCacheService = companyCacheService;
     }
 
@@ -228,14 +246,15 @@ public class ChoreService : IChoreService
     /// <summary>
     /// Create a new chore assignment
     /// </summary>
-    public async Task<(bool Success, string Message, Chore? Chore)> CreateChoreAsync(
+    public async Task<(bool Success, string Message, Chore? Chore, BusyValidation? Validation, string? OverrideToken)> CreateChoreAsync(
         int assigneeId,
         DateOnly date,
         string title,
         string? notes = null,
         bool forceAssign = false,
         int? moleculeId = null,
-        int? choreTypeId = null)
+        int? choreTypeId = null,
+        string? overrideToken = null)
     {
         var currentUserId = GetCurrentUserId();
         int? companyId = null;
@@ -246,47 +265,33 @@ public class ChoreService : IChoreService
 
             if (currentUser == null)
             {
-                return (false, "User not authenticated.", null);
+                return (false, "User not authenticated.", null, null, null);
             }
 
-            // Check if current user can manage chores
             if (!await CanUserManageChoresAsync(currentUserId))
             {
-                return (false, "You do not have permission to create chores.", null);
+                return (false, "You do not have permission to create chores.", null, null, null);
             }
 
-            // Get assignee — bypass tenant filter; per-assignee authorization happens below.
             // SECURITY-AUDITED: SAFE — CanUserManageChoreForAssigneeAsync is the access gate.
             var assignee = await _db.Users.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(u => u.Id == assigneeId);
             if (assignee == null)
             {
-                return (false, "Assignee not found.", null);
+                return (false, "Assignee not found.", null, null, null);
             }
 
-            // Check if assignee is eligible (not a Director, etc.)
             if (!await CanUserManageChoreForAssigneeAsync(currentUserId, assigneeId))
             {
-                return (false, "You cannot assign chores to this user.", null);
+                return (false, "You cannot assign chores to this user.", null, null, null);
             }
 
-            // Validate title early (before transaction)
             if (string.IsNullOrWhiteSpace(title))
             {
-                return (false, "Chore title is required.", null);
+                return (false, "Chore title is required.", null, null, null);
             }
 
-            // COLLISION RULE: Check for vacation conflict (unless force-assigning)
-            if (!forceAssign)
-            {
-                var (hasConflict, vacationStart, vacationEnd, vacationType) = await GetVacationConflictDetailsAsync(assigneeId, date);
-                if (hasConflict)
-                {
-                    return (false, $"VACATION_CONFLICT|{vacationStart}|{vacationEnd}|{vacationType}", null);
-                }
-            }
-
-            // Get MoleculeId from the assignee's company if not explicitly provided
+            // Resolve MoleculeId from the assignee's company if not explicitly provided.
             var effectiveMoleculeId = moleculeId;
             if (!effectiveMoleculeId.HasValue)
             {
@@ -294,24 +299,39 @@ public class ChoreService : IChoreService
                 effectiveMoleculeId = company?.MoleculeId;
             }
 
-            // Atomic mutual exclusion: wrap chore+shift checks and insert in single transaction (fixes A-03)
-            // SQLite serializes writes, so this ensures the check-then-insert is atomic
+            if (!effectiveMoleculeId.HasValue)
+            {
+                return (false, "Unable to resolve molecule for chore assignment.", null, null, null);
+            }
+
+            var target = new BusyTarget.Chore(date, effectiveMoleculeId.Value, choreTypeId);
+
+            // Atomic mutual exclusion: wrap validate→insert in a single transaction so the
+            // override-retry path also re-validates inside the transaction. Preserves the
+            // A-03 atomicity guarantee from before the migration.
             using var transaction = await _db.Database.BeginTransactionAsync();
             Chore chore;
+            BusyValidation validation;
             try
             {
-                // Check if assignee already has an active chore on this date (inside transaction)
-                if (await HasActiveChoreOnDateAsync(assigneeId, date))
+                validation = await _busyService.ValidateAsync(target, assigneeId, currentUserId, overrideToken);
+
+                if (!validation.CanProceed)
                 {
                     await transaction.RollbackAsync();
-                    return (false, "This user already has an active chore on this date.", null);
+                    var firstErr = validation.Errors.FirstOrDefault();
+                    return (false, firstErr?.Key ?? "VALIDATION_FAILED", null, validation, null);
                 }
 
-                // Check if assignee has a shift on this date (mutual exclusion with shifts)
-                if (await HasShiftOnDateAsync(assigneeId, date))
+                // Warnings remain only if no valid override token was supplied. forceAssign=true is
+                // the legacy bypass (vacation only) — honoured for backwards compat with
+                // Pages/Public/Chores and Pages/Chores/Calendar until those migrate to overrideToken.
+                if (validation.Warnings.Count > 0 && !forceAssign)
                 {
                     await transaction.RollbackAsync();
-                    return (false, "SHIFT_CONFLICT", null);
+                    var token = _busyService.GenerateOverrideToken(
+                        target, assigneeId, validation.Warnings.Select(w => w.Key).ToList());
+                    return (false, "BUSY_OVERRIDE_REQUIRED", null, validation, token);
                 }
 
                 chore = new Chore
@@ -331,36 +351,36 @@ public class ChoreService : IChoreService
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
+            catch (DbUpdateException) { throw; }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Failed to atomically create chore for user {UserId} on {Date}", assigneeId, date);
-                return (false, "Failed to create chore - please try again.", null);
+                return (false, "Failed to create chore - please try again.", null, null, null);
             }
 
             _logger.LogInformation("Chore {ChoreId} created by user {CreatedBy} for user {UserId} on {Date}",
                 chore.Id, currentUserId, assigneeId, date);
 
-            // Audit log for force-assignments (bypassing vacation conflict)
-            if (forceAssign)
+            if (forceAssign || !string.IsNullOrEmpty(overrideToken))
             {
-                _logger.LogWarning("Chore {ChoreId} was FORCE-ASSIGNED by user {CreatedBy} despite vacation conflict for user {UserId} on {Date}",
+                _logger.LogWarning("Chore {ChoreId} was FORCE-ASSIGNED by user {CreatedBy} despite warnings for user {UserId} on {Date}",
                     chore.Id, currentUserId, assigneeId, date);
             }
 
-            return (true, "Chore created successfully.", chore);
+            return (true, "Chore created successfully.", chore, validation, null);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error creating chore. CompanyId={CompanyId}, CreatedBy={CreatedBy}, AssigneeId={AssigneeId}, Date={Date}, Title={Title}",
                 companyId, currentUserId, assigneeId, date, title);
-            return (false, "An error occurred while creating the chore.", null);
+            return (false, "An error occurred while creating the chore.", null, null, null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error creating chore. CompanyId={CompanyId}, CreatedBy={CreatedBy}, AssigneeId={AssigneeId}, Date={Date}, Title={Title}",
                 companyId, currentUserId, assigneeId, date, title);
-            return (false, "An error occurred while creating the chore.", null);
+            return (false, "An error occurred while creating the chore.", null, null, null);
         }
     }
 
@@ -718,5 +738,22 @@ public class ChoreService : IChoreService
             .Include(c => c.Creator)
             .Include(c => c.Canceler)
             .FirstOrDefaultAsync(c => c.Id == choreId);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ChoreAssignmentValidation> ValidateChoreAssignmentAsync(
+        int userId,
+        DateOnly date,
+        int moleculeId,
+        int? choreTypeId = null,
+        string? overrideToken = null,
+        CancellationToken ct = default)
+    {
+        // BusyService is the single validation authority — it enforces molecule boundary,
+        // vacation overlap, cross-resource conflicts, and duplicate-chore detection. Same
+        // delegation pattern that ShiftAssignmentService.ValidateShiftAssignmentAsync uses.
+        var target = new BusyTarget.Chore(date, moleculeId, choreTypeId);
+        var v = await _busyService.ValidateAsync(target, userId, actorUserId: 0, overrideToken);
+        return new ChoreAssignmentValidation(v.CanProceed, v.Errors, v.Warnings);
     }
 }

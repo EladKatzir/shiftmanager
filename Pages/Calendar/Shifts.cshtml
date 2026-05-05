@@ -86,6 +86,21 @@
                 <span class="btn-icon"><icon name="printer" /></span>
                 <span class="btn-text">@Localizer["Print"]</span>
             </button>
+
+            @* Justice — in-context analytics drawer (Phase 2). Renders BOTH a toolbar button
+               (in-place) AND a fixed-position drawer (out-of-flow). The button is gated by
+               <require-grant key="ViewJusticeTable"> inside the partial. *@
+            @{
+                var justicePanelModel = new ShiftManager.Pages.Shared.JusticePanelModel
+                {
+                    CalendarKind = "shifts",
+                    DataEndpoint = $"/Calendar/Shifts?handler=Justice&MoleculeId={Model.MoleculeId}&JobTypeId={Model.JobTypeId}&Start={Model.StartDate:yyyy-MM-dd}",
+                    ButtonTitle = Localizer["Justice_Panel_Button"].Value,
+                    RibbonAria = Localizer["Justice_EquityRibbon_Aria"].Value,
+                    CloseLabel = Localizer["Justice_Panel_Close"].Value
+                };
+            }
+            <partial name="_JusticePanel" model="justicePanelModel" />
         </div>
 
         @* Row 2: Mode toggles + Filter + Just Mine *@
@@ -280,6 +295,10 @@ else
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
+
+    @* Justice in-context drawer (Phase 2) *@
+    <link rel="stylesheet" href="~/css/justice-panel.css" asp-append-version="true" />
+    <script src="~/js/justice-panel.js" asp-append-version="true" defer></script>
     <link rel="stylesheet" href="~/css/calendar-quick-entry.css" asp-append-version="true" />
     <script src="~/js/calendar-quick-entry.js" asp-append-version="true"></script>
     <script src="~/js/excel-calendar-groups.js" asp-append-version="true"></script>

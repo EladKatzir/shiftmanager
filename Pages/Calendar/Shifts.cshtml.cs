@@ -34,6 +34,7 @@ public class ShiftsModel : PageModel
     private readonly ITraineeService _traineeService;
     private readonly IChoreTypeService _choreTypeService;
     private readonly ICalendarTextEntryService _textEntryService;
+    private readonly IJusticeService _justiceService;
 
     public ShiftsModel(
         AppDbContext db,
@@ -47,7 +48,8 @@ public class ShiftsModel : PageModel
         IJobTypeService jobTypeService,
         ITraineeService traineeService,
         IChoreTypeService choreTypeService,
-        ICalendarTextEntryService textEntryService)
+        ICalendarTextEntryService textEntryService,
+        IJusticeService justiceService)
     {
         _db = db;
         _calendarService = calendarService;
@@ -61,6 +63,7 @@ public class ShiftsModel : PageModel
         _traineeService = traineeService;
         _choreTypeService = choreTypeService;
         _textEntryService = textEntryService;
+        _justiceService = justiceService;
     }
 
     // Query parameters
@@ -911,4 +914,287 @@ public class ShiftsModel : PageModel
 
         return cells;
     }
+
+    // ===============================================================================
+    // Justice analytics — in-context drawer (Phase 2)
+    // ===============================================================================
+
+    /// <summary>
+    /// JSON endpoint feeding the slide-in Justice drawer on this calendar.
+    /// Auto-derives scope from the page's MoleculeId / JobTypeId / Start state.
+    /// Authorization: requires ViewJusticeTable grant in the requested molecule scope.
+    /// </summary>
+    public async Task<IActionResult> OnGetJusticeAsync(CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+        {
+            return Forbid();
+        }
+
+        if (!MoleculeId.HasValue)
+        {
+            return new JsonResult(new { error = "no_scope" });
+        }
+
+        // Scope-gating: confirm the user has Justice access in this molecule.
+        var allowedMoleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(currentUserId, "ViewJusticeTable");
+        if (!allowedMoleculeIds.Contains(MoleculeId.Value))
+        {
+            return Forbid();
+        }
+
+        // Period: align with the calendar's current view window (Start / End already computed in OnGetAsync,
+        // but this handler runs independently. Recompute here from the same Start binding.)
+        DateOnly periodStart, periodEnd;
+        ResolveJusticePeriod(out periodStart, out periodEnd);
+
+        var query = new JusticeQuery(
+            Scope: JusticeScope.Molecule,
+            ScopeId: MoleculeId,
+            PeriodStart: periodStart,
+            PeriodEnd: periodEnd,
+            WorkType: JusticeWorkType.Shift,
+            ExcludeExemptShifts: true,
+            Level: JusticeLevel.CompaniesInMolecule);
+
+        var view = await _justiceService.GetInContextViewAsync(query, ct);
+        return new JsonResult(BuildJusticeJson(view));
+    }
+
+    private void ResolveJusticePeriod(out DateOnly start, out DateOnly end)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var anchor = today;
+        if (!string.IsNullOrEmpty(Start) && DateOnly.TryParse(Start, out var parsed))
+        {
+            anchor = parsed;
+        }
+        // Use a 30-day window centered on the calendar's anchor for fairness math.
+        // Keeps the drawer's "Where to focus" within a meaningful planning horizon.
+        start = anchor.AddDays(-15);
+        end = anchor.AddDays(15);
+    }
+
+    private object BuildJusticeJson(InContextJusticeViewModel view)
+    {
+        return new
+        {
+            query = new
+            {
+                scope = view.Query.Scope.ToString(),
+                scopeId = view.Query.ScopeId,
+                level = view.Query.Level.ToString(),
+                workType = view.Query.WorkType.ToString(),
+                periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd"),
+                periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd")
+            },
+            spreadIndex = view.SpreadIndex,
+            spreadSeverity = view.SpreadSeverity,
+            spreadLabel = _localizer[view.SpreadLabelKey].Value,
+            mostOver = view.MostOver is null ? null : new { name = view.MostOver.Name, deviationPercent = view.MostOver.DeviationPercent },
+            mostUnder = view.MostUnder is null ? null : new { name = view.MostUnder.Name, deviationPercent = view.MostUnder.DeviationPercent },
+            rows = view.Rows.Select(r => new { id = r.Id, name = r.Name, actual = r.Actual, expected = r.Expected, deviationPercent = r.DeviationPercent, band = r.Band.ToString() }),
+            maxRibbonValue = view.MaxRibbonValue,
+            whereToFocus = view.WhereToFocus.Select(h => new { kind = h.Kind, shiftInstanceId = h.ShiftInstanceId, date = h.Date.ToString("yyyy-MM-dd"), label = h.Label, deficit = h.Deficit, companyId = h.CompanyId, jobTypeId = h.JobTypeId, dutyTypeValue = h.DutyTypeValue, userId = h.UserId, moleculeId = MoleculeId }),
+            fullViewUrl = view.FullViewUrl,
+            noneLabel = _localizer["Justice_None"].Value,
+            noHolesLabel = _localizer["Justice_Panel_NoHoles"].Value
+        };
+    }
+
+    /// <summary>
+    /// Phase 2b — JSON endpoint that ranks candidate users to fill a specific shift hole.
+    /// Accepts either:
+    ///   - <c>rowId</c> + <c>date</c> (cell click — rowId is the ShiftType id), or
+    ///   - <c>shiftInstanceId</c> + <c>date</c> (focus-list click — instance already known).
+    /// Returns ranked candidates least-loaded-first, with hard-blocked candidates collapsed.
+    /// </summary>
+    public async Task<IActionResult> OnGetJusticeEligibilityAsync(int? rowId, int? shiftInstanceId, string? date, CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+            return Forbid();
+
+        if (!MoleculeId.HasValue)
+            return new JsonResult(new { error = "no_scope" });
+
+        var allowedMoleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(currentUserId, "ViewJusticeTable");
+        if (!allowedMoleculeIds.Contains(MoleculeId.Value))
+            return Forbid();
+
+        if (string.IsNullOrEmpty(date) || !DateOnly.TryParse(date, out var workDate))
+            return BadRequest(new { error = "invalid_date" });
+
+        // SECURITY-AUDITED: SAFE — instance lookup by either composite (ShiftTypeId, WorkDate)
+        // or by primary key. Page-level grant gates Justice access on this molecule; the
+        // instance's molecule is re-verified below before any candidate data is exposed.
+        var instanceQuery = _db.ShiftInstances.IgnoreQueryFilters();
+        var instance = shiftInstanceId.HasValue
+            ? await instanceQuery
+                .Where(si => si.Id == shiftInstanceId.Value && si.WorkDate == workDate)
+                .Select(si => new { si.Id, si.CompanyId, si.ShiftTypeId })
+                .FirstOrDefaultAsync(ct)
+            : (rowId.HasValue
+                ? await instanceQuery
+                    .Where(si => si.ShiftTypeId == rowId.Value && si.WorkDate == workDate)
+                    .Select(si => new { si.Id, si.CompanyId, si.ShiftTypeId })
+                    .FirstOrDefaultAsync(ct)
+                : null);
+
+        if (instance is null)
+            return new JsonResult(new { error = "no_instance" });
+
+        // Defense in depth: caller has grant on MoleculeId; verify the instance's company is in
+        // that molecule (ShiftInstance has no MoleculeId column — go through Company).
+        var instanceMoleculeId = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.Id == instance.CompanyId)
+            .Select(c => c.MoleculeId)
+            .FirstOrDefaultAsync(ct);
+
+        if (instanceMoleculeId != MoleculeId.Value)
+            return Forbid();
+
+        // SECURITY-AUDITED: SAFE — ShiftType lookup by unique id; only its JobTypeId is read for filtering.
+        var shiftType = await _db.ShiftTypes
+            .IgnoreQueryFilters()
+            .Where(st => st.Id == instance.ShiftTypeId)
+            .Select(st => new { st.JobTypeId })
+            .FirstOrDefaultAsync(ct);
+
+        DateOnly periodStart, periodEnd;
+        ResolveJusticePeriod(out periodStart, out periodEnd);
+
+        // Eligibility ranking uses Company-scoped UsersInCompany rows so each candidate carries a
+        // per-user deviation %. Drawer's verdict view uses CompaniesInMolecule for aggregates;
+        // these are different scopes on purpose — verdict is "how is the molecule doing?" while
+        // ranking is "how loaded is each candidate?".
+        var parentScope = new JusticeQuery(
+            Scope: JusticeScope.Company,
+            ScopeId: instance.CompanyId,
+            PeriodStart: periodStart,
+            PeriodEnd: periodEnd,
+            WorkType: JusticeWorkType.Shift,
+            ExcludeExemptShifts: true,
+            Level: JusticeLevel.UsersInCompany);
+
+        var hole = new HoleSelector(
+            Kind: "shift",
+            ShiftInstanceId: instance.Id,
+            Date: workDate,
+            CompanyId: instance.CompanyId,
+            JobTypeId: shiftType?.JobTypeId,
+            DutyTypeValue: null,
+            MoleculeId: null,                    // shifts resolve molecule via Company join in BusyService
+            ParentScope: parentScope);
+
+        var result = await _justiceService.GetEligibleCandidatesAsync(hole, ct);
+        return new JsonResult(BuildEligibilityJson(result, instance.Id, instance.ShiftTypeId, workDate));
+    }
+
+    /// <summary>
+    /// Phase 2c — JSON endpoint that previews the spread-index impact of assigning a user to a hole.
+    /// Pure in-memory recompute; never writes to the DB.
+    /// </summary>
+    public async Task<IActionResult> OnGetJusticePreviewAsync(int userId, int shiftInstanceId, CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+            return Forbid();
+
+        if (!MoleculeId.HasValue)
+            return new JsonResult(new { error = "no_scope" });
+
+        var allowedMoleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(currentUserId, "ViewJusticeTable");
+        if (!allowedMoleculeIds.Contains(MoleculeId.Value))
+            return Forbid();
+
+        // SECURITY-AUDITED: SAFE — ShiftInstance lookup by unique id; molecule re-verified below.
+        var instance = await _db.ShiftInstances
+            .IgnoreQueryFilters()
+            .Where(si => si.Id == shiftInstanceId)
+            .Select(si => new { si.Id, si.CompanyId, si.ShiftTypeId, si.WorkDate })
+            .FirstOrDefaultAsync(ct);
+
+        if (instance is null)
+            return new JsonResult(new { error = "no_instance" });
+
+        var instanceMoleculeId = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.Id == instance.CompanyId)
+            .Select(c => c.MoleculeId)
+            .FirstOrDefaultAsync(ct);
+
+        if (instanceMoleculeId != MoleculeId.Value)
+            return Forbid();
+
+        DateOnly periodStart, periodEnd;
+        ResolveJusticePeriod(out periodStart, out periodEnd);
+
+        var parentScope = new JusticeQuery(
+            Scope: JusticeScope.Company,
+            ScopeId: instance.CompanyId,
+            PeriodStart: periodStart,
+            PeriodEnd: periodEnd,
+            WorkType: JusticeWorkType.Shift,
+            ExcludeExemptShifts: true,
+            Level: JusticeLevel.UsersInCompany);
+
+        var hole = new HoleSelector(
+            Kind: "shift",
+            ShiftInstanceId: instance.Id,
+            Date: instance.WorkDate,
+            CompanyId: instance.CompanyId,
+            JobTypeId: null,
+            DutyTypeValue: null,
+            MoleculeId: null,
+            ParentScope: parentScope);
+
+        var preview = await _justiceService.PreviewImpactAsync(new SimulatedAssignment(userId, hole), ct);
+        return new JsonResult(BuildPreviewJson(preview));
+    }
+
+    private object BuildEligibilityJson(EligibleCandidatesViewModel result, int shiftInstanceId, int shiftTypeId, DateOnly date)
+    {
+        return new
+        {
+            shiftInstanceId,
+            shiftTypeId,
+            date = date.ToString("yyyy-MM-dd"),
+            kind = "shift",
+            candidates = result.Candidates.Select(c => new
+            {
+                userId = c.UserId,
+                displayName = c.DisplayName,
+                avatarUrl = c.AvatarUrl,
+                actual = c.Actual,
+                expected = c.Expected,
+                deviationPercent = c.DeviationPercent,
+                band = c.Band.ToString(),
+                isHardBlocked = c.Eligibility.IsHardBlocked,
+                warnings = c.Eligibility.WarningKeys.Select(k => _localizer[k].Value).ToList()
+            }),
+            hardBlocked = result.HardBlocked.Select(c => new
+            {
+                userId = c.UserId,
+                displayName = c.DisplayName,
+                avatarUrl = c.AvatarUrl,
+                band = c.Band.ToString(),
+                hardBlockReason = c.Eligibility.HardBlockReason
+            })
+        };
+    }
+
+    private static object BuildPreviewJson(ImpactPreviewViewModel p) => new
+    {
+        spreadIndexBefore = p.SpreadIndexBefore,
+        spreadSeverityBefore = p.SpreadSeverityBefore,
+        spreadIndexAfter = p.SpreadIndexAfter,
+        spreadSeverityAfter = p.SpreadSeverityAfter,
+        candidateActualBefore = p.CandidateActualBefore,
+        candidateActualAfter = p.CandidateActualAfter,
+        candidateDeviationBefore = p.CandidateDeviationBefore,
+        candidateDeviationAfter = p.CandidateDeviationAfter
+    };
 }

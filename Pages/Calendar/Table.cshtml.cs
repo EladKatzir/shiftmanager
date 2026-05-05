@@ -656,7 +656,7 @@ public class TableModel : PageModel
                 {
                     success = false,
                     requiresOverride = true,
-                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, Category = w.Category.ToString(), w.Detail }),
                     overrideToken,
                     shiftInstanceId = assignment.ShiftInstanceId
                 });
@@ -821,7 +821,7 @@ public class TableModel : PageModel
                 {
                     success = false,
                     requiresOverride = true,
-                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, Category = w.Category.ToString(), w.Detail }),
                     overrideToken,
                     shiftInstanceId = instance.Id
                 });
@@ -841,7 +841,7 @@ public class TableModel : PageModel
                     {
                         success = false,
                         requiresOverride = true,
-                        warnings = result.Validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                        warnings = result.Validation.Warnings.Select(w => new { w.Key, w.Message, Category = w.Category.ToString(), w.Detail }),
                         overrideToken = newToken,
                         shiftInstanceId = instance.Id
                     });
@@ -1286,7 +1286,7 @@ public class TableModel : PageModel
                 {
                     success = false,
                     requiresOverride = true,
-                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, Category = w.Category.ToString(), w.Detail }),
                     overrideToken,
                     assignmentId = request.AssignmentId
                 });
@@ -1448,7 +1448,7 @@ public class TableModel : PageModel
                 {
                     success = false,
                     requiresOverride = true,
-                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, w.Category }),
+                    warnings = validation.Warnings.Select(w => new { w.Key, w.Message, Category = w.Category.ToString(), w.Detail }),
                     overrideToken,
                     shiftInstanceId = assignment.ShiftInstanceId
                 });

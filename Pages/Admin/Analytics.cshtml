@@ -1,748 +1,301 @@
 @page
 @model ShiftManager.Pages.Admin.AnalyticsModel
 @using Microsoft.Extensions.Localization
-@using ShiftManager.Resources
+@using ShiftManager.Models
 @using ShiftManager.Models.Support
+@using ShiftManager.Resources
+@using ShiftManager.Services
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @{
-    ViewData["Title"] = Localizer["AnalyticsDashboard"];
+    ViewData["Title"] = Localizer["Justice_PageTitle"];
     Layout = "_Layout";
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
 {
     new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
-    new BreadcrumbItem { Label = Localizer["Analytics"], IsActive = true }
+    new BreadcrumbItem { Label = Localizer["Justice_PageTitle"], IsActive = true }
 })
 
 @section Styles {
-    <style>
-        /* Page Header */
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0 0 0.5rem 0;
-            line-height: 1.2;
-        }
-
-        .page-subtitle {
-            font-size: 1rem;
-            color: var(--text-muted);
-            margin: 0;
-            line-height: 1.5;
-        }
-
-        .page-header-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .page-header-content {
-            flex: 1;
-        }
-
-        /* Alerts */
-        .alert-success {
-            padding: 1rem 1.25rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.9375rem;
-            font-weight: 500;
-            background: var(--success);
-            color: var(--success-text);
-            border: 1px solid rgba(var(--success-rgb, 16, 185, 129), 0.3);
-        }
-
-        .alert-error {
-            padding: 1rem 1.25rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.9375rem;
-            font-weight: 500;
-            background: var(--danger);
-            color: var(--danger-text);
-            border: 1px solid rgba(var(--danger-rgb, 244, 67, 54), 0.3);
-        }
-
-        /* Date Range Filter Card */
-        .filter-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .filter-header {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text);
-            margin: 0 0 1rem 0;
-        }
-
-        .filter-form {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 1rem;
-            align-items: end;
-        }
-
-        .form-group {
-            margin: 0;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-
-        .form-select {
-            width: 100%;
-            padding: 0.625rem 0.875rem;
-            font-size: 0.9375rem;
-            color: var(--text);
-            background-color: var(--surface-soft);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            transition: all 0.15s ease;
-        }
-
-        .form-select:hover {
-            border-color: var(--primary);
-            background-color: var(--surface);
-        }
-
-        .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            background-color: var(--surface);
-            box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 59, 130, 246), 0.1);
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1.25rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: var(--primary-contrast);
-            border-color: var(--primary);
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
-            border-color: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-secondary {
-            background: var(--surface-soft);
-            color: var(--text);
-            border-color: var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: var(--surface-elevated);
-            border-color: var(--primary);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--stat-color, var(--primary));
-        }
-
-        .stat-card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
-        }
-
-        .stat-card.stat-blue {
-            --stat-color: var(--primary);
-        }
-
-        .stat-card.stat-green {
-            --stat-color: var(--success);
-        }
-
-        .stat-card.stat-purple {
-            --stat-color: var(--accent);
-        }
-
-        .stat-card.stat-orange {
-            --stat-color: var(--warning);
-        }
-
-        .stat-label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 0.25rem;
-            line-height: 1;
-        }
-
-        .stat-description {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        /* Section */
-        .section {
-            margin-bottom: 2rem;
-        }
-
-        .section-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .section-header {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text);
-            margin: 0 0 1.25rem 0;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        /* Data Table */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .data-table thead tr {
-            border-bottom: 2px solid var(--border);
-        }
-
-        .data-table th {
-            padding: 0.875rem;
-            text-align: start;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .data-table tbody tr {
-            border-bottom: 1px solid var(--border);
-            transition: background-color 0.15s ease;
-        }
-
-        .data-table tbody tr:hover {
-            background: var(--surface-soft);
-        }
-
-        .data-table tbody tr:last-child {
-            border-bottom: none;
-        }
-
-        .data-table td {
-            padding: 1rem 0.875rem;
-            font-size: 0.9375rem;
-            color: var(--text);
-        }
-
-        .data-table td.employee-name {
-            font-weight: 500;
-        }
-
-        .data-table td.deficit-high {
-            color: var(--danger);
-            font-weight: 600;
-        }
-
-        .data-table td.deficit-medium {
-            color: var(--warning);
-            font-weight: 600;
-        }
-
-        .data-table td.text-success {
-            color: var(--success);
-        }
-
-        .data-table td.text-danger {
-            color: var(--danger);
-        }
-
-        /* Mini Stats Grid */
-        .mini-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-        }
-
-        .mini-stat {
-            padding: 1rem;
-            background: var(--surface-soft);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .mini-stat-label {
-            font-size: 0.8125rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-
-        .mini-stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .mini-stat-value.text-success {
-            color: var(--success);
-        }
-
-        .mini-stat-value.text-danger {
-            color: var(--danger);
-        }
-
-        .mini-stat-value.text-warning {
-            color: var(--warning);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 2rem;
-        }
-
-        .empty-state-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .empty-state-text {
-            font-size: 0.9375rem;
-            color: var(--text-muted);
-        }
-
-        .success-state {
-            text-align: center;
-            padding: 3rem 2rem;
-            color: var(--success);
-        }
-
-        .success-state-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        .success-state-text {
-            font-size: 0.9375rem;
-            font-weight: 500;
-        }
-
-        /* Responsive Design */
-        @@media (max-width: 768px) {
-            .page-header-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .filter-form {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .mini-stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .page-title {
-                font-size: 1.75rem;
-            }
-
-            .stat-value {
-                font-size: 1.75rem;
-            }
-        }
-
-        @@media (max-width: 480px) {
-            .section-card {
-                padding: 1.25rem;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-            }
-
-            .stat-value {
-                font-size: 1.5rem;
-            }
-
-            .mini-stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .data-table {
-                font-size: 0.875rem;
-            }
-
-            .data-table th,
-            .data-table td {
-                padding: 0.75rem 0.5rem;
-            }
-        }
-
-        /* Table Responsive Wrapper */
-        .table-wrapper {
-            overflow-x: auto;
-            margin: 0 -1.5rem;
-            padding: 0 1.5rem;
-        }
-
-        @@media (max-width: 768px) {
-            .table-wrapper {
-                margin: 0 -1.25rem;
-                padding: 0 1.25rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/justice.css" asp-append-version="true" />
 }
 
-<!-- Page Header -->
-<div class="page-header-actions">
-    <div class="page-header-content">
-        <h1 class="page-title">@Localizer["AnalyticsDashboard"]</h1>
-        <p class="page-subtitle">@Localizer["ViewInsightsMetricsAndReports"]</p>
-    </div>
-</div>
+@section Scripts {
+    <script src="~/js/justice.js" asp-append-version="true" defer></script>
+}
 
-<!-- Date Range Filter -->
-<div class="filter-card">
-    <h3 class="filter-header">@Localizer["DateRange"]</h3>
-    <form method="get" class="filter-form">
-        <div class="form-group">
-            <label class="form-label">@Localizer["SelectPeriod"]</label>
-            <select class="form-select" name="dateRange" onchange="this.form.submit()">
-                <option value="7" selected="@(Model.DateRange == 7)">@Localizer["Last7Days"]</option>
-                <option value="30" selected="@(Model.DateRange == 30)">@Localizer["Last30Days"]</option>
-                <option value="90" selected="@(Model.DateRange == 90)">@Localizer["Last90Days"]</option>
-                <option value="365" selected="@(Model.DateRange == 365)">@Localizer["LastYear"]</option>
-            </select>
+<div class="justice-page" data-page="justice">
+    <header class="page-header justice-header">
+        <div>
+            <h1 class="page-title"><loc key="Justice_PageTitle" /></h1>
+            <p class="page-subtitle"><loc key="Justice_Subtitle" /></p>
         </div>
-        <a asp-page-handler="ExportCsv" asp-route-dateRange="@Model.DateRange" class="btn btn-primary">
-            <span><icon name="download" size="sm" /></span>
-            <span>@Localizer["ExportReport"]</span>
-        </a>
+        <div class="justice-header-actions">
+            <require-grant key="EditJusticeTargets">
+                <button type="button" class="btn btn--secondary" disabled title="@Localizer["Justice_Targets_ComingPhase2"]">
+                    <icon name="settings" size="sm" />
+                    <span><loc key="Justice_Targets" /></span>
+                </button>
+            </require-grant>
+            <a class="btn btn--primary" asp-page-handler="ExportCsv"
+               asp-route-scope="@Model.Scope"
+               asp-route-scopeId="@Model.ScopeId"
+               asp-route-level="@Model.Level"
+               asp-route-workType="@Model.WorkType"
+               asp-route-excludeExempt="@Model.ExcludeExemptShifts"
+               asp-route-from="@Model.EffectivePeriodStart.ToString("yyyy-MM-dd")"
+               asp-route-to="@Model.EffectivePeriodEnd.ToString("yyyy-MM-dd")">
+                <icon name="download" size="sm" />
+                <span><loc key="Justice_ExportCsv" /></span>
+            </a>
+        </div>
+    </header>
+
+    @* ========== Scope strip ========== *@
+    <form method="get" class="justice-filter-card section-card" id="justice-filter-form">
+        <div class="filter-row">
+            <label class="filter-field">
+                <span class="filter-field__label"><loc key="Justice_Level" /></span>
+                <select name="level" class="form-select" data-justice-onchange>
+                    <option value="@JusticeLevel.UsersInCompany" selected="@(Model.Level == JusticeLevel.UsersInCompany)">@Localizer["Justice_Level_UsersInCompany"]</option>
+                    <option value="@JusticeLevel.CompaniesInMolecule" selected="@(Model.Level == JusticeLevel.CompaniesInMolecule)">@Localizer["Justice_Level_CompaniesInMolecule"]</option>
+                    <option value="@JusticeLevel.MoleculesInArea" selected="@(Model.Level == JusticeLevel.MoleculesInArea)">@Localizer["Justice_Level_MoleculesInArea"]</option>
+                </select>
+            </label>
+
+            @{
+                var pickerLabel = Model.Level switch
+                {
+                    JusticeLevel.UsersInCompany => Localizer["Justice_Pick_Company"].Value,
+                    JusticeLevel.CompaniesInMolecule => Localizer["Justice_Pick_Molecule"].Value,
+                    JusticeLevel.MoleculesInArea => Localizer["Justice_Pick_Area"].Value,
+                    _ => ""
+                };
+                IEnumerable<AnalyticsModel.ScopeOption> options = Model.Level switch
+                {
+                    JusticeLevel.UsersInCompany => Model.CompanyOptions,
+                    JusticeLevel.CompaniesInMolecule => Model.MoleculeOptions,
+                    JusticeLevel.MoleculesInArea => Model.AreaOptions,
+                    _ => Enumerable.Empty<AnalyticsModel.ScopeOption>()
+                };
+            }
+            <label class="filter-field">
+                <span class="filter-field__label">@pickerLabel</span>
+                <select name="scopeId" class="form-select" data-justice-onchange>
+                    @if (!options.Any())
+                    {
+                        <option value=""><loc key="Justice_Pick_None" /></option>
+                    }
+                    else
+                    {
+                        foreach (var opt in options)
+                        {
+                            <option value="@opt.Id" selected="@(Model.ScopeId == opt.Id)">@opt.Name</option>
+                        }
+                    }
+                </select>
+            </label>
+
+            <label class="filter-field">
+                <span class="filter-field__label"><loc key="Justice_PeriodStart" /></span>
+                <input type="date" name="from" class="form-input" value="@Model.EffectivePeriodStart.ToString("yyyy-MM-dd")" data-justice-onchange />
+            </label>
+            <label class="filter-field">
+                <span class="filter-field__label"><loc key="Justice_PeriodEnd" /></span>
+                <input type="date" name="to" class="form-input" value="@Model.EffectivePeriodEnd.ToString("yyyy-MM-dd")" data-justice-onchange />
+            </label>
+
+            <label class="filter-field">
+                <span class="filter-field__label"><loc key="Justice_WorkType" /></span>
+                <select name="workType" class="form-select" data-justice-onchange>
+                    <option value="@JusticeWorkType.All" selected="@(Model.WorkType == JusticeWorkType.All)">@Localizer["Justice_WorkType_All"]</option>
+                    <option value="@JusticeWorkType.Shift" selected="@(Model.WorkType == JusticeWorkType.Shift)">@Localizer["Justice_WorkType_Shift"]</option>
+                    <option value="@JusticeWorkType.Chore" selected="@(Model.WorkType == JusticeWorkType.Chore)">@Localizer["Justice_WorkType_Chore"]</option>
+                    <option value="@JusticeWorkType.OnDuty" selected="@(Model.WorkType == JusticeWorkType.OnDuty)">@Localizer["Justice_WorkType_OnDuty"]</option>
+                </select>
+            </label>
+
+            <label class="filter-toggle">
+                <input type="checkbox" name="excludeExempt" value="true" @(Model.ExcludeExemptShifts ? "checked" : "") data-justice-onchange />
+                <span><loc key="Justice_ExcludeExempt" /></span>
+            </label>
+
+            <noscript>
+                <button type="submit" class="btn btn--secondary"><loc key="Justice_Apply" /></button>
+            </noscript>
+        </div>
     </form>
-</div>
 
-<!-- Summary Stats -->
-<div class="stats-grid">
-    <div class="stat-card stat-blue">
-        <div class="stat-label">@Localizer["CoverageRate"]</div>
-        <div class="stat-value">@Model.CoverageRate.ToString("F1")%</div>
-        <div class="stat-description">@Localizer["ShiftCoverage"]</div>
-    </div>
+    @if (Model.View is null)
+    {
+        <div class="empty-state section-card">
+            <div class="empty-state-icon"><icon name="bar-chart-3" size="lg" /></div>
+            <h2><loc key="Justice_Empty_PickScope" /></h2>
+            <p class="text-subtle"><loc key="Justice_Empty_PickScope_Hint" /></p>
+        </div>
+    }
+    else
+    {
+        var v = Model.View;
 
-    <div class="stat-card stat-green">
-        <div class="stat-label">@Localizer["TimeOffRate"]</div>
-        <div class="stat-value">@Model.TimeOffStats.ApprovalRate.ToString("F1")%</div>
-        <div class="stat-description">@Localizer["TimeOffApproval"]</div>
-    </div>
-
-    <div class="stat-card stat-purple">
-        <div class="stat-label">@Localizer["SwapRate"]</div>
-        <div class="stat-value">@Model.SwapStats.ApprovalRate.ToString("F1")%</div>
-        <div class="stat-description">@Localizer["ShiftSwaps"]</div>
-    </div>
-
-    <div class="stat-card stat-orange">
-        <div class="stat-label">@Localizer["AverageDaysOff"]</div>
-        <div class="stat-value">@Model.AverageDaysOffPerEmployee.ToString("F1")</div>
-        <div class="stat-description">@Localizer["PerEmployee"]</div>
-    </div>
-</div>
-
-<!-- Employee Hours -->
-<div class="section">
-    <div class="section-card">
-        <h3 class="section-header">@Localizer["EmployeeHours"]</h3>
-        @if (Model.EmployeeHours.Any())
-        {
-            <div class="table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>@Localizer["Employee"]</th>
-                            <th>@Localizer["TotalHours"]</th>
-                            <th>@Localizer["AvgHoursPerWeek"]</th>
-                            <th>@Localizer["ShiftCount"]</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.EmployeeHours)
+        @* ========== Verdict strip ========== *@
+        <section class="justice-verdict section-card" aria-labelledby="verdict-heading">
+            <div class="verdict-line">
+                <h2 id="verdict-heading" class="verdict-heading">
+                    <icon name="sliders" size="sm" />
+                    <loc key="Justice_Verdict_Heading" />
+                </h2>
+                <span class="verdict-spread-pill" data-severity="@v.SpreadSeverity" dir="ltr">
+                    <span class="verdict-spread-number">@v.SpreadIndex.ToString("F2")</span>
+                    <span class="verdict-spread-glyph" aria-hidden="true">
+                        @for (int i = 0; i < 5; i++)
                         {
-                            <tr>
-                                <td class="employee-name">@item.EmployeeName</td>
-                                <td>@item.TotalHours.ToString("F1")</td>
-                                <td>@item.AverageHoursPerWeek.ToString("F1")</td>
-                                <td>@item.ShiftCount</td>
-                            </tr>
+                            <span class="dot @(i <= v.SpreadSeverity ? "dot--filled" : "")"></span>
                         }
-                    </tbody>
-                </table>
+                    </span>
+                    <span class="verdict-spread-label">@Localizer[v.SpreadLabelKey]</span>
+                </span>
             </div>
-        }
-        else
-        {
-            <div class="empty-state">
-                <div class="empty-state-icon"><icon name="pie-chart" /></div>
-                <div class="empty-state-text">@Localizer["NoDataAvailable"]</div>
-            </div>
-        }
-    </div>
-</div>
 
-<!-- Understaffing Report -->
-<div class="section">
-    <div class="section-card">
-        <h3 class="section-header">@Localizer["UnderstaffingReport"]</h3>
-        @if (Model.UnderstaffingReport.Any())
-        {
-            <div class="table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>@Localizer["Date"]</th>
-                            <th>@Localizer["ShiftType"]</th>
-                            <th>@Localizer["Assigned"]</th>
-                            <th>@Localizer["Required"]</th>
-                            <th>@Localizer["Deficit"]</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var issue in Model.UnderstaffingReport)
+            @if (v.Rows.Any())
+            {
+                <div class="equity-ribbon" role="img" aria-label="@Localizer["Justice_EquityRibbon_Aria"]">
+                    @foreach (var row in v.Rows.OrderBy(r => r.Name))
+                    {
+                        var weight = row.Actual <= 0 ? 1m : row.Actual;
+                        <span class="equity-segment dev-band-@row.Band.ToString().ToLowerInvariant()"
+                              style="flex: @weight.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                              title="@row.Name @row.Actual.ToString("F0")">
+                        </span>
+                    }
+                </div>
+            }
+
+            <div class="verdict-callouts">
+                <div class="callout callout--over">
+                    <span class="callout-label"><loc key="Justice_MostOver" /></span>
+                    <span class="callout-value">
+                        @if (v.MostOver is not null)
                         {
-                            var deficitClass = Math.Abs(issue.Difference) > 2 ? "deficit-high" : "deficit-medium";
-                            <tr>
-                                <td class="employee-name">@issue.WorkDate.ToString("dddd, MMM dd, yyyy")</td>
-                                <td>@Localizer[issue.ShiftType]</td>
-                                <td>@issue.AssignedCount</td>
-                                <td>@issue.RequiredCount</td>
-                                <td class="@deficitClass">@Math.Abs(issue.Difference)</td>
-                            </tr>
+                            @v.MostOver.Name <span dir="ltr">(@FormatDeviation(v.MostOver.DeviationPercent))</span>
                         }
-                    </tbody>
-                </table>
-            </div>
-        }
-        else
-        {
-            <div class="success-state">
-                <div class="success-state-icon"><icon name="check" /></div>
-                <div class="success-state-text">@Localizer["NoUnderstaffingIssues"]</div>
-            </div>
-        }
-    </div>
-</div>
-
-<!-- Top Swappers -->
-<div class="section">
-    <div class="section-card">
-        <h3 class="section-header">@Localizer["MostActiveSwappers"]</h3>
-        @if (Model.TopSwappers.Any())
-        {
-            <div class="table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>@Localizer["Employee"]</th>
-                            <th>@Localizer["TotalRequests"]</th>
-                            <th>@Localizer["Approved"]</th>
-                            <th>@Localizer["Declined"]</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var swapper in Model.TopSwappers)
+                        else
                         {
-                            <tr>
-                                <td class="employee-name">@swapper.EmployeeName</td>
-                                <td>@swapper.SwapRequestCount</td>
-                                <td class="text-success">@swapper.ApprovedCount</td>
-                                <td class="text-danger">@swapper.DeclinedCount</td>
-                            </tr>
+                            <span class="text-subtle"><loc key="Justice_None" /></span>
                         }
-                    </tbody>
-                </table>
+                    </span>
+                </div>
+                <div class="callout callout--under">
+                    <span class="callout-label"><loc key="Justice_MostUnder" /></span>
+                    <span class="callout-value">
+                        @if (v.MostUnder is not null)
+                        {
+                            @v.MostUnder.Name <span dir="ltr">(@FormatDeviation(v.MostUnder.DeviationPercent))</span>
+                        }
+                        else
+                        {
+                            <span class="text-subtle"><loc key="Justice_None" /></span>
+                        }
+                    </span>
+                </div>
             </div>
-        }
-        else
-        {
-            <div class="empty-state">
-                <div class="empty-state-icon"><icon name="refresh-cw" size="2xl" /></div>
-                <div class="empty-state-text">@Localizer["NoDataAvailable"]</div>
+        </section>
+
+        @* ========== Justice Table ========== *@
+        <section class="section-card">
+            <div class="section-header">
+                <h2 class="section-title"><loc key="Justice_Table_Heading" /></h2>
+                <span class="text-subtle">@v.Rows.Count <loc key="Justice_Rows" /></span>
             </div>
-        }
-    </div>
+
+            @if (v.Rows.Count == 0)
+            {
+                <div class="success-state">
+                    <icon name="check-circle" size="md" />
+                    <p><loc key="Justice_NothingToBalance" /></p>
+                </div>
+            }
+            else
+            {
+                <div class="table-wrapper">
+                    <table class="data-table justice-table">
+                        <thead>
+                            <tr>
+                                <th><loc key="Justice_Col_Name" /></th>
+                                <th class="num"><loc key="Justice_Col_Actual" /></th>
+                                <th class="num"><loc key="Justice_Col_Expected" /></th>
+                                <th class="num"><loc key="Justice_Col_Deviation" /></th>
+                                <th><loc key="Justice_Col_Bar" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in v.Rows)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="row-name">
+                                            @if (!string.IsNullOrEmpty(row.AvatarUrl))
+                                            {
+                                                <img src="@row.AvatarUrl" alt="" class="row-avatar" loading="lazy"
+                                                     onerror="this.onerror=null;this.style.display='none';this.nextElementSibling?.classList.add('row-avatar-fallback--visible');" />
+                                                <span class="row-avatar-fallback">@GetInitials(row.Name)</span>
+                                            }
+                                            else if (Model.Level == JusticeLevel.UsersInCompany)
+                                            {
+                                                <span class="row-avatar-fallback row-avatar-fallback--visible">@GetInitials(row.Name)</span>
+                                            }
+                                            <span class="row-name-text">@row.Name</span>
+                                        </div>
+                                    </td>
+                                    <td class="num" dir="ltr">@row.Actual.ToString("F0")</td>
+                                    <td class="num" dir="ltr">@row.Expected.ToString("F1")</td>
+                                    <td class="num">
+                                        <span class="dev-pill dev-band-@row.Band.ToString().ToLowerInvariant()" dir="ltr">
+                                            @FormatDeviation(row.DeviationPercent)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (row.DeviationPercent.HasValue)
+                                        {
+                                            var dev = row.DeviationPercent.Value;
+                                            var clamped = Math.Max(-100m, Math.Min(100m, dev));
+                                            // Map -100..0..+100 to 0..50..100 percent on the bar.
+                                            var barPos = (50m + clamped / 2m).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                                            <span class="dev-bar" dir="ltr" aria-hidden="true">
+                                                <span class="dev-bar-zero"></span>
+                                                <span class="dev-bar-marker dev-band-@row.Band.ToString().ToLowerInvariant()" style="left: @(barPos)%"></span>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-subtle"><loc key="Justice_NoTarget" /></span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    }
 </div>
 
-<!-- Swap Statistics -->
-<div class="section">
-    <div class="section-card">
-        <h3 class="section-header">@Localizer["SwapStatistics"]</h3>
-        <div class="mini-stats-grid">
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["TotalRequests"]</div>
-                <div class="mini-stat-value">@Model.SwapStats.TotalRequests</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["Approved"]</div>
-                <div class="mini-stat-value text-success">@Model.SwapStats.ApprovedCount</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["Declined"]</div>
-                <div class="mini-stat-value text-danger">@Model.SwapStats.DeclinedCount</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["Pending"]</div>
-                <div class="mini-stat-value text-warning">@Model.SwapStats.PendingCount</div>
-            </div>
-        </div>
-    </div>
-</div>
+@functions {
+    string FormatDeviation(decimal? pct)
+    {
+        if (!pct.HasValue) return "—";
+        var sign = pct.Value > 0 ? "+" : "";
+        return $"{sign}{pct.Value:F0}%";
+    }
 
-<!-- Time-Off Statistics -->
-<div class="section">
-    <div class="section-card">
-        <h3 class="section-header">@Localizer["TimeOffStatistics"]</h3>
-        <div class="mini-stats-grid">
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["TotalRequests"]</div>
-                <div class="mini-stat-value">@Model.TimeOffStats.TotalRequests</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["Approved"]</div>
-                <div class="mini-stat-value text-success">@Model.TimeOffStats.ApprovedCount</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["Declined"]</div>
-                <div class="mini-stat-value text-danger">@Model.TimeOffStats.DeclinedCount</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["Pending"]</div>
-                <div class="mini-stat-value text-warning">@Model.TimeOffStats.PendingCount</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@* ✅ PHASE 18: Chores Metrics *@
-<div class="section">
-    <div class="section-card">
-        <h3 class="section-header">@Localizer["ChoresMetrics"]</h3>
-        <div class="mini-stats-grid">
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["CompletedThisWeek"]</div>
-                <div class="mini-stat-value text-success">@Model.ChoresCompletedThisWeek</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["PendingThisWeek"]</div>
-                <div class="mini-stat-value text-warning">@Model.ChoresPendingThisWeek</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["OverdueChores"]</div>
-                <div class="mini-stat-value text-danger">@Model.ChoresOverdue</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@* ✅ PHASE 18: On-Duty Metrics *@
-<div class="section">
-    <div class="section-card">
-        <h3 class="section-header">@Localizer["OnDutyMetrics"]</h3>
-        <div class="mini-stats-grid">
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["OnDutyAssignmentsThisWeek"]</div>
-                <div class="mini-stat-value text-success">@Model.OnDutyAssignmentsThisWeek</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["DaysWithoutOnDuty"]</div>
-                <div class="mini-stat-value @(Model.DaysWithoutOnDuty > 0 ? "text-warning" : "text-success")">@Model.DaysWithoutOnDuty</div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-stat-label">@Localizer["OnDutyCoverageRate"]</div>
-                <div class="mini-stat-value @(Model.OnDutyCoverageRate >= 80 ? "text-success" : "text-warning")">@Model.OnDutyCoverageRate.ToString("F1")%</div>
-            </div>
-        </div>
-    </div>
-</div>
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpperInvariant();
+        return $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant();
+    }
+}

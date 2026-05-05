@@ -20,7 +20,7 @@
     new BreadcrumbItem { Label = Localizer["ChoresCalendar"], IsActive = true }
 })
 
-<div class="cal-page" data-ui-version="v2">
+<div class="cal-page" data-ui-version="v2" data-justice-molecule-id="@Model.MoleculeId">
     @* Toolbar — Row 1: Selectors + Date Nav + Print *@
     <div class="cal-toolbar">
         <div class="cal-toolbar__row">
@@ -90,6 +90,19 @@
                 <span class="btn-icon"><icon name="printer" /></span>
                 <span class="btn-text">@Localizer["Print"]</span>
             </button>
+
+            @* Justice — in-context drawer (Phase 2) *@
+            @{
+                var justicePanelModel = new ShiftManager.Pages.Shared.JusticePanelModel
+                {
+                    CalendarKind = "chores",
+                    DataEndpoint = $"/Calendar/Chores?handler=Justice&MoleculeId={Model.MoleculeId}&Start={Model.StartDate:yyyy-MM-dd}",
+                    ButtonTitle = Localizer["Justice_Panel_Button"].Value,
+                    RibbonAria = Localizer["Justice_EquityRibbon_Aria"].Value,
+                    CloseLabel = Localizer["Justice_Panel_Close"].Value
+                };
+            }
+            <partial name="_JusticePanel" model="justicePanelModel" />
         </div>
 
         @* Row 2: Filter + Just Mine + Legend *@
@@ -210,6 +223,10 @@
     <script src="~/js/calendar-quick-entry.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
+
+    @* Justice in-context drawer (Phase 2) *@
+    <link rel="stylesheet" href="~/css/justice-panel.css" asp-append-version="true" />
+    <script src="~/js/justice-panel.js" asp-append-version="true" defer></script>
     <script>
         // Initialize real-time updates
         document.addEventListener('DOMContentLoaded', function() {

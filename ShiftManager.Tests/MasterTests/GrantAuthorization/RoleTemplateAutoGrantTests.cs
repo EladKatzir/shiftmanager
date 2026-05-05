@@ -179,17 +179,18 @@ public class RoleTemplateAutoGrantTests : MasterTestBase
     // ================================================================
 
     [Theory]
-    // Counts reflect the 2026-04-17 audit fills (see plans/opition-c-please-also-gentle-sutherland.md):
-    // no new grants added; total still 132. Additions are role-template assignments of existing grants.
-    [InlineData("Tzafona", "Employee", 22)]      // unchanged
-    [InlineData("Tzafona", "Lead", 55)]          // +3: ResetPasswords, AssignJobTypes, ApproveExtendedLeave (all SAR own-jobtype)
-    [InlineData("Tzafona", "BRDirector", 67)]    // +5: AssignHakamDuties, EditDutyPrograms (Hakam sentinel), AssignGrants, RevokeGrants, ManageAnnouncements
-    [InlineData("Tzafona", "Director", 63)]      // +3: OverrideVacationLimits, InitiateSwap, DeactivateUsers (all ETM own-jobtype)
-    [InlineData("Tzafona", "Assigner", 24)]      // +1: ViewAllUsers (ETM) — fixes broken cross-company chore assignment
-    [InlineData("Hitazmut", "MoleculeAdmin", 105)]// +8: Duty bundle (13/14/15/107/108), DirectorHubAccess, ManageDepartments, ViewAllAreas
-    [InlineData("Yekev", "DepartmentLead", 58)]  // +7: ApproveVacations, ApproveSwaps, ApproveExtendedLeave, ResetPasswords, AssignRoles, AssignChores, ManageJoinRequests
-    [InlineData("Tzafona", "AreaAdmin", 121)]    // unchanged
-    [InlineData("SystemAdmins", "Owner", 132)]   // unchanged
+    // Counts reflect the 2026-04-17 audit fills + 2026-05-03 Justice analytics additions:
+    // ViewJusticeTable (#133) granted to Lead/BRDirector/Director/Assigner/MoleculeAdmin/AreaAdmin/Owner;
+    // EditJusticeTargets (#134) granted to AreaAdmin + Owner. Total grants: 134.
+    [InlineData("Tzafona", "Employee", 22)]      // unchanged — no Justice grants
+    [InlineData("Tzafona", "Lead", 56)]          // +1 from Justice: ViewJusticeTable
+    [InlineData("Tzafona", "BRDirector", 68)]    // +1 from Justice: ViewJusticeTable
+    [InlineData("Tzafona", "Director", 64)]      // +1 from Justice: ViewJusticeTable
+    [InlineData("Tzafona", "Assigner", 25)]      // +1 from Justice: ViewJusticeTable
+    [InlineData("Hitazmut", "MoleculeAdmin", 106)]// +1 from Justice: ViewJusticeTable
+    [InlineData("Yekev", "DepartmentLead", 58)]  // unchanged — DepartmentLead does not get Justice grants
+    [InlineData("Tzafona", "AreaAdmin", 123)]    // +2 from Justice: ViewJusticeTable + EditJusticeTargets
+    [InlineData("SystemAdmins", "Owner", 134)]   // +2 from Justice: ViewJusticeTable + EditJusticeTargets (Owner gets ALL)
     public async Task User_Has_ExpectedAutoGrantCount(string company, string template, int expectedCount)
     {
         var user = GetTestUser(company, template);

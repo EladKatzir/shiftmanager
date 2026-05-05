@@ -1,0 +1,63 @@
+# EditorConfig — repo-wide formatting + analyzer-rule severity anchor.
+# Closes F-C-001 from .claude-reviews/2026-04-28/01-compiler.md.
+#
+# This file complements Directory.Build.props at the repo root. The .props
+# file enables analyzers; this file is where future per-rule severity
+# adjustments are anchored (e.g. dotnet_diagnostic.CA1062.severity = error).
+#
+# The current revision sets ONLY structural baseline conventions. No CA/IDE
+# rule severities are overridden — the analyzer set defaults are accepted
+# as the warning baseline. Tightening individual rules to `error` happens
+# in follow-up batches (K = perf sweep, L = culture sweep, etc.) once the
+# sweep PRs land and the noise is gone.
+
+root = true
+
+# All files
+[*]
+charset = utf-8
+end_of_line = crlf
+indent_style = space
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# C# source files
+[*.cs]
+indent_size = 4
+
+# Allow C#-idiomatic underscore-prefix on private fields (e.g. _logger, _db)
+# without spurious IDE1006 warnings. Project convention is verified across
+# Services/, Pages/, and Middleware/.
+dotnet_naming_rule.private_fields_should_be_underscore_prefixed.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_underscore_prefixed.style = underscore_prefix
+dotnet_naming_rule.private_fields_should_be_underscore_prefixed.severity = silent
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.underscore_prefix.required_prefix = _
+dotnet_naming_style.underscore_prefix.capitalization = camel_case
+
+# Razor markup
+[*.{cshtml,razor}]
+indent_size = 4
+
+# XML / project files
+[*.{csproj,props,targets,xml,resx}]
+indent_size = 2
+
+# JSON
+[*.json]
+indent_size = 2
+
+# JavaScript / TypeScript / CSS in wwwroot
+[*.{js,ts,css,scss}]
+indent_size = 2
+
+# YAML
+[*.{yml,yaml}]
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false

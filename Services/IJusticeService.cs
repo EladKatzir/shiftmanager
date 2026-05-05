@@ -1,0 +1,48 @@
+using ShiftManager.Models;
+
+namespace ShiftManager.Services;
+
+/// <summary>
+/// Decision-support analytics for the Justice page. Read-only in Phase 1; settings upserts
+/// land in Phase 2 along with the simulator endpoints.
+/// </summary>
+public interface IJusticeService
+{
+    /// <summary>
+    /// Build the full Justice view: rows at the requested level, spread index, most-over/most-under.
+    /// </summary>
+    Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery query, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns all configured targets (defaults + overrides) visible to the current tenant.
+    /// Phase 1 callers use this only to display the read-only "current targets" summary;
+    /// the editable settings modal lands in Phase 2.
+    /// </summary>
+    Task<List<JusticeTarget>> GetTargetsAsync(CancellationToken ct = default);
+
+    // ===============================================================================
+    // Phase 2 — in-context Justice for calendar pages.
+    // ===============================================================================
+
+    /// <summary>
+    /// Builds the calendar-drawer payload: same Justice math as <see cref="GetJusticeViewAsync"/>
+    /// plus a top-N "where to focus" list of upcoming unfilled holes in scope. Caller is
+    /// responsible for scope-gating (ensuring the user has ViewJusticeTable for the requested scope).
+    /// </summary>
+    Task<InContextJusticeViewModel> GetInContextViewAsync(JusticeQuery query, CancellationToken ct = default);
+
+    /// <summary>
+    /// Phase 2b: eligibility ranking for one unfilled hole.
+    /// Shifts use the existing <see cref="IShiftAssignmentService.ValidateShiftAssignmentAsync"/>.
+    /// Chore + OnDuty use a degraded check (vacation overlap + scope membership only — Path C from the plan).
+    /// Candidates are returned least-loaded-first based on the current Justice deviation %.
+    /// </summary>
+    Task<EligibleCandidatesViewModel> GetEligibleCandidatesAsync(HoleSelector hole, CancellationToken ct = default);
+
+    /// <summary>
+    /// Phase 2c: in-memory what-if. Recomputes the spread index assuming the candidate were
+    /// assigned to the hole. Does NOT write to the database. The drawer's "Make it real" CTA
+    /// performs the actual write by deep-linking into the existing calendar POST handler.
+    /// </summary>
+    Task<ImpactPreviewViewModel> PreviewImpactAsync(SimulatedAssignment sim, CancellationToken ct = default);
+}

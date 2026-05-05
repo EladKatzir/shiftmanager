@@ -40,15 +40,48 @@
             }
         </div>
     </td>
+    @{
+        // Phase 2d: infer row kind from row.Id prefix. Used by the Justice drawer to know
+        // whether a cell is a shift hole (capacity-based), a chore-eligible cell (JS-flipped
+        // from focus list), or an onduty hole (always-empty future date).
+        var rowKind = row.Id.StartsWith("user-") ? "chore"
+                    : row.Id.StartsWith("dutytype-") ? "onduty"
+                    : "shift";
+    }
     @foreach (var day in days)
     {
         var cell = row.Cells.GetValueOrDefault(day);
         var isTodayCell = day == today;
         var isPastCell = day < today;
 
+        // Phase 2b/2d: cell-marker logic by row kind.
+        //   shift   → hole when Capacity < DefaultCapacity (server-side determinable)
+        //   onduty  → hole when no real assignment on the date (typeable assignments only,
+        //             excluding overlay items with Id=0 like text entries)
+        //   chore   → eligibility marker only (JS promotes a subset to data-justice-hole="1"
+        //             based on backend's ranked whereToFocus list, avoiding O(users×days) noise)
+        var isJusticeHole = !isPastCell && !isReadOnly && (
+            (rowKind == "shift"
+                && cell?.Capacity != null
+                && cell?.DefaultCapacity != null
+                && cell.Capacity < cell.DefaultCapacity)
+            ||
+            (rowKind == "onduty"
+                && (cell == null || !cell.Assignments.Any(a => a.Id > 0)))
+        );
+
+        var isJusticeEligible = !isPastCell && !isReadOnly && rowKind == "chore"
+            && (cell == null
+                || !cell.Assignments.Any(a => a.Id > 0
+                                              && a.Role != "text-entry"
+                                              && a.Role != "overview-note"));
+
         <td class="excel-calendar__cell @(isTodayCell ? "excel-calendar__cell--today" : "") @(isPastCell ? "excel-calendar__cell--past" : "") @(isReadOnly ? "excel-calendar__cell--readonly" : "")"
             data-row-id="@row.Id"
             data-date="@day.ToString("yyyy-MM-dd")"
+            data-justice-hole="@(isJusticeHole ? "1" : "0")"
+            data-justice-row-kind="@rowKind"
+            data-justice-cell-eligible="@(isJusticeEligible ? "1" : "0")"
             role="gridcell"
             tabindex="0">
 

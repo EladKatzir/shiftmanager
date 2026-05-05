@@ -62,6 +62,15 @@ public class SwapRequest : IBelongsToCompany
     /// </summary>
     public int? ReviewedBy { get; set; }
 
+    /// <summary>
+    /// JSON-serialized list of <see cref="ShiftManager.Models.Validation.ValidationIssue"/> warnings
+    /// that fired against the swap target when the request was created. Lets the approving
+    /// manager see the same conflicts the requester saw — so a chore-on-day warning that existed
+    /// at creation isn't lost between request submission and approval.
+    /// Null = no warnings (clean request). Empty array string = serialization of empty list.
+    /// </summary>
+    public string? WarningsAtCreation { get; set; }
+
     // Navigation properties
     public Company? Company { get; set; }
     public ShiftAssignment? FromAssignment { get; set; }

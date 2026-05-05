@@ -984,10 +984,11 @@ public class AssignerRoleTests : IDisposable
         employeeGrantTypeIds.Should().BeSubsetOf(assignerGrantTypeIds,
             "Assigner should have all Employee grants");
 
-        // Assigner = Employee + AssignChores(17) + ViewAllUsers(34) (2 extras — ViewAllUsers added
-        // 2026-04-18 so molecule-wide AssignChores has user visibility to match)
-        assignerGrants.Should().HaveCount(employeeGrants.Count + 2,
-            "Assigner = Employee + AssignChores + ViewAllUsers");
+        // Assigner = Employee + AssignChores(17) + ViewAllUsers(34) + ViewJusticeTable(133)
+        // (3 extras — ViewAllUsers added 2026-04-18 to give molecule-wide AssignChores its user visibility;
+        //  ViewJusticeTable added 2026-05-03 for Justice analytics page access at Assigner's molecule scope)
+        assignerGrants.Should().HaveCount(employeeGrants.Count + 3,
+            "Assigner = Employee + AssignChores + ViewAllUsers + ViewJusticeTable");
 
         // AssignChores (grant ID 17) should be area-scoped (2026-04-25 policy expansion:
         // Assigner reaches across the whole area to assign chores; other Assigner grants stay SAR)
@@ -1024,8 +1025,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 132 grants (added EditOnCallCalendar + EditAreaCalendarPalette on 2026-04-15)
-        grantTypes.Should().HaveCount(132, "Should have exactly 132 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, store, collaborative on-call editing, and per-area palette grants");
+        // Assert - 134 grants (added ViewJusticeTable + EditJusticeTargets on 2026-05-03)
+        grantTypes.Should().HaveCount(134, "Should have exactly 134 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, store, collaborative on-call editing, per-area palette, and Justice analytics grants");
     }
 
     [Fact]

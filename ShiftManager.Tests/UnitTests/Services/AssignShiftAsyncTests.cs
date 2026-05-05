@@ -1,3 +1,4 @@
+using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -52,7 +53,8 @@ public class AssignShiftAsyncTests : IDisposable
             hierarchySettingsServiceMock.Object,
             auditLogService,
             configMock.Object,
-            configCacheMock);
+            configCacheMock,
+            BusyServiceMockFactory.Real(_db, configMock.Object, restHours: 11, weeklyCap: 48));
     }
 
     public void Dispose()

@@ -29,6 +29,7 @@ public class OnCallModel : PageModel
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<OnCallModel> _logger;
     private readonly ICalendarTextEntryService _textEntryService;
+    private readonly IJusticeService _justiceService;
 
     public OnCallModel(
         AppDbContext db,
@@ -37,7 +38,8 @@ public class OnCallModel : PageModel
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
         ILogger<OnCallModel> logger,
-        ICalendarTextEntryService textEntryService)
+        ICalendarTextEntryService textEntryService,
+        IJusticeService justiceService)
     {
         _db = db;
         _onDutyService = onDutyService;
@@ -46,6 +48,7 @@ public class OnCallModel : PageModel
         _localizer = localizer;
         _logger = logger;
         _textEntryService = textEntryService;
+        _justiceService = justiceService;
     }
 
     // Query parameters
@@ -489,4 +492,256 @@ public class OnCallModel : PageModel
 
         return cells;
     }
+
+    // ===============================================================================
+    // Justice analytics — in-context drawer (Phase 2)
+    // ===============================================================================
+
+    public async Task<IActionResult> OnGetJusticeAsync(CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+            return Forbid();
+
+        if (!AreaId.HasValue)
+            return new JsonResult(new { error = "no_scope" });
+
+        // OnCall is area-scoped. The ViewJusticeTable grant resolves accessible MOLECULES;
+        // we accept the area if at least one accessible molecule lives within it.
+        var allowedMoleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(currentUserId, "ViewJusticeTable");
+        var areaIsReachable = await _db.Molecules
+            .IgnoreQueryFilters()  // SECURITY: Justice viewer may span tenants; molecule list gated by grant.
+            .AnyAsync(m => allowedMoleculeIds.Contains(m.Id) && m.AreaId == AreaId.Value, ct);
+        if (!areaIsReachable) return Forbid();
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var anchor = today;
+        if (!string.IsNullOrEmpty(Start) && DateOnly.TryParse(Start, out var parsed)) anchor = parsed;
+        var periodStart = anchor.AddDays(-15);
+        var periodEnd = anchor.AddDays(15);
+
+        var query = new JusticeQuery(
+            Scope: JusticeScope.Area,
+            ScopeId: AreaId,
+            PeriodStart: periodStart,
+            PeriodEnd: periodEnd,
+            WorkType: JusticeWorkType.OnDuty,
+            ExcludeExemptShifts: false,                  // on-duty has no exempt analogue
+            Level: JusticeLevel.MoleculesInArea);
+
+        var view = await _justiceService.GetInContextViewAsync(query, ct);
+        return new JsonResult(BuildJusticeJson(view));
+    }
+
+    private object BuildJusticeJson(InContextJusticeViewModel view)
+    {
+        return new
+        {
+            query = new
+            {
+                scope = view.Query.Scope.ToString(),
+                scopeId = view.Query.ScopeId,
+                level = view.Query.Level.ToString(),
+                workType = view.Query.WorkType.ToString(),
+                periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd"),
+                periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd")
+            },
+            spreadIndex = view.SpreadIndex,
+            spreadSeverity = view.SpreadSeverity,
+            spreadLabel = _localizer[view.SpreadLabelKey].Value,
+            mostOver = view.MostOver is null ? null : new { name = view.MostOver.Name, deviationPercent = view.MostOver.DeviationPercent },
+            mostUnder = view.MostUnder is null ? null : new { name = view.MostUnder.Name, deviationPercent = view.MostUnder.DeviationPercent },
+            rows = view.Rows.Select(r => new { id = r.Id, name = r.Name, actual = r.Actual, expected = r.Expected, deviationPercent = r.DeviationPercent, band = r.Band.ToString() }),
+            maxRibbonValue = view.MaxRibbonValue,
+            whereToFocus = view.WhereToFocus.Select(h => new { kind = h.Kind, shiftInstanceId = h.ShiftInstanceId, date = h.Date.ToString("yyyy-MM-dd"), label = h.Label, deficit = h.Deficit, companyId = h.CompanyId, jobTypeId = h.JobTypeId, dutyTypeValue = h.DutyTypeValue, userId = h.UserId, moleculeId = (int?)null }),
+            fullViewUrl = view.FullViewUrl,
+            noneLabel = _localizer["Justice_None"].Value,
+            noHolesLabel = _localizer["Justice_Panel_NoHolesOnDuty"].Value
+        };
+    }
+
+    private static bool TryParseRowId(string? raw, string expectedPrefix, out int id)
+    {
+        id = 0;
+        if (string.IsNullOrEmpty(raw)) return false;
+        var prefix = expectedPrefix + "-";
+        if (!raw.StartsWith(prefix, StringComparison.Ordinal)) return false;
+        return int.TryParse(raw.AsSpan(prefix.Length), out id);
+    }
+
+    /// <summary>
+    /// Phase 2d — JSON endpoint that ranks candidate users for a specific (date, dutyType) hole.
+    /// SECURITY-AUDITED: moleculeId derived from the caller's own company — never accepted from
+    /// query string. OnDuty is global by design; molecule scoping here is for Justice fairness math
+    /// (which is per-molecule), not for entity-level access control.
+    /// </summary>
+    public async Task<IActionResult> OnGetJusticeEligibilityAsync(string? rowId, string? date, CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+            return Forbid();
+
+        if (!TryParseRowId(rowId, "dutytype", out var dutyTypeValue))
+            return BadRequest(new { error = "invalid_row_id" });
+
+        if (!await _onDutyService.IsValidDutyTypeAsync(dutyTypeValue))
+            return BadRequest(new { error = "invalid_duty_type" });
+
+        if (string.IsNullOrEmpty(date) || !DateOnly.TryParse(date, out var workDate))
+            return BadRequest(new { error = "invalid_date" });
+
+        // Derive moleculeId from caller's own company, never from query string.
+        // SECURITY-AUDITED: caller's CompanyId comes from the tenant resolver claim; the molecule
+        // we scope Justice to is the one the caller belongs to. If the caller's company has no
+        // molecule (legacy data), abort.
+        var callerCompanyId = _companyContext.CompanyId;
+        if (!callerCompanyId.HasValue)
+            return new JsonResult(new { error = "no_scope" });
+
+        var moleculeId = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.Id == callerCompanyId.Value)
+            .Select(c => c.MoleculeId)
+            .FirstOrDefaultAsync(ct);
+        if (moleculeId is null)
+            return new JsonResult(new { error = "no_molecule" });
+
+        var allowedMoleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(currentUserId, "ViewJusticeTable");
+        if (!allowedMoleculeIds.Contains(moleculeId.Value))
+            return Forbid();
+
+        DateOnly periodStart, periodEnd;
+        ResolveJusticePeriod(out periodStart, out periodEnd);
+
+        var parentScope = new JusticeQuery(
+            Scope: JusticeScope.Molecule,
+            ScopeId: moleculeId.Value,
+            PeriodStart: periodStart,
+            PeriodEnd: periodEnd,
+            WorkType: JusticeWorkType.OnDuty,
+            ExcludeExemptShifts: false,
+            Level: JusticeLevel.UsersInCompany);
+
+        var hole = new HoleSelector(
+            Kind: "onduty",
+            ShiftInstanceId: null,
+            Date: workDate,
+            CompanyId: null,
+            JobTypeId: null,
+            DutyTypeValue: dutyTypeValue,
+            MoleculeId: moleculeId.Value,
+            ParentScope: parentScope);
+
+        var result = await _justiceService.GetEligibleCandidatesAsync(hole, ct);
+        return new JsonResult(BuildOnDutyEligibilityJson(result, workDate, dutyTypeValue, moleculeId.Value));
+    }
+
+    /// <summary>
+    /// Phase 2d — JSON endpoint previewing impact of a hypothetical on-duty assignment.
+    /// </summary>
+    public async Task<IActionResult> OnGetJusticePreviewAsync(int userId, int? dutyTypeValue, string? date, CancellationToken ct)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var currentUserId))
+            return Forbid();
+
+        if (!dutyTypeValue.HasValue)
+            return BadRequest(new { error = "missing_duty_type" });
+
+        if (string.IsNullOrEmpty(date) || !DateOnly.TryParse(date, out var workDate))
+            return BadRequest(new { error = "invalid_date" });
+
+        var callerCompanyId = _companyContext.CompanyId;
+        if (!callerCompanyId.HasValue)
+            return new JsonResult(new { error = "no_scope" });
+
+        var moleculeId = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.Id == callerCompanyId.Value)
+            .Select(c => c.MoleculeId)
+            .FirstOrDefaultAsync(ct);
+        if (moleculeId is null)
+            return new JsonResult(new { error = "no_molecule" });
+
+        var allowedMoleculeIds = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(currentUserId, "ViewJusticeTable");
+        if (!allowedMoleculeIds.Contains(moleculeId.Value))
+            return Forbid();
+
+        DateOnly periodStart, periodEnd;
+        ResolveJusticePeriod(out periodStart, out periodEnd);
+
+        var parentScope = new JusticeQuery(
+            Scope: JusticeScope.Molecule,
+            ScopeId: moleculeId.Value,
+            PeriodStart: periodStart,
+            PeriodEnd: periodEnd,
+            WorkType: JusticeWorkType.OnDuty,
+            ExcludeExemptShifts: false,
+            Level: JusticeLevel.UsersInCompany);
+
+        var hole = new HoleSelector(
+            Kind: "onduty",
+            ShiftInstanceId: null,
+            Date: workDate,
+            CompanyId: null,
+            JobTypeId: null,
+            DutyTypeValue: dutyTypeValue.Value,
+            MoleculeId: moleculeId.Value,
+            ParentScope: parentScope);
+
+        var preview = await _justiceService.PreviewImpactAsync(new SimulatedAssignment(userId, hole), ct);
+        return new JsonResult(BuildPreviewJson(preview));
+    }
+
+    private void ResolveJusticePeriod(out DateOnly start, out DateOnly end)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var anchor = today;
+        if (!string.IsNullOrEmpty(Start) && DateOnly.TryParse(Start, out var parsed)) anchor = parsed;
+        start = anchor.AddDays(-15);
+        end = anchor.AddDays(15);
+    }
+
+    private object BuildOnDutyEligibilityJson(EligibleCandidatesViewModel result, DateOnly date, int dutyTypeValue, int moleculeId)
+    {
+        return new
+        {
+            kind = "onduty",
+            date = date.ToString("yyyy-MM-dd"),
+            dutyTypeValue,
+            moleculeId,
+            candidates = result.Candidates.Select(c => new
+            {
+                userId = c.UserId,
+                displayName = c.DisplayName,
+                avatarUrl = c.AvatarUrl,
+                actual = c.Actual,
+                expected = c.Expected,
+                deviationPercent = c.DeviationPercent,
+                band = c.Band.ToString(),
+                isHardBlocked = c.Eligibility.IsHardBlocked,
+                warnings = c.Eligibility.WarningKeys
+            }),
+            hardBlocked = result.HardBlocked.Select(c => new
+            {
+                userId = c.UserId,
+                displayName = c.DisplayName,
+                avatarUrl = c.AvatarUrl,
+                band = c.Band.ToString(),
+                hardBlockReason = c.Eligibility.HardBlockReason
+            })
+        };
+    }
+
+    private static object BuildPreviewJson(ImpactPreviewViewModel p) => new
+    {
+        spreadIndexBefore = p.SpreadIndexBefore,
+        spreadSeverityBefore = p.SpreadSeverityBefore,
+        spreadIndexAfter = p.SpreadIndexAfter,
+        spreadSeverityAfter = p.SpreadSeverityAfter,
+        candidateActualBefore = p.CandidateActualBefore,
+        candidateActualAfter = p.CandidateActualAfter,
+        candidateDeviationBefore = p.CandidateDeviationBefore,
+        candidateDeviationAfter = p.CandidateDeviationAfter
+    };
 }

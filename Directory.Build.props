@@ -1,0 +1,50 @@
+<Project>
+
+  <!--
+    Repo-wide analyzer infrastructure (closes F-C-001 from
+    .claude-reviews/2026-04-28/01-compiler.md).
+
+    Without this file, the .NET SDK enables only baseline CodeAnalysis at
+    AnalysisLevel=latest-default, so the build emits CS-only warnings and
+    every CA1xxx/CA2xxx rule is silent. The 2026-05-03 transient analyzer
+    pass surfaced 3,228 production CA warnings; this file makes that pass
+    durable so the rules survive future `dotnet build` invocations and
+    regress-checks land in CI.
+
+    AnalysisMode is intentionally left at Default (not All): the diagnostic
+    review observed `csc.dll` OOMing at 5.8 GB when AnalysisMode=All was
+    used against this codebase. A separate follow-up batch will re-evaluate
+    All once individual rule families have been triaged.
+  -->
+  <PropertyGroup>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+  </PropertyGroup>
+
+  <!--
+    Test-project carve-out (closes F-C-009 + F-C-018).
+
+    Two rules are unconditional noise in the xUnit/ASP.NET-Core test profile
+    and deserve project-scoped suppression:
+      CA2007 — ConfigureAwait(false). 2,150 sites in the test project.
+               ASP.NET Core has no SynchronizationContext, so the rule has
+               no signal in production code (0 sites) and fires constantly
+               on every `await` in test code. Suppressing in tests does NOT
+               weaken production diagnostics.
+      CA1707 — Underscore in identifier. 977 sites in the test project,
+               14 in production. Tests intentionally use the
+               `Method_Underscore_Style` xUnit naming convention. The 14
+               production sites are flagged separately under F-C-017 and
+               are NOT suppressed here.
+
+    The condition uses MSBuildProjectName.EndsWith('.Tests') instead of
+    `'$(IsTestProject)' == 'true'` because Directory.Build.props is
+    imported BEFORE the project file's PropertyGroup runs, so IsTestProject
+    is not yet set when this condition is evaluated.
+  -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <NoWarn>$(NoWarn);CA2007;CA1707</NoWarn>
+  </PropertyGroup>
+
+</Project>

@@ -771,7 +771,7 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 106, ETA));  // CanBeAssignedNOC
 
         // ============================================
-        // OWNER (Template 11) — 132 grants at ETP (ALL grant types, ALL canGive)
+        // OWNER (Template 11) — 134 grants at ETP (ALL grant types, ALL canGive)
         // Self-scoped grants stay SAR. Every other grant at ETP with canGive:true.
         // ============================================
         // Self-scoped grants (SAR)
@@ -1009,6 +1009,28 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 132, ETM));   // MoleculeAdmin
         grants.Add(G(10, 132, ETA));  // AreaAdmin
         grants.Add(G(11, 132, ETP, canGive: true));  // Owner
+
+        // ============================================
+        // ViewJusticeTable (ID 133) — Justice analytics page (2026-05-03)
+        // Distributed to assignment-decision-makers across the hierarchy.
+        // Each role sees their natural scope (Assigner = molecule, Lead/BRDirector = molecule
+        // per the 2026-04-25 cross-tenant scope expansion, AreaAdmin = area, Owner = project).
+        // ============================================
+        grants.Add(G(2, 133, ETM));   // BRDirector — molecule (per 2026-04-25 scope expansion)
+        grants.Add(G(3, 133, ETM));   // Lead — molecule (per 2026-04-25 scope expansion)
+        grants.Add(G(5, 133, ETM));   // Director — molecule
+        grants.Add(G(7, 133, ETM));   // MoleculeAdmin
+        grants.Add(G(8, 133, SAR));   // Assigner — molecule (their RoleTemplate scope is Molecule)
+        grants.Add(G(10, 133, ETA));  // AreaAdmin
+        grants.Add(G(11, 133, ETP, canGive: true));  // Owner
+
+        // ============================================
+        // EditJusticeTargets (ID 134) — Justice analytics targets/overrides (2026-05-03)
+        // Tight by default: only Owner + AreaAdmin can edit. The settings modal (Phase 2)
+        // adds an IDOR check to verify the user is allowed to edit at the requested scope.
+        // ============================================
+        grants.Add(G(10, 134, ETA));                  // AreaAdmin — area-scoped overrides
+        grants.Add(G(11, 134, ETP, canGive: true));   // Owner — project-wide
 
         return grants;
     }

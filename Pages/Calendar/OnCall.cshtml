@@ -92,6 +92,19 @@
                 <span class="btn-icon"><icon name="printer" /></span>
                 <span class="btn-text">@Localizer["Print"]</span>
             </button>
+
+            @* Justice — in-context drawer (Phase 2). Area-scoped for OnCall. *@
+            @{
+                var justicePanelModel = new ShiftManager.Pages.Shared.JusticePanelModel
+                {
+                    CalendarKind = "onduty",
+                    DataEndpoint = $"/Calendar/OnCall?handler=Justice&AreaId={Model.AreaId}&Start={Model.StartDate:yyyy-MM-dd}",
+                    ButtonTitle = Localizer["Justice_Panel_Button"].Value,
+                    RibbonAria = Localizer["Justice_EquityRibbon_Aria"].Value,
+                    CloseLabel = Localizer["Justice_Panel_Close"].Value
+                };
+            }
+            <partial name="_JusticePanel" model="justicePanelModel" />
         </div>
 
         @* Row 2: Filter + Just Mine + Legend *@
@@ -216,6 +229,10 @@
     <link rel="stylesheet" href="~/css/calendar-quick-entry.css" asp-append-version="true" />
     <script src="~/js/calendar-quick-entry.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+
+    @* Justice in-context drawer (Phase 2) *@
+    <link rel="stylesheet" href="~/css/justice-panel.css" asp-append-version="true" />
+    <script src="~/js/justice-panel.js" asp-append-version="true" defer></script>
     <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
     <script>
         // Initialize real-time updates

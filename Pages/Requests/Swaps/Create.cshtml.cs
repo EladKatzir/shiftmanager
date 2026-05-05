@@ -19,15 +19,24 @@ public class CreateModel : LocalizedPageModel
     private readonly ICompanyContext _companyContext;
     private readonly IGrantService _grantService;
     private readonly IAuditLogService _auditLogService;
+    private readonly IBusyService _busyService;
 
-    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ICompanyContext companyContext, IGrantService grantService, IAuditLogService auditLogService)
+    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ICompanyContext companyContext, IGrantService grantService, IAuditLogService auditLogService, IBusyService busyService)
         : base(localizer)
     {
         _db = db;
         _companyContext = companyContext;
         _grantService = grantService;
         _auditLogService = auditLogService;
+        _busyService = busyService;
     }
+
+    /// <summary>
+    /// Busy warnings produced when validating the swap target against the source shift.
+    /// Surfaced in the form for the requester and (later) carried into the manager's
+    /// approval queue. Empty list = clean swap, no warnings.
+    /// </summary>
+    public IReadOnlyList<ValidationIssue> SwapTargetWarnings { get; set; } = new List<ValidationIssue>();
 
     public record AssignmentVM(int AssignmentId, string Label);
     public List<AssignmentVM> MyAssignments { get; set; } = new();
@@ -134,12 +143,37 @@ public class CreateModel : LocalizedPageModel
             return Page();
         }
 
+        // Run busy validation against the swap target so the requester sees warnings
+        // (e.g., target has a chore on the swap date) before the request is sent. Hard
+        // errors block; warnings annotate the request and surface to the approving manager.
+        var busyValidation = await _busyService.ValidateAsync(
+            new BusyTarget.Shift(assignment.ShiftInstanceId), ToUserId.Value, userId);
+        if (!busyValidation.CanProceed)
+        {
+            foreach (var err in busyValidation.Errors)
+                ModelState.AddModelError("", err.Message);
+            SwapTargetWarnings = busyValidation.Errors;
+            await OnGetAsync();
+            return Page();
+        }
+        SwapTargetWarnings = busyValidation.Warnings;
+
         var swapRequest = new SwapRequest { FromAssignmentId = SelectedAssignmentId.Value, FromUserId = userId, ToUserId = ToUserId.Value };
+
+        // Persist creation-time warnings so the approver sees the same conflicts the requester
+        // acknowledged. JSON serialization keeps the structured payload (Key, Message, Detail)
+        // intact for re-rendering in the approval queue. Null when clean — saves a few bytes
+        // and signals "no concerns" unambiguously to the approver UI.
+        if (busyValidation.Warnings.Count > 0)
+        {
+            swapRequest.WarningsAtCreation = System.Text.Json.JsonSerializer.Serialize(busyValidation.Warnings);
+        }
+
         _db.SwapRequests.Add(swapRequest);
         await _db.SaveChangesAsync();
 
         await _auditLogService.LogAsync("SwapRequestCreated", "SwapRequest", swapRequest.Id,
-            $"Created swap request for assignment {SelectedAssignmentId.Value} to user {ToUserId.Value}");
+            $"Created swap request for assignment {SelectedAssignmentId.Value} to user {ToUserId.Value} (warnings: {busyValidation.Warnings.Count})");
 
         return RedirectToPage("/Requests/Index");
     }

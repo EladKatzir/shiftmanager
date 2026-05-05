@@ -174,7 +174,11 @@ public class GriffinServiceTests : IDisposable
 
         await _service.ExchangeTokenAsync("a b+c/d", GriffinBaseUrl, 10);
 
-        var url = requests[0].RequestUri!.ToString();
+        // Use OriginalString (the URI as constructed) rather than ToString() — the latter is
+        // a display-friendly rendering that decodes %20→space and would mask encoding errors
+        // even when the bytes actually sent on the wire are correct. OriginalString reflects
+        // exactly what HttpClient transmitted.
+        var url = requests[0].RequestUri!.OriginalString;
         url.Should().Contain("token=a%20b%2Bc%2Fd");
     }
 
