@@ -14,6 +14,8 @@ public class ShiftType
     public const string KEY_OFFLINE = "OFFLINE";
     public const string KEY_EVENING = "EVENING";
     public const string KEY_HOME = "HOME";
+    public const string KEY_HOME_PM = "HOME_PM";    // 16:00-23:59 partial-day HOME (After day-1 evening)
+    public const string KEY_HOME_AM = "HOME_AM";    // 00:00-13:00 partial-day HOME (After day-2 / vacation-end morning)
 
     // Tech shift type keys
     public const string TECH_HANAVA = "HANAVA";

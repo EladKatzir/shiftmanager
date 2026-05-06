@@ -218,29 +218,15 @@ public class HomeTypeService : IHomeTypeService
         if (homeType == null)
             return new GenerationResult(0, 0, new List<GenerationConflict> { new(default, 0, "", "HomeType not found") });
 
-        // Ensure HOME ShiftType exists in this molecule
-        var homeShiftType = await _db.ShiftTypes
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(st => st.Key == ShiftType.KEY_HOME && st.MoleculeId == homeType.MoleculeId);
-
-        if (homeShiftType == null)
-        {
-            // Auto-create HOME ShiftType with defaults (molecule-scoped, no CompanyId)
-            homeShiftType = new ShiftType
-            {
-                Key = ShiftType.KEY_HOME,
-                MoleculeId = homeType.MoleculeId,
-                Scope = Models.Support.ShiftScope.Molecule,
-                Start = new TimeOnly(0, 0),
-                End = new TimeOnly(23, 59),
-                RowColor = "#F8E7B1",
-                NameEn = "Home",
-                NameHe = "בית"
-            };
-            _db.ShiftTypes.Add(homeShiftType);
-            await _db.SaveChangesAsync();
-            _logger.LogInformation("Auto-created HOME ShiftType {Id} for molecule {MoleculeId}", homeShiftType.Id, homeType.MoleculeId);
-        }
+        // Ensure all three HOME ShiftType variants exist in this molecule.
+        // HOME (full day) is used for rotation generation here; HOME_PM and HOME_AM are
+        // pre-seeded so the materialiser (Task 15+) can use them without re-creating.
+        var homeShiftType = await EnsureHomeShiftTypeAsync(homeType.MoleculeId,
+            ShiftType.KEY_HOME, new TimeOnly(0, 0), new TimeOnly(23, 59), "Home", "בית");
+        await EnsureHomeShiftTypeAsync(homeType.MoleculeId,
+            ShiftType.KEY_HOME_PM, new TimeOnly(16, 0), new TimeOnly(23, 59), "After", "אפטר");
+        await EnsureHomeShiftTypeAsync(homeType.MoleculeId,
+            ShiftType.KEY_HOME_AM, new TimeOnly(0, 0), new TimeOnly(13, 0), "After", "אפטר");
 
         // Determine home dates from pattern or derived rule
         var homeDates = GetHomeDatesForRange(homeType, startDate, endDate, userIds);
@@ -449,6 +435,29 @@ public class HomeTypeService : IHomeTypeService
     }
 
     // --- Private helpers ---
+
+    private async Task<ShiftType> EnsureHomeShiftTypeAsync(int moleculeId, string key, TimeOnly start, TimeOnly end, string nameEn, string nameHe)
+    {
+        var existing = await _db.ShiftTypes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(st => st.Key == key && st.MoleculeId == moleculeId);
+        if (existing != null) return existing;
+        var st = new ShiftType
+        {
+            Key = key,
+            MoleculeId = moleculeId,
+            Scope = Models.Support.ShiftScope.Molecule,
+            Start = start,
+            End = end,
+            RowColor = "#F8E7B1",
+            NameEn = nameEn,
+            NameHe = nameHe
+        };
+        _db.ShiftTypes.Add(st);
+        await _db.SaveChangesAsync();
+        _logger.LogInformation("Auto-created {Key} ShiftType {Id} for molecule {MoleculeId}", key, st.Id, moleculeId);
+        return st;
+    }
 
     private List<DateOnly> GetHomeDatesForRange(HomeType homeType, DateOnly start, DateOnly end, List<int> userIds)
     {
