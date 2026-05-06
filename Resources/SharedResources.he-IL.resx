@@ -15321,4 +15321,16 @@
   <data name="Conflict_Resource_Vacation" xml:space="preserve">
     <value>חופשה מאושרת</value>
   </data>
+  <data name="MoleculeApprovalSettings_Title" xml:space="preserve">
+    <value>הגדרות אישור מולקולה</value>
+  </data>
+  <data name="DualApprovalDayThreshold" xml:space="preserve">
+    <value>סף אישור כפול (ימים)</value>
+  </data>
+  <data name="DualApprovalDayThreshold_Help" xml:space="preserve">
+    <value>חופשות הארוכות ממספר ימים זה דורשות אישור משני הדרגים.</value>
+  </data>
+  <data name="Saved" xml:space="preserve">
+    <value>נשמר</value>
+  </data>
 </root>

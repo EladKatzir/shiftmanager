@@ -1,0 +1,42 @@
+@page "{MoleculeId:int?}"
+@model ShiftManager.Pages.Admin.Molecules.ApprovalSettingsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["MoleculeApprovalSettings_Title"].Value;
+}
+
+<div class="page-container">
+    <h2><loc key="MoleculeApprovalSettings_Title" /></h2>
+
+    @if (!string.IsNullOrEmpty(Model.MoleculeName))
+    {
+        <p class="subtitle">@Model.MoleculeName</p>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert alert-success">@Model.StatusMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="MoleculeId" />
+
+        <div class="form-group">
+            <label asp-for="DualApprovalDayThreshold"><loc key="DualApprovalDayThreshold" /></label>
+            <input asp-for="DualApprovalDayThreshold" type="number" min="1" max="365" class="form-input" />
+            <small class="form-help"><loc key="DualApprovalDayThreshold_Help" /></small>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary"><loc key="Save" /></button>
+        </div>
+    </form>
+</div>
