@@ -1,6 +1,8 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
+using ShiftManager.Hubs;
 using ShiftManager.Models;
 
 namespace ShiftManager.Services;
@@ -11,11 +13,16 @@ public class HomeTypeService : IHomeTypeService
 {
     private readonly AppDbContext _db;
     private readonly ILogger<HomeTypeService> _logger;
+    private readonly IHubContext<CalendarHub>? _hub;
 
-    public HomeTypeService(AppDbContext db, ILogger<HomeTypeService> logger)
+    public HomeTypeService(
+        AppDbContext db,
+        ILogger<HomeTypeService> logger,
+        IHubContext<CalendarHub>? hub = null)
     {
         _db = db;
         _logger = logger;
+        _hub = hub;
     }
 
     public async Task<List<HomeTypeDto>> GetHomeTypesAsync(int moleculeId)
@@ -399,6 +406,19 @@ public class HomeTypeService : IHomeTypeService
 
         _logger.LogInformation("Generated {Created} HOME shifts for HomeType {HomeTypeId}, skipped {Skipped}, conflicts {Conflicts}",
             created, homeTypeId, skipped, conflicts.Count);
+
+        // SignalR broadcast (best-effort)
+        if (_hub != null)
+        {
+            try
+            {
+                await _hub.Clients.All.SendAsync("ShiftsUpdated", new { moleculeId = homeType.MoleculeId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "SignalR broadcast failed for HomeType {Id} (non-fatal)", homeType.Id);
+            }
+        }
 
         return new GenerationResult(created, skipped, conflicts);
     }
