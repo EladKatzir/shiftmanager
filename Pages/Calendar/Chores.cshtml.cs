@@ -252,6 +252,10 @@ public class ChoresModel : PageModel
         // Get overlays (vacation, on-duty, other shifts) — same pattern as Calendar/Shifts
         var overlays = await _calendarService.GetOverlaysAsync(moleculeId, StartDate, EndDate);
 
+        // Task 24: Load HOME shift assignments for the same molecule. Rendered as
+        // read-only chips on the user row so admins can see when a user is unavailable.
+        var homeShifts = await LoadHomeShiftsAsync(Users.Select(u => u.Id).ToList());
+
         // Load text entries + overview notes for all users (cross-company via IgnoreQueryFilters)
         var allUserIds = Users.Select(u => u.Id);
         var allEntriesWithType = await _textEntryService.GetForUsersAndDateRangeWithTypeAsync(allUserIds, StartDate, EndDate);
@@ -294,7 +298,7 @@ public class ChoresModel : PageModel
             };
 
             // Build cells for each date
-            row.Cells = BuildCellsForUser(user.Id, chores, overlays, textEntries, overviewNotes, isHebrew);
+            row.Cells = BuildCellsForUser(user.Id, chores, overlays, textEntries, overviewNotes, homeShifts, isHebrew);
             rows.Add(row);
         }
 
@@ -332,12 +336,75 @@ public class ChoresModel : PageModel
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Per-user-per-date HOME shift item used to render the read-only HOME overlay
+    /// chip on Chores/OnCall calendars (Task 24). Carries source-icon + time fields.
+    /// </summary>
+    private record HomeShiftItem(
+        string Name,
+        string? ShiftStart,
+        string? ShiftEnd,
+        int? SourceTimeOffRequestId,
+        int? SourceTimeOffRequestType);
+
+    private async Task<Dictionary<(int UserId, DateOnly Date), List<HomeShiftItem>>> LoadHomeShiftsAsync(List<int> userIds)
+    {
+        if (userIds.Count == 0)
+        {
+            return new Dictionary<(int UserId, DateOnly Date), List<HomeShiftItem>>();
+        }
+
+        // SECURITY-AUDITED: SAFE — userIds were already filtered by molecule membership
+        // in GetUsersForMoleculeAsync; date range is bounded; HOME-only filter via Key.
+        var assignments = await _db.ShiftAssignments
+            .IgnoreQueryFilters()
+            .Include(sa => sa.ShiftInstance)
+                .ThenInclude(si => si.ShiftType)
+            .Include(sa => sa.SourceTimeOffRequest)
+            .Where(sa => sa.UserId.HasValue
+                && userIds.Contains(sa.UserId.Value)
+                && sa.ShiftInstance.WorkDate >= StartDate
+                && sa.ShiftInstance.WorkDate <= EndDate
+                && (sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME
+                    || sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME_PM
+                    || sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME_AM))
+            .ToListAsync();
+
+        var result = new Dictionary<(int UserId, DateOnly Date), List<HomeShiftItem>>();
+        foreach (var a in assignments)
+        {
+            if (!a.UserId.HasValue) continue;
+            var key = (a.UserId.Value, a.ShiftInstance.WorkDate);
+            var st = a.ShiftInstance.ShiftType;
+            // Use the computed Name (returns "Home" for KEY_HOME). The HOME chip's
+            // visual identity is carried by the source/house icons in the partial,
+            // so a localized resource lookup isn't required for the chip label.
+            var name = st?.Name ?? _localizer["Shift"].Value;
+            var item = new HomeShiftItem(
+                name,
+                st?.Start.ToString("HH:mm"),
+                st?.End.ToString("HH:mm"),
+                a.SourceTimeOffRequestId,
+                a.SourceTimeOffRequest != null ? (int?)a.SourceTimeOffRequest.Type : null);
+
+            if (!result.TryGetValue(key, out var list))
+            {
+                list = new List<HomeShiftItem>();
+                result[key] = list;
+            }
+            list.Add(item);
+        }
+
+        return result;
+    }
+
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
         int userId,
         List<Chore> chores,
         Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
         Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
         Dictionary<(int UserId, DateOnly Date), string> overviewNotes,
+        Dictionary<(int UserId, DateOnly Date), List<HomeShiftItem>> homeShifts,
         bool isHebrew)
     {
         var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
@@ -358,6 +425,28 @@ public class ChoresModel : PageModel
                 Role = c.ChoreType?.Color, // Use color as role for styling
                 UserId = c.UserId
             }).ToList();
+
+            // Task 24: HOME shifts as read-only overlay chips. Id=0 makes them
+            // non-removable (no × button). Renders via shared partial as full chip
+            // with source/house icons + time range.
+            if (homeShifts.TryGetValue((userId, date), out var homeList))
+            {
+                foreach (var home in homeList)
+                {
+                    cell.Assignments.Add(new ExcelCalendarAssignment
+                    {
+                        Id = 0,
+                        Name = home.Name,
+                        Role = "shift",
+                        UserId = userId,
+                        IsHome = true,
+                        ShiftStart = home.ShiftStart,
+                        ShiftEnd = home.ShiftEnd,
+                        SourceTimeOffRequestId = home.SourceTimeOffRequestId,
+                        SourceTimeOffRequestType = home.SourceTimeOffRequestType
+                    });
+                }
+            }
 
             // Add overlay data: vacation, on-duty, and other shifts as badges
             // NOTE: Chore overlay items are intentionally skipped — chores are the primary content on this page

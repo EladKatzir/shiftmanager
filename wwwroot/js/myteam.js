@@ -309,8 +309,9 @@ function renderDayCell(day, isMobile) {
     const tooltip = buildTooltip(day);
     const titleAttr = tooltip ? `title="${escapeHtml(tooltip)}"` : '';
 
-    // Get icon for status type
-    const icon = getStatusIcon(day.type);
+    // Get icon for status type. Task 24 — HOME shows source-icon (rotation/vacation/after)
+    // + house icon, mirroring the unified chip used on the calendar pages.
+    const icon = getStatusIcon(day.type, day.metadata);
 
     // Translate label
     const translatedLabel = translateStatusLabel(day.label);
@@ -328,7 +329,17 @@ function renderDayCell(day, isMobile) {
     `;
 }
 
-function getStatusIcon(type) {
+function getStatusIcon(type, metadata) {
+    // Task 24 — HOME chip shows two emoji icons: source (loop/luggage/moon)
+    // followed by a house, matching the unified chip on Calendar pages
+    // (repeat/plane/sunrise + house Lucide icons there).
+    if (type === 'Home') {
+        const sourceIcon = metadata === 'vacation' ? '🧳'
+                         : metadata === 'after'    ? '🌙'
+                         :                            '🔄'; // rotation default
+        return sourceIcon + '🏠';
+    }
+
     const icons = {
         'Vacation': '🧳',
         'VacationPartial': '🧳',

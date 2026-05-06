@@ -281,7 +281,8 @@ public class TeamCalendarsController : ControllerBase
                             Type = "Free",
                             Label = "Free",
                             TimeRange = (string?)null,
-                            TargetUrl = (string?)null
+                            TargetUrl = (string?)null,
+                            Metadata = (string?)null
                         };
                     }
 
@@ -295,7 +296,8 @@ public class TeamCalendarsController : ControllerBase
                             Type = "Free",
                             Label = "Free",
                             TimeRange = (string?)null,
-                            TargetUrl = (string?)null
+                            TargetUrl = (string?)null,
+                            Metadata = (string?)null
                         };
                     }
 
@@ -308,7 +310,10 @@ public class TeamCalendarsController : ControllerBase
                         Type = dayStatus.Type.ToString(),
                         Label = dayStatus.Label,
                         TimeRange = dayStatus.TimeRange,
-                        TargetUrl = targetUrl
+                        TargetUrl = targetUrl,
+                        // Task 24 — for HOME days, Metadata is "rotation"|"vacation"|"after"
+                        // so the JS layer can pick the source icon.
+                        Metadata = dayStatus.Metadata
                     };
                 }).ToList();
 

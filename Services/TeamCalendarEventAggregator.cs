@@ -68,7 +68,9 @@ public class TeamCalendarEventAggregator
 
     /// <summary>
     /// Computes the single status for a user on a specific day.
-    /// Priority: Vacation > After > On-Duty > Shift > Chore > Free
+    /// Priority: Vacation > After > On-Duty > Home > Shift > Chore > Free
+    /// (Home is promoted above plain Shift so the unified HOME marker wins
+    /// when a user has a HOME assignment — Task 24.)
     /// </summary>
     private DayStatus ComputeDayStatus(
         int userId,
@@ -90,6 +92,14 @@ public class TeamCalendarEventAggregator
         if (onDuty != null)
         {
             return onDuty;
+        }
+
+        // Task 24: HOME wins over plain Shift so the unified HOME indicator
+        // appears on MyTeam when a user has a HOME (rotation/vacation/after) day.
+        var home = GetHomeForDay(userId, date, shifts);
+        if (home != null)
+        {
+            return home;
         }
 
         // Check Shift
@@ -295,8 +305,10 @@ public class TeamCalendarEventAggregator
 
     private DayStatus? GetShiftForDay(int userId, DateOnly date, List<ShiftEvent> shifts)
     {
+        // HOME assignments are surfaced via GetHomeForDay; exclude them from the
+        // plain Shift bucket so the chip doesn't render as a generic shift.
         var userShifts = shifts
-            .Where(s => s.UserId == userId && s.Date == date)
+            .Where(s => s.UserId == userId && s.Date == date && !s.IsHome)
             .ToList();
 
         if (!userShifts.Any())
@@ -325,6 +337,42 @@ public class TeamCalendarEventAggregator
             Label = "Shift",
             TimeRange = null, // Too complex to show
             Metadata = $"{userShifts.Count} shifts",
+            TargetUrl = "/Calendar/Table"
+        };
+    }
+
+    /// <summary>
+    /// Task 24: Surfaces HOME shifts on MyTeam as a unified "Home" status.
+    /// HomeSourceType lets the JS pick the source icon (rotation / vacation / after).
+    /// </summary>
+    private DayStatus? GetHomeForDay(int userId, DateOnly date, List<ShiftEvent> shifts)
+    {
+        var homeShift = shifts
+            .Where(s => s.UserId == userId && s.Date == date && s.IsHome)
+            .OrderBy(s => s.Start)
+            .FirstOrDefault();
+
+        if (homeShift == null)
+        {
+            return null;
+        }
+
+        // SourceTimeOffRequestType: null = rotation, 0 = vacation, 1 = after.
+        // Encode in Metadata so the JS layer (myteam.js) can pick the source icon
+        // without changing the DayStatus shape.
+        var sourceTag = homeShift.SourceTimeOffRequestType switch
+        {
+            0 => "vacation",
+            1 => "after",
+            _ => "rotation"
+        };
+
+        return new DayStatus
+        {
+            Type = DayStatusType.Home,
+            Label = "Home",
+            TimeRange = $"{homeShift.Start:HH:mm} - {homeShift.End:HH:mm}",
+            Metadata = sourceTag,
             TargetUrl = "/Calendar/Table"
         };
     }
@@ -402,9 +450,12 @@ public class TeamCalendarEventAggregator
         DateOnly weekStart,
         DateOnly weekEnd)
     {
+        // Task 24: Include SourceTimeOffRequest so HOME chip can resolve source
+        // (rotation/vacation/after) for the source icon.
         var assignments = await _context.ShiftAssignments
             .Include(a => a.ShiftInstance)
             .ThenInclude(si => si.ShiftType)
+            .Include(a => a.SourceTimeOffRequest)
             .Where(a =>
                 a.UserId != null &&
                 memberUserIds.Contains(a.UserId.Value) &&
@@ -424,7 +475,12 @@ public class TeamCalendarEventAggregator
                 ShiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(a.ShiftInstance.ShiftType, a.CompanyId, culture),
                 NameEn = a.ShiftInstance.ShiftType.NameEn,
                 Start = a.ShiftInstance.ShiftType.Start,
-                End = a.ShiftInstance.ShiftType.End
+                End = a.ShiftInstance.ShiftType.End,
+                // Task 24 — HOME unification fields
+                IsHome = a.ShiftInstance.ShiftType.IsHome,
+                SourceTimeOffRequestType = a.SourceTimeOffRequest != null
+                    ? (int?)a.SourceTimeOffRequest.Type
+                    : null
             });
         }
         return result;
@@ -493,6 +549,10 @@ public class ShiftEvent
     public string? NameEn { get; set; }
     public TimeOnly Start { get; set; }
     public TimeOnly End { get; set; }
+    /// <summary>True for KEY_HOME / KEY_HOME_PM / KEY_HOME_AM (Task 24).</summary>
+    public bool IsHome { get; set; }
+    /// <summary>0=Vacation, 1=After, null=rotation. Drives MyTeam HOME source icon.</summary>
+    public int? SourceTimeOffRequestType { get; set; }
 }
 
 public class ChoreEvent
@@ -522,7 +582,9 @@ public enum DayStatusType
     AfterPartial,
     OnDuty,
     Shift,
-    Chore
+    Chore,
+    /// <summary>HOME shift (rotation/vacation/after). Source carried in DayStatus.Metadata. Task 24.</summary>
+    Home
 }
 
 public class DayStatus

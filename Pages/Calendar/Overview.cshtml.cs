@@ -277,13 +277,29 @@ public class OverviewModel : PageModel
         return result;
     }
 
-    private async Task<Dictionary<(int UserId, DateOnly Date), List<string>>> LoadShiftsAsync()
+    /// <summary>
+    /// Per-user-per-date shift item used to render the Overview cell.
+    /// Carries HOME-specific fields so the shared _CalendarRow partial can
+    /// render HOME chips with source/house icons + time range (Task 23).
+    /// </summary>
+    private record OverviewShiftItem(
+        string Name,
+        bool IsHome,
+        string? ShiftStart,
+        string? ShiftEnd,
+        int? SourceTimeOffRequestId,
+        int? SourceTimeOffRequestType);
+
+    private async Task<Dictionary<(int UserId, DateOnly Date), List<OverviewShiftItem>>> LoadShiftsAsync()
     {
         var userIds = Users.Select(u => u.Id).ToList();
 
+        // Include SourceTimeOffRequest so the projection can expose its Type for HOME chip
+        // source-icon resolution (rotation/vacation/after) — Task 23.
         var assignments = await _db.ShiftAssignments
             .Include(sa => sa.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
+            .Include(sa => sa.SourceTimeOffRequest)
             .Where(sa => ((sa.UserId.HasValue && userIds.Contains(sa.UserId.Value)) ||
                          (sa.TraineeUserId.HasValue && userIds.Contains(sa.TraineeUserId.Value))) &&
                         sa.ShiftInstance.WorkDate >= StartDate &&
@@ -293,14 +309,25 @@ public class OverviewModel : PageModel
         var companyId = _tenantResolver.GetCurrentTenantId();
         var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
 
-        var result = new Dictionary<(int UserId, DateOnly Date), List<string>>();
+        var result = new Dictionary<(int UserId, DateOnly Date), List<OverviewShiftItem>>();
         foreach (var assignment in assignments)
         {
             var date = assignment.ShiftInstance.WorkDate;
-            var shiftName = assignment.ShiftInstance.ShiftType != null
+            var shiftType = assignment.ShiftInstance.ShiftType;
+            var shiftName = shiftType != null
                 ? await _companyLocalizationService.ResolveShiftTypeNameAsync(
-                    assignment.ShiftInstance.ShiftType, companyId, culture)
+                    shiftType, companyId, culture)
                 : _localizer["Shift"].Value;
+
+            // ShiftType.IsHome is [NotMapped] — safe here because the projection runs
+            // client-side after .ToListAsync(). Same pattern as Calendar/Shifts.
+            var isHome = shiftType?.IsHome == true;
+            var shiftStart = shiftType?.Start.ToString("HH:mm");
+            var shiftEnd = shiftType?.End.ToString("HH:mm");
+            var sourceId = assignment.SourceTimeOffRequestId;
+            var sourceType = assignment.SourceTimeOffRequest != null
+                ? (int?)assignment.SourceTimeOffRequest.Type
+                : null;
 
             // Add for primary user if assigned
             if (assignment.UserId.HasValue && userIds.Contains(assignment.UserId.Value))
@@ -308,9 +335,9 @@ public class OverviewModel : PageModel
                 var key = (assignment.UserId.Value, date);
                 if (!result.ContainsKey(key))
                 {
-                    result[key] = new List<string>();
+                    result[key] = new List<OverviewShiftItem>();
                 }
-                result[key].Add(shiftName);
+                result[key].Add(new OverviewShiftItem(shiftName, isHome, shiftStart, shiftEnd, sourceId, sourceType));
             }
 
             // Also add for trainee if applicable
@@ -319,9 +346,11 @@ public class OverviewModel : PageModel
                 var traineeKey = (assignment.TraineeUserId.Value, date);
                 if (!result.ContainsKey(traineeKey))
                 {
-                    result[traineeKey] = new List<string>();
+                    result[traineeKey] = new List<OverviewShiftItem>();
                 }
-                result[traineeKey].Add($"{shiftName} ({_localizer["Trainee"].Value})");
+                result[traineeKey].Add(new OverviewShiftItem(
+                    $"{shiftName} ({_localizer["Trainee"].Value})",
+                    isHome, shiftStart, shiftEnd, sourceId, sourceType));
             }
         }
 
@@ -386,7 +415,7 @@ public class OverviewModel : PageModel
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
         int userId,
         Dictionary<(int UserId, DateOnly Date), bool> vacations,
-        Dictionary<(int UserId, DateOnly Date), List<string>> shifts,
+        Dictionary<(int UserId, DateOnly Date), List<OverviewShiftItem>> shifts,
         Dictionary<(int UserId, DateOnly Date), List<string>> chores,
         Dictionary<(int UserId, DateOnly Date), List<string>> onDuties,
         Dictionary<(int UserId, DateOnly Date), string> notes,
@@ -400,7 +429,8 @@ public class OverviewModel : PageModel
             var key = (userId, date);
             var assignments = new List<ExcelCalendarAssignment>();
 
-            // Add shifts as assignments
+            // Add shifts as assignments. HOME shifts populate IsHome + source/time fields
+            // so the shared _CalendarRow partial renders the unified HOME chip (Task 23).
             if (shifts.TryGetValue(key, out var shiftList))
             {
                 foreach (var shift in shiftList)
@@ -408,9 +438,14 @@ public class OverviewModel : PageModel
                     assignments.Add(new ExcelCalendarAssignment
                     {
                         Id = 0, // Not editable
-                        Name = shift,
+                        Name = shift.Name,
                         Role = "shift",
-                        UserId = userId
+                        UserId = userId,
+                        IsHome = shift.IsHome,
+                        ShiftStart = shift.ShiftStart,
+                        ShiftEnd = shift.ShiftEnd,
+                        SourceTimeOffRequestId = shift.SourceTimeOffRequestId,
+                        SourceTimeOffRequestType = shift.SourceTimeOffRequestType
                     });
                 }
             }
