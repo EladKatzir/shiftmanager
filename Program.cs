@@ -353,6 +353,7 @@ builder.Services.AddScoped<TeamCalendarEventAggregator>();
 builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
 builder.Services.AddScoped<IChoreTypeService, ChoreTypeService>();
 builder.Services.AddScoped<IHomeTypeService, HomeTypeService>();
+builder.Services.AddScoped<IHomeMaterialiserService, HomeMaterialiserService>();
 builder.Services.AddScoped<IUserDayNoteService, UserDayNoteService>();
 builder.Services.AddScoped<ICalendarTextEntryService, CalendarTextEntryService>();
 
