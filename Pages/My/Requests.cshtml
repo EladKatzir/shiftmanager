@@ -77,6 +77,15 @@
                             <p class="form-hint"><loc key="ApproverDescription" /></p>
                         </div>
 
+                        <div class="form-group form-group--checkbox">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="TimeOffRequest.Private" value="true" />
+                                <input type="hidden" name="TimeOffRequest.Private" value="false" />
+                                <span><loc key="TimeOffRequest_Private" /></span>
+                            </label>
+                            <small class="form-help"><loc key="TimeOffRequest_Private_Help" /></small>
+                        </div>
+
                         <div class="form-group">
                             <label asp-for="TimeOffRequest.Reason" class="form-label"><loc key="Reason" /></label>
                             <textarea asp-for="TimeOffRequest.Reason" rows="3" class="form-textarea" placeholder="@Localizer["TimeOffReasonPlaceholder"]"></textarea>

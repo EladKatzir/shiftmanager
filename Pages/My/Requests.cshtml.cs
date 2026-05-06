@@ -282,6 +282,7 @@ public class RequestsModel : LocalizedPageModel
                 Type = TimeOffRequest.Type,
                 Reason = TimeOffRequest.Reason,
                 ApproverId = TimeOffRequest.ApproverId > 0 ? TimeOffRequest.ApproverId : null,
+                Private = TimeOffRequest.Private,
                 Status = RequestStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
@@ -466,6 +467,8 @@ public class RequestsModel : LocalizedPageModel
         public string Reason { get; set; } = "";
 
         public int? ApproverId { get; set; }
+
+        public bool Private { get; set; } = false;
     }
 
     public class SwapRequestForm

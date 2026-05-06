@@ -173,12 +173,13 @@ public class IndexModel : LocalizedPageModel
                 }
             }
 
-            // Load pending time-off requests with company filtering
+            // Load pending time-off requests with company filtering and visibility filter
             _logger.LogInformation("Loading pending time off requests");
             // IgnoreQueryFilters: accessibleCompanyIds already scoped — tenant filter breaks multi-company views
             var pendingTO = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
                                    join u in _db.Users.IgnoreQueryFilters() on r.UserId equals u.Id
                                    where r.Status == RequestStatus.Pending && accessibleCompanyIds.Contains(u.CompanyId)
+                                      && (!r.Private || r.ApproverId == currentUserId)
                                    orderby r.CreatedAt
                                    select new TimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason)).ToListAsync();
             TimeOff = pendingTO;

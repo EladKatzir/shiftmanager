@@ -15371,4 +15371,10 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Saved" xml:space="preserve">
     <value>Saved</value>
   </data>
+  <data name="TimeOffRequest_Private" xml:space="preserve">
+    <value>Private (only the chosen approver sees this request)</value>
+  </data>
+  <data name="TimeOffRequest_Private_Help" xml:space="preserve">
+    <value>When checked, other eligible approvers in your pool won't see this request — only the person you select.</value>
+  </data>
 </root>

@@ -15333,4 +15333,10 @@
   <data name="Saved" xml:space="preserve">
     <value>נשמר</value>
   </data>
+  <data name="TimeOffRequest_Private" xml:space="preserve">
+    <value>פרטי (רק הממונה הנבחר יראה את הבקשה)</value>
+  </data>
+  <data name="TimeOffRequest_Private_Help" xml:space="preserve">
+    <value>כאשר מסומן, מאשרים אחרים בקבוצה לא יראו את הבקשה — רק האדם שתבחר.</value>
+  </data>
 </root>
