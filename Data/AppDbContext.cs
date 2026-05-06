@@ -277,6 +277,18 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<TimeOffRequest>()
             .HasIndex(t => new { t.CompanyId, t.UserId, t.StartDate });
 
+        // HOME unification: dual-approval actor tracking
+        modelBuilder.Entity<TimeOffRequest>()
+            .HasOne(t => t.FirstApprovalActor)
+            .WithMany()
+            .HasForeignKey(t => t.FirstApprovalActorId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<TimeOffRequest>()
+            .HasOne(t => t.SecondApprovalActor)
+            .WithMany()
+            .HasForeignKey(t => t.SecondApprovalActorId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Multitenancy Phase 1: Add composite index for SwapRequests
         modelBuilder.Entity<SwapRequest>()
             .HasIndex(s => new { s.CompanyId, s.Status, s.CreatedAt });

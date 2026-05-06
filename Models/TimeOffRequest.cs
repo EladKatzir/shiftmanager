@@ -31,6 +31,25 @@ public class TimeOffRequest : IBelongsToCompany
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
+    /// User who acted as the first-tier approver (Lead, or BRDirector for non-Alhut/Text requesters).
+    /// Set the moment the first tier approves. Null until then.
+    /// In single-approval flow this is the only approver recorded.
+    /// </summary>
+    public int? FirstApprovalActorId { get; set; }
+    public DateTime? FirstApprovalActedAt { get; set; }
+
+    /// <summary>
+    /// User who acted as the second-tier approver (Director for Alhut/Text, MoleculeAdmin otherwise).
+    /// Only set when dual approval is required (vacation length > MoleculeApprovalSettings.DualApprovalDayThreshold).
+    /// Null in single-approval cases.
+    /// </summary>
+    public int? SecondApprovalActorId { get; set; }
+    public DateTime? SecondApprovalActedAt { get; set; }
+
+    public AppUser? FirstApprovalActor { get; set; }
+    public AppUser? SecondApprovalActor { get; set; }
+
+    /// <summary>
     /// Get the actual start date and time when the time-off begins.
     /// Vacation: StartDate at 00:00
     /// After: StartDate at 16:00
