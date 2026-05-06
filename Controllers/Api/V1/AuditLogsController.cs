@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Data.SeedData;
-using ShiftManager.Models.Api;
+using ShiftManager.Models;
 using ShiftManager.Models.Api.Dto;
 using ShiftManager.Services;
 
@@ -13,6 +13,14 @@ namespace ShiftManager.Controllers.Api.V1;
 /// API controller for audit log access.
 /// All endpoints require API key authentication via X-API-Key header.
 /// </summary>
+/// <remarks>
+/// Batch H (2026-05-06): migrated from ApiProblemDetails to ApiErrorResponse.
+/// Template controller for the rest of the V1 migration. Notable shape changes:
+///   * NotFound  : (detail, instance) → (resource, id)  — code is "{RESOURCE}_NOT_FOUND"
+///   * Unauthorized: (detail, instance) → (message)      — code is "UNAUTHORIZED"
+///   * ServerError : (detail, instance) → (message)      — code is "SERVER_ERROR"
+/// The "instance" path is dropped — ApiErrorResponse surfaces CorrelationId instead.
+/// </remarks>
 [Authorize]
 [ApiController]
 [Route("api/v1/audit-logs")]
@@ -39,9 +47,9 @@ public class AuditLogsController : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResponse<AuditLogDto>), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> ListAuditLogs(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
@@ -57,7 +65,7 @@ public class AuditLogsController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListAuditLogs), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims
@@ -67,7 +75,7 @@ public class AuditLogsController : ControllerBase
                 // ERR-003: Log authorization failure
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(ListAuditLogs), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Validate pagination
@@ -162,15 +170,13 @@ public class AuditLogsController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
                 nameof(ListAuditLogs), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
                 nameof(ListAuditLogs), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 }

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data.SeedData;
-using ShiftManager.Models.Api;
+using ShiftManager.Models;
 using ShiftManager.Models.Api.Dto;
 using ShiftManager.Services;
 using ShiftManager.Services.Api;
@@ -47,9 +47,9 @@ public class ShiftsController : ControllerBase
     /// <returns>Paginated list of shifts</returns>
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResponse<ShiftDto>), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> ListShifts(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
@@ -66,7 +66,7 @@ public class ShiftsController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListShifts), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims (set by ApiAuthenticationMiddleware)
@@ -76,7 +76,7 @@ public class ShiftsController : ControllerBase
                 // ERR-003: Log authorization failure
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(ListShifts), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Parse date filters
@@ -89,9 +89,7 @@ public class ShiftsController : ControllerBase
                 {
                     _logger.LogWarning("Invalid date format in request. Endpoint={Endpoint}, CompanyId={CompanyId}, StartDate={StartDate}",
                         nameof(ListShifts), companyId, startDate);
-                    return BadRequest(ApiProblemDetails.ValidationError(
-                        "Invalid startDate format. Use yyyy-MM-dd",
-                        HttpContext.Request.Path));
+                    return BadRequest(ApiErrorResponse.BadRequest("Invalid startDate format. Use yyyy-MM-dd"));
                 }
                 startDateParsed = parsed;
             }
@@ -102,9 +100,7 @@ public class ShiftsController : ControllerBase
                 {
                     _logger.LogWarning("Invalid date format in request. Endpoint={Endpoint}, CompanyId={CompanyId}, EndDate={EndDate}",
                         nameof(ListShifts), companyId, endDate);
-                    return BadRequest(ApiProblemDetails.ValidationError(
-                        "Invalid endDate format. Use yyyy-MM-dd",
-                        HttpContext.Request.Path));
+                    return BadRequest(ApiErrorResponse.BadRequest("Invalid endDate format. Use yyyy-MM-dd"));
                 }
                 endDateParsed = parsed;
             }
@@ -134,15 +130,13 @@ public class ShiftsController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
                 nameof(ListShifts), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
                 nameof(ListShifts), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 
@@ -154,10 +148,10 @@ public class ShiftsController : ControllerBase
     /// <returns>Shift details with assignments</returns>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ShiftDto), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 404)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 404)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> GetShift(int id)
     {
         try
@@ -167,7 +161,7 @@ public class ShiftsController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetShift), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims
@@ -177,7 +171,7 @@ public class ShiftsController : ControllerBase
                 // ERR-003: Log authorization failure
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, ShiftId={ShiftId}, HasCompanyClaim={HasClaim}",
                     nameof(GetShift), HttpContext.Request.Path, id, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Call service
@@ -187,7 +181,7 @@ public class ShiftsController : ControllerBase
             {
                 _logger.LogWarning("Shift not found. Endpoint={Endpoint}, CompanyId={CompanyId}, ShiftId={ShiftId}",
                     nameof(GetShift), companyId, id);
-                return NotFound(ApiProblemDetails.NotFound($"Shift {id} not found", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.NotFound("Shift", id.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             }
 
             return Ok(shift);
@@ -196,15 +190,13 @@ public class ShiftsController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, ShiftId={ShiftId}, Path={Path}",
                 nameof(GetShift), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, ShiftId={ShiftId}, Path={Path}",
                 nameof(GetShift), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 }
