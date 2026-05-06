@@ -768,7 +768,17 @@ public class ShiftsModel : PageModel
                         IsTrainee = false, // Shift-mode rows are primary employees, never trainees
                         UserId = a.UserId,
                         TraineeUserId = a.TraineeUserId,
-                        TraineeName = a.Trainee?.DisplayName
+                        TraineeName = a.Trainee?.DisplayName,
+                        // HOME unification (Task 22): expose source-of-truth so renderer can pick
+                        // repeat (rotation) / plane (vacation) / sunrise (after) icons. Shift-mode
+                        // doesn't normally show HOME (HOME is JobTypeId=null), but stay consistent.
+                        IsHome = a.ShiftInstance.ShiftType?.IsHome == true,
+                        ShiftStart = a.ShiftInstance.ShiftType?.Start.ToString("HH:mm"),
+                        ShiftEnd = a.ShiftInstance.ShiftType?.End.ToString("HH:mm"),
+                        SourceTimeOffRequestId = a.SourceTimeOffRequestId,
+                        SourceTimeOffRequestType = a.SourceTimeOffRequest != null
+                            ? (int?)a.SourceTimeOffRequest.Type
+                            : null
                     }).ToList();
 
                 if (CapacityMode)
@@ -847,7 +857,16 @@ public class ShiftsModel : PageModel
                 IsTraineeShift = a.IsTraineeShift,
                 UserId = a.UserId,
                 TraineeUserId = a.TraineeUserId,
-                TraineeName = a.Trainee?.DisplayName
+                TraineeName = a.Trainee?.DisplayName,
+                // HOME unification (Task 22): user-mode chips render with source icons
+                // (repeat/plane/sunrise) + house icon + time range when ShiftType.IsHome.
+                IsHome = a.ShiftInstance.ShiftType?.IsHome == true,
+                ShiftStart = a.ShiftInstance.ShiftType?.Start.ToString("HH:mm"),
+                ShiftEnd = a.ShiftInstance.ShiftType?.End.ToString("HH:mm"),
+                SourceTimeOffRequestId = a.SourceTimeOffRequestId,
+                SourceTimeOffRequestType = a.SourceTimeOffRequest != null
+                    ? (int?)a.SourceTimeOffRequest.Type
+                    : null
             }).ToList();
 
             // Add overlay data: render chore/duty items as non-removable assignment chips

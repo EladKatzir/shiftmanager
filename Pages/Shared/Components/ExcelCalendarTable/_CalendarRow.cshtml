@@ -105,16 +105,48 @@
                     {
                         var roleColor = assignment.Role ?? "";
                         var assignStyle = !string.IsNullOrEmpty(roleColor) ? $"--_role-color: {roleColor}" : "";
-                        <div class="excel-calendar__assignment"
+                        // HOME unification (Task 22): pick source icon for HOME chips.
+                        //   no source request → rotation → "repeat"
+                        //   source request Type=0 (Vacation) → "plane"
+                        //   source request Type=1 (After)    → "sunrise"
+                        // Non-HOME assignments fall through to the legacy chip layout.
+                        var isHomeChip = assignment.IsHome;
+                        string? homeSourceIcon = null;
+                        if (isHomeChip)
+                        {
+                            homeSourceIcon = assignment.SourceTimeOffRequestId == null
+                                ? "repeat"
+                                : assignment.SourceTimeOffRequestType == 0 ? "plane"
+                                : assignment.SourceTimeOffRequestType == 1 ? "sunrise"
+                                : "repeat";
+                        }
+                        var chipClass = isHomeChip ? "excel-calendar__assignment chip-home" : "excel-calendar__assignment";
+                        <div class="@chipClass"
                              data-assignment-id="@assignment.Id"
                              data-user-id="@assignment.UserId"
                              data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
                              data-trainee-name="@(assignment.TraineeName ?? "")"
                              data-role-color="@roleColor"
                              data-entry-type="@(roleColor == "text-entry" ? "text" : "")"
+                             data-is-home="@(isHomeChip ? "1" : "0")"
+                             data-source-request-id="@(assignment.SourceTimeOffRequestId?.ToString() ?? "")"
+                             data-source-request-type="@(assignment.SourceTimeOffRequestType?.ToString() ?? "")"
                              style="@assignStyle"
                              title="@assignment.AssignmentTooltip">
-                            <span class="excel-calendar__assignment-name">@assignment.Name</span>
+                            @if (isHomeChip)
+                            {
+                                <span class="chip-icon" aria-hidden="true"><icon name="@homeSourceIcon" size="xs" /></span>
+                                <span class="chip-icon" aria-hidden="true"><icon name="house" size="xs" /></span>
+                                <span class="excel-calendar__assignment-name chip-label">@assignment.Name</span>
+                                @if (!string.IsNullOrEmpty(assignment.ShiftStart) && !string.IsNullOrEmpty(assignment.ShiftEnd))
+                                {
+                                    <span class="chip-time">@assignment.ShiftStart&ndash;@assignment.ShiftEnd</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="excel-calendar__assignment-name">@assignment.Name</span>
+                            }
                             @if (!string.IsNullOrEmpty(assignment.SubLabel))
                             {
                                 <span class="excel-calendar__assignment-note">@assignment.SubLabel</span>

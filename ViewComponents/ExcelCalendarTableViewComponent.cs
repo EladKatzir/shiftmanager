@@ -57,6 +57,19 @@ public class ExcelCalendarAssignment
     public int? TraineeUserId { get; set; }
     public string? TraineeName { get; set; }
     public string? AssignmentTooltip { get; set; }  // e.g. "Assigned by X on Y" — set by oncall calendar
+
+    // HOME unification (Task 22) — let the renderer compose chips with source-icon prefix.
+    // IsHome is true for ShiftType.IsHome assignments; the chip then renders source/house icons + time range.
+    public bool IsHome { get; set; }
+    public string? ShiftStart { get; set; }  // pre-formatted "HH:mm" for chip time label
+    public string? ShiftEnd { get; set; }    // pre-formatted "HH:mm" for chip time label
+
+    // Source-of-truth for HOME chip's source icon (Task 22):
+    //   null → rotation HOME (icon = repeat)
+    //   set + Type=Vacation (0) → vacation HOME (icon = plane)
+    //   set + Type=After    (1) → after HOME    (icon = sunrise)
+    public int? SourceTimeOffRequestId { get; set; }
+    public int? SourceTimeOffRequestType { get; set; }  // (int?)TimeOffType — 0=Vacation, 1=After
 }
 
 public class ExcelCalendarOverlay

@@ -3786,3 +3786,61 @@ body.bottom-sheet-open {
     position: fixed;
     width: 100%;
 }
+
+/* ===========================================================================
+ * HOME chip composition (Task 22 — HOME unification, 2026-05-03)
+ *
+ * Every HOME chip on every calendar surface displays:
+ *   - Same home color (uses --shift-home-soft / --shift-home-text tokens)
+ *   - A source icon (Lucide):
+ *       repeat  — rotation HOME (no SourceTimeOffRequestId)
+ *       plane   — vacation HOME (Type=0)
+ *       sunrise — after HOME (Type=1)
+ *   - A house icon (always present)
+ *   - Time-range label (00:00–23:59 / 16:00–23:59 / 00:00–13:00)
+ *
+ * The .chip-home class is applied alongside .excel-calendar__assignment so all
+ * existing layout rules (positioning inside a cell, hover highlighting, etc.)
+ * still apply. Light + dark themes inherit the right tokens automatically.
+ * =========================================================================== */
+.excel-calendar__assignment.chip-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: var(--shift-home-soft) !important;
+  color: var(--shift-home-text) !important;
+  border: 1px solid var(--shift-home, #c9a25a);
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+}
+
+.excel-calendar__assignment.chip-home .chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--shift-home-text) !important;
+}
+
+.excel-calendar__assignment.chip-home .chip-icon svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+}
+
+.excel-calendar__assignment.chip-home .chip-label {
+  font-weight: 500;
+  color: var(--shift-home-text) !important;
+}
+
+.excel-calendar__assignment.chip-home .chip-time {
+  opacity: 0.75;
+  font-size: 0.7rem;
+  margin-inline-start: 0.25rem;
+  color: var(--shift-home-text) !important;
+}
+
+.excel-calendar__assignment.chip-home .excel-calendar__remove-btn {
+  /* Keep the × visible on the home palette */
+  color: var(--shift-home-text) !important;
+}

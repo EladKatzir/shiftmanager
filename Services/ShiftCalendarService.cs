@@ -72,6 +72,10 @@ public class ShiftCalendarService : IShiftCalendarService
             .Include(sa => sa.Trainee)
             .Include(sa => sa.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
+            // HOME unification (Task 22): expose source TimeOffRequest so callers can render
+            // vacation/after/rotation source icons on HOME chips. Nullable for non-HOME and
+            // rotation-sourced HOME assignments.
+            .Include(sa => sa.SourceTimeOffRequest)
             .AsSplitQuery() // C-07: split multi-include query to avoid cartesian explosion
             .Where(sa => sa.ShiftInstance.ShiftType.MoleculeId == moleculeId
                 && sa.ShiftInstance.WorkDate >= start
