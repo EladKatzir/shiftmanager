@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data.SeedData;
-using ShiftManager.Models.Api;
+using ShiftManager.Models;
 using ShiftManager.Models.Api.Dto;
 using ShiftManager.Services;
 using ShiftManager.Services.Api;
@@ -41,9 +41,9 @@ public class OnDutyController : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResponse<OnDutyDto>), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> ListOnDuties(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
@@ -61,7 +61,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListOnDuties), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims (for authentication, even though on-duty is global)
@@ -70,7 +70,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(ListOnDuties), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Parse date filters
@@ -83,8 +83,7 @@ public class OnDutyController : ControllerBase
                 {
                     _logger.LogWarning("Invalid startDate format. Endpoint={Endpoint}, StartDate={StartDate}",
                         nameof(ListOnDuties), startDate);
-                    return BadRequest(ApiProblemDetails.ValidationError(
-                        "Invalid startDate format. Use yyyy-MM-dd", HttpContext.Request.Path));
+                    return BadRequest(ApiErrorResponse.BadRequest("Invalid startDate format. Use yyyy-MM-dd"));
                 }
                 startDateParsed = parsed;
             }
@@ -95,8 +94,7 @@ public class OnDutyController : ControllerBase
                 {
                     _logger.LogWarning("Invalid endDate format. Endpoint={Endpoint}, EndDate={EndDate}",
                         nameof(ListOnDuties), endDate);
-                    return BadRequest(ApiProblemDetails.ValidationError(
-                        "Invalid endDate format. Use yyyy-MM-dd", HttpContext.Request.Path));
+                    return BadRequest(ApiErrorResponse.BadRequest("Invalid endDate format. Use yyyy-MM-dd"));
                 }
                 endDateParsed = parsed;
             }
@@ -123,15 +121,13 @@ public class OnDutyController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. Path={Path}",
                 nameof(ListOnDuties), HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. Path={Path}",
                 nameof(ListOnDuties), HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 
@@ -141,10 +137,10 @@ public class OnDutyController : ControllerBase
     /// </summary>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(OnDutyDto), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 404)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 404)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> GetOnDuty(int id, [FromQuery] bool includeRelated = true)
     {
         try
@@ -154,7 +150,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetOnDuty), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims (for authentication)
@@ -163,7 +159,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(GetOnDuty), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             var onDuty = await _onDutyService.GetOnDutyAsync(id, includeRelated);
@@ -172,7 +168,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("On-duty assignment not found. Endpoint={Endpoint}, OnDutyId={OnDutyId}",
                     nameof(GetOnDuty), id);
-                return NotFound(ApiProblemDetails.NotFound($"On-duty assignment {id} not found", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.NotFound("OnDuty", id.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             }
 
             return Ok(onDuty);
@@ -181,15 +177,13 @@ public class OnDutyController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. OnDutyId={OnDutyId}, Path={Path}",
                 nameof(GetOnDuty), id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. OnDutyId={OnDutyId}, Path={Path}",
                 nameof(GetOnDuty), id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 
@@ -199,10 +193,10 @@ public class OnDutyController : ControllerBase
     /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(OnDutyDto), 201)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 400)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 400)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> CreateOnDuty([FromBody] CreateOnDutyDto request)
     {
         try
@@ -212,7 +206,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(CreateOnDuty), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims (for authentication)
@@ -221,7 +215,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(CreateOnDuty), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Get UserId from claims (the creator)
@@ -230,7 +224,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("UserId claim missing. Endpoint={Endpoint}",
                     nameof(CreateOnDuty));
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Validate request
@@ -238,21 +232,21 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("Validation error: UserId required. Endpoint={Endpoint}",
                     nameof(CreateOnDuty));
-                return BadRequest(ApiProblemDetails.ValidationError("UserId is required", HttpContext.Request.Path));
+                return BadRequest(ApiErrorResponse.BadRequest("UserId is required"));
             }
 
             if (string.IsNullOrWhiteSpace(request.Date))
             {
                 _logger.LogWarning("Validation error: Date required. Endpoint={Endpoint}",
                     nameof(CreateOnDuty));
-                return BadRequest(ApiProblemDetails.ValidationError("Date is required", HttpContext.Request.Path));
+                return BadRequest(ApiErrorResponse.BadRequest("Date is required"));
             }
 
             if (string.IsNullOrWhiteSpace(request.Type))
             {
                 _logger.LogWarning("Validation error: Type required. Endpoint={Endpoint}",
                     nameof(CreateOnDuty));
-                return BadRequest(ApiProblemDetails.ValidationError("Type is required", HttpContext.Request.Path));
+                return BadRequest(ApiErrorResponse.BadRequest("Type is required"));
             }
 
             var (onDuty, error) = await _onDutyService.CreateOnDutyAsync(creatorId, request);
@@ -261,7 +255,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("On-duty creation validation error. Endpoint={Endpoint}, Error={Error}",
                     nameof(CreateOnDuty), error);
-                return BadRequest(ApiProblemDetails.ValidationError(error, HttpContext.Request.Path));
+                return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
             _logger.LogInformation("On-duty assignment created. Endpoint={Endpoint}, OnDutyId={OnDutyId}",
@@ -273,15 +267,13 @@ public class OnDutyController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. Path={Path}",
                 nameof(CreateOnDuty), HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. Path={Path}",
                 nameof(CreateOnDuty), HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 
@@ -291,11 +283,11 @@ public class OnDutyController : ControllerBase
     /// </summary>
     [HttpPatch("{id}")]
     [ProducesResponseType(typeof(OnDutyDto), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 400)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 404)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 400)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 404)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> UpdateOnDuty(int id, [FromBody] UpdateOnDutyDto request)
     {
         try
@@ -305,7 +297,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(UpdateOnDuty), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims (for authentication)
@@ -314,7 +306,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(UpdateOnDuty), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             var (onDuty, error) = await _onDutyService.UpdateOnDutyAsync(id, request);
@@ -325,11 +317,11 @@ public class OnDutyController : ControllerBase
                 {
                     _logger.LogWarning("On-duty assignment not found for update. Endpoint={Endpoint}, OnDutyId={OnDutyId}",
                         nameof(UpdateOnDuty), id);
-                    return NotFound(ApiProblemDetails.NotFound(error, HttpContext.Request.Path));
+                    return NotFound(ApiErrorResponse.Create("NOT_FOUND", error));
                 }
                 _logger.LogWarning("On-duty update validation error. Endpoint={Endpoint}, OnDutyId={OnDutyId}, Error={Error}",
                     nameof(UpdateOnDuty), id, error);
-                return BadRequest(ApiProblemDetails.ValidationError(error, HttpContext.Request.Path));
+                return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
             _logger.LogInformation("On-duty assignment updated. Endpoint={Endpoint}, OnDutyId={OnDutyId}",
@@ -341,15 +333,13 @@ public class OnDutyController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. OnDutyId={OnDutyId}, Path={Path}",
                 nameof(UpdateOnDuty), id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. OnDutyId={OnDutyId}, Path={Path}",
                 nameof(UpdateOnDuty), id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 
@@ -359,11 +349,11 @@ public class OnDutyController : ControllerBase
     /// </summary>
     [HttpDelete("{id}")]
     [ProducesResponseType(204)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 400)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 404)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 400)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 404)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> DeleteOnDuty(int id)
     {
         try
@@ -373,7 +363,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(DeleteOnDuty), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims (for authentication)
@@ -382,7 +372,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(DeleteOnDuty), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Get UserId from claims
@@ -391,7 +381,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("UserId claim missing. Endpoint={Endpoint}",
                     nameof(DeleteOnDuty));
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             var success = await _onDutyService.DeleteOnDutyAsync(id, canceledBy);
@@ -400,8 +390,7 @@ public class OnDutyController : ControllerBase
             {
                 _logger.LogWarning("On-duty deletion failed. Endpoint={Endpoint}, OnDutyId={OnDutyId}",
                     nameof(DeleteOnDuty), id);
-                return NotFound(ApiProblemDetails.NotFound(
-                    "On-duty assignment not found or already canceled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ONDUTY_NOT_FOUND", "On-duty assignment not found or already canceled"));
             }
 
             _logger.LogInformation("On-duty assignment deleted. Endpoint={Endpoint}, OnDutyId={OnDutyId}, CanceledBy={CanceledBy}",
@@ -413,15 +402,13 @@ public class OnDutyController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. OnDutyId={OnDutyId}, Path={Path}",
                 nameof(DeleteOnDuty), id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. OnDutyId={OnDutyId}, Path={Path}",
                 nameof(DeleteOnDuty), id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 }

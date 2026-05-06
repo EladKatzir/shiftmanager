@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data.SeedData;
-using ShiftManager.Models.Api;
+using ShiftManager.Models;
 using ShiftManager.Models.Api.Dto;
 using ShiftManager.Services;
 using ShiftManager.Services.Api;
@@ -39,9 +39,9 @@ public class NotificationsController : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResponse<NotificationDto>), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> ListNotifications(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
@@ -56,7 +56,7 @@ public class NotificationsController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(ListNotifications), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims
@@ -66,7 +66,7 @@ public class NotificationsController : ControllerBase
                 // ERR-003: Log authorization failure
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(ListNotifications), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             var (notifications, totalCount) = await _notificationService.ListNotificationsAsync(
@@ -91,15 +91,13 @@ public class NotificationsController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
                 nameof(ListNotifications), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
                 nameof(ListNotifications), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 
@@ -109,10 +107,10 @@ public class NotificationsController : ControllerBase
     /// </summary>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(NotificationDto), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 404)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 404)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> GetNotification(int id)
     {
         try
@@ -122,7 +120,7 @@ public class NotificationsController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(GetNotification), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims
@@ -132,7 +130,7 @@ public class NotificationsController : ControllerBase
                 // ERR-003: Log authorization failure
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(GetNotification), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             var notification = await _notificationService.GetNotificationAsync(companyId, id);
@@ -141,7 +139,7 @@ public class NotificationsController : ControllerBase
             {
                 _logger.LogWarning("Notification not found. Endpoint={Endpoint}, CompanyId={CompanyId}, NotificationId={NotificationId}",
                     nameof(GetNotification), companyId, id);
-                return NotFound(ApiProblemDetails.NotFound($"Notification {id} not found", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.NotFound("Notification", id.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             }
 
             return Ok(notification);
@@ -150,15 +148,13 @@ public class NotificationsController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, NotificationId={NotificationId}, Path={Path}",
                 nameof(GetNotification), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, NotificationId={NotificationId}, Path={Path}",
                 nameof(GetNotification), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 
@@ -168,11 +164,11 @@ public class NotificationsController : ControllerBase
     /// </summary>
     [HttpPost("{id}/mark-read")]
     [ProducesResponseType(typeof(NotificationDto), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 400)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 404)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 400)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 404)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> MarkAsRead(int id, [FromBody] MarkAsReadRequest? request = null)
     {
         try
@@ -182,7 +178,7 @@ public class NotificationsController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(MarkAsRead), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims
@@ -192,7 +188,7 @@ public class NotificationsController : ControllerBase
                 // ERR-003: Log authorization failure
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(MarkAsRead), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             var (notification, error) = await _notificationService.MarkAsReadAsync(
@@ -204,11 +200,11 @@ public class NotificationsController : ControllerBase
                 {
                     _logger.LogWarning("Notification not found for mark as read. Endpoint={Endpoint}, CompanyId={CompanyId}, NotificationId={NotificationId}",
                         nameof(MarkAsRead), companyId, id);
-                    return NotFound(ApiProblemDetails.NotFound(error, HttpContext.Request.Path));
+                    return NotFound(ApiErrorResponse.Create("NOT_FOUND", error));
                 }
                 _logger.LogWarning("Mark as read validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, NotificationId={NotificationId}, Error={Error}",
                     nameof(MarkAsRead), companyId, id, error);
-                return BadRequest(ApiProblemDetails.ValidationError(error, HttpContext.Request.Path));
+                return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
             _logger.LogInformation("Notification marked as read. Endpoint={Endpoint}, CompanyId={CompanyId}, NotificationId={NotificationId}",
@@ -220,15 +216,13 @@ public class NotificationsController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, NotificationId={NotificationId}, Path={Path}",
                 nameof(MarkAsRead), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, NotificationId={NotificationId}, Path={Path}",
                 nameof(MarkAsRead), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 
@@ -238,10 +232,10 @@ public class NotificationsController : ControllerBase
     /// </summary>
     [HttpPost("mark-all-read")]
     [ProducesResponseType(typeof(MarkAllReadResponse), 200)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 400)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 401)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 403)]
-    [ProducesResponseType(typeof(ApiProblemDetails), 429)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 400)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 403)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 429)]
     public async Task<IActionResult> MarkAllAsRead([FromBody] MarkAllAsReadRequest request)
     {
         try
@@ -251,7 +245,7 @@ public class NotificationsController : ControllerBase
             {
                 _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
                     nameof(MarkAllAsRead), HttpContext.Request.Path);
-                return NotFound(ApiProblemDetails.NotFound("This API endpoint is not enabled", HttpContext.Request.Path));
+                return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
             // Get CompanyId from claims
@@ -261,14 +255,14 @@ public class NotificationsController : ControllerBase
                 // ERR-003: Log authorization failure
                 _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
                     nameof(MarkAllAsRead), HttpContext.Request.Path, companyIdClaim != null);
-                return Unauthorized(ApiProblemDetails.Unauthorized("Invalid authentication", HttpContext.Request.Path));
+                return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             if (request.UserId <= 0)
             {
                 _logger.LogWarning("Validation error: UserId required. Endpoint={Endpoint}, CompanyId={CompanyId}",
                     nameof(MarkAllAsRead), companyId);
-                return BadRequest(ApiProblemDetails.ValidationError("UserId is required", HttpContext.Request.Path));
+                return BadRequest(ApiErrorResponse.BadRequest("UserId is required"));
             }
 
             var count = await _notificationService.MarkAllAsReadAsync(companyId, request.UserId);
@@ -282,15 +276,13 @@ public class NotificationsController : ControllerBase
         {
             _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
                 nameof(MarkAllAsRead), User.FindFirst("CompanyId")?.Value, request?.UserId, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An error occurred while processing your request", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
                 nameof(MarkAllAsRead), User.FindFirst("CompanyId")?.Value, request?.UserId, HttpContext.Request.Path);
-            return StatusCode(500, ApiProblemDetails.InternalError(
-                "An unexpected error occurred", HttpContext.Request.Path));
+            return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
 }

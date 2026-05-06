@@ -423,9 +423,9 @@ public class ApiAuthenticationMiddleware
     private async Task WriteUnauthorizedResponse(HttpContext context, string detail)
     {
         context.Response.StatusCode = 401;
-        context.Response.ContentType = "application/problem+json";
+        context.Response.ContentType = "application/json";
 
-        var problem = ApiProblemDetails.Unauthorized(detail, context.Request.Path);
+        var problem = ShiftManager.Models.ApiErrorResponse.Unauthorized(detail);
         await context.Response.WriteAsJsonAsync(problem);
     }
 
@@ -435,9 +435,9 @@ public class ApiAuthenticationMiddleware
     private async Task WriteForbiddenResponse(HttpContext context, string detail)
     {
         context.Response.StatusCode = 403;
-        context.Response.ContentType = "application/problem+json";
+        context.Response.ContentType = "application/json";
 
-        var problem = ApiProblemDetails.Forbidden(detail, context.Request.Path);
+        var problem = ShiftManager.Models.ApiErrorResponse.Forbidden(detail);
         await context.Response.WriteAsJsonAsync(problem);
     }
 
