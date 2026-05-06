@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -185,7 +186,7 @@ public class AssignModel : LocalizedPageModel
         await _auditLogService.LogAsync("GrantAssigned", "Grant", grant.Id,
             $"Assigned grant '{grantType.Key}' to user '{user.DisplayName}' (UserId={SelectedUserId})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_GrantAssigned"],
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_GrantAssigned"],
             _localizer[grantType.NameKey], user.DisplayName);
 
         return RedirectToPage("Index", new { ViewMode = "grants", FilterUserId = SelectedUserId });

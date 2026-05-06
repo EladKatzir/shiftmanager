@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -157,7 +158,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("GroupingCreated", "ShiftGrouping", grouping.Id,
             $"Created shift grouping '{grouping.DisplayName}' in molecule (MoleculeId={grouping.MoleculeId})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_GroupingCreated"], grouping.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_GroupingCreated"], grouping.DisplayName);
         return RedirectToPage();
     }
 
@@ -195,7 +196,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("GroupingEdited", "ShiftGrouping", EditId,
             $"Shift grouping edited to '{displayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_GroupingEdited"], displayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_GroupingEdited"], displayName);
         return RedirectToPage();
     }
 
@@ -211,13 +212,13 @@ public class IndexModel : LocalizedPageModel
         if (grouping.IsActive)
         {
             await _shiftGroupingService.DeactivateGroupingAsync(id);
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_GroupingDeactivated"], grouping.DisplayName);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_GroupingDeactivated"], grouping.DisplayName);
         }
         else
         {
             grouping.IsActive = true;
             await _db.SaveChangesAsync();
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_GroupingActivated"], grouping.DisplayName);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_GroupingActivated"], grouping.DisplayName);
         }
 
         _logger.LogInformation("ShiftGrouping {GroupingId} ({GroupingName}) active status changed to {IsActive}",
@@ -253,7 +254,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("GroupingDeleted", "ShiftGrouping", id,
             $"Deleted shift grouping '{grouping.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_GroupingDeleted"], grouping.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_GroupingDeleted"], grouping.DisplayName);
         return RedirectToPage();
     }
 }

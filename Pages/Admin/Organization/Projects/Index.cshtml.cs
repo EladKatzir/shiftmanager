@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -81,7 +82,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("ProjectCreated", "Project", project.Id,
             $"Created project '{project.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_ProjectCreated"], project.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_ProjectCreated"], project.DisplayName);
         return RedirectToPage();
     }
 
@@ -117,7 +118,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("ProjectRenamed", "Project", EditId,
             $"Project renamed from '{oldName}' to '{project.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_ProjectRenamed"], project.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_ProjectRenamed"], project.DisplayName);
         return RedirectToPage();
     }
 
@@ -139,8 +140,8 @@ public class IndexModel : LocalizedPageModel
             $"Project '{project.DisplayName}' {(project.IsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = project.IsActive
-            ? string.Format(_localizer["Success_ProjectActivated"], project.DisplayName)
-            : string.Format(_localizer["Success_ProjectDeactivated"], project.DisplayName);
+            ? string.Format(CultureInfo.CurrentCulture, _localizer["Success_ProjectActivated"], project.DisplayName)
+            : string.Format(CultureInfo.CurrentCulture, _localizer["Success_ProjectDeactivated"], project.DisplayName);
         return RedirectToPage();
     }
 
@@ -168,7 +169,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("ProjectDeleted", "Project", id,
             $"Deleted project '{project.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_ProjectDeleted"], project.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_ProjectDeleted"], project.DisplayName);
         return RedirectToPage();
     }
 }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -169,7 +170,7 @@ public class AssignModel : LocalizedPageModel
         await _auditLogService.LogAsync("RoleAssigned", "UserRoleAssignment", assignment.Id,
             $"Assigned role '{roleTemplate.Key}' to user '{user.DisplayName}' (UserId={SelectedUserId})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_RoleAssigned"],
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_RoleAssigned"],
             _localizer[roleTemplate.NameKey], user.DisplayName);
 
         return RedirectToPage("Index", new { ViewMode = "assignments", FilterUserId = SelectedUserId });

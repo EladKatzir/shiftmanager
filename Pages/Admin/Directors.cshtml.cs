@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -139,7 +140,7 @@ public class DirectorsModel : LocalizedPageModel
 
         if (existingAssignment != null)
         {
-            TempData["ErrorMessage"] = string.Format(_localizer["Error_DirectorAlreadyAssigned"].Value, director.DisplayName, company.LocalizedName);
+            TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_DirectorAlreadyAssigned"].Value, director.DisplayName, company.LocalizedName);
             return RedirectToPage();
         }
 
@@ -158,7 +159,7 @@ public class DirectorsModel : LocalizedPageModel
         _logger.LogInformation("Assigned Director {DirectorEmail} to Company {CompanyName} by {GrantedBy}",
             director.Email, company.Name, currentUserId);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorAssignedToCompany"].Value, director.DisplayName, company.LocalizedName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DirectorAssignedToCompany"].Value, director.DisplayName, company.LocalizedName);
         return RedirectToPage();
     }
 
@@ -183,7 +184,7 @@ public class DirectorsModel : LocalizedPageModel
         _logger.LogInformation("Revoked Director access for {DirectorEmail} from Company {CompanyName}",
             assignment.User!.Email, assignment.Company!.Name);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorAccessRevoked"].Value, assignment.User.DisplayName, assignment.Company.Name);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DirectorAccessRevoked"].Value, assignment.User.DisplayName, assignment.Company.Name);
         return RedirectToPage();
     }
 
@@ -240,7 +241,7 @@ public class DirectorsModel : LocalizedPageModel
         _logger.LogInformation("Reassigned Director {UserId} from Company {OldCompanyId} to {NewCompanyId}",
             assignment.UserId, assignment.CompanyId, newCompanyId);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DirectorReassigned"].Value, company.LocalizedName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DirectorReassigned"].Value, company.LocalizedName);
         return RedirectToPage();
     }
 }

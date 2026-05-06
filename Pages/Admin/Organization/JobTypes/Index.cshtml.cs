@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -189,7 +190,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("JobTypeCreated", "JobType", jobType.Id,
             $"Created job type '{jobType.DisplayName}' in area (AreaId={jobType.AreaId})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeCreated"], jobType.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JobTypeCreated"], jobType.DisplayName);
         return RedirectToPage();
     }
 
@@ -233,7 +234,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("JobTypeEdited", "JobType", EditId,
             $"Job type edited: '{oldName}' -> '{jobType.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeEdited"], jobType.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JobTypeEdited"], jobType.DisplayName);
         return RedirectToPage();
     }
 
@@ -265,8 +266,8 @@ public class IndexModel : LocalizedPageModel
             $"Job type '{jobTypeInfo.DisplayName}' {(newIsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = newIsActive
-            ? string.Format(_localizer["Success_JobTypeActivated"], jobTypeInfo.DisplayName)
-            : string.Format(_localizer["Success_JobTypeDeactivated"], jobTypeInfo.DisplayName);
+            ? string.Format(CultureInfo.CurrentCulture, _localizer["Success_JobTypeActivated"], jobTypeInfo.DisplayName)
+            : string.Format(CultureInfo.CurrentCulture, _localizer["Success_JobTypeDeactivated"], jobTypeInfo.DisplayName);
 
         return RedirectToPage();
     }
@@ -300,7 +301,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("JobTypeDeleted", "JobType", id,
             $"Deleted job type '{jobTypeInfo?.DisplayName ?? "Unknown"}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeDeleted"], jobTypeInfo?.DisplayName ?? "Unknown");
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JobTypeDeleted"], jobTypeInfo?.DisplayName ?? "Unknown");
         return RedirectToPage();
     }
 }

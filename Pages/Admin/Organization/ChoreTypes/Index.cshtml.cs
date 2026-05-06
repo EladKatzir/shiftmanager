@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -218,7 +219,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("ChoreTypeCreated", "ChoreType", choreType.Id,
             $"Created chore type '{choreType.DisplayName}' in molecule (MoleculeId={MoleculeId.Value})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_ChoreTypeCreated"], choreType.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_ChoreTypeCreated"], choreType.DisplayName);
         return RedirectToPage(new { MoleculeId });
     }
 
@@ -272,7 +273,7 @@ public class IndexModel : LocalizedPageModel
             await _auditLogService.LogAsync("ChoreTypeUpdated", "ChoreType", choreType.Id,
                 $"Updated chore type '{choreType.DisplayName}'");
 
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_ChoreTypeUpdated"], choreType.DisplayName);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_ChoreTypeUpdated"], choreType.DisplayName);
         }
         catch (ArgumentException)
         {
@@ -311,7 +312,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("ChoreTypeDeleted", "ChoreType", id,
             $"Deactivated chore type '{choreType.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_ChoreTypeDeactivated"], choreType.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_ChoreTypeDeactivated"], choreType.DisplayName);
         return RedirectToPage(new { MoleculeId });
     }
 
@@ -344,7 +345,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("ChoreTypeUpdated", "ChoreType", id,
             $"Activated chore type '{choreType.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_ChoreTypeActivated"], choreType.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_ChoreTypeActivated"], choreType.DisplayName);
         return RedirectToPage(new { MoleculeId });
     }
 

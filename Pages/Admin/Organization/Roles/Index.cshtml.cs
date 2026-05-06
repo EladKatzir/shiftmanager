@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -167,7 +168,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("RoleRevoked", "UserRoleAssignment", id,
             $"Revoked role '{roleKey}' from user '{userName}' (UserId={userId})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_RoleRevoked"],
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_RoleRevoked"],
             _localizer[roleNameKey], userName);
 
         return RedirectToPage(new { ViewMode = "assignments", FilterUserId = userId });

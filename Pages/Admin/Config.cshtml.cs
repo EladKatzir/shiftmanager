@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -152,7 +153,7 @@ public class ConfigModel : LocalizedPageModel
             description: $"Created custom OnDuty type: {NameEn} ({NameHe}) with value {autoTypeValue}",
             details: System.Text.Json.JsonSerializer.Serialize(new { TypeValue = autoTypeValue, NameEn, NameHe, Icon, Color }));
 
-        Success = string.Format(_localizer["Success_OnDutyTypeCreated"], NameEn);
+        Success = string.Format(CultureInfo.CurrentCulture, _localizer["Success_OnDutyTypeCreated"], NameEn);
         return RedirectToPage();
     }
 
@@ -174,7 +175,7 @@ public class ConfigModel : LocalizedPageModel
 
         if (inUse)
         {
-            Error = string.Format(_localizer["Error_CannotDeleteOnDutyTypeInUse"], type.NameEn);
+            Error = string.Format(CultureInfo.CurrentCulture, _localizer["Error_CannotDeleteOnDutyTypeInUse"], type.NameEn);
             await OnGetAsync();
             return Page();
         }
@@ -190,7 +191,7 @@ public class ConfigModel : LocalizedPageModel
             description: $"Deleted custom OnDuty type: {type.NameEn} (value {type.TypeValue})",
             details: System.Text.Json.JsonSerializer.Serialize(new { TypeValue = type.TypeValue, NameEn = type.NameEn }));
 
-        Success = string.Format(_localizer["Success_OnDutyTypeDeleted"], type.NameEn);
+        Success = string.Format(CultureInfo.CurrentCulture, _localizer["Success_OnDutyTypeDeleted"], type.NameEn);
         return RedirectToPage();
     }
 

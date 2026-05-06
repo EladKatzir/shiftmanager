@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -273,7 +274,7 @@ public class EmailConfigModel : LocalizedPageModel
             if (sendResult.Success && LastTestResult != null)
             {
                 TestDiagnostics = FormatDiagnostics(LastTestResult);
-                TempData["SuccessMessage"] = string.Format(_localizer["Success_TestEmailSent"].Value, testEmail);
+                TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_TestEmailSent"].Value, testEmail);
             }
             else if (!sendResult.Success)
             {
@@ -287,7 +288,7 @@ public class EmailConfigModel : LocalizedPageModel
                 var diagnosticDetail = sendResult.ErrorMessage
                     ?? LastTestResult?.ErrorMessage
                     ?? _localizer["Error_TestEmailFailedNoDiagnostics"].Value;
-                TempData["ErrorMessage"] = string.Format(_localizer["Error_TestEmailFailed"].Value, diagnosticDetail);
+                TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_TestEmailFailed"].Value, diagnosticDetail);
                 TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
             else

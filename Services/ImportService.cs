@@ -184,7 +184,15 @@ public class ImportService : IImportService
                 }
                 catch (JsonException ex)
                 {
-                    result.Warnings.Add($"Line {lineNumber}: JSON parse error - {ex.Message}");
+                    // Batch S (F-H-014): surface full exception context (path, BytePositionInLine,
+                    // and inner exception chain) so operators can diagnose which character on which
+                    // line caused the parse failure. Previously only ex.Message was added, swallowing
+                    // the structured location info.
+                    var location = ex.Path != null
+                        ? $" at JSON path '{ex.Path}', byte position {ex.BytePositionInLine?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "?"}"
+                        : "";
+                    var innerSuffix = ex.InnerException != null ? $" (inner: {ex.InnerException.Message})" : "";
+                    result.Warnings.Add($"Line {lineNumber}: JSON parse error - {ex.Message}{location}{innerSuffix}");
                 }
             }
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -114,7 +115,7 @@ public class AreaConfigModel : PageModel
         _logger.LogInformation("Updated area settings for Area {AreaId}: RestHours={RestHours}, WeeklyCap={WeeklyCap}",
             EditAreaId, DefaultRestHours, DefaultWeeklyCap);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_AreaSettingsUpdated"], area.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_AreaSettingsUpdated"], area.DisplayName);
         return RedirectToPage();
     }
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -145,7 +146,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("DutyTypeCreated", "DutyType", config.Id,
             $"Created duty type '{config.NameEn}' (TypeValue={config.TypeValue})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DutyTypeCreated"].Value, config.NameEn);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DutyTypeCreated"].Value, config.NameEn);
         return RedirectToPage();
     }
 
@@ -207,7 +208,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("DutyTypeUpdated", "DutyType", config.Id,
             $"Updated duty type '{config.NameEn}' (TypeValue={config.TypeValue})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DutyTypeUpdated"].Value, config.NameEn);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DutyTypeUpdated"].Value, config.NameEn);
         return RedirectToPage();
     }
 
@@ -245,8 +246,8 @@ public class IndexModel : LocalizedPageModel
             $"Duty type '{config.NameEn}' {(config.IsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = config.IsActive
-            ? string.Format(_localizer["Success_DutyTypeActivated"].Value, config.NameEn)
-            : string.Format(_localizer["Success_DutyTypeDeactivated"].Value, config.NameEn);
+            ? string.Format(CultureInfo.CurrentCulture, _localizer["Success_DutyTypeActivated"].Value, config.NameEn)
+            : string.Format(CultureInfo.CurrentCulture, _localizer["Success_DutyTypeDeactivated"].Value, config.NameEn);
 
         return RedirectToPage();
     }

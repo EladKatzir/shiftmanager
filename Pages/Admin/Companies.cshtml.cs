@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -313,7 +314,7 @@ public class CompaniesModel : LocalizedPageModel
                 _logger.LogInformation("Assigned Director {DirectorId} ({DirectorEmail}) to company {CompanyName}",
                     SelectedDirectorId.Value, director?.Email, company.Name);
 
-                successUserInfo = string.Format(_localizer["Success_DirectorAssigned"], director?.DisplayName, director?.Email);
+                successUserInfo = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DirectorAssigned"], director?.DisplayName, director?.Email);
             }
             else
             {
@@ -347,7 +348,7 @@ public class CompaniesModel : LocalizedPageModel
                 _logger.LogInformation("Created manager user {ManagerEmail} for company {CompanyName}",
                     ManagerEmail, company.Name);
 
-                successUserInfo = string.Format(_localizer["Success_ManagerCreated"], ManagerEmail);
+                successUserInfo = string.Format(CultureInfo.CurrentCulture, _localizer["Success_ManagerCreated"], ManagerEmail);
             }
 
             // Shift types are now molecule-scoped — no per-company seeding needed.
@@ -394,7 +395,7 @@ public class CompaniesModel : LocalizedPageModel
                 }
             }
 
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyCreated"], company.Name, successUserInfo);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_CompanyCreated"], company.Name, successUserInfo);
 
             return RedirectToPage();
         }
@@ -468,7 +469,7 @@ public class CompaniesModel : LocalizedPageModel
         _companyCacheService.InvalidateCache(RenameCompanyId);
 
         _logger.LogInformation("Company {CompanyId} renamed to {NewName}", RenameCompanyId, NewCompanyName);
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyRenamed"], NewCompanyName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_CompanyRenamed"], NewCompanyName);
 
         return RedirectToPage();
     }
@@ -614,7 +615,7 @@ public class CompaniesModel : LocalizedPageModel
             _companyCacheService.InvalidateCache(id);
 
             _logger.LogInformation("Company {CompanyId} ({CompanyName}) deleted successfully", id, company.Name);
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyDeleted"], company.Name);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_CompanyDeleted"], company.Name);
 
             return RedirectToPage();
         }

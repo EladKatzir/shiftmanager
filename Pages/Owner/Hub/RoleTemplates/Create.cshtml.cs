@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -78,7 +79,7 @@ public class CreateModel : LocalizedPageModel
         var exists = await _db.RoleTemplates.AnyAsync(rt => rt.Key == Key);
         if (exists)
         {
-            ErrorMessage = string.Format(_localizer["Error_RoleTemplate_KeyExists"].Value, Key);
+            ErrorMessage = string.Format(CultureInfo.CurrentCulture, _localizer["Error_RoleTemplate_KeyExists"].Value, Key);
             return Page();
         }
 

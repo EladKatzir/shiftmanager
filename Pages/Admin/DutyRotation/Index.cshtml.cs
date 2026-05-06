@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -155,7 +156,7 @@ public class IndexModel : LocalizedPageModel
 
             _logger.LogInformation("DutyRotation {RotationId} created by user {UserId}", rotation.Id, currentUserId);
 
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_RotationCreated"].Value, rotation.Name);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_RotationCreated"].Value, rotation.Name);
         }
         catch (Exception ex)
         {

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -171,7 +172,7 @@ public class ForgotPasswordModel : LocalizedPageModel
 </head>
 <body>
     <h2>{_localizer["Email_PasswordRecoveryTitle"]}</h2>
-    <p>{string.Format(_localizer["Email_Hello"], user.DisplayName)},</p>
+    <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], user.DisplayName)},</p>
     <p>{_localizer["Email_PasswordRecoveryBody"]}</p>
     <p><strong>{_localizer["Email_YourTemporaryPassword"]}:</strong> <code class='code-box'>{temporaryPassword}</code></p>
     <p><strong>{_localizer["Important"]}:</strong> {_localizer["Email_PasswordRecoveryImportant"]}</p>

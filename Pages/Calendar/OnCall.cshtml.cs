@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -455,7 +456,7 @@ public class OnCallModel : PageModel
                 Role = o.Notes, // Use notes as additional info
                 UserId = o.UserId,
                 AssignmentTooltip = o.Creator != null
-                    ? string.Format(_localizer["OnDuty_AssignedByTooltip"].Value, o.Creator.DisplayName, o.CreatedAt.ToString("d"))
+                    ? string.Format(CultureInfo.CurrentCulture, _localizer["OnDuty_AssignedByTooltip"].Value, o.Creator.DisplayName, o.CreatedAt.ToString("d"))
                     : null
             }).ToList();
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -40,7 +41,7 @@ public class LanguageEditModeModel : LocalizedPageModel
         var allowedCultures = new[] { "en-US", "he-IL" };
         if (!allowedCultures.Contains(culture))
         {
-            TempData["ErrorMessage"] = string.Format(_localizer["Error_InvalidCulture"].Value, culture);
+            TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_InvalidCulture"].Value, culture);
             return RedirectToPage("/Owner/LanguageManagement");
         }
 

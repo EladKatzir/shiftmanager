@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -728,7 +729,7 @@ public class IndexModel : LocalizedPageModel
                 endDate: request.EndDate);
 
             _logger.LogInformation("Successfully deleted time-off request {RequestId} for user {UserName}", id, userName);
-            Message = string.Format(_localizer["Success_TimeOffDeleted"], userName, request.StartDate.ToString("yyyy-MM-dd"), request.EndDate.ToString("yyyy-MM-dd"));
+            Message = string.Format(CultureInfo.CurrentCulture, _localizer["Success_TimeOffDeleted"], userName, request.StartDate.ToString("yyyy-MM-dd"), request.EndDate.ToString("yyyy-MM-dd"));
 
             return RedirectToPage();
         }

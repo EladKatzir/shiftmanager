@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -154,7 +155,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("GrantRevoked", "Grant", id,
             $"Revoked grant '{grant.GrantType.Key}' from user '{grant.User.DisplayName}' (UserId={grant.UserId})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_GrantRevoked"],
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_GrantRevoked"],
             _localizer[grant.GrantType.NameKey], grant.User.DisplayName);
 
         return RedirectToPage(new { ViewMode = "grants", FilterUserId = grant.UserId });

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -145,7 +146,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("DepartmentCreated", "Department", department.Id,
             $"Created department '{department.DisplayName}' in molecule (MoleculeId={department.MoleculeId})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentCreated"], department.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DepartmentCreated"], department.DisplayName);
         return RedirectToPage();
     }
 
@@ -181,7 +182,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("DepartmentRenamed", "Department", EditId,
             $"Department renamed from '{oldName}' to '{department.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentRenamed"], department.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DepartmentRenamed"], department.DisplayName);
         return RedirectToPage();
     }
 
@@ -205,8 +206,8 @@ public class IndexModel : LocalizedPageModel
             $"Department '{department.DisplayName}' {(department.IsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = department.IsActive
-            ? string.Format(_localizer["Success_DepartmentActivated"], department.DisplayName)
-            : string.Format(_localizer["Success_DepartmentDeactivated"], department.DisplayName);
+            ? string.Format(CultureInfo.CurrentCulture, _localizer["Success_DepartmentActivated"], department.DisplayName)
+            : string.Format(CultureInfo.CurrentCulture, _localizer["Success_DepartmentDeactivated"], department.DisplayName);
 
         return RedirectToPage();
     }
@@ -239,7 +240,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("DepartmentDeleted", "Department", id,
             $"Deleted department '{department.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentDeleted"], department.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DepartmentDeleted"], department.DisplayName);
         return RedirectToPage();
     }
 }

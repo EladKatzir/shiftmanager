@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -99,7 +100,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("AreaCreated", "Area", area.Id,
             $"Created area '{area.DisplayName}' in project (ProjectId={area.ProjectId})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_AreaCreated"], area.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_AreaCreated"], area.DisplayName);
         return RedirectToPage();
     }
 
@@ -135,7 +136,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("AreaRenamed", "Area", EditId,
             $"Area renamed from '{oldName}' to '{area.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_AreaRenamed"], area.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_AreaRenamed"], area.DisplayName);
         return RedirectToPage();
     }
 
@@ -158,8 +159,8 @@ public class IndexModel : LocalizedPageModel
             $"Area '{area.DisplayName}' {(area.IsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = area.IsActive
-            ? string.Format(_localizer["Success_AreaActivated"], area.DisplayName)
-            : string.Format(_localizer["Success_AreaDeactivated"], area.DisplayName);
+            ? string.Format(CultureInfo.CurrentCulture, _localizer["Success_AreaActivated"], area.DisplayName)
+            : string.Format(CultureInfo.CurrentCulture, _localizer["Success_AreaDeactivated"], area.DisplayName);
         return RedirectToPage();
     }
 
@@ -187,7 +188,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("AreaDeleted", "Area", id,
             $"Deleted area '{area.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_AreaDeleted"], area.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_AreaDeleted"], area.DisplayName);
         return RedirectToPage();
     }
 }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
@@ -45,7 +46,7 @@ public class SetupTaskService : ISetupTaskService
         {
             Type = SetupTaskType.AssignMoleculeAdmin,
             Title = _localizer["SetupTask_AssignMoleculeAdmin_Title"],
-            Description = string.Format(_localizer["SetupTask_AssignMoleculeAdmin_Desc"], molecule.DisplayName),
+            Description = string.Format(CultureInfo.CurrentCulture, _localizer["SetupTask_AssignMoleculeAdmin_Desc"], molecule.DisplayName),
             MoleculeId = moleculeId,
             AssignedToUserId = assignToUserId,
             Status = SetupTaskStatus.Pending,
@@ -59,7 +60,7 @@ public class SetupTaskService : ISetupTaskService
             {
                 Type = SetupTaskType.SetupShiftGroupings,
                 Title = _localizer["SetupTask_SetupShiftGroupings_Title"],
-                Description = string.Format(_localizer["SetupTask_SetupShiftGroupings_Desc"], molecule.DisplayName),
+                Description = string.Format(CultureInfo.CurrentCulture, _localizer["SetupTask_SetupShiftGroupings_Desc"], molecule.DisplayName),
                 MoleculeId = moleculeId,
                 AssignedToUserId = assignToUserId,
                 Status = SetupTaskStatus.Pending,
@@ -78,8 +79,8 @@ public class SetupTaskService : ISetupTaskService
                     tasks.Add(new SetupTask
                     {
                         Type = taskType.Value,
-                        Title = string.Format(_localizer[$"SetupTask_{taskType.Value}_Title"], jobType.DisplayName),
-                        Description = string.Format(_localizer[$"SetupTask_{taskType.Value}_Desc"], jobType.DisplayName, molecule.DisplayName),
+                        Title = string.Format(CultureInfo.CurrentCulture, _localizer[$"SetupTask_{taskType.Value}_Title"], jobType.DisplayName),
+                        Description = string.Format(CultureInfo.CurrentCulture, _localizer[$"SetupTask_{taskType.Value}_Desc"], jobType.DisplayName, molecule.DisplayName),
                         MoleculeId = moleculeId,
                         JobTypeId = jobType.Id,
                         AssignedToUserId = assignToUserId,
@@ -95,7 +96,7 @@ public class SetupTaskService : ISetupTaskService
         {
             Type = SetupTaskType.SetupShiftBlueprints,
             Title = _localizer["SetupTask_SetupShiftBlueprints_Title"],
-            Description = string.Format(_localizer["SetupTask_SetupShiftBlueprints_Desc"], molecule.DisplayName),
+            Description = string.Format(CultureInfo.CurrentCulture, _localizer["SetupTask_SetupShiftBlueprints_Desc"], molecule.DisplayName),
             MoleculeId = moleculeId,
             AssignedToUserId = assignToUserId,
             Status = SetupTaskStatus.Pending,
@@ -128,7 +129,7 @@ public class SetupTaskService : ISetupTaskService
         {
             Type = SetupTaskType.AssignBRDirector,
             Title = _localizer["SetupTask_AssignBRDirector_Title"],
-            Description = string.Format(_localizer["SetupTask_AssignBRDirector_Desc"], company.LocalizedName),
+            Description = string.Format(CultureInfo.CurrentCulture, _localizer["SetupTask_AssignBRDirector_Desc"], company.LocalizedName),
             MoleculeId = company.MoleculeId,
             CompanyId = companyId,
             AssignedToUserId = assignToUserId,
@@ -150,8 +151,8 @@ public class SetupTaskService : ISetupTaskService
                     tasks.Add(new SetupTask
                     {
                         Type = taskType.Value,
-                        Title = string.Format(_localizer[$"SetupTask_{taskType.Value}_Title"], jobType.DisplayName, company.LocalizedName),
-                        Description = string.Format(_localizer[$"SetupTask_{taskType.Value}_Desc"], jobType.DisplayName, company.LocalizedName),
+                        Title = string.Format(CultureInfo.CurrentCulture, _localizer[$"SetupTask_{taskType.Value}_Title"], jobType.DisplayName, company.LocalizedName),
+                        Description = string.Format(CultureInfo.CurrentCulture, _localizer[$"SetupTask_{taskType.Value}_Desc"], jobType.DisplayName, company.LocalizedName),
                         MoleculeId = company.MoleculeId,
                         CompanyId = companyId,
                         JobTypeId = jobType.Id,
@@ -168,7 +169,7 @@ public class SetupTaskService : ISetupTaskService
         {
             Type = SetupTaskType.AssignAssigners,
             Title = _localizer["SetupTask_AssignAssigners_Title"],
-            Description = string.Format(_localizer["SetupTask_AssignAssigners_Desc"], company.LocalizedName),
+            Description = string.Format(CultureInfo.CurrentCulture, _localizer["SetupTask_AssignAssigners_Desc"], company.LocalizedName),
             MoleculeId = company.MoleculeId,
             CompanyId = companyId,
             AssignedToUserId = assignToUserId,

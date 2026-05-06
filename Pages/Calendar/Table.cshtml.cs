@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -713,7 +714,7 @@ public class TableModel : PageModel
                     return new JsonResult(new
                     {
                         success = false,
-                        error = string.Format(_localizer["Calendar_Error_OverlappingShift"].Value, overlapName, existingStart.ToString("HH:mm"), existingEnd.ToString("HH:mm"))
+                        error = string.Format(CultureInfo.CurrentCulture, _localizer["Calendar_Error_OverlappingShift"].Value, overlapName, existingStart.ToString("HH:mm"), existingEnd.ToString("HH:mm"))
                     });
                 }
             }
@@ -1083,7 +1084,7 @@ public class TableModel : PageModel
                         success = false,
                         requiresConfirmation = true,
                         affectedAssignments = affectedCount,
-                        message = string.Format(_localizer["Calendar_Confirm_RemoveEmployees"].Value, affectedCount)
+                        message = string.Format(CultureInfo.CurrentCulture, _localizer["Calendar_Confirm_RemoveEmployees"].Value, affectedCount)
                     });
                 }
 
@@ -2415,7 +2416,7 @@ public class TableModel : PageModel
                 success = true,
                 created = createdCount,
                 updated = updatedCount,
-                message = string.Format(_localizer["FillRange_Success"].Value, createdCount + updatedCount)
+                message = string.Format(CultureInfo.CurrentCulture, _localizer["FillRange_Success"].Value, createdCount + updatedCount)
             });
         }
         catch (Exception ex)
@@ -2529,7 +2530,7 @@ public class TableModel : PageModel
                         date = instance.WorkDate.ToString("yyyy-MM-dd"),
                         type = "underfilled",
                         severity = "warning",
-                        message = string.Format(_localizer["FillRange_Understaffed"].Value, filledCount, instance.StaffingRequired),
+                        message = string.Format(CultureInfo.CurrentCulture, _localizer["FillRange_Understaffed"].Value, filledCount, instance.StaffingRequired),
                         filled = filledCount,
                         required = instance.StaffingRequired
                     });
@@ -2546,7 +2547,7 @@ public class TableModel : PageModel
                         date = instance.WorkDate.ToString("yyyy-MM-dd"),
                         type = "overfilled",
                         severity = "error",
-                        message = string.Format(_localizer["FillRange_Overstaffed"].Value, filledCount, instance.StaffingRequired),
+                        message = string.Format(CultureInfo.CurrentCulture, _localizer["FillRange_Overstaffed"].Value, filledCount, instance.StaffingRequired),
                         filled = filledCount,
                         required = instance.StaffingRequired
                     });

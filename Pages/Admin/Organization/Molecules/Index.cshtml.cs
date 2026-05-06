@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -173,7 +174,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("MoleculeCreated", "Molecule", molecule.Id,
             $"Created molecule '{molecule.DisplayName}' (Type={molecule.Type}) in area (AreaId={molecule.AreaId})");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_MoleculeCreated"], molecule.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_MoleculeCreated"], molecule.DisplayName);
         return RedirectToPage();
     }
 
@@ -209,7 +210,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("MoleculeRenamed", "Molecule", EditId,
             $"Molecule renamed from '{oldName}' to '{molecule.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_MoleculeRenamed"], molecule.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_MoleculeRenamed"], molecule.DisplayName);
         return RedirectToPage();
     }
 
@@ -233,8 +234,8 @@ public class IndexModel : LocalizedPageModel
             $"Molecule '{molecule.DisplayName}' {(molecule.IsActive ? "activated" : "deactivated")}");
 
         TempData["SuccessMessage"] = molecule.IsActive
-            ? string.Format(_localizer["Success_MoleculeActivated"], molecule.DisplayName)
-            : string.Format(_localizer["Success_MoleculeDeactivated"], molecule.DisplayName);
+            ? string.Format(CultureInfo.CurrentCulture, _localizer["Success_MoleculeActivated"], molecule.DisplayName)
+            : string.Format(CultureInfo.CurrentCulture, _localizer["Success_MoleculeDeactivated"], molecule.DisplayName);
 
         return RedirectToPage();
     }
@@ -269,7 +270,7 @@ public class IndexModel : LocalizedPageModel
         await _auditLogService.LogAsync("MoleculeDeleted", "Molecule", id,
             $"Deleted molecule '{molecule.DisplayName}'");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_MoleculeDeleted"], molecule.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_MoleculeDeleted"], molecule.DisplayName);
         return RedirectToPage();
     }
 

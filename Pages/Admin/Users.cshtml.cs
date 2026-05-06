@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -702,7 +703,7 @@ public class UsersModel : LocalizedPageModel
 
         if (!await _directorService.CanAssignRoleAsync(targetRole))
         {
-            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"], targetRole);
+            TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_NoPermissionAssignRole"], targetRole);
             return RedirectToPage();
         }
 
@@ -892,7 +893,7 @@ public class UsersModel : LocalizedPageModel
             newUser.Id,
             $"Created new user '{newUser.DisplayName}' ({newUser.Email}) with role {targetRole}");
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_UserCreated"], NewDisplayName, targetRole);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_UserCreated"], NewDisplayName, targetRole);
         return RedirectToPage();
     }
 
@@ -1040,7 +1041,7 @@ public class UsersModel : LocalizedPageModel
 
         if (!await _directorService.CanAssignRoleAsync(targetRole))
         {
-            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"], targetRole);
+            TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_NoPermissionAssignRole"], targetRole);
             return RedirectToPage();
         }
 
@@ -1100,7 +1101,7 @@ public class UsersModel : LocalizedPageModel
 
                 if (activeShiftsCount > 0)
                 {
-                    TempData["ErrorMessage"] = string.Format(_localizer["Error_CannotChangeToTrainee_ActiveShifts"], activeShiftsCount);
+                    TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_CannotChangeToTrainee_ActiveShifts"], activeShiftsCount);
                     return RedirectToPage();
                 }
 
@@ -1112,7 +1113,7 @@ public class UsersModel : LocalizedPageModel
 
                 if (traineeShadowingCount > 0)
                 {
-                    TempData["ErrorMessage"] = string.Format(_localizer["Error_CannotChangeToTrainee_ShadowingTrainees"], traineeShadowingCount);
+                    TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_CannotChangeToTrainee_ShadowingTrainees"], traineeShadowingCount);
                     return RedirectToPage();
                 }
             }
@@ -1228,7 +1229,7 @@ public class UsersModel : LocalizedPageModel
                 }
             }
 
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_RoleUpdated"], targetRole, u.DisplayName);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_RoleUpdated"], targetRole, u.DisplayName);
         }
         return RedirectToPage();
     }
@@ -1319,7 +1320,7 @@ public class UsersModel : LocalizedPageModel
             );
         }
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_JobTypeUpdated"], u.DisplayName, jobTypeName ?? "-");
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JobTypeUpdated"], u.DisplayName, jobTypeName ?? "-");
         return RedirectToPage();
     }
 
@@ -1498,7 +1499,7 @@ public class UsersModel : LocalizedPageModel
                 description: $"Password reset for user {u.DisplayName} ({u.Email})"
             );
 
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_PasswordUpdated"], u.DisplayName);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_PasswordUpdated"], u.DisplayName);
         }
         return RedirectToPage();
     }
@@ -1564,7 +1565,7 @@ public class UsersModel : LocalizedPageModel
         _logger.LogInformation("User {CurrentUserId} unlocked account for user {TargetUserId} ({Email})",
             currentUserId, targetUser.Id, targetUser.Email);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_AccountUnlocked"], targetUser.DisplayName);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_AccountUnlocked"], targetUser.DisplayName);
         return RedirectToPage();
     }
 
@@ -1762,7 +1763,7 @@ public class UsersModel : LocalizedPageModel
             _logger.LogInformation("Successfully deleted user {UserId} ({UserName}) and all related data", id, user.DisplayName);
 
             // Use TempData to show success message after redirect
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_UserDeleted"], user.DisplayName);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_UserDeleted"], user.DisplayName);
 
             return RedirectToPage();
         }
@@ -1845,7 +1846,7 @@ public class UsersModel : LocalizedPageModel
         // Validate permission to assign the requested role
         if (!await _directorService.CanAssignRoleAsync(joinRequest.RequestedRole))
         {
-            TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"].Value, joinRequest.RequestedRole);
+            TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_NoPermissionAssignRole"].Value, joinRequest.RequestedRole);
             return RedirectToPage();
         }
 
@@ -1949,7 +1950,7 @@ public class UsersModel : LocalizedPageModel
             _logger.LogInformation("Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) for company {CompanyId}",
                 id, currentUserId, newUser.Id, newUser.Email, joinRequest.CompanyId);
 
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_JoinRequestApproved"], joinRequest.DisplayName, joinRequest.Email, joinRequest.RequestedRole, joinRequest.Company?.Name);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JoinRequestApproved"], joinRequest.DisplayName, joinRequest.Email, joinRequest.RequestedRole, joinRequest.Company?.Name);
             return RedirectToPage();
         }
         catch (Exception ex)
@@ -2036,7 +2037,7 @@ public class UsersModel : LocalizedPageModel
             _logger.LogInformation("Join request {RequestId} rejected by {ReviewerId}. Email: {Email}, Company: {CompanyId}",
                 id, currentUserId, joinRequest.Email, joinRequest.CompanyId);
 
-            TempData["SuccessMessage"] = string.Format(_localizer["Success_JoinRequestRejected"], joinRequest.DisplayName, joinRequest.Email);
+            TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JoinRequestRejected"], joinRequest.DisplayName, joinRequest.Email);
             return RedirectToPage();
         }
         catch (Exception ex)
@@ -2151,7 +2152,7 @@ public class UsersModel : LocalizedPageModel
                 {
                     _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve join request {RequestId} for unauthorized company/jobtype {CompanyId}/{JobTypeId}",
                         currentUserId, currentUser!.Role, joinRequest.Id, joinRequest.CompanyId, joinRequest.JobTypeId);
-                    errors.Add(string.Format(_localizer["Error_NoPermissionDifferentCompany"], joinRequest.DisplayName));
+                    errors.Add(string.Format(CultureInfo.CurrentCulture, _localizer["Error_NoPermissionDifferentCompany"], joinRequest.DisplayName));
                     skippedCount++;
                     continue;
                 }
@@ -2159,7 +2160,7 @@ public class UsersModel : LocalizedPageModel
                 // Check if already reviewed
                 if (joinRequest.Status != JoinRequestStatus.Pending)
                 {
-                    errors.Add(string.Format(_localizer["Error_AlreadyReviewed"], joinRequest.DisplayName));
+                    errors.Add(string.Format(CultureInfo.CurrentCulture, _localizer["Error_AlreadyReviewed"], joinRequest.DisplayName));
                     skippedCount++;
                     continue;
                 }
@@ -2167,7 +2168,7 @@ public class UsersModel : LocalizedPageModel
                 // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier
                 if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == joinRequest.Email))
                 {
-                    errors.Add(string.Format(_localizer["Error_UserWithEmailExists"], joinRequest.Email));
+                    errors.Add(string.Format(CultureInfo.CurrentCulture, _localizer["Error_UserWithEmailExists"], joinRequest.Email));
                     skippedCount++;
                     continue;
                 }
@@ -2181,7 +2182,7 @@ public class UsersModel : LocalizedPageModel
                     batchTemplate = await _roleService.GetRoleTemplateAsync(batchTemplateId);
                     if (batchTemplate == null)
                     {
-                        errors.Add(string.Format(_localizer["Error_InvalidRole"].Value));
+                        errors.Add(string.Format(CultureInfo.CurrentCulture, _localizer["Error_InvalidRole"].Value));
                         skippedCount++;
                         continue;
                     }
@@ -2201,7 +2202,7 @@ public class UsersModel : LocalizedPageModel
                 // Validate permission to assign the role
                 if (!await _directorService.CanAssignRoleAsync(assignedRole))
                 {
-                    errors.Add(string.Format(_localizer["Error_NoPermissionAssignRoleTo"], assignedRole, joinRequest.DisplayName));
+                    errors.Add(string.Format(CultureInfo.CurrentCulture, _localizer["Error_NoPermissionAssignRoleTo"], assignedRole, joinRequest.DisplayName));
                     skippedCount++;
                     continue;
                 }
@@ -2293,10 +2294,10 @@ public class UsersModel : LocalizedPageModel
             await transaction.CommitAsync();
 
             // Build success message
-            var successMessage = string.Format(_localizer["Success_ApprovedCount"], approvedCount);
+            var successMessage = string.Format(CultureInfo.CurrentCulture, _localizer["Success_ApprovedCount"], approvedCount);
             if (skippedCount > 0)
             {
-                successMessage += " " + string.Format(_localizer["Success_SkippedCount"], skippedCount);
+                successMessage += " " + string.Format(CultureInfo.CurrentCulture, _localizer["Success_SkippedCount"], skippedCount);
             }
 
             TempData["SuccessMessage"] = successMessage;

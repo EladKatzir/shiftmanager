@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -251,7 +252,7 @@ public class IndexModel : LocalizedPageModel
         _companyCacheService.InvalidateCache(company.Id);
         _logger.LogInformation("Company '{Name}' added to molecule {MoleculeId} from hierarchy page", company.Name, ParentMoleculeId);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyCreated"].Value, company.Name);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_CompanyCreated"].Value, company.Name);
         return RedirectToPage();
     }
 
@@ -287,7 +288,7 @@ public class IndexModel : LocalizedPageModel
         _companyCacheService.InvalidateCache(EntityId);
         _logger.LogInformation("Company {CompanyId} renamed to '{Name}' from hierarchy page", EntityId, company.Name);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyRenamed"].Value, company.Name);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_CompanyRenamed"].Value, company.Name);
         return RedirectToPage();
     }
 
@@ -315,7 +316,7 @@ public class IndexModel : LocalizedPageModel
         var activeUserCount = await _db.Users.IgnoreQueryFilters().CountAsync(u => u.CompanyId == EntityId && u.IsActive);
         if (activeUserCount > 0)
         {
-            TempData["ErrorMessage"] = string.Format(_localizer["Error_CannotDeleteCompanyWithUsers"].Value, activeUserCount);
+            TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_CannotDeleteCompanyWithUsers"].Value, activeUserCount);
             return RedirectToPage();
         }
 
@@ -351,7 +352,7 @@ public class IndexModel : LocalizedPageModel
         _companyCacheService.InvalidateCache(EntityId);
         _logger.LogInformation("Company {CompanyId} '{Name}' deleted from hierarchy page", EntityId, company.Name);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_CompanyDeleted"].Value, company.Name);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_CompanyDeleted"].Value, company.Name);
         return RedirectToPage();
     }
 
@@ -401,7 +402,7 @@ public class IndexModel : LocalizedPageModel
         await _db.SaveChangesAsync();
         _logger.LogInformation("Department '{Name}' added to molecule {MoleculeId} from hierarchy page", department.Name, ParentMoleculeId);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentCreated"].Value, department.Name);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DepartmentCreated"].Value, department.Name);
         return RedirectToPage();
     }
 
@@ -434,7 +435,7 @@ public class IndexModel : LocalizedPageModel
         await _db.SaveChangesAsync();
         _logger.LogInformation("Department {DepartmentId} renamed to '{Name}' from hierarchy page", EntityId, department.Name);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentRenamed"].Value, department.Name);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DepartmentRenamed"].Value, department.Name);
         return RedirectToPage();
     }
 
@@ -470,7 +471,7 @@ public class IndexModel : LocalizedPageModel
         await _db.SaveChangesAsync();
         _logger.LogInformation("Department {DepartmentId} '{Name}' deleted from hierarchy page", EntityId, department.Name);
 
-        TempData["SuccessMessage"] = string.Format(_localizer["Success_DepartmentDeleted"].Value, department.Name);
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_DepartmentDeleted"].Value, department.Name);
         return RedirectToPage();
     }
 
