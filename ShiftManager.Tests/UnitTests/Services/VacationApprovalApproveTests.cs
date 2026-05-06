@@ -25,6 +25,7 @@ public class VacationApprovalApproveTests : IDisposable
 {
     private readonly AppDbContext _db;
     private readonly Mock<IGrantService> _grantServiceMock;
+    private readonly Mock<IHomeMaterialiserService> _materialiserMock;
     private readonly VacationApprovalService _service;
 
     private const int TestCompanyId = 1;
@@ -42,6 +43,7 @@ public class VacationApprovalApproveTests : IDisposable
         _grantServiceMock = new Mock<IGrantService>();
         var notificationServiceMock = new Mock<INotificationService>();
         var traineeServiceMock = new Mock<ITraineeService>();
+        _materialiserMock = new Mock<IHomeMaterialiserService>();
         var loggerMock = new Mock<ILogger<VacationApprovalService>>();
 
         // Default: approver has the required grant
@@ -61,12 +63,21 @@ public class VacationApprovalApproveTests : IDisposable
                 It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<int>()))
             .Returns(Task.CompletedTask);
 
+        // Default: materialiser succeeds silently
+        _materialiserMock
+            .Setup(m => m.SyncMaterialisedHomeRowsAsync(It.IsAny<int>()))
+            .Returns(Task.CompletedTask);
+        _materialiserMock
+            .Setup(m => m.RestoreRotationHomeAsync(It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
+            .Returns(Task.CompletedTask);
+
         _service = new VacationApprovalService(
             _db,
             _grantServiceMock.Object,
             loggerMock.Object,
             notificationServiceMock.Object,
-            traineeServiceMock.Object);
+            traineeServiceMock.Object,
+            _materialiserMock.Object);
     }
 
     public void Dispose()

@@ -24,6 +24,7 @@ public class VacationApprovalServiceTests : IDisposable
     private readonly Mock<IGrantService> _grantServiceMock;
     private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly Mock<ITraineeService> _traineeServiceMock;
+    private readonly Mock<IHomeMaterialiserService> _materialiserMock;
     private readonly VacationApprovalService _service;
 
     private const int TestCompanyId = 1;
@@ -38,6 +39,7 @@ public class VacationApprovalServiceTests : IDisposable
         _grantServiceMock = new Mock<IGrantService>();
         _notificationServiceMock = new Mock<INotificationService>();
         _traineeServiceMock = new Mock<ITraineeService>();
+        _materialiserMock = new Mock<IHomeMaterialiserService>();
         var loggerMock = new Mock<ILogger<VacationApprovalService>>();
 
         _service = new VacationApprovalService(
@@ -45,7 +47,8 @@ public class VacationApprovalServiceTests : IDisposable
             _grantServiceMock.Object,
             loggerMock.Object,
             _notificationServiceMock.Object,
-            _traineeServiceMock.Object);
+            _traineeServiceMock.Object,
+            _materialiserMock.Object);
     }
 
     public void Dispose()

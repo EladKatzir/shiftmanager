@@ -14,19 +14,22 @@ public class VacationApprovalService : IVacationApprovalService
     private readonly ILogger<VacationApprovalService> _logger;
     private readonly INotificationService _notificationService;
     private readonly ITraineeService _traineeService;
+    private readonly IHomeMaterialiserService _materialiser;
 
     public VacationApprovalService(
         AppDbContext context,
         IGrantService grantService,
         ILogger<VacationApprovalService> logger,
         INotificationService notificationService,
-        ITraineeService traineeService)
+        ITraineeService traineeService,
+        IHomeMaterialiserService materialiser)
     {
         _context = context;
         _grantService = grantService;
         _logger = logger;
         _notificationService = notificationService;
         _traineeService = traineeService;
+        _materialiser = materialiser;
     }
 
     /// <summary>
@@ -250,6 +253,9 @@ public class VacationApprovalService : IVacationApprovalService
             _logger.LogError(ex, "Side effects failed for approved request {RequestId}. Manual remediation may be needed.", requestId);
         }
 
+        // Sync materialised HOME rows for the approval
+        await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+
         return (true, "VacationApproval_Approved");
     }
 
@@ -311,6 +317,9 @@ public class VacationApprovalService : IVacationApprovalService
         _logger.LogInformation(
             "Request {RequestId} declined by user {DeclinerId}. Reason: {Reason}",
             requestId, declinerId, reason ?? "(none)");
+
+        // Sync materialised HOME rows for the decline (should clear any existing rows)
+        await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
 
         return (true, "VacationApproval_Declined");
     }
@@ -518,6 +527,16 @@ public class VacationApprovalService : IVacationApprovalService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Request {RequestId} canceled by user {UserId}", requestId, userId);
+
+        // Sync materialised HOME rows for the cancellation
+        await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+
+        // For vacation cancellations, restore rotation HOME shifts
+        if (request.Type == TimeOffType.Vacation)
+        {
+            await _materialiser.RestoreRotationHomeAsync(request.UserId, request.StartDate, request.EndDate);
+        }
+
         return (true, "VacationApproval_Canceled");
     }
 
