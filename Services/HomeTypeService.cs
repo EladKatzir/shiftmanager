@@ -483,25 +483,25 @@ public class HomeTypeService : IHomeTypeService
     {
         var dates = new List<DateOnly>();
         var homeDaySet = rule.HomeDays.ToHashSet();
-
-        // Find the Monday of the start week
-        var startMonday = start.AddDays(-(((int)start.DayOfWeek + 6) % 7));
+        var anchorMonday = rule.Anchor;  // pre-normalised to a Monday at save-time (DeriveRuleFromPattern)
 
         for (var date = start; date <= end; date = date.AddDays(1))
         {
-            if (!homeDaySet.Contains(date.DayOfWeek))
-                continue;
+            if (!homeDaySet.Contains(date.DayOfWeek)) continue;
 
-            // Determine which week of the cycle this is
-            var weekNum = (date.DayNumber - startMonday.DayNumber) / 7;
+            if (date < anchorMonday) continue;  // before anchor → no rotation
+
+            var weekNum = (date.DayNumber - anchorMonday.DayNumber) / 7;
             var cycleWeek = weekNum % rule.CycleWeeks;
-
             if (rule.WeekOffsets.Contains(cycleWeek))
                 dates.Add(date);
         }
 
         return dates;
     }
+
+    internal static List<DateOnly> GenerateDatesFromRulePublicForTest(DerivedRotationRule rule, DateOnly start, DateOnly end)
+        => GenerateDatesFromRule(rule, start, end);
 
     private DerivedRotationRule? DeserializeRule(string? json)
     {
