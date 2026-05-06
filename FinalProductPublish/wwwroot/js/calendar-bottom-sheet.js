@@ -442,7 +442,7 @@
                     itemType === 'user' && cellData.rowId && cellData.rowId.startsWith('shift-')) {
                 var shiftTypeId = parseInt(cellData.rowId.replace('shift-', ''), 10);
                 if (!isNaN(shiftTypeId) && shiftTypeId > 0) {
-                    populateEligibleUsersAsync(userSelect, calPageConfig.moleculeId, shiftTypeId);
+                    populateEligibleUsersAsync(userSelect, calPageConfig.moleculeId, shiftTypeId, cellData.date);
                 } else {
                     // Malformed rowId — fall back to full molecule user list
                     var fallbackUsers = getAvailableUsers(cellData);
@@ -450,8 +450,13 @@
                         var opt = document.createElement('option');
                         opt.value = user.id;
                         opt.textContent = user.name;
+                        opt.dataset.userName = user.name;
                         userSelect.appendChild(opt);
                     });
+                    if (cellData.date && calPageConfig && calPageConfig.moleculeId > 0) {
+                        decorateOptionsWithBusyAsync(userSelect, fallbackUsers.map(function (u) { return u.id; }), cellData.date, calPageConfig.moleculeId, null)
+                            .catch(function (err) { console.warn('Busy decoration failed:', err); });
+                    }
                 }
             } else {
                 // Populate from available users (read from page data or cell context)
@@ -460,8 +465,20 @@
                     var opt = document.createElement('option');
                     opt.value = user.id;
                     opt.textContent = user.name;
+                    opt.dataset.userName = user.name;
                     userSelect.appendChild(opt);
                 });
+
+                // Busy decoration for chore/onduty modes (where rowId is user-N or dutytype-N)
+                if (cellData.date && calPageConfig && calPageConfig.moleculeId > 0 && availableUsers.length > 0) {
+                    var userIdList = availableUsers
+                        .map(function (u) { return parseInt(u.id, 10); })
+                        .filter(function (n) { return !isNaN(n) && n > 0; });
+                    if (userIdList.length > 0) {
+                        decorateOptionsWithBusyAsync(userSelect, userIdList, cellData.date, calPageConfig.moleculeId, null)
+                            .catch(function (err) { console.warn('Busy decoration failed:', err); });
+                    }
+                }
             }
 
             fieldGroup.appendChild(userSelect);
@@ -620,10 +637,16 @@
                 close();
                 if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
             } else if (result.requiresOverride) {
-                // Show warnings and ask to confirm
-                var msgs = (result.warnings || []).map(function (w) { return w.message; }).join('\n');
-                var confirmLabel = (window.AppLocalizer?.BottomSheet_Warnings || 'Warnings:') + '\n';
-                if (confirm(confirmLabel + msgs)) {
+                // Show warnings via FeedbackModal.confirm (replaces native confirm())
+                var confirmFn = (window.FeedbackModal && typeof window.FeedbackModal.confirm === 'function')
+                    ? function () { return window.FeedbackModal.confirm('warning', { warnings: result.warnings || [] }); }
+                    : function () {
+                        var msgs = (result.warnings || []).map(function (w) { return w.message; }).join('\n');
+                        var label = (window.AppLocalizer?.BottomSheet_Warnings || 'Warnings:') + '\n';
+                        return Promise.resolve(confirm(label + msgs));
+                    };
+                confirmFn().then(function (proceed) {
+                    if (!proceed) return;
                     // Retry with override
                     fetch('/Calendar/Table?handler=AddTrainee', {
                         method: 'POST',
@@ -641,7 +664,7 @@
                             showErrorMsg(r2.error || 'Error');
                         }
                     });
-                }
+                });
             } else {
                 showErrorMsg(result.error || 'Error');
             }
@@ -701,12 +724,12 @@
         if (typeof window.quickAddChore === 'function') {
             // Close after initiating — quickAddChore handles its own toasts/confirms
             close();
-            window.quickAddChore(cellData.date, userId, title, false, choreTypeId);
+            window.quickAddChore(cellData.date, userId, title, choreTypeId);
         }
     }
 
     // --- Fetch eligible users for a Tech molecule shift type and populate a <select> ---
-    async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId) {
+    async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId, date, instanceIdHint) {
         var loadingOpt = document.createElement('option');
         loadingOpt.value = '';
         loadingOpt.disabled = true;
@@ -725,8 +748,15 @@
                     var opt = document.createElement('option');
                     opt.value = user.id;
                     opt.textContent = user.name;
+                    opt.dataset.userName = user.name;
                     selectEl.appendChild(opt);
                 });
+
+                if (date && moleculeId) {
+                    // Decorate with busy badges (best-effort — failure is non-fatal)
+                    decorateOptionsWithBusyAsync(selectEl, data.users.map(function (u) { return u.id; }), date, moleculeId, null)
+                        .catch(function (err) { console.warn('Busy decoration failed:', err); });
+                }
             }
         } catch (e) {
             if (loadingOpt.parentNode === selectEl) selectEl.removeChild(loadingOpt);
@@ -737,6 +767,68 @@
             errOpt.textContent = (window.AppLocalizer?.BottomSheet_LoadError || 'Failed to load users');
             selectEl.appendChild(errOpt);
         }
+    }
+
+    // --- Decorate <option> labels with busy badges (text prefixes) and disable hard conflicts ---
+    // Native <option> can't render rich HTML cross-browser, so we prefix the text with
+    // single-character glyphs and append a parenthetical hint. data-busy-* attributes
+    // are added so future enhancements (custom listbox) can pick up the same data.
+    async function decorateOptionsWithBusyAsync(selectEl, userIds, date, moleculeId, target) {
+        if (!userIds || userIds.length === 0) return;
+        var resp = await fetch('/Api/Calendar/GetBusyStates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ userIds: userIds, date: date, moleculeId: moleculeId, target: target })
+        });
+        if (!resp.ok) return;
+        var json = await resp.json();
+        if (!json.success || !json.busy) return;
+
+        Array.prototype.forEach.call(selectEl.options, function (opt) {
+            if (!opt.value) return;
+            var state = json.busy[opt.value];
+            if (!state) return;
+
+            var name = opt.dataset.userName || opt.textContent;
+            var badges = [];
+            if (state.hasShift) {
+                if (state.shift && state.shift.isHome) badges.push('\u{1F3E0}'); // 🏠
+                else if (state.shift && state.shift.isOffline) badges.push('\u{1F4F4}'); // 📴
+                else badges.push('⏱'); // ⏱
+            }
+            if (state.hasChore) badges.push('\u{1F9F9}'); // 🧹
+            if (state.hasOnDuty) badges.push('\u{1F6E1}'); // 🛡
+            if (state.hasVacation) badges.push('\u{1F334}'); // 🌴
+
+            opt.dataset.busyHasShift = state.hasShift ? 'true' : 'false';
+            opt.dataset.busyHasChore = state.hasChore ? 'true' : 'false';
+            opt.dataset.busyHasOnDuty = state.hasOnDuty ? 'true' : 'false';
+            opt.dataset.busyHasVacation = state.hasVacation ? 'true' : 'false';
+            opt.dataset.busyHighest = state.highest;
+
+            if (state.hasHardError) {
+                opt.disabled = true;
+                opt.dataset.busyHardError = state.hardErrorKey || 'true';
+            }
+
+            var prefix = badges.length > 0 ? badges.join('') + '  ' : '';
+            var suffix = '';
+            if (state.shift && state.shift.name) {
+                suffix = '  • ' + state.shift.name;
+                if (state.shift.start && state.shift.end && !state.shift.isHome && !state.shift.isOffline) {
+                    suffix += ' ' + state.shift.start + '–' + state.shift.end;
+                }
+            } else if (state.hasChore && state.choreTitle) {
+                suffix = '  • ' + state.choreTitle;
+            } else if (state.hasOnDuty) {
+                suffix = '  • ' + (state.onDutyType || 'on-duty');
+            } else if (state.hasVacation) {
+                suffix = '  • \u{1F334}';
+            }
+
+            opt.textContent = prefix + name + suffix;
+        });
     }
 
     // --- Get available users for assignment ---
@@ -796,7 +888,7 @@
                 var choreTypeSelect = document.getElementById('choreTypeSelect');
                 var choreTypeId = choreTypeSelect ? (choreTypeSelect.value || null) : null;
                 var fallbackTitle = (window.AppLocalizer?.BottomSheet_Chore || 'Chore');
-                window.quickAddChore(cellData.date, userId, fallbackTitle, false, choreTypeId);
+                window.quickAddChore(cellData.date, userId, fallbackTitle, choreTypeId);
                 close();
             }
         } else if (calendarType === 'oncall' && typeof window.quickAddOnDuty === 'function') {

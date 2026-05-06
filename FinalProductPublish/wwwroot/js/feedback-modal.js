@@ -275,5 +275,229 @@
     if (detailsEl) detailsEl.addEventListener('toggle', handleDetailsToggle);
   }
 
-  window.FeedbackModal = { show: show };
+  // ----------------------------------------------------------------------
+  // Confirm modal — Promise<boolean> for busy/conflict warnings.
+  // Replaces native window.confirm() in shift/chore/on-duty assignment flows.
+  // ----------------------------------------------------------------------
+
+  var CONFIRM_MODAL_ID = 'js-feedback-confirm';
+
+  function loc(key, fallback) {
+    var v = window.AppLocalizer && window.AppLocalizer[key];
+    return (typeof v === 'string' && v.length > 0) ? v : (fallback || key);
+  }
+
+  // Map a warning key to its resource type, used as a fallback when the server
+  // payload doesn't include a structured Detail block.
+  function keyToResourceType(key) {
+    switch (key) {
+      case 'OVERLAP':
+      case 'SHIFT_EXISTS_CONFLICT':
+        return 'shift';
+      case 'CHORE_CONFLICT':
+        return 'chore';
+      case 'ONDUTY_CONFLICT':
+        return 'onduty';
+      case 'HOME_CONFLICT':
+        return 'home';
+      case 'VACATION_CONFLICT':
+        return 'vacation';
+      default:
+        return null;
+    }
+  }
+
+  function formatBusyRow(detail) {
+    // detail = BusyConflictDetail {
+    //   key, category, resourceType, resourceName, date, startTime, endTime
+    // }
+    if (!detail) return '';
+
+    // Resolve the resource label (e.g., "the chore "paint wall"", "Hakam on-duty")
+    var resourceLabel = detail.resourceName || '';
+    var rt = (detail.resourceType || '').toLowerCase();
+    if (rt === 'shift' && detail.resourceName) {
+      resourceLabel = loc('Conflict_Resource_Shift', 'the shift {0}').replace('{0}', detail.resourceName);
+    } else if (rt === 'chore' && detail.resourceName) {
+      resourceLabel = loc('Conflict_Resource_Chore', 'the chore "{0}"').replace('{0}', detail.resourceName);
+    } else if (rt === 'onduty') {
+      resourceLabel = loc('Conflict_Resource_OnDuty', '{0} on-duty').replace('{0}', detail.resourceName || '');
+    } else if (rt === 'home') {
+      resourceLabel = loc('Conflict_Resource_Home', 'home day');
+    } else if (rt === 'vacation') {
+      resourceLabel = loc('Conflict_Resource_Vacation', 'approved vacation');
+    }
+
+    var dateStr = detail.date || '';
+    var timeWindow = (detail.startTime && detail.endTime)
+      ? (detail.startTime + '–' + detail.endTime)
+      : '';
+
+    var template = timeWindow
+      ? loc('Conflict_BusyAtAssignment_WithTime', 'User is busy at {0} on {1}, {2}')
+      : loc('Conflict_BusyAtAssignment_AllDay', 'User is busy at {0} on {1}');
+
+    return template
+      .replace('{0}', resourceLabel)
+      .replace('{1}', dateStr)
+      .replace('{2}', timeWindow);
+  }
+
+  function getOrCreateConfirmModal() {
+    var modal = document.getElementById(CONFIRM_MODAL_ID);
+    if (modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = CONFIRM_MODAL_ID;
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', CONFIRM_MODAL_ID + '-title');
+    modal.setAttribute('aria-describedby', CONFIRM_MODAL_ID + '-body');
+    modal.className = 'modal modal--sm modal--feedback modal--feedback-warning';
+    modal.setAttribute('tabindex', '-1');
+
+    modal.innerHTML =
+      '<div class="modal__header">' +
+        '<h2 class="modal__title" id="' + CONFIRM_MODAL_ID + '-title"></h2>' +
+      '</div>' +
+      '<div class="modal__body" id="' + CONFIRM_MODAL_ID + '-body"></div>' +
+      '<div class="modal__footer"></div>';
+
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.id = CONFIRM_MODAL_ID + '-backdrop';
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  /**
+   * Show a confirm dialog scoped to busy/conflict warnings.
+   * Returns Promise<boolean> — true=proceed, false=cancel.
+   *
+   * @param {'warning'|'info'} severity
+   * @param {{
+   *   title?: string,
+   *   warnings?: Array<{key, category, resourceType, resourceName, date, startTime, endTime}>,
+   *   message?: string,            // fallback when warnings is absent (legacy plain-string callers)
+   *   okLabel?: string,
+   *   cancelLabel?: string,
+   *   destructiveOk?: boolean
+   * }} options
+   * @returns {Promise<boolean>}
+   */
+  function confirm(severity, options) {
+    options = options || {};
+    if (severity !== 'warning' && severity !== 'info') severity = 'warning';
+
+    return new Promise(function (resolve) {
+      var modal = getOrCreateConfirmModal();
+      var backdrop = document.getElementById(CONFIRM_MODAL_ID + '-backdrop');
+
+      modal.className = 'modal modal--sm modal--feedback modal--feedback-' + severity;
+
+      var title = options.title || loc('Conflict_Title_Warnings', 'Assignment has warnings');
+      modal.querySelector('#' + CONFIRM_MODAL_ID + '-title').textContent = title;
+
+      var bodyEl = modal.querySelector('#' + CONFIRM_MODAL_ID + '-body');
+      var icon = ICONS[severity] || ICONS.warning;
+      var bodyHtml = '<div class="feedback-icon">' + icon + '</div>';
+
+      var warnings = Array.isArray(options.warnings) ? options.warnings : [];
+
+      if (warnings.length > 0) {
+        bodyHtml += '<ul class="feedback-conflict-list">';
+        warnings.forEach(function (w) {
+          var detail = w.detail || null;
+          // Map either the detail.resourceType, or fall back to inferring from key
+          var rt = (detail && detail.resourceType)
+            || keyToResourceType(w.key)
+            || 'shift';
+          var cls = 'busy-badge--' + escapeHtml(String(rt).toLowerCase());
+          var sentence = detail
+            ? formatBusyRow(detail)
+            : (w.message || w.Message || '');
+          bodyHtml += '<li class="feedback-conflict-row">' +
+            '<span class="busy-badge ' + cls + '" aria-hidden="true"></span>' +
+            '<span class="feedback-conflict-row__text">' + escapeHtml(sentence) + '</span>' +
+          '</li>';
+        });
+        bodyHtml += '</ul>';
+      } else if (options.message) {
+        // Legacy plain-string code path — preserved during migration.
+        bodyHtml += '<div class="feedback-message">' + escapeHtml(options.message) + '</div>';
+      }
+
+      bodyEl.innerHTML = bodyHtml;
+
+      var footerEl = modal.querySelector('.modal__footer');
+      var okClass = options.destructiveOk ? 'btn btn-danger' : 'btn btn-primary';
+      footerEl.innerHTML =
+        '<button type="button" class="btn btn-secondary" data-action="cancel">' +
+          escapeHtml(options.cancelLabel || loc('Conflict_Cancel', 'Cancel')) +
+        '</button>' +
+        '<button type="button" class="' + okClass + '" data-action="ok">' +
+          escapeHtml(options.okLabel || loc('Conflict_ProceedButton', 'Proceed anyway')) +
+        '</button>';
+
+      var okBtn = footerEl.querySelector('[data-action="ok"]');
+      var cancelBtn = footerEl.querySelector('[data-action="cancel"]');
+
+      modal.classList.add('is-open');
+      backdrop.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+
+      // Focus Cancel by default — safer than auto-focusing Proceed.
+      cancelBtn.focus();
+
+      function close(result) {
+        modal.classList.remove('is-open');
+        backdrop.classList.remove('is-open');
+        document.body.style.overflow = '';
+        cleanup();
+        resolve(result);
+      }
+
+      function getFocusables() {
+        return modal.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])');
+      }
+
+      function handleKey(e) {
+        if (e.key === 'Escape') { close(false); return; }
+        if (e.key === 'Enter' && document.activeElement === okBtn) { close(true); return; }
+        if (e.key === 'Tab') {
+          var focusables = getFocusables();
+          if (focusables.length === 0) return;
+          e.preventDefault();
+          var idx = Array.prototype.indexOf.call(focusables, document.activeElement);
+          var nextIdx = e.shiftKey
+            ? (idx <= 0 ? focusables.length - 1 : idx - 1)
+            : ((idx + 1) % focusables.length);
+          focusables[nextIdx].focus();
+        }
+      }
+
+      function handleBackdrop(e) {
+        if (e.target === backdrop) { close(false); }
+      }
+
+      function handleOk() { close(true); }
+      function handleCancel() { close(false); }
+
+      function cleanup() {
+        okBtn.removeEventListener('click', handleOk);
+        cancelBtn.removeEventListener('click', handleCancel);
+        modal.removeEventListener('keydown', handleKey);
+        backdrop.removeEventListener('click', handleBackdrop);
+      }
+
+      okBtn.addEventListener('click', handleOk);
+      cancelBtn.addEventListener('click', handleCancel);
+      modal.addEventListener('keydown', handleKey);
+      backdrop.addEventListener('click', handleBackdrop);
+    });
+  }
+
+  window.FeedbackModal = { show: show, confirm: confirm };
 })();

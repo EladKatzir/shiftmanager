@@ -208,6 +208,14 @@
             API controller for audit log access.
             All endpoints require API key authentication via X-API-Key header.
             </summary>
+            <remarks>
+            Batch H (2026-05-06): migrated from ApiProblemDetails to ApiErrorResponse.
+            Template controller for the rest of the V1 migration. Notable shape changes:
+              * NotFound  : (detail, instance) → (resource, id)  — code is "{RESOURCE}_NOT_FOUND"
+              * Unauthorized: (detail, instance) → (message)      — code is "UNAUTHORIZED"
+              * ServerError : (detail, instance) → (message)      — code is "SERVER_ERROR"
+            The "instance" path is dropped — ApiErrorResponse surfaces CorrelationId instead.
+            </remarks>
         </member>
         <member name="M:ShiftManager.Controllers.Api.V1.AuditLogsController.ListAuditLogs(System.Int32,System.Int32,System.Nullable{System.Int32},System.String,System.String,System.String)">
             <summary>
@@ -2654,6 +2662,114 @@
         <member name="M:ShiftManager.Migrations.AddAreaCalendarPalettes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddJusticeTarget">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddJusticeTarget.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddJusticeTarget.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddJusticeTarget.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddSwapRequestWarningsAtCreation">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddSwapRequestWarningsAtCreation.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddSwapRequestWarningsAtCreation.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddSwapRequestWarningsAtCreation.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddSourceTimeOffRequestIdToShiftAssignments">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddSourceTimeOffRequestIdToShiftAssignments.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddSourceTimeOffRequestIdToShiftAssignments.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddSourceTimeOffRequestIdToShiftAssignments.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddPrivateToTimeOffRequests">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddPrivateToTimeOffRequests.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddPrivateToTimeOffRequests.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddPrivateToTimeOffRequests.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddDualApprovalTrackingToTimeOffRequests">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDualApprovalTrackingToTimeOffRequests.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDualApprovalTrackingToTimeOffRequests.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDualApprovalTrackingToTimeOffRequests.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.RemoveHomeTypeDefaultTimes">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.RemoveHomeTypeDefaultTimes.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.RemoveHomeTypeDefaultTimes.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.RemoveHomeTypeDefaultTimes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddLastGeneratedAtToHomeTypes">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddLastGeneratedAtToHomeTypes.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddLastGeneratedAtToHomeTypes.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddLastGeneratedAtToHomeTypes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddMoleculeApprovalSettings">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMoleculeApprovalSettings.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMoleculeApprovalSettings.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddMoleculeApprovalSettings.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddUpdatedAtToHomeTypes">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUpdatedAtToHomeTypes.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUpdatedAtToHomeTypes.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUpdatedAtToHomeTypes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -3324,89 +3440,6 @@
         <member name="T:ShiftManager.Models.Api.Dto.PaginatedResponse`1">
             <summary>
             Paginated response wrapper
-            </summary>
-        </member>
-        <member name="T:ShiftManager.Models.Api.ApiProblemDetails">
-            <summary>
-            RFC-7807 Problem Details for HTTP APIs
-            https://datatracker.ietf.org/doc/html/rfc7807
-            </summary>
-            <remarks>
-            <para>
-            <b>Deprecated</b> as part of the project-wide error-handling overhaul.
-            New code should use <see cref="T:ShiftManager.Models.ApiErrorResponse"/>, which is the
-            canonical project-native API error envelope (used by ApiExceptionMiddleware and
-            supports correlation IDs out of the box).
-            </para>
-            <para>
-            This class is kept as a backward-compatibility shim for one release so existing
-            V1 controllers can migrate incrementally. Scheduled for removal in the next release.
-            </para>
-            </remarks>
-        </member>
-        <member name="P:ShiftManager.Models.Api.ApiProblemDetails.Type">
-            <summary>
-            A URI reference that identifies the problem type
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.Api.ApiProblemDetails.Title">
-            <summary>
-            A short, human-readable summary of the problem type
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.Api.ApiProblemDetails.Status">
-            <summary>
-            The HTTP status code
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.Api.ApiProblemDetails.Detail">
-            <summary>
-            A human-readable explanation specific to this occurrence of the problem
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.Api.ApiProblemDetails.Instance">
-            <summary>
-            A URI reference that identifies the specific occurrence of the problem
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.Api.ApiProblemDetails.Extensions">
-            <summary>
-            Additional extension members (for validation errors, etc.)
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Models.Api.ApiProblemDetails.ValidationError(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.String[]})">
-            <summary>
-            Helper method to create a validation error problem
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Models.Api.ApiProblemDetails.NotFound(System.String,System.String)">
-            <summary>
-            Helper method to create a not found problem
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Models.Api.ApiProblemDetails.Unauthorized(System.String,System.String)">
-            <summary>
-            Helper method to create an unauthorized problem
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Models.Api.ApiProblemDetails.Forbidden(System.String,System.String)">
-            <summary>
-            Helper method to create a forbidden problem
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Models.Api.ApiProblemDetails.Conflict(System.String,System.String)">
-            <summary>
-            Helper method to create a conflict problem
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Models.Api.ApiProblemDetails.RateLimitExceeded(System.Int32,System.String)">
-            <summary>
-            Helper method to create a rate limit problem
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Models.Api.ApiProblemDetails.InternalError(System.String,System.String)">
-            <summary>
-            Helper method to create an internal server error problem
             </summary>
         </member>
         <member name="P:ShiftManager.Models.AppUser.Rank">
@@ -4213,14 +4246,21 @@
             null = custom (non-repeating) pattern.
             </summary>
         </member>
-        <member name="P:ShiftManager.Models.HomeType.DefaultStartTime">
-            <summary>Default home block start time (e.g., Thursday 06:00).</summary>
-        </member>
-        <member name="P:ShiftManager.Models.HomeType.DefaultEndTime">
-            <summary>Default home block end time (e.g., Sunday 13:00).</summary>
-        </member>
         <member name="P:ShiftManager.Models.HomeType.IsActive">
             <summary>Whether this home type is active and available for assignment.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.LastGeneratedAt">
+            <summary>
+            Set by the materialiser on every successful Generate. Compared to UpdatedAt to drive
+            the "needs regenerate" admin banner: when UpdatedAt > LastGeneratedAt (or this is null),
+            the pattern was edited but not yet propagated to ShiftAssignment rows.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.HomeType.UpdatedAt">
+            <summary>
+            Bumped whenever the rule, pattern, or per-user override changes. Compared to LastGeneratedAt
+            to surface the "needs regenerate" admin banner.
+            </summary>
         </member>
         <member name="T:ShiftManager.Models.HomeTypeOverride">
             <summary>
@@ -4263,6 +4303,99 @@
             Tech and System molecules will not see it in dropdowns or assignments.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.JusticeScope">
+            <summary>
+            Hierarchy level a Justice query is scoped to.
+            Mirrors the org hierarchy: Project > Area > Molecule > Company.
+            Global = no scope filter (used for default per-user targets).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.JusticeLevel">
+            <summary>
+            Which row dimension the Justice Table is grouping by.
+            Different from JusticeScope — Scope is the filter, Level is the row aggregation.
+            E.g., Scope=Molecule + Level=CompaniesInMolecule means "filter to one molecule,
+            show one row per company inside it".
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.JusticeWorkType">
+            <summary>
+            Work item category being measured.
+            Shifts are capacity-driven (expected = sum of StaffingRequired).
+            Chore + OnDuty are target-driven (expected = per-user target * headcount, with optional override).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.PeriodKind">
+            <summary>
+            Period bucket for per-user expected counts.
+            E.g., "3 chores per month per user" -> PeriodKind=PerMonth, ExpectedCount=3.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.JusticeTarget">
+             <summary>
+             Configurable expected workload per (work-type, scope) combination, used by the Justice Analytics page.
+            
+             Resolution algorithm (executed at query time, never stored):
+               1. WorkType=Shift  -> ignore this table; expected = sum(ShiftInstance.StaffingRequired) over scope+period.
+               2. Else: look for an explicit row matching (WorkType, ScopeKind, ScopeId).
+               3. If found, expected = ExpectedCount * period-duration-in-PeriodKind-units.
+               4. Otherwise fall through to the Global row (ScopeKind=Global, ScopeId=null) and multiply by
+                  the active-user headcount in the requested scope.
+            
+             Tenant isolation: deliberately NOT IBelongsToCompany.
+               - Global / Area / Molecule rows are conceptually tenant-agnostic (CompanyId = null).
+               - Company-scoped overrides carry CompanyId so the tenant filter in AppDbContext
+                 (e.CompanyId == null || e.CompanyId == tenantId) still allows them through correctly.
+               - Same pattern as <see cref="T:ShiftManager.Models.EmailConfig"/>.
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.JusticeTarget.CompanyId">
+            <summary>
+            Null for Global / Area / Molecule rows.
+            Set explicitly by the upsert handler when ScopeKind == Company.
+            CompanyIdInterceptor does NOT touch this entity (no IBelongsToCompany).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.JusticeTarget.WorkType">
+            <summary>
+            Which work-type the target applies to. Shift rows are accepted but ignored at query time
+            (capacity-driven). Stored only so the settings UI can show "AUTO from calendar capacity"
+            for the Shift row consistently.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.JusticeTarget.ScopeKind">
+            <summary>
+            Hierarchy level this row applies to. Combined with ScopeId to identify the exact scope.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.JusticeTarget.ScopeId">
+            <summary>
+            Null only when ScopeKind == Global. Otherwise references the Project/Area/Molecule/Company id.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.JusticeTarget.ExpectedCount">
+            <summary>
+            Expected count per PeriodKind unit.
+            For Global rows this is per-user (e.g., 3 chores per user per month).
+            For Company / Molecule / Area rows this is the absolute expected total at that scope per period.
+            decimal(7,2) to allow fractional targets like "2.5 on-duties / month".
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.JusticeTarget.PeriodKind">
+            <summary>
+            Bucket the ExpectedCount is denominated in.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.JusticeTarget.Note">
+            <summary>
+            Optional admin note explaining the override (e.g., "specialty unit, fewer chores").
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.JusticeTarget.CreatedByUserId">
+            <summary>
+            Null for system-seeded global defaults. Set to AppUser.Id when an admin saves an override.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.MasterProgram">
             <summary>
             Represents a collection of Programs that form a complete weekly schedule.
@@ -4278,6 +4411,20 @@
         <member name="P:ShiftManager.Models.MasterProgramItem.SortOrder">
             <summary>
             Display order for UI. Lower numbers appear first.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.MoleculeApprovalSettings">
+            <summary>
+            Per-molecule approval configuration. Currently holds the threshold (in days) above which
+            a vacation requires dual approval. Editable only by users with MoleculeAdmin or Director
+            role-template scoped to that molecule.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.MoleculeApprovalSettings.DualApprovalDayThreshold">
+            <summary>
+            Vacations strictly longer than this number of days require approval from both tiers
+            (Lead+Director for Alhut/Text; BRDirector+MoleculeAdmin otherwise). Default 7.
+            After requests are always single-approval regardless of this value.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.OnDuty">
@@ -4597,6 +4744,13 @@
             Cell-level annotation for display in calendar (e.g., "עולה ב13", "רחב").
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.ShiftAssignment.SourceTimeOffRequestId">
+            <summary>
+            Links this shift assignment to its source TimeOffRequest (vacation/after).
+            Set when materializing vacation or after shifts from approved requests.
+            Used for diff-and-sync when the request is canceled or dates change.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.ShiftAssignment.RowVersion">
             <summary>
             Row version for optimistic concurrency control.
@@ -4737,6 +4891,71 @@
         <member name="T:ShiftManager.Models.StoreHoursEntry">
             <summary>
             Store opening hours entry — one per day-of-week per store.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.BusyLevel">
+            <summary>
+            Severity of the highest busy condition for a user on a given date.
+            None = not busy. Soft = warnings present (overrideable). Hard = blocking issues.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.BusyConflictDetail">
+            <summary>
+            One conflicting resource with enough context for the UI to render the
+            "User is busy at [resource] on [date] [time]. Proceed anyway?" sentence
+            without server-side string formatting.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Support.BusyConflictDetail.#ctor(System.String,System.String,System.String,System.String,System.DateOnly,System.String,System.String)">
+            <summary>
+            One conflicting resource with enough context for the UI to render the
+            "User is busy at [resource] on [date] [time]. Proceed anyway?" sentence
+            without server-side string formatting.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.BusySummary">
+            <summary>
+            Summary of a user's resource bookings on a single date — used to decorate
+            assignee-picker options with badges. Target-agnostic: a user with a shift
+            on the date carries HasShift=true regardless of what we are about to assign.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Support.BusySummary.#ctor(System.Int32,System.Boolean,ShiftManager.Models.Support.BusyShiftHit,System.Boolean,System.String,System.Boolean,System.Nullable{ShiftManager.Models.Support.OnDutyType},System.Boolean,System.Nullable{System.DateOnly},ShiftManager.Models.Support.BusyLevel)">
+            <summary>
+            Summary of a user's resource bookings on a single date — used to decorate
+            assignee-picker options with badges. Target-agnostic: a user with a shift
+            on the date carries HasShift=true regardless of what we are about to assign.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.BusyShiftHit">
+            <summary>
+            Subset of a user's existing shift assignment relevant to busy detection.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Support.BusyShiftHit.#ctor(System.String,System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Subset of a user's existing shift assignment relevant to busy detection.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.BusyTarget">
+            <summary>
+            Discriminated target of an assignment validation — Shift, Chore, or OnDuty.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.BusyValidation">
+            <summary>
+            Validation result with errors (hard blocks) and warnings (overrideable).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Support.BusyValidation.#ctor(System.Boolean,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue},System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue})">
+            <summary>
+            Validation result with errors (hard blocks) and warnings (overrideable).
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Models.Support.RequestStatus.PendingSecondApproval">
+            <summary>
+            Dual-approval intermediate state: one tier (Lead or Director) has approved
+            but the complementary tier is still pending. Materialiser does NOT fire on this state.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.Support.OnDutyType">
@@ -4954,6 +5173,15 @@
         <member name="P:ShiftManager.Models.SwapRequest.ReviewedBy">
             <summary>
             Who reviewed the swap request
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.SwapRequest.WarningsAtCreation">
+            <summary>
+            JSON-serialized list of <see cref="T:ShiftManager.Models.Validation.ValidationIssue"/> warnings
+            that fired against the swap target when the request was created. Lets the approving
+            manager see the same conflicts the requester saw — so a chore-on-day warning that existed
+            at creation isn't lost between request submission and approval.
+            Null = no warnings (clean request). Empty array string = serialization of empty list.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.TeamCalendar">
@@ -5194,6 +5422,26 @@
             If null, any manager can approve.
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.TimeOffRequest.Private">
+            <summary>
+            When true, this time-off request is visible only to the chosen approver (ApproverId).
+            When false (default), it follows standard primary+fallback approver routing.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.TimeOffRequest.FirstApprovalActorId">
+            <summary>
+            User who acted as the first-tier approver (Lead, or BRDirector for non-Alhut/Text requesters).
+            Set the moment the first tier approves. Null until then.
+            In single-approval flow this is the only approver recorded.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.TimeOffRequest.SecondApprovalActorId">
+            <summary>
+            User who acted as the second-tier approver (Director for Alhut/Text, MoleculeAdmin otherwise).
+            Only set when dual approval is required (vacation length > MoleculeApprovalSettings.DualApprovalDayThreshold).
+            Null in single-approval cases.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Models.TimeOffRequest.GetActualStartDateTime">
             <summary>
             Get the actual start date and time when the time-off begins.
@@ -5297,6 +5545,42 @@
             Null for requests created before this field was added.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.Validation.ChoreAssignmentValidation">
+             <summary>
+             Result of <see cref="M:ShiftManager.Services.IChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)"/> — mirrors the
+             shift-assignment validation shape so callers (notably JusticeService eligibility ranking)
+             can render warnings/errors uniformly across all three work-type calendars.
+            
+             The actual checks live in <see cref="T:ShiftManager.Services.IBusyService"/>; this record is just the
+             outward-facing DTO that the chore service exposes.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Validation.ChoreAssignmentValidation.#ctor(System.Boolean,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue},System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue})">
+             <summary>
+             Result of <see cref="M:ShiftManager.Services.IChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)"/> — mirrors the
+             shift-assignment validation shape so callers (notably JusticeService eligibility ranking)
+             can render warnings/errors uniformly across all three work-type calendars.
+            
+             The actual checks live in <see cref="T:ShiftManager.Services.IBusyService"/>; this record is just the
+             outward-facing DTO that the chore service exposes.
+             </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Validation.OnDutyAssignmentValidation">
+            <summary>
+            Result of <see cref="M:ShiftManager.Services.IOnDutyService.ValidateOnDutyAssignmentAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.Int32,System.String,System.Threading.CancellationToken)"/> — same shape
+            as <see cref="T:ShiftManager.Models.Validation.ChoreAssignmentValidation"/> for symmetry. OnDuty has no MoleculeId column on
+            the entity itself; the moleculeId parameter on the service method is used purely for
+            HMAC override-token scoping (see BusyService.TargetCanonical).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Validation.OnDutyAssignmentValidation.#ctor(System.Boolean,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue},System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Validation.ValidationIssue})">
+            <summary>
+            Result of <see cref="M:ShiftManager.Services.IOnDutyService.ValidateOnDutyAssignmentAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.Int32,System.String,System.Threading.CancellationToken)"/> — same shape
+            as <see cref="T:ShiftManager.Models.Validation.ChoreAssignmentValidation"/> for symmetry. OnDuty has no MoleculeId column on
+            the entity itself; the moleculeId parameter on the service method is used purely for
+            HMAC override-token scoping (see BusyService.TargetCanonical).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.Validation.ValidationCategory">
              <summary>
              Category of validation check for UI grouping, override scoping, and cross-service classification.
@@ -5321,9 +5605,14 @@
              <b>Message</b> is a fully-localized, user-facing string. Producers MUST resolve this
              via <c>IStringLocalizer&lt;SharedResource&gt;</c> before constructing the issue.
              </para>
+             <para>
+             <b>Detail</b> is an optional structured payload used by busy/conflict warnings to
+             let the client render the localized "User is busy at X on Y" sentence without
+             server-side string formatting. Null when not applicable.
+             </para>
              </summary>
         </member>
-        <member name="M:ShiftManager.Models.Validation.ValidationIssue.#ctor(System.String,System.String,ShiftManager.Models.Validation.ValidationSeverity,ShiftManager.Models.Validation.ValidationCategory)">
+        <member name="M:ShiftManager.Models.Validation.ValidationIssue.#ctor(System.String,System.String,ShiftManager.Models.Validation.ValidationSeverity,ShiftManager.Models.Validation.ValidationCategory,ShiftManager.Models.Support.BusyConflictDetail)">
              <summary>
              A single validation issue produced by a service operation.
             
@@ -5335,6 +5624,11 @@
              <para>
              <b>Message</b> is a fully-localized, user-facing string. Producers MUST resolve this
              via <c>IStringLocalizer&lt;SharedResource&gt;</c> before constructing the issue.
+             </para>
+             <para>
+             <b>Detail</b> is an optional structured payload used by busy/conflict warnings to
+             let the client render the localized "User is busy at X on Y" sentence without
+             server-side string formatting. Null when not applicable.
              </para>
              </summary>
         </member>
@@ -5458,6 +5752,34 @@
             Phase 8.5: Expanded list of protected paths that should not be used as return URLs
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Admin.AnalyticsModel">
+             <summary>
+             Justice — workload distribution analytics page (rewritten 2026-05-03).
+            
+             Replaces the legacy retrospective dashboard that mixed HR process metrics with assignment
+             decision support. Now focused exclusively on the latter: who is over/under-loaded across
+             users, companies, and molecules; and what targets we expect each scope to deliver.
+            
+             Phase 1 ships read-only views (Justice Table + verdict strip + equity ribbon + CSV export).
+             Phase 2 adds the What-If simulator, settings modal, and decision-support widgets.
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.CompanyOptions">
+            <summary>
+            Companies the current user can pick as the scope target. Populated for all levels but
+            only meaningful for UsersInCompany.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.MoleculeOptions">
+            <summary>
+            Molecules the current user can pick. Filled for Molecule and Area levels.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.AreaOptions">
+            <summary>
+            Areas the current user can pick (drilled from molecules they can access).
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Admin.CompaniesModel.ContainsDangerousContent(System.String)">
             <summary>
             Detects potentially dangerous content like script tags, HTML tags, and JavaScript event handlers
@@ -5479,6 +5801,13 @@
             Admin Hub - Central dashboard for management and configuration.
             ✅ P2-1: Unified entry point for all administrative tasks.
             Visible to users with AccessAdminNavigation grant.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Molecules.ApprovalSettingsModel.ResolveAndAuthorizeAsync(System.Int32)">
+            <summary>
+            Resolves the molecule for the current user. If MoleculeId param is 0/missing,
+            uses the user's own molecule (via Company.MoleculeId). Authorizes the user as
+            MoleculeAdmin OR Director (any JobType) within that molecule.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Admin.Organization.ChoreTypes.IndexModel.IsUserAuthorizedForMoleculeAsync(System.Int32)">
@@ -5565,9 +5894,32 @@
             ✅ PHASE 20: API endpoint to delete on-duty assignments from calendar views
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.GetBusyStatesModel">
+            <summary>
+            Returns per-user busy summaries for a date — used by assignee pickers to
+            decorate options with busy badges. When a target is supplied, also runs
+            the full validation predicate per user so the picker can disable hard-conflict
+            users in lock-step with the post-submit validator.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.GetChoresDataModel">
             <summary>
             API endpoint for shadow refresh of Chores calendar data.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.GetEligibleUsersForChoreModel">
+            <summary>
+            Eligible users for chore assignment within a molecule. Cross-company within
+            the molecule is intentional — the chore service uses molecule scope, not tenant.
+            Mirrors auth pattern of GetEligibleUsersForShift.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.GetEligibleUsersForOnDutyModel">
+            <summary>
+            Eligible users for on-duty assignment within a molecule. Cross-company within
+            molecule is intentional. Mirrors auth pattern of GetEligibleUsersForShift.
+            Optionally filters by officer rank when EnforceRankEligibility flag is on AND
+            a specific OnDutyType is supplied that requires officer rank.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.GetEligibleUsersForShiftModel">
@@ -5907,6 +6259,20 @@
             Parses browser information from user agent string.
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Api.TimeOffRequestApiModel">
+             <summary>
+             Task 28 — TimeOffRequest API used by the cancel-or-shorten dialog.
+            
+             Routes (handlers selected via ?handler= query string per Razor Pages convention):
+               GET  /Api/TimeOffRequest/{id}                       → request details (json)
+               POST /Api/TimeOffRequest/{id}?handler=Cancel        → cancel entire request
+               POST /Api/TimeOffRequest/{id}?handler=UpdateDates   → shorten range (Vacation only)
+            
+             Cookie-authenticated. CSRF is enforced by Razor Pages antiforgery + the
+             X-Requested-With header check in ApiAuthenticationMiddleware (the middleware
+             is whitelisted for /Api/TimeOffRequest below).
+             </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Api.Widget.SaveQuickInfoConfigModel">
             <summary>
             API endpoint for saving/loading Quick Info widget configuration.
@@ -5930,6 +6296,32 @@
             <summary>
             Excel-style Chores Calendar page - Shows chore assignments by user across dates.
             Chores are molecule-scoped (cross-company within molecule).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Calendar.ChoresModel.HomeShiftItem">
+            <summary>
+            Per-user-per-date HOME shift item used to render the read-only HOME overlay
+            chip on Chores/OnCall calendars (Task 24). Carries source-icon + time fields.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ChoresModel.HomeShiftItem.#ctor(System.String,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <summary>
+            Per-user-per-date HOME shift item used to render the read-only HOME overlay
+            chip on Chores/OnCall calendars (Task 24). Carries source-icon + time fields.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ChoresModel.OnGetJusticeEligibilityAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d — JSON endpoint that ranks candidate users to fill a specific chore hole.
+            Inputs: <paramref name="rowId"/> is the Chore-calendar row identifier ("user-{userId}"),
+            <paramref name="date"/> is the target date.
+            SECURITY-AUDITED: MoleculeId is page-model-only — never accepted from query string here
+            because that would be an IDOR vector (caller could probe unauthorized molecules).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ChoresModel.OnGetJusticePreviewAsync(System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d — JSON endpoint previewing impact of a hypothetical chore assignment.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Calendar.DayModel">
@@ -6031,11 +6423,38 @@
             Info about a duty type (built-in or custom)
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Calendar.OnCallModel.OnGetJusticeEligibilityAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d — JSON endpoint that ranks candidate users for a specific (date, dutyType) hole.
+            SECURITY-AUDITED: moleculeId derived from the caller's own company — never accepted from
+            query string. OnDuty is global by design; molecule scoping here is for Justice fairness math
+            (which is per-molecule), not for entity-level access control.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.OnCallModel.OnGetJusticePreviewAsync(System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d — JSON endpoint previewing impact of a hypothetical on-duty assignment.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Calendar.OverviewModel">
             <summary>
             Excel-style Overview Calendar page - View-only aggregation of all user data.
             Company-scoped: shows users in current company as rows, days as columns.
             Each cell shows aggregated status (vacations, shifts, chores, on-duty) plus notes.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Calendar.OverviewModel.OverviewShiftItem">
+            <summary>
+            Per-user-per-date shift item used to render the Overview cell.
+            Carries HOME-specific fields so the shared _CalendarRow partial can
+            render HOME chips with source/house icons + time range (Task 23).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.OverviewModel.OverviewShiftItem.#ctor(System.String,System.Boolean,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <summary>
+            Per-user-per-date shift item used to render the Overview cell.
+            Carries HOME-specific fields so the shared _CalendarRow partial can
+            render HOME chips with source/house icons + time range (Task 23).
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Calendar.ShiftsModel">
@@ -6049,6 +6468,28 @@
             SP3: Build grouped rows for tech molecule user-mode calendar.
             Groups users by PrimaryShiftType (shift-type sections) or by Company (for non-shift users).
             Within shift-type groups, splits into regulars and trainees (localized via _localizer).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.OnGetJusticeAsync(System.Threading.CancellationToken)">
+            <summary>
+            JSON endpoint feeding the slide-in Justice drawer on this calendar.
+            Auto-derives scope from the page's MoleculeId / JobTypeId / Start state.
+            Authorization: requires ViewJusticeTable grant in the requested molecule scope.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.OnGetJusticeEligibilityAsync(System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2b — JSON endpoint that ranks candidate users to fill a specific shift hole.
+            Accepts either:
+              - <c>rowId</c> + <c>date</c> (cell click — rowId is the ShiftType id), or
+              - <c>shiftInstanceId</c> + <c>date</c> (focus-list click — instance already known).
+            Returns ranked candidates least-loaded-first, with hard-blocked candidates collapsed.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.OnGetJusticePreviewAsync(System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2c — JSON endpoint that previews the spread-index impact of assigning a user to a hole.
+            Pure in-memory recompute; never writes to the DB.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.TableModel.LocalizeShiftTypeName(ShiftManager.Models.ShiftType)">
@@ -6511,6 +6952,15 @@
             False for employees who can only view their own requests.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Requests.IndexModel.DeserializeWarnings(System.String)">
+            <summary>
+            Deserialize the JSON-persisted warnings written at swap-request creation time.
+            Returns the localized Message of each warning so the approver UI can render
+            them as a list. Failures are swallowed (return empty list) — a corrupted JSON
+            blob is non-blocking; the approver still sees the swap and can approve based
+            on the rest of the request data.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Requests.IndexModel.RequireManagerAccessAsync">
             <summary>
             Checks if the current user has ManagerHomeAccess grant (required for approve/decline/delete actions).
@@ -6520,6 +6970,50 @@
             <summary>
             Validates that the current user has access to manage requests for the specified company.
             Grant-based authorization check (not role-based).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Requests.Swaps.CreateModel.SwapTargetWarnings">
+            <summary>
+            Busy warnings produced when validating the swap target against the source shift.
+            Surfaced in the form for the requester and (later) carried into the manager's
+            approval queue. Empty list = clean swap, no warnings.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Shared.JusticePanelModel">
+             <summary>
+             Model for the <c>_JusticePanel.cshtml</c> partial. Used by every calendar page that wants
+             the in-context Justice drawer (Calendar/Shifts, Calendar/Chores, Calendar/OnCall as of Phase 2).
+            
+             The host page constructs this once and passes it as the model. Most fields are pre-localized
+             strings so the partial doesn't need its own <see cref="!:IStringLocalizer"/> injection.
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Shared.JusticePanelModel.CalendarKind">
+            <summary>
+            Discriminator used by the JS to know which calendar surfaced the drawer.
+            One of: "shifts", "chores", "onduty". Drives the "Make it real" deep-link target later.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Shared.JusticePanelModel.DataEndpoint">
+            <summary>
+            URL the JS XHR-fetches for the drawer payload. Should call the host page's
+            <c>OnGetJusticeAsync</c> handler (e.g., <c>/Calendar/Shifts?handler=Justice</c>) with
+            the current scope baked into the URL by the host page model.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Shared.JusticePanelModel.ButtonTitle">
+            <summary>
+            Title shown on the toolbar button's <c>title</c> attribute (already localized).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Shared.JusticePanelModel.RibbonAria">
+            <summary>
+            Localized aria-label for the equity ribbon SVG-equivalent.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Shared.JusticePanelModel.CloseLabel">
+            <summary>
+            Localized close-button aria-label.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IAnalyticsService">
@@ -6956,6 +7450,14 @@
             SECURITY-AUDITED: Same IgnoreQueryFilters rationale as GetForUsersAndDateRangeAsync.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d: validate a hypothetical chore assignment without writing. Used by the Justice
+            drawer's eligibility ranking on the Chores calendar. Delegates to <see cref="M:ShiftManager.Services.IBusyService.ValidateAsync(ShiftManager.Models.Support.BusyTarget,System.Int32,System.Int32,System.String)"/>
+            with a <c>BusyTarget.Chore</c>; the existing busy logic enforces molecule boundary,
+            vacation overlap, cross-resource conflicts, and duplicate-chore detection.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.ChoreService.CanUserManageChoresAsync(System.Int32)">
             <summary>
             Check if current user can manage chores.
@@ -7002,7 +7504,7 @@
             Returns (hasConflict, startDate, endDate, type)
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.ChoreService.CreateChoreAsync(System.Int32,System.DateOnly,System.String,System.String,System.Boolean,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+        <member name="M:ShiftManager.Services.ChoreService.CreateChoreAsync(System.Int32,System.DateOnly,System.String,System.String,System.Boolean,System.Nullable{System.Int32},System.Nullable{System.Int32},System.String)">
             <summary>
             Create a new chore assignment
             </summary>
@@ -7032,6 +7534,9 @@
             Get a chore by ID. Bypasses the tenant query filter so cross-tenant chores are visible
             to authorized callers (Owner/Director/AreaAdmin acting on grants that span companies).
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
         </member>
         <member name="T:ShiftManager.Services.ClientTelemetryService">
             <summary>
@@ -7149,6 +7654,19 @@
             Can be disabled via feature flag: FF_ENABLE_DAILY_NOTIFICATIONS
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.DailyNotificationJob.TryAcquireRunningLock">
+            <summary>
+            Batch T (F-R-007): atomic acquire of the per-process job lock. Returns true
+            if this caller acquired the lock, false if a previous iteration is still running.
+            Wraps the raw Interlocked.CompareExchange so the intent ("am I allowed to start?")
+            is obvious at the call site.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DailyNotificationJob.ReleaseRunningLock">
+            <summary>
+            Batch T (F-R-007): release the per-process job lock. Idempotent.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.DatabaseBackupService">
             <summary>
             Background service that automatically backs up the SQLite database.
@@ -7211,7 +7729,7 @@
             folders next to the export path; deletes the rest by LastWriteTime ascending.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.DirectorService.CanAssignRole(ShiftManager.Models.Support.UserRole)">
+        <member name="M:ShiftManager.Services.DirectorService.CanAssignRoleAsync(ShiftManager.Models.Support.UserRole)">
             <remarks>
             This method checks role TYPE permission only. Scope validation (whether the target user
             belongs to a company the caller manages) must be performed at the call site.
@@ -7682,6 +8200,61 @@
         <member name="M:ShiftManager.Services.IAreaPaletteService.InvalidateAreaCache(System.Int32)">
             <summary>Invalidate cache (safety hatch after manual DB edits).</summary>
         </member>
+        <member name="T:ShiftManager.Services.IBusyService">
+            <summary>
+            Single source of truth for "is user X busy on date Y?" used by every
+            assignment flow (shift, chore, on-duty, swap, fill-range). See plan
+            in docs/superpowers/specs for design context.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IBusyService.GetBusyStatesAsync(System.Collections.Generic.IReadOnlyList{System.Int32},System.DateOnly,System.Int32,ShiftManager.Models.Support.BusyTarget)">
+            <summary>
+            Returns per-user busy summaries for a date, keyed by user id.
+            Used by assignee pickers to decorate options with busy badges.
+            When <paramref name="target"/> is non-null, each summary also carries a
+            hard-error flag computed by running the full validation predicate against
+            the target — so the picker can disable hard-conflict users in lock-step
+            with the post-submit validator.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IBusyService.ValidateAsync(ShiftManager.Models.Support.BusyTarget,System.Int32,System.Int32,System.String)">
+            <summary>
+            Validates an assignment target against a user. Returns errors (hard blocks)
+            and warnings (overrideable via HMAC token). When <paramref name="overrideToken"/>
+            is supplied and matches the warnings, the warnings list is cleared so callers
+            can proceed.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IBusyService.ValidateBatchAsync(System.Collections.Generic.IReadOnlyList{System.ValueTuple{ShiftManager.Models.Support.BusyTarget,System.Int32}},System.Int32)">
+            <summary>
+            Batch validation for fill-range and other bulk flows. Pre-loads users,
+            shift instances, assignments in shared queries.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IBusyService.GenerateOverrideToken(ShiftManager.Models.Support.BusyTarget,System.Int32,System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>
+            Generates a 5-minute HMAC token scoped to the exact target + user + warning keys.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IBusyService.ValidateOverrideToken(System.String,ShiftManager.Models.Support.BusyTarget,System.Int32)">
+            <summary>
+            Validates a previously-issued override token against the target + user.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.BusySummaryWithHardError">
+            <summary>
+            Picker-friendly extension of <see cref="T:ShiftManager.Models.Support.BusySummary"/> that also carries the
+            hard-error verdict for a given target, so the listbox can disable options
+            without a second roundtrip.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.BusySummaryWithHardError.#ctor(ShiftManager.Models.Support.BusySummary,System.Boolean,System.String)">
+            <summary>
+            Picker-friendly extension of <see cref="T:ShiftManager.Models.Support.BusySummary"/> that also carries the
+            hard-error verdict for a given target, so the listbox can disable options
+            without a second roundtrip.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.IClientTelemetryService">
             <summary>
             Service for managing client-side telemetry data in air-gapped environments.
@@ -7969,10 +8542,13 @@
         </member>
         <member name="T:ShiftManager.Services.IDirectorService">
             <summary>
-            Service for checking Director permissions
+            Service for checking Director permissions.
+            All methods are async because grant resolution is database-backed and
+            must not be called from a synchronous context — see Batch D in
+            .claude-reviews/2026-04-28/00-index.md (closes F-H-003, F-A-002, F-R-001).
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IDirectorService.IsDirector">
+        <member name="M:ShiftManager.Services.IDirectorService.IsDirectorAsync">
             <summary>
             Check if the current user is a Director
             </summary>
@@ -7997,13 +8573,13 @@
             Check if current user can manage a specific company (either as Director, Manager, or Owner of that company)
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IDirectorService.CanAssignRole(System.String)">
+        <member name="M:ShiftManager.Services.IDirectorService.CanAssignRoleAsync(System.String)">
             <summary>
             Check if current user can assign the specified role
             Directors cannot assign Owner role
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IDirectorService.CanAssignRole(ShiftManager.Models.Support.UserRole)">
+        <member name="M:ShiftManager.Services.IDirectorService.CanAssignRoleAsync(ShiftManager.Models.Support.UserRole)">
             <summary>
             Check if current user can assign the specified role (strongly-typed)
             Owner: can assign any role
@@ -8607,6 +9183,22 @@
             Updates company settings overrides.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IHomeMaterialiserService.SyncMaterialisedHomeRowsAsync(System.Int32)">
+            <summary>
+            Idempotent diff-and-sync: ensures ShiftAssignment rows for a TimeOffRequest
+            match the request's current state.
+            - Status = Approved: desired set is computed from Type+dates (After: HOME_PM day-N + HOME_AM day-N+1; Vacation: HOME each day Start..End + HOME_AM End+1).
+            - Status = Declined/Canceled/Pending/PendingSecondApproval: desired set is empty (rows deleted).
+            Existing rows tagged with this SourceTimeOffRequestId are diffed: missing inserted, surplus deleted.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IHomeMaterialiserService.RestoreRotationHomeAsync(System.Int32,System.DateOnly,System.DateOnly)">
+            <summary>
+            After a vacation cancellation, restore rotation HOME rows for the user across the
+            formerly-covered date range using the deterministic DerivedRotationRule.
+            No-op if the user has no HomeTypeId.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.IImportService">
             <summary>
             Service for importing archived data
@@ -8662,6 +9254,46 @@
             <summary>
             Returns job types applicable to a specific molecule: molecule-specific ones plus
             area-wide ones (where MoleculeId is null) from the molecule's area.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IJusticeService">
+            <summary>
+            Decision-support analytics for the Justice page. Read-only in Phase 1; settings upserts
+            land in Phase 2 along with the simulator endpoints.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJusticeService.GetJusticeViewAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
+            <summary>
+            Build the full Justice view: rows at the requested level, spread index, most-over/most-under.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJusticeService.GetTargetsAsync(System.Threading.CancellationToken)">
+            <summary>
+            Returns all configured targets (defaults + overrides) visible to the current tenant.
+            Phase 1 callers use this only to display the read-only "current targets" summary;
+            the editable settings modal lands in Phase 2.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJusticeService.GetInContextViewAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
+            <summary>
+            Builds the calendar-drawer payload: same Justice math as <see cref="M:ShiftManager.Services.IJusticeService.GetJusticeViewAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)"/>
+            plus a top-N "where to focus" list of upcoming unfilled holes in scope. Caller is
+            responsible for scope-gating (ensuring the user has ViewJusticeTable for the requested scope).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJusticeService.GetEligibleCandidatesAsync(ShiftManager.Services.HoleSelector,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2b: eligibility ranking for one unfilled hole.
+            Shifts use the existing <see cref="M:ShiftManager.Services.IShiftAssignmentService.ValidateShiftAssignmentAsync(System.Int32,System.Int32)"/>.
+            Chore + OnDuty use a degraded check (vacation overlap + scope membership only — Path C from the plan).
+            Candidates are returned least-loaded-first based on the current Justice deviation %.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJusticeService.PreviewImpactAsync(ShiftManager.Services.SimulatedAssignment,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2c: in-memory what-if. Recomputes the spread index assuming the candidate were
+            assigned to the hole. Does NOT write to the database. The drawer's "Make it real" CTA
+            performs the actual write by deep-linking into the existing calendar POST handler.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ILanguageManagementService">
@@ -9399,6 +10031,16 @@
             Call this after setting request status to Approved.
             </summary>
         </member>
+        <!-- Badly formed XML comment ignored for member "M:ShiftManager.Services.IVacationApprovalService.UpdateRequestDatesAsync(System.Int32,System.DateOnly,System.DateOnly,System.Int32)" -->
+        <member name="M:ShiftManager.Services.IVacationApprovalService.GetApproverPoolAsync(System.Int32)">
+            <summary>
+            Compute the eligible approver pool for a TimeOffRequest. Per-jobtype-vertical:
+            - Alhut/Text requesters: Lead or Director with same JobTypeId in molecule
+            - Hakam/BR/Other requesters: BRDirector or MoleculeAdmin in molecule
+            Empty-pool fallback: MoleculeAdmin users in the molecule (regardless of JobType).
+            Self-exclusion: requester is never in their own pool.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.IValidationService">
             <summary>
             Service for validating user input with proper regex patterns and security checks.
@@ -9480,6 +10122,226 @@
              Previously this service had silent <c>return false</c> failures with no logging — those
              are now structured failures with localized messages keyed under <c>Error_JobTypeService_*</c>.
              </summary>
+        </member>
+        <member name="T:ShiftManager.Services.JusticeService">
+             <summary>
+             Implementation of <see cref="T:ShiftManager.Services.IJusticeService"/>. Phase 1: read-only views.
+            
+             Algorithm summary (see plan file <c>we-want-to-redesign-proud-ullman.md</c> for full design):
+               1. Build the row set for the requested <see cref="T:ShiftManager.Models.JusticeLevel"/>:
+                    - UsersInCompany     -> one row per user in scope
+                    - CompaniesInMolecule -> one row per company in scope
+                    - MoleculesInArea    -> one row per molecule in scope
+               2. For each row, compute Actual (count of completed work in period) and Expected
+                  (resolved per the targets/overrides table or, for Shift work-type, from
+                  Sum(ShiftInstance.StaffingRequired)).
+               3. Compute deviation %, band, and the page-wide spread index.
+            
+             The "exclude exempt" toggle (<see cref="P:ShiftManager.Services.JusticeQuery.ExcludeExemptShifts"/>) gates BOTH
+             the Actual and Expected paths for the Shift work-type symmetrically. Otherwise the deviation
+             math goes nonsense when the toggle flips.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.ResolveExpectedForCompanyOrMolecule(ShiftManager.Services.JusticeQuery,ShiftManager.Models.JusticeScope,System.Int32,System.Int32,System.Decimal,System.Collections.Generic.List{ShiftManager.Models.JusticeTarget})">
+            <summary>
+            Compute total expected for a Company or Molecule scope (used at row-level aggregation in
+            the Companies-in-Molecule and Molecules-in-Area views). Headcount-based per-user rollup
+            when no explicit override exists at this scope.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.ComputeSpreadIndex(System.Collections.Generic.List{ShiftManager.Services.JusticeRow})">
+            <summary>
+            Spread index = mean absolute deviation %. Lower is fairer; 0 means perfect distribution.
+            We deliberately use mean-absolute rather than stdev so the number reads as "% off-target".
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.MapSpreadToSeverity(System.Decimal)">
+            <summary>
+            Maps spread index (0..1+) to a 5-circle severity glyph and a verdict label key.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.BuildWhereToFocusAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
+            <summary>
+            Dispatcher: routes to a kind-specific hole builder. For <see cref="F:ShiftManager.Models.JusticeWorkType.All"/>
+            the three lists are concatenated and re-ranked by date so the user sees the next imminent
+            holes regardless of work type.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.BuildChoreHolesAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d: chore holes are user-date pairs where a genuinely under-loaded user has no chore
+            on a given date. "Under-loaded" reuses the existing Justice band math (Under or SoftUnder)
+            so this list stays consistent with the verdict strip and Justice Table.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.BuildOnDutyHolesAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d: on-duty holes are (date × dutyType) pairs in the lookforward window with no active
+            assignment. OnDuty types include built-ins (Hakam=0, Lead=1) plus active custom types from
+            <c>OnDutyTypeConfig</c>. The hole list is bounded by the date window, not by company scope —
+            OnDuty is global by design.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.BuildFullViewUrl(ShiftManager.Services.JusticeQuery)">
+            <summary>
+            Build a deep-link to /Admin/Analytics pre-scoped to the same query.
+            The full standalone page handles the comparative views (Spread Trend, Heatmap, etc.)
+            that don't fit in a calendar drawer.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.ResolveScopeCompanyIdsAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
+            <summary>
+            Resolves the JusticeQuery's scope to the concrete list of CompanyIds that fall under it.
+            Used by BuildWhereToFocusAsync and the eligibility / preview helpers.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.CheckChoreEligibilityAsync(System.Int32,System.DateOnly,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d real validation for chores. Replaces the prior degraded path. Delegates entirely
+            to <see cref="M:ShiftManager.Services.IChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)"/> which routes through BusyService —
+            same authority that the actual chore POST handler uses, so warnings here are the same
+            warnings the user will see on "Make it real".
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.CheckOnDutyEligibilityAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d real validation for on-duty. Replaces the prior degraded path. The
+            <paramref name="moleculeId"/> here is the same value the JS-side "Make it real" will pass
+            in the POST body so HMAC override-token canonical forms match.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.ResolveUsersInScopeAsync(ShiftManager.Services.HoleSelector,System.Threading.CancellationToken)">
+            <summary>
+            When the parent scope is wider than UsersInCompany (e.g., CompaniesInMolecule),
+            we still need a list of user candidates for the chosen hole. We constrain to users
+            in the hole's CompanyId so chore/on-duty rankings stay within the entity's natural reach.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.ResolveCandidateAggregateRowAsync(ShiftManager.Services.SimulatedAssignment,System.Collections.Generic.List{ShiftManager.Services.JusticeRow},System.Threading.CancellationToken)">
+            <summary>
+            When the parent scope is at Company / Molecule level, the visible rows are aggregates.
+            For the what-if delta we attribute the candidate's +1 to whichever aggregate row contains them.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.JusticeQuery">
+            <summary>
+            All inputs required to render the Justice analytics page.
+            Bound from the query string of /Admin/Analytics. Defaults filled in by the page model
+            when the user lands without parameters.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeQuery.#ctor(ShiftManager.Models.JusticeScope,System.Nullable{System.Int32},System.DateOnly,System.DateOnly,ShiftManager.Models.JusticeWorkType,System.Boolean,ShiftManager.Models.JusticeLevel)">
+            <summary>
+            All inputs required to render the Justice analytics page.
+            Bound from the query string of /Admin/Analytics. Defaults filled in by the page model
+            when the user lands without parameters.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.JusticeViewModel">
+            <summary>
+            Top-level result for the Justice page.
+            Spread index summarises the imbalance over the rendered rows; lower is fairer.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeViewModel.#ctor(ShiftManager.Services.JusticeQuery,System.Decimal,System.Int32,System.String,ShiftManager.Services.JusticeRow,ShiftManager.Services.JusticeRow,System.Collections.Generic.List{ShiftManager.Services.JusticeRow},System.Decimal)">
+            <summary>
+            Top-level result for the Justice page.
+            Spread index summarises the imbalance over the rendered rows; lower is fairer.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.JusticeRow">
+            <summary>
+            One row in the Justice table — represents a user, company, or molecule depending on Level.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeRow.#ctor(System.Int32,System.String,System.String,System.Decimal,System.Decimal,System.Nullable{System.Decimal},ShiftManager.Services.DeviationBand)">
+            <summary>
+            One row in the Justice table — represents a user, company, or molecule depending on Level.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.DeviationBand">
+            <summary>
+            Color/severity bucket for the deviation pill. Asymmetric on purpose:
+            under-loaded is "opportunity" (info-blue), over-loaded is "alarm" (danger-red).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.InContextJusticeViewModel">
+            <summary>
+            Compact Justice payload for the calendar drawer. Same Justice math as the standalone page
+            but trimmed to what the drawer renders: verdict pieces + rows + a small "where to focus" list
+            of the next-N unfilled holes in the active scope.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.InContextJusticeViewModel.#ctor(ShiftManager.Services.JusticeQuery,System.Decimal,System.Int32,System.String,ShiftManager.Services.JusticeRow,ShiftManager.Services.JusticeRow,System.Collections.Generic.List{ShiftManager.Services.JusticeRow},System.Decimal,System.Collections.Generic.List{ShiftManager.Services.UnfilledHole},System.String)">
+            <summary>
+            Compact Justice payload for the calendar drawer. Same Justice math as the standalone page
+            but trimmed to what the drawer renders: verdict pieces + rows + a small "where to focus" list
+            of the next-N unfilled holes in the active scope.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.UnfilledHole">
+            <summary>
+            One unfilled cell on the calendar that the assigner could fix.
+            Renders in the "Where to focus" list and feeds the eligibility-ranking flow.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.UnfilledHole.#ctor(System.String,System.Nullable{System.Int32},System.DateOnly,System.String,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <summary>
+            One unfilled cell on the calendar that the assigner could fix.
+            Renders in the "Where to focus" list and feeds the eligibility-ranking flow.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.HoleSelector">
+            <summary>
+            Identifies which hole the user wants to fill, plus the parent calendar's scope so the service
+            can rank candidates correctly.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.HoleSelector.#ctor(System.String,System.Nullable{System.Int32},System.DateOnly,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},ShiftManager.Services.JusticeQuery)">
+            <summary>
+            Identifies which hole the user wants to fill, plus the parent calendar's scope so the service
+            can rank candidates correctly.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.EligibleCandidatesViewModel">
+            <summary>
+            Ranked candidate list returned by GetEligibleCandidatesAsync.
+            Candidates are ordered least-loaded-first (most negative deviation %).
+            HardBlocked candidates are returned in a separate list so the drawer can collapse them.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.EligibleCandidatesViewModel.#ctor(ShiftManager.Services.HoleSelector,System.Collections.Generic.List{ShiftManager.Services.RankedCandidate},System.Collections.Generic.List{ShiftManager.Services.RankedCandidate})">
+            <summary>
+            Ranked candidate list returned by GetEligibleCandidatesAsync.
+            Candidates are ordered least-loaded-first (most negative deviation %).
+            HardBlocked candidates are returned in a separate list so the drawer can collapse them.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.CandidateEligibility">
+            <summary>
+            Per-candidate validation result. For shifts, comes from
+            <see cref="M:ShiftManager.Services.IShiftAssignmentService.ValidateShiftAssignmentAsync(System.Int32,System.Int32)"/>.
+            For chores and on-duty (Phase 2d), comes from a degraded check that only verifies
+            vacation overlap and scope membership — the existing POST handlers re-validate the rest.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.CandidateEligibility.#ctor(System.Boolean,System.String,System.Collections.Generic.List{System.String})">
+            <summary>
+            Per-candidate validation result. For shifts, comes from
+            <see cref="M:ShiftManager.Services.IShiftAssignmentService.ValidateShiftAssignmentAsync(System.Int32,System.Int32)"/>.
+            For chores and on-duty (Phase 2d), comes from a degraded check that only verifies
+            vacation overlap and scope membership — the existing POST handlers re-validate the rest.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.SimulatedAssignment">
+            <summary>
+            Predicted impact of a hypothetical assignment, computed in-memory without writing.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.SimulatedAssignment.#ctor(System.Int32,ShiftManager.Services.HoleSelector)">
+            <summary>
+            Predicted impact of a hypothetical assignment, computed in-memory without writing.
+            </summary>
         </member>
         <member name="T:ShiftManager.Services.LanguageManagementService">
             <summary>
@@ -9691,6 +10553,15 @@
             Check if a duty type value is valid (either a built-in enum or a custom OnDutyTypeConfig).
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IOnDutyService.ValidateOnDutyAssignmentAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.Int32,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d: validate a hypothetical on-duty assignment without writing. Used by the Justice
+            drawer's eligibility ranking on the OnCall calendar. Delegates to <see cref="M:ShiftManager.Services.IBusyService.ValidateAsync(ShiftManager.Models.Support.BusyTarget,System.Int32,System.Int32,System.String)"/>.
+            The <paramref name="moleculeId"/> is used only for HMAC token scoping — OnDuty is global by design
+            and has no MoleculeId column on the entity. The molecule boundary is gated at the page-handler
+            level via grant verification.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.OnDutyService">
              <summary>
              Service for managing "Day Shifts" (user-facing term: "משמרות יומיות" / "Day Shifts").
@@ -9739,7 +10610,7 @@
             Returns (hasConflict, startDate, endDate, type)
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.OnDutyService.CreateOnDutyAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.String,System.Boolean)">
+        <member name="M:ShiftManager.Services.OnDutyService.CreateOnDutyAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.String,System.Boolean,System.Nullable{System.Int32},System.String)">
             <summary>
             Create a new on-duty assignment
             </summary>
@@ -9773,6 +10644,9 @@
             <summary>
             Check if a specific user is eligible for a duty type.
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.OnDutyService.ValidateOnDutyAssignmentAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.Int32,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
         </member>
         <member name="T:ShiftManager.Services.OwnerCompanySelectorService">
             <summary>
@@ -10113,7 +10987,9 @@
         <member name="M:ShiftManager.Services.TeamCalendarEventAggregator.ComputeDayStatus(System.Int32,System.DateOnly,System.Collections.Generic.List{ShiftManager.Services.VacationEvent},System.Collections.Generic.List{ShiftManager.Services.ShiftEvent},System.Collections.Generic.List{ShiftManager.Services.ChoreEvent},System.Collections.Generic.List{ShiftManager.Services.OnDutyEvent})">
             <summary>
             Computes the single status for a user on a specific day.
-            Priority: Vacation > After > On-Duty > Shift > Chore > Free
+            Priority: Vacation > After > On-Duty > Home > Shift > Chore > Free
+            (Home is promoted above plain Shift so the unified HOME marker wins
+            when a user has a HOME assignment — Task 24.)
             </summary>
         </member>
         <member name="M:ShiftManager.Services.TeamCalendarEventAggregator.DateIsInTimeOffRange(System.DateOnly,ShiftManager.Services.VacationEvent)">
@@ -10122,6 +10998,21 @@
             Vacation semantics: covers full days + busy until 13:00 the day after EndDate.
             After semantics: 4PM on StartDate → 1PM on day after StartDate (single day).
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.TeamCalendarEventAggregator.GetHomeForDay(System.Int32,System.DateOnly,System.Collections.Generic.List{ShiftManager.Services.ShiftEvent})">
+            <summary>
+            Task 24: Surfaces HOME shifts on MyTeam as a unified "Home" status.
+            HomeSourceType lets the JS pick the source icon (rotation / vacation / after).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Services.ShiftEvent.IsHome">
+            <summary>True for KEY_HOME / KEY_HOME_PM / KEY_HOME_AM (Task 24).</summary>
+        </member>
+        <member name="P:ShiftManager.Services.ShiftEvent.SourceTimeOffRequestType">
+            <summary>0=Vacation, 1=After, null=rotation. Drives MyTeam HOME source icon.</summary>
+        </member>
+        <member name="F:ShiftManager.Services.DayStatusType.Home">
+            <summary>HOME shift (rotation/vacation/after). Source carried in DayStatus.Metadata. Task 24.</summary>
         </member>
         <member name="T:ShiftManager.Services.TeamCalendarService">
             <summary>
@@ -10238,7 +11129,20 @@
         </member>
         <member name="M:ShiftManager.Services.VacationApprovalService.ApproveAsync(System.Int32,System.Int32,System.String)">
             <summary>
-            Approves a time-off request. Verifies the approver has the required grant.
+            Approves a time-off request. Implements the dual-approval state machine
+            per molecule's <see cref="P:ShiftManager.Models.MoleculeApprovalSettings.DualApprovalDayThreshold"/>:
+            <list type="bullet">
+              <item>Vacations with length &gt; threshold require parallel dual approval
+                    (Lead+Director for Alhut/Text; BRDirector+MoleculeAdmin otherwise).</item>
+              <item>Vacations with length ≤ threshold and all After requests use single approval.</item>
+            </list>
+            State transitions:
+            <list type="bullet">
+              <item>Pending → first tier action → PendingSecondApproval (dual mode)</item>
+              <item>PendingSecondApproval → complementary tier action → Approved</item>
+              <item>Pending → tier action → Approved (single mode)</item>
+            </list>
+            Side-effects + materialiser fire only on the final Approved transition.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.VacationApprovalService.DeclineAsync(System.Int32,System.Int32,System.String)">
@@ -10293,6 +11197,7 @@
             Allows a user to cancel their own pending request.
             </summary>
         </member>
+        <!-- Badly formed XML comment ignored for member "M:ShiftManager.Services.VacationApprovalService.UpdateRequestDatesAsync(System.Int32,System.DateOnly,System.DateOnly,System.Int32)" -->
         <member name="M:ShiftManager.Services.VacationApprovalService.DetectOrphanedRulesAsync(System.Int32)">
             <summary>
             Detects approval rules that have no active users who can fulfill them.
@@ -10313,6 +11218,15 @@
         <member name="M:ShiftManager.Services.VacationApprovalService.GetMatchingRuleAsync(ShiftManager.Models.TimeOffRequest)">
             <summary>
             Gets the matching approval rule for a request (helper method).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.GetApproverPoolAsync(System.Int32)">
+            <summary>
+            Compute the eligible approver pool for a TimeOffRequest. Per-jobtype-vertical:
+            - Alhut/Text requesters: Lead or Director with same JobTypeId in molecule
+            - Hakam/BR/Other requesters: BRDirector or MoleculeAdmin in molecule
+            Empty-pool fallback: MoleculeAdmin users in the molecule (regardless of JobType).
+            Self-exclusion: requester is never in their own pool.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.ValidationService">

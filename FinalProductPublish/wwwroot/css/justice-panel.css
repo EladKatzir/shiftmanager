@@ -1,0 +1,672 @@
+/* =====================================================================
+   Justice Panel — slide-in drawer for the calendar pages (Phase 2).
+
+   Loaded only on Calendar/Shifts, Calendar/Chores, Calendar/OnCall via the
+   _JusticePanel.cshtml partial. Reuses tokens from tokens.css. No new
+   color tokens introduced.
+
+   RTL: drawer flips edge automatically via `inset-inline-end` (logical
+   property). The internal callouts also use logical borders.
+
+   Bidi isolation: the spread-index number, deviation %, and the
+   centered deviation bars stay LTR even in Hebrew — that's the math
+   semantics, not language semantics. Use dir="ltr" wrappers in the JS
+   render path.
+   ===================================================================== */
+
+/* ---- Toolbar button ---------------------------------------------------- */
+.cal-toolbar__justice-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.cal-toolbar__justice-trigger .btn-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+@media (max-width: 640px) {
+    /* Collapse to icon-only on narrow viewports — calendar toolbars are dense. */
+    .cal-toolbar__justice-trigger .btn-text {
+        display: none;
+    }
+}
+
+/* ---- Drawer shell ------------------------------------------------------ */
+.justice-drawer {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    inset-inline-end: 0;
+    width: min(380px, 100vw);
+    max-width: 100vw;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+    border-inline-start: 1px solid var(--border);
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 220ms ease;
+    overflow: hidden;
+}
+
+[dir="rtl"] .justice-drawer {
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.12);
+    transform: translateX(-100%);
+}
+
+.justice-drawer[hidden] {
+    /* keep CSS transitions working — visibility-only hide */
+    display: flex !important;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.justice-drawer.justice-drawer--open {
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+}
+
+@media (max-width: 640px) {
+    /* Mobile takeover. */
+    .justice-drawer {
+        width: 100vw;
+        border-inline-start: none;
+    }
+}
+
+/* ---- Header ------------------------------------------------------------ */
+.justice-drawer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-soft);
+    flex-shrink: 0;
+}
+
+.justice-drawer__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text);
+}
+
+.justice-drawer__close {
+    line-height: 1;
+    padding: 0.35rem 0.55rem;
+    font-size: 1rem;
+}
+
+.justice-drawer__scope {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.justice-drawer__scope .scope-chip {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: var(--text);
+    margin-inline-end: 0.25rem;
+    font-weight: 500;
+}
+
+/* ---- Body / scroll region --------------------------------------------- */
+.justice-drawer__body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ---- Skeleton loading ------------------------------------------------- */
+.justice-skeleton {
+    background: linear-gradient(90deg, var(--surface-soft) 25%, var(--border) 50%, var(--surface-soft) 75%);
+    background-size: 200% 100%;
+    animation: justice-skeleton-shimmer 1.4s ease-in-out infinite;
+    border-radius: 6px;
+    display: block;
+}
+.justice-skeleton--chip { height: 1.25rem; width: 60%; }
+.justice-skeleton--strip { height: 3.5rem; width: 100%; }
+.justice-skeleton--list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+.justice-skeleton__line { height: 2.25rem; border-radius: 6px;
+    background: linear-gradient(90deg, var(--surface-soft) 25%, var(--border) 50%, var(--surface-soft) 75%);
+    background-size: 200% 100%;
+    animation: justice-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes justice-skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ---- Error state ------------------------------------------------------ */
+.justice-drawer__error {
+    text-align: center;
+    padding: 1.5rem 0.5rem;
+    color: var(--text-muted);
+}
+.justice-drawer__error p {
+    margin: 0.75rem 0 1rem 0;
+    color: var(--text);
+}
+
+/* ---- Verdict ---------------------------------------------------------- */
+.justice-drawer__verdict {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: var(--surface-soft);
+}
+
+.justice-drawer__spread {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.justice-drawer__spread-num {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.justice-drawer__spread-glyph {
+    display: inline-flex;
+    gap: 0.2rem;
+}
+
+.justice-drawer__spread-glyph .dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: transparent;
+    border: 1.5px solid var(--text-muted);
+    box-sizing: border-box;
+}
+
+.justice-drawer__spread-glyph[data-severity="0"] .dot--filled,
+.justice-drawer__spread-glyph[data-severity="1"] .dot--filled { background: var(--success); border-color: var(--success); }
+.justice-drawer__spread-glyph[data-severity="2"] .dot--filled,
+.justice-drawer__spread-glyph[data-severity="3"] .dot--filled { background: var(--warning); border-color: var(--warning); }
+.justice-drawer__spread-glyph[data-severity="4"] .dot--filled { background: var(--danger); border-color: var(--danger); }
+
+.justice-drawer__spread-label {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.justice-drawer__callouts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.justice-drawer__callouts .callout {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 6px;
+    background: var(--surface);
+    border-inline-start: 3px solid var(--border);
+    font-size: 0.8125rem;
+}
+.justice-drawer__callouts .callout--over { border-inline-start-color: var(--danger); }
+.justice-drawer__callouts .callout--under { border-inline-start-color: var(--info); }
+.justice-drawer__callouts .callout-label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.justice-drawer__callouts .callout-value {
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* ---- Section titles inside drawer ------------------------------------- */
+.justice-drawer__section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: var(--text);
+}
+
+.justice-drawer__count {
+    display: inline-block;
+    background: var(--surface-soft);
+    color: var(--text-muted);
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* ---- Where-to-focus list --------------------------------------------- */
+.justice-focus-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.justice-focus-list__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 6px;
+    background: var(--surface-soft);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-align: start;
+    color: var(--text);
+    font-size: 0.875rem;
+    transition: border-color 120ms, background 120ms;
+}
+.justice-focus-list__item:hover,
+.justice-focus-list__item:focus-visible {
+    border-color: var(--accent);
+    outline: none;
+    background: var(--accent-soft);
+}
+
+.justice-focus-list__deficit {
+    font-size: 0.75rem;
+    background: var(--danger);
+    color: var(--primary-contrast) !important;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.justice-focus-list__empty {
+    padding: 1rem 0.5rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+.justice-focus-list__empty .icon {
+    color: var(--success);
+    margin-bottom: 0.5rem;
+}
+
+/* ---- Equity ribbon (compact) ----------------------------------------- */
+.justice-drawer__details {
+    border-top: 1px solid var(--border);
+    padding-top: 0.5rem;
+}
+.justice-drawer__details > summary {
+    cursor: pointer;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text);
+    list-style: none;
+    padding: 0.25rem 0;
+}
+.justice-drawer__details > summary::-webkit-details-marker { display: none; }
+.justice-drawer__details > summary::before {
+    content: "▸";
+    margin-inline-end: 0.4rem;
+    color: var(--text-muted);
+    transition: transform 120ms;
+    display: inline-block;
+}
+.justice-drawer__details[open] > summary::before { transform: rotate(90deg); }
+
+.justice-drawer__details .equity-ribbon {
+    display: flex;
+    width: 100%;
+    height: 1rem;
+    margin-top: 0.5rem;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--surface-soft);
+    gap: 1px;
+}
+.justice-drawer__details .equity-ribbon > .equity-segment {
+    display: block;
+    height: 100%;
+    min-width: 3px;
+}
+.equity-segment.dev-band-under         { background: var(--info); }
+.equity-segment.dev-band-softunder     { background: var(--accent); }
+.equity-segment.dev-band-balanced      { background: var(--success); }
+.equity-segment.dev-band-softover      { background: var(--warning); }
+.equity-segment.dev-band-over          { background: var(--danger); }
+.equity-segment.dev-band-notarget      { background: var(--border); }
+
+/* ---- Footer ---------------------------------------------------------- */
+.justice-drawer__footer {
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+    display: flex;
+    justify-content: center;
+}
+
+/* =====================================================================
+   Phase 2b — calendar cell hole highlight + candidates view
+   ===================================================================== */
+
+/* Cell that the drawer is currently showing candidates for. Outline lives on the cell
+   itself (not a child) so the table layout doesn't shift when toggled. */
+.excel-calendar__cell[data-justice-hole="1"] {
+    cursor: pointer;
+}
+.excel-calendar__cell.js-hole-active {
+    outline: 2px dashed var(--accent);
+    outline-offset: -2px;
+    background: var(--accent-soft);
+}
+
+/* Candidates view replaces the main content while open; same body padding */
+.justice-drawer__candidates {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0.75rem 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 0;
+}
+
+.justice-candidates__header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.25rem;
+}
+.justice-candidates__back {
+    padding: 0.2rem 0.5rem;
+    line-height: 1;
+}
+[dir="rtl"] .justice-candidates__back > span[aria-hidden="true"] {
+    /* Flip the back chevron in RTL so it points the right direction */
+    transform: scaleX(-1);
+    display: inline-block;
+}
+.justice-candidates__header-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-inline-start: auto;
+}
+
+/* Candidate list */
+.justice-candidates {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.justice-candidate {
+    display: flex;
+    flex-direction: column;
+}
+.justice-candidate--blocked {
+    opacity: 0.55;
+}
+
+.justice-candidate__row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    border-radius: 6px;
+    background: var(--surface-soft);
+    border: 1px solid transparent;
+    text-align: start;
+    color: var(--text);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms;
+}
+.justice-candidate__row:hover:not([disabled]),
+.justice-candidate__row:focus-visible {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    outline: none;
+}
+.justice-candidate__row[disabled],
+.justice-candidate__row[aria-disabled="true"] {
+    cursor: not-allowed;
+}
+
+.justice-candidate__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+.justice-candidate__avatar--initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.justice-candidate__main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 0.15rem;
+}
+.justice-candidate__name {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.justice-candidate__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Deviation pill — same colors as the equity ribbon for consistency */
+.justice-candidate__pill {
+    font-size: 0.6875rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.justice-candidate__pill.dev-band-under         { background: var(--info); color: var(--primary-contrast) !important; }
+.justice-candidate__pill.dev-band-softunder     { background: var(--accent); color: var(--primary-contrast) !important; }
+.justice-candidate__pill.dev-band-balanced      { background: var(--success); color: var(--primary-contrast) !important; }
+.justice-candidate__pill.dev-band-softover      { background: var(--warning); color: var(--primary-contrast) !important; }
+.justice-candidate__pill.dev-band-over          { background: var(--danger); color: var(--primary-contrast) !important; }
+.justice-candidate__pill.dev-band-notarget      { background: var(--surface); color: var(--text-muted); border: 1px dashed var(--border); }
+
+.justice-candidate__status {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+}
+.justice-candidate__status--ok { color: var(--success); }
+.justice-candidate__status--warn { color: var(--warning); }
+.justice-candidate__status--blocked { color: var(--danger); }
+
+.justice-candidates__divider {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 0;
+    list-style: none;
+}
+
+.justice-candidates__empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 1rem;
+    list-style: none;
+}
+
+/* =====================================================================
+   Phase 2c — inline preview panel under candidate row
+   ===================================================================== */
+
+.justice-candidate__preview[hidden] {
+    display: none !important;
+}
+.justice-candidate__preview {
+    margin-top: 0.5rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-inline-start: 3px solid var(--accent);
+    font-size: 0.8125rem;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.justice-preview__loading,
+.justice-preview__error {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 0.25rem 0;
+}
+.justice-preview__error { color: var(--danger); }
+
+.justice-preview__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.4rem;
+}
+.justice-preview__label {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.justice-preview__value {
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+}
+.justice-preview__diff--down { color: var(--success); font-weight: 600; }
+.justice-preview__diff--up { color: var(--danger); font-weight: 600; }
+.justice-preview__diff--flat { color: var(--text-muted); }
+
+.justice-preview__pill {
+    margin-inline-start: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: var(--text);
+    font-size: 0.6875rem;
+    font-weight: 600;
+}
+
+.justice-preview__cta {
+    margin-top: 0.25rem;
+    display: flex;
+    justify-content: flex-end;
+}
+.justice-preview__cta .btn-primary {
+    /* Project memory contrast rule: explicit white text on the primary background */
+    color: var(--primary-contrast) !important;
+}
+
+/* Disabled state — applies when chore form has no title yet, or during in-flight POST. */
+.justice-preview__cta .btn-primary[disabled],
+.justice-preview__cta .btn-primary[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* =====================================================================
+   Phase 2d — chore form (type select + title input) inside candidates view
+   + chore-eligible cell marker on the calendar grid.
+   ===================================================================== */
+
+.justice-chore-form {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.justice-chore-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.justice-chore-form__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.justice-chore-form__select,
+.justice-chore-form__input {
+    /* Inherits .form-select / .form-control sizing — no new color tokens introduced. */
+    font-size: 0.875rem;
+}
+
+/* Chore-eligible marker — softer than shift/onduty hole outline so a chore calendar with
+   30+ empty cells doesn't look like a forest of warning indicators. The full
+   data-justice-hole="1" promotion is JS-applied to the 5 cells in whereToFocus. */
+.excel-calendar__cell[data-justice-cell-eligible="1"] {
+    cursor: pointer;
+}
+.excel-calendar__cell[data-justice-cell-eligible="1"]:hover {
+    background: var(--accent-soft);
+}

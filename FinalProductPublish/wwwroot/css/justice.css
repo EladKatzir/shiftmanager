@@ -1,0 +1,393 @@
+/* ============================================================
+   Justice Analytics Page (Phase 1)
+   Loaded only on /Admin/Analytics. Reuses tokens from tokens.css and
+   component classes from components.css/site.css. No new color tokens.
+   Discipline notes:
+     - Every colored background MUST set `color: var(--primary-contrast) !important`
+       directly on the element. Inherited color from parents has caused dark-on-dark
+       text regressions repeatedly in this project.
+     - Centered deviation bars stay LTR even in Hebrew RTL — negative is always to the
+       left of zero. The Razor view applies dir="ltr" on those elements.
+   ============================================================ */
+
+.justice-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ---------- Header ---------- */
+
+.justice-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 0;
+}
+
+.justice-header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.justice-header-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    margin: 0.25rem 0 0 0;
+    font-size: 0.9375rem;
+}
+
+/* ---------- Filter strip ---------- */
+
+.justice-filter-card {
+    padding: 1rem 1.25rem;
+}
+
+.filter-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 140px;
+    flex: 1 1 160px;
+}
+
+.filter-field__label {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--surface-soft);
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.875rem;
+    color: var(--text);
+}
+
+.filter-toggle input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+/* ---------- Verdict strip ---------- */
+
+.justice-verdict {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.verdict-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.verdict-heading {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+}
+
+.verdict-spread-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: var(--surface-soft);
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.verdict-spread-number {
+    font-size: 1.25rem;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.verdict-spread-glyph {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.verdict-spread-glyph .dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: transparent;
+    border: 1.5px solid var(--text-muted);
+    box-sizing: border-box;
+}
+
+.verdict-spread-glyph .dot--filled {
+    background: var(--text-muted);
+}
+
+/* As severity climbs, fill the dots from a calmer to a more alarming color. */
+.verdict-spread-pill[data-severity="0"] .dot--filled { background: var(--success); border-color: var(--success); }
+.verdict-spread-pill[data-severity="1"] .dot--filled { background: var(--success); border-color: var(--success); }
+.verdict-spread-pill[data-severity="2"] .dot--filled { background: var(--warning); border-color: var(--warning); }
+.verdict-spread-pill[data-severity="3"] .dot--filled { background: var(--warning); border-color: var(--warning); }
+.verdict-spread-pill[data-severity="4"] .dot--filled { background: var(--danger); border-color: var(--danger); }
+
+.verdict-spread-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ---------- Equity Ribbon ---------- */
+
+.equity-ribbon {
+    display: flex;
+    width: 100%;
+    height: 1.75rem;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface-soft);
+    gap: 2px;
+}
+
+.equity-segment {
+    display: block;
+    height: 100%;
+    min-width: 4px;
+    transition: filter 120ms ease;
+}
+
+.equity-segment:hover {
+    filter: brightness(1.1);
+    cursor: help;
+}
+
+/* Each segment paints with the user's deviation band color. */
+.equity-segment.dev-band-under         { background: var(--info); }
+.equity-segment.dev-band-softunder     { background: var(--accent); }
+.equity-segment.dev-band-balanced      { background: var(--success); }
+.equity-segment.dev-band-softover      { background: var(--warning); }
+.equity-segment.dev-band-over          { background: var(--danger); }
+.equity-segment.dev-band-notarget      { background: var(--border); }
+
+/* ---------- Verdict callouts ---------- */
+
+.verdict-callouts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.callout {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: var(--surface-soft);
+    border-left: 4px solid var(--border);
+}
+
+[dir="rtl"] .callout {
+    border-left: none;
+    border-right: 4px solid var(--border);
+}
+
+.callout--over { border-color: var(--danger); }
+.callout--under { border-color: var(--info); }
+
+.callout-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.callout-value {
+    font-size: 1rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .verdict-callouts {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Justice Table ---------- */
+
+.justice-table th.num,
+.justice-table td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+[dir="rtl"] .justice-table th.num,
+[dir="rtl"] .justice-table td.num {
+    text-align: left;
+}
+
+.row-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.row-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--surface-soft);
+}
+
+.row-avatar-fallback {
+    display: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--text) !important;
+    font-size: 0.75rem;
+    font-weight: 600;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.row-avatar-fallback--visible {
+    display: inline-flex;
+}
+
+.row-name-text {
+    font-weight: 500;
+}
+
+/* ---------- Deviation pill (color-banded) ---------- */
+
+.dev-pill {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.dev-pill.dev-band-under {
+    background: var(--info);
+    color: var(--primary-contrast) !important;
+}
+.dev-pill.dev-band-softunder {
+    background: var(--accent);
+    color: var(--primary-contrast) !important;
+}
+.dev-pill.dev-band-balanced {
+    background: var(--success);
+    color: var(--primary-contrast) !important;
+}
+.dev-pill.dev-band-softover {
+    background: var(--warning);
+    color: var(--warning-text) !important;
+}
+.dev-pill.dev-band-over {
+    background: var(--danger);
+    color: var(--primary-contrast) !important;
+}
+.dev-pill.dev-band-notarget {
+    background: var(--surface-soft);
+    color: var(--text-muted) !important;
+}
+
+/* ---------- Deviation bar (centered around zero) ---------- */
+
+.dev-bar {
+    position: relative;
+    display: inline-block;
+    width: 140px;
+    height: 6px;
+    background: var(--surface-soft);
+    border-radius: 4px;
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+.dev-bar-zero {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    left: 50%;
+    width: 1px;
+    background: var(--border);
+    transform: translateX(-50%);
+}
+
+.dev-bar-marker {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 2px var(--surface);
+    transition: left 200ms ease;
+}
+
+.dev-bar-marker.dev-band-under         { background: var(--info); }
+.dev-bar-marker.dev-band-softunder     { background: var(--accent); }
+.dev-bar-marker.dev-band-balanced      { background: var(--success); }
+.dev-bar-marker.dev-band-softover      { background: var(--warning); }
+.dev-bar-marker.dev-band-over          { background: var(--danger); }
+
+/* ---------- Empty state inside section-card ---------- */
+
+.justice-page .empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+}
+
+.justice-page .empty-state-icon {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.justice-page .empty-state h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    color: var(--text);
+}

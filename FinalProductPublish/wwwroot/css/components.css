@@ -2299,6 +2299,62 @@ select.form-field__input {
 .modal--feedback-info .modal__header { border-bottom-color: var(--info); }
 
 /* ========================================
+   23b. BUSY-CONFLICT BADGES + CONFIRM MODAL ROWS
+   Shared styles for FeedbackModal.confirm and the
+   assignee-picker listbox. Each badge is a small
+   colored chip identifying the conflicting resource type.
+   ======================================== */
+
+.busy-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Dark-mode handled by token swap in tokens.css (--chore-soft, --shift-home-soft etc.
+   each have a [data-theme="dark"] override). Hex fallbacks here are light-mode values,
+   used only if the variable is undefined — never in production. Audited 2026-05-05. */
+.busy-badge--shift   { background: var(--surface-soft); color: var(--text-muted) !important; }
+.busy-badge--home    { background: var(--shift-home-soft, #F0E6F6); color: var(--shift-home, #B088C7) !important; }
+.busy-badge--chore   { background: var(--chore-soft, #FBF3D5); color: var(--chore, #E6C447) !important; }
+.busy-badge--onduty  { background: var(--camo-sand-soft, #F4ECD8); color: var(--shift-hakam, #C97064) !important; }
+.busy-badge--vacation { background: var(--info-soft); color: var(--vacation, #7FA8C9) !important; }
+
+/* Confirm-modal warning rows — one row per BusyConflictDetail. */
+.feedback-conflict-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  text-align: start;
+}
+
+.feedback-conflict-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.feedback-conflict-row + .feedback-conflict-row {
+  border-top: 1px solid var(--border);
+}
+
+.feedback-conflict-row__text {
+  flex: 1;
+  color: var(--text);
+}
+
+/* ========================================
    23a. FEEDBACK MODAL EXTENSIONS
    Detail panel + correlation-ID display for the
    project-wide error-handling overhaul.
