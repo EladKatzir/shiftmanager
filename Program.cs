@@ -1643,6 +1643,38 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogError(ex, "MoleculeApprovalSettings seed failed");
     }
+
+    // ============================================================
+    // HOME UNIFICATION: Backfill materialised HOME rows for existing
+    // approved TimeOffRequests with recent EndDate.
+    // ============================================================
+    try
+    {
+        var horizon = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-7);
+        var requestsToMaterialise = await db.TimeOffRequests
+            .IgnoreQueryFilters()
+            .Where(t => t.Status == RequestStatus.Approved && t.EndDate >= horizon)
+            .Where(t => !db.ShiftAssignments.IgnoreQueryFilters().Any(sa => sa.SourceTimeOffRequestId == t.Id))
+            .Select(t => t.Id)
+            .ToListAsync();
+
+        if (requestsToMaterialise.Count > 0)
+        {
+            var materialiser = scope.ServiceProvider.GetRequiredService<IHomeMaterialiserService>();
+            int succeeded = 0, failed = 0;
+            foreach (var rid in requestsToMaterialise)
+            {
+                try { await materialiser.SyncMaterialisedHomeRowsAsync(rid); succeeded++; }
+                catch (Exception ex) { failed++; logger.LogWarning(ex, "Materialiser backfill failed for request {Id}", rid); }
+            }
+            logger.LogInformation("Materialiser backfill: {Succeeded} succeeded, {Failed} failed (of {Total})",
+                succeeded, failed, requestsToMaterialise.Count);
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Materialiser backfill block failed");
+    }
 }
 
 // ============================================================
