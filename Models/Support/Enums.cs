@@ -16,7 +16,12 @@ public enum RequestStatus
     Pending = 0,
     Approved = 1,
     Declined = 2,
-    Canceled = 3
+    Canceled = 3,
+    /// <summary>
+    /// Dual-approval intermediate state: one tier (Lead or Director) has approved
+    /// but the complementary tier is still pending. Materialiser does NOT fire on this state.
+    /// </summary>
+    PendingSecondApproval = 4
 }
 
 public enum NotificationType

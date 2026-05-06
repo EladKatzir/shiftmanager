@@ -137,7 +137,7 @@ public class ShiftType
     /// HOME shifts are exempt from overlap, rest period, and weekly cap checks.
     /// </summary>
     [NotMapped]
-    public bool IsHome => Key == KEY_HOME;
+    public bool IsHome => Key == KEY_HOME || Key == KEY_HOME_PM || Key == KEY_HOME_AM;
 
     /// <summary>
     /// Get the sort order for this shift type (for consistent ordering across views).
