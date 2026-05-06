@@ -11,6 +11,8 @@ namespace ShiftManager.Services;
 // for Directors managing multiple companies; all queries scoped by explicit requestId/userId/companyId parameters
 public class VacationApprovalService : IVacationApprovalService
 {
+    private static readonly HashSet<int> AlhutTextJobTypeIds = new() { 1, 3 };
+
     private readonly AppDbContext _context;
     private readonly IGrantService _grantService;
     private readonly ILogger<VacationApprovalService> _logger;
@@ -812,5 +814,66 @@ public class VacationApprovalService : IVacationApprovalService
 
         return rules.FirstOrDefault(r => r.JobTypeId != null && r.JobTypeId == userJobTypeId)
             ?? rules.FirstOrDefault(r => r.JobTypeId == null);
+    }
+
+    /// <summary>
+    /// Compute the eligible approver pool for a TimeOffRequest. Per-jobtype-vertical:
+    /// - Alhut/Text requesters: Lead or Director with same JobTypeId in molecule
+    /// - Hakam/BR/Other requesters: BRDirector or MoleculeAdmin in molecule
+    /// Empty-pool fallback: MoleculeAdmin users in the molecule (regardless of JobType).
+    /// Self-exclusion: requester is never in their own pool.
+    /// </summary>
+    public async Task<List<AppUser>> GetApproverPoolAsync(int requestId)
+    {
+        // SECURITY-AUDITED: IgnoreQueryFilters SAFE — pool resolution requires cross-tenant
+        // visibility (requester's molecule may span multiple companies); scoped by molecule.
+        var req = await _context.TimeOffRequests.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.Id == requestId);
+        if (req == null) return new List<AppUser>();
+
+        var requester = await _context.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == req.UserId);
+        if (requester == null) return new List<AppUser>();
+
+        var moleculeId = await _context.Companies.IgnoreQueryFilters()
+            .Where(c => c.Id == requester.CompanyId)
+            .Select(c => (int?)c.MoleculeId)
+            .FirstOrDefaultAsync();
+        if (moleculeId == null) return new List<AppUser>();
+
+        bool isAlhutOrText = requester.JobTypeId.HasValue
+            && AlhutTextJobTypeIds.Contains(requester.JobTypeId.Value);
+
+        // Load all active users in the same molecule (with their RoleTemplate)
+        var moleculeUsers = await _context.Users.IgnoreQueryFilters()
+            .Include(u => u.RoleTemplate)
+            .Join(_context.Companies.IgnoreQueryFilters(),
+                  u => u.CompanyId, c => c.Id, (u, c) => new { User = u, c.MoleculeId })
+            .Where(x => x.MoleculeId == moleculeId.Value
+                     && x.User.IsActive
+                     && x.User.Id != requester.Id)
+            .Select(x => x.User)
+            .ToListAsync();
+
+        var strictPool = moleculeUsers.Where(u =>
+        {
+            var key = u.RoleTemplate?.Key;
+            if (isAlhutOrText)
+            {
+                return (key == "Lead" || key == "Director")
+                    && u.JobTypeId == requester.JobTypeId;
+            }
+            else
+            {
+                return key == "BRDirector" || key == "MoleculeAdmin";
+            }
+        }).ToList();
+
+        if (strictPool.Count > 0) return strictPool;
+
+        // Empty-pool fallback: any MoleculeAdmin in molecule
+        return moleculeUsers
+            .Where(u => u.RoleTemplate?.Key == "MoleculeAdmin")
+            .ToList();
     }
 }

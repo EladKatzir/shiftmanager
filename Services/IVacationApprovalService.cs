@@ -46,4 +46,13 @@ public interface IVacationApprovalService
     /// </summary>
     Task<(bool Success, string Message)> UpdateRequestDatesAsync(
         int requestId, DateOnly newStart, DateOnly newEnd, int actorUserId);
+
+    /// <summary>
+    /// Compute the eligible approver pool for a TimeOffRequest. Per-jobtype-vertical:
+    /// - Alhut/Text requesters: Lead or Director with same JobTypeId in molecule
+    /// - Hakam/BR/Other requesters: BRDirector or MoleculeAdmin in molecule
+    /// Empty-pool fallback: MoleculeAdmin users in the molecule (regardless of JobType).
+    /// Self-exclusion: requester is never in their own pool.
+    /// </summary>
+    Task<List<AppUser>> GetApproverPoolAsync(int requestId);
 }
