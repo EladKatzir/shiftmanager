@@ -29,6 +29,19 @@ public class DailyNotificationJob : BackgroundService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Batch T (F-R-007): atomic acquire of the per-process job lock. Returns true
+    /// if this caller acquired the lock, false if a previous iteration is still running.
+    /// Wraps the raw Interlocked.CompareExchange so the intent ("am I allowed to start?")
+    /// is obvious at the call site.
+    /// </summary>
+    private bool TryAcquireRunningLock() => Interlocked.CompareExchange(ref _isRunning, 1, 0) == 0;
+
+    /// <summary>
+    /// Batch T (F-R-007): release the per-process job lock. Idempotent.
+    /// </summary>
+    private void ReleaseRunningLock() => Interlocked.Exchange(ref _isRunning, 0);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Daily Notification Job started");
@@ -67,7 +80,7 @@ public class DailyNotificationJob : BackgroundService
             }
 
             // C-04: Skip if previous iteration is still running
-            if (Interlocked.CompareExchange(ref _isRunning, 1, 0) != 0)
+            if (!TryAcquireRunningLock())
             {
                 _logger.LogWarning("Daily digest processing still running from previous iteration, skipping this cycle");
                 await Task.Delay(_checkInterval, stoppingToken);
@@ -101,7 +114,7 @@ public class DailyNotificationJob : BackgroundService
             }
             finally
             {
-                Interlocked.Exchange(ref _isRunning, 0);
+                ReleaseRunningLock();
             }
 
             // Wait for next check interval

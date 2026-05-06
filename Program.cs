@@ -596,7 +596,12 @@ using (var scope = app.Services.CreateScope())
             app.Environment.EnvironmentName);
     }
 
-    // Also support environment variable override for backward compatibility
+    // Configuration precedence (Batch T / F-A-019): SEED_ADMIN_PASSWORD env var
+    // takes priority OVER appsettings.json (Seeding:Owner:Password) when both are
+    // set. This is the canonical pattern for production deployments — sensitive
+    // credentials should be supplied via env vars (or container secrets, IIS
+    // application settings, etc.) and the appsettings value treated as a default
+    // for local dev only. The same pattern applies to SEED_DIRECTOR_PASSWORD below.
     var envPassword = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD");
     if (!string.IsNullOrEmpty(envPassword))
     {
