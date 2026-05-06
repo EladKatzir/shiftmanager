@@ -1546,6 +1546,75 @@ using (var scope = app.Services.CreateScope())
     }
 
     // ============================================================
+    // HOME UNIFICATION: Backfill Anchor field in legacy DerivedRotationRule JSONs
+    // (Pre-Task-11 HomeTypes have rules without an Anchor field; deserialise
+    // returns Anchor=default(DateOnly) which is 0001-01-01. Detect and rewrite.)
+    // ============================================================
+    try
+    {
+        var legacyHomeTypes = await db.HomeTypes
+            .IgnoreQueryFilters()
+            .Where(h => h.DerivedRule != null && h.DerivedRule != "")
+            .ToListAsync();
+
+        var jsonOpts = new System.Text.Json.JsonSerializerOptions
+        {
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
+
+        int rewritten = 0;
+        foreach (var ht in legacyHomeTypes)
+        {
+            DerivedRotationRule? rule;
+            try
+            {
+                rule = System.Text.Json.JsonSerializer.Deserialize<DerivedRotationRule>(ht.DerivedRule!, jsonOpts);
+            }
+            catch
+            {
+                continue; // malformed JSON — skip; admin will need to recreate the rule
+            }
+
+            if (rule == null || rule.Anchor != default) continue;
+
+            DateOnly anchor;
+            if (!string.IsNullOrEmpty(ht.PatternJson))
+            {
+                List<string>? paintedRaw = null;
+                try { paintedRaw = System.Text.Json.JsonSerializer.Deserialize<List<string>>(ht.PatternJson); } catch { }
+                var painted = (paintedRaw ?? new List<string>())
+                    .Select(s => DateOnly.TryParse(s, out var d) ? (DateOnly?)d : null)
+                    .Where(d => d.HasValue)
+                    .Select(d => d!.Value)
+                    .ToList();
+                anchor = painted.Any()
+                    ? painted.Min().AddDays(-(((int)painted.Min().DayOfWeek + 6) % 7))
+                    : new DateOnly(2026, 1, 5); // fallback: a known Monday in the project's active period
+            }
+            else
+            {
+                anchor = new DateOnly(2026, 1, 5);
+            }
+
+            var fixedRule = new DerivedRotationRule(
+                rule.CycleWeeks, rule.HomeDays, rule.WeekOffsets,
+                anchor, rule.StartTime, rule.EndTime);
+            ht.DerivedRule = System.Text.Json.JsonSerializer.Serialize(fixedRule, jsonOpts);
+            rewritten++;
+        }
+
+        if (rewritten > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("Backfilled DerivedRotationRule.Anchor for {Count} legacy HomeTypes", rewritten);
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "DerivedRotationRule.Anchor backfill failed");
+    }
+
+    // ============================================================
     // HOME UNIFICATION: Seed MoleculeApprovalSettings for every molecule
     // ============================================================
     try
