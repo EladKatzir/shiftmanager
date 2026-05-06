@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -482,7 +483,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ShiftAssignedSubject"], _localization.FormatMediumDate(shiftDate));
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_ShiftAssignedSubject"], _localization.FormatMediumDate(shiftDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -505,7 +506,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_ShiftAssignedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ShiftAssignedBody"]}</p>
 
             <div class='shift-details'>
@@ -546,7 +547,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ShiftChangedSubject"], _localization.FormatMediumDate(shiftDate));
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_ShiftChangedSubject"], _localization.FormatMediumDate(shiftDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -570,7 +571,7 @@ public class MailService : IMailService
             <h2>⚠️ {_localizer["Email_ShiftChangedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ShiftChangedBody"]}</p>
 
             <div class='shift-details'>
@@ -614,7 +615,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ShiftDeletedSubject"], _localization.FormatMediumDate(shiftDate));
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_ShiftDeletedSubject"], _localization.FormatMediumDate(shiftDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -637,7 +638,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_ShiftDeletedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ShiftDeletedBody"]}</p>
 
             <div class='shift-details'>
@@ -675,7 +676,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ChoreAssignedSubject"], _localization.FormatMediumDate(choreDate));
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_ChoreAssignedSubject"], _localization.FormatMediumDate(choreDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -698,7 +699,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_ChoreAssignedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ChoreAssignedBody"]}</p>
 
             <div class='chore-details'>
@@ -735,7 +736,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_ChoreCanceledSubject"], _localization.FormatMediumDate(choreDate));
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_ChoreCanceledSubject"], _localization.FormatMediumDate(choreDate));
 
         string htmlBody = $@"
 <!DOCTYPE html>
@@ -758,7 +759,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_ChoreCanceledTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ChoreCanceledBody"]}</p>
 
             <div class='chore-details'>
@@ -796,7 +797,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_AccountApprovedSubject"], companyName);
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_AccountApprovedSubject"], companyName);
 
         // Check for custom template
         var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.AccountApproved);
@@ -840,10 +841,10 @@ public class MailService : IMailService
         </div>
         <div class='content'>
             <div class='welcome-box'>
-                <h3>{string.Format(_localizer["Email_WelcomeToCompany"], WebUtility.HtmlEncode(companyName))}</h3>
+                <h3>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_WelcomeToCompany"], WebUtility.HtmlEncode(companyName))}</h3>
             </div>
 
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(userName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(userName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='account-details'>
@@ -886,7 +887,7 @@ public class MailService : IMailService
             ? _localization.FormatMediumDate(startDate)
             : $"{_localization.FormatMediumDate(startDate)} - {_localization.FormatMediumDate(endDate)}";
 
-        string subject = string.Format(_localizer["Email_TimeOffApprovedSubject"], dateRange);
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_TimeOffApprovedSubject"], dateRange);
 
         // Check for custom template
         var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.TimeOffApproved);
@@ -928,7 +929,7 @@ public class MailService : IMailService
             <h2>✓ {_localizer["Email_TimeOffApprovedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='timeoff-details'>
@@ -968,7 +969,7 @@ public class MailService : IMailService
             ? _localization.FormatMediumDate(startDate)
             : $"{_localization.FormatMediumDate(startDate)} - {_localization.FormatMediumDate(endDate)}";
 
-        string subject = string.Format(_localizer["Email_TimeOffDeclinedSubject"], dateRange);
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_TimeOffDeclinedSubject"], dateRange);
 
         // Check for custom template
         var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.TimeOffDeclined);
@@ -1010,7 +1011,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_TimeOffDeclinedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='timeoff-details'>
@@ -1050,7 +1051,7 @@ public class MailService : IMailService
             ? _localization.FormatMediumDate(startDate)
             : $"{_localization.FormatMediumDate(startDate)} - {_localization.FormatMediumDate(endDate)}";
 
-        string subject = string.Format(_localizer["Email_TimeOffDeletedSubject"], dateRange);
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_TimeOffDeletedSubject"], dateRange);
 
         // Check for custom template
         var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.TimeOffDeleted);
@@ -1092,7 +1093,7 @@ public class MailService : IMailService
             <h2>⚠️ {_localizer["Email_TimeOffDeletedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='timeoff-details'>
@@ -1167,7 +1168,7 @@ public class MailService : IMailService
             <h2>✓ {_localizer["Email_SwapRequestApprovedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='swap-details'>
@@ -1243,7 +1244,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_SwapRequestDeclinedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='swap-details'>
@@ -1279,7 +1280,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_OnDutyAssignedSubject"], _localization.FormatMediumDate(onDutyDate));
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_OnDutyAssignedSubject"], _localization.FormatMediumDate(onDutyDate));
 
         // Check for custom template
         var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.OnDutyAssigned);
@@ -1321,7 +1322,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_OnDutyAssignedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='onduty-details'>
@@ -1357,7 +1358,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_OnDutyCanceledSubject"], _localization.FormatMediumDate(onDutyDate));
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_OnDutyCanceledSubject"], _localization.FormatMediumDate(onDutyDate));
 
         // Check for custom template
         var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.OnDutyCanceled);
@@ -1399,7 +1400,7 @@ public class MailService : IMailService
             <h2>⚠️ {_localizer["Email_OnDutyCanceledTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='onduty-details'>
@@ -1436,7 +1437,7 @@ public class MailService : IMailService
         }
 
         var emailDir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
-        string subject = string.Format(_localizer["Email_AccessRequestSubmittedSubject"], requesterName);
+        string subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_AccessRequestSubmittedSubject"], requesterName);
 
         // Check for custom template
         var customMessage = await _emailTemplateService.GetCustomMessageAsync(EmailTemplateType.AccessRequestSubmitted);
@@ -1480,7 +1481,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_AccessRequestSubmittedTitle"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(ownerName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(ownerName)}</strong>")},</p>
             <p>{messageBody}</p>
 
             <div class='request-details'>
@@ -1509,7 +1510,7 @@ public class MailService : IMailService
     public async Task<OperationResult> SendTraineeAddedEmailAsync(string recipientEmail, string employeeName,
         string traineeName, string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime)
     {
-        var subject = string.Format(_localizer["Email_TraineeAdded_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
+        var subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_TraineeAdded_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
 
         var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -1530,11 +1531,11 @@ public class MailService : IMailService
             <h2>{_localizer["Email_TraineeAdded_Title"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_TraineeAdded_Body"]}</p>
 
             <div class='highlight'>
-                {string.Format(_localizer["Email_TraineeAdded_Highlight"], $"<strong>{WebUtility.HtmlEncode(traineeName)}</strong>")}
+                {string.Format(CultureInfo.CurrentCulture, _localizer["Email_TraineeAdded_Highlight"], $"<strong>{WebUtility.HtmlEncode(traineeName)}</strong>")}
             </div>
 
             <div class='details'>
@@ -1558,7 +1559,7 @@ public class MailService : IMailService
     public async Task<OperationResult> SendSlotRemovedEmailAsync(string recipientEmail, string employeeName,
         string shiftTypeName, DateOnly shiftDate, TimeOnly startTime, TimeOnly endTime, string reason)
     {
-        var subject = string.Format(_localizer["Email_SlotRemoved_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
+        var subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_SlotRemoved_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
 
         var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -1579,7 +1580,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_SlotRemoved_Title"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_SlotRemoved_Body"]}</p>
 
             <div class='details'>
@@ -1607,7 +1608,7 @@ public class MailService : IMailService
     public async Task<OperationResult> SendShiftModifiedEmailAsync(string recipientEmail, string employeeName,
         string shiftTypeName, DateOnly shiftDate, string changeDescription)
     {
-        var subject = string.Format(_localizer["Email_ShiftModified_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
+        var subject = string.Format(CultureInfo.CurrentCulture, _localizer["Email_ShiftModified_Subject"], shiftTypeName, _localization.FormatMediumDate(shiftDate));
 
         var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -1628,7 +1629,7 @@ public class MailService : IMailService
             <h2>{_localizer["Email_ShiftModified_Title"]}</h2>
         </div>
         <div class='content'>
-            <p>{string.Format(_localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
+            <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(employeeName)}</strong>")},</p>
             <p>{_localizer["Email_ShiftModified_Body"]}</p>
 
             <div class='details'>
