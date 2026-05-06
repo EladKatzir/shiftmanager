@@ -8947,6 +8947,18 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="VacationApproval_DatesUpdated" xml:space="preserve">
     <value>Request dates updated</value>
   </data>
+  <data name="VacationApproval_NotEligibleTier" xml:space="preserve">
+    <value>You are not in the approver pool for this request</value>
+  </data>
+  <data name="VacationApproval_TierAlreadyApproved" xml:space="preserve">
+    <value>Your tier has already approved this request</value>
+  </data>
+  <data name="VacationApproval_RequesterNotFound" xml:space="preserve">
+    <value>Requester not found</value>
+  </data>
+  <data name="VacationApproval_ApproverNotFound" xml:space="preserve">
+    <value>Approver not found</value>
+  </data>
   <!-- SeedData Page -->
   <data name="SeedData_Title" xml:space="preserve">
     <value>Seed Data</value>

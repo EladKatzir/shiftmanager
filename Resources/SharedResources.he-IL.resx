@@ -8913,6 +8913,18 @@
   <data name="VacationApproval_DatesUpdated" xml:space="preserve">
     <value>תאריכי הבקשה עודכנו</value>
   </data>
+  <data name="VacationApproval_NotEligibleTier" xml:space="preserve">
+    <value>אתה לא בקבוצת המאשרים לבקשה זו</value>
+  </data>
+  <data name="VacationApproval_TierAlreadyApproved" xml:space="preserve">
+    <value>השכבה שלך כבר אישרה את הבקשה</value>
+  </data>
+  <data name="VacationApproval_RequesterNotFound" xml:space="preserve">
+    <value>המבקש לא נמצא</value>
+  </data>
+  <data name="VacationApproval_ApproverNotFound" xml:space="preserve">
+    <value>המאשר לא נמצא</value>
+  </data>
   <!-- SeedData Page -->
   <data name="SeedData_Title" xml:space="preserve">
     <value>נתוני בסיס</value>

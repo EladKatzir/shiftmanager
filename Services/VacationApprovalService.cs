@@ -166,7 +166,20 @@ public class VacationApprovalService : IVacationApprovalService
     }
 
     /// <summary>
-    /// Approves a time-off request. Verifies the approver has the required grant.
+    /// Approves a time-off request. Implements the dual-approval state machine
+    /// per molecule's <see cref="MoleculeApprovalSettings.DualApprovalDayThreshold"/>:
+    /// <list type="bullet">
+    ///   <item>Vacations with length &gt; threshold require parallel dual approval
+    ///         (Lead+Director for Alhut/Text; BRDirector+MoleculeAdmin otherwise).</item>
+    ///   <item>Vacations with length ≤ threshold and all After requests use single approval.</item>
+    /// </list>
+    /// State transitions:
+    /// <list type="bullet">
+    ///   <item>Pending → first tier action → PendingSecondApproval (dual mode)</item>
+    ///   <item>PendingSecondApproval → complementary tier action → Approved</item>
+    ///   <item>Pending → tier action → Approved (single mode)</item>
+    /// </list>
+    /// Side-effects + materialiser fire only on the final Approved transition.
     /// </summary>
     public async Task<(bool Success, string Message)> ApproveAsync(int requestId, int approverId, string? notes = null)
     {
@@ -180,12 +193,7 @@ public class VacationApprovalService : IVacationApprovalService
             return (false, "VacationApproval_RequestNotFound");
         }
 
-        if (request.Status != RequestStatus.Pending)
-        {
-            return (false, "VacationApproval_AlreadyProcessed");
-        }
-
-        // SECURITY: Prevent self-approval of vacation requests
+        // SECURITY: Prevent self-approval of vacation requests (fires before tier/grant checks)
         if (request.UserId == approverId)
         {
             _logger.LogWarning(
@@ -194,7 +202,15 @@ public class VacationApprovalService : IVacationApprovalService
             return (false, "VacationApproval_CannotApproveSelf");
         }
 
-        // Verify approver has the required grant
+        // Status guard — only Pending and PendingSecondApproval can be acted on.
+        if (request.Status != RequestStatus.Pending
+            && request.Status != RequestStatus.PendingSecondApproval)
+        {
+            return (false, "VacationApproval_AlreadyProcessed");
+        }
+
+        // Verify approver has the required grant (legacy check — preserved for backward compat
+        // with rule-based approval; tier check below is the new dual-approval gating).
         bool canApprove = await CanUserApproveAsync(approverId, requestId);
         if (!canApprove)
         {
@@ -204,41 +220,179 @@ public class VacationApprovalService : IVacationApprovalService
             return (false, "VacationApproval_NotAuthorized");
         }
 
-        // Wrap approval in transaction to prevent concurrent overlapping approvals
+        // Determine whether dual approval is required for this request.
+        // After requests are always single-approval. Vacation requires dual only when
+        // length strictly exceeds the molecule's DualApprovalDayThreshold.
+        // IgnoreQueryFilters: requester/company/molecule may be cross-tenant.
+        var requester = await _context.Users.IgnoreQueryFilters()
+            .Include(u => u.RoleTemplate)
+            .FirstOrDefaultAsync(u => u.Id == request.UserId);
+        if (requester == null)
+        {
+            return (false, "VacationApproval_RequesterNotFound");
+        }
+
+        var moleculeId = await _context.Companies.IgnoreQueryFilters()
+            .Where(c => c.Id == request.CompanyId)
+            .Select(c => (int?)c.MoleculeId)
+            .FirstOrDefaultAsync();
+        var settings = moleculeId.HasValue
+            ? await _context.MoleculeApprovalSettings.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(s => s.MoleculeId == moleculeId.Value)
+            : null;
+        var threshold = settings?.DualApprovalDayThreshold ?? 7;
+
+        var lengthDays = request.EndDate.DayNumber - request.StartDate.DayNumber + 1;
+        bool requiresDual = request.Type == TimeOffType.Vacation && lengthDays > threshold;
+
+        // Determine the approver's tier. Tiers are disjoint by RoleTemplate Key.
+        // Alhut/Text (JobTypeId 1 or 3) → first=Lead, second=Director (same JobTypeId)
+        // Other → first=BRDirector, second=MoleculeAdmin
+        var approver = await _context.Users.IgnoreQueryFilters()
+            .Include(u => u.RoleTemplate)
+            .FirstOrDefaultAsync(u => u.Id == approverId);
+        if (approver == null)
+        {
+            return (false, "VacationApproval_ApproverNotFound");
+        }
+
+        bool isAlhutOrText = requester.JobTypeId.HasValue
+            && AlhutTextJobTypeIds.Contains(requester.JobTypeId.Value);
+        var approverKey = approver.RoleTemplate?.Key;
+
+        bool approverIsFirstTier;
+        bool approverIsSecondTier;
+        if (isAlhutOrText)
+        {
+            approverIsFirstTier = approverKey == "Lead"
+                && approver.JobTypeId == requester.JobTypeId;
+            approverIsSecondTier = approverKey == "Director"
+                && approver.JobTypeId == requester.JobTypeId;
+        }
+        else
+        {
+            approverIsFirstTier = approverKey == "BRDirector";
+            approverIsSecondTier = approverKey == "MoleculeAdmin";
+        }
+
+        // For single-approval (≤ threshold or After), tier eligibility is relaxed —
+        // the legacy CanUserApproveAsync grant gate above is sufficient. Only enforce
+        // tier membership when dual approval applies.
+        if (requiresDual && !approverIsFirstTier && !approverIsSecondTier)
+        {
+            _logger.LogWarning(
+                "User {ApproverId} (key={Key}) is not in the dual-approval tier pool for request {RequestId}",
+                approverId, approverKey, requestId);
+            return (false, "VacationApproval_NotEligibleTier");
+        }
+
+        // Wrap state-machine transition in a transaction for concurrency safety.
         using var transaction = await _context.Database.BeginTransactionAsync();
+        bool finalApproved = false;
         try
         {
-            // Re-check status inside transaction (may have changed concurrently)
+            // Re-fetch inside transaction.
             var freshRequest = await _context.TimeOffRequests
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(r => r.Id == requestId);
-            if (freshRequest == null || freshRequest.Status != RequestStatus.Pending)
+            if (freshRequest == null
+                || (freshRequest.Status != RequestStatus.Pending
+                    && freshRequest.Status != RequestStatus.PendingSecondApproval))
             {
                 await transaction.RollbackAsync();
                 return (false, "VacationApproval_AlreadyProcessed");
             }
 
-            // Check for overlapping APPROVED requests for the same user
-            var hasOverlap = await _context.TimeOffRequests
-                .IgnoreQueryFilters()
-                .AnyAsync(r => r.UserId == freshRequest.UserId
-                    && r.Id != requestId
-                    && r.Status == RequestStatus.Approved
-                    && r.StartDate <= freshRequest.EndDate
-                    && r.EndDate >= freshRequest.StartDate);
+            // Overlap check applies only to the FINAL approval transition (when status will
+            // become Approved). For intermediate Pending → PendingSecondApproval transitions,
+            // skip the overlap check — it will be re-evaluated on the second approval.
+            bool willFinalApprove = !requiresDual
+                || freshRequest.Status == RequestStatus.PendingSecondApproval;
 
-            if (hasOverlap)
+            if (willFinalApprove)
             {
-                await transaction.RollbackAsync();
-                _logger.LogWarning(
-                    "Cannot approve request {RequestId}: overlaps with an already-approved vacation for user {UserId}",
-                    requestId, freshRequest.UserId);
-                return (false, "VacationApproval_OverlappingApproved");
+                var hasOverlap = await _context.TimeOffRequests
+                    .IgnoreQueryFilters()
+                    .AnyAsync(r => r.UserId == freshRequest.UserId
+                        && r.Id != requestId
+                        && r.Status == RequestStatus.Approved
+                        && r.StartDate <= freshRequest.EndDate
+                        && r.EndDate >= freshRequest.StartDate);
+
+                if (hasOverlap)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogWarning(
+                        "Cannot approve request {RequestId}: overlaps with an already-approved vacation for user {UserId}",
+                        requestId, freshRequest.UserId);
+                    return (false, "VacationApproval_OverlappingApproved");
+                }
             }
 
-            // Update the request
-            freshRequest.Status = RequestStatus.Approved;
-            freshRequest.ApproverId = approverId;
+            var now = DateTime.UtcNow;
+
+            if (!requiresDual)
+            {
+                // Single-approval flow: any tier-eligible (or grant-holding) approver finishes.
+                // Status must be Pending here — PendingSecondApproval is unreachable in single mode.
+                if (freshRequest.Status != RequestStatus.Pending)
+                {
+                    await transaction.RollbackAsync();
+                    return (false, "VacationApproval_AlreadyProcessed");
+                }
+                freshRequest.Status = RequestStatus.Approved;
+                freshRequest.ApproverId = approverId;
+                freshRequest.FirstApprovalActorId = approverId;
+                freshRequest.FirstApprovalActedAt = now;
+                finalApproved = true;
+            }
+            else
+            {
+                // Dual-approval flow.
+                if (freshRequest.Status == RequestStatus.Pending)
+                {
+                    // First action by either tier → record on the matching slot, advance to
+                    // PendingSecondApproval awaiting the complementary tier.
+                    if (approverIsFirstTier)
+                    {
+                        freshRequest.FirstApprovalActorId = approverId;
+                        freshRequest.FirstApprovalActedAt = now;
+                    }
+                    else // approverIsSecondTier (guaranteed by the eligibility check above)
+                    {
+                        freshRequest.SecondApprovalActorId = approverId;
+                        freshRequest.SecondApprovalActedAt = now;
+                    }
+                    freshRequest.Status = RequestStatus.PendingSecondApproval;
+                    finalApproved = false;
+                }
+                else // PendingSecondApproval
+                {
+                    if (approverIsFirstTier && freshRequest.FirstApprovalActorId == null)
+                    {
+                        freshRequest.FirstApprovalActorId = approverId;
+                        freshRequest.FirstApprovalActedAt = now;
+                        freshRequest.Status = RequestStatus.Approved;
+                        freshRequest.ApproverId = approverId;
+                        finalApproved = true;
+                    }
+                    else if (approverIsSecondTier && freshRequest.SecondApprovalActorId == null)
+                    {
+                        freshRequest.SecondApprovalActorId = approverId;
+                        freshRequest.SecondApprovalActedAt = now;
+                        freshRequest.Status = RequestStatus.Approved;
+                        freshRequest.ApproverId = approverId;
+                        finalApproved = true;
+                    }
+                    else
+                    {
+                        // Same tier already approved — block the duplicate action.
+                        await transaction.RollbackAsync();
+                        return (false, "VacationApproval_TierAlreadyApproved");
+                    }
+                }
+            }
+
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
         }
@@ -250,21 +404,30 @@ public class VacationApprovalService : IVacationApprovalService
         }
 
         _logger.LogInformation(
-            "Request {RequestId} approved by user {ApproverId}",
-            requestId, approverId);
+            "Request {RequestId} approval action by user {ApproverId} (finalApproved={FinalApproved})",
+            requestId, approverId, finalApproved);
 
-        // Process post-approval side effects (shift removal, trainee cancel, notification)
-        try
+        // Side-effects + materialiser only on the final → Approved transition.
+        if (finalApproved)
         {
-            await ProcessApprovalSideEffectsAsync(requestId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Side effects failed for approved request {RequestId}. Manual remediation may be needed.", requestId);
-        }
+            try
+            {
+                await ProcessApprovalSideEffectsAsync(requestId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Side effects failed for approved request {RequestId}. Manual remediation may be needed.", requestId);
+            }
 
-        // Sync materialised HOME rows for the approval
-        await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+            try
+            {
+                await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Materialiser failed for approved request {RequestId}", requestId);
+            }
+        }
 
         return (true, "VacationApproval_Approved");
     }
@@ -284,7 +447,10 @@ public class VacationApprovalService : IVacationApprovalService
             return (false, "VacationApproval_RequestNotFound");
         }
 
-        if (request.Status != RequestStatus.Pending)
+        // Decline is allowed from either Pending OR PendingSecondApproval — either tier
+        // (or any grant-holder) can reject the request and abort the flow.
+        if (request.Status != RequestStatus.Pending
+            && request.Status != RequestStatus.PendingSecondApproval)
         {
             return (false, "VacationApproval_AlreadyProcessed");
         }
@@ -307,7 +473,9 @@ public class VacationApprovalService : IVacationApprovalService
             var freshRequest = await _context.TimeOffRequests
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(r => r.Id == requestId);
-            if (freshRequest == null || freshRequest.Status != RequestStatus.Pending)
+            if (freshRequest == null
+                || (freshRequest.Status != RequestStatus.Pending
+                    && freshRequest.Status != RequestStatus.PendingSecondApproval))
             {
                 await transaction.RollbackAsync();
                 return (false, "VacationApproval_AlreadyProcessed");

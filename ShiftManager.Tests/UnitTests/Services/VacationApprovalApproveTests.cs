@@ -1,11 +1,13 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 using ShiftManager.Services;
 
 namespace ShiftManager.Tests.UnitTests.Services;
@@ -71,13 +73,23 @@ public class VacationApprovalApproveTests : IDisposable
             .Setup(m => m.RestoreRotationHomeAsync(It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
             .Returns(Task.CompletedTask);
 
+        var auditLogServiceMock = new Mock<IAuditLogService>();
+        var localizerMock = new Mock<IStringLocalizer<SharedResources>>();
+        // Default behavior: return a LocalizedString whose Value equals the key (so tests
+        // asserting Contain("KeyFragment") still pass against either raw keys or localizer results).
+        localizerMock
+            .Setup(l => l[It.IsAny<string>()])
+            .Returns((string name) => new LocalizedString(name, name));
+
         _service = new VacationApprovalService(
             _db,
             _grantServiceMock.Object,
             loggerMock.Object,
             notificationServiceMock.Object,
             traineeServiceMock.Object,
-            _materialiserMock.Object);
+            _materialiserMock.Object,
+            auditLogServiceMock.Object,
+            localizerMock.Object);
     }
 
     public void Dispose()
