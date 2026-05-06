@@ -49,13 +49,19 @@ public class IndexModel : PageModel
     [BindProperty] public string Name { get; set; } = string.Empty;
     [BindProperty] public string? NameHe { get; set; }
     [BindProperty] public int CreateMoleculeId { get; set; }
-    [BindProperty] public string? PatternJson { get; set; }
+
+    // Rule-config bind properties (replace painter)
+    [BindProperty] public int RuleCycleWeeks { get; set; } = 4;
+    [BindProperty] public List<DayOfWeek> RuleHomeDays { get; set; } = new();
+    [BindProperty] public List<int> RuleWeekOffsets { get; set; } = new() { 0 };
+    [BindProperty] public DateOnly RuleAnchor { get; set; } = NextMonday();
+    [BindProperty] public DateOnly? RuleActiveStart { get; set; }
+    [BindProperty] public DateOnly? RuleActiveEnd { get; set; }
 
     // Edit form
     [BindProperty] public int EditId { get; set; }
     [BindProperty] public string EditName { get; set; } = string.Empty;
     [BindProperty] public string? EditNameHe { get; set; }
-    [BindProperty] public string? EditPatternJson { get; set; }
 
     // Generate form
     [BindProperty] public int GenerateHomeTypeId { get; set; }
@@ -78,6 +84,25 @@ public class IndexModel : PageModel
     public record AvailableUserInfo(int UserId, string DisplayName, int? CurrentHomeTypeId, string? CurrentHomeTypeName);
     public Dictionary<int, List<AssignedUserInfo>> AssignedUsersPerHomeType { get; set; } = new();
     public List<AvailableUserInfo> AvailableUsersInMolecule { get; set; } = new();
+
+    // Banner data (Task 26)
+    public class HomeTypeBanner
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public bool NeedsRegen { get; set; }
+        public DateTime? LastGeneratedAt { get; set; }
+        public int UserCount { get; set; }
+    }
+    public List<HomeTypeBanner> Banners { get; set; } = new();
+
+    private static DateOnly NextMonday()
+    {
+        var t = DateOnly.FromDateTime(DateTime.Today);
+        var daysUntilMonday = ((int)DayOfWeek.Monday - (int)t.DayOfWeek + 7) % 7;
+        if (daysUntilMonday == 0) daysUntilMonday = 7;
+        return t.AddDays(daysUntilMonday);
+    }
 
     public async Task OnGetAsync()
     {
@@ -153,6 +178,38 @@ public class IndexModel : PageModel
                 .Select(u => u with { CurrentHomeTypeName = u.CurrentHomeTypeId.HasValue && htNameLookup.ContainsKey(u.CurrentHomeTypeId.Value)
                     ? htNameLookup[u.CurrentHomeTypeId.Value] : null })
                 .ToList();
+
+            // Compute regen banners (Task 26)
+            // SECURITY-AUDITED: SAFE — scoped to MoleculeId we already resolved for the page
+            var bannerSource = await _db.HomeTypes
+                .IgnoreQueryFilters()
+                .Where(h => h.MoleculeId == MoleculeId.Value)
+                .Select(h => new
+                {
+                    h.Id,
+                    h.Name,
+                    h.LastGeneratedAt,
+                    h.UpdatedAt
+                })
+                .ToListAsync();
+
+            var userCounts = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.HomeTypeId.HasValue && bannerSource.Select(b => b.Id).Contains(u.HomeTypeId.Value) && u.IsActive)
+                .GroupBy(u => u.HomeTypeId!.Value)
+                .Select(g => new { HomeTypeId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.HomeTypeId, x => x.Count);
+
+            Banners = bannerSource
+                .Select(h => new HomeTypeBanner
+                {
+                    Id = h.Id,
+                    Name = h.Name,
+                    NeedsRegen = h.LastGeneratedAt == null || h.UpdatedAt > h.LastGeneratedAt,
+                    LastGeneratedAt = h.LastGeneratedAt,
+                    UserCount = userCounts.TryGetValue(h.Id, out var c) ? c : 0
+                })
+                .ToList();
         }
     }
 
@@ -162,9 +219,14 @@ public class IndexModel : PageModel
         if (!int.TryParse(userIdClaim, out var currentUserId))
             return RedirectToPage();
 
-        // Parse painted dates and derive rule
-        var paintedDates = ParseDatesFromJson(PatternJson);
-        var rule = _homeTypeService.DeriveRuleFromPattern(paintedDates);
+        // Build rule directly from bind properties (Task 25 — rule-first editor)
+        var rule = new DerivedRotationRule(
+            CycleWeeks: Math.Clamp(RuleCycleWeeks, 1, 12),
+            HomeDays: RuleHomeDays?.Distinct().ToList() ?? new List<DayOfWeek>(),
+            WeekOffsets: RuleWeekOffsets?.Distinct().Where(i => i >= 0 && i < Math.Clamp(RuleCycleWeeks, 1, 12)).ToList() ?? new List<int>(),
+            Anchor: RuleAnchor,
+            StartTime: null,
+            EndTime: null);
 
         // Resolve CompanyId from molecule
         var molecule = await _db.Molecules.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == CreateMoleculeId);
@@ -186,8 +248,9 @@ public class IndexModel : PageModel
             NameHe = NameHe?.Trim(),
             MoleculeId = CreateMoleculeId,
             CompanyId = companyId,
-            PatternJson = PatternJson,
-            DerivedRule = rule != null ? JsonSerializer.Serialize(rule) : null,
+            PatternJson = null, // legacy column unused for new rules
+            DerivedRule = JsonSerializer.Serialize(rule),
+            UpdatedAt = DateTime.UtcNow,
             CreatedBy = currentUserId
         };
 
@@ -209,13 +272,18 @@ public class IndexModel : PageModel
         ht.Name = EditName.Trim();
         ht.NameHe = EditNameHe?.Trim();
 
-        if (!string.IsNullOrEmpty(EditPatternJson))
-        {
-            ht.PatternJson = EditPatternJson;
-            var paintedDates = ParseDatesFromJson(EditPatternJson);
-            var rule = _homeTypeService.DeriveRuleFromPattern(paintedDates);
-            ht.DerivedRule = rule != null ? JsonSerializer.Serialize(rule) : null;
-        }
+        // Build rule from bind properties (Task 25 — rule-first editor)
+        var rule = new DerivedRotationRule(
+            CycleWeeks: Math.Clamp(RuleCycleWeeks, 1, 12),
+            HomeDays: RuleHomeDays?.Distinct().ToList() ?? new List<DayOfWeek>(),
+            WeekOffsets: RuleWeekOffsets?.Distinct().Where(i => i >= 0 && i < Math.Clamp(RuleCycleWeeks, 1, 12)).ToList() ?? new List<int>(),
+            Anchor: RuleAnchor,
+            StartTime: null,
+            EndTime: null);
+
+        ht.DerivedRule = JsonSerializer.Serialize(rule);
+        ht.PatternJson = null;
+        ht.UpdatedAt = DateTime.UtcNow;
 
         await _homeTypeService.UpdateHomeTypeAsync(ht);
         TempData["SuccessMessage"] = $"Updated: {ht.Name}";
@@ -239,6 +307,7 @@ public class IndexModel : PageModel
         if (ht != null)
         {
             ht.IsActive = !ht.IsActive;
+            ht.UpdatedAt = DateTime.UtcNow;
             await _homeTypeService.UpdateHomeTypeAsync(ht);
         }
         return RedirectToPage(new { MoleculeId = ht?.MoleculeId });
@@ -258,6 +327,12 @@ public class IndexModel : PageModel
         TempData["SuccessMessage"] = $"Assigned {userIds.Count} user(s)";
 
         var ht = await _homeTypeService.GetHomeTypeAsync(AssignHomeTypeId);
+        // Bump UpdatedAt — new users need shifts generated for them
+        if (ht != null)
+        {
+            ht.UpdatedAt = DateTime.UtcNow;
+            await _homeTypeService.UpdateHomeTypeAsync(ht);
+        }
         return RedirectToPage(new { MoleculeId = ht?.MoleculeId });
     }
 
@@ -299,23 +374,50 @@ public class IndexModel : PageModel
         var result = await _homeTypeService.GenerateHomeShiftsAsync(
             GenerateHomeTypeId, start, end, userIds, currentUserId, mode);
 
+        // Mark as freshly generated — clears the regen banner (Task 26)
+        var ht = await _db.HomeTypes.IgnoreQueryFilters().FirstOrDefaultAsync(h => h.Id == GenerateHomeTypeId);
+        if (ht != null)
+        {
+            ht.LastGeneratedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+
         TempData["SuccessMessage"] = $"Generated {result.Created} HOME shifts. Skipped: {result.Skipped}. Conflicts: {result.Conflicts.Count}";
 
-        var ht = await _homeTypeService.GetHomeTypeAsync(GenerateHomeTypeId);
         return RedirectToPage(new { MoleculeId = ht?.MoleculeId });
     }
 
-    private static List<DateOnly> ParseDatesFromJson(string? json)
+    // --- Per-user override handlers (Task 27) ---
+
+    public async Task<IActionResult> OnGetGetOverrideAsync(int userId, int homeTypeId)
     {
-        if (string.IsNullOrEmpty(json)) return new();
-        try
+        var dates = await _homeTypeService.GetUserOverrideDatesAsync(homeTypeId, userId);
+        return new JsonResult(new { dates = dates.Select(d => d.ToString("yyyy-MM-dd")).ToList() });
+    }
+
+    public record OverrideRequest(int UserId, int HomeTypeId, List<string> Dates);
+
+    public async Task<IActionResult> OnPostSaveOverrideAsync([FromBody] OverrideRequest req)
+    {
+        if (req == null) return BadRequest();
+
+        var dates = (req.Dates ?? new List<string>())
+            .Select(s => DateOnly.TryParse(s, out var d) ? (DateOnly?)d : null)
+            .Where(d => d.HasValue).Select(d => d!.Value).ToList();
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var actorId)) return Unauthorized();
+
+        await _homeTypeService.SaveUserOverrideAsync(req.HomeTypeId, req.UserId, dates, actorId);
+
+        // Bump UpdatedAt so the regen banner surfaces
+        var ht = await _db.HomeTypes.IgnoreQueryFilters().FirstOrDefaultAsync(h => h.Id == req.HomeTypeId);
+        if (ht != null)
         {
-            var strings = JsonSerializer.Deserialize<List<string>>(json) ?? new();
-            return strings
-                .Select(s => DateOnly.TryParse(s, out var d) ? d : default)
-                .Where(d => d != default)
-                .ToList();
+            ht.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
         }
-        catch { return new(); }
+
+        return new JsonResult(new { success = true });
     }
 }

@@ -48,6 +48,12 @@ public class HomeType : IBelongsToCompany
     /// </summary>
     public DateTime? LastGeneratedAt { get; set; }
 
+    /// <summary>
+    /// Bumped whenever the rule, pattern, or per-user override changes. Compared to LastGeneratedAt
+    /// to surface the "needs regenerate" admin banner.
+    /// </summary>
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int CreatedBy { get; set; }
 

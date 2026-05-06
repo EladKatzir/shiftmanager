@@ -33,6 +33,33 @@
     <div class="alert alert--danger">@Model.ErrorMessage</div>
 }
 
+@* Regenerate banners (Task 26) *@
+@foreach (var b in Model.Banners.Where(b => b.NeedsRegen))
+{
+    <div class="alert alert--warning regen-banner" style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+        <span style="flex: 1;">
+            &#9888; <strong>@b.Name</strong> &mdash; @b.UserCount <loc key="Users" />.
+            <loc key="HomeType_BannerNeedsRegen" />
+            @if (b.LastGeneratedAt.HasValue)
+            {
+                <span style="color: var(--text-muted); font-size: 0.85em; margin-left: var(--space-2);">
+                    @($"Last generated: {b.LastGeneratedAt.Value:yyyy-MM-dd HH:mm}")
+                </span>
+            }
+            else
+            {
+                <span style="color: var(--text-muted); font-size: 0.85em; margin-left: var(--space-2);">
+                    <loc key="HomeType_NeverGenerated" />
+                </span>
+            }
+        </span>
+        <button type="button" class="btn btn--sm btn--primary"
+                onclick="showGenerateDialog(@b.Id, '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(b.Name))')">
+            <loc key="Regenerate" />
+        </button>
+    </div>
+}
+
 <!-- Molecule selector -->
 <form method="get" class="filter-bar">
     <label><loc key="Molecule" /></label>
@@ -123,21 +150,27 @@
                             <ul style="list-style: none; padding: 0; margin: 0 0 var(--space-3) 0;">
                                 @foreach (var user in assignedUsers)
                                 {
-                                    <li style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--border);">
+                                    <li style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--border); gap: var(--space-2);">
                                         <span>@user.DisplayName</span>
-                                        <form method="post" asp-page-handler="UnassignUser" style="margin: 0;"
-                                              data-confirm-modal
-                                              data-confirm-title="@Localizer["Confirm_UnassignUser_Title"]"
-                                              data-confirm-message="@Localizer["Confirm_UnassignUser"]"
-                                              data-confirm-action="@Localizer["Remove"]"
-                                              data-confirm-level="danger">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="UnassignHomeTypeId" value="@ht.Id" />
-                                            <input type="hidden" name="UnassignUserId" value="@user.UserId" />
-                                            <button type="submit" class="btn btn--sm btn--danger">
-                                                <loc key="Remove" />
+                                        <div style="display: flex; gap: var(--space-2);">
+                                            <button type="button" class="btn btn--sm btn--outline"
+                                                    onclick="openOverrideEditor(@user.UserId, @ht.Id, '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(user.DisplayName))')">
+                                                <loc key="EditOverridePattern" />
                                             </button>
-                                        </form>
+                                            <form method="post" asp-page-handler="UnassignUser" style="margin: 0;"
+                                                  data-confirm-modal
+                                                  data-confirm-title="@Localizer["Confirm_UnassignUser_Title"]"
+                                                  data-confirm-message="@Localizer["Confirm_UnassignUser"]"
+                                                  data-confirm-action="@Localizer["Remove"]"
+                                                  data-confirm-level="danger">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="UnassignHomeTypeId" value="@ht.Id" />
+                                                <input type="hidden" name="UnassignUserId" value="@user.UserId" />
+                                                <button type="submit" class="btn btn--sm btn--danger">
+                                                    <loc key="Remove" />
+                                                </button>
+                                            </form>
+                                        </div>
                                     </li>
                                 }
                             </ul>
@@ -179,7 +212,7 @@ else if (Model.MoleculeId.HasValue)
     </div>
 }
 
-<!-- Create Form -->
+<!-- Create Form (rule-first editor — Task 25) -->
 @if (Model.MoleculeId.HasValue)
 {
     <div class="card" style="margin-top: var(--space-6);">
@@ -196,13 +229,55 @@ else if (Model.MoleculeId.HasValue)
                 <label><loc key="HebrewName" /></label>
                 <input type="text" name="NameHe" class="form-input" placeholder="@Localizer["HomeType_HeNamePlaceholder"]" />
             </div>
-            <div class="form-group">
-                <label><loc key="PaintHomeDays" /></label>
-                <div id="calendar-painter" class="home-type-calendar"></div>
-                <input type="hidden" name="PatternJson" id="pattern-json" />
+
+            <div class="rule-editor">
+                <div class="form-group">
+                    <label asp-for="RuleCycleWeeks"><loc key="HomeType_CycleWeeks" /></label>
+                    <input asp-for="RuleCycleWeeks" type="number" min="1" max="12" class="form-input" />
+                </div>
+
+                <div class="form-group">
+                    <label><loc key="HomeType_HomeDays" /></label>
+                    <div class="day-checkboxes" style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
+                        @foreach (var d in Enum.GetValues<DayOfWeek>())
+                        {
+                            <label class="checkbox-inline" style="display: inline-flex; align-items: center; gap: var(--space-1);">
+                                <input type="checkbox" name="RuleHomeDays" value="@((int)d)"
+                                       @(Model.RuleHomeDays.Contains(d) ? "checked=\"checked\"" : "") />
+                                @Localizer[d.ToString()]
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><loc key="HomeType_WeekOffsets" /></label>
+                    <div class="week-offset-checkboxes" id="week-offset-checkboxes" style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
+                        @for (int i = 0; i < Math.Max(1, Math.Min(12, Model.RuleCycleWeeks)); i++)
+                        {
+                            <label class="checkbox-inline" style="display: inline-flex; align-items: center; gap: var(--space-1);">
+                                <input type="checkbox" name="RuleWeekOffsets" value="@i"
+                                       @(Model.RuleWeekOffsets.Contains(i) ? "checked=\"checked\"" : "") />
+                                Week @(i + 1)
+                            </label>
+                        }
+                    </div>
+                    <small style="color: var(--text-muted);"><loc key="HomeType_WeekOffsets_Help" /></small>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="RuleAnchor"><loc key="HomeType_Anchor" /></label>
+                    <input asp-for="RuleAnchor" type="date" class="form-input" />
+                    <small style="color: var(--text-muted);"><loc key="HomeType_Anchor_Help" /></small>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn--primary"><loc key="Create" /></button>
+            <div class="rule-preview" style="margin-top: var(--space-4);">
+                <h4><loc key="HomeType_Preview_Title" /></h4>
+                <div id="rule-preview-calendar" class="rule-preview-calendar"></div>
+            </div>
+
+            <button type="submit" class="btn btn--primary" style="margin-top: var(--space-4);"><loc key="Create" /></button>
         </form>
     </div>
 }
@@ -236,6 +311,19 @@ else if (Model.MoleculeId.HasValue)
     </form>
 </div>
 
+<!-- Per-user override editor (Task 27) -->
+<div id="override-editor" class="modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 1000;">
+    <div class="modal-content card" style="max-width: 520px; width: 90%; padding: var(--space-4);">
+        <h5><loc key="OverrideForUser" /> <span id="override-user-name"></span></h5>
+        <p style="color: var(--text-muted);"><loc key="OverrideHelp" /></p>
+        <textarea id="override-dates" rows="6" class="form-input" placeholder="2026-05-17, 2026-05-24, ..."></textarea>
+        <div class="modal-actions" style="display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-3);">
+            <button type="button" class="btn btn--outline" onclick="closeOverrideEditor()"><loc key="Cancel" /></button>
+            <button type="button" class="btn btn--primary" onclick="saveOverride()"><loc key="Save" /></button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/home-type-calendar.js" asp-append-version="true"></script>
     <script>
@@ -252,6 +340,62 @@ else if (Model.MoleculeId.HasValue)
             var section = document.getElementById('user-section-' + htId);
             if (section) {
                 section.style.display = section.style.display === 'none' ? '' : 'none';
+            }
+        }
+
+        // Per-user override editor (Task 27)
+        async function openOverrideEditor(userId, homeTypeId, displayName) {
+            var nameSpan = document.getElementById('override-user-name');
+            if (nameSpan) nameSpan.textContent = displayName || '';
+            try {
+                var r = await fetch('/Admin/HomeTypes?handler=GetOverride&userId=' + encodeURIComponent(userId) + '&homeTypeId=' + encodeURIComponent(homeTypeId), {
+                    credentials: 'same-origin'
+                });
+                if (r.ok) {
+                    var data = await r.json();
+                    document.getElementById('override-dates').value = (data.dates || []).join(', ');
+                } else {
+                    document.getElementById('override-dates').value = '';
+                }
+            } catch (e) {
+                document.getElementById('override-dates').value = '';
+            }
+            var editor = document.getElementById('override-editor');
+            editor.dataset.userId = userId;
+            editor.dataset.homeTypeId = homeTypeId;
+            editor.style.display = 'flex';
+        }
+
+        function closeOverrideEditor() {
+            document.getElementById('override-editor').style.display = 'none';
+        }
+
+        async function saveOverride() {
+            var editor = document.getElementById('override-editor');
+            var datesRaw = document.getElementById('override-dates').value || '';
+            var dates = datesRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            var token = document.querySelector('input[name=__RequestVerificationToken]')?.value;
+            try {
+                var r = await fetch('/Admin/HomeTypes?handler=SaveOverride', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token || ''
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        userId: parseInt(editor.dataset.userId, 10),
+                        homeTypeId: parseInt(editor.dataset.homeTypeId, 10),
+                        dates: dates
+                    })
+                });
+                if (!r.ok) {
+                    alert('Failed to save override (HTTP ' + r.status + ')');
+                    return;
+                }
+                location.reload();
+            } catch (e) {
+                alert('Failed to save override: ' + e.message);
             }
         }
     </script>

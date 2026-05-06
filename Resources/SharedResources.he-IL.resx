@@ -15339,4 +15339,46 @@
   <data name="TimeOffRequest_Private_Help" xml:space="preserve">
     <value>כאשר מסומן, מאשרים אחרים בקבוצה לא יראו את הבקשה — רק האדם שתבחר.</value>
   </data>
+  <data name="HomeType_CycleWeeks" xml:space="preserve">
+    <value>אורך מחזור (שבועות)</value>
+  </data>
+  <data name="HomeType_HomeDays" xml:space="preserve">
+    <value>ימי בית בשבוע</value>
+  </data>
+  <data name="HomeType_WeekOffsets" xml:space="preserve">
+    <value>שבועות פעילים במחזור</value>
+  </data>
+  <data name="HomeType_WeekOffsets_Help" xml:space="preserve">
+    <value>בחר אילו שבועות במחזור הם שבועות בית.</value>
+  </data>
+  <data name="HomeType_Anchor" xml:space="preserve">
+    <value>תאריך עוגן (יום שני של שבוע 1)</value>
+  </data>
+  <data name="HomeType_Anchor_Help" xml:space="preserve">
+    <value>מגדיר את ראשית המחזור. ערוך רק בתחילת רוטציה חדשה.</value>
+  </data>
+  <data name="HomeType_Preview_Title" xml:space="preserve">
+    <value>תצוגה מקדימה (60 ימים הבאים)</value>
+  </data>
+  <data name="HomeType_BannerNeedsRegen" xml:space="preserve">
+    <value>התבנית עודכנה אבל משמרות בית לא נוצרו מחדש.</value>
+  </data>
+  <data name="HomeType_NeverGenerated" xml:space="preserve">
+    <value>מעולם לא יוצר</value>
+  </data>
+  <data name="Regenerate" xml:space="preserve">
+    <value>צור מחדש</value>
+  </data>
+  <data name="HomeType_UserOverrides_Toggle" xml:space="preserve">
+    <value>חריגות לפי משתמש</value>
+  </data>
+  <data name="EditOverridePattern" xml:space="preserve">
+    <value>ערוך תבנית חריגה</value>
+  </data>
+  <data name="OverrideForUser" xml:space="preserve">
+    <value>חריגה עבור</value>
+  </data>
+  <data name="OverrideHelp" xml:space="preserve">
+    <value>תאריכים מופרדים בפסיקים (yyyy-MM-dd) שמחליפים את הרוטציה הסטנדרטית למשתמש זה.</value>
+  </data>
 </root>
