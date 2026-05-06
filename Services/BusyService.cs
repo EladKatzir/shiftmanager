@@ -99,7 +99,7 @@ public class BusyService : IBusyService
                     Name: new ShiftType { Key = userShift.Key, NameEn = userShift.ShiftTypeNameEn }.Name,
                     Start: userShift.Start.ToString("HH:mm"),
                     End: userShift.End.ToString("HH:mm"),
-                    IsHome: userShift.Key == ShiftType.KEY_HOME,
+                    IsHome: userShift.Key == ShiftType.KEY_HOME || userShift.Key == ShiftType.KEY_HOME_PM || userShift.Key == ShiftType.KEY_HOME_AM,
                     IsOffline: userShift.Key == ShiftType.KEY_OFFLINE);
 
             var hasShift = userShift != null;
@@ -406,7 +406,9 @@ public class BusyService : IBusyService
                 sa.ShiftInstance.ShiftType.Start,
                 sa.ShiftInstance.ShiftType.End,
                 IsOffline = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_OFFLINE,
-                IsHome = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME,
+                IsHome = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME
+                      || sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME_PM
+                      || sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME_AM,
                 ShiftKey = sa.ShiftInstance.ShiftType.Key,
                 ShiftNameEn = sa.ShiftInstance.ShiftType.NameEn
             }).ToListAsync();

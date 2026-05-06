@@ -421,8 +421,13 @@ public class AnalyticsService : IAnalyticsService
     {
         try
         {
-            // Exclude HOME/OFFLINE shifts from coverage — they're not real operational shifts
-            var exemptKeys = new[] { ShiftManager.Models.ShiftType.KEY_HOME, ShiftManager.Models.ShiftType.KEY_OFFLINE };
+            // Exclude all HOME variants and OFFLINE from coverage — they're not real operational shifts
+            var exemptKeys = new[] {
+                ShiftManager.Models.ShiftType.KEY_HOME,
+                ShiftManager.Models.ShiftType.KEY_HOME_PM,
+                ShiftManager.Models.ShiftType.KEY_HOME_AM,
+                ShiftManager.Models.ShiftType.KEY_OFFLINE
+            };
             var instances = await _db.ShiftInstances
                 .AsNoTracking()
                 .Include(si => si.ShiftType)

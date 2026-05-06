@@ -240,11 +240,13 @@ public class HomeTypeService : IHomeTypeService
         // Handle re-generation mode
         if (mode == RegenerationMode.OverwriteAll)
         {
-            // Remove existing HOME assignments in range
+            // Remove existing HOME-family assignments in range (HOME, HOME_PM, HOME_AM)
             var existingHomeAssignments = await _db.ShiftAssignments
                 .IgnoreQueryFilters()
                 .Where(sa => sa.UserId.HasValue && userIds.Contains(sa.UserId.Value)
-                    && sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME
+                    && (sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME
+                     || sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME_PM
+                     || sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME_AM)
                     && sa.ShiftInstance.WorkDate >= startDate
                     && sa.ShiftInstance.WorkDate <= endDate)
                 .ToListAsync();
@@ -258,7 +260,9 @@ public class HomeTypeService : IHomeTypeService
                 && sa.ShiftInstance.ShiftType.Key != ShiftType.KEY_OFFLINE
                 && sa.ShiftInstance.WorkDate >= startDate
                 && sa.ShiftInstance.WorkDate <= endDate)
-            .Select(sa => new { sa.UserId, sa.ShiftInstance.WorkDate, IsHome = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME })
+            .Select(sa => new { sa.UserId, sa.ShiftInstance.WorkDate, IsHome = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME
+                                                                                  || sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME_PM
+                                                                                  || sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME_AM })
             .ToListAsync();
 
         var existingChores = await _db.Chores
