@@ -12,6 +12,7 @@ public record DerivedRotationRule(
     int CycleWeeks,
     List<DayOfWeek> HomeDays,
     List<int> WeekOffsets,  // 0-based week indices within the cycle that are "home" weeks
+    DateOnly Anchor,           // Monday of week 1 of the cycle (deterministic origin)
     TimeOnly? StartTime,
     TimeOnly? EndTime
 );

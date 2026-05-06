@@ -137,7 +137,11 @@ public class HomeTypeService : IHomeTypeService
         // Normalize week offsets within the cycle
         var weekOffsets = weekIndices.Select(w => w % cycleWeeks).Distinct().OrderBy(w => w).ToList();
 
-        return new DerivedRotationRule(cycleWeeks, homeDays, weekOffsets, null, null);
+        // Compute anchor as the Monday of the earliest painted date
+        var earliest = paintedDates.Min();
+        var anchor = earliest.AddDays(-(((int)earliest.DayOfWeek + 6) % 7));
+
+        return new DerivedRotationRule(cycleWeeks, homeDays, weekOffsets, anchor, null, null);
     }
 
     public async Task<List<AppUser>> GetUsersForHomeTypeAsync(int homeTypeId)
