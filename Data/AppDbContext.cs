@@ -49,6 +49,7 @@ public class AppDbContext : DbContext
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
     public DbSet<HomeType> HomeTypes => Set<HomeType>();
     public DbSet<HomeTypeOverride> HomeTypeOverrides => Set<HomeTypeOverride>();
+    public DbSet<MoleculeApprovalSettings> MoleculeApprovalSettings => Set<MoleculeApprovalSettings>();
 
     // Justice Analytics (2026-05-03): configurable per-(work-type, scope) workload targets
     // for the Analytics page. CompanyId nullable; tenant filter follows EmailConfig pattern.
@@ -276,6 +277,19 @@ public class AppDbContext : DbContext
         // Multitenancy Phase 1: Add composite index for TimeOffRequests
         modelBuilder.Entity<TimeOffRequest>()
             .HasIndex(t => new { t.CompanyId, t.UserId, t.StartDate });
+
+        // HOME unification: per-molecule approval settings
+        modelBuilder.Entity<MoleculeApprovalSettings>(b => {
+            b.HasOne(m => m.Molecule)
+                .WithMany()
+                .HasForeignKey(m => m.MoleculeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(m => m.UpdatedBy)
+                .WithMany()
+                .HasForeignKey(m => m.UpdatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            b.HasIndex(m => m.MoleculeId).IsUnique();
+        });
 
         // HOME unification: dual-approval actor tracking
         modelBuilder.Entity<TimeOffRequest>()

@@ -1544,6 +1544,35 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogError(ex, "Role-scope migration failed (Kabar/Lead/Assigner chore policy)");
     }
+
+    // ============================================================
+    // HOME UNIFICATION: Seed MoleculeApprovalSettings for every molecule
+    // ============================================================
+    try
+    {
+        var moleculeIds = await db.Molecules.Select(m => m.Id).ToListAsync();
+        var existingMoleculeIds = await db.MoleculeApprovalSettings.Select(s => s.MoleculeId).ToListAsync();
+        var systemUserId = await db.Users.IgnoreQueryFilters()
+            .Where(u => u.Role == UserRole.Owner)
+            .Select(u => u.Id)
+            .FirstOrDefaultAsync();
+        if (systemUserId == 0) systemUserId = 1; // fallback if no owner exists yet
+        foreach (var mid in moleculeIds.Except(existingMoleculeIds))
+        {
+            db.MoleculeApprovalSettings.Add(new MoleculeApprovalSettings
+            {
+                MoleculeId = mid,
+                DualApprovalDayThreshold = 7,
+                UpdatedAt = DateTime.UtcNow,
+                UpdatedByUserId = systemUserId
+            });
+        }
+        await db.SaveChangesAsync();
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "MoleculeApprovalSettings seed failed");
+    }
 }
 
 // ============================================================
