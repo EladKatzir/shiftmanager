@@ -119,6 +119,7 @@ public static class FeatureFlagSeed
             F(Flags.VacationApprovalEnabled, "Enables the vacation approval workflow including rule-based routing, auto-approve, and multi-level approval.", now),
             F(Flags.StoreHoursEnabled, "Enables the Store Hours feature including store management, opening hours, and Quick Info widget integration.", now),
             F(Flags.EmailServiceEnabled, "Global kill switch for email notifications. When disabled, no emails are sent regardless of per-company settings.", now),
+            F(Flags.HomeUnification, "Enables the unified HOME materialisation, dual-approval routing, and rule-first HomeType. Off = legacy behaviour.", now),
 
             // Localization flags — read at startup, require an app restart to take effect.
             FDisabled(Flags.HebrewDefault, "When enabled: anonymous visitors default to Hebrew, and legacy en-US cookies from the old default are auto-cleared on next visit. Read ONCE at app startup — toggling this flag in the UI requires an app restart to take effect. Disabled by default for rollback safety.", now),
@@ -246,6 +247,7 @@ public static class FeatureFlagSeed
         public const string VacationApprovalEnabled = "FF_VACATION_APPROVAL_ENABLED";
         public const string StoreHoursEnabled = "FF_STORE_HOURS_ENABLED";
         public const string EmailServiceEnabled = "FF_EMAIL_SERVICE_ENABLED";
+        public const string HomeUnification = "FF_HOME_UNIFICATION";
 
         // Localization flags (startup-only — require app restart to take effect)
         public const string HebrewDefault = "FF_HEBREW_DEFAULT";

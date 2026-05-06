@@ -47,6 +47,7 @@ public class VacationApprovalApproveTests : IDisposable
         var traineeServiceMock = new Mock<ITraineeService>();
         _materialiserMock = new Mock<IHomeMaterialiserService>();
         var loggerMock = new Mock<ILogger<VacationApprovalService>>();
+        var featureFlagServiceMock = new Mock<IFeatureFlagService>();
 
         // Default: approver has the required grant
         _grantServiceMock
@@ -73,6 +74,11 @@ public class VacationApprovalApproveTests : IDisposable
             .Setup(m => m.RestoreRotationHomeAsync(It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
             .Returns(Task.CompletedTask);
 
+        // Default: feature flag is enabled for tests
+        featureFlagServiceMock
+            .Setup(s => s.IsEnabledAsync(It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>()))
+            .ReturnsAsync(true);
+
         var auditLogServiceMock = new Mock<IAuditLogService>();
         var localizerMock = new Mock<IStringLocalizer<SharedResources>>();
         // Default behavior: return a LocalizedString whose Value equals the key (so tests
@@ -89,7 +95,8 @@ public class VacationApprovalApproveTests : IDisposable
             traineeServiceMock.Object,
             _materialiserMock.Object,
             auditLogServiceMock.Object,
-            localizerMock.Object);
+            localizerMock.Object,
+            featureFlagServiceMock.Object);
     }
 
     public void Dispose()

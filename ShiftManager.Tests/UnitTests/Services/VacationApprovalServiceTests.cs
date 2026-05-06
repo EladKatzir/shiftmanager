@@ -45,11 +45,16 @@ public class VacationApprovalServiceTests : IDisposable
         var loggerMock = new Mock<ILogger<VacationApprovalService>>();
         var auditLogServiceMock = new Mock<IAuditLogService>();
         var localizerMock = new Mock<IStringLocalizer<SharedResources>>();
+        var featureFlagServiceMock = new Mock<IFeatureFlagService>();
         // Default behavior: return a LocalizedString whose Value equals the key (so tests
         // asserting Contain("KeyFragment") still pass against either raw keys or localizer results).
         localizerMock
             .Setup(l => l[It.IsAny<string>()])
             .Returns((string name) => new LocalizedString(name, name));
+        // Default behavior: feature flag is enabled for tests
+        featureFlagServiceMock
+            .Setup(s => s.IsEnabledAsync(It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>()))
+            .ReturnsAsync(true);
 
         _service = new VacationApprovalService(
             _db,
@@ -59,7 +64,8 @@ public class VacationApprovalServiceTests : IDisposable
             _traineeServiceMock.Object,
             _materialiserMock.Object,
             auditLogServiceMock.Object,
-            localizerMock.Object);
+            localizerMock.Object,
+            featureFlagServiceMock.Object);
     }
 
     public void Dispose()

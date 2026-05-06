@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
@@ -21,6 +22,7 @@ public class VacationApprovalService : IVacationApprovalService
     private readonly IHomeMaterialiserService _materialiser;
     private readonly IAuditLogService _auditLogService;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IFeatureFlagService _featureFlagService;
 
     public VacationApprovalService(
         AppDbContext context,
@@ -30,7 +32,8 @@ public class VacationApprovalService : IVacationApprovalService
         ITraineeService traineeService,
         IHomeMaterialiserService materialiser,
         IAuditLogService auditLogService,
-        IStringLocalizer<SharedResources> localizer)
+        IStringLocalizer<SharedResources> localizer,
+        IFeatureFlagService featureFlagService)
     {
         _context = context;
         _grantService = grantService;
@@ -40,6 +43,7 @@ public class VacationApprovalService : IVacationApprovalService
         _materialiser = materialiser;
         _auditLogService = auditLogService;
         _localizer = localizer;
+        _featureFlagService = featureFlagService;
     }
 
     /// <summary>
@@ -421,7 +425,10 @@ public class VacationApprovalService : IVacationApprovalService
 
             try
             {
-                await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+                if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HomeUnification))
+                {
+                    await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+                }
             }
             catch (Exception ex)
             {
@@ -497,7 +504,10 @@ public class VacationApprovalService : IVacationApprovalService
             requestId, declinerId, reason ?? "(none)");
 
         // Sync materialised HOME rows for the decline (should clear any existing rows)
-        await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+        if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HomeUnification))
+        {
+            await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+        }
 
         return (true, "VacationApproval_Declined");
     }
@@ -707,12 +717,15 @@ public class VacationApprovalService : IVacationApprovalService
         _logger.LogInformation("Request {RequestId} canceled by user {UserId}", requestId, userId);
 
         // Sync materialised HOME rows for the cancellation
-        await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
-
-        // For vacation cancellations, restore rotation HOME shifts
-        if (request.Type == TimeOffType.Vacation)
+        if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HomeUnification))
         {
-            await _materialiser.RestoreRotationHomeAsync(request.UserId, request.StartDate, request.EndDate);
+            await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+
+            // For vacation cancellations, restore rotation HOME shifts
+            if (request.Type == TimeOffType.Vacation)
+            {
+                await _materialiser.RestoreRotationHomeAsync(request.UserId, request.StartDate, request.EndDate);
+            }
         }
 
         return (true, "VacationApproval_Canceled");
@@ -757,13 +770,16 @@ public class VacationApprovalService : IVacationApprovalService
             await _context.SaveChangesAsync();
 
             // Re-materialise: this will delete HOME rows now outside the new range
-            await _materialiser.SyncMaterialisedHomeRowsAsync(req.Id);
+            if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HomeUnification))
+            {
+                await _materialiser.SyncMaterialisedHomeRowsAsync(req.Id);
 
-            // Restore rotation HOME on the days that USED to be covered but no longer are
-            if (newStart > oldStart)
-                await _materialiser.RestoreRotationHomeAsync(req.UserId, oldStart, newStart.AddDays(-1));
-            if (newEnd < oldEnd)
-                await _materialiser.RestoreRotationHomeAsync(req.UserId, newEnd.AddDays(1), oldEnd);
+                // Restore rotation HOME on the days that USED to be covered but no longer are
+                if (newStart > oldStart)
+                    await _materialiser.RestoreRotationHomeAsync(req.UserId, oldStart, newStart.AddDays(-1));
+                if (newEnd < oldEnd)
+                    await _materialiser.RestoreRotationHomeAsync(req.UserId, newEnd.AddDays(1), oldEnd);
+            }
 
             await tx.CommitAsync();
 
