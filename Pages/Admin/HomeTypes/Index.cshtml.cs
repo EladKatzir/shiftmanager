@@ -50,8 +50,6 @@ public class IndexModel : PageModel
     [BindProperty] public string? NameHe { get; set; }
     [BindProperty] public int CreateMoleculeId { get; set; }
     [BindProperty] public string? PatternJson { get; set; }
-    [BindProperty] public string? DefaultStartTime { get; set; }
-    [BindProperty] public string? DefaultEndTime { get; set; }
 
     // Edit form
     [BindProperty] public int EditId { get; set; }
@@ -168,9 +166,6 @@ public class IndexModel : PageModel
         var paintedDates = ParseDatesFromJson(PatternJson);
         var rule = _homeTypeService.DeriveRuleFromPattern(paintedDates);
 
-        TimeOnly? startTime = TimeOnly.TryParse(DefaultStartTime, out var st) ? st : null;
-        TimeOnly? endTime = TimeOnly.TryParse(DefaultEndTime, out var et) ? et : null;
-
         // Resolve CompanyId from molecule
         var molecule = await _db.Molecules.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == CreateMoleculeId);
         if (molecule == null)
@@ -193,8 +188,6 @@ public class IndexModel : PageModel
             CompanyId = companyId,
             PatternJson = PatternJson,
             DerivedRule = rule != null ? JsonSerializer.Serialize(rule) : null,
-            DefaultStartTime = startTime,
-            DefaultEndTime = endTime,
             CreatedBy = currentUserId
         };
 

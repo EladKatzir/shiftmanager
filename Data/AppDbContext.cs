@@ -1218,12 +1218,6 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
-        // HomeType time converters
-        modelBuilder.Entity<HomeType>()
-            .Property(p => p.DefaultStartTime).HasConversion(timeConverter);
-        modelBuilder.Entity<HomeType>()
-            .Property(p => p.DefaultEndTime).HasConversion(timeConverter);
-
         // AppUser → HomeType relationship
         modelBuilder.Entity<AppUser>()
             .HasOne(u => u.HomeType)

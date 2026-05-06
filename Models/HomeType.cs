@@ -38,12 +38,6 @@ public class HomeType : IBelongsToCompany
     /// </summary>
     public string? DerivedRule { get; set; }
 
-    /// <summary>Default home block start time (e.g., Thursday 06:00).</summary>
-    public TimeOnly? DefaultStartTime { get; set; }
-
-    /// <summary>Default home block end time (e.g., Sunday 13:00).</summary>
-    public TimeOnly? DefaultEndTime { get; set; }
-
     /// <summary>Whether this home type is active and available for assignment.</summary>
     public bool IsActive { get; set; } = true;
 
