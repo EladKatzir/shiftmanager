@@ -41,6 +41,13 @@ public class HomeType : IBelongsToCompany
     /// <summary>Whether this home type is active and available for assignment.</summary>
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Set by the materialiser on every successful Generate. Compared to UpdatedAt to drive
+    /// the "needs regenerate" admin banner: when UpdatedAt > LastGeneratedAt (or this is null),
+    /// the pattern was edited but not yet propagated to ShiftAssignment rows.
+    /// </summary>
+    public DateTime? LastGeneratedAt { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int CreatedBy { get; set; }
 
