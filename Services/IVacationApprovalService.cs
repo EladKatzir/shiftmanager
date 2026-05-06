@@ -37,4 +37,13 @@ public interface IVacationApprovalService
     /// Call this after setting request status to Approved.
     /// </summary>
     Task ProcessApprovalSideEffectsAsync(int requestId);
+
+    /// <summary>
+    /// Shorten an approved Vacation request's date range. Only narrowing is allowed
+    /// (newStart >= original StartDate AND newEnd <= original EndDate). Triggers the
+    /// materialiser to remove HOME rows for days now outside the range, and restores
+    /// rotation HOME on those formerly-covered days.
+    /// </summary>
+    Task<(bool Success, string Message)> UpdateRequestDatesAsync(
+        int requestId, DateOnly newStart, DateOnly newEnd, int actorUserId);
 }

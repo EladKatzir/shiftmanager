@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
@@ -15,6 +17,8 @@ public class VacationApprovalService : IVacationApprovalService
     private readonly INotificationService _notificationService;
     private readonly ITraineeService _traineeService;
     private readonly IHomeMaterialiserService _materialiser;
+    private readonly IAuditLogService _auditLogService;
+    private readonly IStringLocalizer<SharedResources> _localizer;
 
     public VacationApprovalService(
         AppDbContext context,
@@ -22,7 +26,9 @@ public class VacationApprovalService : IVacationApprovalService
         ILogger<VacationApprovalService> logger,
         INotificationService notificationService,
         ITraineeService traineeService,
-        IHomeMaterialiserService materialiser)
+        IHomeMaterialiserService materialiser,
+        IAuditLogService auditLogService,
+        IStringLocalizer<SharedResources> localizer)
     {
         _context = context;
         _grantService = grantService;
@@ -30,6 +36,8 @@ public class VacationApprovalService : IVacationApprovalService
         _notificationService = notificationService;
         _traineeService = traineeService;
         _materialiser = materialiser;
+        _auditLogService = auditLogService;
+        _localizer = localizer;
     }
 
     /// <summary>
@@ -538,6 +546,72 @@ public class VacationApprovalService : IVacationApprovalService
         }
 
         return (true, "VacationApproval_Canceled");
+    }
+
+    /// <summary>
+    /// Shorten an approved Vacation request's date range. Only narrowing is allowed
+    /// (newStart >= original StartDate AND newEnd <= original EndDate). Triggers the
+    /// materialiser to remove HOME rows for days now outside the range, and restores
+    /// rotation HOME on those formerly-covered days.
+    /// </summary>
+    public async Task<(bool Success, string Message)> UpdateRequestDatesAsync(
+        int requestId, DateOnly newStart, DateOnly newEnd, int actorUserId)
+    {
+        // IgnoreQueryFilters: request may be in a different company than current tenant
+        var req = await _context.TimeOffRequests.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.Id == requestId);
+
+        if (req == null)
+            return (false, _localizer["VacationApproval_RequestNotFound"]);
+
+        if (req.Status != RequestStatus.Approved)
+            return (false, _localizer["VacationApproval_OnlyApprovedShortenable"]);
+
+        if (req.Type == TimeOffType.After)
+            return (false, _localizer["VacationApproval_AfterNotShortenable"]);
+
+        if (newStart < req.StartDate || newEnd > req.EndDate)
+            return (false, _localizer["VacationApproval_ShortenOnlyNarrows"]);
+
+        if (newEnd < newStart)
+            return (false, _localizer["Error_EndDateBeforeStartDate"]);
+
+        var oldStart = req.StartDate;
+        var oldEnd = req.EndDate;
+
+        using var tx = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            req.StartDate = newStart;
+            req.EndDate = newEnd;
+            await _context.SaveChangesAsync();
+
+            // Re-materialise: this will delete HOME rows now outside the new range
+            await _materialiser.SyncMaterialisedHomeRowsAsync(req.Id);
+
+            // Restore rotation HOME on the days that USED to be covered but no longer are
+            if (newStart > oldStart)
+                await _materialiser.RestoreRotationHomeAsync(req.UserId, oldStart, newStart.AddDays(-1));
+            if (newEnd < oldEnd)
+                await _materialiser.RestoreRotationHomeAsync(req.UserId, newEnd.AddDays(1), oldEnd);
+
+            await tx.CommitAsync();
+
+            await _auditLogService.LogAsync("TimeOffRequestDatesUpdated", "TimeOffRequest", req.Id,
+                $"Shortened from {oldStart:yyyy-MM-dd}..{oldEnd:yyyy-MM-dd} to {newStart:yyyy-MM-dd}..{newEnd:yyyy-MM-dd} by user {actorUserId}");
+
+            _logger.LogInformation(
+                "Request {RequestId} dates shortened by user {ActorUserId}: {OldStart}..{OldEnd} → {NewStart}..{NewEnd}",
+                requestId, actorUserId, oldStart, oldEnd, newStart, newEnd);
+
+            return (true, _localizer["VacationApproval_DatesUpdated"]);
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            _logger.LogError(ex, "Failed to update dates for vacation request {RequestId}", requestId);
+            return (false, _localizer["VacationApproval_Error"]);
+        }
     }
 
     /// <summary>

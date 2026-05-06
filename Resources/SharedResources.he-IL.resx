@@ -8901,6 +8901,18 @@
   <data name="VacationApproval_RequestNotFound" xml:space="preserve">
     <value>בקשת חופשה לא נמצאה</value>
   </data>
+  <data name="VacationApproval_OnlyApprovedShortenable" xml:space="preserve">
+    <value>ניתן לקצר רק בקשות מאושרות</value>
+  </data>
+  <data name="VacationApproval_AfterNotShortenable" xml:space="preserve">
+    <value>בקשות אפטר הן ליום אחד ולא ניתן לקצר</value>
+  </data>
+  <data name="VacationApproval_ShortenOnlyNarrows" xml:space="preserve">
+    <value>קיצור יכול רק לצמצם את הטווח הקיים</value>
+  </data>
+  <data name="VacationApproval_DatesUpdated" xml:space="preserve">
+    <value>תאריכי הבקשה עודכנו</value>
+  </data>
   <!-- SeedData Page -->
   <data name="SeedData_Title" xml:space="preserve">
     <value>נתוני בסיס</value>

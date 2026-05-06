@@ -8935,6 +8935,18 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="VacationApproval_RequestNotFound" xml:space="preserve">
     <value>Vacation request not found</value>
   </data>
+  <data name="VacationApproval_OnlyApprovedShortenable" xml:space="preserve">
+    <value>Only approved requests can be shortened</value>
+  </data>
+  <data name="VacationApproval_AfterNotShortenable" xml:space="preserve">
+    <value>After requests are single-day; cannot be shortened</value>
+  </data>
+  <data name="VacationApproval_ShortenOnlyNarrows" xml:space="preserve">
+    <value>Shorten can only narrow the existing range</value>
+  </data>
+  <data name="VacationApproval_DatesUpdated" xml:space="preserve">
+    <value>Request dates updated</value>
+  </data>
   <!-- SeedData Page -->
   <data name="SeedData_Title" xml:space="preserve">
     <value>Seed Data</value>
