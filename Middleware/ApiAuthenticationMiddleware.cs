@@ -387,6 +387,13 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
+        // Task 28: TimeOffRequest API - used by cancel-or-shorten-dialog.js for the
+        // × button on vacation/after-derived HOME chips (cancel entire / shorten range)
+        if (path.StartsWithSegments("/Api/TimeOffRequest", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return false;
     }
 

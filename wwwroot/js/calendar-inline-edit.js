@@ -808,6 +808,20 @@ async function submitQuickAdd(date) {
             return;
         }
 
+        // Task 28: Vacation/After-derived HOME chips have data-source-request-id set.
+        // Instead of deleting a single ShiftAssignment row, open a dialog that lets
+        // the user cancel the entire request or shorten the date range.
+        // Rotation HOME chips (no source-request-id) keep the existing single-row delete.
+        var sourceRequestIdAttr = assignmentEl ? assignmentEl.dataset.sourceRequestId : '';
+        var sourceRequestId = sourceRequestIdAttr ? parseInt(sourceRequestIdAttr, 10) : 0;
+        if (sourceRequestId > 0) {
+            if (typeof window.openCancelOrShortenDialog === 'function') {
+                window.openCancelOrShortenDialog(sourceRequestId, assignmentId, btn);
+                return;
+            }
+            // Dialog script not loaded — fall through to existing delete (best-effort)
+        }
+
         var calendarType = detectCalendarTypeForRemoval();
 
         if (calendarType === 'chores') {
