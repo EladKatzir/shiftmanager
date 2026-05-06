@@ -874,8 +874,12 @@ public class JusticeService : IJusticeService
         var view = await GetJusticeViewAsync(hole.ParentScope, ct);
 
         // Filter rows to users only — the parent scope must be UsersInCompany for ranking to make sense.
-        // If the parent is Companies/Molecules level, fall back to listing users in the hole's CompanyId.
-        var userIdsForRanking = view.Query.Level == JusticeLevel.UsersInCompany
+        // If the parent is Companies/Molecules level OR if UsersInCompany returned empty (because the
+        // parent scope's Scope didn't match Company — e.g. OnDuty molecule-scoped ranking), fall back
+        // to listing users in the hole's company / molecule scope. The deviation pills will read as
+        // "no target" for these candidates because per-user rows weren't built — the ranking still
+        // routes through real BusyService validation, which is the authority for hard-block decisions.
+        var userIdsForRanking = (view.Query.Level == JusticeLevel.UsersInCompany && view.Rows.Count > 0)
             ? view.Rows.Select(r => r.Id).ToList()
             : await ResolveUsersInScopeAsync(hole, ct);
 

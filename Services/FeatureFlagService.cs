@@ -45,21 +45,16 @@ public class FeatureFlagService : IFeatureFlagService
     {
         var cacheKey = BuildCacheKey(flagName, userId, companyId);
 
-        if (_cache.TryGetValue(cacheKey, out bool cachedValue))
+        // Batch J (F-H-009): GetOrCreateAsync collapses TryGetValue + Set into a single
+        // call. Doesn't fully eliminate the cache-stampede race (two simultaneous misses
+        // can still both run the factory), but the prior pattern (separate TryGetValue
+        // then Set) read worse and gave both observers no clear single-source-of-truth.
+        return await _cache.GetOrCreateAsync(cacheKey, async entry =>
         {
-            return cachedValue;
-        }
-
-        // Resolution priority: user-specific > company-specific > global
-        bool isEnabled = await ResolveFlag(flagName, userId, companyId);
-
-        // Cache the result
-        _cache.Set(cacheKey, isEnabled, new MemoryCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = CacheExpiration
+            entry.AbsoluteExpirationRelativeToNow = CacheExpiration;
+            // Resolution priority: user-specific > company-specific > global
+            return await ResolveFlag(flagName, userId, companyId);
         });
-
-        return isEnabled;
     }
 
     /// <summary>

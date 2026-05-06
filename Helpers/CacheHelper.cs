@@ -18,7 +18,11 @@ public static class CacheHelper
     public static string GenerateETag(object data)
     {
         var json = JsonSerializer.Serialize(data);
-        var hash = MD5.HashData(Encoding.UTF8.GetBytes(json));
+        // Batch M (F-C-012): SHA256 instead of MD5. ETags don't need crypto strength,
+        // but CA5351 flags MD5 as broken-crypto category. SHA256 is in the BCL, no
+        // additional package needed. Existing ETag-comparison logic doesn't care about
+        // hash length, so the switch is transparent to clients.
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(json));
         return $"\"{Convert.ToBase64String(hash)}\"";
     }
 
@@ -29,7 +33,7 @@ public static class CacheHelper
     /// <returns>A quoted ETag string suitable for HTTP headers</returns>
     public static string GenerateETag(string content)
     {
-        var hash = MD5.HashData(Encoding.UTF8.GetBytes(content));
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(content));
         return $"\"{Convert.ToBase64String(hash)}\"";
     }
 

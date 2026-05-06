@@ -40,17 +40,12 @@ public class DirectorService : IDirectorService
         }
     }
 
-    public bool IsDirector()
+    public async Task<bool> IsDirectorAsync()
     {
         if (CurrentUserId == null)
             return false;
 
-        // TECH DEBT: Sync-over-async via GetAwaiter().GetResult(). Works in current Kestrel thread pool model.
-        // TODO: Convert to async interface when callers can be made async.
-        // Converting IsDirector() and CanAssignRole() to async would require updating
-        // IDirectorService and all call sites (Razor pages, middleware, authorization handlers).
-        return _grantService.HasGrantAsync(CurrentUserId.Value, DirectorHubAccessGrant)
-            .GetAwaiter().GetResult();
+        return await _grantService.HasGrantAsync(CurrentUserId.Value, DirectorHubAccessGrant);
     }
 
     public async Task<bool> IsDirectorOfAsync(int companyId)
@@ -92,7 +87,7 @@ public class DirectorService : IDirectorService
         return false;
     }
 
-    public bool CanAssignRole(string role)
+    public async Task<bool> CanAssignRoleAsync(string role)
     {
         // Safe string overload - try parse and delegate to strongly-typed version
         if (string.IsNullOrWhiteSpace(role))
@@ -101,7 +96,7 @@ public class DirectorService : IDirectorService
         // Try to parse the role string (case-insensitive)
         if (Enum.TryParse<UserRole>(role.Trim(), ignoreCase: true, out var targetRole))
         {
-            return CanAssignRole(targetRole);
+            return await CanAssignRoleAsync(targetRole);
         }
 
         // Invalid role string
@@ -112,39 +107,28 @@ public class DirectorService : IDirectorService
     /// This method checks role TYPE permission only. Scope validation (whether the target user
     /// belongs to a company the caller manages) must be performed at the call site.
     /// </remarks>
-    public bool CanAssignRole(UserRole targetRole)
+    public async Task<bool> CanAssignRoleAsync(UserRole targetRole)
     {
         if (CurrentUserId == null)
             return false;
 
         // Check AdminAccess first — it's a superset permission that implies all others
         // (Owner template may not include the specific AssignRoles grant)
-        // TECH DEBT: Sync-over-async via GetAwaiter().GetResult(). Works in current Kestrel thread pool model.
-        // TODO: Convert to async interface when callers can be made async.
-        var hasAdminAccess = _grantService.HasGrantAsync(CurrentUserId.Value, AdminAccessGrant)
-            .GetAwaiter().GetResult();
-
-        if (hasAdminAccess)
+        if (await _grantService.HasGrantAsync(CurrentUserId.Value, AdminAccessGrant))
         {
             // Admin can assign any role including Owner
             return true;
         }
 
         // Check if user has AssignRoles grant
-        var hasAssignRolesGrant = _grantService.HasGrantAsync(CurrentUserId.Value, AssignRolesGrant)
-            .GetAwaiter().GetResult();
-
-        if (!hasAssignRolesGrant)
+        if (!await _grantService.HasGrantAsync(CurrentUserId.Value, AssignRolesGrant))
             return false;
 
         // Get the user's grants to determine their scope/level
         // Users can only assign roles at or below their permission level
 
         // Check if user has DirectorHubAccess (director-level permissions)
-        var hasDirectorAccess = _grantService.HasGrantAsync(CurrentUserId.Value, DirectorHubAccessGrant)
-            .GetAwaiter().GetResult();
-
-        if (hasDirectorAccess)
+        if (await _grantService.HasGrantAsync(CurrentUserId.Value, DirectorHubAccessGrant))
         {
             // Directors can assign Employee, Manager, Director, Trainee (but NOT Owner)
             return targetRole == UserRole.Employee
@@ -154,10 +138,7 @@ public class DirectorService : IDirectorService
         }
 
         // Check if user has ManagerHomeAccess (manager-level permissions)
-        var hasManagerAccess = _grantService.HasGrantAsync(CurrentUserId.Value, ManagerHomeAccessGrant)
-            .GetAwaiter().GetResult();
-
-        if (hasManagerAccess)
+        if (await _grantService.HasGrantAsync(CurrentUserId.Value, ManagerHomeAccessGrant))
         {
             // Managers can assign Employee and Trainee only
             return targetRole == UserRole.Employee

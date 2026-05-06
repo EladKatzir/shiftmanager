@@ -111,23 +111,6 @@ public class UsersModel : LocalizedPageModel
     public int TotalJoinRequests { get; set; }
     public int TotalJoinRequestsPages => (int)Math.Ceiling(TotalJoinRequests / (double)JoinRequestsPageSize);
 
-    // Expose assignable roles for UI filtering (legacy enum-based)
-    public List<UserRole> AssignableRoles
-    {
-        get
-        {
-            var roles = new List<UserRole>();
-            if (_directorService.CanAssignRole(UserRole.Employee)) roles.Add(UserRole.Employee);
-            if (_directorService.CanAssignRole(UserRole.Manager)) roles.Add(UserRole.Manager);
-            if (_directorService.CanAssignRole(UserRole.Director)) roles.Add(UserRole.Director);
-            if (_directorService.CanAssignRole(UserRole.Owner)) roles.Add(UserRole.Owner);
-            if (_directorService.CanAssignRole(UserRole.Trainee)) roles.Add(UserRole.Trainee);
-            if (_directorService.CanAssignRole(UserRole.Assigner)) roles.Add(UserRole.Assigner);
-            if (_directorService.CanAssignRole(UserRole.AreaAdmin)) roles.Add(UserRole.AreaAdmin);
-            return roles;
-        }
-    }
-
     // Template-based assignable roles (dynamic from DB)
     public List<RoleTemplate> AssignableRoleTemplates { get; set; } = new();
 
@@ -431,10 +414,17 @@ public class UsersModel : LocalizedPageModel
         // Load assignable role templates (filtered by CanBeAssignedByDefault and user's grant level)
         AssignableRoleTemplates = await _roleService.GetAssignableRoleTemplatesAsync();
 
-        // Filter templates by what the current user can assign (DerivedUserRole check)
-        AssignableRoleTemplates = AssignableRoleTemplates
-            .Where(rt => !rt.DerivedUserRole.HasValue || _directorService.CanAssignRole(rt.DerivedUserRole.Value))
-            .ToList();
+        // Filter templates by what the current user can assign (DerivedUserRole check).
+        // Materialized loop instead of LINQ .Where() because CanAssignRoleAsync is async — see Batch D.
+        var filteredTemplates = new List<RoleTemplate>(AssignableRoleTemplates.Count);
+        foreach (var rt in AssignableRoleTemplates)
+        {
+            if (!rt.DerivedUserRole.HasValue || await _directorService.CanAssignRoleAsync(rt.DerivedUserRole.Value))
+            {
+                filteredTemplates.Add(rt);
+            }
+        }
+        AssignableRoleTemplates = filteredTemplates;
 
         // Load existing users with filters
         IQueryable<AppUser> usersQuery;
@@ -710,7 +700,7 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        if (!_directorService.CanAssignRole(targetRole))
+        if (!await _directorService.CanAssignRoleAsync(targetRole))
         {
             TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"], targetRole);
             return RedirectToPage();
@@ -937,7 +927,33 @@ public class UsersModel : LocalizedPageModel
                 return RedirectToPage();
             }
 
+            var wasActive = u.IsActive;
             u.IsActive = !u.IsActive;
+
+            // Batch F (F-H-013): on DEACTIVATION, clear auth-scoped relationships that lose meaning
+            // when the user is inactive. Grants and shift assignments are intentionally NOT touched
+            // here — current reactivation flow at the bottom of this method depends on grants
+            // staying intact OR being restorable from RoleTemplate; shift assignments are
+            // operational data that admins may want preserved across toggle. Both are documented
+            // as deferred design-alignment items in 00-index.md Batch F.
+            if (wasActive && !u.IsActive)
+            {
+                // Other users training UNDER this (deactivated) user lose their trainer.
+                // Null the FK so the foreign-key constraint stays valid and the trainee isn't
+                // pointing at an inactive trainer.
+                await _db.ShiftAssignments.IgnoreQueryFilters()
+                    .Where(sa => sa.TraineeUserId == id)
+                    .ExecuteUpdateAsync(sa => sa.SetProperty(a => a.TraineeUserId, (int?)null));
+
+                // DirectorCompany rows are pure auth-scope mappings — a deactivated user
+                // should not retain Director privileges over any company. Mirrors the
+                // OnPostDeleteUserAsync cleanup at line 1655.
+                // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by specific userId
+                await _db.DirectorCompanies.IgnoreQueryFilters()
+                    .Where(dc => dc.UserId == id)
+                    .ExecuteDeleteAsync();
+            }
+
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
                 () => _db.SaveChangesAsync(), "AppUser", id);
             if (!saveResult.Success)
@@ -1022,7 +1038,7 @@ public class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        if (!_directorService.CanAssignRole(targetRole))
+        if (!await _directorService.CanAssignRoleAsync(targetRole))
         {
             TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"], targetRole);
             return RedirectToPage();
@@ -1827,7 +1843,7 @@ public class UsersModel : LocalizedPageModel
         }
 
         // Validate permission to assign the requested role
-        if (!_directorService.CanAssignRole(joinRequest.RequestedRole))
+        if (!await _directorService.CanAssignRoleAsync(joinRequest.RequestedRole))
         {
             TempData["ErrorMessage"] = string.Format(_localizer["Error_NoPermissionAssignRole"].Value, joinRequest.RequestedRole);
             return RedirectToPage();
@@ -2183,7 +2199,7 @@ public class UsersModel : LocalizedPageModel
                 }
 
                 // Validate permission to assign the role
-                if (!_directorService.CanAssignRole(assignedRole))
+                if (!await _directorService.CanAssignRoleAsync(assignedRole))
                 {
                     errors.Add(string.Format(_localizer["Error_NoPermissionAssignRoleTo"], assignedRole, joinRequest.DisplayName));
                     skippedCount++;

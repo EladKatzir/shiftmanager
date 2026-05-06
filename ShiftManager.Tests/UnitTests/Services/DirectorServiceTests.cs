@@ -89,52 +89,52 @@ public class DirectorServiceTests : IDisposable
     }
 
     [Fact]
-    public void IsDirector_ReturnsTrue_ForOwner()
+    public async Task IsDirectorAsync_ReturnsTrue_ForOwner()
     {
         // Arrange
         SetupUser(1, UserRole.Owner);
 
         // Act
-        var result = _service.IsDirector();
+        var result = await _service.IsDirectorAsync();
 
         // Assert
         result.Should().BeTrue("Owner has Director permissions");
     }
 
     [Fact]
-    public void IsDirector_ReturnsTrue_ForDirector()
+    public async Task IsDirectorAsync_ReturnsTrue_ForDirector()
     {
         // Arrange
         SetupUser(1, UserRole.Director);
 
         // Act
-        var result = _service.IsDirector();
+        var result = await _service.IsDirectorAsync();
 
         // Assert
         result.Should().BeTrue("Director role has Director permissions");
     }
 
     [Fact]
-    public void IsDirector_ReturnsFalse_ForManager()
+    public async Task IsDirectorAsync_ReturnsFalse_ForManager()
     {
         // Arrange
         SetupUser(1, UserRole.Manager);
 
         // Act
-        var result = _service.IsDirector();
+        var result = await _service.IsDirectorAsync();
 
         // Assert
         result.Should().BeFalse("Manager does not have Director permissions");
     }
 
     [Fact]
-    public void IsDirector_ReturnsFalse_ForEmployee()
+    public async Task IsDirectorAsync_ReturnsFalse_ForEmployee()
     {
         // Arrange
         SetupUser(1, UserRole.Employee);
 
         // Act
-        var result = _service.IsDirector();
+        var result = await _service.IsDirectorAsync();
 
         // Assert
         result.Should().BeFalse("Employee does not have Director permissions");
@@ -198,70 +198,70 @@ public class DirectorServiceTests : IDisposable
     }
 
     [Fact]
-    public void CanAssignRole_Owner_CanAssignAnyRole()
+    public async Task CanAssignRoleAsync_Owner_CanAssignAnyRole()
     {
         // Arrange
         SetupUser(1, UserRole.Owner);
 
         // Act & Assert
-        _service.CanAssignRole(UserRole.Owner).Should().BeTrue();
-        _service.CanAssignRole(UserRole.Director).Should().BeTrue();
-        _service.CanAssignRole(UserRole.Manager).Should().BeTrue();
-        _service.CanAssignRole(UserRole.Employee).Should().BeTrue();
+        (await _service.CanAssignRoleAsync(UserRole.Owner)).Should().BeTrue();
+        (await _service.CanAssignRoleAsync(UserRole.Director)).Should().BeTrue();
+        (await _service.CanAssignRoleAsync(UserRole.Manager)).Should().BeTrue();
+        (await _service.CanAssignRoleAsync(UserRole.Employee)).Should().BeTrue();
     }
 
     [Fact]
-    public void CanAssignRole_Director_CannotAssignOwner()
+    public async Task CanAssignRoleAsync_Director_CannotAssignOwner()
     {
         // Arrange
         SetupUser(1, UserRole.Director);
 
         // Act
-        var canAssignOwner = _service.CanAssignRole(UserRole.Owner);
+        var canAssignOwner = await _service.CanAssignRoleAsync(UserRole.Owner);
 
         // Assert
         canAssignOwner.Should().BeFalse("Director CANNOT assign Owner role - security critical!");
     }
 
     [Fact]
-    public void CanAssignRole_Director_CanAssignDirectorManagerEmployee()
+    public async Task CanAssignRoleAsync_Director_CanAssignDirectorManagerEmployee()
     {
         // Arrange
         SetupUser(1, UserRole.Director);
 
         // Act & Assert
-        _service.CanAssignRole(UserRole.Director).Should().BeTrue();
-        _service.CanAssignRole(UserRole.Manager).Should().BeTrue();
-        _service.CanAssignRole(UserRole.Employee).Should().BeTrue();
-        _service.CanAssignRole(UserRole.Trainee).Should().BeTrue();
+        (await _service.CanAssignRoleAsync(UserRole.Director)).Should().BeTrue();
+        (await _service.CanAssignRoleAsync(UserRole.Manager)).Should().BeTrue();
+        (await _service.CanAssignRoleAsync(UserRole.Employee)).Should().BeTrue();
+        (await _service.CanAssignRoleAsync(UserRole.Trainee)).Should().BeTrue();
     }
 
     [Fact]
-    public void CanAssignRole_Manager_CanOnlyAssignEmployee()
+    public async Task CanAssignRoleAsync_Manager_CanOnlyAssignEmployee()
     {
         // Arrange
         SetupUser(1, UserRole.Manager);
 
         // Act & Assert
-        _service.CanAssignRole(UserRole.Owner).Should().BeFalse();
-        _service.CanAssignRole(UserRole.Director).Should().BeFalse();
-        _service.CanAssignRole(UserRole.Manager).Should().BeFalse();
-        _service.CanAssignRole(UserRole.Employee).Should().BeTrue("Manager can assign Employee");
-        _service.CanAssignRole(UserRole.Trainee).Should().BeTrue("Manager can assign Trainee");
+        (await _service.CanAssignRoleAsync(UserRole.Owner)).Should().BeFalse();
+        (await _service.CanAssignRoleAsync(UserRole.Director)).Should().BeFalse();
+        (await _service.CanAssignRoleAsync(UserRole.Manager)).Should().BeFalse();
+        (await _service.CanAssignRoleAsync(UserRole.Employee)).Should().BeTrue("Manager can assign Employee");
+        (await _service.CanAssignRoleAsync(UserRole.Trainee)).Should().BeTrue("Manager can assign Trainee");
     }
 
     [Fact]
-    public void CanAssignRole_Employee_CannotAssignAnyRole()
+    public async Task CanAssignRoleAsync_Employee_CannotAssignAnyRole()
     {
         // Arrange
         SetupUser(1, UserRole.Employee);
 
         // Act & Assert
-        _service.CanAssignRole(UserRole.Owner).Should().BeFalse();
-        _service.CanAssignRole(UserRole.Director).Should().BeFalse();
-        _service.CanAssignRole(UserRole.Manager).Should().BeFalse();
-        _service.CanAssignRole(UserRole.Employee).Should().BeFalse("Employee cannot assign any role");
-        _service.CanAssignRole(UserRole.Trainee).Should().BeFalse("Employee cannot assign Trainee");
+        (await _service.CanAssignRoleAsync(UserRole.Owner)).Should().BeFalse();
+        (await _service.CanAssignRoleAsync(UserRole.Director)).Should().BeFalse();
+        (await _service.CanAssignRoleAsync(UserRole.Manager)).Should().BeFalse();
+        (await _service.CanAssignRoleAsync(UserRole.Employee)).Should().BeFalse("Employee cannot assign any role");
+        (await _service.CanAssignRoleAsync(UserRole.Trainee)).Should().BeFalse("Employee cannot assign Trainee");
     }
 
     [Fact]

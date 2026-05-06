@@ -47,7 +47,7 @@ public class ViewAsModeService : IViewAsModeService
     public async Task<bool> EnterViewAsModeAsync(int companyId)
     {
         // Only Directors can use this mode
-        if (!_directorService.IsDirector())
+        if (!await _directorService.IsDirectorAsync())
             return false;
 
         // Verify Director has access to this company

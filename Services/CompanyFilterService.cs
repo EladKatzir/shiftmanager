@@ -105,7 +105,7 @@ public class CompanyFilterService : ICompanyFilterService
         }
 
         // Director/AreaAdmin can access their assigned companies (organizational identity check)
-        if (_directorService.IsDirector() || (CurrentUser?.IsInRole(nameof(UserRole.AreaAdmin)) ?? false))
+        if (await _directorService.IsDirectorAsync() || (CurrentUser?.IsInRole(nameof(UserRole.AreaAdmin)) ?? false))
         {
             return await _directorService.GetDirectorCompanyIdsAsync();
         }

@@ -1,14 +1,17 @@
 namespace ShiftManager.Services;
 
 /// <summary>
-/// Service for checking Director permissions
+/// Service for checking Director permissions.
+/// All methods are async because grant resolution is database-backed and
+/// must not be called from a synchronous context — see Batch D in
+/// .claude-reviews/2026-04-28/00-index.md (closes F-H-003, F-A-002, F-R-001).
 /// </summary>
 public interface IDirectorService
 {
     /// <summary>
     /// Check if the current user is a Director
     /// </summary>
-    bool IsDirector();
+    Task<bool> IsDirectorAsync();
 
     /// <summary>
     /// Check if the current user is a Director of a specific company
@@ -34,7 +37,7 @@ public interface IDirectorService
     /// Check if current user can assign the specified role
     /// Directors cannot assign Owner role
     /// </summary>
-    bool CanAssignRole(string role);
+    Task<bool> CanAssignRoleAsync(string role);
 
     /// <summary>
     /// Check if current user can assign the specified role (strongly-typed)
@@ -43,5 +46,5 @@ public interface IDirectorService
     /// Manager: can assign Employee only
     /// Employee: cannot assign any role
     /// </summary>
-    bool CanAssignRole(Models.Support.UserRole targetRole);
+    Task<bool> CanAssignRoleAsync(Models.Support.UserRole targetRole);
 }
