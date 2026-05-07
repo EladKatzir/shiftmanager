@@ -90,8 +90,7 @@ public class CompanyLocalizationService : ICompanyLocalizationService
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            var term = searchTerm.ToLower();
-            query = query.Where(o => o.ResourceKey.ToLower().Contains(term) || o.OverrideValue.ToLower().Contains(term));
+            query = query.Where(o => o.ResourceKey.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || o.OverrideValue.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
         }
 
         return await query

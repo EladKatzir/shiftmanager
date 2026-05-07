@@ -220,17 +220,17 @@ public class AvatarService : IAvatarService
         if (parts.Length >= 2)
         {
             // First and last name initials
-            return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+            return $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant();
         }
         else if (parts.Length == 1 && parts[0].Length >= 2)
         {
             // First two letters
-            return parts[0].Substring(0, 2).ToUpper();
+            return parts[0].Substring(0, 2).ToUpperInvariant();
         }
         else if (parts.Length == 1 && parts[0].Length == 1)
         {
             // Single letter
-            return parts[0].ToUpper();
+            return parts[0].ToUpperInvariant();
         }
 
         return "?";
@@ -243,7 +243,7 @@ public class AvatarService : IAvatarService
             // D-06: Validate filename to prevent path traversal via manipulated AvatarFileName
             var sanitizedFileName = Path.GetFileName(fileName);
             if (string.IsNullOrEmpty(sanitizedFileName) || sanitizedFileName != fileName ||
-                fileName.Contains("..") || fileName.Contains('/') || fileName.Contains('\\'))
+                fileName.Contains("..", StringComparison.Ordinal) || fileName.Contains('/') || fileName.Contains('\\'))
             {
                 _logger.LogWarning("Avatar path traversal attempt blocked: {FileName} for company {CompanyId}", fileName, companyId);
                 return;

@@ -402,11 +402,23 @@ Solution:
   2. Set SEED_ADMIN_PASSWORD to a strong password
   3. Save and restart application
 
-Problem: "Database error" or "Migration failed"
-Solution:
+Problem: "Database error" or "Migration failed" (existing database)
+Solution (PRESERVES DATA — recommended for production):
+  1. Stop application
+  2. Locate the most recent pre-migration backup in the Backups\ directory
+     - File pattern: app.db.pre-migration-{timestamp} (created automatically
+       by the application before each migration attempt — see Program.cs)
+  3. Copy that backup over app.db (rename current app.db to app.db.failed first)
+  4. Delete app.db-shm and app.db-wal so SQLite re-opens cleanly
+  5. Do NOT delete the failed migration files from Migrations\ directory
+  6. Contact ops/DBA before retrying — investigate the migration error before
+     letting startup re-attempt the same migration
+  7. Once the root cause is fixed, restart the application
+
+Solution (DESTRUCTIVE — only for fresh installs with no real data):
   1. Stop application
   2. Delete app.db, app.db-shm, app.db-wal
-  3. Start application (database will be recreated)
+  3. Start application (database will be recreated empty)
   4. If problem persists, check file permissions
 
 Problem: "Port 5000 is already in use"

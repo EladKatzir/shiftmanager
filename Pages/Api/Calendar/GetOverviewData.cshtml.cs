@@ -8,6 +8,7 @@ using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Api.Calendar;
@@ -113,7 +114,7 @@ public class GetOverviewDataModel : PageModel
             var notes = notesDict.Select(kvp => new
             {
                 userId = kvp.Key.UserId,
-                date = kvp.Key.Date.ToString("yyyy-MM-dd"),
+                date = kvp.Key.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 note = kvp.Value
             }).ToList();
 
@@ -128,8 +129,8 @@ public class GetOverviewDataModel : PageModel
                 .Select(t => new
                 {
                     userId = t.UserId,
-                    startDate = t.StartDate.ToString("yyyy-MM-dd"),
-                    endDate = t.EndDate.ToString("yyyy-MM-dd"),
+                    startDate = t.StartDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    endDate = t.EndDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     type = t.Type.ToString()
                 })
                 .ToListAsync();
@@ -142,7 +143,7 @@ public class GetOverviewDataModel : PageModel
                 .Select(c => new
                 {
                     userId = c.UserId,
-                    date = c.Date.ToString("yyyy-MM-dd"),
+                    date = c.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     title = c.Title,
                     isActive = c.CanceledAt == null
                 })
@@ -160,7 +161,7 @@ public class GetOverviewDataModel : PageModel
                     .Select(e => new
                     {
                         userId = kvp.Key.UserId,
-                        date = kvp.Key.Date.ToString("yyyy-MM-dd"),
+                        date = kvp.Key.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                         text = e.Text
                     }))
                 .ToList();
@@ -170,7 +171,7 @@ public class GetOverviewDataModel : PageModel
                 .Select(o => new
                 {
                     userId = o.UserId,
-                    date = o.Date.ToString("yyyy-MM-dd"),
+                    date = o.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     typeName = o.Type.ToString()
                 })
                 .ToListAsync();
@@ -188,7 +189,7 @@ public class GetOverviewDataModel : PageModel
                 .Select(sa => new
                 {
                     userId = sa.UserId,
-                    date = sa.ShiftInstance.WorkDate.ToString("yyyy-MM-dd"),
+                    date = sa.ShiftInstance.WorkDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     shiftName = sa.ShiftInstance.ShiftType != null ? sa.ShiftInstance.ShiftType.Key : "Shift"
                 })
                 .ToListAsync();
@@ -207,7 +208,7 @@ public class GetOverviewDataModel : PageModel
                     chores,
                     onDuties,
                     shifts,
-                    timestamp = DateTime.UtcNow.ToString("o")
+                    timestamp = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture)
                 }
             });
         }

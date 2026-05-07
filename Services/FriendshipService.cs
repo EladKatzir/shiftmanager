@@ -283,8 +283,6 @@ public class FriendshipService : IFriendshipService
         if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
             return new List<PotentialFriendDto>();
 
-        var queryLower = query.ToLower();
-
         // Get existing friendships for this user
         // SECURITY-AUDITED: SAFE — scoped by userId; used to annotate search results with friendship status
         var existingFriendships = await _db.UserFriendships
@@ -307,8 +305,8 @@ public class FriendshipService : IFriendshipService
         var users = await _db.Users
             .IgnoreQueryFilters()
             .Where(u => u.IsActive && u.Id != userId &&
-                (u.DisplayName.ToLower().Contains(queryLower) ||
-                 u.Email.ToLower().Contains(queryLower)))
+                (u.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                 u.Email.Contains(query, StringComparison.OrdinalIgnoreCase)))
             .Include(u => u.JobType)
             .Take(limit)
             .ToListAsync();

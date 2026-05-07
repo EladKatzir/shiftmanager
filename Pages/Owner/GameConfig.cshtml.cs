@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Services;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Owner;
@@ -88,14 +89,14 @@ public class GameConfigModel : PageModel
 
             // Save all configuration values
             await SetAsync("GameEnabled", GameEnabled.ToString());
-            await SetAsync("GameGridSize", GridSize.ToString());
-            await SetAsync("GamePointsPer3Match", PointsPer3Match.ToString());
-            await SetAsync("GamePointsPer4Match", PointsPer4Match.ToString());
-            await SetAsync("GamePointsPer5PlusMatch", PointsPer5PlusMatch.ToString());
-            await SetAsync("GameMegaComboMultiplier", MegaComboMultiplier.ToString());
-            await SetAsync("GameMegaCombo3MatchMinLines", MegaCombo3MatchMinLines.ToString());
-            await SetAsync("GameMegaCombo4MatchMinLines", MegaCombo4MatchMinLines.ToString());
-            await SetAsync("GameMegaCombo5MatchMinLines", MegaCombo5MatchMinLines.ToString());
+            await SetAsync("GameGridSize", GridSize.ToString(CultureInfo.InvariantCulture));
+            await SetAsync("GamePointsPer3Match", PointsPer3Match.ToString(CultureInfo.InvariantCulture));
+            await SetAsync("GamePointsPer4Match", PointsPer4Match.ToString(CultureInfo.InvariantCulture));
+            await SetAsync("GamePointsPer5PlusMatch", PointsPer5PlusMatch.ToString(CultureInfo.InvariantCulture));
+            await SetAsync("GameMegaComboMultiplier", MegaComboMultiplier.ToString(CultureInfo.InvariantCulture));
+            await SetAsync("GameMegaCombo3MatchMinLines", MegaCombo3MatchMinLines.ToString(CultureInfo.InvariantCulture));
+            await SetAsync("GameMegaCombo4MatchMinLines", MegaCombo4MatchMinLines.ToString(CultureInfo.InvariantCulture));
+            await SetAsync("GameMegaCombo5MatchMinLines", MegaCombo5MatchMinLines.ToString(CultureInfo.InvariantCulture));
             await SetAsync("GameMilestones", Milestones);
 
             await _db.SaveChangesAsync();

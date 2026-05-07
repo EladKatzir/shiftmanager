@@ -271,7 +271,7 @@ public class ScheduleExportService : IScheduleExportService
                             .Bold()
                             .AlignCenter();
 
-                        column.Item().Text($"Schedule Export: {data.StartDate:yyyy-MM-dd} to {data.EndDate:yyyy-MM-dd}")
+                        column.Item().Text(FormattableString.Invariant($"Schedule Export: {data.StartDate:yyyy-MM-dd} to {data.EndDate:yyyy-MM-dd}"))
                             .FontSize(12)
                             .AlignCenter();
 
@@ -328,7 +328,7 @@ public class ScheduleExportService : IScheduleExportService
                             {
                                 // Show day with no shifts
                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5)
-                                    .Text($"{day.DayName}\n{day.Date:MM/dd}").FontSize(9);
+                                    .Text(FormattableString.Invariant($"{day.DayName}\n{day.Date:MM/dd}")).FontSize(9);
                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5)
                                     .Text("No shifts scheduled").Italic();
                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5);
@@ -341,7 +341,7 @@ public class ScheduleExportService : IScheduleExportService
                                 {
                                     // Date column (only show on first shift of day)
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5)
-                                        .Text(isFirstShiftForDay ? $"{day.DayName}\n{day.Date:MM/dd}" : "")
+                                        .Text(isFirstShiftForDay ? FormattableString.Invariant($"{day.DayName}\n{day.Date:MM/dd}") : "")
                                         .FontSize(9);
 
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5)
@@ -351,7 +351,7 @@ public class ScheduleExportService : IScheduleExportService
                                         .Text(shift.TimeRange).FontSize(9);
 
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5)
-                                        .Text($"{shift.AssignedStaff}/{shift.RequiredStaff}")
+                                        .Text(FormattableString.Invariant($"{shift.AssignedStaff}/{shift.RequiredStaff}"))
                                         .FontColor(shift.AssignedStaff < shift.RequiredStaff ? Colors.Red.Medium : Colors.Black);
 
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(5)
@@ -396,7 +396,7 @@ public class ScheduleExportService : IScheduleExportService
                     .AlignCenter()
                     .Text(text =>
                     {
-                        text.Span($"Generated: {data.GeneratedAt:yyyy-MM-dd HH:mm} UTC | Page ");
+                        text.Span(FormattableString.Invariant($"Generated: {data.GeneratedAt:yyyy-MM-dd HH:mm} UTC | Page "));
                         text.CurrentPageNumber();
                         text.Span(" of ");
                         text.TotalPages();
@@ -425,7 +425,7 @@ public class ScheduleExportService : IScheduleExportService
         worksheet.Cell("A1").Style.Font.Bold = true;
         worksheet.Cell("A1").Style.Font.FontSize = 16;
 
-        worksheet.Cell("A2").Value = $"Schedule Export: {data.StartDate:yyyy-MM-dd} to {data.EndDate:yyyy-MM-dd}";
+        worksheet.Cell("A2").Value = FormattableString.Invariant($"Schedule Export: {data.StartDate:yyyy-MM-dd} to {data.EndDate:yyyy-MM-dd}");
 
         var filterInfo = new List<string>();
         if (!string.IsNullOrEmpty(data.DepartmentName))
@@ -465,7 +465,7 @@ public class ScheduleExportService : IScheduleExportService
             if (day.Shifts.Count == 0)
             {
                 // Show day with no shifts
-                worksheet.Cell(currentRow, 1).Value = day.Date.ToString("yyyy-MM-dd");
+                worksheet.Cell(currentRow, 1).Value = day.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                 worksheet.Cell(currentRow, 2).Value = day.DayName;
                 worksheet.Cell(currentRow, 3).Value = "No shifts scheduled";
                 worksheet.Cell(currentRow, 8).Value = "Shift";
@@ -475,7 +475,7 @@ public class ScheduleExportService : IScheduleExportService
             {
                 foreach (var shift in day.Shifts)
                 {
-                    worksheet.Cell(currentRow, 1).Value = isFirstRowForDay ? day.Date.ToString("yyyy-MM-dd") : "";
+                    worksheet.Cell(currentRow, 1).Value = isFirstRowForDay ? day.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : "";
                     worksheet.Cell(currentRow, 2).Value = isFirstRowForDay ? day.DayName : "";
                     worksheet.Cell(currentRow, 3).Value = shift.ShiftName;
                     worksheet.Cell(currentRow, 4).Value = shift.TimeRange;
@@ -550,17 +550,17 @@ public class ScheduleExportService : IScheduleExportService
             if (day.Shifts.Count == 0)
             {
                 // Show day with no shifts
-                sb.AppendLine($"{day.Date:yyyy-MM-dd},{day.DayName},\"No shifts scheduled\",,,,,Shift");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"{day.Date:yyyy-MM-dd},{day.DayName},\"No shifts scheduled\",,,,,Shift");
             }
             else
             {
                 foreach (var shift in day.Shifts)
                 {
-                    var date = isFirstRowForDay ? day.Date.ToString("yyyy-MM-dd") : "";
+                    var date = isFirstRowForDay ? day.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : "";
                     var dayName = isFirstRowForDay ? day.DayName : "";
                     var employees = EscapeCsvField(string.Join("; ", shift.AssignedEmployees));
 
-                    sb.AppendLine($"{date},{dayName},{EscapeCsvField(shift.ShiftName)},{shift.TimeRange},{shift.RequiredStaff},{shift.AssignedStaff},{employees},Shift");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"{date},{dayName},{EscapeCsvField(shift.ShiftName)},{shift.TimeRange},{shift.RequiredStaff},{shift.AssignedStaff},{employees},Shift");
                     isFirstRowForDay = false;
                 }
             }
@@ -580,9 +580,9 @@ public class ScheduleExportService : IScheduleExportService
 
         // Add metadata comment at end
         sb.AppendLine();
-        sb.AppendLine($"# Generated: {data.GeneratedAt:yyyy-MM-dd HH:mm} UTC");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"# Generated: {data.GeneratedAt:yyyy-MM-dd HH:mm} UTC");
         sb.AppendLine($"# Company: {data.CompanyName}");
-        sb.AppendLine($"# Period: {data.StartDate:yyyy-MM-dd} to {data.EndDate:yyyy-MM-dd}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"# Period: {data.StartDate:yyyy-MM-dd} to {data.EndDate:yyyy-MM-dd}");
 
         // Return UTF-8 encoded bytes with BOM for Excel compatibility
         var preamble = Encoding.UTF8.GetPreamble();

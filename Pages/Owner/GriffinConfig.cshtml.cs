@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
@@ -294,9 +295,9 @@ public class GriffinConfigModel : LocalizedPageModel
 
         sb.AppendLine("=== Griffin Connection Test Diagnostics ===");
         sb.AppendLine();
-        sb.AppendLine($"Timestamp: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-        sb.AppendLine($"Duration: {result.DurationMs} ms");
-        sb.AppendLine($"Success: {(result.Success ? "YES" : "NO")}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Timestamp: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Duration: {result.DurationMs} ms");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Success: {(result.Success ? "YES" : "NO")}");
         sb.AppendLine();
 
         if (result.ValidationErrors != null && result.ValidationErrors.Any())
@@ -304,7 +305,7 @@ public class GriffinConfigModel : LocalizedPageModel
             sb.AppendLine("--- Validation Errors ---");
             foreach (var error in result.ValidationErrors)
             {
-                sb.AppendLine($"  • {error}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  • {error}");
             }
             sb.AppendLine();
         }
@@ -312,14 +313,14 @@ public class GriffinConfigModel : LocalizedPageModel
         if (result.StatusCode.HasValue)
         {
             sb.AppendLine("--- HTTP Response ---");
-            sb.AppendLine($"Status Code: {result.StatusCode}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Status Code: {result.StatusCode}");
             sb.AppendLine();
         }
 
         if (!string.IsNullOrEmpty(result.RedirectUrl))
         {
             sb.AppendLine("--- Redirect Information ---");
-            sb.AppendLine($"Redirect URL: {result.RedirectUrl}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Redirect URL: {result.RedirectUrl}");
             sb.AppendLine("(This is expected - Griffin redirects to ADFS login page)");
             sb.AppendLine();
         }
@@ -329,7 +330,7 @@ public class GriffinConfigModel : LocalizedPageModel
             sb.AppendLine("--- Response Headers ---");
             foreach (var header in result.ResponseHeaders.OrderBy(h => h.Key))
             {
-                sb.AppendLine($"{header.Key}: {header.Value}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"{header.Key}: {header.Value}");
             }
             sb.AppendLine();
         }

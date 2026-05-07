@@ -9,6 +9,7 @@ using ShiftManager.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Resources;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Calendar;
@@ -126,8 +127,8 @@ public class MonthModel : PageModel
         }
         CurrentMonth = target;
 
-        Previous = (target.AddMonths(-1), target.AddMonths(-1).ToString("MMM yyyy"));
-        Next = (target.AddMonths(1), target.AddMonths(1).ToString("MMM yyyy"));
+        Previous = (target.AddMonths(-1), target.AddMonths(-1).ToString("MMM yyyy", CultureInfo.CurrentCulture));
+        Next = (target.AddMonths(1), target.AddMonths(1).ToString("MMM yyyy", CultureInfo.CurrentCulture));
 
         // Get current user
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -345,11 +346,11 @@ public class MonthModel : PageModel
                         Date = instance.WorkDate,
                         Title = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name),
                         AssigneeName = assignment.UserName,
-                        TimeRange = $"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}",
-                        ColorClass = $"shift-{instance.ShiftType.Key.ToLower()}",
+                        TimeRange = FormattableString.Invariant($"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}"),
+                        ColorClass = $"shift-{instance.ShiftType.Key.ToLowerInvariant()}",
                         Icon = GetShiftIcon(instance.ShiftType.Key),
                         IsCurrentUser = isCurrentUser || isTrainee,
-                        ManagementUrl = $"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}",
+                        ManagementUrl = FormattableString.Invariant($"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}"),
                         Details = string.IsNullOrEmpty(instance.Name) ? shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name) : instance.Name,
                         StaffingInfo = $"{shiftAssignments.Count}/{instance.StaffingRequired}",
                         IsTrainee = isTrainee
@@ -367,11 +368,11 @@ public class MonthModel : PageModel
                     Date = instance.WorkDate,
                     Title = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name),
                     AssigneeName = _localizer["Unassigned"].Value,
-                    TimeRange = $"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}",
-                    ColorClass = $"shift-{instance.ShiftType.Key.ToLower()}",
+                    TimeRange = FormattableString.Invariant($"{instance.ShiftType.Start:HH:mm} - {instance.ShiftType.End:HH:mm}"),
+                    ColorClass = $"shift-{instance.ShiftType.Key.ToLowerInvariant()}",
                     Icon = GetShiftIcon(instance.ShiftType.Key),
                     IsCurrentUser = false,
-                    ManagementUrl = $"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}",
+                    ManagementUrl = FormattableString.Invariant($"/Calendar/Table?date={instance.WorkDate:yyyy-MM-dd}"),
                     Details = shiftTypeNames.GetValueOrDefault(instance.ShiftTypeId, instance.ShiftType.Name),
                     StaffingInfo = $"0/{instance.StaffingRequired}"
                 });
@@ -460,7 +461,7 @@ public class MonthModel : PageModel
 
     private string GetShiftIcon(string shiftKey)
     {
-        return shiftKey.ToLower() switch
+        return shiftKey.ToLowerInvariant() switch
         {
             "morning" => "🌅",
             "middle" => "☀️",
@@ -487,7 +488,7 @@ public class MonthModel : PageModel
         {
             var customType = customTypes[(int)type];
             var cultureName = System.Globalization.CultureInfo.CurrentUICulture.Name;
-            var name = cultureName.StartsWith("he") ? customType.NameHe : customType.NameEn;
+            var name = cultureName.StartsWith("he", StringComparison.Ordinal) ? customType.NameHe : customType.NameEn;
             return (name, customType.Icon, $"onduty-custom-{(int)type}");
         }
         else

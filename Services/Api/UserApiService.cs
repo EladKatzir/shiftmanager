@@ -66,10 +66,9 @@ public class UserApiService
         // Apply search filter (email or display name)
         if (!string.IsNullOrEmpty(search))
         {
-            var searchLower = search.ToLower();
             query = query.Where(u =>
-                u.Email.ToLower().Contains(searchLower) ||
-                u.DisplayName.ToLower().Contains(searchLower));
+                u.Email.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                u.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase));
         }
 
         // Get total count before pagination

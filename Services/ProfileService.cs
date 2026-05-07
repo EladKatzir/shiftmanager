@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
@@ -201,8 +202,8 @@ public class ProfileService : IProfileService
 
                 changes.Add(CreateAuditEntry(companyId, targetUserId, editorUserId,
                     nameof(AppUser.DateOfBirth),
-                    targetUser.DateOfBirth?.ToString("yyyy-MM-dd"),
-                    dto.DateOfBirth?.ToString("yyyy-MM-dd"),
+                    targetUser.DateOfBirth?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    dto.DateOfBirth?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     timestamp));
                 targetUser.DateOfBirth = dto.DateOfBirth;
             }
@@ -237,8 +238,8 @@ public class ProfileService : IProfileService
 
                 changes.Add(CreateAuditEntry(companyId, targetUserId, editorUserId,
                     nameof(AppUser.HireDate),
-                    targetUser.HireDate?.ToString("yyyy-MM-dd"),
-                    dto.HireDate?.ToString("yyyy-MM-dd"),
+                    targetUser.HireDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    dto.HireDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     timestamp));
                 targetUser.HireDate = dto.HireDate;
             }
@@ -376,15 +377,13 @@ public class ProfileService : IProfileService
             return new List<AppUser>();
         }
 
-        var term = searchTerm.ToLower();
-
         return await _db.Users
             .Where(u => u.IsActive &&
-                (u.DisplayName.ToLower().Contains(term) ||
-                 (u.PreferredName != null && u.PreferredName.ToLower().Contains(term)) ||
-                 u.Email.ToLower().Contains(term) ||
-                 (u.LegacyDepartment != null && u.LegacyDepartment.ToLower().Contains(term)) ||
-                 (u.JobTitle != null && u.JobTitle.ToLower().Contains(term))))
+                (u.DisplayName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                 (u.PreferredName != null && u.PreferredName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                 u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                 (u.LegacyDepartment != null && u.LegacyDepartment.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                 (u.JobTitle != null && u.JobTitle.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))))
             .OrderBy(u => u.DisplayName)
             .Take(maxResults)
             .ToListAsync();

@@ -334,7 +334,7 @@ public class EmailConfigModel : LocalizedPageModel
     <div class='test-info'>
         <p><strong>This is a test email from ShiftManager.</strong></p>
         <p>If you're seeing this message, your email configuration is working correctly!</p>
-        <p><strong>Sent:</strong> " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") + @" UTC</p>
+        <p><strong>Sent:</strong> " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + @" UTC</p>
     </div>
 </body>
 </html>";
@@ -343,9 +343,9 @@ public class EmailConfigModel : LocalizedPageModel
     private string FormatDiagnostics(EmailApiLog log)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"Timestamp: {log.Timestamp:yyyy-MM-dd HH:mm:ss} UTC");
-        sb.AppendLine($"Duration: {log.DurationMs}ms");
-        sb.AppendLine($"Success: {(log.Success ? "Yes" : "No")}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Timestamp: {log.Timestamp:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Duration: {log.DurationMs}ms");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Success: {(log.Success ? "Yes" : "No")}");
         sb.AppendLine();
 
         if (!string.IsNullOrEmpty(log.ValidationErrors))
@@ -356,8 +356,8 @@ public class EmailConfigModel : LocalizedPageModel
         }
 
         sb.AppendLine("REQUEST:");
-        sb.AppendLine($"  URL: {log.RequestUrl}");
-        sb.AppendLine($"  Method: {log.RequestMethod}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  URL: {log.RequestUrl}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  Method: {log.RequestMethod}");
 
         if (!string.IsNullOrEmpty(log.RequestHeaders))
         {
@@ -366,18 +366,18 @@ public class EmailConfigModel : LocalizedPageModel
             {
                 var headers = JsonSerializer.Deserialize<Dictionary<string, string>>(log.RequestHeaders);
                 foreach (var h in headers ?? new())
-                    sb.AppendLine($"    {h.Key}: {h.Value}");
+                    sb.AppendLine(CultureInfo.InvariantCulture, $"    {h.Key}: {h.Value}");
             }
             catch
             {
-                sb.AppendLine($"    {log.RequestHeaders}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"    {log.RequestHeaders}");
             }
         }
 
         if (!string.IsNullOrEmpty(log.RequestBody))
         {
             var bodyPreview = log.RequestBody.Length > 500 ? log.RequestBody.Substring(0, 500) + "..." : log.RequestBody;
-            sb.AppendLine($"  Body: {bodyPreview}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  Body: {bodyPreview}");
         }
 
         sb.AppendLine();
@@ -385,11 +385,11 @@ public class EmailConfigModel : LocalizedPageModel
 
         if (log.ResponseStatusCode.HasValue)
         {
-            sb.AppendLine($"  Status Code: {log.ResponseStatusCode}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  Status Code: {log.ResponseStatusCode}");
             if (!string.IsNullOrEmpty(log.ResponseBody))
             {
                 var responsePreview = log.ResponseBody.Length > 500 ? log.ResponseBody.Substring(0, 500) + "..." : log.ResponseBody;
-                sb.AppendLine($"  Body: {responsePreview}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  Body: {responsePreview}");
             }
         }
         else
@@ -398,7 +398,7 @@ public class EmailConfigModel : LocalizedPageModel
         }
 
         if (!string.IsNullOrEmpty(log.ErrorMessage))
-            sb.AppendLine($"\nERROR: {log.ErrorMessage}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"\nERROR: {log.ErrorMessage}");
 
         return sb.ToString();
     }
@@ -425,14 +425,14 @@ public class EmailConfigModel : LocalizedPageModel
 
         foreach (var log in logs)
         {
-            csv.AppendLine($"\"{log.Timestamp:yyyy-MM-dd HH:mm:ss}\"," +
-                         $"\"{log.RecipientEmail}\"," +
-                         $"\"{log.EmailSubject.Replace("\"", "\"\"")}\"," +
-                         $"{log.Success}," +
-                         $"{log.ResponseStatusCode?.ToString() ?? "N/A"}," +
-                         $"{log.DurationMs}," +
-                         $"\"{log.ErrorMessage?.Replace("\"", "\"\"") ?? ""}\"," +
-                         $"\"{log.RequestUrl}\"");
+            csv.Append(CultureInfo.InvariantCulture, $"\"{log.Timestamp:yyyy-MM-dd HH:mm:ss}\",");
+            csv.Append(CultureInfo.InvariantCulture, $"\"{log.RecipientEmail}\",");
+            csv.Append(CultureInfo.InvariantCulture, $"\"{log.EmailSubject.Replace("\"", "\"\"", StringComparison.Ordinal)}\",");
+            csv.Append(CultureInfo.InvariantCulture, $"{log.Success},");
+            csv.Append(CultureInfo.InvariantCulture, $"{log.ResponseStatusCode?.ToString(CultureInfo.InvariantCulture) ?? "N/A"},");
+            csv.Append(CultureInfo.InvariantCulture, $"{log.DurationMs},");
+            csv.Append(CultureInfo.InvariantCulture, $"\"{log.ErrorMessage?.Replace("\"", "\"\"", StringComparison.Ordinal) ?? ""}\",");
+            csv.AppendLine(CultureInfo.InvariantCulture, $"\"{log.RequestUrl}\"");
         }
 
         var fileName = $"EmailApiLogs_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";

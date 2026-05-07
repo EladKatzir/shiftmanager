@@ -135,13 +135,13 @@ public class RateLimitingMiddleware
     {
         var lowerPath = path.ToLowerInvariant();
 
-        if (lowerPath.StartsWith("/api/calendar") || lowerPath.StartsWith("/api/team-calendars"))
+        if (lowerPath.StartsWith("/api/calendar", StringComparison.Ordinal) || lowerPath.StartsWith("/api/team-calendars", StringComparison.Ordinal))
             return "calendar";
-        if (lowerPath.StartsWith("/api/context"))
+        if (lowerPath.StartsWith("/api/context", StringComparison.Ordinal))
             return "context";
-        if (lowerPath.StartsWith("/api/widget"))
+        if (lowerPath.StartsWith("/api/widget", StringComparison.Ordinal))
             return "widget";
-        if (lowerPath.StartsWith("/api/telemetry"))
+        if (lowerPath.StartsWith("/api/telemetry", StringComparison.Ordinal))
             return "telemetry";
 
         return "default";

@@ -123,7 +123,7 @@ public class ForgotPasswordModel : LocalizedPageModel
             var user = await _db.Users
                 .IgnoreQueryFilters() // Allow searching across all companies
                 .FirstOrDefaultAsync(u =>
-                    u.Email.ToLower() == Email.ToLower() &&
+                    u.Email.ToLowerInvariant() == Email.ToLowerInvariant() &&
                     u.Phone != null &&
                     u.Phone == Phone);
 
@@ -262,7 +262,7 @@ public class ForgotPasswordModel : LocalizedPageModel
             // Find user by email (case-insensitive)
             var user = await _db.Users
                 .IgnoreQueryFilters() // Allow searching across all companies
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == ChangeEmail.ToLower());
+                .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == ChangeEmail.ToLowerInvariant());
 
             if (user == null)
             {

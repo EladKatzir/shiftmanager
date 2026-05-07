@@ -204,7 +204,7 @@ public class AvatarTagHelper : TagHelper
         output.TagName = "div";
         output.TagMode = TagMode.StartTagAndEndTag;
 
-        var sizeClass = Size.ToLower() switch
+        var sizeClass = Size.ToLowerInvariant() switch
         {
             "xs" => "avatar--xs",
             "sm" => "avatar--sm",
@@ -241,7 +241,7 @@ public class AvatarTagHelper : TagHelper
 
     private static (int width, int height) GetDimensions(string size)
     {
-        return size.ToLower() switch
+        return size.ToLowerInvariant() switch
         {
             "xs" => (24, 24),
             "sm" => (32, 32),
@@ -262,10 +262,10 @@ public class AvatarTagHelper : TagHelper
         if (parts.Length == 1)
         {
             return parts[0].Length >= 2
-                ? parts[0].Substring(0, 2).ToUpper()
-                : parts[0].ToUpper();
+                ? parts[0].Substring(0, 2).ToUpperInvariant()
+                : parts[0].ToUpperInvariant();
         }
 
-        return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+        return $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant();
     }
 }

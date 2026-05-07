@@ -133,7 +133,7 @@ public class TableModel : PageModel
         var companyId = _companyContext.GetCompanyIdOrThrow();
 
         // Set view mode (week, 2weeks, month)
-        ViewMode = view?.ToLower() ?? "week";
+        ViewMode = view?.ToLowerInvariant() ?? "week";
         if (ViewMode != "week" && ViewMode != "2weeks" && ViewMode != "month")
         {
             ViewMode = "week"; // Default fallback
@@ -514,7 +514,7 @@ public class TableModel : PageModel
             if (isNew)
             {
                 await _auditLogService.LogAsync("ShiftInstanceCreated", "ShiftInstance", instance.Id,
-                    $"Created shift instance for type {request.ShiftTypeId} on {request.Date:yyyy-MM-dd} with {request.StaffingRequired} slots");
+                    FormattableString.Invariant($"Created shift instance for type {request.ShiftTypeId} on {request.Date:yyyy-MM-dd} with {request.StaffingRequired} slots"));
             }
 
             return new JsonResult(new
@@ -596,7 +596,7 @@ public class TableModel : PageModel
                 await transaction.CommitAsync();
 
                 await _auditLogService.LogAsync("ShiftInstanceCreated", "ShiftInstance", instance.Id,
-                    $"Created shift instance for type {request.ShiftTypeId} on {request.Date:yyyy-MM-dd} with {request.StaffingRequired} slots");
+                    FormattableString.Invariant($"Created shift instance for type {request.ShiftTypeId} on {request.Date:yyyy-MM-dd} with {request.StaffingRequired} slots"));
 
                 return new JsonResult(new
                 {
@@ -714,7 +714,7 @@ public class TableModel : PageModel
                     return new JsonResult(new
                     {
                         success = false,
-                        error = string.Format(CultureInfo.CurrentCulture, _localizer["Calendar_Error_OverlappingShift"].Value, overlapName, existingStart.ToString("HH:mm"), existingEnd.ToString("HH:mm"))
+                        error = string.Format(CultureInfo.CurrentCulture, _localizer["Calendar_Error_OverlappingShift"].Value, overlapName, existingStart.ToString("HH:mm", CultureInfo.InvariantCulture), existingEnd.ToString("HH:mm", CultureInfo.InvariantCulture))
                     });
                 }
             }
@@ -732,7 +732,7 @@ public class TableModel : PageModel
             var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == request.UserId);
 
             await _auditLogService.LogAsync("ShiftSlotAssigned", "ShiftAssignment", request.AssignmentId,
-                $"Assigned user {request.UserId} ({user?.DisplayName}) to slot on {shiftDate:yyyy-MM-dd}");
+                FormattableString.Invariant($"Assigned user {request.UserId} ({user?.DisplayName}) to slot on {shiftDate:yyyy-MM-dd}"));
 
             return new JsonResult(new
             {
@@ -760,11 +760,23 @@ public class TableModel : PageModel
             var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
             if (!isAdmin)
             {
-                // Check for any shift assignment grant scoped to this company
-                var hasAnyShiftGrant = await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignAlhutShifts", companyId: companyId)
-                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTextShifts", companyId: companyId)
-                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignBRShifts", companyId: companyId)
-                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTechShifts", companyId: companyId);
+                // SECURITY-AUDITED 2026-05-07 (Finding #3 fix): pass the shift's JobTypeId
+                // to the scope check. Without it, a Lead with JobType=Alhut whose seed gives
+                // them BOTH AssignAlhutShifts AND AssignTextShifts (each persisted with
+                // JobTypeId=Alhut via useOwnJobType:true) could assign Text-jobtype shifts
+                // because the molecule branch of HasGrantWithScopeAsync ignored JobType.
+                // Now: lookup the shift's JobTypeId once, pass it, and rely on the new
+                // jobTypeMismatch filter to suppress wrong-JobType grants.
+                var probeShiftJobTypeId = await _db.ShiftTypes
+                    .IgnoreQueryFilters()
+                    .Where(st => st.Id == request.ShiftTypeId)
+                    .Select(st => (int?)st.JobTypeId)
+                    .FirstOrDefaultAsync();
+
+                var hasAnyShiftGrant = await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignAlhutShifts", companyId: companyId, jobTypeId: probeShiftJobTypeId)
+                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTextShifts", companyId: companyId, jobTypeId: probeShiftJobTypeId)
+                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignBRShifts", companyId: companyId, jobTypeId: probeShiftJobTypeId)
+                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTechShifts", companyId: companyId, jobTypeId: probeShiftJobTypeId);
 
                 if (!hasAnyShiftGrant)
                     return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
@@ -880,7 +892,7 @@ public class TableModel : PageModel
             }
 
             await _auditLogService.LogAsync("ShiftAssigned", "ShiftAssignment", result.AssignmentId,
-                $"Assigned user {request.UserId} ({user?.DisplayName}) to shift type {request.ShiftTypeId} on {instance.WorkDate:yyyy-MM-dd}");
+                FormattableString.Invariant($"Assigned user {request.UserId} ({user?.DisplayName}) to shift type {request.ShiftTypeId} on {instance.WorkDate:yyyy-MM-dd}"));
 
             return new JsonResult(new
             {
@@ -950,7 +962,7 @@ public class TableModel : PageModel
             }
 
             await _auditLogService.LogAsync("ShiftUnassigned", "ShiftAssignment", request.AssignmentId,
-                $"Unassigned user {removedUserId} ({removedUserName}) from shift on {workDate:yyyy-MM-dd}");
+                FormattableString.Invariant($"Unassigned user {removedUserId} ({removedUserName}) from shift on {workDate:yyyy-MM-dd}"));
 
             return new JsonResult(new { success = true });
         }
@@ -1010,7 +1022,7 @@ public class TableModel : PageModel
             }
 
             await _auditLogService.LogAsync("ShiftCleared", "ShiftAssignment", request.AssignmentId,
-                $"Cleared assignment on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}");
+                FormattableString.Invariant($"Cleared assignment on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}"));
 
             return new JsonResult(new { success = true });
         }
@@ -1147,7 +1159,7 @@ public class TableModel : PageModel
             }
 
             await _auditLogService.LogAsync("StaffingUpdated", "ShiftInstance", instance.Id,
-                $"Updated staffing to {request.StaffingRequired} on {instance.WorkDate:yyyy-MM-dd}");
+                FormattableString.Invariant($"Updated staffing to {request.StaffingRequired} on {instance.WorkDate:yyyy-MM-dd}"));
 
             return new JsonResult(new { success = true });
         }
@@ -1217,7 +1229,7 @@ public class TableModel : PageModel
                 deletedInstanceId, assignments.Count);
 
             await _auditLogService.LogAsync("ShiftDeleted", "ShiftInstance", deletedInstanceId,
-                $"Deleted shift instance on {deletedWorkDate:yyyy-MM-dd} with {assignments.Count} assignments");
+                FormattableString.Invariant($"Deleted shift instance on {deletedWorkDate:yyyy-MM-dd} with {assignments.Count} assignments"));
 
             // Send real-time notification (fire-and-forget)
             try
@@ -1336,7 +1348,7 @@ public class TableModel : PageModel
             }
 
             await _auditLogService.LogAsync("TraineeAdded", "ShiftAssignment", request.AssignmentId,
-                $"Added trainee {request.TraineeUserId} ({trainee?.DisplayName}) to assignment on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}");
+                FormattableString.Invariant($"Added trainee {request.TraineeUserId} ({trainee?.DisplayName}) to assignment on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}"));
 
             return new JsonResult(new
             {
@@ -1402,7 +1414,7 @@ public class TableModel : PageModel
             }
 
             await _auditLogService.LogAsync("TraineeRemoved", "ShiftAssignment", request.AssignmentId,
-                $"Removed trainee {removedTraineeId} from assignment on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}");
+                FormattableString.Invariant($"Removed trainee {removedTraineeId} from assignment on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}"));
 
             return new JsonResult(new { success = true });
         }
@@ -1498,7 +1510,7 @@ public class TableModel : PageModel
             }
 
             await _auditLogService.LogAsync("ShiftUserChanged", "ShiftAssignment", request.AssignmentId,
-                $"Changed user to {request.NewUserId} ({user?.DisplayName}) on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}");
+                FormattableString.Invariant($"Changed user to {request.NewUserId} ({user?.DisplayName}) on {assignment.ShiftInstance.WorkDate:yyyy-MM-dd}"));
 
             return new JsonResult(new
             {
@@ -1601,7 +1613,7 @@ public class TableModel : PageModel
             }
 
             // Create custom shift type with a unique internal key but user-visible name
-            var customKey = $"CUSTOM_{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
+            var customKey = $"CUSTOM_{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant()}";
 
             var shiftType = new ShiftType
             {
@@ -1935,7 +1947,7 @@ public class TableModel : PageModel
                 }
 
                 availability.Add(new {
-                    date = date.ToString("d/M"),
+                    date = date.ToString("d/M", CultureInfo.InvariantCulture),
                     dayName = date.DayOfWeek.ToString().Substring(0, 3),
                     status,
                     tooltip
@@ -2448,7 +2460,7 @@ public class TableModel : PageModel
             var companyId = _companyContext.GetCompanyIdOrThrow();
 
             // Calculate date range from query parameters (same logic as OnGetAsync)
-            string viewMode = view?.ToLower() ?? "week";
+            string viewMode = view?.ToLowerInvariant() ?? "week";
             if (viewMode != "week" && viewMode != "2weeks" && viewMode != "month")
             {
                 viewMode = "week";
@@ -2527,7 +2539,7 @@ public class TableModel : PageModel
                         instanceId = instance.Id,
                         shiftTypeId = instance.ShiftTypeId,
                         shiftTypeName = localizedShiftName,
-                        date = instance.WorkDate.ToString("yyyy-MM-dd"),
+                        date = instance.WorkDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                         type = "underfilled",
                         severity = "warning",
                         message = string.Format(CultureInfo.CurrentCulture, _localizer["FillRange_Understaffed"].Value, filledCount, instance.StaffingRequired),
@@ -2544,7 +2556,7 @@ public class TableModel : PageModel
                         instanceId = instance.Id,
                         shiftTypeId = instance.ShiftTypeId,
                         shiftTypeName = localizedShiftName,
-                        date = instance.WorkDate.ToString("yyyy-MM-dd"),
+                        date = instance.WorkDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                         type = "overfilled",
                         severity = "error",
                         message = string.Format(CultureInfo.CurrentCulture, _localizer["FillRange_Overstaffed"].Value, filledCount, instance.StaffingRequired),

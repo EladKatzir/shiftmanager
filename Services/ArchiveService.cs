@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using System.Globalization;
 using System.IO.Compression;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -167,7 +168,7 @@ public class ArchiveService : IArchiveService
             var archivesFolder = Path.Combine(_env.ContentRootPath, "Archives");
             Directory.CreateDirectory(archivesFolder);
 
-            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
 
             // Collect data
             var data = await CollectArchiveDataAsync(request.CutoffDate, request.Types);
@@ -485,7 +486,7 @@ public class ArchiveService : IArchiveService
             foreach (var sa in data.ShiftAssignments)
             {
                 var csv = $"{sa.Id},{sa.CompanyId},{sa.ShiftInstanceId}," +
-                          $"{sa.UserId?.ToString() ?? ""},{sa.TraineeUserId?.ToString() ?? ""},{sa.CreatedAt:yyyy-MM-dd HH:mm:ss}";
+                          $"{sa.UserId?.ToString(CultureInfo.InvariantCulture) ?? ""},{sa.TraineeUserId?.ToString(CultureInfo.InvariantCulture) ?? ""},{sa.CreatedAt:yyyy-MM-dd HH:mm:ss}";
                 await csvWriter.WriteLineAsync(csv);
             }
         }
@@ -500,9 +501,9 @@ public class ArchiveService : IArchiveService
             foreach (var sr in data.SwapRequests)
             {
                 var csv = $"{sr.Id},{sr.CompanyId},{sr.FromAssignmentId},{sr.ToAssignmentId ?? 0}," +
-                          $"{sr.FromUserId},{sr.ToUserId?.ToString() ?? ""},{sr.Status}," +
+                          $"{sr.FromUserId},{sr.ToUserId?.ToString(CultureInfo.InvariantCulture) ?? ""},{sr.Status}," +
                           $"\"{EscapeCsv(sr.Reason)}\",\"{EscapeCsv(sr.DeclineReason)}\"," +
-                          $"{sr.CreatedAt:yyyy-MM-dd HH:mm:ss},{sr.ReviewedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""}";
+                          $"{sr.CreatedAt:yyyy-MM-dd HH:mm:ss},{sr.ReviewedAt?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) ?? ""}";
                 await csvWriter.WriteLineAsync(csv);
             }
         }
@@ -534,7 +535,7 @@ public class ArchiveService : IArchiveService
             {
                 var csv = $"{c.Id},{c.CompanyId},{c.UserId},{c.Date:yyyy-MM-dd}," +
                           $"\"{EscapeCsv(c.Title)}\",\"{EscapeCsv(c.Notes)}\",{c.CreatedBy}," +
-                          $"{c.CreatedAt:yyyy-MM-dd HH:mm:ss},{c.CanceledAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""},{c.CanceledBy?.ToString() ?? ""}";
+                          $"{c.CreatedAt:yyyy-MM-dd HH:mm:ss},{c.CanceledAt?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) ?? ""},{c.CanceledBy?.ToString(CultureInfo.InvariantCulture) ?? ""}";
                 await csvWriter.WriteLineAsync(csv);
             }
         }
@@ -550,7 +551,7 @@ public class ArchiveService : IArchiveService
             {
                 var csv = $"{od.Id},{od.UserId},{od.Date:yyyy-MM-dd},{od.Type}," +
                           $"\"{EscapeCsv(od.Notes)}\",{od.CreatedBy}," +
-                          $"{od.CreatedAt:yyyy-MM-dd HH:mm:ss},{od.CanceledAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""},{od.CanceledBy?.ToString() ?? ""}";
+                          $"{od.CreatedAt:yyyy-MM-dd HH:mm:ss},{od.CanceledAt?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) ?? ""},{od.CanceledBy?.ToString(CultureInfo.InvariantCulture) ?? ""}";
                 await csvWriter.WriteLineAsync(csv);
             }
         }
@@ -594,10 +595,10 @@ public class ArchiveService : IArchiveService
                     si.Id,
                     si.CompanyId,
                     ShiftTypeKey = si.ShiftType.Key,
-                    WorkDate = si.WorkDate.ToString("yyyy-MM-dd"),
+                    WorkDate = si.WorkDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     si.Name,
                     si.StaffingRequired,
-                    UpdatedAt = si.UpdatedAt.ToString("o")
+                    UpdatedAt = si.UpdatedAt.ToString("o", CultureInfo.InvariantCulture)
                 }
             };
             await dataWriter.WriteLineAsync(JsonSerializer.Serialize(record, _jsonOptions));
@@ -656,12 +657,12 @@ public class ArchiveService : IArchiveService
                     tor.Id,
                     tor.CompanyId,
                     tor.UserId,
-                    StartDate = tor.StartDate.ToString("yyyy-MM-dd"),
-                    EndDate = tor.EndDate.ToString("yyyy-MM-dd"),
+                    StartDate = tor.StartDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    EndDate = tor.EndDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     Type = tor.Type.ToString(),
                     tor.Reason,
                     Status = tor.Status.ToString(),
-                    CreatedAt = tor.CreatedAt.ToString("o")
+                    CreatedAt = tor.CreatedAt.ToString("o", CultureInfo.InvariantCulture)
                 }
             };
             await dataWriter.WriteLineAsync(JsonSerializer.Serialize(record, _jsonOptions));
@@ -677,12 +678,12 @@ public class ArchiveService : IArchiveService
                     c.Id,
                     c.CompanyId,
                     c.UserId,
-                    Date = c.Date.ToString("yyyy-MM-dd"),
+                    Date = c.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     c.Title,
                     c.Notes,
                     c.CreatedBy,
-                    CreatedAt = c.CreatedAt.ToString("o"),
-                    CanceledAt = c.CanceledAt?.ToString("o"),
+                    CreatedAt = c.CreatedAt.ToString("o", CultureInfo.InvariantCulture),
+                    CanceledAt = c.CanceledAt?.ToString("o", CultureInfo.InvariantCulture),
                     c.CanceledBy
                 }
             };
@@ -698,12 +699,12 @@ public class ArchiveService : IArchiveService
                 {
                     od.Id,
                     od.UserId,
-                    Date = od.Date.ToString("yyyy-MM-dd"),
+                    Date = od.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                     Type = od.Type.ToString(),
                     od.Notes,
                     od.CreatedBy,
-                    CreatedAt = od.CreatedAt.ToString("o"),
-                    CanceledAt = od.CanceledAt?.ToString("o"),
+                    CreatedAt = od.CreatedAt.ToString("o", CultureInfo.InvariantCulture),
+                    CanceledAt = od.CanceledAt?.ToString("o", CultureInfo.InvariantCulture),
                     od.CanceledBy
                 }
             };

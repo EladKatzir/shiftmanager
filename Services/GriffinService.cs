@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Claims;
@@ -62,9 +63,13 @@ public class GriffinService : IGriffinService
 
     public async Task<GriffinApiResult<string>> ExchangeTokenAsync(string hashedToken, string griffinBaseUrl, int timeoutSeconds)
     {
-        // Griffin's /authentication/claimToken endpoint expects the hashed token
-        // under the 'token' query parameter (same convention as /validate and /getClaims).
-        var url = $"{griffinBaseUrl.TrimEnd('/')}/authentication/claimToken?token={Uri.EscapeDataString(hashedToken)}";
+        // Griffin's /authentication/claimToken endpoint takes the HASHED token under
+        // the 'hash' query parameter. (Note: /authorization/validate and /getClaims
+        // use 'token' — they take a JWT, not a hash. Different inputs, different names.)
+        // If you change this, also update the regression-guard tests in GriffinServiceTests.cs
+        // and the empirical proof rendered by /GriffinDiagnostic's "Live token-exchange
+        // comparison" section, which asserts that ?hash= succeeds and ?token= is rejected.
+        var url = $"{griffinBaseUrl.TrimEnd('/')}/authentication/claimToken?hash={Uri.EscapeDataString(hashedToken)}";
 
         _logger.LogDebug("Exchanging Griffin hashed token for JWT");
 
@@ -266,7 +271,7 @@ public class GriffinService : IGriffinService
             .IgnoreQueryFilters()
             .Include(u => u.RoleTemplate)
             .Include(u => u.JobType)
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == griffinClaims.EmailAddress.ToLower());
+            .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == griffinClaims.EmailAddress.ToLowerInvariant());
 
         if (user != null && !user.IsActive)
         {
@@ -347,7 +352,7 @@ public class GriffinService : IGriffinService
             // HIGH-007: store hashed token reference instead of raw token in claims
             new Claim("Griffin:TokenHash", ComputeSHA256Hash(token)),
             new Claim("Griffin:AuthTime", griffinClaims.IssuedAt),
-            new Claim("AuthTimestamp", DateTime.UtcNow.ToString("o"))
+            new Claim("AuthTimestamp", DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture))
         };
 
         if (!string.IsNullOrWhiteSpace(user.AvatarFileName))
@@ -421,7 +426,7 @@ public class GriffinService : IGriffinService
                 "AppUser",
                 user.Id,
                 $"Auto-provisioned Griffin user: {user.Email} — PENDING PLACEMENT (no molecule/hierarchy assigned)",
-                $"Role={user.Role}, CompanyId={user.CompanyId}, EmailAddress={griffinClaims.EmailAddress}");
+                FormattableString.Invariant($"Role={user.Role}, CompanyId={user.CompanyId}, EmailAddress={griffinClaims.EmailAddress}"));
 
             return user;
         }
@@ -452,7 +457,7 @@ public class GriffinService : IGriffinService
         {
             return GriffinApiResult<string>.Fail(new GriffinApiError(
                 stage, GriffinErrorCode.NetworkTimeout,
-                $"Timed out after {timeoutSeconds}s calling {url}. {ex.Message}", host));
+                FormattableString.Invariant($"Timed out after {timeoutSeconds}s calling {url}. {ex.Message}"), host));
         }
         catch (HttpRequestException ex) when (TryFindSocketError(ex, out var sockErr))
         {
@@ -516,7 +521,7 @@ public class GriffinService : IGriffinService
             };
             return GriffinApiResult<string>.Fail(new GriffinApiError(
                 stage, code,
-                $"HTTP {status} from {url}. Body: '{TrimForLog(body)}'",
+                FormattableString.Invariant($"HTTP {status} from {url}. Body: '{TrimForLog(body)}'"),
                 host, status, ResponsePreview: TrimForLog(body)));
         }
 

@@ -198,8 +198,8 @@ public class OnCallModel : PageModel
             _ => 7
         };
 
-        PreviousStart = StartDate.AddDays(-daysToMove).ToString("yyyy-MM-dd");
-        NextStart = StartDate.AddDays(daysToMove).ToString("yyyy-MM-dd");
+        PreviousStart = StartDate.AddDays(-daysToMove).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        NextStart = StartDate.AddDays(daysToMove).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 
     private static DateOnly GetStartOfWeek(DateOnly date)
@@ -307,7 +307,7 @@ public class OnCallModel : PageModel
             DutyTypes.Add(new DutyTypeInfo
             {
                 TypeValue = customType.TypeValue,
-                Name = Thread.CurrentThread.CurrentUICulture.Name.StartsWith("he")
+                Name = Thread.CurrentThread.CurrentUICulture.Name.StartsWith("he", StringComparison.Ordinal)
                     ? customType.NameHe
                     : customType.NameEn,
                 Icon = customType.Icon,
@@ -456,7 +456,7 @@ public class OnCallModel : PageModel
                 Role = o.Notes, // Use notes as additional info
                 UserId = o.UserId,
                 AssignmentTooltip = o.Creator != null
-                    ? string.Format(CultureInfo.CurrentCulture, _localizer["OnDuty_AssignedByTooltip"].Value, o.Creator.DisplayName, o.CreatedAt.ToString("d"))
+                    ? string.Format(CultureInfo.CurrentCulture, _localizer["OnDuty_AssignedByTooltip"].Value, o.Creator.DisplayName, o.CreatedAt.ToString("d", CultureInfo.CurrentCulture))
                     : null
             }).ToList();
 
@@ -544,8 +544,8 @@ public class OnCallModel : PageModel
                 scopeId = view.Query.ScopeId,
                 level = view.Query.Level.ToString(),
                 workType = view.Query.WorkType.ToString(),
-                periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd"),
-                periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd")
+                periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
             },
             spreadIndex = view.SpreadIndex,
             spreadSeverity = view.SpreadSeverity,
@@ -554,7 +554,7 @@ public class OnCallModel : PageModel
             mostUnder = view.MostUnder is null ? null : new { name = view.MostUnder.Name, deviationPercent = view.MostUnder.DeviationPercent },
             rows = view.Rows.Select(r => new { id = r.Id, name = r.Name, actual = r.Actual, expected = r.Expected, deviationPercent = r.DeviationPercent, band = r.Band.ToString() }),
             maxRibbonValue = view.MaxRibbonValue,
-            whereToFocus = view.WhereToFocus.Select(h => new { kind = h.Kind, shiftInstanceId = h.ShiftInstanceId, date = h.Date.ToString("yyyy-MM-dd"), label = h.Label, deficit = h.Deficit, companyId = h.CompanyId, jobTypeId = h.JobTypeId, dutyTypeValue = h.DutyTypeValue, userId = h.UserId, moleculeId = (int?)null }),
+            whereToFocus = view.WhereToFocus.Select(h => new { kind = h.Kind, shiftInstanceId = h.ShiftInstanceId, date = h.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), label = h.Label, deficit = h.Deficit, companyId = h.CompanyId, jobTypeId = h.JobTypeId, dutyTypeValue = h.DutyTypeValue, userId = h.UserId, moleculeId = (int?)null }),
             fullViewUrl = view.FullViewUrl,
             noneLabel = _localizer["Justice_None"].Value,
             noHolesLabel = _localizer["Justice_Panel_NoHolesOnDuty"].Value
@@ -708,7 +708,7 @@ public class OnCallModel : PageModel
         return new
         {
             kind = "onduty",
-            date = date.ToString("yyyy-MM-dd"),
+            date = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             dutyTypeValue,
             moleculeId,
             candidates = result.Candidates.Select(c => new

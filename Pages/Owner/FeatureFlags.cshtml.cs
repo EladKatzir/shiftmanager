@@ -54,7 +54,7 @@ public class FeatureFlagsModel : LocalizedPageModel
                 .ToList();
 
             var enabledFlags = Request.Form.Keys
-                .Where(k => k.StartsWith("flag_"))
+                .Where(k => k.StartsWith("flag_", StringComparison.Ordinal))
                 .Select(k => k.Substring(5)) // Remove "flag_" prefix
                 .ToHashSet();
 
@@ -115,13 +115,13 @@ public class FeatureFlagsModel : LocalizedPageModel
     /// </summary>
     private static string GetCategory(string flagName)
     {
-        if (flagName.StartsWith("FF_API_"))
+        if (flagName.StartsWith("FF_API_", StringComparison.Ordinal))
             return "API Endpoints";
-        if (flagName.StartsWith("FF_EXCEL_"))
+        if (flagName.StartsWith("FF_EXCEL_", StringComparison.Ordinal))
             return "Excel Calendars";
-        if (flagName.StartsWith("FF_NEW_") || flagName.StartsWith("FF_WIDGETS_") || flagName.StartsWith("FF_SCOPE_"))
+        if (flagName.StartsWith("FF_NEW_", StringComparison.Ordinal) || flagName.StartsWith("FF_WIDGETS_", StringComparison.Ordinal) || flagName.StartsWith("FF_SCOPE_", StringComparison.Ordinal))
             return "UI Features";
-        if (flagName.StartsWith("FF_ENFORCE_") || flagName.StartsWith("FF_ALLOW_") || flagName.StartsWith("FF_ENABLE_"))
+        if (flagName.StartsWith("FF_ENFORCE_", StringComparison.Ordinal) || flagName.StartsWith("FF_ALLOW_", StringComparison.Ordinal) || flagName.StartsWith("FF_ENABLE_", StringComparison.Ordinal))
             return "Operations";
         // Remaining: feature-specific flags (friendships, duty rotation, setup tasks)
         return "Features";

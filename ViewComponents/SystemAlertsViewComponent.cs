@@ -4,6 +4,7 @@ using Microsoft.Extensions.Localization;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
+using System.Globalization;
 
 namespace ShiftManager.ViewComponents;
 
@@ -75,7 +76,7 @@ public class SystemAlertsViewComponent : ViewComponent
             {
                 var walSizeMb = new FileInfo(walPath).Length / (1024.0 * 1024.0);
                 if (walSizeMb > 100)
-                    alerts.Add(_localizer["SystemAlert_WalSize", walSizeMb.ToString("F0")]);
+                    alerts.Add(_localizer["SystemAlert_WalSize", walSizeMb.ToString("F0", CultureInfo.InvariantCulture)]);
             }
         }
         catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check WAL size"); }
@@ -86,9 +87,9 @@ public class SystemAlertsViewComponent : ViewComponent
             var driveInfo = new DriveInfo(Path.GetPathRoot(dbPath) ?? "C");
             var freePercent = (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize * 100;
             if (freePercent < 5)
-                alerts.Add(_localizer["SystemAlert_DiskCritical", freePercent.ToString("F1")]);
+                alerts.Add(_localizer["SystemAlert_DiskCritical", freePercent.ToString("F1", CultureInfo.InvariantCulture)]);
             else if (freePercent < 10)
-                alerts.Add(_localizer["SystemAlert_DiskLow", freePercent.ToString("F1")]);
+                alerts.Add(_localizer["SystemAlert_DiskLow", freePercent.ToString("F1", CultureInfo.InvariantCulture)]);
         }
         catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check disk space"); }
 
@@ -106,7 +107,7 @@ public class SystemAlertsViewComponent : ViewComponent
                 if (latestBackup == null)
                     alerts.Add(_localizer["SystemAlert_NoBackups"]);
                 else if ((DateTime.Now - latestBackup.CreationTime).TotalDays > 2)
-                    alerts.Add(_localizer["SystemAlert_BackupOld", ((DateTime.Now - latestBackup.CreationTime).TotalDays).ToString("F0")]);
+                    alerts.Add(_localizer["SystemAlert_BackupOld", ((DateTime.Now - latestBackup.CreationTime).TotalDays).ToString("F0", CultureInfo.InvariantCulture)]);
             }
             else
             {
@@ -149,9 +150,9 @@ public class SystemAlertsViewComponent : ViewComponent
                 var errors = root.GetProperty("Errors").GetInt32();
                 var lastRun = root.GetProperty("LastRun").GetDateTime();
                 if (errors > 0)
-                    alerts.Add(_localizer["SystemAlert_NotificationFailures", errors.ToString(), lastRun.ToString("g")]);
+                    alerts.Add(_localizer["SystemAlert_NotificationFailures", errors.ToString(CultureInfo.InvariantCulture), lastRun.ToString("g", CultureInfo.CurrentCulture)]);
                 if ((DateTime.UtcNow - lastRun).TotalHours > 24)
-                    alerts.Add(_localizer["SystemAlert_NoNotificationRun", ((DateTime.UtcNow - lastRun).TotalHours).ToString("F0")]);
+                    alerts.Add(_localizer["SystemAlert_NoNotificationRun", ((DateTime.UtcNow - lastRun).TotalHours).ToString("F0", CultureInfo.InvariantCulture)]);
             }
         }
         catch (Exception ex) { _logger.LogWarning(ex, "SystemAlerts: Failed to check notification stats"); }

@@ -192,8 +192,8 @@ public class ChoresModel : PageModel
             _ => 7
         };
 
-        PreviousStart = StartDate.AddDays(-daysToMove).ToString("yyyy-MM-dd");
-        NextStart = StartDate.AddDays(daysToMove).ToString("yyyy-MM-dd");
+        PreviousStart = StartDate.AddDays(-daysToMove).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        NextStart = StartDate.AddDays(daysToMove).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 
     private static DateOnly GetStartOfWeek(DateOnly date)
@@ -279,7 +279,7 @@ public class ChoresModel : PageModel
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
 
         // Build groups by chore type
-        var isHebrew = CultureInfo.CurrentUICulture.Name.StartsWith("he");
+        var isHebrew = CultureInfo.CurrentUICulture.Name.StartsWith("he", StringComparison.Ordinal);
         var groups = ChoreTypes.Select(ct => new ExcelCalendarGroup
         {
             Id = $"choretype-{ct.Id}",
@@ -382,8 +382,8 @@ public class ChoresModel : PageModel
             var name = st?.Name ?? _localizer["Shift"].Value;
             var item = new HomeShiftItem(
                 name,
-                st?.Start.ToString("HH:mm"),
-                st?.End.ToString("HH:mm"),
+                st?.Start.ToString("HH:mm", CultureInfo.InvariantCulture),
+                st?.End.ToString("HH:mm", CultureInfo.InvariantCulture),
                 a.SourceTimeOffRequestId,
                 a.SourceTimeOffRequest != null ? (int?)a.SourceTimeOffRequest.Type : null);
 
@@ -552,8 +552,8 @@ public class ChoresModel : PageModel
                 scopeId = view.Query.ScopeId,
                 level = view.Query.Level.ToString(),
                 workType = view.Query.WorkType.ToString(),
-                periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd"),
-                periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd")
+                periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
             },
             spreadIndex = view.SpreadIndex,
             spreadSeverity = view.SpreadSeverity,
@@ -562,7 +562,7 @@ public class ChoresModel : PageModel
             mostUnder = view.MostUnder is null ? null : new { name = view.MostUnder.Name, deviationPercent = view.MostUnder.DeviationPercent },
             rows = view.Rows.Select(r => new { id = r.Id, name = r.Name, actual = r.Actual, expected = r.Expected, deviationPercent = r.DeviationPercent, band = r.Band.ToString() }),
             maxRibbonValue = view.MaxRibbonValue,
-            whereToFocus = view.WhereToFocus.Select(h => new { kind = h.Kind, shiftInstanceId = h.ShiftInstanceId, date = h.Date.ToString("yyyy-MM-dd"), label = h.Label, deficit = h.Deficit, companyId = h.CompanyId, jobTypeId = h.JobTypeId, dutyTypeValue = h.DutyTypeValue, userId = h.UserId, moleculeId = MoleculeId }),
+            whereToFocus = view.WhereToFocus.Select(h => new { kind = h.Kind, shiftInstanceId = h.ShiftInstanceId, date = h.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), label = h.Label, deficit = h.Deficit, companyId = h.CompanyId, jobTypeId = h.JobTypeId, dutyTypeValue = h.DutyTypeValue, userId = h.UserId, moleculeId = MoleculeId }),
             fullViewUrl = view.FullViewUrl,
             noneLabel = _localizer["Justice_None"].Value,
             noHolesLabel = _localizer["Justice_Panel_NoHolesChores"].Value
@@ -726,7 +726,7 @@ public class ChoresModel : PageModel
         return new
         {
             kind = "chore",
-            date = date.ToString("yyyy-MM-dd"),
+            date = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             moleculeId = MoleculeId,
             targetUserId,
             candidates = result.Candidates.Select(c => new

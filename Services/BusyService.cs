@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -97,8 +98,8 @@ public class BusyService : IBusyService
                 ? null
                 : new BusyShiftHit(
                     Name: new ShiftType { Key = userShift.Key, NameEn = userShift.ShiftTypeNameEn }.Name,
-                    Start: userShift.Start.ToString("HH:mm"),
-                    End: userShift.End.ToString("HH:mm"),
+                    Start: userShift.Start.ToString("HH:mm", CultureInfo.InvariantCulture),
+                    End: userShift.End.ToString("HH:mm", CultureInfo.InvariantCulture),
                     IsHome: userShift.Key == ShiftType.KEY_HOME || userShift.Key == ShiftType.KEY_HOME_PM || userShift.Key == ShiftType.KEY_HOME_AM,
                     IsOffline: userShift.Key == ShiftType.KEY_OFFLINE);
 
@@ -141,6 +142,21 @@ public class BusyService : IBusyService
         return result;
     }
 
+    /// <summary>
+    /// Validates a candidate assignment against existing busy state. Returns errors (block)
+    /// and warnings (overrideable) per the severity policy in the class header.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Time-window overlap semantics (closes F-H-015): shifts use HALF-OPEN intervals
+    /// [start, end). Two adjacent shifts that touch at a boundary are NOT overlapping —
+    /// e.g. 09:00–12:00 followed by 12:00–15:00 is allowed. The overlap test is
+    /// <c>existingStart &lt; newEnd &amp;&amp; newStart &lt; existingEnd</c> (strict less-than
+    /// on both sides), which means an existing shift ending exactly at <c>newStart</c>
+    /// or starting exactly at <c>newEnd</c> does not trigger OVERLAP. See implementation
+    /// in <see cref="ValidateShiftAsync"/> around the "Overlap detection" comment.
+    /// </para>
+    /// </remarks>
     public async Task<BusyValidation> ValidateAsync(
         BusyTarget target,
         int userId,
@@ -171,6 +187,16 @@ public class BusyService : IBusyService
             errors.Add(new ValidationIssue(
                 "USER_NOT_FOUND",
                 _localizer["Error_UserNotFound"],
+                ValidationSeverity.Error,
+                ValidationCategory.JobType));
+            return new BusyValidation(false, errors, warnings);
+        }
+
+        if (!user.IsActive)
+        {
+            errors.Add(new ValidationIssue(
+                "USER_INACTIVE",
+                _localizer["Error_UserInactive"],
                 ValidationSeverity.Error,
                 ValidationCategory.JobType));
             return new BusyValidation(false, errors, warnings);
@@ -224,7 +250,7 @@ public class BusyService : IBusyService
                 "SHIFT_EXISTS_CONFLICT", _localizer["Warning_ShiftExistsOnHomeDate"],
                 ValidationSeverity.Warning, ValidationCategory.HomeConflict,
                 new BusyConflictDetail("SHIFT_EXISTS_CONFLICT", "HomeConflict", "shift", name, target.Date,
-                    existingShift.Start.ToString("HH:mm"), existingShift.End.ToString("HH:mm"))));
+                    existingShift.Start.ToString("HH:mm", CultureInfo.InvariantCulture), existingShift.End.ToString("HH:mm", CultureInfo.InvariantCulture))));
         }
 
         // Existing chore on date (warning — was hard error in old ChoreService:304)
@@ -288,6 +314,16 @@ public class BusyService : IBusyService
             errors.Add(new ValidationIssue(
                 "USER_NOT_FOUND",
                 _localizer["Error_UserNotFound"],
+                ValidationSeverity.Error,
+                ValidationCategory.JobType));
+            return new BusyValidation(false, errors, warnings);
+        }
+
+        if (!user.IsActive)
+        {
+            errors.Add(new ValidationIssue(
+                "USER_INACTIVE",
+                _localizer["Error_UserInactive"],
                 ValidationSeverity.Error,
                 ValidationCategory.JobType));
             return new BusyValidation(false, errors, warnings);
@@ -432,8 +468,8 @@ public class BusyService : IBusyService
                             ResourceType: "shift",
                             ResourceName: new ShiftType { Key = ra.ShiftKey, NameEn = ra.ShiftNameEn }.Name,
                             Date: ra.WorkDate,
-                            StartTime: ra.Start.ToString("HH:mm"),
-                            EndTime: ra.End.ToString("HH:mm"))));
+                            StartTime: ra.Start.ToString("HH:mm", CultureInfo.InvariantCulture),
+                            EndTime: ra.End.ToString("HH:mm", CultureInfo.InvariantCulture))));
                     break;
                 }
             }
@@ -508,8 +544,8 @@ public class BusyService : IBusyService
                         ResourceType: "shift",
                         ResourceName: new ShiftType { Key = realShiftOnDate.ShiftKey, NameEn = realShiftOnDate.ShiftNameEn }.Name,
                         Date: realShiftOnDate.WorkDate,
-                        StartTime: realShiftOnDate.Start.ToString("HH:mm"),
-                        EndTime: realShiftOnDate.End.ToString("HH:mm"))));
+                        StartTime: realShiftOnDate.Start.ToString("HH:mm", CultureInfo.InvariantCulture),
+                        EndTime: realShiftOnDate.End.ToString("HH:mm", CultureInfo.InvariantCulture))));
             }
 
             bool hasDuplicateHome = nearbyAssignments.Any(ra => ra.IsHome && ra.WorkDate == shiftInstance.WorkDate);
@@ -672,7 +708,7 @@ public class BusyService : IBusyService
         {
             errors.Add(new ValidationIssue(
                 "USER_INACTIVE",
-                _localizer["Error_UserNotFound"],
+                _localizer["Error_UserInactive"],
                 ValidationSeverity.Error,
                 ValidationCategory.JobType));
             return new BusyValidation(false, errors, warnings);
@@ -747,7 +783,7 @@ public class BusyService : IBusyService
                 "SHIFT_EXISTS_CONFLICT", _localizer["Warning_ShiftExistsOnHomeDate"],
                 ValidationSeverity.Warning, ValidationCategory.HomeConflict,
                 new BusyConflictDetail("SHIFT_EXISTS_CONFLICT", "HomeConflict", "shift", name, target.Date,
-                    existingShift.Start.ToString("HH:mm"), existingShift.End.ToString("HH:mm"))));
+                    existingShift.Start.ToString("HH:mm", CultureInfo.InvariantCulture), existingShift.End.ToString("HH:mm", CultureInfo.InvariantCulture))));
         }
 
         // Existing chore (NEW warning — not checked today)
@@ -863,9 +899,10 @@ public class BusyService : IBusyService
 
     private static string TargetCanonical(BusyTarget target) => target switch
     {
-        BusyTarget.Shift s => $"shift:{s.ShiftInstanceId}",
-        BusyTarget.Chore c => $"chore:{c.Date:yyyy-MM-dd}:{c.MoleculeId}:{c.ChoreTypeId?.ToString() ?? "_"}",
-        BusyTarget.OnDuty o => $"onduty:{o.Date:yyyy-MM-dd}:{(int)o.Type}:{o.MoleculeId}",
+        // HMAC cache key — every component must format identically across server locales.
+        BusyTarget.Shift s => FormattableString.Invariant($"shift:{s.ShiftInstanceId}"),
+        BusyTarget.Chore c => FormattableString.Invariant($"chore:{c.Date:yyyy-MM-dd}:{c.MoleculeId}:{c.ChoreTypeId?.ToString(CultureInfo.InvariantCulture) ?? "_"}"),
+        BusyTarget.OnDuty o => FormattableString.Invariant($"onduty:{o.Date:yyyy-MM-dd}:{(int)o.Type}:{o.MoleculeId}"),
         _ => throw new ArgumentOutOfRangeException(nameof(target))
     };
 }

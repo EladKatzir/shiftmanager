@@ -9,6 +9,7 @@ using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using ShiftManager.ViewComponents;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.Calendar;
@@ -276,8 +277,8 @@ public class ShiftsModel : PageModel
             _ => 7
         };
 
-        PreviousStart = StartDate.AddDays(-daysToMove).ToString("yyyy-MM-dd");
-        NextStart = StartDate.AddDays(daysToMove).ToString("yyyy-MM-dd");
+        PreviousStart = StartDate.AddDays(-daysToMove).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        NextStart = StartDate.AddDays(daysToMove).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 
     private static DateOnly GetStartOfWeek(DateOnly date)
@@ -398,7 +399,7 @@ public class ShiftsModel : PageModel
             var row = new ExcelCalendarRow
             {
                 Id = $"shift-{shiftType.Id}",
-                Label = $"{localizedName} ({shiftType.Start:HH:mm}-{shiftType.End:HH:mm})",
+                Label = FormattableString.Invariant($"{localizedName} ({shiftType.Start:HH:mm}-{shiftType.End:HH:mm})"),
                 Color = shiftType.RowColor,
                 CompanyName = shiftType.CompanyId.HasValue ? companyNames.GetValueOrDefault(shiftType.CompanyId.Value) : null
             };
@@ -773,8 +774,8 @@ public class ShiftsModel : PageModel
                         // repeat (rotation) / plane (vacation) / sunrise (after) icons. Shift-mode
                         // doesn't normally show HOME (HOME is JobTypeId=null), but stay consistent.
                         IsHome = a.ShiftInstance.ShiftType?.IsHome == true,
-                        ShiftStart = a.ShiftInstance.ShiftType?.Start.ToString("HH:mm"),
-                        ShiftEnd = a.ShiftInstance.ShiftType?.End.ToString("HH:mm"),
+                        ShiftStart = a.ShiftInstance.ShiftType?.Start.ToString("HH:mm", CultureInfo.InvariantCulture),
+                        ShiftEnd = a.ShiftInstance.ShiftType?.End.ToString("HH:mm", CultureInfo.InvariantCulture),
                         SourceTimeOffRequestId = a.SourceTimeOffRequestId,
                         SourceTimeOffRequestType = a.SourceTimeOffRequest != null
                             ? (int?)a.SourceTimeOffRequest.Type
@@ -861,8 +862,8 @@ public class ShiftsModel : PageModel
                 // HOME unification (Task 22): user-mode chips render with source icons
                 // (repeat/plane/sunrise) + house icon + time range when ShiftType.IsHome.
                 IsHome = a.ShiftInstance.ShiftType?.IsHome == true,
-                ShiftStart = a.ShiftInstance.ShiftType?.Start.ToString("HH:mm"),
-                ShiftEnd = a.ShiftInstance.ShiftType?.End.ToString("HH:mm"),
+                ShiftStart = a.ShiftInstance.ShiftType?.Start.ToString("HH:mm", CultureInfo.InvariantCulture),
+                ShiftEnd = a.ShiftInstance.ShiftType?.End.ToString("HH:mm", CultureInfo.InvariantCulture),
                 SourceTimeOffRequestId = a.SourceTimeOffRequestId,
                 SourceTimeOffRequestType = a.SourceTimeOffRequest != null
                     ? (int?)a.SourceTimeOffRequest.Type
@@ -1005,8 +1006,8 @@ public class ShiftsModel : PageModel
                 scopeId = view.Query.ScopeId,
                 level = view.Query.Level.ToString(),
                 workType = view.Query.WorkType.ToString(),
-                periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd"),
-                periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd")
+                periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
             },
             spreadIndex = view.SpreadIndex,
             spreadSeverity = view.SpreadSeverity,
@@ -1015,7 +1016,7 @@ public class ShiftsModel : PageModel
             mostUnder = view.MostUnder is null ? null : new { name = view.MostUnder.Name, deviationPercent = view.MostUnder.DeviationPercent },
             rows = view.Rows.Select(r => new { id = r.Id, name = r.Name, actual = r.Actual, expected = r.Expected, deviationPercent = r.DeviationPercent, band = r.Band.ToString() }),
             maxRibbonValue = view.MaxRibbonValue,
-            whereToFocus = view.WhereToFocus.Select(h => new { kind = h.Kind, shiftInstanceId = h.ShiftInstanceId, date = h.Date.ToString("yyyy-MM-dd"), label = h.Label, deficit = h.Deficit, companyId = h.CompanyId, jobTypeId = h.JobTypeId, dutyTypeValue = h.DutyTypeValue, userId = h.UserId, moleculeId = MoleculeId }),
+            whereToFocus = view.WhereToFocus.Select(h => new { kind = h.Kind, shiftInstanceId = h.ShiftInstanceId, date = h.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), label = h.Label, deficit = h.Deficit, companyId = h.CompanyId, jobTypeId = h.JobTypeId, dutyTypeValue = h.DutyTypeValue, userId = h.UserId, moleculeId = MoleculeId }),
             fullViewUrl = view.FullViewUrl,
             noneLabel = _localizer["Justice_None"].Value,
             noHolesLabel = _localizer["Justice_Panel_NoHoles"].Value
@@ -1180,7 +1181,7 @@ public class ShiftsModel : PageModel
         {
             shiftInstanceId,
             shiftTypeId,
-            date = date.ToString("yyyy-MM-dd"),
+            date = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             kind = "shift",
             candidates = result.Candidates.Select(c => new
             {
