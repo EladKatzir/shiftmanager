@@ -186,13 +186,29 @@ public class GrantService : IGrantService
                     return true;
             }
 
+            // SECURITY-AUDITED 2026-05-07: JobType filter for area/molecule-scoped grants.
+            // When the grant is JobType-restricted (e.g., AssignTextShifts stored with
+            // JobTypeId=Alhut for an Alhut Lead via useOwnJobType:true), the request must
+            // satisfy the JobType to match. Mismatch → skip this grant.
+            //
+            // When the request omits jobTypeId, we preserve legacy behavior (the molecule/area
+            // match still applies) — most page-level [Authorize(Policy=...)] checks don't pass
+            // jobTypeId, and the existing JobType-with-Company branch below has been the
+            // only enforcement point. Tightening the no-jobTypeId case would silently break
+            // 22+ ETM-OWN grants across Lead/Director templates without a coordinated audit.
+            //
+            // Callers that DO need JobType enforcement (e.g., shift-assign handlers) must
+            // explicitly pass jobTypeId. See Pages/Calendar/Table.cshtml.cs:OnPostAssignEmployeeAsync.
+            bool jobTypeMismatch = grant.JobTypeId.HasValue && jobTypeId.HasValue
+                                   && grant.JobTypeId != jobTypeId;
+
             // Area scope: explicit area match, OR cascade — the requested moleculeId/companyId
             // belongs to this area (verified via the pre-resolved hierarchy lookup above), OR
             // the grant is in the user's own area and no narrower scope was requested.
             // Bug-fix 2026-04-25: previously the user-path fallback ran unconditionally,
             // letting Lead/Director/Kabar at area X be reported as having grants for any
             // sibling molecule Y in area X regardless of which molecule the caller asked about.
-            if (grant.AreaId.HasValue)
+            if (grant.AreaId.HasValue && !jobTypeMismatch)
             {
                 if (areaId.HasValue && grant.AreaId == areaId)
                     return true;
@@ -208,7 +224,7 @@ public class GrantService : IGrantService
 
             // Molecule scope: explicit molecule match, OR cascade — the requested companyId
             // belongs to this molecule, OR no narrower scope and grant is at user's own molecule.
-            if (grant.MoleculeId.HasValue)
+            if (grant.MoleculeId.HasValue && !jobTypeMismatch)
             {
                 if (moleculeId.HasValue && grant.MoleculeId == moleculeId)
                     return true;
