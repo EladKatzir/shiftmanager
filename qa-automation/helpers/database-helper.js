@@ -19,47 +19,66 @@ async function cleanupTestData(page) {
     console.log('🧹 Cleaning up test data...');
 
     try {
-        // Navigate to a cleanup endpoint if available, or manually delete test data
-        // For now, we'll delete companies created during tests
         await page.goto(`${BASE_URL}/Admin/Companies`);
         await page.waitForLoadState('networkidle');
 
-        // Delete companies with test prefixes and patterns
         const testPrefixes = ['TenantA_', 'TenantB_', 'Company_', 'TestCompany_', 'E2E_', 'DEL_',
                               'DROP TABLE', 'testcompany-', 'TestCo_'];
+
+        // Pre-fix: a leftover #js-confirm-modal-backdrop element from a prior dialog can intercept
+        // pointer events on every subsequent click. Strip any open modal/backdrop before starting,
+        // and after each delete cycle.
+        const dismissAnyConfirmModal = async () => {
+            await page.evaluate(() => {
+                document.querySelectorAll('#js-confirm-modal, #js-confirm-modal-backdrop, .modal.is-open, .modal-backdrop.is-open')
+                    .forEach(el => el.remove());
+                document.body.style.overflow = '';
+                document.body.classList.remove('modal-open');
+            });
+        };
+        await dismissAnyConfirmModal();
 
         for (const prefix of testPrefixes) {
             let deleted = 0;
             const rows = await page.locator(`tbody tr:has-text("${prefix}")`).count();
+            if (rows === 0) continue;
+            console.log(`  Found ${rows} test companies with prefix "${prefix}"`);
 
-            if (rows > 0) {
-                console.log(`  Found ${rows} test companies with prefix "${prefix}"`);
+            for (let i = 0; i < Math.min(rows, 50); i++) {
+                const row = page.locator(`tbody tr:has-text("${prefix}")`).first();
+                if (!(await row.count())) break;
 
-                // Delete all companies with this prefix (increased limit to 50)
-                for (let i = 0; i < Math.min(rows, 50); i++) {
-                    const row = page.locator(`tbody tr:has-text("${prefix}")`).first();
-                    const deleteButton = row.locator('button:has-text("Delete"), form[action*="Delete"] button').first();
+                // The delete UI is a form whose submit button is gated by a JS confirm modal
+                // (data-confirm-modal). The modal-backdrop intercepts the click. Bypass the UI
+                // confirmation entirely by *submitting the form directly* via page.evaluate.
+                const submitted = await row.evaluate((tr) => {
+                    const form = tr.querySelector('form[action*="Delete" i], form[asp-page-handler*="Delete" i], form button[type="submit"]')?.closest('form');
+                    if (!form) return false;
+                    // Detach any data-confirm-modal so the form submits without the dialog
+                    form.removeAttribute('data-confirm-modal');
+                    form.submit();
+                    return true;
+                }).catch(() => false);
 
-                    if (await deleteButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-                        // Set up dialog handler before clicking
-                        page.once('dialog', async dialog => await dialog.accept());
-
-                        await deleteButton.click();
-                        await page.waitForLoadState('networkidle');
-                        deleted++;
-                    }
-                }
-
-                if (deleted > 0) {
-                    console.log(`  ✓ Deleted ${deleted} test companies with prefix "${prefix}"`);
+                if (submitted) {
+                    // form.submit() triggers navigation — wait for it cleanly so our next
+                    // page.evaluate doesn't fire mid-navigation ("Execution context destroyed").
+                    await page.waitForURL(/.*/, { timeout: 5000 }).catch(() => { });
+                    await page.waitForLoadState('networkidle').catch(() => { });
+                    await dismissAnyConfirmModal().catch(() => { });
+                    deleted++;
+                } else {
+                    // Row had no recognizable delete form — skip
+                    break;
                 }
             }
+            if (deleted > 0) console.log(`  ✓ Deleted ${deleted} companies with prefix "${prefix}"`);
         }
 
         console.log('✓ Test data cleanup complete');
     } catch (error) {
         console.error('⚠️  Error during cleanup:', error.message);
-        // Don't throw - cleanup is best-effort
+        // Cleanup is best-effort — never let it fail a run.
     }
 }
 
