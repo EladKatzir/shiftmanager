@@ -190,6 +190,24 @@ public class ShiftValidationTests : IDisposable
     }
 
     [Fact]
+    public async Task Validate_UserInactive_ReturnsHardError()
+    {
+        // Pins the BusyService.ValidateShiftAsync IsActive guard. Prior to this fix,
+        // deactivated users (IsActive=false) could be silently assigned shifts because
+        // the IsActive check existed only in ValidateOnDutyAsync, not in ValidateShiftAsync
+        // or ValidateChoreAsync. See Phase 3d.4 Playwright finding (2026-05-07).
+        var data = await CreateBaseHierarchyAsync();
+
+        data.User.IsActive = false;
+        await _db.SaveChangesAsync();
+
+        var result = await _service.ValidateShiftAssignmentAsync(data.User.Id, data.ShiftInstance.Id);
+
+        result.CanAssign.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.Key == "USER_INACTIVE");
+    }
+
+    [Fact]
     public async Task Validate_ShiftNotFound_ReturnsError()
     {
         // Arrange

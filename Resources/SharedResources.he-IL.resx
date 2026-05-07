@@ -3914,6 +3914,9 @@
   <data name="Error_UserNotFound" xml:space="preserve">
     <value>משתמש לא נמצא</value>
   </data>
+  <data name="Error_UserInactive" xml:space="preserve">
+    <value>המשתמש מושבת ולא ניתן לשבץ אותו למשמרות, מטלות או תורנויות.</value>
+  </data>
   <data name="Error_InvalidRank" xml:space="preserve">
     <value>דרגה צבאית לא חוקית נבחרה</value>
   </data>
