@@ -221,3 +221,7 @@ FinalProductPublish/Microsoft.CodeCoverage.*.dll
 # Claude Code internal directories
 .claude/agent-memory/
 .superpowers/
+
+# dotnet test output (TRX, coverage, host artifacts)
+test-results/
+TestResults/
