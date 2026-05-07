@@ -148,10 +148,14 @@ public class GriffinServiceTests : IDisposable
         result.Should().EndWith(tokenConsumerUrl);
     }
 
-    // ---------- ExchangeTokenAsync: URL CONTRACT (regression guard for the bug we just fixed) ----------
+    // ---------- ExchangeTokenAsync: URL CONTRACT (claimToken takes ?hash=, not ?token=) ----------
+    // The Griffin /authentication/claimToken endpoint accepts the hashed token under the 'hash'
+    // query parameter. /authorization/validate and /getClaims use 'token' because their input
+    // IS a JWT — different inputs, different names. The /GriffinDiagnostic page renders an
+    // empirical proof of this contract (raw ?hash= vs raw ?token= side by side). Don't conflate.
 
     [Fact]
-    public async Task ExchangeTokenAsync_UsesTokenQueryParameter_NotHash()
+    public async Task ExchangeTokenAsync_UsesHashQueryParameter_NotToken()
     {
         var requests = new List<HttpRequestMessage>();
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
@@ -161,12 +165,12 @@ public class GriffinServiceTests : IDisposable
 
         requests.Should().HaveCount(1);
         var url = requests[0].RequestUri!.ToString();
-        url.Should().Contain("?token=hashed-token-A");
-        url.Should().NotContain("?hash=");
+        url.Should().Contain("?hash=hashed-token-A");
+        url.Should().NotContain("?token=");
     }
 
     [Fact]
-    public async Task ExchangeTokenAsync_UrlEncodesTokenValue()
+    public async Task ExchangeTokenAsync_UrlEncodesHashValue()
     {
         var requests = new List<HttpRequestMessage>();
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
@@ -179,7 +183,7 @@ public class GriffinServiceTests : IDisposable
         // even when the bytes actually sent on the wire are correct. OriginalString reflects
         // exactly what HttpClient transmitted.
         var url = requests[0].RequestUri!.OriginalString;
-        url.Should().Contain("token=a%20b%2Bc%2Fd");
+        url.Should().Contain("hash=a%20b%2Bc%2Fd");
     }
 
     // ---------- ExchangeTokenAsync: response shape tolerance (item #3) ----------

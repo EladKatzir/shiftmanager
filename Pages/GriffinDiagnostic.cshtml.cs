@@ -1,10 +1,14 @@
+using System.Diagnostics;
+using System.Net.Http;
 using System.Text.Json;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
 using ShiftManager.Services;
 
 namespace ShiftManager.Pages;
@@ -72,6 +76,37 @@ public class GriffinDiagnosticModel : PageModel
     public bool OldUrlLooksLikeUrl { get; set; }
     public bool NewUrlLooksLikeUrl { get; set; }
     public bool DoofUrlLooksLikeUrl { get; set; }
+
+    // ========== Live token-exchange comparison (POST /GriffinDiagnostic?handler=TestExchange) ==========
+    // Pasted by the admin from a real Griffin redirect (the value of ?hashedToken= on the
+    // browser callback URL). One-shot — Griffin invalidates the hash after first use, so the
+    // admin will need a fresh redirect for each test cycle.
+    [BindProperty]
+    public string? TestHashedToken { get; set; }
+
+    public bool RanLiveTest { get; set; }
+    public TokenExchangeAttempt? AttemptCurlHash { get; set; }       // Raw GET ?hash= (mirrors working curl)
+    public TokenExchangeAttempt? AttemptViaService { get; set; }     // Through GriffinService (production code path)
+    public TokenExchangeAttempt? AttemptCurlToken { get; set; }      // Raw GET ?token= (control — proves the bug)
+    public TokenExchangeAttempt? AttemptClaimsChain { get; set; }    // Optional follow-up: getClaims with the JWT
+    public string? ExtractedJwtMasked { get; set; }
+
+    /// <summary>
+    /// One round-trip's worth of evidence: the URL we hit, what came back, how long it took.
+    /// Rendered side-by-side with sibling attempts so a human can spot which boundary differs.
+    /// </summary>
+    public sealed class TokenExchangeAttempt
+    {
+        public string Mode { get; set; } = "";              // Human-readable label
+        public string MaskedUrl { get; set; } = "";         // URL with hash/JWT masked
+        public string CurlEquivalent { get; set; } = "";    // Copy-pastable curl command (also masked)
+        public bool Success { get; set; }
+        public int? HttpStatus { get; set; }
+        public string? ErrorToken { get; set; }             // Service-mode only (e.g., GRIFFIN-TOKENEXCHANGE-200)
+        public string? ResponseBodyPreview { get; set; }
+        public int DurationMs { get; set; }
+        public string? Exception { get; set; }
+    }
 
     public GriffinDiagnosticModel(
         IGriffinConfigService griffinConfigService,
@@ -334,17 +369,17 @@ public class GriffinDiagnosticModel : PageModel
             Checks.Add("7. Running additional validation checks...");
 
             // Check for common mistakes
-            if (GriffinConfig.BaseUrl?.Contains("//") == true && !GriffinConfig.BaseUrl.StartsWith("http"))
+            if (GriffinConfig.BaseUrl?.Contains("//", StringComparison.Ordinal) == true && !GriffinConfig.BaseUrl.StartsWith("http", StringComparison.Ordinal))
             {
                 Warnings.Add("BaseUrl contains '//' but doesn't start with 'http://' or 'https://'. Did you mean to add the scheme?");
             }
 
-            if (GriffinConfig.TokenConsumerUrl?.StartsWith("/") == true && !GriffinConfig.TokenConsumerUrl.StartsWith("http"))
+            if (GriffinConfig.TokenConsumerUrl?.StartsWith("/", StringComparison.Ordinal) == true && !GriffinConfig.TokenConsumerUrl.StartsWith("http", StringComparison.Ordinal))
             {
                 Warnings.Add("Callback URL starts with '/' (looks like a relative path). It should be a full URL like 'http://localhost:5000/Auth/GriffinCallback'");
             }
 
-            if (GriffinConfig.BaseUrl?.EndsWith("/") == true)
+            if (GriffinConfig.BaseUrl?.EndsWith("/", StringComparison.Ordinal) == true)
             {
                 Warnings.Add("BaseUrl ends with a trailing slash. This is usually fine, but may cause double-slash in generated URLs.");
             }
@@ -554,8 +589,8 @@ public class GriffinDiagnosticModel : PageModel
         var oldCallback = GriffinConfig.TokenConsumerUrl + "?returnUrl=" + ReturnUrlEncoded3x;
         OldCallbackUrl = oldCallback;
         OldFinalGriffinUrl = $"{GriffinConfig.BaseUrl?.TrimEnd('/')}/authentication?tokenConsumerURL={oldCallback}";
-        OldUrlLooksLikeUrl = OldFinalGriffinUrl.Contains("tokenConsumerURL=https://") ||
-                             OldFinalGriffinUrl.Contains("tokenConsumerURL=http://");
+        OldUrlLooksLikeUrl = OldFinalGriffinUrl.Contains("tokenConsumerURL=https://", StringComparison.Ordinal) ||
+                             OldFinalGriffinUrl.Contains("tokenConsumerURL=http://", StringComparison.Ordinal);
 
         // ===========================================
         // NEW APPROACH (Clean tokenConsumerURL, returnUrl in cookie - CORRECT)
@@ -565,8 +600,8 @@ public class GriffinDiagnosticModel : PageModel
         // This matches how DOOF keeps its tokenConsumerURL clean.
         NewCallbackUrl = GriffinConfig.TokenConsumerUrl;  // Clean URL, no query params
         NewFinalGriffinUrl = $"{GriffinConfig.BaseUrl?.TrimEnd('/')}/authentication?tokenConsumerURL={GriffinConfig.TokenConsumerUrl}";
-        NewUrlLooksLikeUrl = NewFinalGriffinUrl.Contains("tokenConsumerURL=https://") ||
-                             NewFinalGriffinUrl.Contains("tokenConsumerURL=http://");
+        NewUrlLooksLikeUrl = NewFinalGriffinUrl.Contains("tokenConsumerURL=https://", StringComparison.Ordinal) ||
+                             NewFinalGriffinUrl.Contains("tokenConsumerURL=http://", StringComparison.Ordinal);
 
         // ===========================================
         // DOOF APPROACH (Reference - WORKS)
@@ -575,10 +610,10 @@ public class GriffinDiagnosticModel : PageModel
         DoofDestinationEncoded3x = ReturnUrlEncoded3x;  // Same as ours
         DoofCallbackUrl = "https://doof.d8200.mil/api/login/" + DoofDestinationEncoded3x;
         DoofFinalGriffinUrl = $"https://doof-auth-adfs.d8200.mil/authentication?tokenConsumerURL={DoofCallbackUrl}";
-        DoofUrlLooksLikeUrl = DoofFinalGriffinUrl.Contains("tokenConsumerURL=https://");
+        DoofUrlLooksLikeUrl = DoofFinalGriffinUrl.Contains("tokenConsumerURL=https://", StringComparison.Ordinal);
 
         Checks.Add("📊 URL Comparison Generated:");
-        var oldUrlStart = OldFinalGriffinUrl.IndexOf("tokenConsumerURL=");
+        var oldUrlStart = OldFinalGriffinUrl.IndexOf("tokenConsumerURL=", StringComparison.Ordinal);
         if (oldUrlStart >= 0)
         {
             oldUrlStart += 17; // Length of "tokenConsumerURL="
@@ -587,5 +622,229 @@ public class GriffinDiagnosticModel : PageModel
         }
         Checks.Add($"   CURRENT (fixed): tokenConsumerURL is clean — returnUrl stored in cookie");
         Checks.Add($"   DOOF (reference): tokenConsumerURL is clean — destination in path");
+    }
+
+    // ============================================================================================
+    // Live token-exchange comparison
+    //
+    // The user's recurring "even after multiple refactors, ADFS still 400s" pattern was caused by
+    // a query parameter mismatch: claimToken takes ?hash=, but our service was sending ?token=.
+    // To make any future regression like this immediately visible — and to give an admin in the
+    // air-gapped env a way to compare service-vs-curl behavior without leaving the app — this
+    // handler runs three independent attempts on a single user-supplied hashed token:
+    //
+    //   (A) Raw HTTP GET with ?hash=     (mirrors the working curl)
+    //   (B) Through GriffinService       (the production code path)
+    //   (C) Raw HTTP GET with ?token=    (control — should fail; proves ?hash= is the contract)
+    //
+    // If (B) succeeds we also chain a getClaims call so the full happy-path is visible too.
+    //
+    // SECURITY-AUDITED: Page is gated by Grant:AdminAccess. The hashed token is supplied by
+    // the authenticated admin and used only against the configured BaseUrl. Token values are
+    // masked (first 4 + last 4) in rendered output to limit shoulder-surfing / screenshot leak.
+    // ============================================================================================
+    public async Task<IActionResult> OnPostTestExchangeAsync()
+    {
+        // Re-run the read-only diagnostic so the rest of the page renders with up-to-date state.
+        await OnGetAsync();
+
+        if (string.IsNullOrWhiteSpace(TestHashedToken))
+        {
+            Warnings.Add("Live token-exchange test was triggered without a hashed token. Paste the value of '?hashedToken=' from the Griffin redirect URL and resubmit.");
+            return Page();
+        }
+
+        if (GriffinConfig?.BaseUrl is null || BaseUrlHasScheme != true)
+        {
+            Warnings.Add("Live token-exchange test cannot run: BaseUrl is missing or invalid. Fix the configuration first.");
+            return Page();
+        }
+
+        RanLiveTest = true;
+        var hash = TestHashedToken.Trim();
+        var baseUrl = GriffinConfig.BaseUrl.TrimEnd('/');
+        var timeoutSeconds = GriffinConfig.TimeoutSeconds > 0 ? GriffinConfig.TimeoutSeconds : 10;
+
+        // Three independent calls — fan out concurrently so the page returns quickly even if one hangs.
+        var rawHashTask = RunRawAttemptAsync(
+            baseUrl, hash, paramName: "hash", timeoutSeconds,
+            label: "(A) Raw HTTP GET ?hash=  — mirrors the working curl");
+        var serviceTask = RunServiceAttemptAsync(hash, baseUrl, timeoutSeconds);
+        var rawTokenTask = RunRawAttemptAsync(
+            baseUrl, hash, paramName: "token", timeoutSeconds,
+            label: "(C) Raw HTTP GET ?token=  — control: should fail with HTTP 400");
+
+        await Task.WhenAll(rawHashTask, serviceTask, rawTokenTask);
+
+        AttemptCurlHash = rawHashTask.Result;
+        AttemptViaService = serviceTask.Result;
+        AttemptCurlToken = rawTokenTask.Result;
+
+        // Chain step: if the service exchange returned a JWT, follow up with getClaims
+        // so the diagnostic shows the full happy-path the user reproduced manually with two curls.
+        if (AttemptViaService.Success && !string.IsNullOrWhiteSpace(AttemptViaService.ResponseBodyPreview))
+        {
+            // The service-mode preview already holds the parsed JWT (ExchangeTokenAsync extracts it).
+            var jwt = AttemptViaService.ResponseBodyPreview!.Trim();
+            // Strip a trailing ellipsis our truncator may have added.
+            if (jwt.EndsWith("…", StringComparison.Ordinal)) jwt = jwt[..^1];
+            ExtractedJwtMasked = MaskSecret(jwt);
+            AttemptClaimsChain = await RunClaimsChainAsync(baseUrl, jwt, timeoutSeconds);
+        }
+
+        return Page();
+    }
+
+    private async Task<TokenExchangeAttempt> RunRawAttemptAsync(
+        string baseUrl, string hash, string paramName, int timeoutSeconds, string label)
+    {
+        var url = $"{baseUrl}/authentication/claimToken?{paramName}={Uri.EscapeDataString(hash)}";
+        var attempt = new TokenExchangeAttempt
+        {
+            Mode = label,
+            MaskedUrl = MaskUrlSecret(url),
+            CurlEquivalent = $"curl -X GET '{MaskUrlSecret(url)}' -H 'accept: */*'",
+        };
+
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            // Bare HttpClient (no factory). Deliberately chosen so this attempt isolates
+            // *transport* variables — if it succeeds while the service path fails, the
+            // delta is somewhere in our HttpClientFactory pipeline, not the URL contract.
+            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(timeoutSeconds) };
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.Accept.Clear();
+            req.Headers.Accept.ParseAdd("*/*");
+            using var response = await client.SendAsync(req);
+            attempt.HttpStatus = (int)response.StatusCode;
+            attempt.Success = response.IsSuccessStatusCode;
+            var body = await response.Content.ReadAsStringAsync();
+            attempt.ResponseBodyPreview = TruncateForDisplay(body);
+        }
+        catch (Exception ex)
+        {
+            attempt.Exception = ex.GetType().Name + ": " + ex.Message;
+        }
+        finally
+        {
+            sw.Stop();
+            attempt.DurationMs = (int)sw.ElapsedMilliseconds;
+        }
+
+        return attempt;
+    }
+
+    private async Task<TokenExchangeAttempt> RunServiceAttemptAsync(string hash, string baseUrl, int timeoutSeconds)
+    {
+        var attempt = new TokenExchangeAttempt
+        {
+            Mode = "(B) Through GriffinService.ExchangeTokenAsync — production code path",
+            MaskedUrl = $"{baseUrl}/authentication/claimToken?hash={MaskSecret(hash)}",
+            CurlEquivalent = "(uses HttpClientFactory \"GriffinClient\" — same pipeline as the live login flow)",
+        };
+
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            var result = await _griffinService.ExchangeTokenAsync(hash, baseUrl, timeoutSeconds);
+            attempt.Success = result.Success;
+            if (result.Success)
+            {
+                attempt.HttpStatus = 200;
+                attempt.ResponseBodyPreview = TruncateForDisplay(result.Value ?? string.Empty);
+            }
+            else if (result.Error is not null)
+            {
+                attempt.HttpStatus = result.Error.HttpStatus;
+                attempt.ErrorToken = result.Error.ErrorToken;
+                attempt.ResponseBodyPreview = TruncateForDisplay(result.Error.ResponsePreview ?? result.Error.TechnicalDetail ?? string.Empty);
+            }
+        }
+        catch (Exception ex)
+        {
+            attempt.Exception = ex.GetType().Name + ": " + ex.Message;
+        }
+        finally
+        {
+            sw.Stop();
+            attempt.DurationMs = (int)sw.ElapsedMilliseconds;
+        }
+
+        return attempt;
+    }
+
+    private async Task<TokenExchangeAttempt> RunClaimsChainAsync(string baseUrl, string jwt, int timeoutSeconds)
+    {
+        var url = $"{baseUrl}/authorization/getClaims?token={Uri.EscapeDataString(jwt)}";
+        var attempt = new TokenExchangeAttempt
+        {
+            Mode = "Chain follow-up: GET /authorization/getClaims?token=<JWT>",
+            MaskedUrl = MaskUrlSecret(url),
+            CurlEquivalent = $"curl -X GET '{MaskUrlSecret(url)}' -H 'accept: */*'",
+        };
+
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(timeoutSeconds) };
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.Accept.Clear();
+            req.Headers.Accept.ParseAdd("*/*");
+            using var response = await client.SendAsync(req);
+            attempt.HttpStatus = (int)response.StatusCode;
+            attempt.Success = response.IsSuccessStatusCode;
+            var body = await response.Content.ReadAsStringAsync();
+            attempt.ResponseBodyPreview = TruncateForDisplay(body);
+        }
+        catch (Exception ex)
+        {
+            attempt.Exception = ex.GetType().Name + ": " + ex.Message;
+        }
+        finally
+        {
+            sw.Stop();
+            attempt.DurationMs = (int)sw.ElapsedMilliseconds;
+        }
+
+        return attempt;
+    }
+
+    private static string TruncateForDisplay(string body)
+    {
+        if (string.IsNullOrEmpty(body)) return string.Empty;
+        const int max = 600;
+        return body.Length > max ? body[..max] + "…" : body;
+    }
+
+    private static string MaskSecret(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return string.Empty;
+        if (s.Length <= 8) return "***";
+        return $"{s[..4]}…{s[^4..]}";
+    }
+
+    /// <summary>
+    /// Replaces the value of the first hash= or token= query parameter with a masked version
+    /// suitable for display. Preserves the surrounding URL structure so a developer can still
+    /// see exactly which endpoint and parameter name was used.
+    /// </summary>
+    private static string MaskUrlSecret(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return url;
+        foreach (var key in new[] { "hash=", "token=" })
+        {
+            var idx = url.IndexOf(key, StringComparison.Ordinal);
+            if (idx < 0) continue;
+            var valStart = idx + key.Length;
+            var ampersand = url.IndexOf('&', valStart);
+            var rawEncoded = ampersand < 0 ? url[valStart..] : url[valStart..ampersand];
+            string decoded;
+            try { decoded = Uri.UnescapeDataString(rawEncoded); }
+            catch { decoded = rawEncoded; }
+            var masked = MaskSecret(decoded);
+            return url[..valStart] + masked + (ampersand < 0 ? string.Empty : url[ampersand..]);
+        }
+        return url;
     }
 }

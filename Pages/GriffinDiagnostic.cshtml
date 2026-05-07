@@ -663,6 +663,202 @@
         </div>
     }
 
+    @* LIVE TOKEN-EXCHANGE COMPARISON — paste a hashedToken, see what each path does *@
+    @if (Model.GriffinConfig != null)
+    {
+        <div class="section" style="border: 3px solid var(--info);">
+            <h2 style="background: linear-gradient(135deg, var(--info) 0%, var(--accent) 100%); color: var(--primary-contrast);">
+                🧪 Live token-exchange comparison
+            </h2>
+            <div class="section-body">
+                <p style="color: var(--text); line-height: 1.7;">
+                    Paste the value of <code>?hashedToken=</code> from a real Griffin redirect URL (browser
+                    address bar after clicking <strong>Sign in with ADFS</strong>) and click <strong>Run
+                    live test</strong>. The diagnostic hits <code>/authentication/claimToken</code> three
+                    independent ways and renders results side-by-side. If they disagree, the discrepancy
+                    pinpoints exactly which boundary broke. Hashes are <strong>one-shot</strong> —
+                    you'll need a fresh redirect for each test cycle.
+                </p>
+
+                <ul style="color: var(--text-muted); font-size: var(--text-small); margin: 1rem 0 1.5rem 1.5rem; line-height: 1.7;">
+                    <li><strong style="color: var(--success);">(A) Raw HTTP GET ?hash=</strong> — bare HttpClient, mirrors the curl that worked manually</li>
+                    <li><strong style="color: var(--info);">(B) Through GriffinService</strong> — the production code path; uses HttpClientFactory "GriffinClient"</li>
+                    <li><strong style="color: var(--warning);">(C) Raw HTTP GET ?token=</strong> — control: should be HTTP 400, proves <code>?hash=</code> is the contract</li>
+                </ul>
+
+                <form method="post" asp-page-handler="TestExchange" style="margin: 1.5rem 0;">
+                    <label for="TestHashedToken" class="field-label">Hashed token</label>
+                    <input type="text" id="TestHashedToken" name="TestHashedToken"
+                        value="@(Model.TestHashedToken ?? "")"
+                        placeholder="e.g. ddjhfsjfdshdlshdlhdssdd…"
+                        autocomplete="off" spellcheck="false"
+                        style="width: 100%; font-family: var(--font-mono); padding: 0.75rem;
+                               border: 1px solid var(--border); border-radius: var(--radius-sm);
+                               background: var(--surface-soft); color: var(--text); font-size: 0.9rem;" />
+                    <button type="submit" class="griffin-btn" style="margin-top: 1rem;">▶ Run live test</button>
+                </form>
+
+                @if (Model.RanLiveTest)
+                {
+                    var hashOk = Model.AttemptCurlHash?.Success == true;
+                    var tokenOk = Model.AttemptCurlToken?.Success == true;
+                    var serviceOk = Model.AttemptViaService?.Success == true;
+
+                    <h3 style="color: var(--text); margin-top: 2rem;">Side-by-side results</h3>
+                    <div class="grid">
+                        @foreach (var attempt in new[] { Model.AttemptCurlHash, Model.AttemptViaService, Model.AttemptCurlToken })
+                        {
+                            if (attempt == null) { continue; }
+                            var borderColor = attempt.Success ? "var(--success)" : "var(--danger)";
+                            var badgeClass = attempt.Success ? "griffin-badge-success" : "griffin-badge-error";
+                            <div class="grid-item" style="border: 2px solid @borderColor;">
+                                <h4 style="margin: 0 0 0.5rem 0; color: var(--text); font-size: var(--text-small); text-transform: none; line-height: 1.4;">@attempt.Mode</h4>
+
+                                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0.75rem 0;">
+                                    <span class="griffin-badge @badgeClass">
+                                        @(attempt.Success ? "✓" : "✗") HTTP @(attempt.HttpStatus?.ToString() ?? "—")
+                                    </span>
+                                    <span style="color: var(--text-muted); font-size: var(--text-tiny);">@attempt.DurationMs ms</span>
+                                    @if (!string.IsNullOrEmpty(attempt.ErrorToken))
+                                    {
+                                        <code style="background: var(--danger-soft); color: var(--danger); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); font-size: var(--text-tiny);">@attempt.ErrorToken</code>
+                                    }
+                                </div>
+
+                                <div style="margin-top: 0.75rem;">
+                                    <span class="field-label" style="font-size: var(--text-tiny);">Request URL (masked)</span>
+                                    <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); word-break: break-all; padding: 0.5rem; background: var(--surface-soft); border-radius: var(--radius-sm); margin-top: 0.25rem;">@attempt.MaskedUrl</div>
+                                </div>
+
+                                <div style="margin-top: 0.5rem;">
+                                    <span class="field-label" style="font-size: var(--text-tiny);">Equivalent curl</span>
+                                    <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); word-break: break-all; padding: 0.5rem; background: var(--surface-soft); border-radius: var(--radius-sm); margin-top: 0.25rem;">@attempt.CurlEquivalent</div>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(attempt.ResponseBodyPreview))
+                                {
+                                    <div style="margin-top: 0.5rem;">
+                                        <span class="field-label" style="font-size: var(--text-tiny);">Response body preview</span>
+                                        <pre style="font-size: 0.7rem; max-height: 150px; overflow-y: auto; margin: 0.25rem 0 0 0; padding: 0.5rem;">@attempt.ResponseBodyPreview</pre>
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(attempt.Exception))
+                                {
+                                    <div style="margin-top: 0.5rem;">
+                                        <span class="field-label" style="font-size: var(--text-tiny); color: var(--danger);">Exception</span>
+                                        <pre style="font-size: 0.7rem; color: var(--danger); margin: 0.25rem 0 0 0; padding: 0.5rem;">@attempt.Exception</pre>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    @* Verdict — empirical contract proof *@
+                    <div style="margin-top: 2rem; padding: 1.25rem; border-radius: var(--radius-md); background: var(--surface-soft); border-inline-start: 4px solid var(--accent);">
+                        <h4 style="margin: 0 0 0.75rem 0; color: var(--text);">Empirical contract verdict</h4>
+                        <ul style="margin: 0; padding-inline-start: 1.5rem; line-height: 1.9;">
+                            <li>Server accepts <code>?hash=</code>: <strong style="color: var(@(hashOk ? "--success" : "--danger"));">@(hashOk ? "YES (expected)" : "NO")</strong></li>
+                            <li>Server accepts <code>?token=</code>: <strong style="color: var(@(tokenOk ? "--warning" : "--success"));">@(tokenOk ? "YES (unexpected — server contract may have changed)" : "NO (expected)")</strong></li>
+                            <li>Production code path (B) succeeds: <strong style="color: var(@(serviceOk ? "--success" : "--danger"));">@(serviceOk ? "YES" : "NO")</strong></li>
+                        </ul>
+
+                        @if (hashOk && !serviceOk)
+                        {
+                            <p style="margin: 1rem 0 0 0; color: var(--danger); font-weight: 600;">
+                                ⚠ Raw <code>?hash=</code> works but the service path fails. The
+                                discrepancy is in the <strong>HttpClientFactory pipeline</strong>
+                                (handlers, SSL config, default headers), NOT the URL contract.
+                                Inspect <code>Program.cs → AddHttpClient("GriffinClient")</code>
+                                and any <code>DelegatingHandler</code>s composed into it.
+                            </p>
+                        }
+                        else if (!hashOk && tokenOk)
+                        {
+                            <p style="margin: 1rem 0 0 0; color: var(--warning); font-weight: 600;">
+                                ⚠ Server now accepts <code>?token=</code> but rejects <code>?hash=</code>.
+                                Either Griffin changed its contract or this is a different Griffin
+                                deployment. Update <code>GriffinService.cs</code> line 72 and the
+                                regression-guard tests in <code>GriffinServiceTests.cs:154</code>.
+                            </p>
+                        }
+                        else if (!hashOk && !tokenOk && Model.AttemptCurlHash?.HttpStatus != null)
+                        {
+                            <p style="margin: 1rem 0 0 0; color: var(--danger); font-weight: 600;">
+                                ⚠ Both raw attempts failed. The server is reachable (we got HTTP responses)
+                                but rejecting both parameter names. Possible causes: hash already consumed
+                                (single-use), hash expired, or server misconfigured. Generate a fresh hash
+                                via <strong>Sign in with ADFS</strong> and retry.
+                            </p>
+                        }
+                        else if (!hashOk && Model.AttemptCurlHash?.Exception != null)
+                        {
+                            <p style="margin: 1rem 0 0 0; color: var(--danger); font-weight: 600;">
+                                ⚠ Could not reach the Griffin server at all (transport-level exception).
+                                Check network connectivity, DNS resolution, and the BaseUrl scheme/host.
+                            </p>
+                        }
+                        else if (hashOk && serviceOk)
+                        {
+                            <p style="margin: 1rem 0 0 0; color: var(--success); font-weight: 600;">
+                                ✓ Production path matches the working raw call. End-to-end is healthy.
+                                If users still report failures, capture their exact hashedToken (from the
+                                browser URL) and rerun this diagnostic with that value.
+                            </p>
+                        }
+                    </div>
+
+                    @* Optional chain follow-up *@
+                    @if (Model.AttemptClaimsChain != null)
+                    {
+                        var chain = Model.AttemptClaimsChain;
+                        var chainBorder = chain.Success ? "var(--success)" : "var(--danger)";
+                        var chainBadge = chain.Success ? "griffin-badge-success" : "griffin-badge-error";
+                        <h3 style="color: var(--text); margin-top: 2rem;">Chain follow-up: getClaims</h3>
+                        <p style="color: var(--text-muted); font-size: var(--text-small); margin-bottom: 1rem;">
+                            Service exchange returned a JWT (preview <code>@Model.ExtractedJwtMasked</code>). Diagnostic
+                            followed up with <code>GET /authorization/getClaims?token=&lt;JWT&gt;</code> — the same second
+                            curl the user ran manually to prove the auth server worked end-to-end.
+                        </p>
+                        <div class="grid-item" style="border: 2px solid @chainBorder;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: var(--text); font-size: var(--text-small); text-transform: none;">@chain.Mode</h4>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0.75rem 0;">
+                                <span class="griffin-badge @chainBadge">
+                                    @(chain.Success ? "✓" : "✗") HTTP @(chain.HttpStatus?.ToString() ?? "—")
+                                </span>
+                                <span style="color: var(--text-muted); font-size: var(--text-tiny);">@chain.DurationMs ms</span>
+                            </div>
+                            <div style="margin-top: 0.75rem;">
+                                <span class="field-label" style="font-size: var(--text-tiny);">Request URL (masked)</span>
+                                <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); word-break: break-all; padding: 0.5rem; background: var(--surface-soft); border-radius: var(--radius-sm); margin-top: 0.25rem;">@chain.MaskedUrl</div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(chain.ResponseBodyPreview))
+                            {
+                                <div style="margin-top: 0.5rem;">
+                                    <span class="field-label" style="font-size: var(--text-tiny);">Response body preview (claims JSON)</span>
+                                    <pre style="font-size: 0.7rem; max-height: 200px; overflow-y: auto; margin: 0.25rem 0 0 0; padding: 0.5rem;">@chain.ResponseBodyPreview</pre>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(chain.Exception))
+                            {
+                                <div style="margin-top: 0.5rem;">
+                                    <span class="field-label" style="font-size: var(--text-tiny); color: var(--danger);">Exception</span>
+                                    <pre style="font-size: 0.7rem; color: var(--danger); margin: 0.25rem 0 0 0; padding: 0.5rem;">@chain.Exception</pre>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p style="color: var(--text-muted); font-style: italic;">
+                        Live test not yet run. Paste a hashed token above and submit to compare the three modes side-by-side.
+                    </p>
+                }
+            </div>
+        </div>
+    }
+
     @* Actions *@
     <div class="section">
         <h2>🔄 @Localizer["Actions"]</h2>
