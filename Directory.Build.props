@@ -23,6 +23,14 @@
   </PropertyGroup>
 
   <!--
+    LoggerMessage source-gen migration (closes F-C-013, multi-PR Batch K).
+    EventId allocation table lives in docs/reference/LOGGING-CONVENTIONS.md
+    so per-file PRs don't collide. Phase 1 (2026-05-08) closed 43 sites in
+    Pages/Auth/Login.cshtml.cs, reserving range 1000-1099 for that file.
+  -->
+
+
+  <!--
     Test-project carve-out (closes F-C-009 + F-C-018).
 
     Two rules are unconditional noise in the xUnit/ASP.NET-Core test profile

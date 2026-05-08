@@ -18,7 +18,7 @@ namespace ShiftManager.Pages.Auth;
 // SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — anonymous auth flow before tenant context established;
 // scoped by explicit email parameter; user lookup for authentication only
 [AllowAnonymous]
-public class LoginModel : LocalizedPageModel
+public partial class LoginModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<LoginModel> _logger;
@@ -82,14 +82,14 @@ public class LoginModel : LocalizedPageModel
             // Not configured at all (database table missing or appsettings disabled)
             ShowGriffinButton = false;
             ShowGriffinUnavailableMessage = false;
-            _logger.LogDebug("Griffin config not found (database table may be missing or appsettings.json has Enabled=false)");
+            LogGriffinConfigNotFound(_logger);
         }
         else if (!griffinConfig.Enabled)
         {
             // Configured but explicitly disabled
             ShowGriffinButton = false;
             ShowGriffinUnavailableMessage = false;
-            _logger.LogDebug("Griffin config exists but Enabled=false for company {CompanyId}", griffinConfig.CompanyId);
+            LogGriffinDisabled(_logger, griffinConfig.CompanyId);
         }
         else if (string.IsNullOrWhiteSpace(griffinConfig.BaseUrl) ||
                  string.IsNullOrWhiteSpace(griffinConfig.TokenConsumerUrl))
@@ -97,7 +97,7 @@ public class LoginModel : LocalizedPageModel
             // Enabled but incomplete configuration
             ShowGriffinButton = false;
             ShowGriffinUnavailableMessage = true;
-            _logger.LogWarning("Griffin enabled but configuration incomplete: BaseUrl={BaseUrl}, TokenConsumerUrl={TokenConsumerUrl}",
+            LogGriffinIncomplete(_logger,
                 griffinConfig.BaseUrl ?? "(null)",
                 griffinConfig.TokenConsumerUrl ?? "(null)");
         }
@@ -110,8 +110,7 @@ public class LoginModel : LocalizedPageModel
             // which silently hid the button on transient network/SSL/timeout failures.
             ShowGriffinButton = true;
             ShowGriffinUnavailableMessage = false;
-            _logger.LogDebug("Griffin ADFS is configured and enabled for BaseUrl={BaseUrl}, showing login option",
-                griffinConfig.BaseUrl);
+            LogGriffinReady(_logger, griffinConfig.BaseUrl);
         }
 
         // ✅ SUB-PHASE 18.14: Prevent browser caching to ensure link renders correctly
@@ -130,7 +129,7 @@ public class LoginModel : LocalizedPageModel
 
             if (!_rateLimiting.IsAllowed(ipRateLimitKey, 10, 15))
             {
-                _logger.LogWarning("Rate limit exceeded for login from IP: {IP}", ipAddress);
+                LogIpRateLimitExceeded(_logger, ipAddress);
                 Error = _localizer["Error_Login_RateLimitExceeded"];
                 return Page();
             }
@@ -142,7 +141,7 @@ public class LoginModel : LocalizedPageModel
                 var accountRateLimitKey = $"login:account:{normalizedEmail}";
                 if (!_rateLimiting.IsAllowed(accountRateLimitKey, 15, 15))
                 {
-                    _logger.LogWarning("Per-account rate limit exceeded for {Email} from IP {IP} (possible multi-IP attack)",
+                    LogAccountRateLimitExceeded(_logger,
                         Services.PiiMasker.MaskEmail(normalizedEmail), ipAddress);
                     Error = _localizer["Error_Login_RateLimitExceeded"];
                     return Page();
@@ -158,7 +157,7 @@ public class LoginModel : LocalizedPageModel
 
             if (Email.Length > 255 || Password.Length > 500)
             {
-                _logger.LogWarning("Login attempt with oversized input from IP {IP}", ipAddress);
+                LogOversizedInput(_logger, ipAddress);
                 Error = _localizer["Error_InvalidInput"];
                 return Page();
             }
@@ -184,7 +183,7 @@ public class LoginModel : LocalizedPageModel
                 if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
                 {
                     var remainingMinutes = (int)(user.LockoutEnd.Value - DateTime.UtcNow).TotalMinutes + 1;
-                    _logger.LogWarning("Login attempt for locked account: {Email}. Lockout ends in {Minutes} minutes", ShiftManager.Services.PiiMasker.MaskEmail(Email), remainingMinutes);
+                    LogAccountAlreadyLocked(_logger, ShiftManager.Services.PiiMasker.MaskEmail(Email), remainingMinutes);
 
                     // Set lockout properties for UI display
                     IsAccountLocked = true;
@@ -200,7 +199,7 @@ public class LoginModel : LocalizedPageModel
             // SSO users have no local password — redirect them to ADFS login
             if (user != null && user.PasswordHash.Length == 0)
             {
-                _logger.LogInformation("SSO user {Email} attempted local login, redirecting to ADFS", ShiftManager.Services.PiiMasker.MaskEmail(Email));
+                LogSsoUserLocalAttempt(_logger, ShiftManager.Services.PiiMasker.MaskEmail(Email));
                 Error = _localizer["Error_Login_SSOUserUseADFS"];
                 return Page();
             }
@@ -219,7 +218,7 @@ public class LoginModel : LocalizedPageModel
                         user.LockoutEnd = DateTime.UtcNow.AddMinutes(3);
                         await _db.SaveChangesAsync();
 
-                        _logger.LogWarning("Account locked for {Email} after {Attempts} failed attempts", ShiftManager.Services.PiiMasker.MaskEmail(Email), user.FailedLoginAttempts);
+                        LogAccountLockedAfterAttempts(_logger, ShiftManager.Services.PiiMasker.MaskEmail(Email), user.FailedLoginAttempts);
 
                         // Set lockout properties for UI display
                         IsAccountLocked = true;
@@ -229,14 +228,14 @@ public class LoginModel : LocalizedPageModel
                     }
 
                     await _db.SaveChangesAsync();
-                    _logger.LogWarning("Login failed for {Email} (attempt {Attempt}/10)", ShiftManager.Services.PiiMasker.MaskEmail(Email), user.FailedLoginAttempts);
+                    LogLoginFailedAttempt(_logger, ShiftManager.Services.PiiMasker.MaskEmail(Email), user.FailedLoginAttempts);
 
                     // Set failed attempts count for warning display (only if user exists)
                     FailedAttemptsCount = user.FailedLoginAttempts;
                 }
                 else
                 {
-                    _logger.LogWarning("Login failed for {Email} (user not found)", ShiftManager.Services.PiiMasker.MaskEmail(Email));
+                    LogLoginFailedUserNotFound(_logger, ShiftManager.Services.PiiMasker.MaskEmail(Email));
                 }
 
                 Error = _localizer["Error_Login_InvalidCredentials"];
@@ -264,7 +263,7 @@ public class LoginModel : LocalizedPageModel
                     if (template.DerivedUserRole.HasValue)
                         user.Role = template.DerivedUserRole.Value;
                     await _db.SaveChangesAsync();
-                    _logger.LogInformation("Backfilled RoleTemplateId={TemplateId} for user {UserId} at login", template.Id, user.Id);
+                    LogRoleTemplateBackfill(_logger, template.Id, user.Id);
                 }
             }
 
@@ -344,19 +343,19 @@ public class LoginModel : LocalizedPageModel
                 });
             }
 
-            _logger.LogInformation("User {UserId} ({Email}) signed in successfully. Role={Role}", user.Id, ShiftManager.Services.PiiMasker.MaskEmail(user.Email), user.Role);
+            LogSignedInSuccessfully(_logger, user.Id, ShiftManager.Services.PiiMasker.MaskEmail(user.Email), user.Role);
 
             // A-07: Force redirect to password change page if MustChangePassword flag is set
             if (user.MustChangePassword)
             {
-                _logger.LogInformation("User {UserId} must change password — redirecting to ForgotPassword", user.Id);
+                LogMustChangePassword(_logger, user.Id);
                 return RedirectToPage("/Auth/ForgotPassword");
             }
 
             // B-05: Redirect new users to onboarding wizard on first login
             if (!user.HasCompletedOnboarding)
             {
-                _logger.LogInformation("User {UserId} has not completed onboarding — redirecting to wizard", user.Id);
+                LogOnboardingPending(_logger, user.Id);
                 return RedirectToPage("/My/Onboarding");
             }
 
@@ -371,7 +370,7 @@ public class LoginModel : LocalizedPageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception during login for {Email}", ShiftManager.Services.PiiMasker.MaskEmail(Email));
+            LogUnhandledLoginException(_logger, ex, ShiftManager.Services.PiiMasker.MaskEmail(Email));
             Error = _localizer["Error_UnexpectedError"];
             return Page();
         }
@@ -381,14 +380,14 @@ public class LoginModel : LocalizedPageModel
     {
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-        _logger.LogInformation("Griffin authentication initiated from IP {IP}", ipAddress);
+        LogGriffinAuthInitiated(_logger, ipAddress);
 
         var griffinConfig = await _griffinConfigService.GetGriffinConfigAsync();
 
         // Validate Griffin is enabled
         if (griffinConfig?.Enabled != true)
         {
-            _logger.LogWarning("Griffin authentication attempt but config not enabled (config null or Enabled=false)");
+            LogGriffinPostNotEnabled(_logger);
             Error = _localizer["Error_Login_AdfsNotConfigured"];
             ReturnUrl = returnUrl ?? "/";
             ShowGriffinButton = true;
@@ -400,7 +399,7 @@ public class LoginModel : LocalizedPageModel
         // Validate required configuration fields
         if (string.IsNullOrWhiteSpace(griffinConfig.BaseUrl))
         {
-            _logger.LogError("Griffin enabled but BaseUrl is missing");
+            LogGriffinPostBaseUrlMissing(_logger);
             Error = _localizer["Error_Login_AdfsNotConfigured"];
             ReturnUrl = returnUrl ?? "/";
             ShowGriffinButton = true;
@@ -411,7 +410,7 @@ public class LoginModel : LocalizedPageModel
 
         if (string.IsNullOrWhiteSpace(griffinConfig.TokenConsumerUrl))
         {
-            _logger.LogError("Griffin enabled but TokenConsumerUrl is missing");
+            LogGriffinPostTokenConsumerMissing(_logger);
             Error = _localizer["Error_Login_AdfsNotConfigured"];
             ReturnUrl = returnUrl ?? "/";
             ShowGriffinButton = true;
@@ -424,8 +423,8 @@ public class LoginModel : LocalizedPageModel
         if (!Uri.TryCreate(griffinConfig.BaseUrl, UriKind.Absolute, out var baseUri) ||
             (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
         {
-            _logger.LogError("CRITICAL: Griffin BaseUrl is missing scheme or invalid: '{BaseUrl}'", griffinConfig.BaseUrl);
-            _logger.LogError("BaseUrl must start with http:// or https://. Current value will cause 404 redirect error.");
+            LogGriffinBaseUrlInvalidScheme(_logger, griffinConfig.BaseUrl);
+            LogGriffinBaseUrlSchemeAdvice(_logger);
             Error = "Griffin ADFS configuration error: Base URL must start with http:// or https://. Please contact your administrator to fix this in /Owner/GriffinConfig.";
             ReturnUrl = returnUrl ?? "/";
             ShowGriffinButton = false;
@@ -437,8 +436,8 @@ public class LoginModel : LocalizedPageModel
         if (!Uri.TryCreate(griffinConfig.TokenConsumerUrl, UriKind.Absolute, out var callbackUri) ||
             (callbackUri.Scheme != Uri.UriSchemeHttp && callbackUri.Scheme != Uri.UriSchemeHttps))
         {
-            _logger.LogError("CRITICAL: Griffin TokenConsumerUrl is missing scheme or invalid: '{TokenConsumerUrl}'", griffinConfig.TokenConsumerUrl);
-            _logger.LogError("TokenConsumerUrl must start with http:// or https://. Current value will cause authentication failure.");
+            LogGriffinTokenConsumerInvalidScheme(_logger, griffinConfig.TokenConsumerUrl);
+            LogGriffinTokenConsumerSchemeAdvice(_logger);
             Error = "Griffin ADFS configuration error: Callback URL must start with http:// or https://. Please contact your administrator to fix this in /Owner/GriffinConfig.";
             ReturnUrl = returnUrl ?? "/";
             ShowGriffinButton = false;
@@ -465,26 +464,26 @@ public class LoginModel : LocalizedPageModel
                 MaxAge = TimeSpan.FromMinutes(5),
                 Path = "/Auth"
             });
-            _logger.LogDebug("Stored returnUrl in cookie: {ReturnUrl}", returnUrl);
+            LogGriffinReturnUrlStored(_logger, returnUrl);
         }
 
-        _logger.LogInformation("=== GRIFFIN ADFS REDIRECT DEBUG ===");
-        _logger.LogInformation("Config from database:");
-        _logger.LogInformation("  - BaseUrl: {BaseUrl}", griffinConfig.BaseUrl);
-        _logger.LogInformation("  - TokenConsumerUrl: {TokenConsumerUrl}", griffinConfig.TokenConsumerUrl);
-        _logger.LogInformation("  - CallbackUrl (clean, no query params): {CallbackUrl}", callbackUrl);
+        LogGriffinDebugBanner(_logger);
+        LogGriffinDebugConfigHeader(_logger);
+        LogGriffinDebugBaseUrl(_logger, griffinConfig.BaseUrl);
+        LogGriffinDebugTokenConsumerUrl(_logger, griffinConfig.TokenConsumerUrl);
+        LogGriffinDebugCallbackUrl(_logger, callbackUrl);
 
         // Build authentication URL
         var authUrl = _griffinService.BuildAuthenticationUrl(griffinConfig.BaseUrl, callbackUrl);
 
-        _logger.LogInformation("Generated authentication URL: {AuthUrl}", authUrl);
+        LogGriffinAuthUrlGenerated(_logger, authUrl);
 
         // ✅ CRITICAL FIX: Validate the generated URL is absolute before redirecting
         if (!Uri.TryCreate(authUrl, UriKind.Absolute, out var authUri))
         {
-            _logger.LogError("CRITICAL: Generated auth URL is NOT absolute: '{AuthUrl}'", authUrl);
-            _logger.LogError("This will cause ASP.NET to treat it as a relative path, resulting in 404 error.");
-            _logger.LogError("Check that BaseUrl starts with http:// or https://");
+            LogGriffinAuthUrlNotAbsolute(_logger, authUrl);
+            LogGriffinAuthUrlNotAbsoluteCause(_logger);
+            LogGriffinAuthUrlNotAbsoluteAdvice(_logger);
             Error = "Griffin ADFS configuration error: Generated authentication URL is invalid. Please contact your administrator.";
             ReturnUrl = returnUrl ?? "/";
             ShowGriffinButton = false;
@@ -493,14 +492,14 @@ public class LoginModel : LocalizedPageModel
             return Page();
         }
 
-        _logger.LogInformation("URL validation:");
-        _logger.LogInformation("  - Is Absolute: YES ✓");
-        _logger.LogInformation("  - Scheme: {Scheme}", authUri.Scheme);
-        _logger.LogInformation("  - Host: {Host}", authUri.Host);
-        _logger.LogInformation("  - Path: {Path}", authUri.AbsolutePath);
-        _logger.LogInformation("  - Query: {Query}", authUri.Query.Length > 100 ? authUri.Query.Substring(0, 100) + "..." : authUri.Query);
-        _logger.LogInformation("Redirecting browser to Griffin ADFS...");
-        _logger.LogInformation("=== END DEBUG ===");
+        LogGriffinUrlValidationHeader(_logger);
+        LogGriffinUrlIsAbsolute(_logger);
+        LogGriffinUrlScheme(_logger, authUri.Scheme);
+        LogGriffinUrlHost(_logger, authUri.Host);
+        LogGriffinUrlPath(_logger, authUri.AbsolutePath);
+        LogGriffinUrlQuery(_logger, authUri.Query.Length > 100 ? authUri.Query.Substring(0, 100) + "..." : authUri.Query);
+        LogGriffinRedirecting(_logger);
+        LogGriffinDebugFooter(_logger);
 
         // Redirect to Griffin
         return Redirect(authUrl);
