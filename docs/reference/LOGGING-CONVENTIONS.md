@@ -27,7 +27,7 @@ in the same file don't collide with sibling files.
 | 1200–1299      | *(reserved — Auth callbacks, e.g. GriffinCallback)* | Pending |
 | 2000–2099      | `Services/NotificationService.cs`        | ✅ In use (39 of 100 IDs allocated) |
 | 3000–3099      | `Controllers/Api/V1/SwapRequestsController.cs` | ✅ In use (21 methods cover 42 call sites) |
-| 4000–4099      | `Pages/Calendar/Table.cshtml.cs`         | Pending |
+| 4000–4099      | `Pages/Calendar/Table.cshtml.cs`         | ✅ In use (14 methods cover 39 call sites) |
 | 5000–5099      | `Services/MailService.cs`                | Pending |
 | 6000–6099      | `Pages/Admin/Users.cshtml.cs`            | Pending |
 | 7000–7099      | `Services/GriffinService.cs` + `GriffinConfigService.cs` | Pending |
@@ -89,6 +89,27 @@ Success paths use the parsed `int CompanyId`. Same template literal text, distin
 method overloads — source-gen requires concrete signatures.
 
 The full method-by-method mapping lives in `Controllers/Api/V1/SwapRequestsController.Logging.cs`.
+
+### `Pages/Calendar/Table.cshtml.cs` — 4000–4099
+
+A second example of **template parameterization** for repeated patterns: 28 of
+the 39 call sites collapse into 3 partial methods because they share template
+shape, with the action name extracted as an `{Action}` placeholder:
+
+| Sub-range | Section                                   | Methods | Sites | Description                          |
+|-----------|-------------------------------------------|---------|-------|--------------------------------------|
+| 4000–4009 | Page lifecycle                            | 4       | 4     | OnGet date parsing + initial load    |
+| 4010–4019 | Action error catches                      | 2       | 18    | `LogErrorAction(ex, "<verb>")` + `LogErrorActionInstance(ex, "<verb>", id)` |
+| 4020–4029 | Calendar notification dispatch failures   | 1       | 10    | `LogCalendarNotificationFailed(ex, "<Action>")` |
+| 4030–4039 | Information logs                          | 6       | 6     | Each unique (Auto-detached, Deleted, Created custom shift type, Detached, Reset, Fill range completed) |
+| 4040–4049 | Misc validation                           | 1       | 1     | Invalid target date                  |
+
+**Behavioral note**: parameterizing the action name into `{Action}` produces
+*structured-log property* `Action` rather than embedding the verb in the
+literal template. Console output is identical; structured-log consumers
+(if/when added) gain a filterable property.
+
+The full method-by-method mapping lives in `Pages/Calendar/Table.cshtml.Logging.cs`.
 
 ## Pattern — adding a new partial method
 

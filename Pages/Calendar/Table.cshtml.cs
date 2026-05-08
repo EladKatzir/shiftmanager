@@ -16,7 +16,7 @@ using System.Text.Json;
 namespace ShiftManager.Pages.Calendar;
 
 [Authorize(Policy = "Grant:ManagerHomeAccess")]
-public class TableModel : PageModel
+public partial class TableModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly ICompanyContext _companyContext;
@@ -155,13 +155,13 @@ public class TableModel : PageModel
             }
             else
             {
-                _logger.LogWarning("Invalid start date year: {Start}, defaulting to current week", start);
+                LogInvalidStartDateYear(_logger, start);
                 StartDate = today.AddDays(-(int)today.DayOfWeek);
             }
         }
         else
         {
-            _logger.LogWarning("Invalid start date format: {Start}, defaulting to current week", start);
+            LogInvalidStartDateFormat(_logger, start);
             StartDate = today.AddDays(-(int)today.DayOfWeek);
         }
 
@@ -345,7 +345,7 @@ public class TableModel : PageModel
                 .ToListAsync();
         }
 
-        _logger.LogInformation("Loaded {Count} shift types, molecule mode: {IsMoleculeMode}", ShiftTypes.Count, IsMoleculeMode);
+        LogShiftTypesLoaded(_logger, ShiftTypes.Count, IsMoleculeMode);
 
         // Pre-compute localized names for Razor view
         foreach (var st in ShiftTypes)
@@ -355,7 +355,7 @@ public class TableModel : PageModel
 
         if (!ShiftTypes.Any())
         {
-            _logger.LogWarning("No shift types found - calendar will be empty");
+            LogNoShiftTypes(_logger);
         }
 
         // Load busy user status for all dates in a single batch query (avoids N+1)
@@ -527,7 +527,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error ensuring shift instance");
+            LogErrorAction(_logger, ex, "ensuring shift instance");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_EnsureShiftInstanceFailed"].Value });
         }
     }
@@ -613,7 +613,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating shift instance");
+            LogErrorAction(_logger, ex, "creating shift instance");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_CreateShiftInstanceFailed"].Value });
         }
     }
@@ -742,7 +742,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning user to slot");
+            LogErrorAction(_logger, ex, "assigning user to slot");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignUserToSlotFailed"].Value });
         }
     }
@@ -888,7 +888,7 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for AssignEmployee");
+                LogCalendarNotificationFailed(_logger, notifyEx, "AssignEmployee");
             }
 
             await _auditLogService.LogAsync("ShiftAssigned", "ShiftAssignment", result.AssignmentId,
@@ -903,7 +903,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning employee");
+            LogErrorAction(_logger, ex, "assigning employee");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignEmployeeFailed"].Value });
         }
     }
@@ -958,7 +958,7 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for UnassignEmployee");
+                LogCalendarNotificationFailed(_logger, notifyEx, "UnassignEmployee");
             }
 
             await _auditLogService.LogAsync("ShiftUnassigned", "ShiftAssignment", request.AssignmentId,
@@ -968,7 +968,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error unassigning employee");
+            LogErrorAction(_logger, ex, "unassigning employee");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UnassignEmployeeFailed"].Value });
         }
     }
@@ -1018,7 +1018,7 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for ClearAssignment");
+                LogCalendarNotificationFailed(_logger, notifyEx, "ClearAssignment");
             }
 
             await _auditLogService.LogAsync("ShiftCleared", "ShiftAssignment", request.AssignmentId,
@@ -1028,7 +1028,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error clearing assignment");
+            LogErrorAction(_logger, ex, "clearing assignment");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ClearAssignmentFailed"].Value });
         }
     }
@@ -1051,9 +1051,7 @@ public class TableModel : PageModel
             if (instance.OriginalProgramId.HasValue && !instance.IsDetached)
             {
                 await _programService.DetachInstanceAsync(instance.Id, "Manual staffing adjustment");
-                _logger.LogInformation(
-                    "Auto-detached ShiftInstance {InstanceId} from Program {ProgramId} due to manual staffing change",
-                    instance.Id, instance.OriginalProgramId);
+                LogAutoDetachedFromProgram(_logger, instance.Id, instance.OriginalProgramId);
             }
 
             // SECURITY-AUDITED: SAFE — entity lookup by unique ID
@@ -1155,7 +1153,7 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for UpdateShiftStaffing");
+                LogCalendarNotificationFailed(_logger, notifyEx, "UpdateShiftStaffing");
             }
 
             await _auditLogService.LogAsync("StaffingUpdated", "ShiftInstance", instance.Id,
@@ -1165,7 +1163,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating shift staffing");
+            LogErrorAction(_logger, ex, "updating shift staffing");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UpdateStaffingFailed"].Value });
         }
     }
@@ -1225,8 +1223,7 @@ public class TableModel : PageModel
             if (!saveResult.Success)
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
-            _logger.LogInformation("Deleted shift instance {InstanceId} with {AssignmentCount} assignments",
-                deletedInstanceId, assignments.Count);
+            LogShiftInstanceDeleted(_logger, deletedInstanceId, assignments.Count);
 
             await _auditLogService.LogAsync("ShiftDeleted", "ShiftInstance", deletedInstanceId,
                 FormattableString.Invariant($"Deleted shift instance on {deletedWorkDate:yyyy-MM-dd} with {assignments.Count} assignments"));
@@ -1250,14 +1247,14 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for DeleteShiftInstance");
+                LogCalendarNotificationFailed(_logger, notifyEx, "DeleteShiftInstance");
             }
 
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting shift instance {InstanceId}", request.ShiftInstanceId);
+            LogErrorActionInstance(_logger, ex, "deleting shift instance", request.ShiftInstanceId);
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DeleteShiftInstanceFailed"].Value });
         }
     }
@@ -1344,7 +1341,7 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for AddTrainee");
+                LogCalendarNotificationFailed(_logger, notifyEx, "AddTrainee");
             }
 
             await _auditLogService.LogAsync("TraineeAdded", "ShiftAssignment", request.AssignmentId,
@@ -1358,7 +1355,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding trainee");
+            LogErrorAction(_logger, ex, "adding trainee");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AddTraineeFailed"].Value });
         }
     }
@@ -1410,7 +1407,7 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for RemoveTrainee");
+                LogCalendarNotificationFailed(_logger, notifyEx, "RemoveTrainee");
             }
 
             await _auditLogService.LogAsync("TraineeRemoved", "ShiftAssignment", request.AssignmentId,
@@ -1420,7 +1417,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing trainee");
+            LogErrorAction(_logger, ex, "removing trainee");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_RemoveTraineeFailed"].Value });
         }
     }
@@ -1506,7 +1503,7 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for ChangeUser");
+                LogCalendarNotificationFailed(_logger, notifyEx, "ChangeUser");
             }
 
             await _auditLogService.LogAsync("ShiftUserChanged", "ShiftAssignment", request.AssignmentId,
@@ -1520,7 +1517,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error changing user");
+            LogErrorAction(_logger, ex, "changing user");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ChangeUserFailed"].Value });
         }
     }
@@ -1581,7 +1578,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating shift metadata");
+            LogErrorAction(_logger, ex, "updating shift metadata");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UpdateMetadataFailed"].Value });
         }
     }
@@ -1632,8 +1629,7 @@ public class TableModel : PageModel
             if (!saveResult.Success)
                 return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
 
-            _logger.LogInformation("Created custom shift type {ShiftTypeId} with name '{Name}' for company {CompanyId}",
-                shiftType.Id, shiftType.NameEn, companyId);
+            LogCustomShiftTypeCreated(_logger, shiftType.Id, shiftType.NameEn, companyId);
 
             await _auditLogService.LogAsync("ShiftTypeCreated", "ShiftType", shiftType.Id,
                 $"Created custom shift type '{shiftType.NameEn}' ({customKey})");
@@ -1660,7 +1656,7 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for CreateCustomShiftType");
+                LogCalendarNotificationFailed(_logger, notifyEx, "CreateCustomShiftType");
             }
 
             var localizedShiftName = await LocalizeShiftTypeName(shiftType);
@@ -1673,7 +1669,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating custom shift type");
+            LogErrorAction(_logger, ex, "creating custom shift type");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_CreateCustomShiftTypeFailed"].Value });
         }
     }
@@ -1789,15 +1785,13 @@ public class TableModel : PageModel
             await _auditLogService.LogAsync("ShiftDetached", "ShiftInstance", request.ShiftInstanceId,
                 $"Detached from program. Reason: {request.Reason}");
 
-            _logger.LogInformation(
-                "Detached ShiftInstance {InstanceId} from Program. Reason: {Reason}",
-                request.ShiftInstanceId, request.Reason);
+            LogShiftInstanceDetached(_logger, request.ShiftInstanceId, request.Reason);
 
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error detaching shift instance {InstanceId}", request.ShiftInstanceId);
+            LogErrorActionInstance(_logger, ex, "detaching shift instance", request.ShiftInstanceId);
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DetachShiftInstanceFailed"].Value });
         }
     }
@@ -1830,15 +1824,13 @@ public class TableModel : PageModel
             await _auditLogService.LogAsync("ShiftReset", "ShiftInstance", request.ShiftInstanceId,
                 $"Reset to program {instance.OriginalProgramId} defaults");
 
-            _logger.LogInformation(
-                "Reset ShiftInstance {InstanceId} to Program {ProgramId} defaults",
-                request.ShiftInstanceId, instance.OriginalProgramId);
+            LogShiftInstanceReset(_logger, request.ShiftInstanceId, instance.OriginalProgramId);
 
             return new JsonResult(new { success = true });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error resetting shift instance {InstanceId}", request.ShiftInstanceId);
+            LogErrorActionInstance(_logger, ex, "resetting shift instance", request.ShiftInstanceId);
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ResetShiftInstanceFailed"].Value });
         }
     }
@@ -2091,7 +2083,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading roster employees");
+            LogErrorAction(_logger, ex, "loading roster employees");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_LoadEmployeesFailed"].Value });
         }
     }
@@ -2138,7 +2130,7 @@ public class TableModel : PageModel
                 DateOnly parsedDate;
                 if (!DateOnly.TryParse(targetDate, out parsedDate))
                 {
-                    _logger.LogWarning("Invalid target date: {Date}", targetDate);
+                    LogInvalidTargetDate(_logger, targetDate);
                     continue;
                 }
 
@@ -2376,9 +2368,7 @@ public class TableModel : PageModel
 
             await transaction.CommitAsync();
 
-            _logger.LogInformation(
-                "Fill range completed: {Created} created, {Updated} updated using mode {Mode}",
-                createdCount, updatedCount, request.Mode);
+            LogFillRangeCompleted(_logger, createdCount, updatedCount, request.Mode);
 
             // Send real-time notification (fire-and-forget) — one aggregated notification for the fill operation
             try
@@ -2417,7 +2407,7 @@ public class TableModel : PageModel
             }
             catch (Exception notifyEx)
             {
-                _logger.LogWarning(notifyEx, "Failed to send calendar notification for FillRange");
+                LogCalendarNotificationFailed(_logger, notifyEx, "FillRange");
             }
 
             await _auditLogService.LogAsync("ShiftRangeFilled", "ShiftInstance", request.SourceInstanceId,
@@ -2433,7 +2423,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error filling range");
+            LogErrorAction(_logger, ex, "filling range");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_FillRangeFailed"].Value });
         }
     }
@@ -2570,7 +2560,7 @@ public class TableModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting conflicts");
+            LogErrorAction(_logger, ex, "getting conflicts");
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_LoadConflictsFailed"].Value });
         }
     }
