@@ -25,7 +25,7 @@ in the same file don't collide with sibling files.
 | 1000–1099      | `Pages/Auth/Login.cshtml.cs`             | ✅ In use (43 of 100 IDs allocated) |
 | 1100–1199      | *(reserved — Auth/Signup, Auth/GriffinSignup, Auth/ForgotPassword)* | Pending |
 | 1200–1299      | *(reserved — Auth callbacks, e.g. GriffinCallback)* | Pending |
-| 2000–2099      | `Services/NotificationService.cs`        | Pending (Phase 2) |
+| 2000–2099      | `Services/NotificationService.cs`        | ✅ In use (39 of 100 IDs allocated) |
 | 3000–3099      | `Controllers/Api/V1/SwapRequestsController.cs` | Pending |
 | 4000–4099      | `Pages/Calendar/Table.cshtml.cs`         | Pending |
 | 5000–5099      | `Services/MailService.cs`                | Pending |
@@ -49,7 +49,20 @@ update this table in the same PR, and use IDs from that block exclusively.
 | 1030–1099 | `OnPostGriffinAsync`| 26   | ADFS redirect path (verbose debug)   |
 
 The full method-by-method mapping lives in `Pages/Auth/Login.cshtml.Logging.cs`.
-That file has the canonical `[LoggerMessage(EventId = ...)]` declarations.
+
+### `Services/NotificationService.cs` — 2000–2099
+
+| Sub-range | Section                                   | Used | Description                          |
+|-----------|-------------------------------------------|------|--------------------------------------|
+| 2000–2009 | `CreateNotificationAsync` core            | 4    | Recipient lookup, success, DB/unexpected catches |
+| 2010–2019 | Email fan-out errors per notification type| 9    | Shift/chore/on-duty/time-off/swap/access email failures |
+| 2020–2029 | Access request notifications              | 4    | Owner lookup, fan-out, success summary |
+| 2030–2039 | Daily digest                              | 8    | Per-user dispatch lifecycle, success/fail/error |
+| 2040–2049 | Day-before reminders                      | 6    | Same lifecycle as digest, distinct event family |
+| 2050–2059 | Ops Console scheduler email failures      | 3    | Trainee added / slot removed / shift modified |
+| 2060–2069 | TryCreate diagnostic helpers              | 5    | Admin-only structured-result wrappers |
+
+The full method-by-method mapping lives in `Services/NotificationService.Logging.cs`.
 
 ## Pattern — adding a new partial method
 

@@ -82,7 +82,7 @@ public interface INotificationService
 //      tenant assignments (Owner/Director/AreaAdmin acting outside their own company) actually
 //      reach the assignee. Authorization for the action that triggered the notification has
 //      already been enforced upstream by the caller.
-public class NotificationService : INotificationService
+public partial class NotificationService : INotificationService
 {
     private readonly AppDbContext _db;
     private readonly ILogger<NotificationService> _logger;
@@ -125,7 +125,7 @@ public class NotificationService : INotificationService
             var recipient = await GetRecipientAcrossTenantsAsync(userId);
             if (recipient == null)
             {
-                _logger.LogWarning("CreateNotificationAsync: recipient {UserId} not found", userId);
+                LogCreateRecipientNotFound(_logger, userId);
                 return false;
             }
             companyId = recipient.CompanyId;
@@ -146,19 +146,17 @@ public class NotificationService : INotificationService
             _db.UserNotifications.Add(notification);
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation("Created notification {Type} for user {UserId}: {Title}", type, userId, title);
+            LogNotificationCreated(_logger, type, userId, title);
             return true;
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error creating notification. CompanyId={CompanyId}, Type={Type}, UserId={UserId}, Title={Title}",
-                companyId, type, userId, title);
+            LogCreateDbError(_logger, ex, companyId, type, userId, title);
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating notification. CompanyId={CompanyId}, Type={Type}, UserId={UserId}, Title={Title}",
-                companyId, type, userId, title);
+            LogCreateUnexpectedError(_logger, ex, companyId, type, userId, title);
             return false;
         }
     }
@@ -191,7 +189,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending shift assigned email to user {UserId}", userId);
+            LogEmailErrorShiftAssigned(_logger, ex, userId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -224,7 +222,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending shift removed email to user {UserId}", userId);
+            LogEmailErrorShiftRemoved(_logger, ex, userId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -273,7 +271,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending time-off {Status} email to user {UserId}", status, userId);
+            LogEmailErrorTimeOff(_logger, ex, status, userId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -316,7 +314,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending swap request {Status} email to user {UserId}", status, userId);
+            LogEmailErrorSwapRequest(_logger, ex, status, userId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -345,7 +343,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending chore assigned email to user {UserId}", userId);
+            LogEmailErrorChoreAssigned(_logger, ex, userId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -374,7 +372,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending chore canceled email to user {UserId}", userId);
+            LogEmailErrorChoreCanceled(_logger, ex, userId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -407,7 +405,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending on-duty assigned email to user {UserId}", userId);
+            LogEmailErrorOnDutyAssigned(_logger, ex, userId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -440,7 +438,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending on-duty canceled email to user {UserId}", userId);
+            LogEmailErrorOnDutyCanceled(_logger, ex, userId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -470,7 +468,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending time-off deleted email to user {UserId}", userId);
+            LogEmailErrorTimeOffDeleted(_logger, ex, userId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -502,7 +500,7 @@ public class NotificationService : INotificationService
 
             if (!owners.Any())
             {
-                _logger.LogWarning("No owner users found to notify about access request {RequestId}", requestId);
+                LogAccessRequestNoOwners(_logger, requestId);
                 return;
             }
 
@@ -541,17 +539,16 @@ public class NotificationService : INotificationService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error sending access request email to owner {UserId}", owner.Id);
+                    LogEmailErrorAccessRequest(_logger, ex, owner.Id);
                     // Don't throw - continue notifying other owners
                 }
             }
 
-            _logger.LogInformation("Notified {OwnerCount} owners about access request {RequestId} from {RequesterEmail}",
-                owners.Count, requestId, requesterEmail);
+            LogAccessRequestNotified(_logger, owners.Count, requestId, requesterEmail);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error notifying owners about access request {RequestId}", requestId);
+            LogAccessRequestNotifyError(_logger, ex, requestId);
             // Don't throw - access request was still created successfully
         }
     }
@@ -602,15 +599,13 @@ public class NotificationService : INotificationService
                 .Select(p => p.UserId)
                 .ToListAsync();
 
-            _logger.LogInformation("Found {Count} users for daily digest at {Time} for company {CompanyId}",
-                userIds.Count, currentTime, companyId);
+            LogDigestUsersFound(_logger, userIds.Count, currentTime, companyId);
 
             return userIds;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting users for daily digest at {Time} for company {CompanyId}",
-                currentTime, companyId);
+            LogDigestUsersError(_logger, ex, currentTime, companyId);
             return new List<int>();
         }
     }
@@ -625,7 +620,7 @@ public class NotificationService : INotificationService
             var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user == null || string.IsNullOrWhiteSpace(user.Email))
             {
-                _logger.LogWarning("User {UserId} not found or has no email address", userId);
+                LogDigestUserMissing(_logger, userId);
                 return false;
             }
 
@@ -634,7 +629,7 @@ public class NotificationService : INotificationService
 
             if (preference == null || !preference.ReceiveDailyDigest)
             {
-                _logger.LogInformation("User {UserId} has no active daily digest preference", userId);
+                LogDigestNoPreference(_logger, userId);
                 return false;
             }
 
@@ -869,7 +864,7 @@ public class NotificationService : INotificationService
             // If no content, don't send email
             if (!digestParts.Any())
             {
-                _logger.LogInformation("No digest content for user {UserId}, skipping email", userId);
+                LogDigestNoContent(_logger, userId);
                 return true; // Not an error, just nothing to send
             }
 
@@ -907,18 +902,18 @@ public class NotificationService : INotificationService
 
             if (sendResult.Success)
             {
-                _logger.LogInformation("Successfully sent daily digest to user {UserId} ({Email})", userId, user.Email);
+                LogDigestSent(_logger, userId, user.Email);
             }
             else
             {
-                _logger.LogWarning("Failed to send daily digest to user {UserId} ({Email}): {Reason}", userId, user.Email, sendResult.ErrorMessage);
+                LogDigestSendFailed(_logger, userId, user.Email, sendResult.ErrorMessage);
             }
 
             return sendResult.Success;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending daily digest to user {UserId} in company {CompanyId}", userId, companyId);
+            LogDigestError(_logger, ex, userId, companyId);
             return false;
         }
     }
@@ -934,7 +929,7 @@ public class NotificationService : INotificationService
             var user = await GetRecipientAcrossTenantsAsync(userId);
             if (user == null || string.IsNullOrWhiteSpace(user.Email))
             {
-                _logger.LogWarning("User {UserId} not found or has no email", userId);
+                LogDayBeforeUserMissing(_logger, userId);
                 return;
             }
 
@@ -944,7 +939,7 @@ public class NotificationService : INotificationService
 
             if (prefs == null || (!prefs.RemindBeforeShifts && !prefs.RemindBeforeChores && !prefs.RemindBeforeOnDuty))
             {
-                _logger.LogDebug("User {UserId} has no day-before reminders enabled", userId);
+                LogDayBeforeNotEnabled(_logger, userId);
                 return;
             }
 
@@ -1048,7 +1043,7 @@ public class NotificationService : INotificationService
             // If no reminders, don't send email
             if (!reminderParts.Any())
             {
-                _logger.LogInformation("No day-before reminders for user {UserId}", userId);
+                LogDayBeforeNoneToSend(_logger, userId);
                 return;
             }
 
@@ -1085,16 +1080,16 @@ public class NotificationService : INotificationService
 
             if (sendResult.Success)
             {
-                _logger.LogInformation("Successfully sent day-before reminders to user {UserId} ({Email})", userId, user.Email);
+                LogDayBeforeSent(_logger, userId, user.Email);
             }
             else
             {
-                _logger.LogWarning("Failed to send day-before reminders to user {UserId} ({Email}): {Reason}", userId, user.Email, sendResult.ErrorMessage);
+                LogDayBeforeSendFailed(_logger, userId, user.Email, sendResult.ErrorMessage);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending day-before reminders to user {UserId} in company {CompanyId}", userId, companyId);
+            LogDayBeforeError(_logger, ex, userId, companyId);
         }
     }
 
@@ -1126,7 +1121,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending trainee added email to user {UserId}", primaryUserId);
+            LogEmailErrorTraineeAdded(_logger, ex, primaryUserId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -1191,7 +1186,7 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending slot removed email to user {UserId}", affectedUserId);
+            LogEmailErrorSlotRemoved(_logger, ex, affectedUserId);
             // Don't throw - email failure should not block notification creation
         }
     }
@@ -1224,7 +1219,7 @@ public class NotificationService : INotificationService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending shift modified email to user {UserId}", userId);
+                LogEmailErrorShiftModified(_logger, ex, userId);
                 // Don't throw - email failure should not block notification creation
             }
         }
@@ -1248,9 +1243,7 @@ public class NotificationService : INotificationService
         // two fields that MUST be populated for a notification row to be meaningful.
         if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(body))
         {
-            _logger.LogWarning(
-                "TryCreateNotificationWithDiagnosticsAsync: missing title/body for recipient {UserId}",
-                recipientUserId);
+            LogTryCreateMissingContent(_logger, recipientUserId);
             return OperationResult.Fail(
                 "Error_NotificationService_TemplateMissing",
                 _localizer["Error_NotificationService_TemplateMissing"].Value);
@@ -1264,9 +1257,7 @@ public class NotificationService : INotificationService
             var recipient = await GetRecipientAcrossTenantsAsync(recipientUserId);
             if (recipient == null)
             {
-                _logger.LogWarning(
-                    "TryCreateNotificationWithDiagnosticsAsync: recipient {UserId} not found",
-                    recipientUserId);
+                LogTryCreateRecipientNotFound(_logger, recipientUserId);
                 return OperationResult.Fail(
                     "Error_NotificationService_RecipientNotFound",
                     _localizer["Error_NotificationService_RecipientNotFound"].Value);
@@ -1293,25 +1284,19 @@ public class NotificationService : INotificationService
             _db.UserNotifications.Add(notification);
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation(
-                "Diagnostic notification created for user {UserId} (CompanyId={CompanyId}): {Title}",
-                recipientUserId, companyId, title);
+            LogTryCreateSucceeded(_logger, recipientUserId, companyId, title);
             return OperationResult.Ok();
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex,
-                "TryCreateNotificationWithDiagnosticsAsync: DB error for recipient {UserId} (CompanyId={CompanyId})",
-                recipientUserId, companyId);
+            LogTryCreateDbError(_logger, ex, recipientUserId, companyId);
             return OperationResult.Fail(
                 "Error_NotificationService_DispatchFailed",
                 _localizer["Error_NotificationService_DispatchFailed"].Value);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex,
-                "TryCreateNotificationWithDiagnosticsAsync: unexpected error for recipient {UserId} (CompanyId={CompanyId})",
-                recipientUserId, companyId);
+            LogTryCreateUnexpectedError(_logger, ex, recipientUserId, companyId);
             return OperationResult.Fail(
                 "Error_NotificationService_DispatchFailed",
                 _localizer["Error_NotificationService_DispatchFailed"].Value);
