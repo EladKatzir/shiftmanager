@@ -20,7 +20,7 @@ namespace ShiftManager.Pages.Requests;
 // Managers/Directors view all requests across accessible companies; Employees see only their own.
 // POST handlers independently verify ManagerHomeAccess grant before allowing approve/decline/delete.
 [Authorize]
-public class IndexModel : LocalizedPageModel
+public partial class IndexModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly IShiftAssignmentService _assignmentService;
@@ -88,7 +88,7 @@ public class IndexModel : LocalizedPageModel
     {
         try
         {
-            _logger.LogInformation("Loading requests page");
+            LogLoadingRequestsPage(_logger);
 
             // Get current user for company/scope filtering
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -111,7 +111,7 @@ public class IndexModel : LocalizedPageModel
             if (!IsManager)
             {
                 // Employee: show only their OWN requests (pending time-off + pending swaps + approved time-off)
-                _logger.LogInformation("Loading own requests for employee {UserId}", currentUserId);
+                LogLoadingOwnRequests(_logger, currentUserId);
 
                 TimeOff = await _db.TimeOffRequests
                     .Where(r => r.UserId == currentUserId && r.Status == RequestStatus.Pending)
@@ -144,8 +144,7 @@ public class IndexModel : LocalizedPageModel
                     .Select(r => new ApprovedTimeOffVM(r.Id, currentUser.DisplayName, r.StartDate, r.EndDate, r.Reason, r.CreatedAt, r.CreatedAt))
                     .ToListAsync();
 
-                _logger.LogInformation("Loaded {TimeOffCount} pending, {SwapCount} swaps, {ApprovedCount} approved for employee",
-                    TimeOff.Count, Swaps.Count, ApprovedTimeOffs.Count);
+                LogLoadedEmployeeSummary(_logger, TimeOff.Count, Swaps.Count, ApprovedTimeOffs.Count);
                 return;
             }
 
@@ -175,7 +174,7 @@ public class IndexModel : LocalizedPageModel
             }
 
             // Load pending time-off requests with company filtering and visibility filter
-            _logger.LogInformation("Loading pending time off requests");
+            LogLoadingPendingTimeOff(_logger);
             // IgnoreQueryFilters: accessibleCompanyIds already scoped — tenant filter breaks multi-company views
             var pendingTO = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
                                    join u in _db.Users.IgnoreQueryFilters() on r.UserId equals u.Id
@@ -184,10 +183,10 @@ public class IndexModel : LocalizedPageModel
                                    orderby r.CreatedAt
                                    select new TimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason)).ToListAsync();
             TimeOff = pendingTO;
-            _logger.LogInformation("Loaded {Count} pending time off requests", TimeOff.Count);
+            LogLoadedPendingTimeOff(_logger, TimeOff.Count);
 
             // Load pending swap requests with company filtering
-            _logger.LogInformation("Loading pending swap requests");
+            LogLoadingPendingSwaps(_logger);
             // IgnoreQueryFilters: all joined tables have tenant filters that break multi-company views
             var pendingSwaps = await (from s in _db.SwapRequests.IgnoreQueryFilters()
                                       join a in _db.ShiftAssignments.IgnoreQueryFilters() on s.FromAssignmentId equals a.Id
@@ -209,10 +208,10 @@ public class IndexModel : LocalizedPageModel
 
             Swaps = pendingSwaps.Select(x => new SwapVM(x.Id, x.FromUser, x.When, x.ToUser,
                 DeserializeWarnings(x.WarningsAtCreation))).ToList();
-            _logger.LogInformation("Loaded {Count} pending swap requests", Swaps.Count);
+            LogLoadedPendingSwaps(_logger, Swaps.Count);
 
             // Load approved time-off requests
-            _logger.LogInformation("Loading approved time off requests");
+            LogLoadingApprovedTimeOff(_logger);
             // IgnoreQueryFilters: same multi-company scope as pending queries above
             ApprovedTimeOffs = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
                                      join u in _db.Users.IgnoreQueryFilters() on r.UserId equals u.Id
@@ -220,13 +219,13 @@ public class IndexModel : LocalizedPageModel
                                      orderby r.StartDate descending
                                      select new ApprovedTimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason, r.CreatedAt, r.CreatedAt)).ToListAsync();
 
-            _logger.LogInformation("Loaded {Count} approved time off requests", ApprovedTimeOffs.Count);
+            LogLoadedApprovedTimeOff(_logger, ApprovedTimeOffs.Count);
 
-            _logger.LogInformation("Admin requests page loaded successfully");
+            LogAdminPageLoaded(_logger);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading admin requests page");
+            LogErrorLoadingAdminPage(_logger, ex);
             Error = _localizer["Error_LoadingRequests"];
         }
     }
@@ -265,7 +264,7 @@ public class IndexModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            _logger.LogWarning("Invalid time off request ID: {Id}", id);
+            LogInvalidTimeOffRequestId(_logger, id);
             return RedirectToPage();
         }
 
@@ -277,7 +276,7 @@ public class IndexModel : LocalizedPageModel
         var r = await _db.TimeOffRequests.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (r == null)
         {
-            _logger.LogWarning("Time off request {RequestId} not found", id);
+            LogTimeOffRequestNotFound(_logger, id);
             return RedirectToPage();
         }
 
@@ -285,7 +284,7 @@ public class IndexModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdentifierClaim(_logger);
             Error = _localizer["Error_AuthenticationError"];
             return RedirectToPage();
         }
@@ -298,8 +297,7 @@ public class IndexModel : LocalizedPageModel
         var hasAccess = await ValidateAccessToRequestAsync(currentUser, r.CompanyId);
         if (!hasAccess)
         {
-            _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve time off request {RequestId} for unauthorized company {CompanyId}",
-                currentUserId, currentUser.Role, id, r.CompanyId);
+            LogSecurityUnauthorizedAction(_logger, currentUserId, currentUser.Role, "approve", "time off", id, r.CompanyId);
             Error = _localizer["Error_NoPermissionApproveRequest"];
             await OnGetAsync();
             return Page();
@@ -308,8 +306,7 @@ public class IndexModel : LocalizedPageModel
         // ✅ CONCURRENCY FIX: Check status is still Pending before approving
         if (r.Status != RequestStatus.Pending)
         {
-            _logger.LogWarning("CONCURRENCY: User {UserId} attempted to approve time off request {RequestId} with status {Status} (expected Pending)",
-                currentUserId, id, r.Status);
+            LogConcurrencyAlreadyProcessed(_logger, currentUserId, "approve", "time off", id, r.Status);
             Error = _localizer["Error_RequestAlreadyProcessed"];
             await OnGetAsync();
             return Page();
@@ -334,7 +331,7 @@ public class IndexModel : LocalizedPageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Side effects failed for approved time-off request {RequestId}. Manual remediation may be needed.", id);
+            LogTimeOffSideEffectsFailed(_logger, ex, id);
         }
 
         return RedirectToPage();
@@ -349,7 +346,7 @@ public class IndexModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            _logger.LogWarning("Invalid time off request ID: {Id}", id);
+            LogInvalidTimeOffRequestId(_logger, id);
             return RedirectToPage();
         }
 
@@ -361,7 +358,7 @@ public class IndexModel : LocalizedPageModel
         var r = await _db.TimeOffRequests.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (r == null)
         {
-            _logger.LogWarning("Time off request {RequestId} not found", id);
+            LogTimeOffRequestNotFound(_logger, id);
             return RedirectToPage();
         }
 
@@ -369,7 +366,7 @@ public class IndexModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdentifierClaim(_logger);
             Error = _localizer["Error_AuthenticationError"];
             return RedirectToPage();
         }
@@ -382,8 +379,7 @@ public class IndexModel : LocalizedPageModel
         var hasAccess = await ValidateAccessToRequestAsync(currentUser, r.CompanyId);
         if (!hasAccess)
         {
-            _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to decline time off request {RequestId} for unauthorized company {CompanyId}",
-                currentUserId, currentUser.Role, id, r.CompanyId);
+            LogSecurityUnauthorizedAction(_logger, currentUserId, currentUser.Role, "decline", "time off", id, r.CompanyId);
             Error = _localizer["Error_NoPermissionDeclineRequest"];
             await OnGetAsync();
             return Page();
@@ -392,8 +388,7 @@ public class IndexModel : LocalizedPageModel
         // ✅ CONCURRENCY FIX: Check status is still Pending before declining
         if (r.Status != RequestStatus.Pending)
         {
-            _logger.LogWarning("CONCURRENCY: User {UserId} attempted to decline time off request {RequestId} with status {Status} (expected Pending)",
-                currentUserId, id, r.Status);
+            LogConcurrencyAlreadyProcessed(_logger, currentUserId, "decline", "time off", id, r.Status);
             Error = _localizer["Error_RequestAlreadyProcessed"];
             await OnGetAsync();
             return Page();
@@ -425,7 +420,7 @@ public class IndexModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            _logger.LogWarning("Invalid swap request ID: {Id}", id);
+            LogInvalidSwapRequestId(_logger, id);
             return RedirectToPage();
         }
 
@@ -436,7 +431,7 @@ public class IndexModel : LocalizedPageModel
         var s = await _db.SwapRequests.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (s == null)
         {
-            _logger.LogWarning("Swap request {RequestId} not found", id);
+            LogSwapRequestNotFound(_logger, id);
             return RedirectToPage();
         }
 
@@ -444,7 +439,7 @@ public class IndexModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdentifierClaim(_logger);
             Error = _localizer["Error_AuthenticationError"];
             await trx.RollbackAsync();
             return RedirectToPage();
@@ -459,8 +454,7 @@ public class IndexModel : LocalizedPageModel
         var hasAccess = await ValidateAccessToRequestAsync(currentUser, s.CompanyId);
         if (!hasAccess)
         {
-            _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve swap request {RequestId} for unauthorized company {CompanyId}",
-                currentUserId, currentUser.Role, id, s.CompanyId);
+            LogSecurityUnauthorizedAction(_logger, currentUserId, currentUser.Role, "approve", "swap", id, s.CompanyId);
             Error = _localizer["Error_NoPermissionApproveRequest"];
             await trx.RollbackAsync();
             await OnGetAsync();
@@ -470,8 +464,7 @@ public class IndexModel : LocalizedPageModel
         // ✅ CONCURRENCY FIX: Check status is still Pending before approving
         if (s.Status != RequestStatus.Pending)
         {
-            _logger.LogWarning("CONCURRENCY: User {UserId} attempted to approve swap request {RequestId} with status {Status} (expected Pending)",
-                currentUserId, id, s.Status);
+            LogConcurrencyAlreadyProcessed(_logger, currentUserId, "approve", "swap", id, s.Status);
             Error = _localizer["Error_RequestAlreadyProcessed"];
             await trx.RollbackAsync();
             await OnGetAsync();
@@ -539,7 +532,7 @@ public class IndexModel : LocalizedPageModel
         // ✅ SECURITY FIX: Input validation
         if (id <= 0)
         {
-            _logger.LogWarning("Invalid swap request ID: {Id}", id);
+            LogInvalidSwapRequestId(_logger, id);
             return RedirectToPage();
         }
 
@@ -548,7 +541,7 @@ public class IndexModel : LocalizedPageModel
         var s = await _db.SwapRequests.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (s == null)
         {
-            _logger.LogWarning("Swap request {RequestId} not found", id);
+            LogSwapRequestNotFound(_logger, id);
             return RedirectToPage();
         }
 
@@ -556,7 +549,7 @@ public class IndexModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdentifierClaim(_logger);
             Error = _localizer["Error_AuthenticationError"];
             return RedirectToPage();
         }
@@ -569,8 +562,7 @@ public class IndexModel : LocalizedPageModel
         var hasAccess = await ValidateAccessToRequestAsync(currentUser, s.CompanyId);
         if (!hasAccess)
         {
-            _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to decline swap request {RequestId} for unauthorized company {CompanyId}",
-                currentUserId, currentUser.Role, id, s.CompanyId);
+            LogSecurityUnauthorizedAction(_logger, currentUserId, currentUser.Role, "decline", "swap", id, s.CompanyId);
             Error = _localizer["Error_NoPermissionDeclineRequest"];
             await OnGetAsync();
             return Page();
@@ -579,8 +571,7 @@ public class IndexModel : LocalizedPageModel
         // ✅ CONCURRENCY FIX: Check status is still Pending before declining
         if (s.Status != RequestStatus.Pending)
         {
-            _logger.LogWarning("CONCURRENCY: User {UserId} attempted to decline swap request {RequestId} with status {Status} (expected Pending)",
-                currentUserId, id, s.Status);
+            LogConcurrencyAlreadyProcessed(_logger, currentUserId, "decline", "swap", id, s.Status);
             Error = _localizer["Error_RequestAlreadyProcessed"];
             await OnGetAsync();
             return Page();
@@ -636,13 +627,13 @@ public class IndexModel : LocalizedPageModel
 
         try
         {
-            _logger.LogInformation("Admin attempting to delete approved time-off request {RequestId}", id);
+            LogAdminAttemptDeleteTimeOff(_logger, id);
 
             // Get current user for validation
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim");
+                LogInvalidNameIdentifierClaim(_logger);
                 Error = _localizer["Error_AuthenticationError"];
                 return RedirectToPage();
             }
@@ -663,7 +654,7 @@ public class IndexModel : LocalizedPageModel
 
             if (request == null)
             {
-                _logger.LogWarning("Time-off request {RequestId} not found", id);
+                LogTimeOffNotFoundForDelete(_logger, id);
                 Error = _localizer["Error_TimeOffRequestNotFound"];
                 await OnGetAsync();
                 return Page();
@@ -681,8 +672,7 @@ public class IndexModel : LocalizedPageModel
             var hasAccess = await ValidateAccessToRequestAsync(currentUser, user.CompanyId);
             if (!hasAccess)
             {
-                _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to delete time-off {RequestId} for unauthorized company",
-                    currentUserId, currentUser.Role, id);
+                LogSecurityUnauthorizedDelete(_logger, currentUserId, currentUser.Role, id);
                 Error = _localizer["Error_NoPermissionDeleteTimeOff"];
                 await OnGetAsync();
                 return Page();
@@ -690,7 +680,7 @@ public class IndexModel : LocalizedPageModel
 
             if (request.Status != RequestStatus.Approved)
             {
-                _logger.LogWarning("Attempt to delete non-approved time-off request {RequestId} with status {Status}", id, request.Status);
+                LogAttemptDeleteNonApproved(_logger, id, request.Status);
                 Error = _localizer["Error_CanOnlyDeleteApprovedTimeOff"];
                 await OnGetAsync();
                 return Page();
@@ -699,7 +689,7 @@ public class IndexModel : LocalizedPageModel
             // Check if time-off period has started
             if (request.StartDate <= DateOnly.FromDateTime(DateTime.Today))
             {
-                _logger.LogWarning("Attempt to delete time-off request {RequestId} that has already started", id);
+                LogAttemptDeleteAlreadyStarted(_logger, id);
                 Error = _localizer["Error_CannotDeleteStartedTimeOff"];
                 await OnGetAsync();
                 return Page();
@@ -707,8 +697,7 @@ public class IndexModel : LocalizedPageModel
 
             var userName = user.DisplayName;
 
-            _logger.LogInformation("Deleting approved time-off request {RequestId} for user {UserName} ({StartDate} to {EndDate})",
-                id, userName, request.StartDate, request.EndDate);
+            LogDeletingTimeOff(_logger, id, userName, request.StartDate, request.EndDate);
 
             // Remove the time-off request
             _db.TimeOffRequests.Remove(request);
@@ -728,14 +717,14 @@ public class IndexModel : LocalizedPageModel
                 startDate: request.StartDate,
                 endDate: request.EndDate);
 
-            _logger.LogInformation("Successfully deleted time-off request {RequestId} for user {UserName}", id, userName);
+            LogSuccessfullyDeletedTimeOff(_logger, id, userName);
             Message = string.Format(CultureInfo.CurrentCulture, _localizer["Success_TimeOffDeleted"], userName, request.StartDate.ToString("yyyy-MM-dd"), request.EndDate.ToString("yyyy-MM-dd"));
 
             return RedirectToPage();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting time-off request {RequestId}", id);
+            LogErrorDeletingTimeOff(_logger, ex, id);
             Error = _localizer["Error_DeletingTimeOff"];
             await OnGetAsync();
             return Page();
@@ -754,7 +743,7 @@ public class IndexModel : LocalizedPageModel
         var hasGrant = await _grantService.HasGrantAsync(userId, "ManagerHomeAccess");
         if (!hasGrant)
         {
-            _logger.LogWarning("SECURITY: User {UserId} attempted manager action on Requests page without ManagerHomeAccess grant", userId);
+            LogManagerActionWithoutGrant(_logger, userId);
         }
         return hasGrant;
     }

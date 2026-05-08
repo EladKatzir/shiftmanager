@@ -28,7 +28,8 @@ in the same file don't collide with sibling files.
 | 2000–2099      | `Services/NotificationService.cs`        | ✅ In use (39 of 100 IDs allocated) |
 | 3000–3099      | `Controllers/Api/V1/SwapRequestsController.cs` | ✅ In use (21 methods cover 42 call sites) |
 | 4000–4099      | `Pages/Calendar/Table.cshtml.cs`         | ✅ In use (14 methods cover 39 call sites) |
-| 5000–5099      | `Services/MailService.cs`                | Pending |
+| 5000–5099      | `Pages/Requests/Index.cshtml.cs`         | ✅ In use (28 methods cover 42 call sites) |
+| 5500–5599      | `Services/MailService.cs`                | Pending (Batch O scope — defer until god-class decomp begins) |
 | 6000–6099      | `Pages/Admin/Users.cshtml.cs`            | Pending |
 | 7000–7099      | `Services/GriffinService.cs` + `GriffinConfigService.cs` | Pending |
 | 8000–8099      | `Pages/My/Requests.cshtml.cs`            | Pending |
@@ -110,6 +111,32 @@ literal template. Console output is identical; structured-log consumers
 (if/when added) gain a filterable property.
 
 The full method-by-method mapping lives in `Pages/Calendar/Table.cshtml.Logging.cs`.
+
+### `Pages/Requests/Index.cshtml.cs` — 5000–5099
+
+A third example of **template parameterization**, now applied to a Cartesian
+product. Approve/Decline × TimeOff/Swap produced 4 distinct SECURITY literals
+and 4 distinct CONCURRENCY literals (8 unique templates). Parameterizing
+both the action verb (`{Action}`) and entity type (`{EntityType}`) collapses
+those 8 templates into 2 partial methods covering all 8 call sites:
+
+```csharp
+LogSecurityUnauthorizedAction(_logger, userId, role, "approve", "swap", id, companyId);
+LogConcurrencyAlreadyProcessed(_logger, userId, "decline", "time off", id, status);
+```
+
+Combined with reused validation literals ("Invalid X request ID", "X request
+not found", "Invalid or missing NameIdentifier claim"), 42 call sites
+collapse to 28 methods.
+
+| Sub-range | Section                              | Methods | Sites | Description |
+|-----------|--------------------------------------|---------|-------|-------------|
+| 5000–5019 | Page lifecycle                       | 11      | 11    | OnGet flow with separate paths for employee vs admin |
+| 5020–5029 | Common validation/auth errors        | 5       | 14    | TimeOff invalid+not-found, Swap invalid+not-found, claim missing (×5) |
+| 5030–5039 | Authz / concurrency / manager grant  | 4       | 9     | Parameterized SECURITY+CONCURRENCY (×4 each), side-effects, manager grant |
+| 5040–5049 | Delete approved time-off flow        | 8       | 8     | Each unique (Admin attempt, not-found, security, non-approved, started, deleting, success, error) |
+
+The full method-by-method mapping lives in `Pages/Requests/Index.cshtml.Logging.cs`.
 
 ## Pattern — adding a new partial method
 
