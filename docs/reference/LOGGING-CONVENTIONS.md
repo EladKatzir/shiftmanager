@@ -26,7 +26,7 @@ in the same file don't collide with sibling files.
 | 1100–1199      | *(reserved — Auth/Signup, Auth/GriffinSignup, Auth/ForgotPassword)* | Pending |
 | 1200–1299      | *(reserved — Auth callbacks, e.g. GriffinCallback)* | Pending |
 | 2000–2099      | `Services/NotificationService.cs`        | ✅ In use (39 of 100 IDs allocated) |
-| 3000–3099      | `Controllers/Api/V1/SwapRequestsController.cs` | Pending |
+| 3000–3099      | `Controllers/Api/V1/SwapRequestsController.cs` | ✅ In use (21 methods cover 42 call sites) |
 | 4000–4099      | `Pages/Calendar/Table.cshtml.cs`         | Pending |
 | 5000–5099      | `Services/MailService.cs`                | Pending |
 | 6000–6099      | `Pages/Admin/Users.cshtml.cs`            | Pending |
@@ -63,6 +63,32 @@ The full method-by-method mapping lives in `Pages/Auth/Login.cshtml.Logging.cs`.
 | 2060–2069 | TryCreate diagnostic helpers              | 5    | Admin-only structured-result wrappers |
 
 The full method-by-method mapping lives in `Services/NotificationService.Logging.cs`.
+
+### `Controllers/Api/V1/SwapRequestsController.cs` — 3000–3099
+
+This controller demonstrates **method reuse across endpoints** — 21 unique partial
+methods cover 42 call sites because the same boilerplate event (e.g. "API endpoint
+not enabled") fires from each of 6 endpoints, distinguished only by the `Endpoint`
+parameter. Reuse is correct here: events with identical message templates *are*
+the same event, just from different actions.
+
+| Sub-range | Section                                   | Methods | Sites | Description                          |
+|-----------|-------------------------------------------|---------|-------|--------------------------------------|
+| 3000–3009 | Common API auth/access boilerplate        | 3       | 16    | Endpoint disabled / unauthorized / userid missing |
+| 3010–3019 | Date-parsing validation                   | 2       | 2     | List endpoint only                   |
+| 3020–3029 | Catch-block diagnostics                   | 4       | 12    | DB/unexpected, with/without RequestId — string? CompanyId from claim |
+| 3030–3039 | Get endpoint                              | 1       | 1     | Not-found warning                    |
+| 3040–3049 | Create endpoint                           | 3       | 3     | Validation, success                  |
+| 3050–3059 | Approve endpoint                          | 3       | 3     | Not-found, validation, success       |
+| 3060–3069 | Decline endpoint                          | 3       | 3     | Not-found, validation, success       |
+| 3070–3079 | Delete endpoint                           | 2       | 2     | Failed, success                      |
+
+Note the `string? CompanyId` in 3020-3029: catch blocks log the **raw claim string**
+(`User.FindFirst("CompanyId")?.Value`) because the parsed `int` may not be in scope.
+Success paths use the parsed `int CompanyId`. Same template literal text, distinct
+method overloads — source-gen requires concrete signatures.
+
+The full method-by-method mapping lives in `Controllers/Api/V1/SwapRequestsController.Logging.cs`.
 
 ## Pattern — adding a new partial method
 
