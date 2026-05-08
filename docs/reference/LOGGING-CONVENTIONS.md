@@ -30,7 +30,8 @@ in the same file don't collide with sibling files.
 | 4000–4099      | `Pages/Calendar/Table.cshtml.cs`         | ✅ In use (14 methods cover 39 call sites) |
 | 5000–5099      | `Pages/Requests/Index.cshtml.cs`         | ✅ In use (28 methods cover 42 call sites) |
 | 5500–5599      | `Services/MailService.cs`                | Pending (Batch O scope — defer until god-class decomp begins) |
-| 6000–6099      | `Pages/Admin/Users.cshtml.cs`            | Pending |
+| 6000–6099      | `Controllers/Api/V1/TimeOffController.cs`| ✅ In use (25 methods cover 37 call sites) |
+| 12000–12099    | `Pages/Admin/Users.cshtml.cs`            | Pending (reallocated from 6000) |
 | 7000–7099      | `Services/GriffinService.cs` + `GriffinConfigService.cs` | Pending |
 | 8000–8099      | `Pages/My/Requests.cshtml.cs`            | ✅ In use (35 methods cover 38 call sites) |
 | 9000–9099      | Middleware (`ApiAuthenticationMiddleware`, `ApiRequestLoggingMiddleware`, `RateLimitingMiddleware`) | Pending |

@@ -17,7 +17,7 @@ namespace ShiftManager.Controllers.Api.V1;
 [ApiController]
 [Route("api/v1/time-off-requests")]
 [Produces("application/json")]
-public class TimeOffController : ControllerBase
+public partial class TimeOffController : ControllerBase
 {
     private readonly TimeOffApiService _timeOffService;
     private readonly IFeatureFlagService _featureFlagService;
@@ -55,8 +55,7 @@ public class TimeOffController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiTimeOffList))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(ListTimeOffRequests), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(ListTimeOffRequests), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -65,8 +64,7 @@ public class TimeOffController : ControllerBase
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
                 // ERR-003: Log authorization failure
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(ListTimeOffRequests), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(ListTimeOffRequests), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -78,8 +76,7 @@ public class TimeOffController : ControllerBase
             {
                 if (!DateOnly.TryParse(startDate, out var parsed))
                 {
-                    _logger.LogWarning("Invalid startDate format. Endpoint={Endpoint}, CompanyId={CompanyId}, StartDate={StartDate}",
-                        nameof(ListTimeOffRequests), companyId, startDate);
+                    LogInvalidStartDateLower(_logger, nameof(ListTimeOffRequests), companyId, startDate);
                     return BadRequest(ApiErrorResponse.BadRequest("Invalid startDate format. Use yyyy-MM-dd"));
                 }
                 startDateParsed = parsed;
@@ -89,8 +86,7 @@ public class TimeOffController : ControllerBase
             {
                 if (!DateOnly.TryParse(endDate, out var parsed))
                 {
-                    _logger.LogWarning("Invalid endDate format. Endpoint={Endpoint}, CompanyId={CompanyId}, EndDate={EndDate}",
-                        nameof(ListTimeOffRequests), companyId, endDate);
+                    LogInvalidEndDateLower(_logger, nameof(ListTimeOffRequests), companyId, endDate);
                     return BadRequest(ApiErrorResponse.BadRequest("Invalid endDate format. Use yyyy-MM-dd"));
                 }
                 endDateParsed = parsed;
@@ -116,14 +112,12 @@ public class TimeOffController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(ListTimeOffRequests), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogDbErrorCompanyPath(_logger, ex, nameof(ListTimeOffRequests), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(ListTimeOffRequests), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogUnexpectedErrorCompanyPath(_logger, ex, nameof(ListTimeOffRequests), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -145,8 +139,7 @@ public class TimeOffController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiTimeOffGet))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(GetTimeOffRequest), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(GetTimeOffRequest), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -155,8 +148,7 @@ public class TimeOffController : ControllerBase
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
                 // ERR-003: Log authorization failure
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(GetTimeOffRequest), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(GetTimeOffRequest), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -164,8 +156,7 @@ public class TimeOffController : ControllerBase
 
             if (request == null)
             {
-                _logger.LogWarning("Time-off request not found. Endpoint={Endpoint}, CompanyId={CompanyId}, RequestId={RequestId}",
-                    nameof(GetTimeOffRequest), companyId, id);
+                LogTimeOffNotFound(_logger, nameof(GetTimeOffRequest), companyId, id);
                 return NotFound(ApiErrorResponse.NotFound("TimeOff", id.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             }
 
@@ -173,14 +164,12 @@ public class TimeOffController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, RequestId={RequestId}, Path={Path}",
-                nameof(GetTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogDbErrorWithRequestId(_logger, ex, nameof(GetTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, RequestId={RequestId}, Path={Path}",
-                nameof(GetTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogUnexpectedErrorWithRequestId(_logger, ex, nameof(GetTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -203,8 +192,7 @@ public class TimeOffController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiTimeOffCreate))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(CreateTimeOffRequest), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(CreateTimeOffRequest), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -213,45 +201,39 @@ public class TimeOffController : ControllerBase
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
                 // ERR-003: Log authorization failure
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(CreateTimeOffRequest), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(CreateTimeOffRequest), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Validate request
             if (request.UserId <= 0)
             {
-                _logger.LogWarning("Validation error: UserId required. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(CreateTimeOffRequest), companyId);
+                LogValidationUserIdRequired(_logger, nameof(CreateTimeOffRequest), companyId);
                 return BadRequest(ApiErrorResponse.BadRequest("UserId is required"));
             }
 
             if (string.IsNullOrEmpty(request.StartDate))
             {
-                _logger.LogWarning("Validation error: StartDate required. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}",
-                    nameof(CreateTimeOffRequest), companyId, request.UserId);
+                LogValidationStartDateRequired(_logger, nameof(CreateTimeOffRequest), companyId, request.UserId);
                 return BadRequest(ApiErrorResponse.BadRequest("StartDate is required"));
             }
 
             if (string.IsNullOrEmpty(request.EndDate))
             {
-                _logger.LogWarning("Validation error: EndDate required. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}",
-                    nameof(CreateTimeOffRequest), companyId, request.UserId);
+                LogValidationEndDateRequired(_logger, nameof(CreateTimeOffRequest), companyId, request.UserId);
                 return BadRequest(ApiErrorResponse.BadRequest("EndDate is required"));
             }
 
             // Parse dates
             if (!DateOnly.TryParse(request.StartDate, out var startDate))
             {
-                _logger.LogWarning("Invalid StartDate format. Endpoint={Endpoint}, CompanyId={CompanyId}, StartDate={StartDate}",
-                    nameof(CreateTimeOffRequest), companyId, request.StartDate);
+                LogInvalidStartDateUpper(_logger, nameof(CreateTimeOffRequest), companyId, request.StartDate);
                 return BadRequest(ApiErrorResponse.BadRequest("Invalid StartDate format. Use yyyy-MM-dd"));
             }
 
             if (!DateOnly.TryParse(request.EndDate, out var endDate))
             {
-                _logger.LogWarning("Invalid EndDate format. Endpoint={Endpoint}, CompanyId={CompanyId}, EndDate={EndDate}",
-                    nameof(CreateTimeOffRequest), companyId, request.EndDate);
+                LogInvalidEndDateUpper(_logger, nameof(CreateTimeOffRequest), companyId, request.EndDate);
                 return BadRequest(ApiErrorResponse.BadRequest("Invalid EndDate format. Use yyyy-MM-dd"));
             }
 
@@ -262,30 +244,25 @@ public class TimeOffController : ControllerBase
             {
                 if (error.Contains("overlaps"))
                 {
-                    _logger.LogWarning("Time-off request conflict. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}, Error={Error}",
-                        nameof(CreateTimeOffRequest), companyId, request.UserId, error);
+                    LogTimeOffConflict(_logger, nameof(CreateTimeOffRequest), companyId, request.UserId, error);
                     return Conflict(ApiErrorResponse.Conflict(error));
                 }
-                _logger.LogWarning("Time-off request validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}, Error={Error}",
-                    nameof(CreateTimeOffRequest), companyId, request.UserId, error);
+                LogValidationCreateError(_logger, nameof(CreateTimeOffRequest), companyId, request.UserId, error);
                 return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
-            _logger.LogInformation("Time-off request created. Endpoint={Endpoint}, CompanyId={CompanyId}, UserId={UserId}, RequestId={RequestId}",
-                nameof(CreateTimeOffRequest), companyId, request.UserId, timeOffRequest!.Id);
+            LogTimeOffCreated(_logger, nameof(CreateTimeOffRequest), companyId, request.UserId, timeOffRequest!.Id);
 
             return CreatedAtAction(nameof(GetTimeOffRequest), new { id = timeOffRequest!.Id }, timeOffRequest);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
-                nameof(CreateTimeOffRequest), User.FindFirst("CompanyId")?.Value, request?.UserId, HttpContext.Request.Path);
+            LogDbErrorWithUserId(_logger, ex, nameof(CreateTimeOffRequest), User.FindFirst("CompanyId")?.Value, request?.UserId, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, UserId={UserId}, Path={Path}",
-                nameof(CreateTimeOffRequest), User.FindFirst("CompanyId")?.Value, request?.UserId, HttpContext.Request.Path);
+            LogUnexpectedErrorWithUserId(_logger, ex, nameof(CreateTimeOffRequest), User.FindFirst("CompanyId")?.Value, request?.UserId, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -308,8 +285,7 @@ public class TimeOffController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiTimeOffApprove))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(ApproveTimeOffRequest), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(ApproveTimeOffRequest), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -318,8 +294,7 @@ public class TimeOffController : ControllerBase
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
                 // ERR-003: Log authorization failure
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(ApproveTimeOffRequest), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(ApproveTimeOffRequest), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -329,30 +304,25 @@ public class TimeOffController : ControllerBase
             {
                 if (error.Contains("not found"))
                 {
-                    _logger.LogWarning("Time-off request not found for approval. Endpoint={Endpoint}, CompanyId={CompanyId}, RequestId={RequestId}",
-                        nameof(ApproveTimeOffRequest), companyId, id);
+                    LogTimeOffNotFoundForApproval(_logger, nameof(ApproveTimeOffRequest), companyId, id);
                     return NotFound(ApiErrorResponse.Create("NOT_FOUND", error));
                 }
-                _logger.LogWarning("Time-off request approval validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, RequestId={RequestId}, Error={Error}",
-                    nameof(ApproveTimeOffRequest), companyId, id, error);
+                LogValidationApproveError(_logger, nameof(ApproveTimeOffRequest), companyId, id, error);
                 return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
-            _logger.LogInformation("Time-off request approved. Endpoint={Endpoint}, CompanyId={CompanyId}, RequestId={RequestId}",
-                nameof(ApproveTimeOffRequest), companyId, id);
+            LogTimeOffApproved(_logger, nameof(ApproveTimeOffRequest), companyId, id);
 
             return Ok(timeOffRequest);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, RequestId={RequestId}, Path={Path}",
-                nameof(ApproveTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogDbErrorWithRequestId(_logger, ex, nameof(ApproveTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, RequestId={RequestId}, Path={Path}",
-                nameof(ApproveTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogUnexpectedErrorWithRequestId(_logger, ex, nameof(ApproveTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -375,8 +345,7 @@ public class TimeOffController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiTimeOffDecline))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(DeclineTimeOffRequest), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(DeclineTimeOffRequest), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -385,8 +354,7 @@ public class TimeOffController : ControllerBase
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
                 // ERR-003: Log authorization failure
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(DeclineTimeOffRequest), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(DeclineTimeOffRequest), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -396,30 +364,25 @@ public class TimeOffController : ControllerBase
             {
                 if (error.Contains("not found"))
                 {
-                    _logger.LogWarning("Time-off request not found for decline. Endpoint={Endpoint}, CompanyId={CompanyId}, RequestId={RequestId}",
-                        nameof(DeclineTimeOffRequest), companyId, id);
+                    LogTimeOffNotFoundForDecline(_logger, nameof(DeclineTimeOffRequest), companyId, id);
                     return NotFound(ApiErrorResponse.Create("NOT_FOUND", error));
                 }
-                _logger.LogWarning("Time-off request decline validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, RequestId={RequestId}, Error={Error}",
-                    nameof(DeclineTimeOffRequest), companyId, id, error);
+                LogValidationDeclineError(_logger, nameof(DeclineTimeOffRequest), companyId, id, error);
                 return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
-            _logger.LogInformation("Time-off request declined. Endpoint={Endpoint}, CompanyId={CompanyId}, RequestId={RequestId}",
-                nameof(DeclineTimeOffRequest), companyId, id);
+            LogTimeOffDeclined(_logger, nameof(DeclineTimeOffRequest), companyId, id);
 
             return Ok(timeOffRequest);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, RequestId={RequestId}, Path={Path}",
-                nameof(DeclineTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogDbErrorWithRequestId(_logger, ex, nameof(DeclineTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, RequestId={RequestId}, Path={Path}",
-                nameof(DeclineTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogUnexpectedErrorWithRequestId(_logger, ex, nameof(DeclineTimeOffRequest), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
