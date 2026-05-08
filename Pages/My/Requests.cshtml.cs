@@ -16,7 +16,7 @@ using System.Security.Claims;
 namespace ShiftManager.Pages.My;
 
 [Authorize]
-public class RequestsModel : LocalizedPageModel
+public partial class RequestsModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<RequestsModel> _logger;
@@ -62,19 +62,19 @@ public class RequestsModel : LocalizedPageModel
     {
         try
         {
-            _logger.LogInformation("Starting OnGetAsync for requests page");
+            LogStartingOnGet(_logger);
             // SECURITY FIX: Use TryParse to prevent crashes from invalid claims
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim");
+                LogInvalidNameIdentifierClaim(_logger);
                 TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return;
             }
-            _logger.LogInformation("User ID: {UserId}", userId);
+            LogUserId(_logger, userId);
 
             // Load user's time off requests
-            _logger.LogInformation("Loading time off requests for user {UserId}", userId);
+            LogLoadingTimeOff(_logger, userId);
             MyTimeOffRequests = await _db.TimeOffRequests
                 .Where(r => r.UserId == userId)
                 .OrderByDescending(r => r.CreatedAt)
@@ -88,17 +88,17 @@ public class RequestsModel : LocalizedPageModel
                     CreatedAt = r.CreatedAt
                 })
                 .ToListAsync();
-            _logger.LogInformation("Loaded {Count} time off requests for user {UserId}", MyTimeOffRequests.Count, userId);
+            LogLoadedTimeOff(_logger, MyTimeOffRequests.Count, userId);
 
             // Load user's swap requests - simplified query first
-            _logger.LogInformation("Loading shift assignments for user {UserId}", userId);
+            LogLoadingAssignments(_logger, userId);
             var userAssignmentIds = await _db.ShiftAssignments
                 .Where(sa => sa.UserId == userId)
                 .Select(sa => sa.Id)
                 .ToListAsync();
-            _logger.LogInformation("Found {Count} shift assignments for user {UserId}", userAssignmentIds.Count, userId);
+            LogFoundAssignments(_logger, userAssignmentIds.Count, userId);
 
-            _logger.LogInformation("Loading swap requests for user assignments");
+            LogLoadingSwapRequests(_logger);
             MySwapRequests = await _db.SwapRequests
                 .Where(sr => userAssignmentIds.Contains(sr.FromAssignmentId))
                 .OrderByDescending(r => r.CreatedAt)
@@ -112,10 +112,10 @@ public class RequestsModel : LocalizedPageModel
                     CreatedAt = r.CreatedAt
                 })
                 .ToListAsync();
-            _logger.LogInformation("Loaded {Count} swap requests for user {UserId}", MySwapRequests.Count, userId);
+            LogLoadedSwapRequests(_logger, MySwapRequests.Count, userId);
 
             // Load available shifts for swapping (user's upcoming assignments)
-            _logger.LogInformation("Loading available shifts for swapping for user {UserId}", userId);
+            LogLoadingAvailableShifts(_logger, userId);
             var rawShifts = await _db.ShiftAssignments
                 .Where(sa => sa.UserId == userId)
                 .Join(_db.ShiftInstances,
@@ -146,11 +146,11 @@ public class RequestsModel : LocalizedPageModel
                 StartTime = x.ShiftType.Start,
                 EndTime = x.ShiftType.End
             }).ToList();
-            _logger.LogInformation("Loaded {Count} available shifts for user {UserId}", AvailableShifts.Count, userId);
+            LogLoadedAvailableShifts(_logger, AvailableShifts.Count, userId);
 
             // Load available approvers — users who hold ApproveVacations or ApproveExtendedLeave grants
             // scoped to the current user's company
-            _logger.LogInformation("Loading available approvers for user {UserId}", userId);
+            LogLoadingApprovers(_logger, userId);
             var currentUser = await _db.Users.FindAsync(userId);
             if (currentUser != null)
             {
@@ -195,14 +195,14 @@ public class RequestsModel : LocalizedPageModel
                         Role = u.Role.ToString()
                     })
                     .ToListAsync();
-                _logger.LogInformation("Loaded {Count} available approvers for user {UserId}", AvailableApprovers.Count, userId);
+                LogLoadedApprovers(_logger, AvailableApprovers.Count, userId);
             }
 
-            _logger.LogInformation("OnGetAsync completed successfully for user {UserId}", userId);
+            LogOnGetCompleted(_logger, userId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in OnGetAsync for requests page");
+            LogErrorOnGet(_logger, ex);
             TempData["ErrorMessage"] = _localizer["Error_LoadingRequestsFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
     }
@@ -211,7 +211,7 @@ public class RequestsModel : LocalizedPageModel
     {
         try
         {
-            _logger.LogInformation("Starting time off request submission");
+            LogStartingTimeOffSubmit(_logger);
 
             // Clear validation errors for other forms (since both models are on the same page)
             ModelState.ClearValidationState(nameof(SwapRequest));
@@ -226,12 +226,12 @@ public class RequestsModel : LocalizedPageModel
             if (TimeOffRequest.Type == TimeOffType.Vacation && TimeOffRequest.EndDate < TimeOffRequest.StartDate)
             {
                 ModelState.AddModelError("TimeOffRequest.EndDate", _localizer["Error_EndDateBeforeStartDate"]);
-                _logger.LogWarning("Time off request validation failed: End date {EndDate} is before start date {StartDate}", TimeOffRequest.EndDate, TimeOffRequest.StartDate);
+                LogValidationEndBeforeStart(_logger, TimeOffRequest.EndDate, TimeOffRequest.StartDate);
             }
 
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Time off request model state is invalid: {Errors}", string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                LogTimeOffModelInvalid(_logger, string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
                 await OnGetAsync();
                 return Page();
             }
@@ -240,12 +240,12 @@ public class RequestsModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim");
+                LogInvalidNameIdentifierClaim(_logger);
                 TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await OnGetAsync();
                 return Page();
             }
-            _logger.LogInformation("Time off request for user {UserId}, dates {StartDate} to {EndDate}", userId, TimeOffRequest.StartDate, TimeOffRequest.EndDate);
+            LogTimeOffSubmitContext(_logger, userId, TimeOffRequest.StartDate, TimeOffRequest.EndDate);
 
             // Validate approver if specified — must hold ApproveVacations or ApproveExtendedLeave grant
             if (TimeOffRequest.ApproverId.HasValue && TimeOffRequest.ApproverId.Value > 0)
@@ -290,15 +290,13 @@ public class RequestsModel : LocalizedPageModel
             _db.TimeOffRequests.Add(request);
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation("Time off request {RequestId} submitted successfully for user {UserId}, Type: {Type}, Approver: {ApproverId}",
-                request.Id, userId, request.Type, request.ApproverId);
+            LogTimeOffSubmitted(_logger, request.Id, userId, request.Type, request.ApproverId);
 
             // Submit for approval if the vacation approval feature flag is enabled
             if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.VacationApprovalEnabled))
             {
                 var (success, approvalMessage) = await _vacationApprovalService.SubmitForApprovalAsync(request.Id, userId);
-                _logger.LogInformation("Vacation approval result for request {RequestId}: Success={Success}, Message={Message}",
-                    request.Id, success, approvalMessage);
+                LogVacationApprovalResult(_logger, request.Id, success, approvalMessage);
             }
 
             TempData["SuccessMessage"] = _localizer["Success_TimeOffRequestSubmitted"].Value;
@@ -306,7 +304,7 @@ public class RequestsModel : LocalizedPageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error submitting time off request");
+            LogErrorSubmittingTimeOff(_logger, ex);
             TempData["ErrorMessage"] = _localizer["Error_SubmittingRequestFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await OnGetAsync();
             return Page();
@@ -317,7 +315,7 @@ public class RequestsModel : LocalizedPageModel
     {
         try
         {
-            _logger.LogInformation("Starting swap request submission");
+            LogStartingSwapSubmit(_logger);
 
             // Clear validation errors for other forms (since both models are on the same page)
             ModelState.ClearValidationState(nameof(TimeOffRequest));
@@ -330,7 +328,7 @@ public class RequestsModel : LocalizedPageModel
 
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Swap request model state is invalid: {Errors}", string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                LogSwapModelInvalid(_logger, string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
                 await OnGetAsync();
                 return Page();
             }
@@ -339,12 +337,12 @@ public class RequestsModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim");
+                LogInvalidNameIdentifierClaim(_logger);
                 TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await OnGetAsync();
                 return Page();
             }
-            _logger.LogInformation("Swap request for user {UserId}, ShiftId {ShiftId}", userId, SwapRequest.ShiftId);
+            LogSwapSubmitContext(_logger, userId, SwapRequest.ShiftId);
 
             // Verify the assignment belongs to the user
             var assignment = await _db.ShiftAssignments
@@ -352,19 +350,19 @@ public class RequestsModel : LocalizedPageModel
 
             if (assignment == null)
             {
-                _logger.LogWarning("Assignment {ShiftId} not found for user {UserId}", SwapRequest.ShiftId, userId);
+                LogAssignmentNotFound(_logger, SwapRequest.ShiftId, userId);
                 TempData["ErrorMessage"] = _localizer["Error_NotAssignedToShift"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await OnGetAsync();
                 return Page();
             }
 
-            _logger.LogInformation("Found assignment {AssignmentId} for user {UserId}", assignment.Id, userId);
+            LogFoundAssignment(_logger, assignment.Id, userId);
 
             // Load current user to get CompanyId
             var currentUser = await _db.Users.FindAsync(userId);
             if (currentUser == null)
             {
-                _logger.LogError("User {UserId} not found", userId);
+                LogUserNotFound(_logger, userId);
                 TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 await OnGetAsync();
                 return Page();
@@ -383,13 +381,13 @@ public class RequestsModel : LocalizedPageModel
             _db.SwapRequests.Add(swapRequest);
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation("Swap request {RequestId} submitted successfully for assignment {AssignmentId}", swapRequest.Id, assignment.Id);
+            LogSwapSubmitted(_logger, swapRequest.Id, assignment.Id);
             TempData["SuccessMessage"] = _localizer["Success_SwapRequestSubmitted"].Value;
             return RedirectToPage();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error submitting swap request");
+            LogErrorSubmittingSwap(_logger, ex);
             TempData["ErrorMessage"] = _localizer["Error_SubmittingSwapRequestFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await OnGetAsync();
             return Page();
@@ -404,7 +402,7 @@ public class RequestsModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim");
+                LogInvalidNameIdentifierClaim(_logger);
                 TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return RedirectToPage();
             }
@@ -415,14 +413,14 @@ public class RequestsModel : LocalizedPageModel
 
             if (request == null)
             {
-                _logger.LogWarning("Cancel request: TimeOffRequest {RequestId} not found for user {UserId}", requestId, userId);
+                LogCancelTimeOffNotFound(_logger, requestId, userId);
                 TempData["ErrorMessage"] = _localizer["Error_RequestNotFound"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return RedirectToPage();
             }
 
             if (request.Status != RequestStatus.Pending)
             {
-                _logger.LogWarning("Cancel request: TimeOffRequest {RequestId} is not pending (status={Status})", requestId, request.Status);
+                LogCancelTimeOffNotPending(_logger, requestId, request.Status);
                 TempData["ErrorMessage"] = _localizer["Error_RequestAlreadyProcessed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return RedirectToPage();
             }
@@ -431,12 +429,12 @@ public class RequestsModel : LocalizedPageModel
 
             if (success)
             {
-                _logger.LogInformation("TimeOffRequest {RequestId} canceled by user {UserId}", requestId, userId);
+                LogTimeOffCanceled(_logger, requestId, userId);
                 TempData["SuccessMessage"] = _localizer["RequestCanceled"].Value;
             }
             else
             {
-                _logger.LogWarning("Failed to cancel TimeOffRequest {RequestId}: {Message}", requestId, message);
+                LogFailedCancelTimeOff(_logger, requestId, message);
                 TempData["ErrorMessage"] = _localizer["Error_CancelRequestFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
 
@@ -444,7 +442,7 @@ public class RequestsModel : LocalizedPageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error canceling time off request {RequestId}", requestId);
+            LogErrorCancelTimeOff(_logger, ex, requestId);
             TempData["ErrorMessage"] = _localizer["Error_CancelRequestFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             return RedirectToPage();
         }

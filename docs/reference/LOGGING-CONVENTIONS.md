@@ -32,7 +32,7 @@ in the same file don't collide with sibling files.
 | 5500–5599      | `Services/MailService.cs`                | Pending (Batch O scope — defer until god-class decomp begins) |
 | 6000–6099      | `Pages/Admin/Users.cshtml.cs`            | Pending |
 | 7000–7099      | `Services/GriffinService.cs` + `GriffinConfigService.cs` | Pending |
-| 8000–8099      | `Pages/My/Requests.cshtml.cs`            | Pending |
+| 8000–8099      | `Pages/My/Requests.cshtml.cs`            | ✅ In use (35 methods cover 38 call sites) |
 | 9000–9099      | Middleware (`ApiAuthenticationMiddleware`, `ApiRequestLoggingMiddleware`, `RateLimitingMiddleware`) | Pending |
 | 90000–99999    | `Program.cs` startup banners             | Pending (last — startup-only events, low value) |
 
