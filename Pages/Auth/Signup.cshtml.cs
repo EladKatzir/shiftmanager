@@ -28,7 +28,7 @@ public class SignupModel : LocalizedPageModel
 
     private readonly ICompanyCacheService _companyCacheService;
     private readonly IRoleService _roleService;
-    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IBackgroundTaskQueue _backgroundTaskQueue;
 
     public SignupModel(
         AppDbContext db,
@@ -41,7 +41,7 @@ public class SignupModel : LocalizedPageModel
         IAuditLogService auditLogService,
         ICompanyCacheService companyCacheService,
         IRoleService roleService,
-        IServiceScopeFactory serviceScopeFactory)
+        IBackgroundTaskQueue backgroundTaskQueue)
         : base(localizer)
     {
         _db = db;
@@ -53,7 +53,7 @@ public class SignupModel : LocalizedPageModel
         _auditLogService = auditLogService;
         _companyCacheService = companyCacheService;
         _roleService = roleService;
-        _serviceScopeFactory = serviceScopeFactory;
+        _backgroundTaskQueue = backgroundTaskQueue;
     }
 
     [BindProperty, Required, EmailAddress]
@@ -322,12 +322,11 @@ public class SignupModel : LocalizedPageModel
         var capturedCompanyName = selectedCompany.LocalizedName;
         var capturedRequestId = joinRequest.Id;
         var capturedCompanyId = selectedCompany.Id;
-        _ = Task.Run(async () =>
+        _backgroundTaskQueue.Enqueue(async (sp, _) =>
         {
-            using var scope = _serviceScopeFactory.CreateScope();
             try
             {
-                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                var notificationService = sp.GetRequiredService<INotificationService>();
                 await notificationService.NotifyOwnersOfAccessRequestAsync(
                     capturedDisplayName,
                     capturedEmail,
@@ -337,7 +336,7 @@ public class SignupModel : LocalizedPageModel
             }
             catch (Exception ex)
             {
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<SignupModel>>();
+                var logger = sp.GetRequiredService<ILogger<SignupModel>>();
                 logger.LogError(ex, "Failed to notify owners about join request {RequestId}", capturedRequestId);
             }
         });

@@ -143,14 +143,14 @@ public class SignupFlowTests : IDisposable
 
     private SignupModel CreateSignupModel()
     {
-        var scopeFactory = new Mock<IServiceScopeFactory>();
+        var backgroundTaskQueue = new Mock<IBackgroundTaskQueue>();
         var model = new SignupModel(
             _db, _logger.Object, _localizer.Object,
             _featureFlags.Object, _validation.Object,
             _notifications.Object, _rateLimiting.Object,
             _auditLogService.Object,
             _companyCache.Object, _roleService.Object,
-            scopeFactory.Object);
+            backgroundTaskQueue.Object);
 
         // Setup HttpContext so rate limiting and ModelState work
         var httpContext = new DefaultHttpContext();

@@ -27,7 +27,7 @@ public class GriffinSignupModel : LocalizedPageModel
     private readonly IAuditLogService _auditLogService;
     private readonly ICompanyCacheService _companyCacheService;
     private readonly IRoleService _roleService;
-    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IBackgroundTaskQueue _backgroundTaskQueue;
 
     public GriffinSignupModel(
         AppDbContext db,
@@ -41,7 +41,7 @@ public class GriffinSignupModel : LocalizedPageModel
         IAuditLogService auditLogService,
         ICompanyCacheService companyCacheService,
         IRoleService roleService,
-        IServiceScopeFactory serviceScopeFactory)
+        IBackgroundTaskQueue backgroundTaskQueue)
         : base(localizer)
     {
         _db = db;
@@ -54,7 +54,7 @@ public class GriffinSignupModel : LocalizedPageModel
         _auditLogService = auditLogService;
         _companyCacheService = companyCacheService;
         _roleService = roleService;
-        _serviceScopeFactory = serviceScopeFactory;
+        _backgroundTaskQueue = backgroundTaskQueue;
     }
 
     // Griffin-provided fields (hidden fields for round-trip)
@@ -320,12 +320,11 @@ public class GriffinSignupModel : LocalizedPageModel
         var capturedCompanyName = selectedCompany.LocalizedName;
         var capturedRequestId = joinRequest.Id;
         var capturedCompanyId = selectedCompany.Id;
-        _ = Task.Run(async () =>
+        _backgroundTaskQueue.Enqueue(async (sp, _) =>
         {
-            using var scope = _serviceScopeFactory.CreateScope();
             try
             {
-                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                var notificationService = sp.GetRequiredService<INotificationService>();
                 await notificationService.NotifyOwnersOfAccessRequestAsync(
                     capturedDisplayName,
                     capturedEmail,
@@ -335,7 +334,7 @@ public class GriffinSignupModel : LocalizedPageModel
             }
             catch (Exception ex)
             {
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<GriffinSignupModel>>();
+                var logger = sp.GetRequiredService<ILogger<GriffinSignupModel>>();
                 logger.LogError(ex, "Failed to notify owners about Griffin join request {RequestId}", capturedRequestId);
             }
         });

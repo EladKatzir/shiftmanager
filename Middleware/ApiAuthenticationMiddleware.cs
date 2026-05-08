@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models.Api;
+using ShiftManager.Services;
 
 namespace ShiftManager.Middleware;
 
@@ -15,11 +16,16 @@ public class ApiAuthenticationMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ApiAuthenticationMiddleware> _logger;
+    private readonly IBackgroundTaskQueue _backgroundTaskQueue;
 
-    public ApiAuthenticationMiddleware(RequestDelegate next, ILogger<ApiAuthenticationMiddleware> logger)
+    public ApiAuthenticationMiddleware(
+        RequestDelegate next,
+        ILogger<ApiAuthenticationMiddleware> logger,
+        IBackgroundTaskQueue backgroundTaskQueue)
     {
         _next = next;
         _logger = logger;
+        _backgroundTaskQueue = backgroundTaskQueue;
     }
 
     public async Task InvokeAsync(HttpContext context, AppDbContext dbContext)
@@ -204,24 +210,24 @@ public class ApiAuthenticationMiddleware
                 _logger.LogDebug("Cleaned up {Count} stale entries from API key LastUsedAt cache", staleKeys.Count);
             }
 
-            _ = Task.Run(async () =>
+            var capturedApiKeyId = apiKey.Id;
+            _backgroundTaskQueue.Enqueue(async (sp, ct) =>
             {
                 try
                 {
-                    using var scope = context.RequestServices.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var db = sp.GetRequiredService<AppDbContext>();
                     var key = await db.ApiKeys
                         .IgnoreQueryFilters()  // SECURITY-AUDITED: Background update of authenticated key's last-used timestamp
-                        .FirstOrDefaultAsync(k => k.Id == apiKey.Id);
+                        .FirstOrDefaultAsync(k => k.Id == capturedApiKeyId, ct);
                     if (key != null)
                     {
                         key.LastUsedAt = DateTime.UtcNow;
-                        await db.SaveChangesAsync();
+                        await db.SaveChangesAsync(ct);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to update LastUsedAt for API key {KeyId}", apiKey.Id);
+                    _logger.LogError(ex, "Failed to update LastUsedAt for API key {KeyId}", capturedApiKeyId);
                 }
             });
         }

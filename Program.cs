@@ -332,6 +332,12 @@ builder.Services.AddScoped<IVacationApprovalService, VacationApprovalService>();
 builder.Services.AddSingleton<EmailBackgroundQueue>();
 builder.Services.AddHostedService<EmailBackgroundProcessor>();
 
+// Generic background task queue: replaces fire-and-forget Task.Run callsites with
+// observable, back-pressured execution. Hosted service drains the queue on a
+// single reader, creating a fresh DI scope per item. Closes F-A-003.
+builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+builder.Services.AddHostedService<BackgroundTaskHostedService>();
+
 // Phase 6: Daily Notification Background Service
 builder.Services.AddHostedService<DailyNotificationJob>();
 

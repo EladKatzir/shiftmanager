@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using ShiftManager.Data;
 using ShiftManager.Models.Api;
+using ShiftManager.Services;
 
 namespace ShiftManager.Middleware;
 
@@ -12,14 +13,19 @@ public class ApiRequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ApiRequestLoggingMiddleware> _logger;
+    private readonly IBackgroundTaskQueue _backgroundTaskQueue;
 
-    public ApiRequestLoggingMiddleware(RequestDelegate next, ILogger<ApiRequestLoggingMiddleware> logger)
+    public ApiRequestLoggingMiddleware(
+        RequestDelegate next,
+        ILogger<ApiRequestLoggingMiddleware> logger,
+        IBackgroundTaskQueue backgroundTaskQueue)
     {
         _next = next;
         _logger = logger;
+        _backgroundTaskQueue = backgroundTaskQueue;
     }
 
-    public async Task InvokeAsync(HttpContext context, IServiceScopeFactory scopeFactory)
+    public async Task InvokeAsync(HttpContext context)
     {
         // Only process API routes
         if (!context.Request.Path.StartsWithSegments("/api"))
@@ -78,13 +84,15 @@ public class ApiRequestLoggingMiddleware
             var ipAddress = GetClientIpAddress(context);
             var userAgent = context.Request.Headers["User-Agent"].FirstOrDefault() ?? "Unknown";
 
-            // Log request asynchronously (fire-and-forget)
-            _ = Task.Run(async () =>
+            // Log request asynchronously (fire-and-forget via the background task queue —
+            // the hosted service supplies the DI scope and surfaces unhandled exceptions).
+            var capturedElapsedMs = stopwatch.ElapsedMilliseconds;
+            _backgroundTaskQueue.Enqueue(async (sp, _) =>
             {
                 try
                 {
-                    await LogRequestAsync(scopeFactory, apiKey, method, path, queryString,
-                        statusCode, stopwatch.ElapsedMilliseconds, requestId, ipAddress,
+                    await LogRequestAsync(sp, apiKey, method, path, queryString,
+                        statusCode, capturedElapsedMs, requestId, ipAddress,
                         userAgent, caughtException);
                 }
                 catch (Exception ex)
@@ -96,7 +104,7 @@ public class ApiRequestLoggingMiddleware
     }
 
     private async Task LogRequestAsync(
-        IServiceScopeFactory scopeFactory,
+        IServiceProvider scopedProvider,
         ApiKey? apiKey,
         string method,
         string path,
@@ -108,8 +116,7 @@ public class ApiRequestLoggingMiddleware
         string userAgent,
         Exception? exception)
     {
-        using var scope = scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var dbContext = scopedProvider.GetRequiredService<AppDbContext>();
 
         var log = new ApiRequestLog
         {
