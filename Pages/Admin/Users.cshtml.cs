@@ -20,7 +20,7 @@ namespace ShiftManager.Pages.Admin;
 // Owner-only paths are gated by AdminAccess grant check; grant-scoped queries enforce per-company access;
 // hierarchy data (Molecules, JobTypes, Companies) is reference data for dropdowns, not sensitive
 [Authorize(Policy = "Grant:ManagerHomeAccess")]
-public class UsersModel : LocalizedPageModel
+public partial class UsersModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<UsersModel> _logger;
@@ -173,14 +173,14 @@ public class UsersModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdClaim(_logger);
             return;
         }
 
         var currentUser = await _db.Users.FindAsync(currentUserId);
         if (currentUser == null)
         {
-            _logger.LogError("User {UserId} not found in database", currentUserId);
+            LogUserNotFoundInDatabase(_logger, currentUserId);
             return;
         }
 
@@ -820,8 +820,7 @@ public class UsersModel : LocalizedPageModel
         var templateKey = roleTemplate?.Key ?? "Employee";
         var grantScope = await BuildGrantScopeForTemplateAsync(templateKey, targetCompanyId, NewJobTypeId);
         var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, templateKey, grantScope, currentUserIdForCompany);
-        _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to new user {UserId}",
-            grantsAssigned, templateKey, newUser.Id);
+        LogGrantsAssignedToNewUser(_logger, grantsAssigned, templateKey, newUser.Id);
 
         // ✅ P0-4/P0-5 FIX: If creating a Director/AreaAdmin, also create DirectorCompany mapping
         if (targetRole == UserRole.Director || targetRole == UserRole.AreaAdmin)
@@ -853,8 +852,7 @@ public class UsersModel : LocalizedPageModel
                 }
             }
 
-            _logger.LogInformation("Created DirectorCompany mapping for new Director {DirectorId} to Company {CompanyId}",
-                newUser.Id, targetCompanyId);
+            LogDirectorCompanyMappingForNewDirector(_logger, newUser.Id, targetCompanyId);
         }
 
         // Audit logging (RoleAssignmentAudit)
@@ -862,7 +860,7 @@ public class UsersModel : LocalizedPageModel
         var userIdClaimForAudit = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaimForAudit, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim during user creation audit");
+            LogInvalidNameIdClaimUserCreationAudit(_logger);
             currentUserId = 0; // Fallback for audit trail
         }
         _db.RoleAssignmentAudits.Add(new RoleAssignmentAudit
@@ -913,7 +911,7 @@ public class UsersModel : LocalizedPageModel
             var toggleUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(toggleUserIdClaim, out var toggleCurrentUserId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim");
+                LogInvalidNameIdClaim(_logger);
                 TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
                 return RedirectToPage();
             }
@@ -922,8 +920,7 @@ public class UsersModel : LocalizedPageModel
             var hasEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(toggleCurrentUserId, "EditCompanyUsers", u.CompanyId);
             if (!hasEditGrant)
             {
-                _logger.LogWarning("User {CurrentUserId} attempted to toggle user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
-                    toggleCurrentUserId, id, u.CompanyId);
+                LogUnauthorizedUserActionWithGrant(_logger, toggleCurrentUserId, "to toggle", id, u.CompanyId);
                 TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
                 return RedirectToPage();
             }
@@ -969,8 +966,7 @@ public class UsersModel : LocalizedPageModel
                 var grantCount = await _db.Grants.IgnoreQueryFilters().Where(g => g.UserId == u.Id).CountAsync();
                 if (grantCount == 0)
                 {
-                    _logger.LogInformation("Reactivated user {UserId} has 0 grants but RoleTemplateId={TemplateId} — re-provisioning",
-                        u.Id, u.RoleTemplateId.Value);
+                    LogReactivatedUserHasNoGrants(_logger, u.Id, u.RoleTemplateId.Value);
                     try
                     {
                         var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(u.Id);
@@ -983,11 +979,11 @@ public class UsersModel : LocalizedPageModel
                             JobTypeId: hierarchyContext?.JobType?.Id
                         );
                         await _grantService.ApplyAutoGrantsAsync(u.Id, u.RoleTemplateId.Value, roleScope);
-                        _logger.LogInformation("Grants restored for reactivated user {UserId}", u.Id);
+                        LogGrantsRestoredForReactivatedUser(_logger, u.Id);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Failed to restore grants for reactivated user {UserId}", u.Id);
+                        LogFailedToRestoreGrants(_logger, ex, u.Id);
                         // Non-fatal: user is still reactivated, grants can be manually assigned
                     }
                 }
@@ -1025,7 +1021,7 @@ public class UsersModel : LocalizedPageModel
                 return RedirectToPage();
             }
             if (!selectedTemplate.DerivedUserRole.HasValue)
-                _logger.LogWarning("RoleTemplate {Key} (Id={Id}) missing DerivedUserRole — defaulting to Employee", selectedTemplate.Key, selectedTemplate.Id);
+                LogRoleTemplateMissingDerivedRole(_logger, selectedTemplate.Key, selectedTemplate.Id);
             targetRole = selectedTemplate.DerivedUserRole ?? UserRole.Employee;
         }
         else if (!string.IsNullOrWhiteSpace(role) && Enum.TryParse<UserRole>(role, ignoreCase: true, out var parsedRole))
@@ -1054,7 +1050,7 @@ public class UsersModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim");
+                LogInvalidNameIdClaim(_logger);
                 TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
                 return RedirectToPage();
             }
@@ -1064,8 +1060,7 @@ public class UsersModel : LocalizedPageModel
             var hasRoleEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", u.CompanyId);
             if (!hasRoleEditGrant)
             {
-                _logger.LogWarning("User {CurrentUserId} attempted role change on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
-                    currentUserId, id, u.CompanyId);
+                LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "role change on", id, u.CompanyId);
                 TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
                 return RedirectToPage();
             }
@@ -1085,8 +1080,7 @@ public class UsersModel : LocalizedPageModel
                     // Cancel all shadowing assignments
                     var canceledCount = await _traineeService.CancelAllShadowingAssignmentsAsync(id, "RoleChanged", currentUserId);
 
-                    _logger.LogInformation("Canceled {Count} shadowing assignments for user {UserId} due to role change from {OldRole} to {NewRole}",
-                        canceledCount, id, oldRole, targetRole);
+                    LogShadowingAssignmentsCanceled(_logger, canceledCount, id, oldRole, targetRole);
                 }
             }
 
@@ -1161,16 +1155,14 @@ public class UsersModel : LocalizedPageModel
             if (oldTemplateIdForGrants.HasValue)
             {
                 await _grantService.RemoveAutoGrantsAsync(u.Id, oldTemplateIdForGrants.Value);
-                _logger.LogInformation("Removed auto-grants from old role template {OldTemplateId} for user {UserId} during role change",
-                    oldTemplateIdForGrants.Value, u.Id);
+                LogAutoGrantsRemovedDuringRoleChange(_logger, oldTemplateIdForGrants.Value, u.Id);
             }
 
             // Assign new role's auto-grants
             var newGrantTemplateKey = selectedTemplate?.Key ?? MapUserRoleToRoleTemplateKey(targetRole, u.JobType?.Name);
             var newGrantScope = await BuildGrantScopeForTemplateAsync(newGrantTemplateKey, u.CompanyId, u.JobTypeId);
             var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(u.Id, newGrantTemplateKey, newGrantScope, currentUserId);
-            _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to user {UserId} during role change",
-                grantsAssigned, newGrantTemplateKey, u.Id);
+            LogGrantsAssignedDuringRoleChange(_logger, grantsAssigned, newGrantTemplateKey, u.Id);
 
             // ✅ P0-4/P0-5 FIX: If changing TO Director/AreaAdmin, create DirectorCompany mapping
             if (oldRole != UserRole.Director && oldRole != UserRole.AreaAdmin &&
@@ -1202,8 +1194,7 @@ public class UsersModel : LocalizedPageModel
                         }
                     }
 
-                    _logger.LogInformation("Created DirectorCompany mapping for user {UserId} promoted to Director for Company {CompanyId}",
-                        u.Id, u.CompanyId);
+                    LogDirectorCompanyMappingPromoted(_logger, u.Id, u.CompanyId);
                 }
             }
 
@@ -1254,7 +1245,7 @@ public class UsersModel : LocalizedPageModel
         var jobTypeUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(jobTypeUserIdClaim, out var jobTypeCurrentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdClaim(_logger);
             TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
@@ -1263,8 +1254,7 @@ public class UsersModel : LocalizedPageModel
         var hasJobTypeGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(jobTypeCurrentUserId, "EditCompanyUsers", u.CompanyId);
         if (!hasJobTypeGrant)
         {
-            _logger.LogWarning("User {CurrentUserId} attempted job type change on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
-                jobTypeCurrentUserId, id, u.CompanyId);
+            LogUnauthorizedUserActionWithGrant(_logger, jobTypeCurrentUserId, "job type change on", id, u.CompanyId);
             TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
             return RedirectToPage();
         }
@@ -1353,8 +1343,7 @@ public class UsersModel : LocalizedPageModel
             currentUserId, "EditCompanyUsers", u.CompanyId);
         if (!hasEditGrant)
         {
-            _logger.LogWarning("User {CurrentUserId} attempted PrimaryShiftType change on user {TargetUserId} without grant",
-                currentUserId, id);
+            LogPrimaryShiftTypeAttemptedWithoutGrant(_logger, currentUserId, id);
             TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
             return RedirectToPage();
         }
@@ -1379,8 +1368,7 @@ public class UsersModel : LocalizedPageModel
                     .FirstOrDefaultAsync(c => c.Id == u.CompanyId);
                 if (userCompany?.MoleculeId != st.MoleculeId)
                 {
-                    _logger.LogWarning("Rejected cross-molecule PrimaryShiftType assignment: User {UserId} (Molecule {UserMolecule}) → ShiftType {StId} (Molecule {StMolecule})",
-                        id, userCompany?.MoleculeId, st.Id, st.MoleculeId);
+                    LogRejectedCrossMoleculePrimaryShiftType(_logger, id, userCompany?.MoleculeId, st.Id, st.MoleculeId);
                     TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
                     return RedirectToPage();
                 }
@@ -1390,8 +1378,7 @@ public class UsersModel : LocalizedPageModel
                 var eligibleIds = st.GetEligibleCompanyIdList();
                 if (eligibleIds != null && !eligibleIds.Contains(u.CompanyId))
                 {
-                    _logger.LogWarning("Rejected PrimaryShiftType assignment: User {UserId} (Company {CompanyId}) not in EligibleCompanyIds for ShiftType {StId}",
-                        id, u.CompanyId, st.Id);
+                    LogRejectedPrimaryShiftTypeNotInEligibleCompanies(_logger, id, u.CompanyId, st.Id);
                     TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
                     return RedirectToPage();
                 }
@@ -1457,7 +1444,7 @@ public class UsersModel : LocalizedPageModel
             var resetUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(resetUserIdClaim, out var resetCurrentUserId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim during password reset authorization");
+                LogInvalidNameIdClaimPasswordResetAuth(_logger);
                 return RedirectToPage();
             }
 
@@ -1465,8 +1452,7 @@ public class UsersModel : LocalizedPageModel
             var hasResetGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(resetCurrentUserId, "EditCompanyUsers", u.CompanyId);
             if (!hasResetGrant)
             {
-                _logger.LogWarning("User {CurrentUserId} attempted password reset on user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
-                    resetCurrentUserId, id, u.CompanyId);
+                LogUnauthorizedUserActionWithGrant(_logger, resetCurrentUserId, "password reset on", id, u.CompanyId);
                 TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
                 return RedirectToPage();
             }
@@ -1488,7 +1474,7 @@ public class UsersModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim during password reset audit");
+                LogInvalidNameIdClaimPasswordResetAudit(_logger);
                 currentUserId = 0; // Fallback for audit trail
             }
             await _auditLogService.LogUserActionAsync(
@@ -1517,7 +1503,7 @@ public class UsersModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdClaim(_logger);
             TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
@@ -1534,8 +1520,7 @@ public class UsersModel : LocalizedPageModel
         var hasUnlockGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", targetUser.CompanyId);
         if (!hasUnlockGrant)
         {
-            _logger.LogWarning("User {CurrentUserId} attempted to unlock user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
-                currentUserId, id, targetUser.CompanyId);
+            LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "to unlock", id, targetUser.CompanyId);
             TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
             return RedirectToPage();
         }
@@ -1562,8 +1547,7 @@ public class UsersModel : LocalizedPageModel
             description: $"Account unlocked for user {targetUser.DisplayName} ({targetUser.Email})"
         );
 
-        _logger.LogInformation("User {CurrentUserId} unlocked account for user {TargetUserId} ({Email})",
-            currentUserId, targetUser.Id, targetUser.Email);
+        LogAccountUnlocked(_logger, currentUserId, targetUser.Id, targetUser.Email);
 
         TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_AccountUnlocked"], targetUser.DisplayName);
         return RedirectToPage();
@@ -1579,7 +1563,7 @@ public class UsersModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim");
+                LogInvalidNameIdClaim(_logger);
                 TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
                 return RedirectToPage();
             }
@@ -1587,7 +1571,7 @@ public class UsersModel : LocalizedPageModel
             // Prevent self-deletion
             if (id == currentUserId)
             {
-                _logger.LogWarning("User {CurrentUserId} attempted to delete themselves", currentUserId);
+                LogUserAttemptedSelfDelete(_logger, currentUserId);
                 Error = _localizer["Error_CannotDeleteOwnAccount"];
                 await OnGetAsync();
                 return Page();
@@ -1596,7 +1580,7 @@ public class UsersModel : LocalizedPageModel
             var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
             if (user == null)
             {
-                _logger.LogWarning("User {UserId} not found for deletion", id);
+                LogUserNotFoundForDeletion(_logger, id);
                 Error = _localizer["Error_UserNotFound"];
                 await OnGetAsync();
                 return Page();
@@ -1608,14 +1592,13 @@ public class UsersModel : LocalizedPageModel
             var hasEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", user.CompanyId);
             if (!hasEditGrant)
             {
-                _logger.LogWarning("User {CurrentUserId} attempted to delete user {TargetUserId} without EditCompanyUsers grant for company {CompanyId}",
-                    currentUserId, id, user.CompanyId);
+                LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "to delete", id, user.CompanyId);
                 Error = _localizer["Error_CanOnlyDeleteOwnCompanyUsers"];
                 await OnGetAsync();
                 return Page();
             }
 
-            _logger.LogInformation("Starting deletion of user {UserId} ({UserName}) by admin {CurrentUserId}", id, user.DisplayName, currentUserId);
+            LogStartingUserDeletion(_logger, id, user.DisplayName, currentUserId);
 
             // Audit log BEFORE deletion so we have a record even if the delete fails
             await _auditLogService.LogUserActionAsync(
@@ -1646,7 +1629,7 @@ public class UsersModel : LocalizedPageModel
 
             if (swapRequestsCount > 0)
             {
-                _logger.LogInformation("Deleting {Count} swap requests related to user {UserId}", swapRequestsCount, id);
+                LogDeletingSwapRequests(_logger, swapRequestsCount, id);
                 await _db.SwapRequests
                     .IgnoreQueryFilters()
                     .Where(sr => userAssignmentIds.Contains(sr.FromAssignmentId) || sr.ToUserId == id)
@@ -1656,7 +1639,7 @@ public class UsersModel : LocalizedPageModel
             // 2. Remove all shift assignments using ExecuteDeleteAsync for better performance
             if (shiftAssignmentCount > 0)
             {
-                _logger.LogInformation("Removing {Count} shift assignments for user {UserId}", shiftAssignmentCount, id);
+                LogRemovingShiftAssignments(_logger, shiftAssignmentCount, id);
                 await _db.ShiftAssignments.IgnoreQueryFilters().Where(sa => sa.UserId == id).ExecuteDeleteAsync();
             }
 
@@ -1664,7 +1647,7 @@ public class UsersModel : LocalizedPageModel
             var timeOffRequestCount = await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.UserId == id).CountAsync();
             if (timeOffRequestCount > 0)
             {
-                _logger.LogInformation("Deleting {Count} time-off requests for user {UserId}", timeOffRequestCount, id);
+                LogDeletingTimeOffRequests(_logger, timeOffRequestCount, id);
                 await _db.TimeOffRequests.IgnoreQueryFilters().Where(tor => tor.UserId == id).ExecuteDeleteAsync();
             }
 
@@ -1673,7 +1656,7 @@ public class UsersModel : LocalizedPageModel
             var grantCount = await _db.Grants.IgnoreQueryFilters().Where(g => g.UserId == id).CountAsync();
             if (grantCount > 0)
             {
-                _logger.LogInformation("Removing {Count} grants for deactivated user {UserId}", grantCount, id);
+                LogRemovingGrants(_logger, grantCount, id);
                 await _db.Grants.IgnoreQueryFilters().Where(g => g.UserId == id).ExecuteDeleteAsync();
             }
 
@@ -1751,16 +1734,16 @@ public class UsersModel : LocalizedPageModel
             await _db.RoleAssignmentAudits.IgnoreQueryFilters()
                 .Where(r => r.TargetUserId == id || r.ChangedBy == id).ExecuteDeleteAsync();
 
-            _logger.LogInformation("Completed cleanup of all related records for user {UserId}", id);
+            LogCompletedRelatedRecordsCleanup(_logger, id);
 
             // 4. Hard-delete the user from the database
-            _logger.LogInformation("Permanently deleting user {UserId} ({UserName})", id, user.DisplayName);
+            LogPermanentlyDeletingUser(_logger, id, user.DisplayName);
             _db.Users.Remove(user);
             await _db.SaveChangesAsync();
 
             await transaction.CommitAsync();
 
-            _logger.LogInformation("Successfully deleted user {UserId} ({UserName}) and all related data", id, user.DisplayName);
+            LogSuccessfullyDeletedUser(_logger, id, user.DisplayName);
 
             // Use TempData to show success message after redirect
             TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_UserDeleted"], user.DisplayName);
@@ -1771,7 +1754,7 @@ public class UsersModel : LocalizedPageModel
             && sqliteEx.SqliteErrorCode == 19)
         {
             await transaction.RollbackAsync();
-            _logger.LogError(dbEx, "FK constraint prevented deleting user {UserId}", id);
+            LogFkConstraintPreventedDeletion(_logger, dbEx, id);
             Error = _localizer["Admin_UserDeleteBlockedByDependencies"];
             await OnGetAsync();
             return Page();
@@ -1779,7 +1762,7 @@ public class UsersModel : LocalizedPageModel
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogError(ex, "Error deleting user {UserId}", id);
+            LogErrorDeletingUser(_logger, ex, id);
             Error = _localizer["Error_DeletingUser"];
             await OnGetAsync();
             return Page();
@@ -1799,7 +1782,7 @@ public class UsersModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdClaim(_logger);
             TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
@@ -1916,8 +1899,7 @@ public class UsersModel : LocalizedPageModel
             var roleTemplateKey = approveTemplate?.Key ?? MapUserRoleToRoleTemplateKey(joinRequest.RequestedRole, joinRequest.JobType?.Name);
             var grantScope = await BuildGrantScopeForTemplateAsync(roleTemplateKey, joinRequest.CompanyId, joinRequest.JobTypeId);
             var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
-            _logger.LogInformation("Assigned {GrantsCount} grants from role template {RoleTemplate} to user {UserId} via join request approval",
-                grantsAssigned, roleTemplateKey, newUser.Id);
+            LogGrantsAssignedViaJoinRequestApproval(_logger, grantsAssigned, roleTemplateKey, newUser.Id);
 
             // FINDING-010 FIX: Record initial role assignment in audit trail
             _db.RoleAssignmentAudits.Add(new RoleAssignmentAudit
@@ -1947,15 +1929,14 @@ public class UsersModel : LocalizedPageModel
                 newUser.Role.ToString()
             );
 
-            _logger.LogInformation("Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) for company {CompanyId}",
-                id, currentUserId, newUser.Id, newUser.Email, joinRequest.CompanyId);
+            LogJoinRequestApproved(_logger, id, currentUserId, newUser.Id, newUser.Email, joinRequest.CompanyId);
 
             TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JoinRequestApproved"], joinRequest.DisplayName, joinRequest.Email, joinRequest.RequestedRole, joinRequest.Company?.Name);
             return RedirectToPage();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error approving join request {RequestId}", id);
+            LogErrorApprovingJoinRequest(_logger, ex, id);
             TempData["ErrorMessage"] = _localizer["Error_ApprovingJoinRequest"].Value;
             return RedirectToPage();
         }
@@ -1980,7 +1961,7 @@ public class UsersModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdClaim(_logger);
             TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
@@ -2034,15 +2015,14 @@ public class UsersModel : LocalizedPageModel
                 }
             }
 
-            _logger.LogInformation("Join request {RequestId} rejected by {ReviewerId}. Email: {Email}, Company: {CompanyId}",
-                id, currentUserId, joinRequest.Email, joinRequest.CompanyId);
+            LogJoinRequestRejected(_logger, id, currentUserId, joinRequest.Email, joinRequest.CompanyId);
 
             TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JoinRequestRejected"], joinRequest.DisplayName, joinRequest.Email);
             return RedirectToPage();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error rejecting join request {RequestId}", id);
+            LogErrorRejectingJoinRequest(_logger, ex, id);
             TempData["ErrorMessage"] = _localizer["Error_RejectingJoinRequest"].Value;
             return RedirectToPage();
         }
@@ -2054,7 +2034,7 @@ public class UsersModel : LocalizedPageModel
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!int.TryParse(userIdClaim, out var currentUserId))
         {
-            _logger.LogError("Invalid or missing NameIdentifier claim");
+            LogInvalidNameIdClaim(_logger);
             TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
             return RedirectToPage();
         }
@@ -2117,8 +2097,7 @@ public class UsersModel : LocalizedPageModel
             var invalidIds = SelectedRequests.Where(id => !foundIds.Contains(id)).ToList();
             if (invalidIds.Any())
             {
-                _logger.LogWarning("SECURITY: User {UserId} submitted invalid join request IDs: {InvalidIds}",
-                    currentUserId, string.Join(", ", invalidIds));
+                LogSecurityInvalidJoinRequestIds(_logger, currentUserId, string.Join(", ", invalidIds));
             }
 
             // Grant-based: AdminAccess bypasses company-scoped grant check
@@ -2150,8 +2129,7 @@ public class UsersModel : LocalizedPageModel
                     currentUserId, "ManageJoinRequests", companyId: joinRequest.CompanyId, jobTypeId: joinRequest.JobTypeId);
                 if (!canManage)
                 {
-                    _logger.LogWarning("SECURITY: User {UserId} ({Role}) attempted to approve join request {RequestId} for unauthorized company/jobtype {CompanyId}/{JobTypeId}",
-                        currentUserId, currentUser!.Role, joinRequest.Id, joinRequest.CompanyId, joinRequest.JobTypeId);
+                    LogSecurityUnauthorizedJoinRequestApproval(_logger, currentUserId, currentUser!.Role, joinRequest.Id, joinRequest.CompanyId, joinRequest.JobTypeId);
                     errors.Add(string.Format(CultureInfo.CurrentCulture, _localizer["Error_NoPermissionDifferentCompany"], joinRequest.DisplayName));
                     skippedCount++;
                     continue;
@@ -2187,7 +2165,7 @@ public class UsersModel : LocalizedPageModel
                         continue;
                     }
                     if (!batchTemplate.DerivedUserRole.HasValue)
-                        _logger.LogWarning("RoleTemplate {Key} (Id={Id}) missing DerivedUserRole — defaulting to Employee", batchTemplate.Key, batchTemplate.Id);
+                        LogRoleTemplateMissingDerivedRole(_logger, batchTemplate.Key, batchTemplate.Id);
                     assignedRole = batchTemplate.DerivedUserRole ?? UserRole.Employee;
                 }
                 else if (RequestRoles.TryGetValue(joinRequest.Id, out var legacyRole))
@@ -2253,9 +2231,7 @@ public class UsersModel : LocalizedPageModel
                 var grantScope = await BuildGrantScopeForTemplateAsync(roleTemplateKey, joinRequest.CompanyId, joinRequest.JobTypeId);
                 var grantsAssigned = await _grantService.AssignRoleTemplateGrantsAsync(newUser.Id, roleTemplateKey, grantScope, currentUserId);
 
-                _logger.LogInformation(
-                    "Batch approval: Join request {RequestId} approved by {ApproverId}. Created user {UserId} ({Email}) with role {Role} template {TemplateKey} for company {CompanyId}. Assigned {GrantsCount} grants.",
-                    joinRequest.Id, currentUserId, newUser.Id, newUser.Email, assignedRole, roleTemplateKey, joinRequest.CompanyId, grantsAssigned);
+                LogBatchApprovalSuccess(_logger, joinRequest.Id, currentUserId, newUser.Id, newUser.Email, assignedRole, roleTemplateKey, joinRequest.CompanyId, grantsAssigned);
 
                 // FINDING-010 FIX: Record initial role assignment in audit trail
                 _db.RoleAssignmentAudits.Add(new RoleAssignmentAudit
@@ -2312,7 +2288,7 @@ public class UsersModel : LocalizedPageModel
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogError(ex, "Error during batch approval of join requests");
+            LogErrorBatchApproval(_logger, ex);
             TempData["ErrorMessage"] = _localizer["Error_BatchApprovalFailed"].Value;
             return RedirectToPage();
         }
@@ -2326,7 +2302,7 @@ public class UsersModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var currentUserId))
             {
-                _logger.LogError("Invalid or missing NameIdentifier claim");
+                LogInvalidNameIdClaim(_logger);
                 TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
                 return RedirectToPage();
             }
@@ -2334,7 +2310,7 @@ public class UsersModel : LocalizedPageModel
             var currentUser = await _db.Users.FindAsync(currentUserId);
             if (currentUser == null)
             {
-                _logger.LogError("User {UserId} not found in database", currentUserId);
+                LogUserNotFoundInDatabase(_logger, currentUserId);
                 return RedirectToPage();
             }
 
@@ -2438,7 +2414,7 @@ public class UsersModel : LocalizedPageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error exporting users to CSV");
+            LogErrorExportingUsersToCsv(_logger, ex);
             TempData["ErrorMessage"] = _localizer["Error_ExportingUsers"].Value;
             return RedirectToPage();
         }
@@ -2623,7 +2599,7 @@ public class UsersModel : LocalizedPageModel
             if (importTemplate != null)
             {
                 if (!importTemplate.DerivedUserRole.HasValue)
-                    _logger.LogWarning("RoleTemplate {Key} (Id={Id}) missing DerivedUserRole — defaulting to Employee", importTemplate.Key, importTemplate.Id);
+                    LogRoleTemplateMissingDerivedRole(_logger, importTemplate.Key, importTemplate.Id);
                 role = importTemplate.DerivedUserRole ?? UserRole.Employee;
             }
             else if (Enum.TryParse<UserRole>(roleStr, ignoreCase: true, out var parsedRole))
@@ -2684,8 +2660,7 @@ public class UsersModel : LocalizedPageModel
         if (errors.Count > 0)
             BulkImportResult += "\n" + string.Join("\n", errors.Take(10));
 
-        _logger.LogInformation("Bulk import completed: {Created} created, {Skipped} skipped, {Errors} errors for company {CompanyId}",
-            created, skipped, errors.Count, companyId);
+        LogBulkImportCompleted(_logger, created, skipped, errors.Count, companyId);
 
         return Page();
     }

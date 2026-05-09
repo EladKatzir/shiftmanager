@@ -31,7 +31,7 @@ in the same file don't collide with sibling files.
 | 5000–5099      | `Pages/Requests/Index.cshtml.cs`         | ✅ In use (28 methods cover 42 call sites) |
 | 5500–5599      | `Services/MailService.cs`                | Pending (Batch O scope — defer until god-class decomp begins) |
 | 6000–6099      | `Controllers/Api/V1/TimeOffController.cs`| ✅ In use (25 methods cover 37 call sites) |
-| 12000–12099    | `Pages/Admin/Users.cshtml.cs`            | Pending (reallocated from 6000) |
+| 12000–12099    | `Pages/Admin/Users.cshtml.cs`            | ✅ In use (43 methods cover 60 call sites) |
 | 7000–7099      | `Services/GriffinService.cs` + `GriffinConfigService.cs` | Pending |
 | 8000–8099      | `Pages/My/Requests.cshtml.cs`            | ✅ In use (35 methods cover 38 call sites) |
 | 9000–9099      | Middleware (`ApiAuthenticationMiddleware`, `ApiRequestLoggingMiddleware`, `RateLimitingMiddleware`) | Pending |
@@ -138,6 +138,41 @@ collapse to 28 methods.
 | 5040–5049 | Delete approved time-off flow        | 8       | 8     | Each unique (Admin attempt, not-found, security, non-approved, started, deleting, success, error) |
 
 The full method-by-method mapping lives in `Pages/Requests/Index.cshtml.Logging.cs`.
+
+### `Pages/Admin/Users.cshtml.cs` — 12000–12099
+
+Largest single-file PR in Batch K. 60 call sites collapse to 43 partial methods (~17
+sites of reuse savings) using a mix of Pattern A (one-method-per-site) for distinct
+events and Pattern C (template parameterization) for repeated boilerplate:
+
+- **Pattern C — bare-vs-suffixed claim error**: 10 sites of `"Invalid or missing
+  NameIdentifier claim"` collapse to 1 method; 3 suffixed variants
+  (user-creation audit, password-reset auth, password-reset audit) stay distinct.
+- **Pattern C — `{Action}` parameterization**: 6 unauthorized-action warnings
+  across handlers (toggle, role change, job-type change, password reset, unlock,
+  delete) collapse to 1 method; the verb is a structured-log property.
+- **Pattern A — identical literal, different vars**: 3 `RoleTemplate ... missing
+  DerivedUserRole` sites all share one method despite differing argument names
+  (`selectedTemplate`, `batchTemplate`, `importTemplate`).
+
+| Sub-range   | Section                                       | Methods | Sites | Description |
+|-------------|-----------------------------------------------|---------|-------|-------------|
+| 12000–12009 | Cross-cutting / common errors                 | 7       | 24    | Claim/User-not-found/Role-template-missing/Unauthorized-action |
+| 12010–12019 | Create flow (`OnPostCreateAsync`)             | 2       | 2     | Grants assigned, DirectorCompany mapping |
+| 12020–12029 | Toggle (`OnPostToggleAsync`)                  | 3       | 3     | Reactivation re-provisioning lifecycle |
+| 12030–12039 | Role change (`OnPostRoleAsync`)               | 4       | 4     | Shadowing cancel, grants swap, promote-to-Director |
+| 12040–12049 | PrimaryShiftType (`OnPostPrimaryShiftTypeAsync`) | 3    | 3     | Grant check, cross-molecule, eligible-companies |
+| 12050–12059 | Unlock account (`OnPostUnlockAccountAsync`)   | 1       | 1     | Successful unlock |
+| 12060–12079 | Delete user (`OnPostDeleteUserAsync`)         | 12      | 12    | Self-delete attempt, not-found, lifecycle, FK constraint, errors |
+| 12080–12089 | Join request approve / reject (single+batch)  | 9       | 9     | Per-request + security audits + batch summary |
+| 12090–12099 | CSV export + bulk import                      | 2       | 2     | Export error, bulk-import summary |
+
+**Behavioral note on Pattern C**: parameterizing `{Action}` produces a structured-log
+property `Action` instead of embedding the verb in the literal template. Console
+output is identical; consumers (if/when added) gain a filterable property without
+breaking existing queries.
+
+The full method-by-method mapping lives in `Pages/Admin/Users.cshtml.Logging.cs`.
 
 ## Pattern — adding a new partial method
 
