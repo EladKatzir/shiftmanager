@@ -31,11 +31,17 @@ in the same file don't collide with sibling files.
 | 5000–5099      | `Pages/Requests/Index.cshtml.cs`         | ✅ In use (28 methods cover 42 call sites) |
 | 5500–5599      | `Services/MailService.cs`                | Pending (Batch O scope — defer until god-class decomp begins) |
 | 6000–6099      | `Controllers/Api/V1/TimeOffController.cs`| ✅ In use (25 methods cover 37 call sites) |
-| 12000–12099    | `Pages/Admin/Users.cshtml.cs`            | ✅ In use (43 methods cover 60 call sites) |
-| 7000–7099      | `Services/GriffinService.cs` + `GriffinConfigService.cs` | Pending |
+| 7000–7099      | `Services/GriffinConfigService.cs`       | ✅ In use (24 methods cover 38 call sites) |
 | 8000–8099      | `Pages/My/Requests.cshtml.cs`            | ✅ In use (35 methods cover 38 call sites) |
 | 9000–9099      | Middleware (`ApiAuthenticationMiddleware`, `ApiRequestLoggingMiddleware`, `RateLimitingMiddleware`) | Pending |
-| 90000–99999    | `Program.cs` startup banners             | Pending (last — startup-only events, low value) |
+| 12000–12099    | `Pages/Admin/Users.cshtml.cs`            | ✅ In use (43 methods cover 60 call sites) |
+| 13000–13099    | `Controllers/Api/V1/ChoresController.cs` | ✅ In use (19 methods cover 35 call sites) |
+| 14000–14099    | `Controllers/Api/V1/OnDutyController.cs` | ✅ In use (20 methods cover 35 call sites) |
+| 15000–15099    | `Controllers/Api/V1/UsersController.cs`  | ✅ In use (16 methods cover 26 call sites) |
+| 16000–16099    | `Controllers/Api/V1/FeedbackController.cs` | ✅ In use (17 methods cover 32 call sites) |
+| 17000–17099    | `Services/GriffinService.cs`             | ✅ In use (18 methods cover 26 call sites) |
+| 18000–18099    | `Services/DatabaseBackupService.cs`      | ✅ In use (26 methods cover 26 call sites) |
+| 90000–99999    | `Program.cs` startup banners             | ✅ In use (75 methods cover 80 call sites — 90000-91210 used, 88% headroom remaining) |
 
 When adding a new file to the migration: pick the next free 100-ID block,
 update this table in the same PR, and use IDs from that block exclusively.
@@ -173,6 +179,173 @@ output is identical; consumers (if/when added) gain a filterable property withou
 breaking existing queries.
 
 The full method-by-method mapping lives in `Pages/Admin/Users.cshtml.Logging.cs`.
+
+### `Services/GriffinConfigService.cs` — 7000–7099
+
+Service-class migration (Pattern A primary, with one Pattern C reuse for save header).
+24 methods cover 38 call sites; the Created/Updated branch of `SaveGriffinConfigAsync`
+shares 6 per-field `[LoggerMessage]` declarations across both branches.
+
+| Sub-range | Section                                  | Methods | Sites | Description |
+|-----------|------------------------------------------|---------|-------|-------------|
+| 7000–7004 | `Get*GriffinConfigAsync`                 | 5       | 5     | Lookup hit/miss + fallback |
+| 7010–7016 | DB-config dump (Debug)                   | 7       | 7     | One method per field, debug-level |
+| 7020–7025 | Appsettings fallback dump (Debug)        | 6       | 6     | One method per field, debug-level |
+| 7030–7037 | `SaveGriffinConfigAsync` (Information)   | 8       | 15    | Header `{Action}` reuse (Created/Updated × 6 fields), success info |
+| 7040–7044 | `TestConnectionAsync`                    | 5       | 5     | Probe lifecycle: started, response, success, failure shapes |
+
+**Note**: Debug-level db-config dump (7011–7016) and Information-level SaveAsync
+dump (7031–7036) share *identical message templates* but differing log levels —
+source-gen requires separate `[LoggerMessage]` declarations per level.
+
+The full method-by-method mapping lives in `Services/GriffinConfigService.Logging.cs`.
+
+### `Controllers/Api/V1/ChoresController.cs` — 13000–13099
+
+V1 controller — Pattern B reuse via `Endpoint` parameter. 19 methods cover 35 call sites.
+
+| Sub-range   | Section                              | Methods | Sites | Description |
+|-------------|--------------------------------------|---------|-------|-------------|
+| 13000–13002 | Common API auth/access boilerplate   | 3       | 12    | Endpoint disabled / unauthorized / claim missing |
+| 13005–13008 | Catch-block diagnostics              | 4       | 10    | DB+unexpected, with/without ChoreId — `string? CompanyId` from claim |
+| 13010–13011 | List endpoint                        | 2       | 2     | Date validation |
+| 13012       | Get endpoint                         | 1       | 1     | Not-found warning |
+| 13013–13017 | Create endpoint                      | 5       | 5     | Validation, success |
+| 13018–13020 | Update endpoint                      | 3       | 3     | Validation, success |
+| 13021–13022 | Delete endpoint                      | 2       | 2     | Failed, success |
+
+The full method-by-method mapping lives in `Controllers/Api/V1/ChoresController.Logging.cs`.
+
+### `Controllers/Api/V1/OnDutyController.cs` — 14000–14099
+
+V1 controller — Pattern B reuse. 20 methods cover 35 call sites. Unlike TimeOff/Chores,
+on-duty is global (no `CompanyId` logged), so signatures are simpler.
+
+| Sub-range   | Section                              | Methods | Sites | Description |
+|-------------|--------------------------------------|---------|-------|-------------|
+| 14000–14002 | Common API auth/access boilerplate   | 3       | 12    | Endpoint disabled / unauthorized / claim missing |
+| 14005–14008 | Catch-block diagnostics              | 4       | 10    | Path-only (List/Create) + with-OnDutyId (Get/Update/Delete) |
+| 14010–14019 | Endpoint-specific events             | 13      | 13    | Validations, not-found per endpoint, success info, list date warnings |
+
+The full method-by-method mapping lives in `Controllers/Api/V1/OnDutyController.Logging.cs`.
+
+### `Controllers/Api/V1/UsersController.cs` — 15000–15099
+
+V1 controller — Pattern B reuse. 16 methods cover 26 call sites.
+
+| Sub-range   | Section                              | Methods | Sites | Description |
+|-------------|--------------------------------------|---------|-------|-------------|
+| 15000–15002 | Common API auth/access boilerplate   | 3       | 8     | Endpoint disabled / unauthorized / unauthorized-with-userid |
+| 15005–15008 | Catch-block diagnostics              | 4       | 8     | DB+unexpected, with/without UserId |
+| 15010–15012 | Validation errors                    | 3       | 3     | Email/DisplayName/Role required (one method, 3 sites) — actually a single `LogValidationError` method covering 3 distinct call sites |
+| 15015–15017 | Endpoint-specific not-found / success | 6      | 7     | UserNotFound (Get) + UserNotFoundForUpdate + success |
+
+**Note**: 15003 and 15013–15014 left intentionally unused as gaps between sub-range
+boundaries; sequential method declaration was prioritized over filling every slot.
+
+The full method-by-method mapping lives in `Controllers/Api/V1/UsersController.Logging.cs`.
+
+### `Controllers/Api/V1/FeedbackController.cs` — 16000–16099
+
+V1 controller — Pattern B reuse. 17 methods cover 32 call sites (47% reuse).
+
+| Sub-range   | Section                              | Methods | Sites | Description |
+|-------------|--------------------------------------|---------|-------|-------------|
+| 16000–16002 | Common API auth/access               | 3       | 12    | Endpoint disabled (×5) / unauthorized (×5) / claim missing (×2) |
+| 16005–16008 | Catch-block diagnostics              | 4       | 10    | DB+unexpected, with/without FeedbackId |
+| 16010–16012 | Get + Delete distinct sites          | 3       | 3     | Not-found, ownership warnings |
+| 16015–16018 | Create distinct sites                | 4       | 4     | Validations, success |
+| 16020–16022 | UpdateStatus distinct sites          | 3       | 3     | Validation, success, status-change |
+
+The full method-by-method mapping lives in `Controllers/Api/V1/FeedbackController.Logging.cs`.
+
+### `Services/GriffinService.cs` — 17000–17099
+
+Service class — Pattern A primary, with one Pattern C reuse (`{Stage}` placeholder
+consolidates 3 sites of "Griffin {Stage} call failed [{ErrorToken}]: {Detail}"
+across token-exchange / token-validation / getClaims). 18 methods cover 26 call sites.
+
+| Sub-range   | Section                              | Methods | Sites | Description |
+|-------------|--------------------------------------|---------|-------|-------------|
+| 17000–17003 | `BuildAuthenticationUrl`             | 4       | 4     | Probe lifecycle |
+| 17010–17012 | `ExchangeTokenAsync`                 | 3       | 3     | Lifecycle |
+| 17020–17021 | `ValidateTokenAsync`                 | 2       | 2     | Lifecycle |
+| 17030–17034 | `GetClaimsAsync`                     | 5       | 5     | Lifecycle |
+| 17040–17041 | `ValidateAndGetClaimsAsync` cache    | 2       | 2     | Cache hit / miss |
+| 17050–17052 | `AuthenticateUserAsync`              | 3       | 3     | Login lifecycle |
+| 17060–17062 | `AutoProvisionUserAsync`             | 3       | 3     | Provision lifecycle (`UserRole` enum logged here — needs `using ShiftManager.Models.Support`) |
+| 17070       | `CallGriffinGetAsync` unhandled      | 1       | 1     | Unexpected exception |
+| 17080       | Pattern C reuse                      | 1       | 3     | `LogStageCallFailed(_logger, "<stage>", ...)` |
+
+**Critical signature note**: The `UserRole` parameter on `LogAutoProvisioned` must
+be the enum from `ShiftManager.Models.Support` (NOT `ShiftManager.Models`). This
+caused an integration-build error that was caught and fixed.
+
+The full method-by-method mapping lives in `Services/GriffinService.Logging.cs`.
+
+### `Services/DatabaseBackupService.cs` — 18000–18099
+
+Service class — pure Pattern A. 26 methods cover 26 call sites (1.00× ratio — every
+event is semantically distinct, no reuse opportunity).
+
+| Sub-range   | Section                              | Methods | Sites | Description |
+|-------------|--------------------------------------|---------|-------|-------------|
+| 18000–18004 | Service lifecycle                    | 5       | 5     | Started/disabled/skipped |
+| 18010–18018 | Backup creation                      | 9       | 9     | Per-step lifecycle + DB/file/disk-full errors |
+| 18020–18024 | Cleanup of old backups               | 5       | 5     | Retention policy lifecycle + cleanup-on-failure |
+| 18030–18031 | Restore validation                   | 2       | 2     | Pre-restore checks |
+| 18040–18043 | Statistics                           | 4       | 4     | Disk usage / count / size summary |
+| 18050       | Misc                                 | 1       | 1     | Unscheduled diagnostic |
+
+**Note on format specifiers**: `{SizeKB:F1}` and `{Hours:F1}` are valid in source-gen
+templates — preserved verbatim from the original `_logger.Log*` calls.
+
+The full method-by-method mapping lives in `Services/DatabaseBackupService.Logging.cs`.
+
+### `Program.cs` — 90000–99999
+
+Startup-banner migration. 75 methods cover 80 call sites with 1 Pattern C reuse method.
+Used 90000–91210 (12% of the reserved 10,000-ID range; 88% headroom for future startup
+events). Three local `ILogger<Program>` variables (`logger`, `startupLogger`,
+`featureFlagLogger`) all share the same partial methods — call sites pick whichever
+local is in scope.
+
+| Sub-range   | Section                                              | Methods | Sites | Description |
+|-------------|------------------------------------------------------|---------|-------|-------------|
+| 90000–90099 | DB migration / pre-migration backup / DB directory   | 7       | 8     | Phase 2 restore, backup creation, directory setup, migration failure |
+| 90100–90199 | SQLite WAL / busy_timeout / version PRAGMAs          | 4       | 4     | journal_mode, busy_timeout, version, WAL config failure |
+| 90200–90299 | Grant type seeding                                   | 1       | 1     | New grants seeded |
+| 90300–90399 | Role template seed/rename/sync/orphan cleanup        | 11      | 13    | Includes 1 Pattern C reuse (`LogOrphanTemplateRemapped` with `{Entity}` placeholder, 5 sites) |
+| 90400–90499 | Grant mappings + sentinel resolution                 | 4       | 4     | New mappings, reconciliation |
+| 90500–90599 | Catch-up (System molecule, SystemAdmins, HQ)         | 4       | 4     | One-shot org backfills |
+| 90600–90699 | Additional molecules / companies / departments seed  | 10      | 10    | Demo / dev seeds |
+| 90700–90799 | Owner / config seed                                  | 2       | 2     | Owner password / global config |
+| 90800–90899 | Feature flags + test data + grant repair             | 9       | 9     | Demo populations |
+| 90900–90999 | Role-scope migration / Home unification backfills    | 8       | 8     | One-time data migrations |
+| 91000–91099 | Startup lifecycle / safety checks / banner           | 10      | 10    | Application started, safety guards, environment banner |
+| 91100–91199 | Feature flag startup logging                         | 2       | 2     | Banner-time feature-flag dump |
+| 91200–91299 | Owner password warning + API auth exception          | 3       | 3     | Default-password warning, ApiAuth catch |
+
+**Critical structural note**: `public partial class Program { }` is declared at the
+**bottom of `Program.cs`** (load-bearing for `WebApplicationFactory<Program>` in
+integration tests) — DO NOT remove. The new `Program.Logging.cs` mirrors the same
+partial declaration, allowing source-gen to merge the methods.
+
+**Special signature**:
+- `MoleculeType` enum logged at line 1112 → requires `using ShiftManager.Models.Support;`
+- `PathString` for `context.Request.Path` at line 1916 → requires `using Microsoft.AspNetCore.Http;`
+- `int? templateId` for `user.RoleTemplateId` at line 1471 — preserved as nullable
+- Two sites use `object?` for `ExecuteScalarAsync()` results (lines 568 + 581) — preserved as-is
+
+**Open verification item (2026-05-10)**: Phase 16 source-level work is complete and verified
+by grep (0 remaining `logger.Log*` calls in Program.cs, 75 partial methods declared). The
+integration build's link/copy step was blocked by a running `ShiftManager.exe` (PID 138844),
+so the final no-incremental clean build is pending. Compile-phase numbers from the partial
+build: 0 CS errors, 1942 unique warnings (−26 net from 1968), CA1848 unique 1104 (−80
+exactly matching site count). The 54-warning gap may indicate ~28 new warnings from the
+new partial methods (likely CA1822 / CA2007 — investigate next session).
+
+The full method-by-method mapping lives in `Program.Logging.cs`.
 
 ## Pattern — adding a new partial method
 

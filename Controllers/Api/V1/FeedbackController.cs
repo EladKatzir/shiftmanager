@@ -17,7 +17,7 @@ namespace ShiftManager.Controllers.Api.V1;
 [ApiController]
 [Route("api/v1/feedback")]
 [Produces("application/json")]
-public class FeedbackController : ControllerBase
+public partial class FeedbackController : ControllerBase
 {
     private readonly FeedbackApiService _feedbackService;
     private readonly IFeatureFlagService _featureFlagService;
@@ -57,8 +57,7 @@ public class FeedbackController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackList))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(ListFeedback), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(ListFeedback), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -66,8 +65,7 @@ public class FeedbackController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(ListFeedback), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(ListFeedback), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -91,14 +89,12 @@ public class FeedbackController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(ListFeedback), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogDbErrorCompanyPath(_logger, ex, nameof(ListFeedback), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(ListFeedback), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogUnexpectedErrorCompanyPath(_logger, ex, nameof(ListFeedback), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -120,8 +116,7 @@ public class FeedbackController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackGet))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(GetFeedback), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(GetFeedback), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -129,8 +124,7 @@ public class FeedbackController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(GetFeedback), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(GetFeedback), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -138,8 +132,7 @@ public class FeedbackController : ControllerBase
 
             if (feedback == null)
             {
-                _logger.LogWarning("Feedback not found. Endpoint={Endpoint}, CompanyId={CompanyId}, FeedbackId={FeedbackId}",
-                    nameof(GetFeedback), companyId, id);
+                LogFeedbackNotFound(_logger, nameof(GetFeedback), companyId, id);
                 return NotFound(ApiErrorResponse.NotFound("Feedback", id.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             }
 
@@ -147,14 +140,12 @@ public class FeedbackController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, FeedbackId={FeedbackId}, Path={Path}",
-                nameof(GetFeedback), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogDbErrorWithFeedbackId(_logger, ex, nameof(GetFeedback), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, FeedbackId={FeedbackId}, Path={Path}",
-                nameof(GetFeedback), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogUnexpectedErrorWithFeedbackId(_logger, ex, nameof(GetFeedback), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -176,8 +167,7 @@ public class FeedbackController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackCreate))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(CreateFeedback), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(CreateFeedback), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -185,8 +175,7 @@ public class FeedbackController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(CreateFeedback), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(CreateFeedback), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -194,23 +183,20 @@ public class FeedbackController : ControllerBase
             var userIdClaim = User.FindFirst("UserId")?.Value;
             if (userIdClaim == null || !int.TryParse(userIdClaim, out var submitterId))
             {
-                _logger.LogWarning("UserId claim missing. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(CreateFeedback), companyId);
+                LogUserIdClaimMissing(_logger, nameof(CreateFeedback), companyId);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Validate request
             if (string.IsNullOrWhiteSpace(request.Type))
             {
-                _logger.LogWarning("Validation error: Type required. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(CreateFeedback), companyId);
+                LogValidationTypeRequired(_logger, nameof(CreateFeedback), companyId);
                 return BadRequest(ApiErrorResponse.BadRequest("Type is required"));
             }
 
             if (string.IsNullOrWhiteSpace(request.Content))
             {
-                _logger.LogWarning("Validation error: Content required. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(CreateFeedback), companyId);
+                LogValidationContentRequired(_logger, nameof(CreateFeedback), companyId);
                 return BadRequest(ApiErrorResponse.BadRequest("Content is required"));
             }
 
@@ -218,26 +204,22 @@ public class FeedbackController : ControllerBase
 
             if (error != null)
             {
-                _logger.LogWarning("Feedback creation validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, Error={Error}",
-                    nameof(CreateFeedback), companyId, error);
+                LogFeedbackCreationValidationError(_logger, nameof(CreateFeedback), companyId, error);
                 return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
-            _logger.LogInformation("Feedback created. Endpoint={Endpoint}, CompanyId={CompanyId}, FeedbackId={FeedbackId}",
-                nameof(CreateFeedback), companyId, feedback!.Id);
+            LogFeedbackCreated(_logger, nameof(CreateFeedback), companyId, feedback!.Id);
 
             return CreatedAtAction(nameof(GetFeedback), new { id = feedback!.Id }, feedback);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(CreateFeedback), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogDbErrorCompanyPath(_logger, ex, nameof(CreateFeedback), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(CreateFeedback), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogUnexpectedErrorCompanyPath(_logger, ex, nameof(CreateFeedback), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -260,8 +242,7 @@ public class FeedbackController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackUpdateStatus))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(UpdateFeedbackStatus), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(UpdateFeedbackStatus), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -269,8 +250,7 @@ public class FeedbackController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(UpdateFeedbackStatus), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(UpdateFeedbackStatus), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -278,8 +258,7 @@ public class FeedbackController : ControllerBase
             var userIdClaim = User.FindFirst("UserId")?.Value;
             if (userIdClaim == null || !int.TryParse(userIdClaim, out var updaterId))
             {
-                _logger.LogWarning("UserId claim missing. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(UpdateFeedbackStatus), companyId);
+                LogUserIdClaimMissing(_logger, nameof(UpdateFeedbackStatus), companyId);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -289,30 +268,25 @@ public class FeedbackController : ControllerBase
             {
                 if (error.Contains("not found"))
                 {
-                    _logger.LogWarning("Feedback not found for update. Endpoint={Endpoint}, CompanyId={CompanyId}, FeedbackId={FeedbackId}",
-                        nameof(UpdateFeedbackStatus), companyId, id);
+                    LogFeedbackNotFoundForUpdate(_logger, nameof(UpdateFeedbackStatus), companyId, id);
                     return NotFound(ApiErrorResponse.Create("NOT_FOUND", error));
                 }
-                _logger.LogWarning("Feedback status update validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, FeedbackId={FeedbackId}, Error={Error}",
-                    nameof(UpdateFeedbackStatus), companyId, id, error);
+                LogFeedbackStatusUpdateValidationError(_logger, nameof(UpdateFeedbackStatus), companyId, id, error);
                 return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
-            _logger.LogInformation("Feedback status updated. Endpoint={Endpoint}, CompanyId={CompanyId}, FeedbackId={FeedbackId}",
-                nameof(UpdateFeedbackStatus), companyId, id);
+            LogFeedbackStatusUpdated(_logger, nameof(UpdateFeedbackStatus), companyId, id);
 
             return Ok(feedback);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, FeedbackId={FeedbackId}, Path={Path}",
-                nameof(UpdateFeedbackStatus), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogDbErrorWithFeedbackId(_logger, ex, nameof(UpdateFeedbackStatus), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, FeedbackId={FeedbackId}, Path={Path}",
-                nameof(UpdateFeedbackStatus), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogUnexpectedErrorWithFeedbackId(_logger, ex, nameof(UpdateFeedbackStatus), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -335,8 +309,7 @@ public class FeedbackController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiFeedbackDelete))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(DeleteFeedback), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(DeleteFeedback), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -344,8 +317,7 @@ public class FeedbackController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(DeleteFeedback), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(DeleteFeedback), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -353,26 +325,22 @@ public class FeedbackController : ControllerBase
 
             if (!success)
             {
-                _logger.LogWarning("Feedback deletion failed. Endpoint={Endpoint}, CompanyId={CompanyId}, FeedbackId={FeedbackId}",
-                    nameof(DeleteFeedback), companyId, id);
+                LogFeedbackDeletionFailed(_logger, nameof(DeleteFeedback), companyId, id);
                 return NotFound(ApiErrorResponse.Create("FEEDBACK_NOT_FOUND", "Feedback not found"));
             }
 
-            _logger.LogInformation("Feedback deleted. Endpoint={Endpoint}, CompanyId={CompanyId}, FeedbackId={FeedbackId}",
-                nameof(DeleteFeedback), companyId, id);
+            LogFeedbackDeleted(_logger, nameof(DeleteFeedback), companyId, id);
 
             return NoContent();
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, FeedbackId={FeedbackId}, Path={Path}",
-                nameof(DeleteFeedback), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogDbErrorWithFeedbackId(_logger, ex, nameof(DeleteFeedback), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, FeedbackId={FeedbackId}, Path={Path}",
-                nameof(DeleteFeedback), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogUnexpectedErrorWithFeedbackId(_logger, ex, nameof(DeleteFeedback), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }

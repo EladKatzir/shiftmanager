@@ -17,7 +17,7 @@ namespace ShiftManager.Controllers.Api.V1;
 [ApiController]
 [Route("api/v1/chores")]
 [Produces("application/json")]
-public class ChoresController : ControllerBase
+public partial class ChoresController : ControllerBase
 {
     private readonly ChoreApiService _choreService;
     private readonly IFeatureFlagService _featureFlagService;
@@ -56,8 +56,7 @@ public class ChoresController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresList))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(ListChores), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(ListChores), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -65,8 +64,7 @@ public class ChoresController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(ListChores), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(ListChores), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -78,8 +76,7 @@ public class ChoresController : ControllerBase
             {
                 if (!DateOnly.TryParse(startDate, out var parsed))
                 {
-                    _logger.LogWarning("Invalid startDate format. Endpoint={Endpoint}, CompanyId={CompanyId}, StartDate={StartDate}",
-                        nameof(ListChores), companyId, startDate);
+                    LogInvalidStartDate(_logger, nameof(ListChores), companyId, startDate);
                     return BadRequest(ApiErrorResponse.BadRequest("Invalid startDate format. Use yyyy-MM-dd"));
                 }
                 startDateParsed = parsed;
@@ -89,8 +86,7 @@ public class ChoresController : ControllerBase
             {
                 if (!DateOnly.TryParse(endDate, out var parsed))
                 {
-                    _logger.LogWarning("Invalid endDate format. Endpoint={Endpoint}, CompanyId={CompanyId}, EndDate={EndDate}",
-                        nameof(ListChores), companyId, endDate);
+                    LogInvalidEndDate(_logger, nameof(ListChores), companyId, endDate);
                     return BadRequest(ApiErrorResponse.BadRequest("Invalid endDate format. Use yyyy-MM-dd"));
                 }
                 endDateParsed = parsed;
@@ -116,14 +112,12 @@ public class ChoresController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(ListChores), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogDbErrorCompanyPath(_logger, ex, nameof(ListChores), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(ListChores), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogUnexpectedErrorCompanyPath(_logger, ex, nameof(ListChores), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -145,8 +139,7 @@ public class ChoresController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresGet))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(GetChore), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(GetChore), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -154,8 +147,7 @@ public class ChoresController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(GetChore), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(GetChore), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -163,8 +155,7 @@ public class ChoresController : ControllerBase
 
             if (chore == null)
             {
-                _logger.LogWarning("Chore not found. Endpoint={Endpoint}, CompanyId={CompanyId}, ChoreId={ChoreId}",
-                    nameof(GetChore), companyId, id);
+                LogChoreNotFound(_logger, nameof(GetChore), companyId, id);
                 return NotFound(ApiErrorResponse.NotFound("Chore", id.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             }
 
@@ -172,14 +163,12 @@ public class ChoresController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, ChoreId={ChoreId}, Path={Path}",
-                nameof(GetChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogDbErrorWithChoreId(_logger, ex, nameof(GetChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, ChoreId={ChoreId}, Path={Path}",
-                nameof(GetChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogUnexpectedErrorWithChoreId(_logger, ex, nameof(GetChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -201,8 +190,7 @@ public class ChoresController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresCreate))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(CreateChore), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(CreateChore), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -210,8 +198,7 @@ public class ChoresController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(CreateChore), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(CreateChore), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -219,30 +206,26 @@ public class ChoresController : ControllerBase
             var userIdClaim = User.FindFirst("UserId")?.Value;
             if (userIdClaim == null || !int.TryParse(userIdClaim, out var creatorId))
             {
-                _logger.LogWarning("UserId claim missing. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(CreateChore), companyId);
+                LogUserIdClaimMissing(_logger, nameof(CreateChore), companyId);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
             // Validate request
             if (request.UserId <= 0)
             {
-                _logger.LogWarning("Validation error: UserId required. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(CreateChore), companyId);
+                LogValidationUserIdRequired(_logger, nameof(CreateChore), companyId);
                 return BadRequest(ApiErrorResponse.BadRequest("UserId is required"));
             }
 
             if (string.IsNullOrWhiteSpace(request.Date))
             {
-                _logger.LogWarning("Validation error: Date required. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(CreateChore), companyId);
+                LogValidationDateRequired(_logger, nameof(CreateChore), companyId);
                 return BadRequest(ApiErrorResponse.BadRequest("Date is required"));
             }
 
             if (string.IsNullOrWhiteSpace(request.Title))
             {
-                _logger.LogWarning("Validation error: Title required. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(CreateChore), companyId);
+                LogValidationTitleRequired(_logger, nameof(CreateChore), companyId);
                 return BadRequest(ApiErrorResponse.BadRequest("Title is required"));
             }
 
@@ -250,26 +233,22 @@ public class ChoresController : ControllerBase
 
             if (error != null)
             {
-                _logger.LogWarning("Chore creation validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, Error={Error}",
-                    nameof(CreateChore), companyId, error);
+                LogChoreCreationValidationError(_logger, nameof(CreateChore), companyId, error);
                 return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
-            _logger.LogInformation("Chore created. Endpoint={Endpoint}, CompanyId={CompanyId}, ChoreId={ChoreId}",
-                nameof(CreateChore), companyId, chore!.Id);
+            LogChoreCreated(_logger, nameof(CreateChore), companyId, chore!.Id);
 
             return CreatedAtAction(nameof(GetChore), new { id = chore!.Id }, chore);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(CreateChore), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogDbErrorCompanyPath(_logger, ex, nameof(CreateChore), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, Path={Path}",
-                nameof(CreateChore), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
+            LogUnexpectedErrorCompanyPath(_logger, ex, nameof(CreateChore), User.FindFirst("CompanyId")?.Value, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -292,8 +271,7 @@ public class ChoresController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresUpdate))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(UpdateChore), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(UpdateChore), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -301,8 +279,7 @@ public class ChoresController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(UpdateChore), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(UpdateChore), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -312,30 +289,25 @@ public class ChoresController : ControllerBase
             {
                 if (error.Contains("not found"))
                 {
-                    _logger.LogWarning("Chore not found for update. Endpoint={Endpoint}, CompanyId={CompanyId}, ChoreId={ChoreId}",
-                        nameof(UpdateChore), companyId, id);
+                    LogChoreNotFoundForUpdate(_logger, nameof(UpdateChore), companyId, id);
                     return NotFound(ApiErrorResponse.Create("NOT_FOUND", error));
                 }
-                _logger.LogWarning("Chore update validation error. Endpoint={Endpoint}, CompanyId={CompanyId}, ChoreId={ChoreId}, Error={Error}",
-                    nameof(UpdateChore), companyId, id, error);
+                LogChoreUpdateValidationError(_logger, nameof(UpdateChore), companyId, id, error);
                 return BadRequest(ApiErrorResponse.BadRequest(error));
             }
 
-            _logger.LogInformation("Chore updated. Endpoint={Endpoint}, CompanyId={CompanyId}, ChoreId={ChoreId}",
-                nameof(UpdateChore), companyId, id);
+            LogChoreUpdated(_logger, nameof(UpdateChore), companyId, id);
 
             return Ok(chore);
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, ChoreId={ChoreId}, Path={Path}",
-                nameof(UpdateChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogDbErrorWithChoreId(_logger, ex, nameof(UpdateChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, ChoreId={ChoreId}, Path={Path}",
-                nameof(UpdateChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogUnexpectedErrorWithChoreId(_logger, ex, nameof(UpdateChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }
@@ -358,8 +330,7 @@ public class ChoresController : ControllerBase
             // Check feature flag
             if (!await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.ApiChoresDelete))
             {
-                _logger.LogWarning("API endpoint not enabled. Endpoint={Endpoint}, Path={Path}",
-                    nameof(DeleteChore), HttpContext.Request.Path);
+                LogApiEndpointNotEnabled(_logger, nameof(DeleteChore), HttpContext.Request.Path);
                 return NotFound(ApiErrorResponse.Create("ENDPOINT_DISABLED", "This API endpoint is not enabled"));
             }
 
@@ -367,8 +338,7 @@ public class ChoresController : ControllerBase
             var companyIdClaim = User.FindFirst("CompanyId")?.Value;
             if (companyIdClaim == null || !int.TryParse(companyIdClaim, out var companyId))
             {
-                _logger.LogWarning("Unauthorized API access attempt. Endpoint={Endpoint}, Path={Path}, HasCompanyClaim={HasClaim}",
-                    nameof(DeleteChore), HttpContext.Request.Path, companyIdClaim != null);
+                LogApiUnauthorized(_logger, nameof(DeleteChore), HttpContext.Request.Path, companyIdClaim != null);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -376,8 +346,7 @@ public class ChoresController : ControllerBase
             var userIdClaim = User.FindFirst("UserId")?.Value;
             if (userIdClaim == null || !int.TryParse(userIdClaim, out var canceledBy))
             {
-                _logger.LogWarning("UserId claim missing. Endpoint={Endpoint}, CompanyId={CompanyId}",
-                    nameof(DeleteChore), companyId);
+                LogUserIdClaimMissing(_logger, nameof(DeleteChore), companyId);
                 return Unauthorized(ApiErrorResponse.Unauthorized("Invalid authentication"));
             }
 
@@ -385,26 +354,22 @@ public class ChoresController : ControllerBase
 
             if (!success)
             {
-                _logger.LogWarning("Chore deletion failed. Endpoint={Endpoint}, CompanyId={CompanyId}, ChoreId={ChoreId}",
-                    nameof(DeleteChore), companyId, id);
+                LogChoreDeletionFailed(_logger, nameof(DeleteChore), companyId, id);
                 return NotFound(ApiErrorResponse.Create("CHORE_NOT_FOUND", "Chore not found or already canceled"));
             }
 
-            _logger.LogInformation("Chore deleted. Endpoint={Endpoint}, CompanyId={CompanyId}, ChoreId={ChoreId}, CanceledBy={CanceledBy}",
-                nameof(DeleteChore), companyId, id, canceledBy);
+            LogChoreDeleted(_logger, nameof(DeleteChore), companyId, id, canceledBy);
 
             return NoContent();
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error in {Endpoint}. CompanyId={CompanyId}, ChoreId={ChoreId}, Path={Path}",
-                nameof(DeleteChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogDbErrorWithChoreId(_logger, ex, nameof(DeleteChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An error occurred while processing your request"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in {Endpoint}. CompanyId={CompanyId}, ChoreId={ChoreId}, Path={Path}",
-                nameof(DeleteChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
+            LogUnexpectedErrorWithChoreId(_logger, ex, nameof(DeleteChore), User.FindFirst("CompanyId")?.Value, id, HttpContext.Request.Path);
             return StatusCode(500, ApiErrorResponse.ServerError("An unexpected error occurred"));
         }
     }

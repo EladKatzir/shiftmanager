@@ -14,7 +14,7 @@ namespace ShiftManager.Services;
 /// - Logs every backup with file size and SHA256 checksum
 /// Fixes: C-02 (no automated backup), E-07 (backup Owner-only dependency)
 /// </summary>
-public class DatabaseBackupService : BackgroundService
+public partial class DatabaseBackupService : BackgroundService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<DatabaseBackupService> _logger;
@@ -47,8 +47,7 @@ public class DatabaseBackupService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Database Backup Service started. Schedule: daily at {Time}, retention: {Retention}, directory: {Dir}",
-            _scheduledTime, "2 most recent backups", Path.GetFullPath(_backupDirectory));
+        LogServiceStarted(_logger, _scheduledTime, "2 most recent backups", Path.GetFullPath(_backupDirectory));
 
         // Wait briefly for app to fully initialize
         await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
@@ -60,7 +59,7 @@ public class DatabaseBackupService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to perform startup backup");
+            LogStartupBackupFailed(_logger, ex);
         }
 
         // Daily backup loop
@@ -79,8 +78,7 @@ public class DatabaseBackupService : BackgroundService
                 }
 
                 var delay = scheduledToday - now;
-                _logger.LogDebug("Next scheduled backup at {Time} (in {Hours:F1} hours)",
-                    scheduledToday, delay.TotalHours);
+                LogNextScheduledBackup(_logger, scheduledToday, delay.TotalHours);
 
                 await Task.Delay(delay, stoppingToken);
 
@@ -95,14 +93,14 @@ public class DatabaseBackupService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in backup scheduling loop");
+                LogSchedulingLoopError(_logger, ex);
                 // Wait 1 hour before retrying on error
                 try { await Task.Delay(TimeSpan.FromHours(1), stoppingToken); }
                 catch (TaskCanceledException) { break; }
             }
         }
 
-        _logger.LogInformation("Database Backup Service stopped");
+        LogServiceStopped(_logger);
     }
 
     /// <summary>
@@ -117,7 +115,7 @@ public class DatabaseBackupService : BackgroundService
 
         if (!File.Exists(_dbPath))
         {
-            _logger.LogWarning("Database file not found at {Path}, skipping backup", _dbPath);
+            LogDbFileNotFound(_logger, _dbPath);
             return null;
         }
 
@@ -133,7 +131,7 @@ public class DatabaseBackupService : BackgroundService
 
         try
         {
-            _logger.LogInformation("Starting database backup: {Reason}", reason);
+            LogBackupStarting(_logger, reason);
 
             // C-10: Use VACUUM INTO for atomic backup (SQLite 3.27.0+)
             // This creates a consistent, standalone backup without WAL/SHM files.
@@ -149,11 +147,11 @@ public class DatabaseBackupService : BackgroundService
                 cmd.Parameters.AddWithValue("@backupPath", backupPath);
                 await Task.Run(() => cmd.ExecuteNonQuery(), cancellationToken);
                 usedVacuumInto = true;
-                _logger.LogDebug("Atomic backup via VACUUM INTO completed");
+                LogVacuumIntoCompleted(_logger);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "VACUUM INTO failed, falling back to file copy");
+                LogVacuumIntoFailed(_logger, ex);
             }
 
             if (!usedVacuumInto)
@@ -167,11 +165,11 @@ public class DatabaseBackupService : BackgroundService
                     using var cmd = conn.CreateCommand();
                     cmd.CommandText = "PRAGMA wal_checkpoint(PASSIVE);";
                     cmd.ExecuteNonQuery();
-                    _logger.LogDebug("WAL checkpoint completed before backup");
+                    LogWalCheckpointCompleted(_logger);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "WAL checkpoint before backup failed, proceeding with file copy");
+                    LogWalCheckpointFailed(_logger, ex);
                 }
 
                 await Task.Run(() => File.Copy(_dbPath, backupPath, overwrite: false), cancellationToken);
@@ -201,16 +199,16 @@ public class DatabaseBackupService : BackgroundService
                 var integrityResult = verifyCmd.ExecuteScalar()?.ToString();
                 if (integrityResult != "ok")
                 {
-                    _logger.LogError("Backup integrity check FAILED for {FileName}: {Result}", backupFileName, integrityResult);
+                    LogIntegrityCheckFailed(_logger, backupFileName, integrityResult);
                 }
                 else
                 {
-                    _logger.LogDebug("Backup integrity check passed for {FileName}", backupFileName);
+                    LogIntegrityCheckPassed(_logger, backupFileName);
                 }
             }
             catch (Exception verifyEx)
             {
-                _logger.LogWarning(verifyEx, "Could not verify backup integrity for {FileName}", backupFileName);
+                LogIntegrityCheckError(_logger, verifyEx, backupFileName);
             }
 
             // D-10: Encrypt backup if passphrase is configured
@@ -224,11 +222,11 @@ public class DatabaseBackupService : BackgroundService
                     File.Delete(backupPath); // Remove plaintext
                     finalPath = encryptedPath;
                     backupFileName += ".enc";
-                    _logger.LogInformation("Backup encrypted with AES-256: {FileName}", backupFileName);
+                    LogBackupEncrypted(_logger, backupFileName);
                 }
                 catch (Exception encEx)
                 {
-                    _logger.LogWarning(encEx, "Backup encryption failed — plaintext backup retained at {Path}", backupPath);
+                    LogBackupEncryptionFailed(_logger, encEx, backupPath);
                 }
             }
 
@@ -236,9 +234,7 @@ public class DatabaseBackupService : BackgroundService
             var fileInfo = new FileInfo(finalPath);
             var checksum = await ComputeChecksumAsync(finalPath, cancellationToken);
 
-            _logger.LogInformation(
-                "Database backup completed. File: {FileName}, Size: {SizeKB:F1} KB, SHA256: {Checksum}, Reason: {Reason}",
-                backupFileName, fileInfo.Length / 1024.0, checksum, reason);
+            LogBackupCompleted(_logger, backupFileName, fileInfo.Length / 1024.0, checksum, reason);
 
             // Clean up old backups
             CleanupOldBackups();
@@ -247,13 +243,13 @@ public class DatabaseBackupService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to backup database to {Path}", backupPath);
+            LogBackupFailed(_logger, ex, backupPath);
 
             // Clean up partial backup
             try { if (File.Exists(backupPath)) File.Delete(backupPath); }
             catch (Exception cleanupEx)
             {
-                _logger.LogWarning(cleanupEx, "Failed to clean up partial backup file: {Path}", backupPath);
+                LogPartialBackupCleanupFailed(_logger, cleanupEx, backupPath);
             }
 
             throw;
@@ -284,12 +280,12 @@ public class DatabaseBackupService : BackgroundService
 
             if (deleted > 0)
             {
-                _logger.LogInformation("E-02: Cleaned up {Count} audit log entries older than {Days} days", deleted, retentionDays);
+                LogAuditLogsCleanedUp(_logger, deleted, retentionDays);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to clean up old audit log entries");
+            LogAuditLogCleanupFailed(_logger, ex);
         }
     }
 
@@ -322,24 +318,22 @@ public class DatabaseBackupService : BackgroundService
                 try
                 {
                     file.Delete();
-                    _logger.LogInformation("Deleted old backup: {FileName} (created {Date})",
-                        file.Name, file.LastWriteTime);
+                    LogOldBackupDeleted(_logger, file.Name, file.LastWriteTime);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to delete old backup: {FileName}", file.Name);
+                    LogOldBackupDeleteFailed(_logger, ex, file.Name);
                 }
             }
 
             if (toDelete.Count > 0)
             {
-                _logger.LogInformation("Cleaned up {Count} old backup(s), retained max {Max}",
-                    toDelete.Count, MaxBackupsRetained);
+                LogOldBackupsCleanedUp(_logger, toDelete.Count, MaxBackupsRetained);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error during backup cleanup");
+            LogBackupCleanupError(_logger, ex);
         }
     }
 
@@ -390,7 +384,7 @@ public class DatabaseBackupService : BackgroundService
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Database Backup Service is stopping...");
+        LogServiceStopping(_logger);
         await base.StopAsync(cancellationToken);
     }
 }
