@@ -102,11 +102,6 @@
                             </button>
                         </form>
                     </div>
-
-                    <!-- Divider -->
-                    <div class="auth-divider">
-                        <span><loc key="Auth_OrContinueWith" /></span>
-                    </div>
                 }
                 else if (Model.ShowGriffinUnavailableMessage)
                 {
@@ -118,49 +113,66 @@
                     </div>
                 }
 
-                <!-- Login Form -->
-                <form method="post" asp-page="./Login" class="auth-form">
-                    @Html.AntiForgeryToken()
+                @* Regular login section — wrapped so FF_HIDE_REGULAR_LOGIN can hide the
+                   form, divider, forgot-password, and request-access links as one unit.
+                   Initially hidden ONLY when both the flag is on AND ADFS is actually
+                   available — otherwise the user would be locked out with no way in. *@
+                @{
+                    var hideRegularLoginInitially = Model.HideRegularLogin && Model.ShowGriffinButton;
+                }
+                <div id="regularLoginSection" style="@(hideRegularLoginInitially ? "display:none;" : null)">
+                    @if (Model.ShowGriffinButton)
+                    {
+                        <!-- Divider -->
+                        <div class="auth-divider">
+                            <span><loc key="Auth_OrContinueWith" /></span>
+                        </div>
+                    }
 
-                    <div class="auth-field">
-                        <label class="auth-field__label" for="Email"><loc key="Email" /></label>
-                        <input type="email"
-                               id="Email"
-                               name="Email"
-                               class="auth-field__input"
-                               value="@Model.Email"
-                               placeholder="@Localizer["Auth_EmailPlaceholder"]"
-                               autocomplete="email"
-                               required />
-                        <div id="emailSuggestion" class="auth-field__suggestion"></div>
-                    </div>
+                    <!-- Login Form -->
+                    <form method="post" asp-page="./Login" class="auth-form">
+                        @Html.AntiForgeryToken()
 
-                    <div class="auth-field">
-                        <label class="auth-field__label" for="Password"><loc key="Password" /></label>
-                        <input type="password"
-                               id="Password"
-                               name="Password"
-                               class="auth-field__input"
-                               placeholder="@Localizer["Auth_PasswordPlaceholder"]"
-                               autocomplete="current-password"
-                               required />
-                    </div>
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="Email"><loc key="Email" /></label>
+                            <input type="email"
+                                   id="Email"
+                                   name="Email"
+                                   class="auth-field__input"
+                                   value="@Model.Email"
+                                   placeholder="@Localizer["Auth_EmailPlaceholder"]"
+                                   autocomplete="email"
+                                   required />
+                            <div id="emailSuggestion" class="auth-field__suggestion"></div>
+                        </div>
 
-                    <div class="auth-forgot">
-                        <a href="/Auth/ForgotPassword" class="auth-forgot__link">
-                            @Localizer["ForgotPassword"]?
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="Password"><loc key="Password" /></label>
+                            <input type="password"
+                                   id="Password"
+                                   name="Password"
+                                   class="auth-field__input"
+                                   placeholder="@Localizer["Auth_PasswordPlaceholder"]"
+                                   autocomplete="current-password"
+                                   required />
+                        </div>
+
+                        <div class="auth-forgot">
+                            <a href="/Auth/ForgotPassword" class="auth-forgot__link">
+                                @Localizer["ForgotPassword"]?
+                            </a>
+                        </div>
+
+                        <button type="submit" class="auth-submit" @(Model.IsAccountLocked ? "disabled" : "")>
+                            <loc key="Login" />
+                        </button>
+
+                        <!-- Signup Link (inside form for identical width — <a> doesn't trigger submit) -->
+                        <a href="/Auth/Signup" class="auth-secondary__link">
+                            <loc key="RequestAccess" />
                         </a>
-                    </div>
-
-                    <button type="submit" class="auth-submit" @(Model.IsAccountLocked ? "disabled" : "")>
-                        <loc key="Login" />
-                    </button>
-
-                    <!-- Signup Link (inside form for identical width — <a> doesn't trigger submit) -->
-                    <a href="/Auth/Signup" class="auth-secondary__link">
-                        <loc key="RequestAccess" />
-                    </a>
-                </form>
+                    </form>
+                </div>
             </div>
         </main>
     </div>
@@ -205,6 +217,29 @@
                     window.location.reload();
                 });
             }
+        })();
+
+        // FF_HIDE_REGULAR_LOGIN escape hatch: Ctrl+click (or ⌘+click on Mac) on the
+        // Shifty logo reveals the regular email/password form. Intentionally has no
+        // visible affordance — the obscurity IS the security model. Admins with local
+        // passwords are the intended audience; ADFS-provisioned users have empty
+        // PasswordHash and would be rejected even if they discovered the gesture.
+        (function() {
+            const logo = document.querySelector('.auth-hero__logo');
+            const section = document.getElementById('regularLoginSection');
+            if (!logo || !section) return;
+            // Only attach when the section starts hidden — otherwise the gesture is a no-op
+            // and we don't want to interfere with normal logo clicks (none today, but still).
+            if (section.style.display !== 'none') return;
+
+            logo.addEventListener('click', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    section.style.display = '';
+                    const emailField = document.getElementById('Email');
+                    if (emailField) emailField.focus();
+                }
+            });
         })();
 
         // Email domain suggestion

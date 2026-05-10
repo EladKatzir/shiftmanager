@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
@@ -26,6 +27,7 @@ public partial class LoginModel : LocalizedPageModel
     private readonly IValidationService _validation;
     private readonly IGriffinConfigService _griffinConfigService;
     private readonly IGriffinService _griffinService;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly IHierarchyService _hierarchyService;
     private readonly IGrantService _grantService;
     private readonly IRoleService _roleService;
@@ -38,6 +40,7 @@ public partial class LoginModel : LocalizedPageModel
         IValidationService validation,
         IGriffinConfigService griffinConfigService,
         IGriffinService griffinService,
+        IFeatureFlagService featureFlagService,
         IHierarchyService hierarchyService,
         IGrantService grantService,
         IRoleService roleService)
@@ -49,6 +52,7 @@ public partial class LoginModel : LocalizedPageModel
         _validation = validation;
         _griffinConfigService = griffinConfigService;
         _griffinService = griffinService;
+        _featureFlagService = featureFlagService;
         _hierarchyService = hierarchyService;
         _grantService = grantService;
         _roleService = roleService;
@@ -59,6 +63,15 @@ public partial class LoginModel : LocalizedPageModel
     public bool ShowAuthPrompt { get; set; }
     public bool ShowGriffinButton { get; set; }
     public bool ShowGriffinUnavailableMessage { get; set; }
+
+    /// <summary>
+    /// When true, the email+password form, the divider, and the secondary
+    /// Forgot-Password / Request-Access links are hidden from the page.
+    /// Admins with local passwords reveal them by Ctrl+clicking the Shifty logo.
+    /// Driven by the FF_HIDE_REGULAR_LOGIN feature flag (default OFF).
+    /// </summary>
+    public bool HideRegularLogin { get; set; }
+
     public string? ReturnUrl { get; set; }
 
     // Account lockout warning properties
@@ -73,6 +86,14 @@ public partial class LoginModel : LocalizedPageModel
 
         // ✅ PHASE 18: Show auth required prompt if user was redirected due to unauthorized access
         ShowAuthPrompt = reason == "authRequired";
+
+        // FF_HIDE_REGULAR_LOGIN gates the email+password form on /Auth/Login. The view still
+        // RENDERS the form (so the Ctrl+click escape hatch can show it) — it just initially
+        // hides it via inline display:none. Server-side POST is intentionally NOT blocked:
+        // the existing PasswordHash.Length==0 check below already prevents SSO-provisioned
+        // users from authenticating with credentials, so the only people who can complete a
+        // POST are admins with real local passwords (the intended escape-hatch population).
+        HideRegularLogin = await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HideRegularLogin);
 
         // ✅ FIX: Improved Griffin availability check with detailed logging
         var griffinConfig = await _griffinConfigService.GetGriffinConfigAsync();

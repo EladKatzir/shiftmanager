@@ -49,6 +49,7 @@ public static class FeatureFlagSeed
             F(Flags.EnableCompanySwitcher, "Enables the company switcher UI in the navigation for users with multi-company access.", now),
             F(Flags.EnforceRankEligibility, "Enforces military rank eligibility checks during duty rotation and on-duty assignment.", now),
             F(Flags.AllowUsersCreationViaAdfs, "When enabled: ADFS-authenticated users not yet in the database are redirected to the Griffin signup form (admin approval required). When disabled: such users are shown a refusal message directing them to contact their officer. Existing users always log in regardless of this flag.", now),
+            FDisabled(Flags.HideRegularLogin, "When enabled: hides the email+password login form on /Auth/Login, leaving only the ADFS button visible. Admins with local passwords can reveal the form by Ctrl+clicking the Shifty logo on the hero panel. Disabled by default — opt-in security hardening for deployments where ADFS is the sole intended sign-in path.", now),
 
             // ============================================================
             // API Endpoint Feature Flags
@@ -182,6 +183,7 @@ public static class FeatureFlagSeed
         public const string EnableCompanySwitcher = "FF_ENABLE_COMPANY_SWITCHER";
         public const string EnforceRankEligibility = "FF_ENFORCE_RANK_ELIGIBILITY";
         public const string AllowUsersCreationViaAdfs = "FF_ALLOW_USERS_CREATION_VIA_ADFS";
+        public const string HideRegularLogin = "FF_HIDE_REGULAR_LOGIN";
 
         // API endpoint flags — master
         public const string ApiEnabled = "FF_API_ENABLED";
