@@ -399,15 +399,8 @@
                     }
                 </div>
 
-                <div class="field">
-                    <span class="field-label">@Localizer["AutoProvisionUsers"]</span>
-                    <div class="field-value">@Model.GriffinConfig.AutoProvisionUsers</div>
-                </div>
-
-                <div class="field">
-                    <span class="field-label">@Localizer["DefaultProvisionedRole"]</span>
-                    <div class="field-value">@Model.GriffinConfig.DefaultProvisionedRole</div>
-                </div>
+                @* AutoProvisionUsers / DefaultProvisionedRole moved to feature flag
+                   FF_ALLOW_USERS_CREATION_VIA_ADFS — see /Owner/FeatureFlags. *@
             </div>
         </div>
 

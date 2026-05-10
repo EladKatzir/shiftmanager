@@ -3,8 +3,12 @@ using ShiftManager.Models.Support;
 namespace ShiftManager.Models;
 
 /// <summary>
-/// Stores Griffin ADFS configuration per company.
+/// Stores Griffin ADFS connectivity configuration per company.
 /// Pattern matches EmailConfig for consistency.
+///
+/// User-provisioning behaviour is NOT stored here — see the feature flag
+/// FF_ALLOW_USERS_CREATION_VIA_ADFS in FeatureFlagSeed for that toggle. This entity
+/// is purely the connection record (URL, callback, timeout).
 /// </summary>
 public class GriffinConfig : IBelongsToCompany
 {
@@ -25,21 +29,6 @@ public class GriffinConfig : IBelongsToCompany
     /// Our callback URL where Griffin redirects after authentication
     /// </summary>
     public string? TokenConsumerUrl { get; set; }
-
-    /// <summary>
-    /// Auto-provision users on first Griffin login
-    /// </summary>
-    public bool AutoProvisionUsers { get; set; } = true;
-
-    /// <summary>
-    /// Default role for auto-provisioned users
-    /// </summary>
-    public UserRole DefaultProvisionedRole { get; set; } = UserRole.Employee;
-
-    /// <summary>
-    /// Template for auto-provisioned SSO users (replaces DefaultProvisionedRole enum).
-    /// </summary>
-    public int? DefaultProvisionedRoleTemplateId { get; set; }
 
     /// <summary>
     /// Timeout for Griffin API calls in seconds

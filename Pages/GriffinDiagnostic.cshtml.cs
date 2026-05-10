@@ -434,8 +434,6 @@ public class GriffinDiagnosticModel : PageModel
                     GriffinConfig.Enabled,
                     GriffinConfig.BaseUrl,
                     GriffinConfig.TokenConsumerUrl,
-                    GriffinConfig.AutoProvisionUsers,
-                    GriffinConfig.DefaultProvisionedRole,
                     GriffinConfig.TimeoutSeconds
                 },
                 Analysis = new

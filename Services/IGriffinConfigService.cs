@@ -1,5 +1,6 @@
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+// UserRole no longer referenced — provisioning role is no longer stored in GriffinConfig.
 
 namespace ShiftManager.Services;
 
@@ -25,15 +26,14 @@ public interface IGriffinConfigService
     Task<GriffinConfig?> GetGriffinConfigByCompanyIdAsync(int companyId);
 
     /// <summary>
-    /// Save Griffin configuration with audit logging
+    /// Save Griffin configuration with audit logging.
+    /// User-provisioning behaviour is controlled by the FF_ALLOW_USERS_CREATION_VIA_ADFS
+    /// feature flag, not by this service.
     /// </summary>
     Task<GriffinConfig> SaveGriffinConfigAsync(
         bool enabled,
         string? baseUrl,
         string? tokenConsumerUrl,
-        bool autoProvisionUsers,
-        UserRole defaultProvisionedRole,
-        int? defaultProvisionedRoleTemplateId,
         int timeoutSeconds,
         string updatedBy);
 

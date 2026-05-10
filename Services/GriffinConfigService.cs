@@ -6,7 +6,7 @@ using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
-public class GriffinConfigService : IGriffinConfigService
+public partial class GriffinConfigService : IGriffinConfigService
 {
     private readonly AppDbContext _dbContext;
     private readonly ITenantResolver _tenantResolver;
@@ -44,14 +44,14 @@ public class GriffinConfigService : IGriffinConfigService
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Unable to get Griffin config via tenant resolver");
+            LogTenantResolverError(_logger, ex);
         }
 
         // Fallback for unauthenticated users (login page, callback) or when tenant-scoped lookup found nothing
         var anyConfig = await GetAnyEnabledGriffinConfigAsync();
         if (anyConfig != null)
         {
-            _logger.LogDebug("Found enabled Griffin config from database (CompanyId={CompanyId}) without tenant context", anyConfig.CompanyId);
+            LogConfigFoundWithoutTenant(_logger, anyConfig.CompanyId);
             return anyConfig;
         }
 
@@ -72,19 +72,18 @@ public class GriffinConfigService : IGriffinConfigService
 
             if (config != null)
             {
-                _logger.LogDebug("Found enabled Griffin config in database (CompanyId={CompanyId}, BaseUrl={BaseUrl})",
-                    config.CompanyId, config.BaseUrl);
+                LogConfigFoundInDatabase(_logger, config.CompanyId, config.BaseUrl);
             }
             else
             {
-                _logger.LogDebug("No enabled Griffin config found in database");
+                LogNoConfigInDatabase(_logger);
             }
 
             return config;
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Error querying database for any enabled Griffin config");
+            LogAnyConfigQueryError(_logger, ex);
             return null;
         }
     }
@@ -99,31 +98,29 @@ public class GriffinConfigService : IGriffinConfigService
 
         if (dbConfig != null)
         {
-            _logger.LogDebug("Loaded Griffin config from database for company {CompanyId}:", companyId);
-            _logger.LogDebug("  - Enabled: {Enabled}", dbConfig.Enabled);
-            _logger.LogDebug("  - BaseUrl: {BaseUrl}", dbConfig.BaseUrl ?? "(null)");
-            _logger.LogDebug("  - TokenConsumerUrl: {TokenConsumerUrl}", dbConfig.TokenConsumerUrl ?? "(null)");
-            _logger.LogDebug("  - AutoProvisionUsers: {AutoProvision}", dbConfig.AutoProvisionUsers);
-            _logger.LogDebug("  - DefaultProvisionedRole: {Role}", dbConfig.DefaultProvisionedRole);
-            _logger.LogDebug("  - TimeoutSeconds: {Timeout}", dbConfig.TimeoutSeconds);
+            LogDbConfigHeader(_logger, companyId);
+            LogDbConfigEnabled(_logger, dbConfig.Enabled);
+            LogDbConfigBaseUrl(_logger, dbConfig.BaseUrl ?? "(null)");
+            LogDbConfigTokenConsumerUrl(_logger, dbConfig.TokenConsumerUrl ?? "(null)");
+            LogDbConfigTimeout(_logger, dbConfig.TimeoutSeconds);
             return dbConfig;
         }
 
         // Fallback to appsettings
-        _logger.LogDebug("No Griffin config in database for company {CompanyId}, using appsettings fallback", companyId);
+        LogUsingAppSettingsFallback(_logger, companyId);
         var fallbackConfig = GetConfigFromAppSettings();
 
         if (fallbackConfig != null)
         {
             fallbackConfig.CompanyId = companyId;
-            _logger.LogDebug("Fallback config from appsettings.json:");
-            _logger.LogDebug("  - Enabled: {Enabled}", fallbackConfig.Enabled);
-            _logger.LogDebug("  - BaseUrl: {BaseUrl}", fallbackConfig.BaseUrl ?? "(null)");
-            _logger.LogDebug("  - TokenConsumerUrl: {TokenConsumerUrl}", fallbackConfig.TokenConsumerUrl ?? "(null)");
+            LogFallbackConfigHeader(_logger);
+            LogFallbackEnabled(_logger, fallbackConfig.Enabled);
+            LogFallbackBaseUrl(_logger, fallbackConfig.BaseUrl ?? "(null)");
+            LogFallbackTokenConsumerUrl(_logger, fallbackConfig.TokenConsumerUrl ?? "(null)");
         }
         else
         {
-            _logger.LogDebug("No fallback config available from appsettings.json (Enabled=false or BaseUrl missing)");
+            LogNoFallbackConfig(_logger);
         }
 
         return fallbackConfig;
@@ -133,9 +130,6 @@ public class GriffinConfigService : IGriffinConfigService
         bool enabled,
         string? baseUrl,
         string? tokenConsumerUrl,
-        bool autoProvisionUsers,
-        UserRole defaultProvisionedRole,
-        int? defaultProvisionedRoleTemplateId,
         int timeoutSeconds,
         string updatedBy)
     {
@@ -155,22 +149,17 @@ public class GriffinConfigService : IGriffinConfigService
                 Enabled = enabled,
                 BaseUrl = baseUrl,
                 TokenConsumerUrl = tokenConsumerUrl,
-                AutoProvisionUsers = autoProvisionUsers,
-                DefaultProvisionedRole = defaultProvisionedRole,
-                DefaultProvisionedRoleTemplateId = defaultProvisionedRoleTemplateId,
                 TimeoutSeconds = timeoutSeconds,
                 LastUpdated = DateTime.UtcNow,
                 LastUpdatedBy = updatedBy
             };
 
             _dbContext.GriffinConfigs.Add(config);
-            _logger.LogInformation("Created new Griffin config for company {CompanyId}:", companyId);
-            _logger.LogInformation("  - Enabled: {Enabled}", enabled);
-            _logger.LogInformation("  - BaseUrl: {BaseUrl}", baseUrl ?? "(null)");
-            _logger.LogInformation("  - TokenConsumerUrl: {TokenConsumerUrl}", tokenConsumerUrl ?? "(null)");
-            _logger.LogInformation("  - AutoProvisionUsers: {AutoProvision}", autoProvisionUsers);
-            _logger.LogInformation("  - DefaultProvisionedRole: {Role}", defaultProvisionedRole);
-            _logger.LogInformation("  - UpdatedBy: {User}", updatedBy);
+            LogSaveHeader(_logger, "Created new", companyId);
+            LogSaveEnabled(_logger, enabled);
+            LogSaveBaseUrl(_logger, baseUrl ?? "(null)");
+            LogSaveTokenConsumerUrl(_logger, tokenConsumerUrl ?? "(null)");
+            LogSaveUpdatedBy(_logger, updatedBy);
         }
         else
         {
@@ -178,25 +167,20 @@ public class GriffinConfigService : IGriffinConfigService
             config.Enabled = enabled;
             config.BaseUrl = baseUrl;
             config.TokenConsumerUrl = tokenConsumerUrl;
-            config.AutoProvisionUsers = autoProvisionUsers;
-            config.DefaultProvisionedRole = defaultProvisionedRole;
-            config.DefaultProvisionedRoleTemplateId = defaultProvisionedRoleTemplateId;
             config.TimeoutSeconds = timeoutSeconds;
             config.LastUpdated = DateTime.UtcNow;
             config.LastUpdatedBy = updatedBy;
 
-            _logger.LogInformation("Updated Griffin config for company {CompanyId}:", companyId);
-            _logger.LogInformation("  - Enabled: {Enabled}", enabled);
-            _logger.LogInformation("  - BaseUrl: {BaseUrl}", baseUrl ?? "(null)");
-            _logger.LogInformation("  - TokenConsumerUrl: {TokenConsumerUrl}", tokenConsumerUrl ?? "(null)");
-            _logger.LogInformation("  - AutoProvisionUsers: {AutoProvision}", autoProvisionUsers);
-            _logger.LogInformation("  - DefaultProvisionedRole: {Role}", defaultProvisionedRole);
-            _logger.LogInformation("  - UpdatedBy: {User}", updatedBy);
+            LogSaveHeader(_logger, "Updated", companyId);
+            LogSaveEnabled(_logger, enabled);
+            LogSaveBaseUrl(_logger, baseUrl ?? "(null)");
+            LogSaveTokenConsumerUrl(_logger, tokenConsumerUrl ?? "(null)");
+            LogSaveUpdatedBy(_logger, updatedBy);
         }
 
         await _dbContext.SaveChangesAsync();
 
-        _logger.LogInformation("Griffin config saved successfully to database for company {CompanyId}", companyId);
+        LogSaveSuccess(_logger, companyId);
 
         return config;
     }
@@ -266,7 +250,7 @@ public class GriffinConfigService : IGriffinConfigService
             var testUrl = $"{baseUrl.TrimEnd('/')}/authentication?tokenConsumerURL=test";
             var requestHeaders = new Dictionary<string, string>();
 
-            _logger.LogDebug("Testing Griffin connection to: {TestUrl}", testUrl);
+            LogTestConnectionStart(_logger, testUrl);
 
             var response = await client.GetAsync(testUrl);
 
@@ -315,11 +299,7 @@ public class GriffinConfigService : IGriffinConfigService
                 result.ErrorMessage = $"Unexpected HTTP status: {result.StatusCode} ({response.StatusCode})";
             }
 
-            _logger.LogInformation(
-                "Griffin connection test completed: {Success}, Status: {StatusCode}, Duration: {Duration}ms",
-                isSuccess ? "SUCCESS" : "FAILURE",
-                result.StatusCode,
-                result.DurationMs);
+            LogTestConnectionCompleted(_logger, isSuccess ? "SUCCESS" : "FAILURE", result.StatusCode, result.DurationMs);
 
             // Step 5: Log to database (fire-and-forget pattern like EmailApiLogService)
             _ = _griffinApiLogService.LogConnectionTestAsync(
@@ -344,7 +324,7 @@ public class GriffinConfigService : IGriffinConfigService
             result.Success = false;
             result.ErrorMessage = $"Network error: {ex.Message}";
 
-            _logger.LogError(ex, "Griffin connection test failed: Network error for {BaseUrl}", baseUrl);
+            LogTestConnectionNetworkError(_logger, ex, baseUrl);
 
             // Log the failure
             _ = _griffinApiLogService.LogConnectionTestAsync(
@@ -369,7 +349,7 @@ public class GriffinConfigService : IGriffinConfigService
             result.Success = false;
             result.ErrorMessage = $"Connection timeout ({timeoutSeconds} seconds exceeded)";
 
-            _logger.LogWarning("Griffin connection test timed out after {Timeout} seconds for {BaseUrl}", timeoutSeconds, baseUrl);
+            LogTestConnectionTimeout(_logger, timeoutSeconds, baseUrl);
 
             // Log the timeout
             _ = _griffinApiLogService.LogConnectionTestAsync(
@@ -394,7 +374,7 @@ public class GriffinConfigService : IGriffinConfigService
             result.Success = false;
             result.ErrorMessage = $"Unexpected error: {ex.Message}";
 
-            _logger.LogError(ex, "Griffin connection test failed with unexpected error for {BaseUrl}", baseUrl);
+            LogTestConnectionUnexpectedError(_logger, ex, baseUrl);
 
             // Log the failure
             _ = _griffinApiLogService.LogConnectionTestAsync(
@@ -425,9 +405,6 @@ public class GriffinConfigService : IGriffinConfigService
             return null;
         }
 
-        var autoProvisionUsers = _configuration.GetValue<bool>("Griffin:AutoProvisionUsers", true);
-        var defaultRoleString = _configuration["Griffin:DefaultProvisionedRole"] ?? "Employee";
-        var defaultRole = Enum.TryParse<UserRole>(defaultRoleString, out var role) ? role : UserRole.Employee;
         var timeoutSeconds = _configuration.GetValue<int>("Griffin:TimeoutSeconds", 30);
 
         return new GriffinConfig
@@ -435,8 +412,6 @@ public class GriffinConfigService : IGriffinConfigService
             Enabled = enabled,
             BaseUrl = baseUrl,
             TokenConsumerUrl = tokenConsumerUrl,
-            AutoProvisionUsers = autoProvisionUsers,
-            DefaultProvisionedRole = defaultRole,
             TimeoutSeconds = timeoutSeconds
         };
     }

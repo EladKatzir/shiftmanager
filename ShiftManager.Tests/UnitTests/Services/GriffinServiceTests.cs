@@ -587,8 +587,13 @@ public class GriffinServiceTests : IDisposable
         result.Error!.Code.Should().Be(GriffinErrorCode.MissingEmailAddress);
     }
 
+    // After the security review, GriffinService never silently creates users.
+    // For an ADFS-authenticated identity that has no matching ShiftManager account,
+    // AuthenticateUserAsync ALWAYS returns UserNotRegistered — the callback layer is
+    // what decides between "redirect to signup" and "show refusal" based on the
+    // FF_ALLOW_USERS_CREATION_VIA_ADFS feature flag.
     [Fact]
-    public async Task AuthenticateUserAsync_UserNotFound_AutoProvisionDisabled_FailsUserNotRegistered()
+    public async Task AuthenticateUserAsync_UserNotFound_FailsUserNotRegistered()
     {
         var callCount = 0;
         var handler = new Mock<HttpMessageHandler>();
@@ -604,7 +609,7 @@ public class GriffinServiceTests : IDisposable
                     return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("\"true\"") };
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Content = new StringContent("""{"UniqueID":"u","EmailAddress":"new@test.local","DisplayName":"D","GivenName":"G","iat":"now"}""")
+                    Content = new StringContent("""{"UniqueID":"u","EmailAddress":"new@test.local","DisplayName":"D","GivenName":"G","Surname":"S","iat":"now"}""")
                 };
             });
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(handler.Object));
@@ -613,8 +618,7 @@ public class GriffinServiceTests : IDisposable
         {
             CompanyId = CompanyId,
             BaseUrl = GriffinBaseUrl,
-            TimeoutSeconds = 10,
-            AutoProvisionUsers = false
+            TimeoutSeconds = 10
         };
 
         var result = await _service.AuthenticateUserAsync("token", config, "127.0.0.1");

@@ -81,11 +81,12 @@
                     <form method="post" asp-page="./GriffinSignup" class="auth-form" id="griffinSignupForm">
                         @Html.AntiForgeryToken()
 
-                        <!-- Hidden fields for Griffin identity (round-trip safe via BindProperty) -->
-                        <input type="hidden" name="Email" value="@Model.Email" />
+                        @* GriffinUniqueID is round-tripped for audit only; it never participates in identity
+                           matching server-side, so a tampered hidden value is harmless. The Email is NOT
+                           round-tripped — the server always re-derives it from the validated Griffin token. *@
                         <input type="hidden" name="GriffinUniqueID" value="@Model.GriffinUniqueID" />
 
-                        <!-- Authenticated identity display (read-only) -->
+                        <!-- Authenticated identity display (read-only — pulled from validated ADFS token) -->
                         <div class="auth-field">
                             <label class="auth-field__label"><loc key="Email" /></label>
                             <div class="auth-field__input" style="background: var(--bg-muted); cursor: default; opacity: 0.8;">
@@ -93,16 +94,31 @@
                             </div>
                         </div>
 
-                        <!-- DisplayName (editable — Griffin may provide OU path format) -->
+                        <!-- GivenName (editable, pre-filled from getClaims) -->
                         <div class="auth-field">
-                            <label class="auth-field__label" for="DisplayName"><loc key="DisplayName" /></label>
+                            <label class="auth-field__label" for="GivenName"><loc key="Auth_GivenName" /></label>
                             <input type="text"
-                                   id="DisplayName"
-                                   name="DisplayName"
+                                   id="GivenName"
+                                   name="GivenName"
                                    class="auth-field__input"
-                                   value="@Model.DisplayName"
-                                   placeholder="@Localizer["Auth_NamePlaceholder"]"
-                                   autocomplete="name"
+                                   value="@Model.GivenName"
+                                   placeholder="@Localizer["Auth_GivenNamePlaceholder"]"
+                                   autocomplete="given-name"
+                                   maxlength="100"
+                                   required />
+                        </div>
+
+                        <!-- Surname (editable, pre-filled from getClaims) -->
+                        <div class="auth-field">
+                            <label class="auth-field__label" for="Surname"><loc key="Auth_Surname" /></label>
+                            <input type="text"
+                                   id="Surname"
+                                   name="Surname"
+                                   class="auth-field__input"
+                                   value="@Model.Surname"
+                                   placeholder="@Localizer["Auth_SurnamePlaceholder"]"
+                                   autocomplete="family-name"
+                                   maxlength="100"
                                    required />
                         </div>
 

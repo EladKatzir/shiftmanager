@@ -477,7 +477,7 @@ using (var scope = app.Services.CreateScope())
     {
         var exportService = app.Services.GetRequiredService<IDeploymentExportService>();
         await exportService.RestoreDataAsync(app.Services);
-        logger.LogInformation("Deployment restore Phase 2 completed");
+        LogDeploymentRestoreCompleted(logger);
     }
 
     // ============================================================
@@ -497,8 +497,7 @@ using (var scope = app.Services.CreateScope())
                 var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
                 var preMigrationPath = Path.Combine(backupDir, $"app.db.pre-migration-{timestamp}");
                 File.Copy(dbFilePath, preMigrationPath, overwrite: false);
-                logger.LogInformation("Pre-migration backup created: {Path} ({SizeKB:F1} KB)",
-                    preMigrationPath, new FileInfo(preMigrationPath).Length / 1024.0);
+                LogPreMigrationBackupCreated(logger, preMigrationPath, new FileInfo(preMigrationPath).Length / 1024.0);
 
                 // Clean up old pre-migration backups — keep only the 2 most recent
                 try
@@ -511,17 +510,17 @@ using (var scope = app.Services.CreateScope())
                     foreach (var oldFile in preMigrationFiles)
                     {
                         oldFile.Delete();
-                        logger.LogInformation("Cleaned up old pre-migration backup: {FileName}", oldFile.Name);
+                        LogPreMigrationBackupCleanedUp(logger, oldFile.Name);
                     }
                 }
                 catch (Exception cleanupEx)
                 {
-                    logger.LogWarning(cleanupEx, "Failed to clean up old pre-migration backups");
+                    LogPreMigrationCleanupFailed(logger, cleanupEx);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to create pre-migration backup. Proceeding with migration.");
+                LogPreMigrationBackupCreateFailed(logger, ex);
             }
         }
     }
@@ -536,7 +535,7 @@ using (var scope = app.Services.CreateScope())
         if (!string.IsNullOrEmpty(dbDir) && !Directory.Exists(dbDir))
         {
             Directory.CreateDirectory(dbDir);
-            logger.LogInformation("Created database directory: {Path}", dbDir);
+            LogDbDirectoryCreated(logger, dbDir);
         }
     }
 
@@ -546,7 +545,7 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        logger.LogCritical(ex, "Database migration failed. The application cannot start. Error: {Message}", ex.Message);
+        LogDbMigrationFailed(logger, ex, ex.Message);
         throw;
     }
 
@@ -565,26 +564,26 @@ using (var scope = app.Services.CreateScope())
         {
             walCmd.CommandText = "PRAGMA journal_mode=WAL;";
             var result = await walCmd.ExecuteScalarAsync();
-            logger.LogInformation("SQLite journal mode set to: {Mode}", result);
+            LogSqliteJournalMode(logger, result);
         }
         using (var busyCmd = connection.CreateCommand())
         {
             busyCmd.CommandText = "PRAGMA busy_timeout=5000;";
             await busyCmd.ExecuteNonQueryAsync();
-            logger.LogInformation("SQLite busy_timeout set to 5000ms");
+            LogSqliteBusyTimeout(logger);
         }
         // G-05: Log SQLite version at startup for diagnostics
         using (var versionCmd = connection.CreateCommand())
         {
             versionCmd.CommandText = "SELECT sqlite_version();";
             var sqliteVersion = await versionCmd.ExecuteScalarAsync();
-            logger.LogInformation("SQLite version: {Version}", sqliteVersion);
+            LogSqliteVersion(logger, sqliteVersion);
         }
         await connection.CloseAsync();
     }
     catch (Exception ex)
     {
-        logger.LogWarning(ex, "Failed to configure SQLite WAL mode / busy_timeout");
+        LogSqliteWalConfigFailed(logger, ex);
     }
 
     // ============================================================
@@ -596,10 +595,7 @@ using (var scope = app.Services.CreateScope())
     // Validate owner password in production
     if (!app.Environment.IsDevelopment() && seedingOptions.Owner.Password == "admin123")
     {
-        logger.LogWarning(
-            "⚠️ SECURITY WARNING: Using default owner password in {Environment} environment. " +
-            "Please set a secure password in appsettings.json under Seeding:Owner:Password",
-            app.Environment.EnvironmentName);
+        LogDefaultOwnerPasswordWarning(logger, app.Environment.EnvironmentName);
     }
 
     // Configuration precedence (Batch T / F-A-019): SEED_ADMIN_PASSWORD env var
@@ -632,7 +628,7 @@ using (var scope = app.Services.CreateScope())
             foreach (var g in newGrants) g.Id = 0;
             db.GrantTypes.AddRange(newGrants);
             await db.SaveChangesAsync();
-            logger.LogInformation("Seeded {Count} new grant types (total defined: {Total})", newGrants.Count, grantTypes.Count);
+            LogGrantTypesSeeded(logger, newGrants.Count, grantTypes.Count);
         }
     }
 
@@ -653,7 +649,7 @@ using (var scope = app.Services.CreateScope())
             // Rename Key if it differs (e.g., "AlhutLead" → "Lead")
             if (existing.Key != seed.Key)
             {
-                logger.LogInformation("Renaming system RoleTemplate ID={Id} Key: {OldKey} → {NewKey}", existing.Id, existing.Key, seed.Key);
+                LogRoleTemplateRenameKey(logger, existing.Id, existing.Key, seed.Key);
                 existing.Key = seed.Key;
                 existing.NameKey = seed.NameKey;
                 existing.DescriptionKey = seed.DescriptionKey;
@@ -663,7 +659,7 @@ using (var scope = app.Services.CreateScope())
             // Force-update DisplayName if seed value differs (handles "Alhut SL" → "Squad Leader" etc.)
             if (!string.IsNullOrEmpty(seed.DisplayNameEN) && existing.DisplayNameEN != seed.DisplayNameEN)
             {
-                logger.LogInformation("Updating RoleTemplate ID={Id} DisplayNameEN: {Old} → {New}", existing.Id, existing.DisplayNameEN, seed.DisplayNameEN);
+                LogRoleTemplateUpdateDisplayNameEN(logger, existing.Id, existing.DisplayNameEN, seed.DisplayNameEN);
                 existing.DisplayNameEN = seed.DisplayNameEN;
                 changed = true;
             }
@@ -679,7 +675,7 @@ using (var scope = app.Services.CreateScope())
         if (renameCount > 0)
         {
             await db.SaveChangesAsync();
-            logger.LogInformation("Pre-seed: renamed/updated {Count} system role templates", renameCount);
+            LogRoleTemplatePreSeedRenamed(logger, renameCount);
         }
     }
 
@@ -694,7 +690,7 @@ using (var scope = app.Services.CreateScope())
         {
             db.RoleTemplates.AddRange(newTemplates);
             await db.SaveChangesAsync();
-            logger.LogInformation("Seeded {Count} new role templates", newTemplates.Count);
+            LogRoleTemplatesSeeded(logger, newTemplates.Count);
         }
 
         // Sync DerivedUserRole, ScopeLevel, IsVisibleInSignup, and other fields from seed to existing templates
@@ -744,7 +740,7 @@ using (var scope = app.Services.CreateScope())
         if (syncCount > 0)
         {
             await db.SaveChangesAsync();
-            logger.LogInformation("Synced {Count} existing role templates with missing seed data (DerivedUserRole, ScopeLevel)", syncCount);
+            LogRoleTemplatesSynced(logger, syncCount);
         }
 
         // Seed grants for ALL templates (existing + new) to fill in any missing mappings
@@ -788,7 +784,7 @@ using (var scope = app.Services.CreateScope())
             foreach (var m in newMappings) m.Id = 0;
             db.RoleTemplateGrants.AddRange(newMappings);
             await db.SaveChangesAsync();
-            logger.LogInformation("Seeded {MappingCount} new grant mappings", newMappings.Count);
+            LogGrantMappingsSeeded(logger, newMappings.Count);
         }
 
         // Reconcile mutable fields on existing role-template-grant mappings.
@@ -820,7 +816,7 @@ using (var scope = app.Services.CreateScope())
         if (reconciled > 0)
         {
             await db.SaveChangesAsync();
-            logger.LogInformation("Reconciled {Count} role-template-grant mappings (ScopeMode/UseOwnJobType/CanOwn/CanGive changes)", reconciled);
+            LogGrantMappingsReconciled(logger, reconciled);
         }
     }
 
@@ -852,13 +848,11 @@ using (var scope = app.Services.CreateScope())
                 var targetKey = orphanMergeMap[orphan.Key];
                 if (!targetTemplates.TryGetValue(targetKey, out var targetId))
                 {
-                    logger.LogWarning("Cannot clean up orphan template {Key} (ID={Id}): target template {TargetKey} not found",
-                        orphan.Key, orphan.Id, targetKey);
+                    LogOrphanTemplateMergeMissingTarget(logger, orphan.Key, orphan.Id, targetKey);
                     continue;
                 }
 
-                logger.LogInformation("Merging orphan RoleTemplate {Key} (ID={OldId}) → {TargetKey} (ID={NewId})",
-                    orphan.Key, orphan.Id, targetKey, targetId);
+                LogOrphanTemplateMerging(logger, orphan.Key, orphan.Id, targetKey, targetId);
 
                 // Remap AppUser.RoleTemplateId
                 var usersToRemap = await db.Users.IgnoreQueryFilters()
@@ -867,7 +861,7 @@ using (var scope = app.Services.CreateScope())
                 foreach (var user in usersToRemap)
                     user.RoleTemplateId = targetId;
                 if (usersToRemap.Any())
-                    logger.LogInformation("  Remapped {Count} AppUser.RoleTemplateId from {Old} to {New}", usersToRemap.Count, orphan.Id, targetId);
+                    LogOrphanTemplateRemapped(logger, usersToRemap.Count, "AppUser.RoleTemplateId", orphan.Id, targetId);
 
                 // Remap UserRoleAssignment.RoleTemplateId
                 var assignmentsToRemap = await db.UserRoleAssignments.IgnoreQueryFilters()
@@ -876,7 +870,7 @@ using (var scope = app.Services.CreateScope())
                 foreach (var assignment in assignmentsToRemap)
                     assignment.RoleTemplateId = targetId;
                 if (assignmentsToRemap.Any())
-                    logger.LogInformation("  Remapped {Count} UserRoleAssignment.RoleTemplateId from {Old} to {New}", assignmentsToRemap.Count, orphan.Id, targetId);
+                    LogOrphanTemplateRemapped(logger, assignmentsToRemap.Count, "UserRoleAssignment.RoleTemplateId", orphan.Id, targetId);
 
                 // Remap UserJoinRequest.RequestedRoleTemplateId
                 var requestsToRemap = await db.UserJoinRequests.IgnoreQueryFilters()
@@ -885,16 +879,12 @@ using (var scope = app.Services.CreateScope())
                 foreach (var request in requestsToRemap)
                     request.RequestedRoleTemplateId = targetId;
                 if (requestsToRemap.Any())
-                    logger.LogInformation("  Remapped {Count} UserJoinRequest.RequestedRoleTemplateId from {Old} to {New}", requestsToRemap.Count, orphan.Id, targetId);
+                    LogOrphanTemplateRemapped(logger, requestsToRemap.Count, "UserJoinRequest.RequestedRoleTemplateId", orphan.Id, targetId);
 
-                // Remap GriffinConfig.DefaultProvisionedRoleTemplateId
-                var configsToRemap = await db.GriffinConfigs.IgnoreQueryFilters()
-                    .Where(c => c.DefaultProvisionedRoleTemplateId == orphan.Id)
-                    .ToListAsync();
-                foreach (var config in configsToRemap)
-                    config.DefaultProvisionedRoleTemplateId = targetId;
-                if (configsToRemap.Any())
-                    logger.LogInformation("  Remapped {Count} GriffinConfig.DefaultProvisionedRoleTemplateId from {Old} to {New}", configsToRemap.Count, orphan.Id, targetId);
+                // (Formerly remapped GriffinConfig.DefaultProvisionedRoleTemplateId — that column
+                // was dropped when SSO user-provisioning moved to the FF_ALLOW_USERS_CREATION_VIA_ADFS
+                // feature flag and admin-approved join requests. No GriffinConfig column references
+                // RoleTemplate any more, so the remap step is gone.)
 
                 // Null out RoleAssignmentAudit references (FK with Restrict delete — would block removal)
                 var auditsFrom = await db.RoleAssignmentAudits.IgnoreQueryFilters()
@@ -911,7 +901,7 @@ using (var scope = app.Services.CreateScope())
 
                 var auditCount = auditsFrom.Count + auditsTo.Count;
                 if (auditCount > 0)
-                    logger.LogInformation("  Remapped {Count} RoleAssignmentAudit references from {Old} to {New}", auditCount, orphan.Id, targetId);
+                    LogOrphanTemplateRemapped(logger, auditCount, "RoleAssignmentAudit references", orphan.Id, targetId);
 
                 // Delete RoleTemplateGrants for the orphan
                 var orphanGrants = await db.RoleTemplateGrants
@@ -919,7 +909,7 @@ using (var scope = app.Services.CreateScope())
                     .ToListAsync();
                 db.RoleTemplateGrants.RemoveRange(orphanGrants);
                 if (orphanGrants.Any())
-                    logger.LogInformation("  Deleted {Count} RoleTemplateGrants for orphan template {Key}", orphanGrants.Count, orphan.Key);
+                    LogOrphanTemplateGrantsDeleted(logger, orphanGrants.Count, orphan.Key);
 
                 // Delete RoleTemplateJobTypeLabels for the orphan
                 var orphanLabels = await db.RoleTemplateJobTypeLabels
@@ -927,14 +917,14 @@ using (var scope = app.Services.CreateScope())
                     .ToListAsync();
                 db.RoleTemplateJobTypeLabels.RemoveRange(orphanLabels);
                 if (orphanLabels.Any())
-                    logger.LogInformation("  Deleted {Count} RoleTemplateJobTypeLabels for orphan template {Key}", orphanLabels.Count, orphan.Key);
+                    LogOrphanTemplateLabelsDeleted(logger, orphanLabels.Count, orphan.Key);
 
                 // Delete the orphan template itself
                 db.RoleTemplates.Remove(orphan);
             }
 
             await db.SaveChangesAsync();
-            logger.LogInformation("Orphan role template cleanup complete: processed {Count} templates", orphanTemplates.Count);
+            LogOrphanTemplateCleanupComplete(logger, orphanTemplates.Count);
         }
     }
 
@@ -998,9 +988,9 @@ using (var scope = app.Services.CreateScope())
 
             await db.SaveChangesAsync();
             if (resolved > 0)
-                logger.LogInformation("Resolved {Count} sentinel TargetJobTypeId values to actual JobType IDs", resolved);
+                LogSentinelGrantsResolved(logger, resolved);
             if (removed > 0)
-                logger.LogWarning("Removed {Count} RoleTemplateGrants with unresolvable JobType sentinels (deployment may not have these JobTypes)", removed);
+                LogSentinelGrantsRemoved(logger, removed);
         }
     }
 
@@ -1019,7 +1009,7 @@ using (var scope = app.Services.CreateScope())
                 systemMol = new Molecule { AreaId = area.Id, Name = "System", DisplayName = "מערכת", Type = MoleculeType.System };
                 db.Molecules.Add(systemMol);
                 await db.SaveChangesAsync();
-                logger.LogInformation("Catch-up: Created System molecule");
+                LogCatchUpSystemMoleculeCreated(logger);
             }
 
             // 2. Ensure SystemAdmins company exists (under System molecule)
@@ -1030,12 +1020,12 @@ using (var scope = app.Services.CreateScope())
                 if (orphanedSysAdmins != null)
                 {
                     orphanedSysAdmins.MoleculeId = systemMol.Id;
-                    logger.LogInformation("Catch-up: Linked orphaned SystemAdmins company to System molecule");
+                    LogCatchUpSystemAdminsLinked(logger);
                 }
                 else
                 {
                     db.Companies.Add(new Company { Name = "SystemAdmins", DisplayName = "מנהלי מערכת", Slug = "system-admins", MoleculeId = systemMol.Id });
-                    logger.LogInformation("Catch-up: Created SystemAdmins company");
+                    LogCatchUpSystemAdminsCreated(logger);
                 }
                 await db.SaveChangesAsync();
             }
@@ -1062,8 +1052,7 @@ using (var scope = app.Services.CreateScope())
                     });
                 }
                 await db.SaveChangesAsync();
-                logger.LogInformation("Catch-up: Created {Count} missing HQ companies for molecules: {Names}",
-                    missingHQ.Count, string.Join(", ", missingHQ.Select(m => m.Name)));
+                LogCatchUpHqCompaniesCreated(logger, missingHQ.Count, string.Join(", ", missingHQ.Select(m => m.Name)));
             }
         }
     }
@@ -1081,7 +1070,7 @@ using (var scope = app.Services.CreateScope())
         // Check if molecule already exists
         if (await db.Molecules.AnyAsync(m => m.Name == molConfig.Name))
         {
-            logger.LogDebug("Molecule {Name} already exists, skipping", molConfig.Name);
+            LogAdditionalMoleculeExists(logger, molConfig.Name);
             continue;
         }
 
@@ -1089,14 +1078,14 @@ using (var scope = app.Services.CreateScope())
         var area = await db.Areas.FirstOrDefaultAsync(a => a.Name == molConfig.AreaName);
         if (area == null)
         {
-            logger.LogWarning("Area {AreaName} not found for molecule {MoleculeName}, skipping", molConfig.AreaName, molConfig.Name);
+            LogAdditionalMoleculeAreaMissing(logger, molConfig.AreaName, molConfig.Name);
             continue;
         }
 
         // Parse molecule type
         if (!Enum.TryParse<MoleculeType>(molConfig.Type, true, out var moleculeType))
         {
-            logger.LogWarning("Invalid molecule type {Type} for {Name}, defaulting to Workforce", molConfig.Type, molConfig.Name);
+            LogAdditionalMoleculeInvalidType(logger, molConfig.Type, molConfig.Name);
             moleculeType = MoleculeType.Workforce;
         }
 
@@ -1109,7 +1098,7 @@ using (var scope = app.Services.CreateScope())
         };
         db.Molecules.Add(molecule);
         await db.SaveChangesAsync();
-        logger.LogInformation("Seeded additional molecule: {Name} ({Type})", molConfig.Name, moleculeType);
+        LogAdditionalMoleculeSeeded(logger, molConfig.Name, moleculeType);
     }
 
     // Seed additional companies from configuration
@@ -1122,14 +1111,14 @@ using (var scope = app.Services.CreateScope())
         var molecule = await db.Molecules.FirstOrDefaultAsync(m => m.Name == compConfig.MoleculeName);
         if (molecule == null)
         {
-            logger.LogWarning("Molecule {MoleculeName} not found for company {CompanyName}, skipping", compConfig.MoleculeName, compConfig.Name);
+            LogAdditionalCompanyMoleculeMissing(logger, compConfig.MoleculeName, compConfig.Name);
             continue;
         }
 
         // Check if company already exists IN THIS MOLECULE (same name can exist in different molecules)
         if (await db.Companies.AnyAsync(c => c.Name == compConfig.Name && c.MoleculeId == molecule.Id))
         {
-            logger.LogDebug("Company {Name} already exists in molecule {Molecule}, skipping", compConfig.Name, compConfig.MoleculeName);
+            LogAdditionalCompanyExists(logger, compConfig.Name, compConfig.MoleculeName);
             continue;
         }
 
@@ -1142,7 +1131,7 @@ using (var scope = app.Services.CreateScope())
         };
         db.Companies.Add(newCompany);
         await db.SaveChangesAsync();
-        logger.LogInformation("Seeded additional company: {Name} in molecule {Molecule}", compConfig.Name, compConfig.MoleculeName);
+        LogAdditionalCompanySeeded(logger, compConfig.Name, compConfig.MoleculeName);
     }
 
     // Seed additional departments from configuration (for Tech molecules)
@@ -1155,14 +1144,14 @@ using (var scope = app.Services.CreateScope())
         var molecule = await db.Molecules.FirstOrDefaultAsync(m => m.Name == deptConfig.MoleculeName);
         if (molecule == null)
         {
-            logger.LogWarning("Molecule {MoleculeName} not found for department {DepartmentName}, skipping", deptConfig.MoleculeName, deptConfig.Name);
+            LogAdditionalDepartmentMoleculeMissing(logger, deptConfig.MoleculeName, deptConfig.Name);
             continue;
         }
 
         // Check if department already exists IN THIS MOLECULE
         if (await db.Departments.AnyAsync(d => d.Name == deptConfig.Name && d.MoleculeId == molecule.Id))
         {
-            logger.LogDebug("Department {Name} already exists in molecule {Molecule}, skipping", deptConfig.Name, deptConfig.MoleculeName);
+            LogAdditionalDepartmentExists(logger, deptConfig.Name, deptConfig.MoleculeName);
             continue;
         }
 
@@ -1175,7 +1164,7 @@ using (var scope = app.Services.CreateScope())
         };
         db.Departments.Add(newDepartment);
         await db.SaveChangesAsync();
-        logger.LogInformation("Seeded additional department: {Name} in molecule {Molecule}", deptConfig.Name, deptConfig.MoleculeName);
+        LogAdditionalDepartmentSeeded(logger, deptConfig.Name, deptConfig.MoleculeName);
     }
 
     // ============================================================
@@ -1239,7 +1228,7 @@ using (var scope = app.Services.CreateScope())
             PasswordSalt = salt
         });
         await db.SaveChangesAsync();
-        logger.LogInformation("Created owner user: {Email}", seedingOptions.Owner.Email);
+        LogOwnerCreated(logger, seedingOptions.Owner.Email);
     }
     else
     {
@@ -1252,7 +1241,7 @@ using (var scope = app.Services.CreateScope())
             ownerUser.FailedLoginAttempts = 0;
             ownerUser.LockoutEnd = null;
             await db.SaveChangesAsync();
-            logger.LogInformation("Fixed owner user flags: {Email}", seedingOptions.Owner.Email);
+            LogOwnerFlagsFixed(logger, seedingOptions.Owner.Email);
         }
     }
 
@@ -1371,7 +1360,7 @@ using (var scope = app.Services.CreateScope())
         {
             db.FeatureFlags.AddRange(newFlags);
             await db.SaveChangesAsync();
-            logger.LogInformation("Seeded {Count} new feature flags (total defined: {Total})", newFlags.Count, featureFlags.Count);
+            LogFeatureFlagsSeeded(logger, newFlags.Count, featureFlags.Count);
         }
     }
 
@@ -1396,7 +1385,7 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred while seeding test data");
+        LogSeedTestDataError(logger, ex);
     }
 
     // ============================================================
@@ -1410,7 +1399,7 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred while seeding E2E test data");
+        LogSeedE2ETestDataError(logger, ex);
     }
 
     // ============================================================
@@ -1424,7 +1413,7 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred while seeding QA test users");
+        LogSeedQaTestUsersError(logger, ex);
     }
 
     // Repair grants for all test users with RoleTemplates (seeder creates users but doesn't assign role template grants)
@@ -1439,12 +1428,12 @@ using (var scope = app.Services.CreateScope())
         {
             var repaired = await grantService.RepairUserGrantsAsync(user.Id);
             if (repaired > 0)
-                logger.LogInformation("Repaired {Count} grants for test user {Email}", repaired, user.Email);
+                LogTestUserGrantsRepaired(logger, repaired, user.Email);
         }
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred while repairing test user grants");
+        LogTestUserGrantRepairError(logger, ex);
     }
 
     // Re-provision grants for existing users whose role templates gained new grants (e.g., EditChoreTypes for Lead/BRDirector/MoleculeAdmin).
@@ -1468,15 +1457,15 @@ using (var scope = app.Services.CreateScope())
                 if (repaired > 0)
                 {
                     totalRepaired += repaired;
-                    logger.LogInformation("Re-provisioned {Count} grants for user {Email} (template {TemplateId})", repaired, user.Email, user.RoleTemplateId);
+                    LogUserGrantsReprovisioned(logger, repaired, user.Email, user.RoleTemplateId);
                 }
             }
             if (totalRepaired > 0)
-                logger.LogInformation("Grant re-provisioning complete: {Total} grants added for {UserCount} users with templates [2,3,7]", totalRepaired, usersToRepair.Count);
+                LogUserGrantReprovisioningComplete(logger, totalRepaired, usersToRepair.Count);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while re-provisioning grants for existing users");
+            LogUserGrantReprovisioningError(logger, ex);
         }
     }
 
@@ -1546,15 +1535,13 @@ using (var scope = app.Services.CreateScope())
             {
                 totalRepaired += await grantService.RepairUserGrantsAsync(uid);
             }
-            logger.LogInformation(
-                "Role-scope migration: re-provisioned {GrantCount} grants for {UserCount} users (Kabar/Lead/Assigner chore+on-duty scope expansion)",
-                totalRepaired, affectedUserIds.Count);
+            LogRoleScopeMigrationComplete(logger, totalRepaired, affectedUserIds.Count);
         }
 
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Role-scope migration failed (Kabar/Lead/Assigner chore policy)");
+        LogRoleScopeMigrationFailed(logger, ex);
     }
 
     // ============================================================
@@ -1618,12 +1605,12 @@ using (var scope = app.Services.CreateScope())
         if (rewritten > 0)
         {
             await db.SaveChangesAsync();
-            logger.LogInformation("Backfilled DerivedRotationRule.Anchor for {Count} legacy HomeTypes", rewritten);
+            LogDerivedRotationAnchorBackfilled(logger, rewritten);
         }
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "DerivedRotationRule.Anchor backfill failed");
+        LogDerivedRotationAnchorBackfillFailed(logger, ex);
     }
 
     // ============================================================
@@ -1652,7 +1639,7 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "MoleculeApprovalSettings seed failed");
+        LogMoleculeApprovalSettingsSeedFailed(logger, ex);
     }
 
     // ============================================================
@@ -1676,15 +1663,14 @@ using (var scope = app.Services.CreateScope())
             foreach (var rid in requestsToMaterialise)
             {
                 try { await materialiser.SyncMaterialisedHomeRowsAsync(rid); succeeded++; }
-                catch (Exception ex) { failed++; logger.LogWarning(ex, "Materialiser backfill failed for request {Id}", rid); }
+                catch (Exception ex) { failed++; LogMaterialiserBackfillRequestFailed(logger, ex, rid); }
             }
-            logger.LogInformation("Materialiser backfill: {Succeeded} succeeded, {Failed} failed (of {Total})",
-                succeeded, failed, requestsToMaterialise.Count);
+            LogMaterialiserBackfillSummary(logger, succeeded, failed, requestsToMaterialise.Count);
         }
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Materialiser backfill block failed");
+        LogMaterialiserBackfillBlockFailed(logger, ex);
     }
 }
 
@@ -1703,9 +1689,9 @@ using (var scope = app.Services.CreateScope())
 startupStopwatch.Stop();
 {
     var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
-    startupLogger.LogInformation("Database migration + seeding completed in {ElapsedMs}ms", startupStopwatch.ElapsedMilliseconds);
+    LogStartupSeedingCompleted(startupLogger, startupStopwatch.ElapsedMilliseconds);
     if (startupStopwatch.ElapsedMilliseconds > 5000)
-        startupLogger.LogWarning("Slow startup detected ({ElapsedMs}ms). Consider pre-warming or optimizing seed checks.", startupStopwatch.ElapsedMilliseconds);
+        LogStartupSlow(startupLogger, startupStopwatch.ElapsedMilliseconds);
 }
 
 if (app.Environment.IsDevelopment())
@@ -1913,7 +1899,7 @@ app.Use(async (context, next) =>
     {
         var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
             .CreateLogger("ApiAuthExceptionGuard");
-        logger.LogError(ex, "Unhandled exception during API authentication for {Path}", context.Request.Path);
+        LogApiAuthUnhandledException(logger, ex, context.Request.Path);
 
         if (!context.Response.HasStarted)
         {
@@ -2091,15 +2077,11 @@ app.MapGet("/api/v1/version", () =>
         var protector = dpProvider.CreateProtector("startup-check");
         var testData = protector.Protect("test");
         protector.Unprotect(testData);
-        startupLogger.LogInformation("Data Protection keys verified at: {Path}",
-            Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys"));
+        LogDataProtectionKeysVerified(startupLogger, Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys"));
     }
     catch (Exception ex)
     {
-        startupLogger.LogCritical(ex, "DATA PROTECTION KEY FAILURE: Cannot encrypt/decrypt data. " +
-            "Email configs and other encrypted data will be unreadable. " +
-            "Check DataProtection-Keys directory at: {Path}",
-            Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys"));
+        LogDataProtectionKeyFailure(startupLogger, ex, Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys"));
     }
 
     // H-05: Warn if DataProtection-Keys directory is empty or missing (critical for deployment migration)
@@ -2107,11 +2089,7 @@ app.MapGet("/api/v1/version", () =>
         var dpKeysDir = Path.Combine(AppContext.BaseDirectory, "DataProtection-Keys");
         if (!Directory.Exists(dpKeysDir) || !Directory.GetFiles(dpKeysDir, "*.xml").Any())
         {
-            startupLogger.LogWarning(
-                "DEPLOYMENT WARNING: DataProtection-Keys directory is empty or missing at {Path}. " +
-                "This means new encryption keys will be generated. All previously encrypted data " +
-                "(email API keys, session cookies) from other deployments will be unreadable. " +
-                "Include DataProtection-Keys in your backup and deployment package.", dpKeysDir);
+            LogDataProtectionKeysMissing(startupLogger, dpKeysDir);
         }
     }
 
@@ -2123,35 +2101,26 @@ app.MapGet("/api/v1/version", () =>
 
         if (fullDbPath.StartsWith(@"\\") || fullDbPath.StartsWith("//"))
         {
-            startupLogger.LogCritical(
-                "SQLITE ON NETWORK SHARE DETECTED: {Path}. " +
-                "SQLite file locking is unreliable on network shares and can cause database corruption. " +
-                "Move app.db to a local disk immediately.", fullDbPath);
+            LogSqliteNetworkShareDetected(startupLogger, fullDbPath);
         }
     }
 
     // Timezone policy assertion (fixes A-04)
     var localTz = TimeZoneInfo.Local;
-    startupLogger.LogInformation("Server timezone: {TimeZone} (UTC offset: {Offset})",
-        localTz.DisplayName, localTz.BaseUtcOffset);
+    LogServerTimezone(startupLogger, localTz.DisplayName, localTz.BaseUtcOffset);
     // Warn if server timezone doesn't match expected Israel timezone
     var expectedTzId = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
         ? "Israel Standard Time" : "Asia/Jerusalem";
     if (localTz.Id != expectedTzId && !localTz.DisplayName.Contains("Israel") && !localTz.DisplayName.Contains("Jerusalem"))
     {
-        startupLogger.LogWarning(
-            "Server timezone '{CurrentTZ}' does not match expected '{ExpectedTZ}'. " +
-            "Date boundaries for shifts may be incorrect. Set server timezone to Israel Standard Time.",
-            localTz.Id, expectedTzId);
+        LogServerTimezoneMismatch(startupLogger, localTz.Id, expectedTzId);
     }
 
     // Default credentials warning (fixes D-01, B-06) — checked during seeding but also at startup banner level
     var seedingPassword = app.Configuration.GetValue<string>("Seeding:Owner:Password");
     if (seedingPassword == "admin123" && !app.Environment.IsDevelopment())
     {
-        startupLogger.LogWarning(
-            "DEFAULT CREDENTIALS: Owner account is using the default password 'admin123'. " +
-            "Change immediately in production via appsettings.json Seeding:Owner:Password or SEED_ADMIN_PASSWORD env var.");
+        LogDefaultCredentialsBanner(startupLogger);
     }
 
     // AllowPublicSignup warning (fixes H-07, B-10)
@@ -2160,9 +2129,7 @@ app.MapGet("/api/v1/version", () =>
         var flagService = flagScope.ServiceProvider.GetRequiredService<IFeatureFlagService>();
         if (flagService.IsEnabled(FeatureFlagSeed.Flags.AllowPublicSignup) && !app.Environment.IsDevelopment())
         {
-            startupLogger.LogWarning(
-                "PUBLIC SIGNUP ENABLED: Anyone with access to this server can create an account. " +
-                "Disable via Owner > Feature Flags or set Features:AllowPublicSignup=false in appsettings.json.");
+            LogPublicSignupEnabledWarning(startupLogger);
         }
     }
 }
@@ -2371,22 +2338,18 @@ void DisplayStartupBanner(WebApplication app)
         foreach (var key in coreFlags)
         {
             var val = flagService.IsEnabled(key);
-            featureFlagLogger.LogInformation("FeatureFlag: {Key}={Value}", key, val);
+            LogFeatureFlagState(featureFlagLogger, key, val);
             if (!val) disabledCoreFlags.Add(key);
         }
         foreach (var key in operationalFlags)
         {
             var val = flagService.IsEnabled(key);
-            featureFlagLogger.LogInformation("FeatureFlag: {Key}={Value}", key, val);
+            LogFeatureFlagState(featureFlagLogger, key, val);
         }
 
         if (disabledCoreFlags.Count > 0)
         {
-            featureFlagLogger.LogWarning(
-                "DISABLED CORE FLAGS DETECTED: {Flags}. " +
-                "These flags control production features and should normally be enabled. " +
-                "To fix: log in as Owner > Feature Flags page, or delete app.db to re-seed defaults.",
-                string.Join(", ", disabledCoreFlags));
+            LogDisabledCoreFlags(featureFlagLogger, string.Join(", ", disabledCoreFlags));
         }
     }
 
@@ -2410,9 +2373,7 @@ void DisplayStartupBanner(WebApplication app)
     Console.WriteLine();
     
     // Log the startup for structured logging as well
-    logger.LogInformation(
-        "ShiftManager started. Version={Version}, Environment={Environment}, URLs={Urls}, Email={EmailEnabled}, Griffin={GriffinEnabled}, API={ApiEnabled}",
-        version, env, string.Join(";", urlList), emailEnabled, griffinEnabled, apiEnabled);
+    LogStartupBanner(logger, version, env, string.Join(";", urlList), emailEnabled, griffinEnabled, apiEnabled);
 }
 
 // Make Program accessible to integration tests

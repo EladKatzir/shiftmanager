@@ -16,7 +16,7 @@ namespace ShiftManager.Services;
 
 // SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — SSO auth flow requires cross-company user search
 // before tenant context is established; scoped by explicit email/companyId parameters
-public class GriffinService : IGriffinService
+public partial class GriffinService : IGriffinService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly AppDbContext _dbContext;
@@ -49,15 +49,15 @@ public class GriffinService : IGriffinService
 
     public string BuildAuthenticationUrl(string griffinBaseUrl, string tokenConsumerUrl)
     {
-        _logger.LogDebug("Building Griffin authentication URL:");
-        _logger.LogDebug("  - Griffin BaseUrl: {BaseUrl}", griffinBaseUrl);
-        _logger.LogDebug("  - TokenConsumerUrl (NOT encoded): {TokenConsumerUrl}", tokenConsumerUrl);
+        LogBuildingAuthUrl(_logger);
+        LogAuthUrlBaseUrl(_logger, griffinBaseUrl);
+        LogAuthUrlTokenConsumerUrl(_logger, tokenConsumerUrl);
 
         // DON'T encode the entire URL - Griffin needs to see a valid URL structure.
         // The tokenConsumerUrl already has its returnUrl parameter properly encoded by the caller.
         var finalUrl = $"{griffinBaseUrl.TrimEnd('/')}/authentication?tokenConsumerURL={tokenConsumerUrl}";
 
-        _logger.LogInformation("Griffin authentication URL constructed: {FinalUrl}", finalUrl);
+        LogAuthUrlConstructed(_logger, finalUrl);
         return finalUrl;
     }
 
@@ -71,13 +71,12 @@ public class GriffinService : IGriffinService
         // comparison" section, which asserts that ?hash= succeeds and ?token= is rejected.
         var url = $"{griffinBaseUrl.TrimEnd('/')}/authentication/claimToken?hash={Uri.EscapeDataString(hashedToken)}";
 
-        _logger.LogDebug("Exchanging Griffin hashed token for JWT");
+        LogExchangingToken(_logger);
 
         var http = await CallGriffinGetAsync(url, timeoutSeconds, GriffinStage.TokenExchange);
         if (!http.Success)
         {
-            _logger.LogWarning("Griffin token exchange failed [{ErrorToken}]: {Detail}",
-                http.Error!.ErrorToken, http.Error.TechnicalDetail);
+            LogStageCallFailed(_logger, "token exchange", http.Error!.ErrorToken, http.Error.TechnicalDetail);
             _securityLogger.LogAuthenticationFailure("Griffin SSO", http.Error.Host ?? "unknown",
                 $"Token exchange {http.Error.ErrorToken}");
             return GriffinApiResult<string>.FailFrom(http);
@@ -92,11 +91,11 @@ public class GriffinService : IGriffinService
                 $"claimToken returned a response we could not parse into a JWT. Raw body (first 300 chars): '{TrimForLog(http.Value)}'",
                 TryGetHost(url),
                 ResponsePreview: TrimForLog(http.Value));
-            _logger.LogWarning("Griffin token exchange returned unparsable body [{ErrorToken}]", err.ErrorToken);
+            LogTokenExchangeUnparsable(_logger, err.ErrorToken);
             return GriffinApiResult<string>.Fail(err);
         }
 
-        _logger.LogDebug("Griffin token exchange successful, received JWT");
+        LogTokenExchangeSuccess(_logger);
         return GriffinApiResult<string>.Ok(jwt);
     }
 
@@ -106,13 +105,12 @@ public class GriffinService : IGriffinService
         // Risk: token may appear in Griffin server access logs. Acceptable for air-gapped deployment.
         var url = $"{griffinBaseUrl.TrimEnd('/')}/authorization/validate?token={Uri.EscapeDataString(token)}";
 
-        _logger.LogDebug("Validating Griffin token (masked: ***)");
+        LogValidatingToken(_logger);
 
         var http = await CallGriffinGetAsync(url, timeoutSeconds, GriffinStage.TokenValidation);
         if (!http.Success)
         {
-            _logger.LogWarning("Griffin token validation call failed [{ErrorToken}]: {Detail}",
-                http.Error!.ErrorToken, http.Error.TechnicalDetail);
+            LogStageCallFailed(_logger, "token validation", http.Error!.ErrorToken, http.Error.TechnicalDetail);
             _securityLogger.LogAuthenticationFailure("Griffin SSO", http.Error.Host ?? "unknown",
                 $"Token validation {http.Error.ErrorToken}");
             return GriffinApiResult<bool>.FailFrom(http);
@@ -131,7 +129,7 @@ public class GriffinService : IGriffinService
             $"validate returned '{TrimForLog(body)}' — expected boolean true/false/1/0/yes/no",
             TryGetHost(url),
             ResponsePreview: TrimForLog(body));
-        _logger.LogWarning("Griffin validate returned unexpected shape [{ErrorToken}]", err.ErrorToken);
+        LogValidateUnexpectedShape(_logger, err.ErrorToken);
         return GriffinApiResult<bool>.Fail(err);
     }
 
@@ -140,13 +138,12 @@ public class GriffinService : IGriffinService
         // SECURITY NOTE: Token passed as query parameter per Griffin API protocol.
         var url = $"{griffinBaseUrl.TrimEnd('/')}/authorization/getClaims?token={Uri.EscapeDataString(token)}";
 
-        _logger.LogDebug("Fetching Griffin claims (token masked: ***)");
+        LogFetchingClaims(_logger);
 
         var http = await CallGriffinGetAsync(url, timeoutSeconds, GriffinStage.ClaimsRetrieval);
         if (!http.Success)
         {
-            _logger.LogWarning("Griffin getClaims call failed [{ErrorToken}]: {Detail}",
-                http.Error!.ErrorToken, http.Error.TechnicalDetail);
+            LogStageCallFailed(_logger, "getClaims", http.Error!.ErrorToken, http.Error.TechnicalDetail);
             _securityLogger.LogAuthenticationFailure("Griffin SSO", http.Error.Host ?? "unknown",
                 $"Claims retrieval {http.Error.ErrorToken}");
             return GriffinApiResult<GriffinClaimsDto>.FailFrom(http);
@@ -176,7 +173,7 @@ public class GriffinService : IGriffinService
                 $"getClaims body was not valid JSON: {ex.Message}. Body preview: '{TrimForLog(body)}'",
                 TryGetHost(url),
                 ResponsePreview: TrimForLog(body));
-            _logger.LogWarning("Griffin getClaims returned invalid JSON [{ErrorToken}]", err.ErrorToken);
+            LogGetClaimsInvalidJson(_logger, err.ErrorToken);
             return GriffinApiResult<GriffinClaimsDto>.Fail(err);
         }
 
@@ -194,7 +191,7 @@ public class GriffinService : IGriffinService
                 GriffinErrorCode.MissingEmailAddress,
                 "Claims JSON did not contain a non-empty EmailAddress field",
                 TryGetHost(url));
-            _logger.LogWarning("Griffin getClaims missing EmailAddress [{ErrorToken}]", err.ErrorToken);
+            LogGetClaimsMissingEmail(_logger, err.ErrorToken);
             _securityLogger.LogSecurityThreat("MissingClaims",
                 "Griffin token claims missing EmailAddress — possible token tampering or Griffin misconfiguration", "unknown");
             return GriffinApiResult<GriffinClaimsDto>.Fail(err);
@@ -207,11 +204,11 @@ public class GriffinService : IGriffinService
                 GriffinErrorCode.MissingUniqueId,
                 "Claims JSON did not contain a non-empty UniqueID field",
                 TryGetHost(url));
-            _logger.LogWarning("Griffin getClaims missing UniqueID [{ErrorToken}]", err.ErrorToken);
+            LogGetClaimsMissingUniqueId(_logger, err.ErrorToken);
             return GriffinApiResult<GriffinClaimsDto>.Fail(err);
         }
 
-        _logger.LogDebug("Griffin claims retrieved for EmailAddress: {EmailAddress}", claims.EmailAddress);
+        LogClaimsRetrieved(_logger, claims.EmailAddress);
         return GriffinApiResult<GriffinClaimsDto>.Ok(claims);
     }
 
@@ -220,11 +217,11 @@ public class GriffinService : IGriffinService
         var cacheKey = $"griffin_claims_{ComputeSHA256Hash(token)}";
         if (_cache.TryGetValue<GriffinClaimsDto>(cacheKey, out var cachedClaims) && cachedClaims != null)
         {
-            _logger.LogDebug("Griffin claims cache hit");
+            LogClaimsCacheHit(_logger);
             return GriffinApiResult<GriffinClaimsDto>.Ok(cachedClaims);
         }
 
-        _logger.LogDebug("Griffin claims cache miss, calling API");
+        LogClaimsCacheMiss(_logger);
 
         var validateResult = await ValidateTokenAsync(token, griffinBaseUrl, timeoutSeconds);
         if (!validateResult.Success)
@@ -285,27 +282,19 @@ public class GriffinService : IGriffinService
 
         if (user == null)
         {
-            if (!config.AutoProvisionUsers)
-            {
-                var err = new GriffinApiError(
-                    GriffinStage.UserLookup,
-                    GriffinErrorCode.UserNotRegistered,
-                    $"User {griffinClaims.EmailAddress} not found and auto-provisioning is disabled");
-                _logger.LogInformation("Griffin user {Email} not found and auto-provisioning disabled", griffinClaims.EmailAddress);
-                _securityLogger.LogAuthenticationFailure(griffinClaims.EmailAddress, ipAddress, "User not found and auto-provisioning disabled");
-                return GriffinApiResult<ClaimsPrincipal>.Fail(err);
-            }
-
-            user = await AutoProvisionUserAsync(griffinClaims, config);
-            if (user == null)
-            {
-                var err = new GriffinApiError(
-                    GriffinStage.UserProvisioning,
-                    GriffinErrorCode.AutoProvisionFailed,
-                    $"AutoProvisionUserAsync returned null for {griffinClaims.EmailAddress} — check server logs for DB error");
-                _securityLogger.LogAuthenticationFailure(griffinClaims.EmailAddress, ipAddress, "Auto-provisioning failed");
-                return GriffinApiResult<ClaimsPrincipal>.Fail(err);
-            }
+            // ADFS authenticated successfully but no matching ShiftManager account exists.
+            // The callback (Pages/Auth/GriffinCallback.cshtml.cs) decides what to do next
+            // based on the FF_ALLOW_USERS_CREATION_VIA_ADFS feature flag:
+            //   - Flag ON  → redirect to /Auth/GriffinSignup (admin-approval join request)
+            //   - Flag OFF → render refusal page asking the user to contact their officer
+            // Either way, we never silently create an account here.
+            var err = new GriffinApiError(
+                GriffinStage.UserLookup,
+                GriffinErrorCode.UserNotRegistered,
+                $"User {griffinClaims.EmailAddress} authenticated via Griffin but has no ShiftManager account");
+            LogUserNotRegistered(_logger, griffinClaims.EmailAddress);
+            _securityLogger.LogAuthenticationFailure(griffinClaims.EmailAddress, ipAddress, "ADFS-authenticated user has no ShiftManager account");
+            return GriffinApiResult<ClaimsPrincipal>.Fail(err);
         }
 
         // Login-time backfill safety net: if user has no RoleTemplate, derive from Role + JobType
@@ -320,7 +309,7 @@ public class GriffinService : IGriffinService
                 if (template.DerivedUserRole.HasValue)
                     user.Role = template.DerivedUserRole.Value;
                 await _dbContext.SaveChangesAsync();
-                _logger.LogInformation("Backfilled RoleTemplateId={TemplateId} for Griffin user {UserId}", template.Id, user.Id);
+                LogBackfilledRoleTemplate(_logger, template.Id, user.Id);
             }
         }
 
@@ -382,61 +371,10 @@ public class GriffinService : IGriffinService
         var identity = new ClaimsIdentity(claims, "Griffin");
         var principal = new ClaimsPrincipal(identity);
 
-        _logger.LogInformation("Griffin authentication successful for user {UserId} ({Email})", user.Id, user.Email);
+        LogAuthenticationSuccess(_logger, user.Id, user.Email);
         _securityLogger.LogAuthenticationSuccess(user.Id, user.Email, user.Role.ToString(), ipAddress);
 
         return GriffinApiResult<ClaimsPrincipal>.Ok(principal);
-    }
-
-    private async Task<AppUser?> AutoProvisionUserAsync(GriffinClaimsDto griffinClaims, GriffinConfig config)
-    {
-        try
-        {
-            var user = new AppUser
-            {
-                CompanyId = config.CompanyId,
-                Email = griffinClaims.EmailAddress,
-                DisplayName = griffinClaims.DisplayName,
-                Role = config.DefaultProvisionedRole,
-                RoleTemplateId = config.DefaultProvisionedRoleTemplateId,
-                IsActive = true,
-                PasswordHash = Array.Empty<byte>(),
-                PasswordSalt = Array.Empty<byte>()
-            };
-
-            if (config.DefaultProvisionedRoleTemplateId.HasValue)
-            {
-                var template = await _dbContext.RoleTemplates.FindAsync(config.DefaultProvisionedRoleTemplateId.Value);
-                if (template?.DerivedUserRole.HasValue == true)
-                    user.Role = template.DerivedUserRole.Value;
-            }
-
-            _dbContext.Users.Add(user);
-            await _dbContext.SaveChangesAsync();
-
-            _logger.LogInformation("Auto-provisioned Griffin user: {Email} with role {Role}, template {TemplateId}",
-                user.Email, user.Role, user.RoleTemplateId);
-            _securityLogger.LogSensitiveDataAccess(user.Id, "AppUser", "AutoProvision via Griffin SSO");
-            _logger.LogWarning("Griffin auto-provisioned user {Email} has no molecule/hierarchy placement. " +
-                "Owner or Manager must assign placement before user can access operational features (D-06).",
-                user.Email);
-
-            await _auditLogService.LogSystemActionAsync(
-                "GriffinAutoProvision",
-                "AppUser",
-                user.Id,
-                $"Auto-provisioned Griffin user: {user.Email} — PENDING PLACEMENT (no molecule/hierarchy assigned)",
-                FormattableString.Invariant($"Role={user.Role}, CompanyId={user.CompanyId}, EmailAddress={griffinClaims.EmailAddress}"));
-
-            return user;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to auto-provision user for {EmailAddress}", griffinClaims.EmailAddress);
-            _securityLogger.LogSecurityThreat("AutoProvisionError",
-                $"Failed to auto-provision Griffin user {griffinClaims.EmailAddress}: {ex.Message}", null);
-            return null;
-        }
     }
 
     // ------------------------------------------------------------------
@@ -489,7 +427,7 @@ public class GriffinService : IGriffinService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception calling Griffin endpoint {Url}", url);
+            LogUnhandledHttpException(_logger, ex, url);
             return GriffinApiResult<string>.Fail(new GriffinApiError(
                 stage, GriffinErrorCode.UnhandledException,
                 $"Unhandled {ex.GetType().Name} calling {url}: {ex.Message}", host));

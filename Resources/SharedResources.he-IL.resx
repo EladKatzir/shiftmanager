@@ -3552,18 +3552,6 @@
   <data name="Owner_Griffin_UserProvisioning" xml:space="preserve">
     <value>יצירת משתמשים אוטומטית</value>
   </data>
-  <data name="Owner_Griffin_AutoProvision" xml:space="preserve">
-    <value>יצור משתמשים חדשים אוטומטית</value>
-  </data>
-  <data name="Owner_Griffin_AutoProvision_Desc" xml:space="preserve">
-    <value>צור חשבונות משתמש אוטומטית בכניסה ראשונה דרך Griffin</value>
-  </data>
-  <data name="Owner_Griffin_DefaultRole" xml:space="preserve">
-    <value>תפקיד ברירת מחדל</value>
-  </data>
-  <data name="Owner_Griffin_DefaultRole_Desc" xml:space="preserve">
-    <value>תפקיד ברירת מחדל שמוקצה למשתמשים שנוצרו אוטומטית</value>
-  </data>
   <data name="Owner_Griffin_TestConnection" xml:space="preserve">
     <value>בדוק חיבור</value>
   </data>
@@ -6928,6 +6916,18 @@
   <data name="Auth_NamePlaceholder" xml:space="preserve">
     <value>הזן את שמך המלא</value>
   </data>
+  <data name="Auth_GivenName" xml:space="preserve">
+    <value>שם פרטי</value>
+  </data>
+  <data name="Auth_GivenNamePlaceholder" xml:space="preserve">
+    <value>הזן את שמך הפרטי</value>
+  </data>
+  <data name="Auth_Surname" xml:space="preserve">
+    <value>שם משפחה</value>
+  </data>
+  <data name="Auth_SurnamePlaceholder" xml:space="preserve">
+    <value>הזן את שם משפחתך</value>
+  </data>
   <data name="Auth_SignupTagline" xml:space="preserve">
     <value>הצטרף לצוות שלך והתחל לנהל משמרות בקלות</value>
   </data>
@@ -8118,6 +8118,15 @@
   </data>
   <data name="Error_GriffinTimeoutOutOfRange" xml:space="preserve">
     <value>זמן המתנה חייב להיות בין 1 ל-60 שניות.</value>
+  </data>
+  <data name="Error_GriffinNoAccess_Title" xml:space="preserve">
+    <value>אין הרשאת גישה</value>
+  </data>
+  <data name="Error_GriffinNoAccess_Detail" xml:space="preserve">
+    <value>לחשבון שלך אין הרשאה לפרויקט זה.</value>
+  </data>
+  <data name="Error_GriffinNoAccess_Remediation" xml:space="preserve">
+    <value>אנא צור קשר עם הקצין הקרוב לביתך.</value>
   </data>
   <data name="Error_SavingFeatureFlags" xml:space="preserve">
     <value>שגיאה בשמירת דגלי תכונה.</value>
@@ -10889,9 +10898,6 @@
   <data name="AuthUrlRedirectDescription" xml:space="preserve">
     <value>תיאור הפניית כתובת אימות</value>
   </data>
-  <data name="AutoProvisionUsers" xml:space="preserve">
-    <value>הקצאת משתמשים אוטומטית</value>
-  </data>
   <data name="BaseUrlGriffinServer" xml:space="preserve">
     <value>כתובת בסיס שרת Griffin</value>
   </data>
@@ -10930,9 +10936,6 @@
   </data>
   <data name="DatabaseId" xml:space="preserve">
     <value>מזהה מסד נתונים</value>
-  </data>
-  <data name="DefaultProvisionedRole" xml:space="preserve">
-    <value>תפקיד ברירת מחדל להקצאה</value>
   </data>
   <data name="DiagnosticChecks" xml:space="preserve">
     <value>בדיקות אבחון</value>
@@ -12124,23 +12127,8 @@
   <data name="Griffin_UserProvisioning" xml:space="preserve">
     <value>הקצאת משתמשים (כלל-מערכתי)</value>
   </data>
-  <data name="Griffin_AutoProvision" xml:space="preserve">
-    <value>הקצאה אוטומטית של משתמשים חדשים</value>
-  </data>
-  <data name="Griffin_AutoProvision_Hint" xml:space="preserve">
-    <value>צור חשבונות משתמשים אוטומטית בכניסה הראשונה דרך Griffin. אם מושבת, יש לאשר משתמשים ידנית על ידי מנהלים.</value>
-  </data>
-  <data name="Griffin_DefaultRole" xml:space="preserve">
-    <value>תפקיד ברירת מחדל למשתמשים מוקצים אוטומטית</value>
-  </data>
-  <data name="Griffin_DefaultRole_Hint" xml:space="preserve">
-    <value>תפקיד ברירת מחדל המוקצה למשתמשים מוקצים אוטומטית בכל החברות</value>
-  </data>
-  <data name="Griffin_SecurityNote_Title" xml:space="preserve">
-    <value>הערת אבטחה:</value>
-  </data>
-  <data name="Griffin_SecurityNote_Text" xml:space="preserve">
-    <value>הקצאה אוטומטית חלה על כל החברות. כל משתמש שמזדהה בהצלחה דרך ADFS יקבל אוטומטית חשבון במערכת. ודא ששרת Griffin ADFS שלך מוגדר כראוי לאפשר רק משתמשים מורשים.</value>
+  <data name="Griffin_UserProvisioning_MovedToFlags" xml:space="preserve">
+    <value>התנהגות הקצאת המשתמשים נשלטת כעת על ידי דגל המאפיינים FF_ALLOW_USERS_CREATION_VIA_ADFS, יחד עם שאר שערי המערכת בכתובת</value>
   </data>
   <data name="Griffin_SaveConfig" xml:space="preserve">
     <value>שמור הגדרות</value>

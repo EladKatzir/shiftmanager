@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
@@ -18,6 +19,7 @@ public class GriffinCallbackModel : LocalizedPageModel
 {
     private readonly IGriffinService _griffinService;
     private readonly IGriffinConfigService _griffinConfigService;
+    private readonly IFeatureFlagService _featureFlagService;
     private readonly ISecurityLogger _securityLogger;
     private readonly ILogger<GriffinCallbackModel> _logger;
     // SECURITY-AUDITED: SAFE — IgnoreQueryFilters used only for cross-company deactivated-user check
@@ -38,6 +40,7 @@ public class GriffinCallbackModel : LocalizedPageModel
         IStringLocalizer<SharedResources> localizer,
         IGriffinService griffinService,
         IGriffinConfigService griffinConfigService,
+        IFeatureFlagService featureFlagService,
         ISecurityLogger securityLogger,
         ILogger<GriffinCallbackModel> logger,
         AppDbContext db)
@@ -45,6 +48,7 @@ public class GriffinCallbackModel : LocalizedPageModel
     {
         _griffinService = griffinService;
         _griffinConfigService = griffinConfigService;
+        _featureFlagService = featureFlagService;
         _securityLogger = securityLogger;
         _logger = logger;
         _db = db;
@@ -107,33 +111,57 @@ public class GriffinCallbackModel : LocalizedPageModel
         {
             var err = authResult.Error!;
 
-            // Special case: valid Griffin user with no ShiftManager account AND auto-provisioning disabled
-            // → redirect to the signup page (existing product behaviour). The JWT is cached, so
-            // ValidateAndGetClaimsAsync below is a cheap cache hit.
+            // Valid Griffin user with no ShiftManager account. The FF_ALLOW_USERS_CREATION_VIA_ADFS
+            // feature flag (managed at /Owner/FeatureFlags) decides what happens next:
+            //   - ON  → redirect to GriffinSignup so the user can file a join request (admin-approved).
+            //   - OFF → render a refusal page asking the user to contact the officer near their home.
+            // We never silently create accounts — that path was retired with the security review.
             if (err.Code == GriffinErrorCode.UserNotRegistered)
             {
-                var claimsResult = await _griffinService.ValidateAndGetClaimsAsync(
-                    token, griffinConfig.BaseUrl!, griffinConfig.TimeoutSeconds);
-                if (claimsResult.Success && claimsResult.Value != null)
+                var allowSignup = await _featureFlagService.IsEnabledAsync(
+                    FeatureFlagSeed.Flags.AllowUsersCreationViaAdfs);
+
+                if (allowSignup)
                 {
-                    Response.Cookies.Append("griffin.token", token, new CookieOptions
+                    var claimsResult = await _griffinService.ValidateAndGetClaimsAsync(
+                        token, griffinConfig.BaseUrl!, griffinConfig.TimeoutSeconds);
+                    if (claimsResult.Success && claimsResult.Value != null)
                     {
-                        HttpOnly = true,
-                        Secure = Request.IsHttps,
-                        SameSite = SameSiteMode.Lax,
-                        Expires = DateTimeOffset.UtcNow.AddMinutes(15),
-                        Path = "/"
-                    });
+                        Response.Cookies.Append("griffin.token", token, new CookieOptions
+                        {
+                            HttpOnly = true,
+                            Secure = Request.IsHttps,
+                            SameSite = SameSiteMode.Lax,
+                            Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+                            Path = "/"
+                        });
 
-                    TempData["GriffinEmail"] = claimsResult.Value.EmailAddress;
-                    TempData["GriffinDisplayName"] = claimsResult.Value.DisplayName;
-                    TempData["GriffinUniqueID"] = claimsResult.Value.UniqueID;
+                        TempData["GriffinEmail"] = claimsResult.Value.EmailAddress;
+                        TempData["GriffinDisplayName"] = claimsResult.Value.DisplayName;
+                        TempData["GriffinGivenName"] = claimsResult.Value.GivenName;
+                        TempData["GriffinSurname"] = claimsResult.Value.Surname;
+                        TempData["GriffinUniqueID"] = claimsResult.Value.UniqueID;
 
-                    _logger.LogInformation("Griffin user {Email} not found in ShiftManager, redirecting to signup",
-                        claimsResult.Value.EmailAddress);
-                    return RedirectToPage("/Auth/GriffinSignup");
+                        _logger.LogInformation("Griffin user {Email} not found in ShiftManager, redirecting to signup",
+                            claimsResult.Value.EmailAddress);
+                        return RedirectToPage("/Auth/GriffinSignup");
+                    }
+                    // Claims fetch failed mid-way — fall through to the generic UserNotRegistered failure.
                 }
-                // Fall through and show the UserNotRegistered failure.
+                else
+                {
+                    // Refusal path: do NOT set the griffin.token cookie — there's no signup form coming,
+                    // so caching the JWT serves no purpose and lengthens the window the token is on disk.
+                    _logger.LogInformation(
+                        "Griffin user not found and FF_ALLOW_USERS_CREATION_VIA_ADFS is disabled; showing refusal page");
+                    FailureTitle = _localizer["Error_GriffinNoAccess_Title"].Value;
+                    FailureDetail = _localizer["Error_GriffinNoAccess_Detail"].Value;
+                    FailureRemediation = _localizer["Error_GriffinNoAccess_Remediation"].Value;
+                    FailureErrorToken = err.ErrorToken;
+                    FailureStage = err.Stage.ToString();
+                    Error = FailureTitle;
+                    return Page();
+                }
             }
 
             return ShowFailure(err);

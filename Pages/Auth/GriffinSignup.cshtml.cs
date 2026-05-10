@@ -57,15 +57,22 @@ public class GriffinSignupModel : LocalizedPageModel
         _backgroundTaskQueue = backgroundTaskQueue;
     }
 
-    // Griffin-provided fields (hidden fields for round-trip)
-    [BindProperty]
+    // Email is server-derived from the validated Griffin token on POST — NOT round-tripped
+    // through the form, so a tampered hidden field cannot impersonate someone else's identity.
     public string Email { get; set; } = string.Empty;
 
+    // GriffinUniqueID is round-tripped for audit logging only; never participates in identity matching.
     [BindProperty]
     public string GriffinUniqueID { get; set; } = string.Empty;
 
-    // User-editable fields
+    // User-editable identity fields (pre-filled from getClaims). DisplayName is synthesized
+    // server-side from GivenName + Surname (AppUser has no split first/last name columns).
     [BindProperty]
+    public string GivenName { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string Surname { get; set; } = string.Empty;
+
     public string DisplayName { get; set; } = string.Empty;
 
     [BindProperty]
@@ -97,6 +104,8 @@ public class GriffinSignupModel : LocalizedPageModel
         // Read claims from TempData (set by GriffinCallback)
         var email = TempData["GriffinEmail"] as string;
         var displayName = TempData["GriffinDisplayName"] as string;
+        var givenName = TempData["GriffinGivenName"] as string;
+        var surname = TempData["GriffinSurname"] as string;
         var uniqueId = TempData["GriffinUniqueID"] as string;
 
         if (string.IsNullOrEmpty(email))
@@ -107,6 +116,8 @@ public class GriffinSignupModel : LocalizedPageModel
         }
 
         Email = email;
+        GivenName = givenName ?? string.Empty;
+        Surname = surname ?? string.Empty;
         DisplayName = displayName ?? string.Empty;
         GriffinUniqueID = uniqueId ?? string.Empty;
         IsGriffinAuthenticated = true;
@@ -161,16 +172,18 @@ public class GriffinSignupModel : LocalizedPageModel
         }
         var griffinClaims = claimsResult.Value;
 
-        // Cross-check submitted email against token claims to prevent hidden field tampering
-        if (!string.Equals(Email, griffinClaims.EmailAddress, StringComparison.OrdinalIgnoreCase))
-        {
-            _logger.LogWarning("Griffin signup email mismatch: submitted={Submitted}, token={Token}",
-                Email, griffinClaims.EmailAddress);
-            Email = griffinClaims.EmailAddress; // Force correct email
-        }
+        // Email is identity-bearing — always trust the validated Griffin token claim, NEVER the form.
+        // No client-side input renders the email, so a tampered DOM cannot impersonate someone else.
+        Email = griffinClaims.EmailAddress;
 
-        // Validate required fields
-        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(DisplayName))
+        // Synthesize DisplayName from the editable name fields (AppUser has no split first/last columns).
+        DisplayName = $"{GivenName} {Surname}".Trim();
+
+        // Validate required fields. GivenName / Surname are user-editable, so they may be empty
+        // if the user clears the prefill — block that explicitly with a friendly error.
+        if (string.IsNullOrWhiteSpace(Email) ||
+            string.IsNullOrWhiteSpace(GivenName) ||
+            string.IsNullOrWhiteSpace(Surname))
         {
             Error = _localizer["Error_Signup_AllFieldsRequired"];
             return Page();
@@ -182,7 +195,7 @@ public class GriffinSignupModel : LocalizedPageModel
             return Page();
         }
 
-        if (DisplayName.Length > 200)
+        if (DisplayName.Length > 200 || GivenName.Length > 100 || Surname.Length > 100)
         {
             Error = _localizer["Error_Signup_DisplayNameTooLong"];
             return Page();

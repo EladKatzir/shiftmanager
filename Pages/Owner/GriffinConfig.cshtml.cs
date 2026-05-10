@@ -4,7 +4,6 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
@@ -25,14 +24,10 @@ public class GriffinConfigModel : LocalizedPageModel
     private readonly IAuditLogService _auditLogService;
     private readonly AppDbContext _db;
     private readonly ILogger<GriffinConfigModel> _logger;
-    private readonly IRoleService _roleService;
 
     [BindProperty] public bool Enabled { get; set; }
     [BindProperty] public string BaseUrl { get; set; } = string.Empty;
     [BindProperty] public string TokenConsumerUrl { get; set; } = string.Empty;
-    [BindProperty] public bool AutoProvisionUsers { get; set; }
-    [BindProperty] public UserRole DefaultProvisionedRole { get; set; } = UserRole.Employee;
-    [BindProperty] public int? DefaultProvisionedRoleTemplateId { get; set; }
     [BindProperty] public int TimeoutSeconds { get; set; } = 10;
 
     // SuccessMessage / ErrorMessage properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
@@ -46,17 +41,13 @@ public class GriffinConfigModel : LocalizedPageModel
     public List<GriffinApiLog> RecentLogs { get; set; } = new();
     public List<GriffinApiLog> RecentFailures { get; set; } = new();
 
-    public SelectList RoleOptions { get; set; } = null!;
-    public List<RoleTemplate> AvailableRoleTemplates { get; set; } = new();
-
     public GriffinConfigModel(
         IStringLocalizer<SharedResources> localizer,
         IGriffinConfigService griffinConfigService,
         IGriffinApiLogService griffinApiLogService,
         IAuditLogService auditLogService,
         AppDbContext db,
-        ILogger<GriffinConfigModel> logger,
-        IRoleService roleService)
+        ILogger<GriffinConfigModel> logger)
         : base(localizer)
     {
         _griffinConfigService = griffinConfigService;
@@ -64,20 +55,16 @@ public class GriffinConfigModel : LocalizedPageModel
         _auditLogService = auditLogService;
         _db = db;
         _logger = logger;
-        _roleService = roleService;
     }
 
     public async Task OnGetAsync()
     {
         await LoadConfigAsync();
-        await LoadRoleOptionsAsync();
         await LoadRecentLogsAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        await LoadRoleOptionsAsync();
-
         // Validate
         var validationError = ValidateInputs();
         if (!string.IsNullOrEmpty(validationError))
@@ -95,9 +82,6 @@ public class GriffinConfigModel : LocalizedPageModel
                 Enabled,
                 BaseUrl,
                 TokenConsumerUrl,
-                AutoProvisionUsers,
-                DefaultProvisionedRole,
-                DefaultProvisionedRoleTemplateId,
                 TimeoutSeconds,
                 userName);
 
@@ -110,7 +94,7 @@ public class GriffinConfigModel : LocalizedPageModel
                 "GriffinConfig",
                 null,
                 "Griffin ADFS configuration updated",
-                $"Enabled={Enabled}, BaseUrl={BaseUrl}, AutoProvision={AutoProvisionUsers}");
+                $"Enabled={Enabled}, BaseUrl={BaseUrl}");
 
             _logger.LogInformation("Griffin config updated by {User}", userName);
         }
@@ -126,7 +110,6 @@ public class GriffinConfigModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostTestConnectionAsync()
     {
-        await LoadRoleOptionsAsync();
         await LoadRecentLogsAsync(); // Load logs for display
 
         // ✅ CRITICAL FIX: Validate before testing
@@ -150,9 +133,6 @@ public class GriffinConfigModel : LocalizedPageModel
                 Enabled,
                 BaseUrl,
                 TokenConsumerUrl,
-                AutoProvisionUsers,
-                DefaultProvisionedRole,
-                DefaultProvisionedRoleTemplateId,
                 TimeoutSeconds,
                 userName);
 
@@ -222,17 +202,8 @@ public class GriffinConfigModel : LocalizedPageModel
             Enabled = config.Enabled;
             BaseUrl = config.BaseUrl ?? string.Empty;
             TokenConsumerUrl = config.TokenConsumerUrl ?? string.Empty;
-            AutoProvisionUsers = config.AutoProvisionUsers;
-            DefaultProvisionedRole = config.DefaultProvisionedRole;
-            DefaultProvisionedRoleTemplateId = config.DefaultProvisionedRoleTemplateId;
             TimeoutSeconds = config.TimeoutSeconds;
         }
-    }
-
-    private async Task LoadRoleOptionsAsync()
-    {
-        RoleOptions = new SelectList(Enum.GetValues(typeof(UserRole)).Cast<UserRole>());
-        AvailableRoleTemplates = await _roleService.GetRoleTemplatesAsync();
     }
 
     private string? ValidateInputs()

@@ -1307,14 +1307,6 @@ public class AppDbContext : DbContext
             .HasIndex(rtjl => new { rtjl.RoleTemplateId, rtjl.JobTypeId })
             .IsUnique();
 
-        // GriffinConfig → RoleTemplate relationship (DefaultProvisionedRoleTemplateId)
-        modelBuilder.Entity<GriffinConfig>()
-            .HasOne<RoleTemplate>()
-            .WithMany()
-            .HasForeignKey(gc => gc.DefaultProvisionedRoleTemplateId)
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
-
         // RoleAssignmentAudit → RoleTemplate relationships (From/To audit trail)
         modelBuilder.Entity<RoleAssignmentAudit>()
             .HasOne<RoleTemplate>()

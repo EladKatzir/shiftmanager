@@ -3727,18 +3727,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Owner_Griffin_UserProvisioning" xml:space="preserve">
     <value>User Provisioning</value>
   </data>
-  <data name="Owner_Griffin_AutoProvision" xml:space="preserve">
-    <value>Auto-Provision New Users</value>
-  </data>
-  <data name="Owner_Griffin_AutoProvision_Desc" xml:space="preserve">
-    <value>Automatically create user accounts on first Griffin login</value>
-  </data>
-  <data name="Owner_Griffin_DefaultRole" xml:space="preserve">
-    <value>Default Role</value>
-  </data>
-  <data name="Owner_Griffin_DefaultRole_Desc" xml:space="preserve">
-    <value>Default role assigned to auto-provisioned users</value>
-  </data>
   <data name="Owner_Griffin_TestConnection" xml:space="preserve">
     <value>Test Connection</value>
   </data>
@@ -7440,6 +7428,18 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Auth_NamePlaceholder" xml:space="preserve">
     <value>Enter your full name</value>
   </data>
+  <data name="Auth_GivenName" xml:space="preserve">
+    <value>Given Name</value>
+  </data>
+  <data name="Auth_GivenNamePlaceholder" xml:space="preserve">
+    <value>Enter your given name</value>
+  </data>
+  <data name="Auth_Surname" xml:space="preserve">
+    <value>Surname</value>
+  </data>
+  <data name="Auth_SurnamePlaceholder" xml:space="preserve">
+    <value>Enter your surname</value>
+  </data>
   <data name="Auth_SignupTagline" xml:space="preserve">
     <value>Join your team and start managing shifts effortlessly</value>
   </data>
@@ -8630,6 +8630,15 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Error_GriffinTimeoutOutOfRange" xml:space="preserve">
     <value>Timeout must be between 1 and 60 seconds.</value>
+  </data>
+  <data name="Error_GriffinNoAccess_Title" xml:space="preserve">
+    <value>Access not authorized</value>
+  </data>
+  <data name="Error_GriffinNoAccess_Detail" xml:space="preserve">
+    <value>Your account does not have access to this project.</value>
+  </data>
+  <data name="Error_GriffinNoAccess_Remediation" xml:space="preserve">
+    <value>Please contact the officer closest to your home.</value>
   </data>
   <data name="Error_SavingFeatureFlags" xml:space="preserve">
     <value>Error saving feature flags.</value>
@@ -10923,9 +10932,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="AuthUrlRedirectDescription" xml:space="preserve">
     <value>Authentication URL redirect description</value>
   </data>
-  <data name="AutoProvisionUsers" xml:space="preserve">
-    <value>Auto Provision Users</value>
-  </data>
   <data name="BaseUrlGriffinServer" xml:space="preserve">
     <value>Base URL Griffin Server</value>
   </data>
@@ -10964,9 +10970,6 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="DatabaseId" xml:space="preserve">
     <value>Database ID</value>
-  </data>
-  <data name="DefaultProvisionedRole" xml:space="preserve">
-    <value>Default Provisioned Role</value>
   </data>
   <data name="DiagnosticChecks" xml:space="preserve">
     <value>Diagnostic Checks</value>
@@ -12158,23 +12161,8 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Griffin_UserProvisioning" xml:space="preserve">
     <value>User Provisioning (System-Wide)</value>
   </data>
-  <data name="Griffin_AutoProvision" xml:space="preserve">
-    <value>Auto-Provision New Users</value>
-  </data>
-  <data name="Griffin_AutoProvision_Hint" xml:space="preserve">
-    <value>Automatically create user accounts on first Griffin login. If disabled, users must be manually approved by administrators.</value>
-  </data>
-  <data name="Griffin_DefaultRole" xml:space="preserve">
-    <value>Default Role for Auto-Provisioned Users</value>
-  </data>
-  <data name="Griffin_DefaultRole_Hint" xml:space="preserve">
-    <value>Default role assigned to auto-provisioned users across all companies</value>
-  </data>
-  <data name="Griffin_SecurityNote_Title" xml:space="preserve">
-    <value>Security Note:</value>
-  </data>
-  <data name="Griffin_SecurityNote_Text" xml:space="preserve">
-    <value>Auto-provisioning applies to all companies. Any user who successfully authenticates via ADFS will automatically get an account in the system. Ensure your Griffin ADFS server is properly configured to only allow authorized users.</value>
+  <data name="Griffin_UserProvisioning_MovedToFlags" xml:space="preserve">
+    <value>User-provisioning behaviour is now controlled by the FF_ALLOW_USERS_CREATION_VIA_ADFS feature flag, alongside other system gates at</value>
   </data>
   <data name="Griffin_SaveConfig" xml:space="preserve">
     <value>Save Configuration</value>

@@ -32,6 +32,13 @@ public class GriffinClaimsDto
     [JsonPropertyName("GivenName")]
     public string GivenName { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Family name / surname. Surfaced to the GriffinSignup form as a pre-filled
+    /// editable field. Empty when Griffin's getClaims response omits the field.
+    /// </summary>
+    [JsonPropertyName("Surname")]
+    public string Surname { get; set; } = string.Empty;
+
     // --- JWT standard fields (for reference/logging) ---
 
     /// <summary>
