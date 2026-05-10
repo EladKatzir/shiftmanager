@@ -1,0 +1,17 @@
+﻿9E403E03448ED353F43D73EAAE32D3A911641F7676FDEA98F0113ECC7F389193 *ShiftManager-v3.9.6-win-x64.zip
+
+ShiftManager v3.9.6
+Build Date: 2026-05-10 14:50:46 UTC
+Git Commit: 9531035
+
+Package Contents:
+  Files:       528
+  DLLs:        361
+  Total Size:  166.1 MB
+  ZIP Size:    65.8 MB
+  Compression: 60.4%
+
+Verification:
+  Windows: CertUtil -hashfile "ShiftManager-v3.9.6-win-x64.zip" SHA256
+  Linux/Mac: sha256sum -c "ShiftManager-v3.9.6-win-x64.zip.sha256"
+

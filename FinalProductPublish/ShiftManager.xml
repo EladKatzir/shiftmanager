@@ -2770,6 +2770,18 @@
         <member name="M:ShiftManager.Migrations.AddUpdatedAtToHomeTypes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.RemoveGriffinProvisioningFields">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.RemoveGriffinProvisioningFields.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.RemoveGriffinProvisioningFields.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.RemoveGriffinProvisioningFields.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -3864,6 +3876,12 @@
             First name / given name
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Surname">
+            <summary>
+            Family name / surname. Surfaced to the GriffinSignup form as a pre-filled
+            editable field. Empty when Griffin's getClaims response omits the field.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Audience">
             <summary>
             Audience
@@ -4164,10 +4182,14 @@
             </summary>
         </member>
         <member name="T:ShiftManager.Models.GriffinConfig">
-            <summary>
-            Stores Griffin ADFS configuration per company.
-            Pattern matches EmailConfig for consistency.
-            </summary>
+             <summary>
+             Stores Griffin ADFS connectivity configuration per company.
+             Pattern matches EmailConfig for consistency.
+            
+             User-provisioning behaviour is NOT stored here — see the feature flag
+             FF_ALLOW_USERS_CREATION_VIA_ADFS in FeatureFlagSeed for that toggle. This entity
+             is purely the connection record (URL, callback, timeout).
+             </summary>
         </member>
         <member name="P:ShiftManager.Models.GriffinConfig.Enabled">
             <summary>
@@ -4182,21 +4204,6 @@
         <member name="P:ShiftManager.Models.GriffinConfig.TokenConsumerUrl">
             <summary>
             Our callback URL where Griffin redirects after authentication
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.GriffinConfig.AutoProvisionUsers">
-            <summary>
-            Auto-provision users on first Griffin login
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.GriffinConfig.DefaultProvisionedRole">
-            <summary>
-            Default role for auto-provisioned users
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.GriffinConfig.DefaultProvisionedRoleTemplateId">
-            <summary>
-            Template for auto-provisioned SSO users (replaces DefaultProvisionedRole enum).
             </summary>
         </member>
         <member name="P:ShiftManager.Models.GriffinConfig.TimeoutSeconds">
@@ -5884,6 +5891,9 @@
             First row is treated as header and skipped.
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Admin.UsersModel.__LogBatchApprovalSuccessStruct">
+            <summary> This API supports the logging infrastructure and is not intended to be used directly from your code. It is subject to change in the future. </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.DeleteChoreModel">
             <summary>
             ✅ PHASE 20: API endpoint to delete chores from calendar views
@@ -6286,6 +6296,14 @@
             Example: "john.doe@army.mil" → "jo***@army.mil"
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Auth.LoginModel.HideRegularLogin">
+            <summary>
+            When true, the email+password form, the divider, and the secondary
+            Forgot-Password / Request-Access links are hidden from the page.
+            Admins with local passwords reveal them by Ctrl+clicking the Shifty logo.
+            Driven by the FF_HIDE_REGULAR_LOGIN feature flag (default OFF).
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Auth.LoginModel.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole,System.String)">
             <summary>
             Maps legacy UserRole + JobType to RoleTemplate key for login-time backfill.
@@ -6588,6 +6606,19 @@
             Abbreviates a name for OPSEC on public leaderboard (B-11).
             Full names are not shown — only first name + last initial.
             Current user sees their own full name.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.GriffinDiagnosticModel.TokenExchangeAttempt">
+            <summary>
+            One round-trip's worth of evidence: the URL we hit, what came back, how long it took.
+            Rendered side-by-side with sibling attempts so a human can spot which boundary differs.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.GriffinDiagnosticModel.MaskUrlSecret(System.String)">
+            <summary>
+            Replaces the value of the first hash= or token= query parameter with a masked version
+            suitable for display. Preserves the surrounding URL structure so a developer can still
+            see exactly which endpoint and parameter name was used.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.LocalizedPageModel">
@@ -7392,6 +7423,35 @@
             <summary>
             Service for managing user avatar uploads with image processing
             </summary>
+        </member>
+        <member name="T:ShiftManager.Services.BackgroundTaskHostedService">
+             <summary>
+             Drains <see cref="T:ShiftManager.Services.IBackgroundTaskQueue"/> on a single reader, creating a fresh
+             DI scope per work item so scoped services (DbContext, etc.) resolve correctly.
+            
+             One unhandled exception in a work item is caught and logged — it must not
+             stop the loop, since other queued items still need to run. Cancellation
+             during shutdown ends the loop cleanly.
+            
+             Closes F-A-003 (raw fire-and-forget Task.Run had no observability or back-pressure).
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.BusyService.ValidateAsync(ShiftManager.Models.Support.BusyTarget,System.Int32,System.Int32,System.String)">
+            <summary>
+            Validates a candidate assignment against existing busy state. Returns errors (block)
+            and warnings (overrideable) per the severity policy in the class header.
+            </summary>
+            <remarks>
+            <para>
+            Time-window overlap semantics (closes F-H-015): shifts use HALF-OPEN intervals
+            [start, end). Two adjacent shifts that touch at a boundary are NOT overlapping —
+            e.g. 09:00–12:00 followed by 12:00–15:00 is allowed. The overlap test is
+            <c>existingStart &lt; newEnd &amp;&amp; newStart &lt; existingEnd</c> (strict less-than
+            on both sides), which means an existing shift ending exactly at <c>newStart</c>
+            or starting exactly at <c>newEnd</c> does not trigger OVERLAP. See implementation
+            in <see cref="M:ShiftManager.Services.BusyService.ValidateShiftAsync(System.Int32,System.Int32,ShiftManager.Models.Support.BusyTarget,System.String)"/> around the "Overlap detection" comment.
+            </para>
+            </remarks>
         </member>
         <member name="M:ShiftManager.Services.IBusyUserService.GetBusyUsersAsync(System.DateOnly,System.TimeOnly,System.TimeOnly,System.Nullable{System.Int32})">
             <summary>
@@ -8199,6 +8259,59 @@
         </member>
         <member name="M:ShiftManager.Services.IAreaPaletteService.InvalidateAreaCache(System.Int32)">
             <summary>Invalidate cache (safety hatch after manual DB edits).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.BackgroundTask">
+            <summary>
+            A unit of background work executed by <see cref="T:ShiftManager.Services.BackgroundTaskHostedService"/>.
+            The queue creates a fresh DI scope per work item and supplies the scoped
+            <see cref="T:System.IServiceProvider"/> here, so callers don't manage scopes themselves.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IBackgroundTaskQueue">
+             <summary>
+             Singleton bounded queue for fire-and-forget background work that needs
+             observability and back-pressure. Replaces ad-hoc <c>_ = Task.Run(...)</c>
+             callsites — closes F-A-003 from the 2026-04-28 diagnostic review.
+            
+             Distinct from <see cref="T:ShiftManager.Services.EmailBackgroundQueue"/>, which is strongly-typed for
+             <c>QueuedEmail</c> and includes retry/dead-letter logic specific to email
+             delivery. Two queues is correct: this one is generic, that one is
+             domain-specific.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IBackgroundTaskQueue.Enqueue(ShiftManager.Services.BackgroundTask)">
+            <summary>
+            Enqueues a work item without waiting. Returns false (and logs a warning)
+            if the queue is at capacity — caller decides whether to drop the work,
+            retry, or surface the failure to the user.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IBackgroundTaskQueue.EnqueueAsync(ShiftManager.Services.BackgroundTask,System.Threading.CancellationToken)">
+            <summary>
+            Enqueues a work item with up to 2 seconds of back-pressure wait if the
+            queue is full. Returns false only after the wait expires.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Services.IBackgroundTaskQueue.Reader">
+            <summary>
+            Reader for the hosted service to consume queued work items.
+            Internal-by-convention — only <see cref="T:ShiftManager.Services.BackgroundTaskHostedService"/>
+            should read from this.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.BackgroundTaskQueue">
+            <summary>
+            Default implementation backed by a bounded <see cref="T:System.Threading.Channels.Channel`1"/>.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.BackgroundTaskQueue.Enqueue(ShiftManager.Services.BackgroundTask)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.BackgroundTaskQueue.EnqueueAsync(ShiftManager.Services.BackgroundTask,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="P:ShiftManager.Services.BackgroundTaskQueue.Reader">
+            <inheritdoc />
         </member>
         <member name="T:ShiftManager.Services.IBusyService">
             <summary>
@@ -9067,9 +9180,11 @@
             Load Griffin config for specific company
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IGriffinConfigService.SaveGriffinConfigAsync(System.Boolean,System.String,System.String,System.Boolean,ShiftManager.Models.Support.UserRole,System.Nullable{System.Int32},System.Int32,System.String)">
+        <member name="M:ShiftManager.Services.IGriffinConfigService.SaveGriffinConfigAsync(System.Boolean,System.String,System.String,System.Int32,System.String)">
             <summary>
-            Save Griffin configuration with audit logging
+            Save Griffin configuration with audit logging.
+            User-provisioning behaviour is controlled by the FF_ALLOW_USERS_CREATION_VIA_ADFS
+            feature flag, not by this service.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGriffinConfigService.TestConnectionAsync(System.String,System.Int32)">

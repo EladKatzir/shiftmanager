@@ -226,6 +226,7 @@ public static class QaTestUserSeed
         // --- Assigners ---
         AddUser(defs, "assigner.oren@test", "Assigner Oren", UserRole.Assigner, "Tzafona", null, "Assigner", companies, templates, alhut, br, text, hakam);
         AddUser(defs, "assigner.ella@test", "Assigner Ella", UserRole.Assigner, "Hitazmut", null, "Assigner", companies, templates, alhut, br, text, hakam);
+        AddShikmaUser(defs, "assigner.pie@test", "Assigner Pie", UserRole.Assigner, "Pie", "Assigner", companies, templates, shikmaProjectManager);
 
         // --- Special users ---
         AddUser(defs, "nogrants@test", "No Grants", UserRole.Employee, "Tzafona", "Alhut", null, companies, templates, alhut, br, text, hakam);
