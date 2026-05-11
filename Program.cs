@@ -213,7 +213,14 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddHttpClient(); // Required for MailService
-builder.Services.AddHttpClient("GriffinClient")
+builder.Services.AddHttpClient("GriffinClient", client =>
+    {
+        // Cap response body size to 512KB. Griffin responses are JWTs (~1KB) or small JSON
+        // claim bundles (~2KB). A misbehaving server, a captive WAF/portal returning a HTML
+        // error page, or a network loop returning a giant body would otherwise be buffered
+        // entirely into a string before any JSON parse — an OOM vector on constrained IIS.
+        client.MaxResponseContentBufferSize = 512 * 1024;
+    })
     .ConfigurePrimaryHttpMessageHandler(() =>
     {
         var handler = new HttpClientHandler();

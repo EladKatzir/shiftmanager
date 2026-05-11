@@ -99,6 +99,12 @@ public class GriffinAuthenticationMiddleware
                path.StartsWithSegments("/Auth/Signup") ||
                path.StartsWithSegments("/Auth/GriffinCallback") ||
                path.StartsWithSegments("/Auth/GriffinSignup") ||
+               // /GriffinDiagnostic is gated by Grant:AdminAccess separately; running this
+               // middleware on every diagnostic page load would trigger a live Griffin API call
+               // (AuthenticateUserAsync) per request — wasteful and confusing when an admin is
+               // logged in via password/cookie auth. The diagnostic page does its own Griffin
+               // testing in OnGetAsync; the middleware shouldn't compete with it.
+               path.StartsWithSegments("/GriffinDiagnostic") ||
                path.StartsWithSegments("/health") ||
                path.StartsWithSegments("/ready") ||
                path.StartsWithSegments("/AccessDenied");

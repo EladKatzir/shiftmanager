@@ -176,6 +176,24 @@ public class GriffinSignupModel : LocalizedPageModel
         // No client-side input renders the email, so a tampered DOM cannot impersonate someone else.
         Email = griffinClaims.EmailAddress;
 
+        // Per-email rate limit — defends against an attacker with a valid Griffin token spinning
+        // signup requests across many CompanyId/RequestedRole combinations to flood the owner
+        // approval queue. The per-IP limit above doesn't catch this (one valid token can be
+        // submitted from many IPs). 3 attempts per hour per email is plenty for any legitimate
+        // user fixing a typo'd company selection.
+        if (!string.IsNullOrEmpty(Email))
+        {
+            var emailRateLimitKey = $"griffinsignup:email:{Email.Trim().ToLowerInvariant()}";
+            if (!_rateLimiting.IsAllowed(emailRateLimitKey, 3, 60))
+            {
+                _logger.LogWarning(
+                    "Griffin signup per-email rate limit exceeded for {Email} from IP {IP}",
+                    Services.PiiMasker.MaskEmail(Email), ipAddress);
+                Error = _localizer["Error_Login_RateLimitExceeded"];
+                return Page();
+            }
+        }
+
         // Synthesize DisplayName from the editable name fields (AppUser has no split first/last columns).
         DisplayName = $"{GivenName} {Surname}".Trim();
 

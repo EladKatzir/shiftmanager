@@ -5,6 +5,7 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -22,6 +23,7 @@ public class GriffinDiagnosticModel : PageModel
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
     private readonly AppDbContext _dbContext;
+    private readonly LinkGenerator _linkGenerator;
 
     public GriffinConfig? GriffinConfig { get; set; }
     public bool HasError { get; set; }
@@ -114,7 +116,8 @@ public class GriffinDiagnosticModel : PageModel
         ILogger<GriffinDiagnosticModel> logger,
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
-        AppDbContext dbContext)
+        AppDbContext dbContext,
+        LinkGenerator linkGenerator)
     {
         _griffinConfigService = griffinConfigService;
         _griffinService = griffinService;
@@ -122,6 +125,7 @@ public class GriffinDiagnosticModel : PageModel
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
         _dbContext = dbContext;
+        _linkGenerator = linkGenerator;
     }
 
     public async Task OnGetAsync()
@@ -131,16 +135,31 @@ public class GriffinDiagnosticModel : PageModel
             Checks.Add("Starting comprehensive Griffin ADFS diagnostic...");
 
             // 1. Check configuration source
+            // SECURITY-AUDITED: IgnoreQueryFilters used to read the raw DB state across tenants.
+            // Without it the diagnostic would only show the admin's own company's row, masking
+            // configs from other tenants and producing false "no DB config" messages on multi-
+            // tenant deployments where another company's row is what's actually being used.
             Checks.Add("1. Checking configuration source...");
-            var dbConfig = await _dbContext.GriffinConfigs.FirstOrDefaultAsync();
+            var dbConfig = await _dbContext.GriffinConfigs
+                .IgnoreQueryFilters()
+                .OrderByDescending(c => c.LastUpdated)
+                .ThenByDescending(c => c.Id)
+                .FirstOrDefaultAsync();
             var appSettingsEnabled = _configuration.GetValue<bool>("Griffin:Enabled", false);
             var appSettingsBaseUrl = _configuration["Griffin:BaseUrl"];
 
-            if (dbConfig != null)
+            if (dbConfig != null && dbConfig.Enabled)
             {
-                ConfigSource = "Database";
-                Checks.Add("   ✓ Configuration loaded from database");
+                ConfigSource = $"Database (Enabled, CompanyId={dbConfig.CompanyId})";
+                Checks.Add("   ✓ Configuration loaded from database (enabled)");
                 ValidationResults["ConfigInDatabase"] = true;
+            }
+            else if (dbConfig != null && !dbConfig.Enabled && appSettingsEnabled && !string.IsNullOrWhiteSpace(appSettingsBaseUrl))
+            {
+                ConfigSource = $"appsettings.json (DB row exists for CompanyId={dbConfig.CompanyId} but is DISABLED)";
+                Checks.Add("   ⚠ DB config row exists but Enabled=false; appsettings.json is being used");
+                Warnings.Add("A database row for Griffin exists but Enabled=false. The login page is currently using the appsettings.json fallback. If you intended to disable Griffin entirely, also disable it in appsettings.json (Griffin:Enabled=false).");
+                ValidationResults["ConfigInDatabase"] = false;
             }
             else if (appSettingsEnabled && !string.IsNullOrWhiteSpace(appSettingsBaseUrl))
             {
@@ -239,21 +258,27 @@ public class GriffinDiagnosticModel : PageModel
                 ValidationResults["CallbackUrlScheme"] = false;
             }
 
-            // 4. Check if callback page exists
-            Checks.Add("4. Checking if Griffin callback page exists...");
+            // 4. Check if Griffin callback page is registered with the routing system.
+            // Earlier versions used Directory.GetCurrentDirectory() + File.Exists, which produced
+            // false negatives in two situations: (a) IIS sets the working directory to
+            // C:\Windows\System32\inetsrv so the relative path resolved nowhere, and
+            // (b) precompiled Razor views ship inside the assembly and have no .cshtml file
+            // on disk at runtime. The routing system is the single source of truth for
+            // "does /Auth/GriffinCallback resolve at runtime?".
+            Checks.Add("4. Checking if Griffin callback page is registered with the router...");
             try
             {
-                var callbackPagePath = Path.Combine(Directory.GetCurrentDirectory(), "Pages", "Auth", "GriffinCallback.cshtml");
-                CallbackPageExists = System.IO.File.Exists(callbackPagePath);
+                var callbackUrl = _linkGenerator.GetPathByPage(HttpContext, "/Auth/GriffinCallback");
+                CallbackPageExists = !string.IsNullOrEmpty(callbackUrl);
 
                 if (CallbackPageExists)
                 {
-                    Checks.Add($"   ✓ Callback page found: {callbackPagePath}");
+                    Checks.Add($"   ✓ Callback page route resolved: {callbackUrl}");
                     ValidationResults["CallbackPageExists"] = true;
                 }
                 else
                 {
-                    Checks.Add($"   ✗ Callback page NOT FOUND: {callbackPagePath}");
+                    Checks.Add("   ✗ /Auth/GriffinCallback is NOT a registered Razor page route");
                     ValidationResults["CallbackPageExists"] = false;
                 }
             }
@@ -384,28 +409,41 @@ public class GriffinDiagnosticModel : PageModel
                 Warnings.Add("BaseUrl ends with a trailing slash. This is usually fine, but may cause double-slash in generated URLs.");
             }
 
-            // 8. Verify unauthenticated config resolution
+            // 8. Check config availability for unauthenticated users (login page).
+            // The login page calls GetGriffinConfigAsync() which has a 3-tier fallback chain:
+            //   (a) tenant-scoped DB row → (b) any enabled DB row → (c) appsettings.json.
+            // Reporting only on (b) used to produce false alarms on appsettings-only deployments
+            // (the login page would still show the ADFS button — diagnosis just couldn't see it).
             Checks.Add("8. Checking config availability for unauthenticated users (login page)...");
             try
             {
-                var anyEnabledConfig = await _griffinConfigService.GetAnyEnabledGriffinConfigAsync();
-                if (anyEnabledConfig != null)
+                var enabledDbConfig = await _griffinConfigService.GetAnyEnabledGriffinConfigAsync();
+                var fullConfig = await _griffinConfigService.GetGriffinConfigAsync();
+
+                if (enabledDbConfig != null)
                 {
-                    Checks.Add($"   ✓ GetAnyEnabledGriffinConfigAsync() found config (CompanyId={anyEnabledConfig.CompanyId})");
-                    Checks.Add("   ✓ Unauthenticated users on login page WILL see the ADFS button");
+                    Checks.Add($"   ✓ Database has enabled config (CompanyId={enabledDbConfig.CompanyId})");
+                    Checks.Add("   ✓ Login page WILL show the ADFS button");
+                    ValidationResults["UnauthenticatedConfigAvailable"] = true;
+                }
+                else if (fullConfig != null)
+                {
+                    Checks.Add("   ✓ Config resolved via appsettings.json fallback (no DB row found)");
+                    Checks.Add("   ✓ Login page WILL show the ADFS button (using appsettings)");
+                    Warnings.Add("Griffin config is currently coming from appsettings.json. Consider configuring it via the admin UI so changes don't require redeployment.");
                     ValidationResults["UnauthenticatedConfigAvailable"] = true;
                 }
                 else
                 {
-                    Checks.Add("   ✗ GetAnyEnabledGriffinConfigAsync() returned null");
-                    Checks.Add("   ✗ Unauthenticated users on login page will NOT see the ADFS button");
-                    Warnings.Add("No enabled Griffin config found in database. Unauthenticated users cannot use ADFS SSO from the login page.");
+                    Checks.Add("   ✗ Neither database nor appsettings.json has enabled Griffin config");
+                    Checks.Add("   ✗ Login page will NOT show the ADFS button");
+                    Warnings.Add("No enabled Griffin config available. Configure one via /Owner/GriffinConfig or the Griffin section in appsettings.json.");
                     ValidationResults["UnauthenticatedConfigAvailable"] = false;
                 }
             }
             catch (Exception ex)
             {
-                Checks.Add($"   ⚠ Error checking unauthenticated config: {ex.Message}");
+                Checks.Add($"   ⚠ Error checking config availability: {ex.Message}");
                 ValidationResults["UnauthenticatedConfigAvailable"] = false;
             }
 
@@ -484,7 +522,7 @@ public class GriffinDiagnosticModel : PageModel
             RootCauseExplanation = @"
                 <p>The <code>BaseUrl</code> field in the database does not start with <code>http://</code> or <code>https://</code>.</p>
                 <p><strong>Current value:</strong> <code>" + HtmlEncoder.Default.Encode(GriffinConfig.BaseUrl ?? "") + @"</code></p>
-                <p><strong>Expected value:</strong> <code>https://7108dev.d8200.mil</code> (or similar)</p>
+                <p><strong>Expected value:</strong> <code>https://your-griffin-host.example.internal</code> (or similar)</p>
                 <p><strong>Why this causes the 404 error:</strong></p>
                 <ul>
                     <li>When BuildAuthenticationUrl() constructs the final URL, it becomes: <code>" + HtmlEncoder.Default.Encode(GriffinConfig.BaseUrl ?? "") + @"/authentication?...</code></li>
@@ -606,8 +644,11 @@ public class GriffinDiagnosticModel : PageModel
         // ===========================================
         // Doof encodes only the destination 3x, appends to base callback URL
         DoofDestinationEncoded3x = ReturnUrlEncoded3x;  // Same as ours
-        DoofCallbackUrl = "https://doof.d8200.mil/api/login/" + DoofDestinationEncoded3x;
-        DoofFinalGriffinUrl = $"https://doof-auth-adfs.d8200.mil/authentication?tokenConsumerURL={DoofCallbackUrl}";
+        // Reference URLs use generic placeholders rather than internal hostnames (OPSEC: source
+        // code may be reviewed by external auditors / shared in support tickets). The reference
+        // pattern still illustrates the URL-encoding contract that matters for the comparison.
+        DoofCallbackUrl = "https://reference-app.example.internal/api/login/" + DoofDestinationEncoded3x;
+        DoofFinalGriffinUrl = $"https://reference-auth-adfs.example.internal/authentication?tokenConsumerURL={DoofCallbackUrl}";
         DoofUrlLooksLikeUrl = DoofFinalGriffinUrl.Contains("tokenConsumerURL=https://", StringComparison.Ordinal);
 
         Checks.Add("📊 URL Comparison Generated:");
@@ -661,7 +702,11 @@ public class GriffinDiagnosticModel : PageModel
         RanLiveTest = true;
         var hash = TestHashedToken.Trim();
         var baseUrl = GriffinConfig.BaseUrl.TrimEnd('/');
-        var timeoutSeconds = GriffinConfig.TimeoutSeconds > 0 ? GriffinConfig.TimeoutSeconds : 10;
+        // Cap diagnostic timeout at 10s. With 4 outgoing calls (3 parallel + 1 chain), the
+        // configured 30s timeout could tie up an IIS thread for 90s+ when Griffin is
+        // unresponsive — exactly the scenario where admins reach for the diagnostic. The
+        // diagnostic is operational gear, not the live login flow; a tight timeout is correct.
+        var timeoutSeconds = Math.Clamp(GriffinConfig.TimeoutSeconds > 0 ? GriffinConfig.TimeoutSeconds : 10, 1, 10);
 
         // Three independent calls — fan out concurrently so the page returns quickly even if one hangs.
         var rawHashTask = RunRawAttemptAsync(
@@ -686,8 +731,19 @@ public class GriffinDiagnosticModel : PageModel
             var jwt = AttemptViaService.ResponseBodyPreview!.Trim();
             // Strip a trailing ellipsis our truncator may have added.
             if (jwt.EndsWith("…", StringComparison.Ordinal)) jwt = jwt[..^1];
-            ExtractedJwtMasked = MaskSecret(jwt);
-            AttemptClaimsChain = await RunClaimsChainAsync(baseUrl, jwt, timeoutSeconds);
+            // Validate the value is structurally JWT-shaped before passing to getClaims.
+            // If the service-side preview was truncated mid-token (>600 chars) the chained
+            // call would otherwise hit Griffin with a malformed token and the resulting
+            // 400 response would mislead the admin into thinking getClaims is broken.
+            if (Services.GriffinService.LooksLikeJwt(jwt))
+            {
+                ExtractedJwtMasked = MaskSecret(jwt);
+                AttemptClaimsChain = await RunClaimsChainAsync(baseUrl, jwt, timeoutSeconds);
+            }
+            else
+            {
+                ExtractedJwtMasked = "(JWT preview was truncated or malformed — skipping chained getClaims)";
+            }
         }
 
         return Page();

@@ -8,14 +8,24 @@
 }
 
 <script>
-// Some SSO providers deliver tokens in URL fragments instead of query params
-if (window.location.hash && !window.location.search.includes('token=') && !window.location.search.includes('HashedToken=')) {
+// Some SSO providers deliver tokens in URL fragments instead of query params.
+// We re-emit the value as a query parameter and let the server-side handler take over.
+// The token value is shape-checked client-side here AND server-side in OnGetAsync —
+// belt-and-suspenders so a junk fragment can't reach the GriffinService HTTP layer.
+(function () {
+    if (!window.location.hash) return;
+    if (window.location.search.indexOf('token=') !== -1) return;
+    if (window.location.search.indexOf('HashedToken=') !== -1) return;
     var params = new URLSearchParams(window.location.hash.substring(1));
     var t = params.get('token') || params.get('HashedToken');
-    if (t) {
-        window.location.href = '/Auth/GriffinCallback?token=' + encodeURIComponent(t);
-    }
-}
+    if (!t) return;
+    // Bounded length + base64url-style alphabet. Rejecting here avoids navigating to
+    // a URL that the server will only refuse. Mirrors IsAcceptableInboundToken in
+    // GriffinCallback.cshtml.cs — keep the two in sync.
+    if (t.length === 0 || t.length > 4000) return;
+    if (!/^[A-Za-z0-9_\-.=]+$/.test(t)) return;
+    window.location.href = '/Auth/GriffinCallback?token=' + encodeURIComponent(t);
+})();
 </script>
 <div class="container mt-5">
     @if (!string.IsNullOrEmpty(Model.FailureErrorToken))

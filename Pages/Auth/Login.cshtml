@@ -132,6 +132,8 @@
                     <!-- Login Form -->
                     <form method="post" asp-page="./Login" class="auth-form">
                         @Html.AntiForgeryToken()
+                        <!-- Audit-only hidden field; flipped to "true" by the Ctrl+click escape-hatch handler. -->
+                        <input type="hidden" id="EscapeHatchUsed" name="EscapeHatchUsed" value="false" />
 
                         <div class="auth-field">
                             <label class="auth-field__label" for="Email"><loc key="Email" /></label>
@@ -238,6 +240,10 @@
                     section.style.display = '';
                     const emailField = document.getElementById('Email');
                     if (emailField) emailField.focus();
+                    // Mark the hidden audit field so the server can log that this submission
+                    // came via the escape hatch (vs. a normal-mode visible-form submission).
+                    const escapeHatchInput = document.getElementById('EscapeHatchUsed');
+                    if (escapeHatchInput) escapeHatchInput.value = 'true';
                 }
             });
         })();

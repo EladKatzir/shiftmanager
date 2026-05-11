@@ -92,10 +92,17 @@ public static class GriffinErrorMessages
             GriffinErrorCode.AutoProvisionFailed
                 => "ADFS authenticated you, but creating a ShiftManager account for you failed. A database error is the likely cause — check the server log.",
 
+            // SECURITY: Never echo TechnicalDetail to end users — it can contain raw URLs
+            // (with the JWT in the query string), socket-error host paths, and stack traces
+            // that leak internal topology. The technical detail still reaches admins via
+            // the application + security loggers; users only get a stable error token to quote.
             GriffinErrorCode.UnhandledException
-                => $"An unexpected error occurred during {stage}. Technical detail: {e.TechnicalDetail}",
+                => $"An unexpected error occurred during {stage}. Quote the error token below to your administrator.",
 
-            _ => e.TechnicalDetail
+            // Exhaustiveness guard: if a future enum value lands here, callers should still
+            // get a safe message rather than the technical detail. The numeric code is shown
+            // so the admin can correlate with code while the user is reading the page.
+            _ => $"Unexpected error (code {(int)e.Code}) during {stage}. Quote the error token below to your administrator."
         };
     }
 

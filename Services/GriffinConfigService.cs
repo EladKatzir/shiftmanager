@@ -63,11 +63,15 @@ public partial class GriffinConfigService : IGriffinConfigService
         try
         {
             // SECURITY-AUDITED: IgnoreQueryFilters needed — called from login page before tenant context exists;
-            // returns the most recently updated enabled config to ensure admin changes take effect
+            // returns the most recently updated enabled config to ensure admin changes take effect.
+            // Secondary sort by Id descending makes the tie-breaker deterministic — if two
+            // admins save configs in the same UTC second the higher-Id (more recently inserted)
+            // row wins consistently, instead of relying on SQLite's row order.
             var config = await _dbContext.GriffinConfigs
                 .IgnoreQueryFilters()
                 .Where(c => c.Enabled && !string.IsNullOrEmpty(c.BaseUrl) && !string.IsNullOrEmpty(c.TokenConsumerUrl))
                 .OrderByDescending(c => c.LastUpdated)
+                .ThenByDescending(c => c.Id)
                 .FirstOrDefaultAsync();
 
             if (config != null)
@@ -106,7 +110,9 @@ public partial class GriffinConfigService : IGriffinConfigService
             return dbConfig;
         }
 
-        // Fallback to appsettings
+        // Fallback to appsettings — IMPORTANT: the returned object is a NEW heap instance,
+        // NOT an EF-tracked entity. Mutating it and calling SaveChangesAsync will silently
+        // do nothing. Treat it as a read-only snapshot.
         LogUsingAppSettingsFallback(_logger, companyId);
         var fallbackConfig = GetConfigFromAppSettings();
 
@@ -126,6 +132,27 @@ public partial class GriffinConfigService : IGriffinConfigService
         return fallbackConfig;
     }
 
+    // Trim + reject URLs with embedded credentials or URL fragments.
+    // Embedded credentials (http://user:pass@host) leak into logs; fragments (#section) break
+    // BuildAuthenticationUrl because the browser interprets the fragment as starting after #
+    // — the path /authentication?... never reaches the server.
+    // Returns (normalized, error). On error, normalized is the input as-is for echo in the error.
+    private static (string? Normalized, string? Error) NormalizeUrl(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return (null, null); // null is allowed
+        var trimmed = input.Trim();
+        if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
+            return (trimmed, "URL is not a valid absolute URL.");
+        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            return (trimmed, "URL must use http:// or https:// scheme.");
+        if (!string.IsNullOrEmpty(uri.UserInfo))
+            return (trimmed, "URL must not embed credentials (user:password@).");
+        if (!string.IsNullOrEmpty(uri.Fragment))
+            return (trimmed, "URL must not contain a fragment (#…) — this breaks the auth redirect.");
+        // Strip a trailing slash on the BaseUrl so the path-join later doesn't double-slash.
+        return (uri.GetLeftPart(UriPartial.Query).TrimEnd('/'), null);
+    }
+
     public async Task<GriffinConfig> SaveGriffinConfigAsync(
         bool enabled,
         string? baseUrl,
@@ -133,6 +160,19 @@ public partial class GriffinConfigService : IGriffinConfigService
         int timeoutSeconds,
         string updatedBy)
     {
+        // Normalise the URLs at the persistence boundary so all later readers see canonical
+        // values (no trailing whitespace, no fragments, no embedded credentials, no trailing
+        // slash). The Owner page also validates earlier, but enforcing here as well makes the
+        // service self-defending against any future caller that bypasses the page validator.
+        var (normalizedBaseUrl, baseUrlError) = NormalizeUrl(baseUrl);
+        if (baseUrlError != null)
+            throw new ArgumentException($"Invalid Griffin BaseUrl: {baseUrlError}", nameof(baseUrl));
+        var (normalizedTokenConsumerUrl, tokenConsumerError) = NormalizeUrl(tokenConsumerUrl);
+        if (tokenConsumerError != null)
+            throw new ArgumentException($"Invalid Griffin TokenConsumerUrl: {tokenConsumerError}", nameof(tokenConsumerUrl));
+        baseUrl = normalizedBaseUrl;
+        tokenConsumerUrl = normalizedTokenConsumerUrl;
+
         var companyId = _tenantResolver.GetCurrentTenantId();
 
         // SECURITY-AUDITED: IgnoreQueryFilters — SaveAsync called from Owner page (already tenant-scoped); explicit companyId filter

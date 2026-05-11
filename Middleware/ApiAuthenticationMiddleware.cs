@@ -314,11 +314,10 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
-        // Griffin ADFS callback - receives authentication token from Griffin service
-        if (path.StartsWithSegments("/Auth/GriffinCallback", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
+        // (Removed: /Auth/GriffinCallback — never reaches here because the middleware
+        // short-circuits non-/api paths at the top of InvokeAsync. The [AllowAnonymous]
+        // attribute on the page model + Program.cs Razor Pages convention provide the
+        // actual access control.)
 
         // Localization API - used by localization-api.js for client-side string fetching
         if (path.StartsWithSegments("/Api/Localization", StringComparison.OrdinalIgnoreCase))

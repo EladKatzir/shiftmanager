@@ -157,6 +157,21 @@ public partial class GriffinService : IGriffinService
             return GriffinApiResult<GriffinClaimsDto>.Fail(err);
         }
 
+        // Sanity check: getClaims is contractually a JSON object. If the body looks like
+        // HTML (a captive-portal/WAF interception page returning 200 with text/html) the
+        // JSON parse would still succeed-or-fail confusingly. Catching the obvious HTML
+        // case up-front gives a clearer diagnostic for air-gapped admins.
+        if (body[0] == '<')
+        {
+            var err = new GriffinApiError(
+                GriffinStage.ClaimsRetrieval,
+                GriffinErrorCode.UnexpectedResponseShape,
+                $"getClaims body looks like HTML, not JSON — likely a proxy/WAF interception. Body preview: '{TrimForLog(body)}'",
+                TryGetHost(url),
+                ResponsePreview: TrimForLog(body));
+            return GriffinApiResult<GriffinClaimsDto>.Fail(err);
+        }
+
         GriffinClaimsDto? claims;
         try
         {
@@ -214,17 +229,33 @@ public partial class GriffinService : IGriffinService
 
     public async Task<GriffinApiResult<GriffinClaimsDto>> ValidateAndGetClaimsAsync(string token, string griffinBaseUrl, int timeoutSeconds)
     {
-        var cacheKey = $"griffin_claims_{ComputeSHA256Hash(token)}";
+        // Compute the hash once and reuse it for both positive and negative cache keys.
+        var tokenHash = ComputeSHA256Hash(token);
+        var cacheKey = $"griffin_claims_{tokenHash}";
+        var negativeCacheKey = $"griffin_invalid_{tokenHash}";
+
         if (_cache.TryGetValue<GriffinClaimsDto>(cacheKey, out var cachedClaims) && cachedClaims != null)
         {
             LogClaimsCacheHit(_logger);
             return GriffinApiResult<GriffinClaimsDto>.Ok(cachedClaims);
         }
 
+        // Negative cache: if Griffin already told us this token is invalid within the last
+        // 60s, return the same error without hammering the Griffin server again. Defends
+        // against accidental client-side retry loops AND against an attacker spinning the
+        // same bad token to overload Griffin (single-server, often air-gapped).
+        if (_cache.TryGetValue<GriffinApiError>(negativeCacheKey, out var cachedNegative) && cachedNegative != null)
+        {
+            LogClaimsCacheHit(_logger);
+            return GriffinApiResult<GriffinClaimsDto>.Fail(cachedNegative);
+        }
+
         LogClaimsCacheMiss(_logger);
 
         var validateResult = await ValidateTokenAsync(token, griffinBaseUrl, timeoutSeconds);
         if (!validateResult.Success)
+            // Transport / parse errors are NOT negative-cached — those should retry.
+            // Only Griffin-said-invalid (below) gets the negative cache treatment.
             return GriffinApiResult<GriffinClaimsDto>.FailFrom(validateResult);
 
         if (!validateResult.Value)
@@ -236,6 +267,11 @@ public partial class GriffinService : IGriffinService
                 "Griffin /authorization/validate returned false — the token is no longer valid (likely expired).",
                 null,
                 HttpStatus: 401);
+            _cache.Set(negativeCacheKey, err, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60),
+                Priority = CacheItemPriority.Low
+            });
             return GriffinApiResult<GriffinClaimsDto>.Fail(err);
         }
 
@@ -253,6 +289,10 @@ public partial class GriffinService : IGriffinService
 
     public async Task<GriffinApiResult<ClaimsPrincipal>> AuthenticateUserAsync(string token, GriffinConfig config, string ipAddress)
     {
+        // ValidateAndGetClaimsAsync may serve cached claims — but the live IsActive enforcement
+        // happens UNCONDITIONALLY at the DB lookup below (lines querying _dbContext.Users).
+        // This means a deactivated user's prior cached claims still produce a UserDeactivated
+        // failure on the next auth attempt. Don't refactor this without preserving that property.
         var claimsResult = await ValidateAndGetClaimsAsync(token, config.BaseUrl!, config.TimeoutSeconds);
         if (!claimsResult.Success)
         {
@@ -328,19 +368,31 @@ public partial class GriffinService : IGriffinService
             await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
         }
 
+        // SECURITY: every value coming from griffinClaims is sanitised before becoming a
+        // Claim — Griffin cannot inject CR/LF (log injection), NUL bytes (log truncation),
+        // or oversize strings into our auth principal even if its response is malicious or
+        // a downstream ADFS user record contains weird characters. DisplayName falls back
+        // through GivenName→UniqueID so we never set an empty Name claim.
+        var displayName = SanitizeClaimString(griffinClaims.DisplayName);
+        var givenName = SanitizeClaimString(griffinClaims.GivenName);
+        var safeUniqueId = SanitizeClaimString(griffinClaims.UniqueID, maxLength: 128);
+        var safeEmail = SanitizeClaimString(griffinClaims.EmailAddress, maxLength: 254); // RFC 5321 max
+        if (string.IsNullOrEmpty(displayName)) displayName = givenName;
+        if (string.IsNullOrEmpty(displayName)) displayName = safeUniqueId;
+
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, griffinClaims.DisplayName),
-            new Claim(ClaimTypes.Email, griffinClaims.EmailAddress),
-            new Claim(ClaimTypes.GivenName, griffinClaims.GivenName),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString(CultureInfo.InvariantCulture)),
+            new Claim(ClaimTypes.Name, displayName),
+            new Claim(ClaimTypes.Email, safeEmail),
+            new Claim(ClaimTypes.GivenName, givenName),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
-            new Claim("CompanyId", user.CompanyId.ToString()),
+            new Claim("CompanyId", user.CompanyId.ToString(CultureInfo.InvariantCulture)),
             new Claim("AuthMethod", "Griffin"),
-            new Claim("Griffin:UniqueID", griffinClaims.UniqueID),
+            new Claim("Griffin:UniqueID", safeUniqueId),
             // HIGH-007: store hashed token reference instead of raw token in claims
             new Claim("Griffin:TokenHash", ComputeSHA256Hash(token)),
-            new Claim("Griffin:AuthTime", griffinClaims.IssuedAt),
+            new Claim("Griffin:AuthTime", FormatClaim(griffinClaims.IssuedAt)),
             new Claim("AuthTimestamp", DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture))
         };
 
@@ -395,7 +447,7 @@ public partial class GriffinService : IGriffinService
         {
             return GriffinApiResult<string>.Fail(new GriffinApiError(
                 stage, GriffinErrorCode.NetworkTimeout,
-                FormattableString.Invariant($"Timed out after {timeoutSeconds}s calling {url}. {ex.Message}"), host));
+                FormattableString.Invariant($"Timed out after {timeoutSeconds}s calling {StripQuery(url)}. {ex.Message}"), host));
         }
         catch (HttpRequestException ex) when (TryFindSocketError(ex, out var sockErr))
         {
@@ -411,7 +463,7 @@ public partial class GriffinService : IGriffinService
             };
             return GriffinApiResult<string>.Fail(new GriffinApiError(
                 stage, code,
-                $"Socket error {sockErr} calling {url}: {ex.Message}", host));
+                $"Socket error {sockErr} calling {StripQuery(url)}: {ex.Message}", host));
         }
         catch (HttpRequestException ex) when (HasInner<AuthenticationException>(ex))
         {
@@ -423,14 +475,14 @@ public partial class GriffinService : IGriffinService
         {
             return GriffinApiResult<string>.Fail(new GriffinApiError(
                 stage, GriffinErrorCode.NetworkOther,
-                $"HTTP request to {url} failed: {ex.Message}", host));
+                $"HTTP request to {StripQuery(url)} failed: {ex.Message}", host));
         }
         catch (Exception ex)
         {
             LogUnhandledHttpException(_logger, ex, url);
             return GriffinApiResult<string>.Fail(new GriffinApiError(
                 stage, GriffinErrorCode.UnhandledException,
-                $"Unhandled {ex.GetType().Name} calling {url}: {ex.Message}", host));
+                $"Unhandled {ex.GetType().Name} calling {StripQuery(url)}: {ex.Message}", host));
         }
 
         var status = (int)response.StatusCode;
@@ -438,12 +490,18 @@ public partial class GriffinService : IGriffinService
         try
         {
             body = await response.Content.ReadAsStringAsync();
+            // Strip UTF-8 BOM if Griffin (or a Windows-side proxy) prepends one. Without this,
+            // a BOM-prefixed JWT comes through as "﻿eyJ..." which Griffin then rejects with
+            // a confusing 400 — and the BOM would also break ExtractTokenFromResponse's JSON
+            // path (System.Text.Json's strict mode doesn't tolerate BOM at position 0 in some
+            // older runtime versions).
+            if (body.Length > 0 && body[0] == '﻿') body = body[1..];
         }
         catch (Exception ex)
         {
             return GriffinApiResult<string>.Fail(new GriffinApiError(
                 stage, GriffinErrorCode.UnreadableResponse,
-                $"Could not read response body from {url}: {ex.Message}", host, status));
+                $"Could not read response body from {StripQuery(url)}: {ex.Message}", host, status));
         }
 
         if (!response.IsSuccessStatusCode)
@@ -459,7 +517,7 @@ public partial class GriffinService : IGriffinService
             };
             return GriffinApiResult<string>.Fail(new GriffinApiError(
                 stage, code,
-                FormattableString.Invariant($"HTTP {status} from {url}. Body: '{TrimForLog(body)}'"),
+                FormattableString.Invariant($"HTTP {status} from {StripQuery(url)}. Body: '{TrimForLog(body)}'"),
                 host, status, ResponsePreview: TrimForLog(body)));
         }
 
@@ -481,10 +539,14 @@ public partial class GriffinService : IGriffinService
         if (trimmed.Length == 0) return null;
 
         // Quick path — not JSON, so just strip surrounding quotes if any.
+        // Apply the same JWT-shape gate as the fallback so a captive-portal HTML/text
+        // response that happens to start with letters can't slip through and be passed
+        // downstream as the "JWT".
         if (trimmed[0] != '{' && trimmed[0] != '[')
         {
             var plain = trimmed.Trim('"').Trim();
-            return plain.Length == 0 ? null : plain;
+            if (plain.Length == 0) return null;
+            return LooksLikeJwt(plain) ? plain : null;
         }
 
         try
@@ -512,9 +574,35 @@ public partial class GriffinService : IGriffinService
             // Not valid JSON — fall through to return the trimmed body as-is.
         }
 
-        // Last resort: return the trimmed body with surrounding quotes removed.
+        // Last resort: return the trimmed body with surrounding quotes removed —
+        // BUT only if it's structurally JWT-shaped (RFC 7519 § 3 mandates exactly 3
+        // dot-separated base64url segments). This guards against a misconfigured WAF
+        // returning HTML 200 ("Welcome to nginx!") that would otherwise be passed
+        // downstream as the "JWT" and produce a confusing HTTP 400 at validate.
         var fallback = trimmed.Trim('"').Trim();
-        return fallback.Length == 0 ? null : fallback;
+        if (fallback.Length == 0) return null;
+        return LooksLikeJwt(fallback) ? fallback : null;
+    }
+
+    // RFC 7519 § 3: a JWS Compact Serialization is exactly three dot-separated segments
+    // (header.payload.signature). Each segment is base64url. This is the cheapest
+    // structural check we can do without parsing the cryptographic envelope.
+    internal static bool LooksLikeJwt(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return false;
+        var parts = s.Split('.');
+        if (parts.Length != 3) return false;
+        foreach (var p in parts)
+        {
+            if (p.Length == 0) return false;
+            foreach (var c in p)
+            {
+                // base64url alphabet: A-Z a-z 0-9 - _   (unpadded; '=' padding allowed by some impls)
+                if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '='))
+                    return false;
+            }
+        }
+        return true;
     }
 
     internal static bool IsTruthy(string s) =>
@@ -559,14 +647,55 @@ public partial class GriffinService : IGriffinService
         return oneLine.Length > 300 ? oneLine[..300] + "..." : oneLine;
     }
 
+    // JWT-spec claims (iat/nbf/exp/aud/iss) arrive on GriffinClaimsDto as JsonElement?
+    // because Griffin's response shape varies (number vs string vs array). This helper
+    // normalises to a string for places that need one (auth-cookie claim values, logs).
+    private static string FormatClaim(JsonElement? element)
+        => element is { ValueKind: not JsonValueKind.Undefined and not JsonValueKind.Null }
+            ? element.Value.ToString()
+            : string.Empty;
+
+    // SECURITY: Removes the query string from a URL before embedding it in user-facing
+    // error messages or non-secure logs. Griffin URLs carry the JWT in `?token=...` /
+    // `?hash=...` query parameters, so logging the full URL leaks the token. The Path
+    // portion alone identifies the endpoint (e.g. "/authorization/getClaims") for
+    // debugging without revealing credentials.
+    private static string StripQuery(string url)
+    {
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return uri.GetLeftPart(UriPartial.Path);
+        // Fallback for malformed URLs: cut at the first '?'.
+        var qIdx = url.IndexOf('?', StringComparison.Ordinal);
+        return qIdx >= 0 ? url[..qIdx] : url;
+    }
+
+    // Sanitise an externally-supplied string before it becomes a Claim value.
+    // Griffin returns DisplayName/GivenName/Surname unmodified from ADFS — a malicious
+    // ADFS response (or a misconfigured user record with a newline in the name) could
+    // otherwise inject log-line terminators, NUL bytes (truncate downstream sinks),
+    // or arbitrarily long values into our security principal. Caps length, drops
+    // control chars, normalises CR/LF to space.
+    private static string SanitizeClaimString(string? input, int maxLength = 256)
+    {
+        if (string.IsNullOrEmpty(input)) return string.Empty;
+        var sb = new StringBuilder(input.Length);
+        foreach (var c in input)
+        {
+            if (c == '\0') continue;                      // drop NUL — log truncation guard
+            if (c == '\r' || c == '\n') { sb.Append(' '); continue; }  // log-injection guard
+            if (char.IsControl(c) && c != '\t') continue; // drop other control chars
+            sb.Append(c);
+        }
+        var s = sb.ToString().Trim();
+        return s.Length > maxLength ? s[..maxLength] : s;
+    }
+
     private static string MapUserRoleToRoleTemplateKey(UserRole role, string? jobTypeName)
         => Helpers.RoleTemplateMapper.MapUserRoleToRoleTemplateKey(role, jobTypeName);
 
-    private string ComputeSHA256Hash(string input)
-    {
-        using var sha256 = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = sha256.ComputeHash(bytes);
-        return Convert.ToHexString(hash);
-    }
+    // Allocation-free SHA256 helper — called twice per Griffin login (cache key + token-hash claim).
+    // SHA256.HashData (added in .NET 5) avoids the per-call SHA256 instance allocation that
+    // SHA256.Create() requires.
+    private static string ComputeSHA256Hash(string input)
+        => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(input)));
 }

@@ -459,10 +459,29 @@ public class GriffinServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetClaimsAsync_InvalidJson_FailsUnreadable()
+    public async Task GetClaimsAsync_HtmlBody_FailsUnexpectedShape()
     {
+        // After the WAF/proxy-detection guard, HTML bodies are now caught BEFORE the JSON
+        // parser sees them and return UnexpectedResponseShape — more informative for admins
+        // than the prior generic "UnreadableResponse" because it tells them to look for
+        // a captive portal or proxy interception rather than a Griffin contract change.
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
             .Returns(CreateMockHttpClient(HttpStatusCode.OK, "<html>nope</html>"));
+
+        var result = await _service.GetClaimsAsync("token", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeFalse();
+        result.Error!.Code.Should().Be(GriffinErrorCode.UnexpectedResponseShape);
+        result.Error.ResponsePreview.Should().Contain("<html>");
+    }
+
+    [Fact]
+    public async Task GetClaimsAsync_NonHtmlInvalidJson_FailsUnreadable()
+    {
+        // Non-HTML invalid JSON (e.g. truncated or corrupted body) still goes through the
+        // JSON parser and produces UnreadableResponse — the original intent of this code path.
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, "{not valid json"));
 
         var result = await _service.GetClaimsAsync("token", GriffinBaseUrl, 10);
 
@@ -506,6 +525,327 @@ public class GriffinServiceTests : IDisposable
 
         result.Success.Should().BeFalse();
         result.Error!.Code.Should().Be(GriffinErrorCode.MissingUniqueId);
+    }
+
+    // ---------- GetClaimsAsync: JWT-field type tolerance (regression guard) ----------
+    // Bug: previously iat/nbf/exp/aud/iis on GriffinClaimsDto were typed as `string`. When
+    // Griffin returned them as JSON numbers (Unix epoch seconds — RFC 7519 NumericDate is a
+    // *number*), System.Text.Json threw JsonException — surfacing to users as
+    // GRIFFIN-CLAIMSRETRIEVAL-301 ("could not be parsed") and blocking the entire ADFS login.
+    // The fix changed those fields to JsonElement?, which accepts any JSON value (number,
+    // string, array, null, object) without throwing. These tests lock the new behavior in.
+
+    [Fact]
+    public async Task GetClaimsAsync_NumericJwtTimestamps_StillParses()
+    {
+        var claimsJson = """
+        {
+            "UniqueID": "jdoe@8200",
+            "EmailAddress": "jdoe@test.local",
+            "DisplayName": "John Doe",
+            "GivenName": "John",
+            "Surname": "Doe",
+            "aud": "microsoft:distinctserver",
+            "iis": "griffin",
+            "iat": 1715425200,
+            "nbf": 1715425200,
+            "exp": 1715428800
+        }
+        """;
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, claimsJson));
+
+        var result = await _service.GetClaimsAsync("valid-token", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeTrue();
+        result.Value!.UniqueID.Should().Be("jdoe@8200");
+        result.Value.EmailAddress.Should().Be("jdoe@test.local");
+    }
+
+    [Fact]
+    public async Task GetClaimsAsync_StringJwtTimestamps_StillParses()
+    {
+        // Some Griffin deployments emit ISO-8601 strings for these fields. Both shapes must work.
+        var claimsJson = """
+        {
+            "UniqueID": "jdoe@8200",
+            "EmailAddress": "jdoe@test.local",
+            "DisplayName": "John Doe",
+            "GivenName": "John",
+            "Surname": "Doe",
+            "aud": "microsoft:distinctserver",
+            "iis": "griffin",
+            "iat": "2026-05-11T10:00:00Z",
+            "nbf": "2026-05-11T10:00:00Z",
+            "exp": "2026-05-11T11:00:00Z"
+        }
+        """;
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, claimsJson));
+
+        var result = await _service.GetClaimsAsync("valid-token", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeTrue();
+        result.Value!.UniqueID.Should().Be("jdoe@8200");
+    }
+
+    [Fact]
+    public async Task GetClaimsAsync_AudienceAsArray_StillParses()
+    {
+        // RFC 7519 §4.1.3: aud MAY be a single StringOrURI OR an array of StringOrURI.
+        // Some issuers always emit an array — the deserializer must not crash on that shape.
+        var claimsJson = """
+        {
+            "UniqueID": "jdoe@8200",
+            "EmailAddress": "jdoe@test.local",
+            "DisplayName": "John Doe",
+            "GivenName": "John",
+            "aud": ["microsoft:audA", "microsoft:audB"],
+            "iat": 1715425200
+        }
+        """;
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, claimsJson));
+
+        var result = await _service.GetClaimsAsync("valid-token", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeTrue();
+        result.Value!.UniqueID.Should().Be("jdoe@8200");
+    }
+
+    [Fact]
+    public async Task GetClaimsAsync_StandardIssClaim_PrefersStandardOverLegacy()
+    {
+        // Some Griffin deployments use the standard JWT "iss" key; older ones use the
+        // non-standard "iis". The DTO accepts both; the computed Issuer property prefers
+        // standard "iss" when both are present.
+        var claimsJson = """
+        {
+            "UniqueID": "jdoe@8200",
+            "EmailAddress": "jdoe@test.local",
+            "DisplayName": "John",
+            "GivenName": "John",
+            "iss": "standard-issuer",
+            "iis": "legacy-issuer"
+        }
+        """;
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, claimsJson));
+
+        var result = await _service.GetClaimsAsync("valid-token", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeTrue();
+        result.Value!.Issuer!.Value.GetString().Should().Be("standard-issuer");
+    }
+
+    // ---------- GetClaimsAsync: number-or-string tolerance on business-critical fields ----------
+    // The DTO's UniqueID, EmailAddress, DisplayName, GivenName, Surname use
+    // JsonNumberOrStringConverter so a Griffin deployment that ever sends one of these
+    // as a JSON number (e.g. "UniqueID": 7108 instead of "7108") doesn't blow up parsing.
+    // This is the same defensive pattern that fixed the iat/nbf/exp bug.
+
+    [Fact]
+    public async Task GetClaimsAsync_NumericUniqueId_StillParses()
+    {
+        var claimsJson = """
+        {
+            "UniqueID": 7108,
+            "EmailAddress": "jdoe@test.local",
+            "DisplayName": "John Doe",
+            "GivenName": "John"
+        }
+        """;
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, claimsJson));
+
+        var result = await _service.GetClaimsAsync("valid-token", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeTrue();
+        result.Value!.UniqueID.Should().Be("7108");
+    }
+
+    [Fact]
+    public async Task GetClaimsAsync_NumericEmailAddress_StillParsesButFailsValidation()
+    {
+        // Defensive: even if Griffin sends an email as a number (extremely unlikely but
+        // theoretically possible), parsing succeeds and we get a string — but downstream
+        // email validation would catch it. Confirms the converter handles ALL scalar fields.
+        var claimsJson = """
+        {
+            "UniqueID": "u1",
+            "EmailAddress": 12345,
+            "DisplayName": "x",
+            "GivenName": "x"
+        }
+        """;
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, claimsJson));
+
+        var result = await _service.GetClaimsAsync("valid-token", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeTrue();
+        result.Value!.EmailAddress.Should().Be("12345");
+    }
+
+    // ---------- LooksLikeJwt: structural validation gate ----------
+
+    [Theory]
+    [InlineData("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature", true)]
+    [InlineData("a.b.c", true)]                                        // minimal 3-segment shape
+    [InlineData("Aa1-_=.Bb2-_=.Cc3-_=", true)]                         // base64url alphabet
+    [InlineData("only.two", false)]                                    // wrong segment count
+    [InlineData("four.dot.parts.here", false)]                         // wrong segment count
+    [InlineData("", false)]                                            // empty
+    [InlineData("a..c", false)]                                        // empty middle segment
+    [InlineData(".b.c", false)]                                        // empty header
+    [InlineData("a.b.", false)]                                        // empty signature
+    [InlineData("<html><body>error</body></html>", false)]             // HTML
+    [InlineData("a.b.c d", false)]                                     // disallowed character (space)
+    [InlineData("a.b.c+d", false)]                                     // disallowed character (+) — base64url uses - not +
+    public void LooksLikeJwt_StructuralCases(string input, bool expected)
+    {
+        ShiftManager.Services.GriffinService.LooksLikeJwt(input).Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task ExchangeTokenAsync_NonJwtFallback_RejectsAsEmpty()
+    {
+        // Body is non-JSON, non-empty, non-JWT-shaped (e.g. a captive-portal HTML snippet).
+        // After the LooksLikeJwt gate, ExtractTokenFromResponse returns null instead of
+        // passing the HTML through as the "JWT" — caller sees EmptyResponse and the user
+        // gets a clean "no JWT was returned" error instead of a confusing 400 at validate.
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, "you are behind a captive portal"));
+
+        var result = await _service.ExchangeTokenAsync("hash", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeFalse();
+        result.Error!.Code.Should().Be(GriffinErrorCode.EmptyResponse);
+    }
+
+    [Fact]
+    public async Task ValidateAndGetClaimsAsync_InvalidToken_NegativelyCached()
+    {
+        // First call: Griffin says false → fail. Second call: hits the negative cache
+        // immediately, no extra HTTP traffic. Defends against retry loops and hammer attacks
+        // on Griffin (single-server, often air-gapped).
+        var callCount = 0;
+        var handler = new Mock<HttpMessageHandler>();
+        handler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("\"false\"") };
+            });
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(() => new HttpClient(handler.Object));
+
+        var r1 = await _service.ValidateAndGetClaimsAsync("bad-token", GriffinBaseUrl, 10);
+        r1.Success.Should().BeFalse();
+        r1.Error!.Code.Should().Be(GriffinErrorCode.HttpUnauthorized);
+
+        var r2 = await _service.ValidateAndGetClaimsAsync("bad-token", GriffinBaseUrl, 10);
+        r2.Success.Should().BeFalse();
+        r2.Error!.Code.Should().Be(GriffinErrorCode.HttpUnauthorized);
+
+        callCount.Should().Be(1, "second call should be served from negative cache");
+    }
+
+    [Fact]
+    public async Task AuthenticateUserAsync_SanitizesControlCharsInDisplayName()
+    {
+        // A Griffin response (or upstream ADFS user record) containing CR/LF in DisplayName
+        // could otherwise inject log-line terminators into our Claims and structured logs.
+        // The SanitizeClaimString helper normalises CR/LF to space.
+        _db.Users.Add(new AppUser
+        {
+            Id = 42, CompanyId = CompanyId,
+            Email = "weird@test.local", DisplayName = "weird",
+            Role = UserRole.Employee, IsActive = true, RoleTemplateId = null
+        });
+        await _db.SaveChangesAsync();
+
+        var callCount = 0;
+        var handler = new Mock<HttpMessageHandler>();
+        handler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount <= 1)
+                    return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("\"true\"") };
+                // DisplayName contains CR + LF + NUL — all should be neutralised.
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{\"UniqueID\":\"u\",\"EmailAddress\":\"weird@test.local\",\"DisplayName\":\"line1\\r\\nline2\\u0000extra\",\"GivenName\":\"safe\",\"iat\":1}")
+                };
+            });
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(handler.Object));
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(42)).ReturnsAsync((UserHierarchyContext?)null);
+
+        var config = new GriffinConfig { CompanyId = CompanyId, BaseUrl = GriffinBaseUrl, TimeoutSeconds = 10 };
+
+        var result = await _service.AuthenticateUserAsync("token", config, "127.0.0.1");
+
+        result.Success.Should().BeTrue();
+        var nameClaim = result.Value!.FindFirst(System.Security.Claims.ClaimTypes.Name)!.Value;
+        nameClaim.Should().NotContain("\r");
+        nameClaim.Should().NotContain("\n");
+        nameClaim.Should().NotContain("\0");
+        nameClaim.Should().Be("line1  line2extra"); // CR + LF → 2 spaces; NUL dropped
+    }
+
+    [Fact]
+    public async Task GetClaimsAsync_BodyWithBom_StillParses()
+    {
+        // Some Windows-side proxies/services prepend a UTF-8 BOM. The CallGriffinGetAsync
+        // helper strips the BOM so downstream parsers don't choke on a mystery U+FEFF.
+        var bomBody = "﻿" + """
+        {
+            "UniqueID": "jdoe@8200",
+            "EmailAddress": "jdoe@test.local",
+            "DisplayName": "John",
+            "GivenName": "John"
+        }
+        """;
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, bomBody));
+
+        var result = await _service.GetClaimsAsync("token", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeTrue();
+        result.Value!.UniqueID.Should().Be("jdoe@8200");
+    }
+
+    [Fact]
+    public async Task GetClaimsAsync_NoJwtFieldsAtAll_StillParses()
+    {
+        // Defensive: even if Griffin omits every JWT-spec field, business-critical fields
+        // (UniqueID + EmailAddress) should be enough to authenticate.
+        var claimsJson = """
+        {
+            "UniqueID": "jdoe@8200",
+            "EmailAddress": "jdoe@test.local",
+            "DisplayName": "John",
+            "GivenName": "John"
+        }
+        """;
+        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(CreateMockHttpClient(HttpStatusCode.OK, claimsJson));
+
+        var result = await _service.GetClaimsAsync("valid-token", GriffinBaseUrl, 10);
+
+        result.Success.Should().BeTrue();
+        result.Value!.IssuedAt.Should().BeNull();
+        result.Value.Audience.Should().BeNull();
+        result.Value.Issuer.Should().BeNull();
     }
 
     // ---------- ValidateAndGetClaimsAsync ----------

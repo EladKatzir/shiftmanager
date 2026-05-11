@@ -60,6 +60,12 @@ public partial class LoginModel : LocalizedPageModel
 
     [BindProperty] public string Email { get; set; } = string.Empty;
     [BindProperty] public string Password { get; set; } = string.Empty;
+
+    // Set to "true" by the Ctrl+click escape-hatch handler when the regular login form is
+    // revealed (only visible when FF_HIDE_REGULAR_LOGIN is enabled). Auditing this lets us
+    // distinguish "admin used the escape hatch" from "Griffin was unavailable so the form
+    // was always visible." Hidden field; never displayed to the user.
+    [BindProperty] public bool EscapeHatchUsed { get; set; }
     public bool ShowAuthPrompt { get; set; }
     public bool ShowGriffinButton { get; set; }
     public bool ShowGriffinUnavailableMessage { get; set; }
@@ -147,6 +153,17 @@ public partial class LoginModel : LocalizedPageModel
             // ✅ SECURITY FIX: Rate limiting — per-IP AND per-account
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
             var ipRateLimitKey = $"login:ip:{ipAddress}";
+
+            // Audit the escape-hatch usage so an admin reviewing security logs can see
+            // who bypassed FF_HIDE_REGULAR_LOGIN and from which IP. The escape hatch is
+            // not a security boundary (PasswordHash.Length==0 still blocks ADFS users)
+            // but the audit trail is.
+            if (EscapeHatchUsed)
+            {
+                _logger.LogWarning(
+                    "Login escape hatch used (Ctrl+click on logo) for {Email} from {IP}",
+                    Services.PiiMasker.MaskEmail(Email ?? ""), ipAddress);
+            }
 
             if (!_rateLimiting.IsAllowed(ipRateLimitKey, 10, 15))
             {
@@ -477,15 +494,31 @@ public partial class LoginModel : LocalizedPageModel
 
         if (!string.IsNullOrEmpty(returnUrl))
         {
-            Response.Cookies.Append("griffin.returnUrl", returnUrl, new CookieOptions
+            // Validate returnUrl is local BEFORE storing in the cookie. Url.IsLocalUrl correctly
+            // rejects "//evil.com" (protocol-relative), "javascript:", "\evil.com", and absolute
+            // off-site URLs. The same check runs at the callback's redirect site, but enforcing
+            // here too means a poisoned returnUrl is never even stored.
+            if (Url.IsLocalUrl(returnUrl))
             {
-                HttpOnly = true,
-                Secure = Request.IsHttps,
-                SameSite = SameSiteMode.Lax,
-                MaxAge = TimeSpan.FromMinutes(5),
-                Path = "/Auth"
-            });
-            LogGriffinReturnUrlStored(_logger, returnUrl);
+                Response.Cookies.Append("griffin.returnUrl", returnUrl, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = Request.IsHttps,
+                    // SameSite=Lax is intentional and load-bearing: the Griffin redirect-back is
+                    // a top-level cross-site GET and Strict would suppress the cookie, breaking
+                    // returnUrl preservation. Lax is the correct mode for this exact pattern.
+                    SameSite = SameSiteMode.Lax,
+                    MaxAge = TimeSpan.FromMinutes(5),
+                    Path = "/Auth"
+                });
+                LogGriffinReturnUrlStored(_logger, returnUrl);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Refusing to store non-local returnUrl in griffin.returnUrl cookie: {ReturnUrl}",
+                    returnUrl);
+            }
         }
 
         LogGriffinDebugBanner(_logger);

@@ -54,6 +54,25 @@ public class GriffinCallbackModel : LocalizedPageModel
         _db = db;
     }
 
+    // Server-side token shape gate. Griffin tokens are SHA-256 hex hashes (~64 chars) on
+    // the inbound /Auth/GriffinCallback?token=... or compact JWS strings (3 dot-segments,
+    // base64url) on the outbound chain. Either way they are bounded in length and use a
+    // restricted alphabet. Reject anything outside that envelope BEFORE we hand the value
+    // to GriffinService — defensive guard against URL crafting / smuggling. 4000 chars
+    // is comfortably above any plausible JWT length (typical Griffin JWT ~600B).
+    private const int MaxInboundTokenLength = 4000;
+    private static bool IsAcceptableInboundToken(string token)
+    {
+        if (token.Length is 0 or > MaxInboundTokenLength) return false;
+        foreach (var c in token)
+        {
+            // base64url alphabet + JWT segment separator + URL-safe padding
+            if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.' || c == '='))
+                return false;
+        }
+        return true;
+    }
+
     public async Task<IActionResult> OnGetAsync(
         [FromQuery(Name = "token")] string? token,
         [FromQuery(Name = "HashedToken")] string? hashedToken,
@@ -70,6 +89,18 @@ public class GriffinCallbackModel : LocalizedPageModel
                 GriffinStage.TokenExchange,
                 GriffinErrorCode.EmptyResponse,
                 "Griffin callback was invoked without any of the expected token query parameters (token, HashedToken, hasedToken)."));
+        }
+        if (!IsAcceptableInboundToken(effectiveToken))
+        {
+            _logger.LogWarning("Griffin callback rejected — token failed shape validation (len={Len})",
+                effectiveToken.Length);
+            _securityLogger.LogSecurityThreat("InvalidTokenShape",
+                $"Inbound Griffin token failed shape validation (length={effectiveToken.Length}). Possible URL crafting attempt.",
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+            return ShowFailure(new GriffinApiError(
+                GriffinStage.TokenExchange,
+                GriffinErrorCode.UnexpectedResponseShape,
+                "Inbound token failed shape validation (length or characters outside the base64url envelope)."));
         }
         token = effectiveToken;
 
@@ -152,8 +183,16 @@ public class GriffinCallbackModel : LocalizedPageModel
                 {
                     // Refusal path: do NOT set the griffin.token cookie — there's no signup form coming,
                     // so caching the JWT serves no purpose and lengthens the window the token is on disk.
+                    //
+                    // Audit the refusal: a holder of a valid Griffin credential who is NOT in
+                    // ShiftManager is operationally relevant (someone with military ADFS auth
+                    // probing for access). Without this entry the event is invisible in logs.
                     _logger.LogInformation(
                         "Griffin user not found and FF_ALLOW_USERS_CREATION_VIA_ADFS is disabled; showing refusal page");
+                    _securityLogger.LogAuthenticationFailure(
+                        "Griffin ADFS (no-account refused)",
+                        ipAddress,
+                        $"ADFS-authenticated identity has no ShiftManager account; user-creation FF is OFF. ErrorToken={err.ErrorToken}");
                     FailureTitle = _localizer["Error_GriffinNoAccess_Title"].Value;
                     FailureDetail = _localizer["Error_GriffinNoAccess_Detail"].Value;
                     FailureRemediation = _localizer["Error_GriffinNoAccess_Remediation"].Value;
