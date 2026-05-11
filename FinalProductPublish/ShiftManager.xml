@@ -6632,6 +6632,13 @@
             see exactly which endpoint and parameter name was used.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.GriffinDiagnosticModel.OnPostSimulateAdfsLoginAsync">
+            <summary>
+            Simulate the post-Griffin pipeline. Builds a fake claims DTO from form fields and runs
+            it through <see cref="M:ShiftManager.Services.IGriffinService.BuildPrincipalFromClaimsAsync(ShiftManager.Models.DTOs.GriffinClaimsDto,System.String,System.String)"/> — the SAME code
+            path production uses after Griffin returns. Does NOT sign the admin in as the target.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.LocalizedPageModel">
             <summary>
             Base class for all Razor Pages that provides localization support.
@@ -8120,6 +8127,17 @@
              the callback page view stays a dumb display of already-formatted text.
              </summary>
         </member>
+        <member name="M:ShiftManager.Services.GriffinService.BuildPrincipalFromClaimsAsync(ShiftManager.Models.DTOs.GriffinClaimsDto,System.String,System.String)">
+            <summary>
+            Runs the post-Griffin authentication pipeline given pre-resolved claims: DB lookup →
+            IsActive → role-template backfill → hierarchy load → grant application → ClaimsPrincipal
+            build. Used by <see cref="M:ShiftManager.Services.GriffinService.AuthenticateUserAsync(System.String,ShiftManager.Models.GriffinConfig,System.String)"/> AND by the /GriffinDiagnostic
+            "Simulate ADFS Login" diagnostic tool, which lets admins exercise this exact pipeline
+            against the real DB without making any HTTP calls to Griffin. Pass a non-null
+            <paramref name="tokenForHash"/> in production (the live token gets SHA256-hashed into a
+            claim); pass null in simulation mode (a placeholder hash is used instead).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.DiskSpaceHealthCheck">
             <summary>
             F-02: Checks available disk space where app.db resides.
@@ -9300,6 +9318,15 @@
         <member name="M:ShiftManager.Services.IGriffinService.AuthenticateUserAsync(System.String,ShiftManager.Models.GriffinConfig,System.String)">
             <summary>
             Full authentication flow: validate token, get claims, lookup/provision user, build ClaimsPrincipal.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGriffinService.BuildPrincipalFromClaimsAsync(ShiftManager.Models.DTOs.GriffinClaimsDto,System.String,System.String)">
+            <summary>
+            Post-Griffin pipeline ONLY — given already-resolved claims, runs the DB lookup,
+            role-template backfill, hierarchy load, grant application, and ClaimsPrincipal build.
+            Used by <see cref="M:ShiftManager.Services.IGriffinService.AuthenticateUserAsync(System.String,ShiftManager.Models.GriffinConfig,System.String)"/> in production AND by the /GriffinDiagnostic
+            "Simulate ADFS Login" diagnostic to exercise the post-Griffin path without HTTP calls.
+            Pass tokenForHash=null in simulation mode (a sentinel hash will be recorded).
             </summary>
         </member>
         <member name="T:ShiftManager.Services.HierarchyPath">

@@ -1,12 +1,12 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 3.9.85
+                           Version 3.9.9
 ================================================================================
 
-VERSION: 3.9.85
+VERSION: 3.9.9
 RELEASE DATE: 2026-05-11
-BUILD DATE: 2026-05-11 15:02:33 UTC
-GIT COMMIT: c7dd40a
+BUILD DATE: 2026-05-11 20:19:17 UTC
+GIT COMMIT: b463703
 GIT BRANCH: update
 
 PACKAGE INFORMATION:
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-05-11 15:02:33 UTC
+Build Date:     2026-05-11 20:19:17 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v3.9.85
+  âœ“ Git tagged: v3.9.9
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -260,14 +260,14 @@ This package has been:
   âœ… Tested automatically with comprehensive checks
   âœ… Verified for completeness (525 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v3.9.85)
+  âœ… Tagged in version control (v3.9.9)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-05-11 15:02:33 UTC
-Git Commit: c7dd40a
+Date: 2026-05-11 20:19:17 UTC
+Git Commit: b463703
 
 ================================================================================
 LICENSE
