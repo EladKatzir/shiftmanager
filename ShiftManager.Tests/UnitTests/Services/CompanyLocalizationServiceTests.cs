@@ -24,6 +24,9 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// CL-07: ValidateOverrideValue rejects control characters
 /// CL-08: SearchOverridesAsync filters by culture and search term
 /// </summary>
+// NOTE: This fixture stays on In-Memory; SearchOverridesAsync's LINQ translation is
+// independently guarded by `SqliteTranslationGuardTests` to prevent re-regression of
+// the GRIFFIN-USERLOOKUP-510 bug class.
 public class CompanyLocalizationServiceTests : IDisposable
 {
     private readonly AppDbContext _db;

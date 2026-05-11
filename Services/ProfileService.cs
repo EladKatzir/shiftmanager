@@ -377,13 +377,16 @@ public class ProfileService : IProfileService
             return new List<AppUser>();
         }
 
+        // EF Core cannot translate Contains(s, StringComparison.X). Pre-lower the search
+        // value client-side; compare against column.ToLower() which translates to SQL LOWER().
+        var searchLower = searchTerm.ToLowerInvariant();
         return await _db.Users
             .Where(u => u.IsActive &&
-                (u.DisplayName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                 (u.PreferredName != null && u.PreferredName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                 u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                 (u.LegacyDepartment != null && u.LegacyDepartment.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                 (u.JobTitle != null && u.JobTitle.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))))
+                (u.DisplayName.ToLower().Contains(searchLower) ||
+                 (u.PreferredName != null && u.PreferredName.ToLower().Contains(searchLower)) ||
+                 u.Email.ToLower().Contains(searchLower) ||
+                 (u.LegacyDepartment != null && u.LegacyDepartment.ToLower().Contains(searchLower)) ||
+                 (u.JobTitle != null && u.JobTitle.ToLower().Contains(searchLower))))
             .OrderBy(u => u.DisplayName)
             .Take(maxResults)
             .ToListAsync();

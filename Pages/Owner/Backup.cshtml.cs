@@ -120,7 +120,7 @@ public class BackupModel : PageModel
             LoadBackups();
             return Page();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error creating database backup");
             TempData["ErrorMessage"] = "An unexpected error occurred. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
@@ -151,7 +151,7 @@ public class BackupModel : PageModel
                 TempData["ErrorId"] = HttpContext.TraceIdentifier;
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error creating deployment export");
             TempData["ErrorMessage"] = "An unexpected error occurred during export."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
@@ -228,12 +228,12 @@ public class BackupModel : PageModel
             if (System.IO.File.Exists(walPath))
             {
                 try { System.IO.File.Delete(walPath); }
-                catch (Exception ex) { _logger.LogWarning(ex, "Could not delete WAL file after restore"); }
+                catch (Exception ex) when (ex is not OperationCanceledException) { _logger.LogWarning(ex, "Could not delete WAL file after restore"); }
             }
             if (System.IO.File.Exists(shmPath))
             {
                 try { System.IO.File.Delete(shmPath); }
-                catch (Exception ex) { _logger.LogWarning(ex, "Could not delete SHM file after restore"); }
+                catch (Exception ex) when (ex is not OperationCanceledException) { _logger.LogWarning(ex, "Could not delete SHM file after restore"); }
             }
 
             // Log the restore
@@ -251,7 +251,7 @@ public class BackupModel : PageModel
             LoadBackups();
             return Page();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error restoring database backup");
             TempData["ErrorMessage"] = "An unexpected error occurred. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
@@ -298,7 +298,7 @@ public class BackupModel : PageModel
             LoadBackups();
             return Page();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error deleting backup");
             TempData["ErrorMessage"] = "An unexpected error occurred. Please try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
@@ -333,7 +333,7 @@ public class BackupModel : PageModel
 
             return PhysicalFile(backupFilePath, "application/octet-stream", backupFileName);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error downloading backup");
             return NotFound();
@@ -381,7 +381,7 @@ public class BackupModel : PageModel
                 .OrderByDescending(b => b.CreatedDate)
                 .ToList();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error loading backups");
         }

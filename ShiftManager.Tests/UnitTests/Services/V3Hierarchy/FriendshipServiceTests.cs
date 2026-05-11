@@ -14,6 +14,9 @@ namespace ShiftManager.Tests.UnitTests.Services.V3Hierarchy;
 /// <summary>
 /// Tests for Task 13.4: Circle/Friends Visibility
 /// Verifies that friendship system correctly controls cross-molecule visibility.
+/// NOTE: Stays on In-Memory; SearchUsersAsync's LINQ translation is independently guarded
+/// by `SqliteTranslationGuardTests` against real SQLite to prevent re-regression of the
+/// GRIFFIN-USERLOOKUP-510 bug class.
 /// </summary>
 public class FriendshipServiceTests : IDisposable
 {

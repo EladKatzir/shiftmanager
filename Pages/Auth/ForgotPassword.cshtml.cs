@@ -119,11 +119,14 @@ public class ForgotPasswordModel : LocalizedPageModel
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             // SECURITY-AUDITED: SAFE — password recovery must search across all companies
-            // Find user by email and phone number match (case-insensitive for email)
+            // Find user by email and phone number match (case-insensitive for email).
+            // EF Core translates u.Email.ToLower() → SQL LOWER(); ToLowerInvariant would throw
+            // "could not be translated" (same root cause as GRIFFIN-USERLOOKUP-510).
+            var emailLower = Email.ToLowerInvariant();
             var user = await _db.Users
                 .IgnoreQueryFilters() // Allow searching across all companies
                 .FirstOrDefaultAsync(u =>
-                    u.Email.ToLowerInvariant() == Email.ToLowerInvariant() &&
+                    u.Email.ToLower() == emailLower &&
                     u.Phone != null &&
                     u.Phone == Phone);
 
@@ -259,10 +262,12 @@ public class ForgotPasswordModel : LocalizedPageModel
         try
         {
             // SECURITY-AUDITED: SAFE — password change must search across all companies
-            // Find user by email (case-insensitive)
+            // Find user by email (case-insensitive). EF translates ToLower() to SQL LOWER();
+            // ToLowerInvariant has no SQL mapping (would throw at runtime — GRIFFIN-USERLOOKUP-510 family).
+            var changeEmailLower = ChangeEmail.ToLowerInvariant();
             var user = await _db.Users
                 .IgnoreQueryFilters() // Allow searching across all companies
-                .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == ChangeEmail.ToLowerInvariant());
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == changeEmailLower);
 
             if (user == null)
             {

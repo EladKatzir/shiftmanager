@@ -308,14 +308,34 @@ public partial class GriffinService : IGriffinService
             return GriffinApiResult<ClaimsPrincipal>.FailFrom(claimsResult);
         }
 
-        var griffinClaims = claimsResult.Value!;
+        return await BuildPrincipalFromClaimsAsync(claimsResult.Value!, token, ipAddress);
+    }
 
+    /// <summary>
+    /// Runs the post-Griffin authentication pipeline given pre-resolved claims: DB lookup →
+    /// IsActive → role-template backfill → hierarchy load → grant application → ClaimsPrincipal
+    /// build. Used by <see cref="AuthenticateUserAsync"/> AND by the /GriffinDiagnostic
+    /// "Simulate ADFS Login" diagnostic tool, which lets admins exercise this exact pipeline
+    /// against the real DB without making any HTTP calls to Griffin. Pass a non-null
+    /// <paramref name="tokenForHash"/> in production (the live token gets SHA256-hashed into a
+    /// claim); pass null in simulation mode (a placeholder hash is used instead).
+    /// </summary>
+    public async Task<GriffinApiResult<ClaimsPrincipal>> BuildPrincipalFromClaimsAsync(
+        GriffinClaimsDto griffinClaims, string? tokenForHash, string ipAddress)
+    {
         // Defence-in-depth: trim the email locally before the DB compare. The new
         // GriffinClaimsDto.Parse already trims string scalars, but a future refactor or
         // alternative call path (e.g. tests constructing the DTO directly) could bypass that.
         // SQLite's `=` comparison does NOT strip trailing whitespace, so an untrimmed value
         // would silently fail to match the DB row and produce a misleading UserNotRegistered.
         var emailForLookup = (griffinClaims.EmailAddress ?? string.Empty).Trim();
+        // Lower-case the search value CLIENT-SIDE with ToLowerInvariant (safe for the ASCII
+        // characters that are valid in email per RFC 5321 — Turkish-locale dotless-i issue
+        // can never trigger because emails contain no 'I' codepoints that fold differently).
+        // The column side below uses .ToLower() which EF Core translates to SQL LOWER()
+        // (locale-neutral at the SQL engine level). .ToLowerInvariant() has NO SQL mapping
+        // in EF Core and throws "could not be translated" — that was the original 510 bug.
+        var emailForLookupLower = emailForLookup.ToLowerInvariant();
 
         // SECURITY-AUDITED: SAFE — authentication must search across all companies to find user by email.
         // Wrapped in try/catch with a SPECIFIC error code so that EF/SQLite/translation failures
@@ -328,7 +348,7 @@ public partial class GriffinService : IGriffinService
                 .IgnoreQueryFilters()
                 .Include(u => u.RoleTemplate)
                 .Include(u => u.JobType)
-                .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == emailForLookup.ToLowerInvariant());
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == emailForLookupLower);
         }
         // Filter out OperationCanceledException — that's a client-disconnect / IIS-timeout signal,
         // not a Griffin failure. Recording it would fill the diagnostics buffer with noise and
@@ -412,6 +432,43 @@ public partial class GriffinService : IGriffinService
                 $"Hierarchy load for user {user.Id} threw {ex.GetType().Name}: {ex.Message}"));
         }
 
+        // Defensive guard: workforce user (CompanyId > 0) with a role template AND null
+        // hierarchy context indicates the user's Company → Molecule → Area → Project chain
+        // is broken (orphan FK from soft-deleted intermediate row, or seed-data corruption).
+        // The 2026-05-11 audit found that proceeding to ApplyAutoGrantsAsync with null path
+        // fields silently creates grants with MoleculeId/AreaId/ProjectId = null — interpreted
+        // as GLOBAL scope = silent over-granting.
+        //
+        // Guard fires only when BOTH conditions hold:
+        //   1. user.RoleTemplateId.HasValue → ApplyAutoGrantsAsync WILL run (otherwise it's
+        //      skipped at line `if (user.RoleTemplateId.HasValue)` below and no over-grant
+        //      can occur)
+        //   2. workforce user (CompanyId > 0, no DepartmentId) → hierarchy null is unexpected
+        //      and signals a broken chain
+        //
+        // Users without a role template (RoleTemplateId == null) — sanitisation/CR/LF tests,
+        // seed-data fixtures, brand-new accounts pre-backfill — fall through gracefully
+        // because there's no grant phase to over-grant. The audit's defensive logging in
+        // ApplyAutoGrantsAsync covers the residual "template deleted via raw SQL" case.
+        if (hierarchyContext == null
+            && user.CompanyId > 0
+            && !user.DepartmentId.HasValue
+            && user.RoleTemplateId.HasValue)
+        {
+            _logger.LogError(
+                "Griffin auth: user {UserId} (CompanyId={CompanyId}, RoleTemplateId={TemplateId}) " +
+                "returned null hierarchy context. Likely orphan FK in Company→Molecule→Area→Project " +
+                "chain. Refusing login to avoid over-granting.",
+                user.Id, user.CompanyId, user.RoleTemplateId);
+            return GriffinApiResult<ClaimsPrincipal>.Fail(new GriffinApiError(
+                GriffinStage.UserLookup,
+                GriffinErrorCode.HierarchyLoadFailed,
+                $"User {user.Id} has CompanyId={user.CompanyId} and a role template but the hierarchy " +
+                $"chain returned null. This usually means a Molecule, Area, or Project the user " +
+                $"belongs to was deleted. Restore the broken hierarchy link or move the user to a " +
+                $"valid company."));
+        }
+
         if (user.RoleTemplateId.HasValue)
         {
             try
@@ -464,8 +521,12 @@ public partial class GriffinService : IGriffinService
             new Claim("CompanyId", user.CompanyId.ToString(CultureInfo.InvariantCulture)),
             new Claim("AuthMethod", "Griffin"),
             new Claim("Griffin:UniqueID", safeUniqueId),
-            // HIGH-007: store hashed token reference instead of raw token in claims
-            new Claim("Griffin:TokenHash", ComputeSHA256Hash(token)),
+            // HIGH-007: store hashed token reference instead of raw token in claims.
+            // The /GriffinDiagnostic "Simulate ADFS Login" path passes tokenForHash=null
+            // because no real token exists — record a fixed sentinel hash so the claim is
+            // still populated and downstream code never sees a null Griffin:TokenHash value.
+            new Claim("Griffin:TokenHash",
+                string.IsNullOrEmpty(tokenForHash) ? "simulated" : ComputeSHA256Hash(tokenForHash)),
             new Claim("Griffin:AuthTime", FormatClaim(griffinClaims.IssuedAt)),
             new Claim("AuthTimestamp", DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture))
         };

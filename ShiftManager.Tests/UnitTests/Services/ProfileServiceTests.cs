@@ -13,6 +13,12 @@ using ShiftManager.Services;
 
 namespace ShiftManager.Tests.UnitTests.Services;
 
+// NOTE: This fixture intentionally remains on UseInMemoryDatabase. Migrating it to real
+// SQLite surfaces 11 unrelated test failures driven by FK-constraint / seed-data semantics
+// that the In-Memory provider relaxes (e.g. SQLite enforces FK ordering during seed). Each
+// of those is its own root-cause investigation. SearchProfilesAsync's LINQ-translatability
+// is independently guarded by `SqliteTranslationGuardTests` against the production service
+// directly — that focused test proves the fix without bringing in unrelated regressions.
 public class ProfileServiceTests : IDisposable
 {
     private readonly AppDbContext _db;

@@ -41,7 +41,7 @@ public class GriffinAuthenticationMiddleware
         {
             griffinConfig = await TryGetGriffinConfigAsync(context, griffinConfigService);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogDebug(ex, "Unable to load Griffin config at middleware stage");
         }
@@ -84,7 +84,7 @@ public class GriffinAuthenticationMiddleware
                     authResult.Error?.TechnicalDetail ?? "(no error detail)");
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Griffin authentication threw unexpectedly");
             context.Response.Cookies.Delete("griffin.token");

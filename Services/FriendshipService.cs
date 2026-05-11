@@ -300,13 +300,16 @@ public class FriendshipService : IFriendshipService
             .Select(f => f.UserId == userId ? f.FriendId : f.UserId)
             .ToHashSet();
 
-        // Search users
-        // SECURITY-AUDITED: SAFE — cross-company user search is intentional for friend discovery; limited to 20 results, basic info only
+        // Search users.
+        // SECURITY-AUDITED: SAFE — cross-company user search is intentional for friend discovery; limited to 20 results, basic info only.
+        // EF Core cannot translate Contains(s, StringComparison.X) — pre-lower the search
+        // value client-side and compare against column.ToLower() which translates to SQL LOWER().
+        var queryLower = query.ToLowerInvariant();
         var users = await _db.Users
             .IgnoreQueryFilters()
             .Where(u => u.IsActive && u.Id != userId &&
-                (u.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                 u.Email.Contains(query, StringComparison.OrdinalIgnoreCase)))
+                (u.DisplayName.ToLower().Contains(queryLower) ||
+                 u.Email.ToLower().Contains(queryLower)))
             .Include(u => u.JobType)
             .Take(limit)
             .ToListAsync();

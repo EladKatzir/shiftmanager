@@ -672,8 +672,12 @@ public partial class UsersModel : LocalizedPageModel
         if (!NewEmail.Contains('@') || NewEmail.Length < 3)
         { Error = _localizer["Error_InvalidEmailFormat"]; return Page(); }
 
-        // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier
-        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == NewEmail)) { Error = _localizer["Error_EmailAlreadyExists"]; return Page(); }
+        // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier.
+        // Case-insensitive comparison: prevents admins from accidentally creating "Foo@x.com" when
+        // "foo@x.com" already exists (which would later collide at login when the case-insensitive
+        // lookup finds 2 matches and FirstOrDefaultAsync returns non-deterministically).
+        var newEmailLower = NewEmail.ToLowerInvariant();
+        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLower() == newEmailLower)) { Error = _localizer["Error_EmailAlreadyExists"]; return Page(); }
 
         // Resolve role template and derive UserRole
         RoleTemplate? roleTemplate = null;
@@ -1819,8 +1823,10 @@ public partial class UsersModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier
-        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == joinRequest.Email))
+        // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier.
+        // Case-insensitive check (consistent with all other email-existence checks).
+        var requestEmailLower = joinRequest.Email.ToLowerInvariant();
+        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLower() == requestEmailLower))
         {
             TempData["ErrorMessage"] = _localizer["Error_UserEmailAlreadyExists"].Value;
             return RedirectToPage();
@@ -2143,8 +2149,10 @@ public partial class UsersModel : LocalizedPageModel
                     continue;
                 }
 
-                // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier
-                if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == joinRequest.Email))
+                // SECURITY-AUDITED: IgnoreQueryFilters for global email uniqueness — email is the login identifier.
+                // Case-insensitive check — see siblings in this file for rationale.
+                var jrEmailLower = joinRequest.Email.ToLowerInvariant();
+                if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLower() == jrEmailLower))
                 {
                     errors.Add(string.Format(CultureInfo.CurrentCulture, _localizer["Error_UserWithEmailExists"], joinRequest.Email));
                     skippedCount++;
@@ -2583,7 +2591,9 @@ public partial class UsersModel : LocalizedPageModel
                 continue;
             }
 
-            if (await _db.Users.AnyAsync(u => u.Email == email))
+            // Case-insensitive (CSV import uniqueness must match Login/Griffin lookup case-folding).
+            var importEmailLower = email.ToLowerInvariant();
+            if (await _db.Users.AnyAsync(u => u.Email.ToLower() == importEmailLower))
             {
                 skipped++;
                 continue;

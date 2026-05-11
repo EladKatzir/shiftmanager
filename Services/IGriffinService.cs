@@ -50,4 +50,14 @@ public interface IGriffinService
     /// Full authentication flow: validate token, get claims, lookup/provision user, build ClaimsPrincipal.
     /// </summary>
     Task<GriffinApiResult<ClaimsPrincipal>> AuthenticateUserAsync(string token, GriffinConfig config, string ipAddress);
+
+    /// <summary>
+    /// Post-Griffin pipeline ONLY — given already-resolved claims, runs the DB lookup,
+    /// role-template backfill, hierarchy load, grant application, and ClaimsPrincipal build.
+    /// Used by <see cref="AuthenticateUserAsync"/> in production AND by the /GriffinDiagnostic
+    /// "Simulate ADFS Login" diagnostic to exercise the post-Griffin path without HTTP calls.
+    /// Pass tokenForHash=null in simulation mode (a sentinel hash will be recorded).
+    /// </summary>
+    Task<GriffinApiResult<ClaimsPrincipal>> BuildPrincipalFromClaimsAsync(
+        GriffinClaimsDto griffinClaims, string? tokenForHash, string ipAddress);
 }

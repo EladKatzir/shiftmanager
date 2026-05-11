@@ -207,12 +207,18 @@ public partial class LoginModel : LocalizedPageModel
                 return Page();
             }
 
-            // SECURITY-AUDITED: SAFE — login must search across all companies to authenticate users
+            // SECURITY-AUDITED: SAFE — login must search across all companies to authenticate users.
+            // Case-insensitive email match (consistent with GriffinService, GriffinSignup,
+            // ForgotPassword). A user signed up with "Foo@x.com" can log in with "foo@x.com" —
+            // before this fix the lookup was case-sensitive and the case-mismatched user was a
+            // ghost account that could not authenticate. .ToLower() translates to SQL LOWER();
+            // .ToLowerInvariant() does NOT translate (root cause of GRIFFIN-USERLOOKUP-510).
+            var emailLower = (Email ?? string.Empty).ToLowerInvariant();
             var user = await _db.Users
                 .IgnoreQueryFilters() // Allow login across all companies
                 .Include(u => u.RoleTemplate)
                 .Include(u => u.JobType)
-                .FirstOrDefaultAsync(u => u.Email == Email && u.IsActive);
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == emailLower && u.IsActive);
 
             // ✅ SECURITY FIX: Account lockout protection
             if (user != null)

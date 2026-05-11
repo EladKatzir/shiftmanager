@@ -63,12 +63,18 @@ public class UserApiService
             query = query.Where(u => u.IsActive == isActive.Value);
         }
 
-        // Apply search filter (email or display name)
+        // Apply search filter (email or display name).
+        // EF Core has NO SQL translation for Contains(s, StringComparison.X) — it throws
+        // "could not be translated" at runtime (same root cause as GRIFFIN-USERLOOKUP-510).
+        // Pre-lower the input client-side, then compare with column.ToLower() which EF
+        // translates to SQL LOWER() — locale-neutral at the SQL engine level. Search input
+        // is ASCII-typed by users in the UI; ToLowerInvariant is the right client-side call.
         if (!string.IsNullOrEmpty(search))
         {
+            var searchLower = search.ToLowerInvariant();
             query = query.Where(u =>
-                u.Email.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                u.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase));
+                u.Email.ToLower().Contains(searchLower) ||
+                u.DisplayName.ToLower().Contains(searchLower));
         }
 
         // Get total count before pagination

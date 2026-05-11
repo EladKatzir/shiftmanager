@@ -134,7 +134,7 @@ public class AnalyticsService : IAnalyticsService
             _cache.Set(cacheKey, results, TimeSpan.FromMinutes(CacheDurationMinutes));
             return results;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating employee hours");
             return new List<EmployeeHoursDto>();
@@ -166,7 +166,7 @@ public class AnalyticsService : IAnalyticsService
 
             return results;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating upcoming shifts");
             return new List<EmployeeShiftCountDto>();
@@ -251,7 +251,7 @@ public class AnalyticsService : IAnalyticsService
 
             return warnings.OrderBy(w => w.RestHours).ToList();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating back-to-back shifts");
             return new List<BackToBackShiftDto>();
@@ -305,7 +305,7 @@ public class AnalyticsService : IAnalyticsService
 
             return results;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating hours by role");
             return new Dictionary<UserRole, decimal>();
@@ -357,7 +357,7 @@ public class AnalyticsService : IAnalyticsService
 
             return results;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating understaffing report");
             return new List<StaffingIssueDto>();
@@ -410,7 +410,7 @@ public class AnalyticsService : IAnalyticsService
 
             return results;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating overstaffing report");
             return new List<StaffingIssueDto>();
@@ -457,7 +457,7 @@ public class AnalyticsService : IAnalyticsService
             var coverageRate = (decimal)totalAssigned / totalRequired * 100;
             return Math.Round(Math.Min(coverageRate, 100), 2);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating coverage rate");
             return 0;
@@ -494,7 +494,7 @@ public class AnalyticsService : IAnalyticsService
                 ApprovalRate = Math.Round(approvalRate, 2)
             };
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating swap stats");
             return new SwapStatsDto();
@@ -534,7 +534,7 @@ public class AnalyticsService : IAnalyticsService
 
             return results;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating top swappers");
             return new List<TopSwapperDto>();
@@ -550,7 +550,7 @@ public class AnalyticsService : IAnalyticsService
             _logger.LogWarning("SwapRequest model does not have ReviewedAt field. Cannot calculate average approval time.");
             return Task.FromResult(TimeSpan.Zero);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating average swap approval time");
             return Task.FromResult(TimeSpan.Zero);
@@ -587,7 +587,7 @@ public class AnalyticsService : IAnalyticsService
                 ApprovalRate = Math.Round(approvalRate, 2)
             };
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating time-off stats");
             return new TimeOffStatsDto();
@@ -620,7 +620,7 @@ public class AnalyticsService : IAnalyticsService
 
             return Math.Round((decimal)totalDays / employeeCount, 2);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating average days off per employee");
             return 0;
@@ -662,7 +662,7 @@ public class AnalyticsService : IAnalyticsService
 
             return results;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error calculating time-off by month");
             return new Dictionary<string, int>();

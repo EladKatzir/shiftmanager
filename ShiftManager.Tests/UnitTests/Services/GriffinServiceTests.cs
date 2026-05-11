@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
 using FluentAssertions;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -17,6 +17,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class GriffinServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
     private readonly IMemoryCache _memoryCache;
@@ -31,12 +32,21 @@ public class GriffinServiceTests : IDisposable
 
     public GriffinServiceTests()
     {
+        // Real SQLite in-memory (NOT EF Core's UseInMemoryDatabase, which executes LINQ
+        // client-side and silently masks "could not be translated" bugs — that's the entire
+        // root cause of GRIFFIN-USERLOOKUP-510). With real SQLite, every test exercises the
+        // production SQL translator, so any future regression to a non-translatable LINQ
+        // expression (.ToLowerInvariant(), Contains(s, StringComparison.X), Regex.IsMatch, etc.)
+        // fails at test time instead of in production.
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:");
+        _sqliteConnection.Open();
+
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -59,6 +69,7 @@ public class GriffinServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
         _memoryCache.Dispose();
     }
 
@@ -1006,6 +1017,114 @@ public class GriffinServiceTests : IDisposable
         result.Error!.Code.Should().Be(GriffinErrorCode.UserDeactivated);
     }
 
+    // -------------------------------------------------------------------------------------------
+    // BuildPrincipalFromClaimsAsync — the post-Griffin pipeline that GriffinDiagnostic's
+    // "Simulate ADFS Login" tool uses. Exercises DB lookup → IsActive → role-template
+    // backfill → hierarchy load → grant application → ClaimsPrincipal build with NO HTTP calls.
+    // -------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task BuildPrincipalFromClaimsAsync_ExistingActiveUser_ReturnsPrincipalWithSimulatedTokenHash()
+    {
+        _db.Users.Add(new AppUser
+        {
+            Id = 5, CompanyId = CompanyId,
+            Email = "sim@test.local", DisplayName = "Simulated User",
+            Role = UserRole.Employee, IsActive = true, RoleTemplateId = null
+        });
+        await _db.SaveChangesAsync();
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(5))
+            .ReturnsAsync((UserHierarchyContext?)null);
+
+        var fakeClaims = new GriffinClaimsDto
+        {
+            EmailAddress = "sim@test.local",
+            UniqueID = "SIM-001",
+            DisplayName = "Simulated User",
+            GivenName = "Simulated",
+            Surname = "User"
+        };
+
+        // tokenForHash=null → matches the simulator's call exactly.
+        var result = await _service.BuildPrincipalFromClaimsAsync(fakeClaims, tokenForHash: null, ipAddress: "diagnostic:simulator");
+
+        result.Success.Should().BeTrue();
+        result.Value!.FindFirst("Griffin:TokenHash")!.Value.Should().Be("simulated");
+        result.Value.FindFirst("AuthMethod")!.Value.Should().Be("Griffin");
+        result.Value.FindFirst(System.Security.Claims.ClaimTypes.Email)!.Value.Should().Be("sim@test.local");
+        // The audit-log path receives the simulator IP — useful for separating sim runs from real auth.
+        _securityLoggerMock.Verify(l => l.LogAuthenticationSuccess(
+            5, "sim@test.local", It.IsAny<string>(), "diagnostic:simulator"), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuildPrincipalFromClaimsAsync_UserNotFound_ReturnsUserNotRegistered()
+    {
+        var fakeClaims = new GriffinClaimsDto
+        {
+            EmailAddress = "ghost@test.local",
+            UniqueID = "GHOST-1",
+            DisplayName = "Ghost"
+        };
+
+        var result = await _service.BuildPrincipalFromClaimsAsync(fakeClaims, null, "diagnostic:simulator");
+
+        result.Success.Should().BeFalse();
+        result.Error!.Code.Should().Be(GriffinErrorCode.UserNotRegistered);
+    }
+
+    [Fact]
+    public async Task BuildPrincipalFromClaimsAsync_InactiveUser_ReturnsUserDeactivated()
+    {
+        _db.Users.Add(new AppUser
+        {
+            Id = 6, CompanyId = CompanyId,
+            Email = "deact@test.local", DisplayName = "Deactivated",
+            Role = UserRole.Employee, IsActive = false
+        });
+        await _db.SaveChangesAsync();
+
+        var fakeClaims = new GriffinClaimsDto
+        {
+            EmailAddress = "deact@test.local",
+            UniqueID = "D-1",
+            DisplayName = "Deactivated"
+        };
+
+        var result = await _service.BuildPrincipalFromClaimsAsync(fakeClaims, null, "diagnostic:simulator");
+
+        result.Success.Should().BeFalse();
+        result.Error!.Code.Should().Be(GriffinErrorCode.UserDeactivated);
+    }
+
+    [Fact]
+    public async Task BuildPrincipalFromClaimsAsync_MixedCaseEmail_FindsUser()
+    {
+        // Real-world echo of the production scenario: Griffin returns lowercase email,
+        // DB has mixed-case. The case-insensitive lookup must still find the user.
+        _db.Users.Add(new AppUser
+        {
+            Id = 7, CompanyId = CompanyId,
+            Email = "Mixed@Case.Mil", DisplayName = "Mixed",
+            Role = UserRole.Employee, IsActive = true
+        });
+        await _db.SaveChangesAsync();
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(7))
+            .ReturnsAsync((UserHierarchyContext?)null);
+
+        var fakeClaims = new GriffinClaimsDto
+        {
+            EmailAddress = "  mixed@case.mil  ", // also untrimmed
+            UniqueID = "M-1",
+            DisplayName = "Mixed"
+        };
+
+        var result = await _service.BuildPrincipalFromClaimsAsync(fakeClaims, null, "diagnostic:simulator");
+
+        result.Success.Should().BeTrue();
+        result.Value!.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value.Should().Be("7");
+    }
+
     [Fact]
     public async Task AuthenticateUserAsync_ExistingUser_ReturnsClaimsPrincipal()
     {
@@ -1255,5 +1374,130 @@ public class GriffinServiceTests : IDisposable
         msg.Detail.Should().NotContain("eyJ");
         msg.Detail.Should().NotContain("token=");
         msg.Detail.Should().NotContain("Sensitive technical detail");
+    }
+
+    // ============================================================================================
+    // LINQ-to-SQL translation regression guard (added 2026-05-11 after GRIFFIN-USERLOOKUP-510)
+    //
+    // The bug: AuthenticateUserAsync did `.FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == ...)`.
+    // EF Core CANNOT translate ToLowerInvariant() — only ToLower() and ToUpper() — and threw
+    // InvalidOperationException at runtime with "The LINQ expression ... could not be translated."
+    //
+    // Why our existing tests didn't catch it: every Griffin test in this file uses
+    // UseInMemoryDatabase, which executes LINQ in C# without any SQL translation. The
+    // in-memory provider happily ran ToLowerInvariant() client-side, masking the bug
+    // completely until it hit real SQLite in production.
+    //
+    // These tests use the actual SQLite provider (the production database) so any future
+    // regression to an untranslatable expression fails at test time, not at first login.
+    // ============================================================================================
+
+    [Fact]
+    public async Task AppUser_EmailLookup_CaseInsensitive_TranslatesToSqlAgainstSqlite()
+    {
+        await using var connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<EmailLookupOnlyContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var db = new EmailLookupOnlyContext(options);
+        await db.Database.EnsureCreatedAsync();
+        db.Users.AddRange(
+            new AppUser { Id = 1, CompanyId = 1, Email = "ALPHA@unit.test", DisplayName = "A", Role = UserRole.Employee, IsActive = true },
+            new AppUser { Id = 2, CompanyId = 1, Email = "beta@unit.test", DisplayName = "B", Role = UserRole.Employee, IsActive = true });
+        await db.SaveChangesAsync();
+
+        // The production query pattern (GriffinService.cs:331). If a future change reintroduces
+        // ToLowerInvariant() here, SQLite will throw InvalidOperationException and this test
+        // will fail — catching the bug before deployment.
+        var searchEmail = "alpha@unit.test".ToLowerInvariant();
+        var found = await db.Users
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == searchEmail);
+
+        found.Should().NotBeNull();
+        found!.Id.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task AppUser_EmailLookup_UsingToLowerInvariant_FailsTranslation()
+    {
+        // Negative proof: demonstrates EXACTLY the failure mode that escaped to production.
+        // Documents the contract violation so anyone reading the test suite understands WHY
+        // the previous test uses .ToLower() and not .ToLowerInvariant().
+        await using var connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<EmailLookupOnlyContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var db = new EmailLookupOnlyContext(options);
+        await db.Database.EnsureCreatedAsync();
+
+        var searchEmail = "x@x.mil";
+        var act = async () => await db.Users
+            .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == searchEmail.ToLowerInvariant());
+
+        // EF Core SQLite throws InvalidOperationException with "could not be translated".
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*could not be translated*");
+    }
+
+    [Fact]
+    public async Task AppUser_EmailLookup_FindsMixedCaseEmail()
+    {
+        // End-to-end behavioral check: a Griffin claim with lowercase email must find a DB
+        // row stored in mixed case (Griffin returns "elad@d360.dom"; DB has "Elad@d360.dom").
+        await using var connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<EmailLookupOnlyContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var db = new EmailLookupOnlyContext(options);
+        await db.Database.EnsureCreatedAsync();
+        db.Users.Add(new AppUser
+        {
+            Id = 1, CompanyId = 1,
+            Email = "Elad@D360.DOM",
+            DisplayName = "Elad", Role = UserRole.Employee, IsActive = true
+        });
+        await db.SaveChangesAsync();
+
+        var griffinEmail = "  elad@d360.dom  "; // simulating untrimmed Griffin value
+        var lower = griffinEmail.Trim().ToLowerInvariant();
+        var found = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == lower);
+
+        found.Should().NotBeNull();
+        found!.DisplayName.Should().Be("Elad");
+    }
+
+    /// <summary>
+    /// Minimal SQLite-backed DbContext exposing only the AppUser table. Avoids spinning up
+    /// the entire AppDbContext (which needs ITenantResolver, interceptors, query filters,
+    /// migrations) while still exercising the real EF Core SQLite LINQ-to-SQL translator —
+    /// the layer that catches "could not be translated" bugs.
+    /// </summary>
+    private sealed class EmailLookupOnlyContext : DbContext
+    {
+        public EmailLookupOnlyContext(DbContextOptions<EmailLookupOnlyContext> options) : base(options) { }
+        public DbSet<AppUser> Users => Set<AppUser>();
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // AppUser has many nav properties (RoleTemplate, JobType, Company, etc.) the
+            // production model wires up. For a translation-layer regression test we only
+            // need the Email column to participate in the query; ignore everything else.
+            modelBuilder.Entity<AppUser>(e =>
+            {
+                e.ToTable("Users");
+                e.HasKey(u => u.Id);
+                e.Property(u => u.Email).IsRequired();
+                e.Ignore(u => u.RoleTemplate);
+                e.Ignore(u => u.JobType);
+                e.Ignore(u => u.Department);
+                e.Ignore(u => u.PrimaryShiftType);
+                e.Ignore(u => u.HomeType);
+            });
+        }
     }
 }

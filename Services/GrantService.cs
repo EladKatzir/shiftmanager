@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
@@ -12,17 +13,27 @@ public class GrantService : IGrantService
     private readonly AppDbContext _db;
     private readonly IHierarchyService _hierarchyService;
     private readonly IAuditLogService _auditLogService;
+    // Optional logger — production DI injects the concrete logger; tests pass null and the
+    // null-conditional log calls become no-ops. Keeps the test surface untouched while
+    // enabling diagnostic logging for the silent-no-op paths discovered in the 2026-05-11
+    // GrantService audit (e.g. RoleTemplate not found → user gets no auto-grants).
+    private readonly ILogger<GrantService>? _logger;
 
     // C-09: Per-request cache for hierarchy contexts and grant type lookups
     // GrantService is scoped (one per HTTP request), so this caches for the request lifetime
     private readonly Dictionary<int, UserHierarchyContext?> _hierarchyCache = new();
     private readonly Dictionary<string, GrantType?> _grantTypeCache = new();
 
-    public GrantService(AppDbContext db, IHierarchyService hierarchyService, IAuditLogService auditLogService)
+    public GrantService(
+        AppDbContext db,
+        IHierarchyService hierarchyService,
+        IAuditLogService auditLogService,
+        ILogger<GrantService>? logger = null)
     {
         _db = db;
         _hierarchyService = hierarchyService;
         _auditLogService = auditLogService;
+        _logger = logger;
     }
 
     // Grant checking
@@ -596,7 +607,17 @@ public class GrantService : IGrantService
             .FirstOrDefaultAsync(rt => rt.Id == roleTemplateId);
 
         if (roleTemplate == null)
+        {
+            // Silent no-op would leave the user with degraded permissions and zero diagnostic
+            // trail. Log a warning so admins can see when grant assignment was skipped because
+            // the role template referenced by RoleTemplateId no longer exists (e.g. template
+            // deleted in admin UI while users still reference it, or seed-data drift).
+            _logger?.LogWarning(
+                "ApplyAutoGrantsAsync skipped: RoleTemplate {RoleTemplateId} not found in DB for user {UserId}. " +
+                "User will have no auto-grants applied. Check RoleTemplate seed/admin state.",
+                roleTemplateId, userId);
             return;
+        }
 
         // Phase 1: Resolve all expected grants from template
         var expectedGrants = new List<(int GrantTypeId, GrantScope EffectiveScope, bool CanOwn, bool CanGive)>();

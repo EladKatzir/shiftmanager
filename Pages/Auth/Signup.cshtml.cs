@@ -243,10 +243,14 @@ public class SignupModel : LocalizedPageModel
             return Page();
         }
 
-        // Check if user already exists
+        // Check if user already exists (case-insensitive — must match the case-insensitive
+        // lookup that Login/Griffin paths use; otherwise "Foo@x.com" and "foo@x.com" would
+        // be treated as different accounts at signup but the same at login → duplicate-row
+        // collision in the GriffinDiagnostic trace tool).
         // IgnoreQueryFilters: anonymous user has no tenant context (CompanyId=0),
-        // so the query filter would skip all real users — check across all companies
-        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == Email))
+        // so the query filter would skip all real users — check across all companies.
+        var emailLower = (Email ?? string.Empty).ToLowerInvariant();
+        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLower() == emailLower))
         {
             Error = _localizer["Error_Signup_EmailExists"];
             return Page();
@@ -258,7 +262,7 @@ public class SignupModel : LocalizedPageModel
             .IgnoreQueryFilters()
             .Include(jr => jr.Company)
             .FirstOrDefaultAsync(jr =>
-                jr.Email == Email &&
+                jr.Email.ToLower() == emailLower &&
                 jr.CompanyId == CompanyId &&
                 jr.RequestedRole == RequestedRole &&
                 jr.Status == JoinRequestStatus.Pending);
@@ -306,7 +310,7 @@ public class SignupModel : LocalizedPageModel
 
             await _auditLogService.LogUserActionAsync(0, "JoinRequestCreated", "UserJoinRequest", joinRequest.Id, $"Join request created by '{joinRequest.Email}' for role {joinRequest.RequestedRole}");
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Failed to save join request for {Email}", Email);
             Error = _localizer["Error_AnErrorOccurred"];
@@ -334,7 +338,7 @@ public class SignupModel : LocalizedPageModel
                     capturedRequestId,
                     capturedCompanyId);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 var logger = sp.GetRequiredService<ILogger<SignupModel>>();
                 logger.LogError(ex, "Failed to notify owners about join request {RequestId}", capturedRequestId);

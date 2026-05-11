@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.DTOs;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
 
@@ -153,6 +154,38 @@ public class GriffinDiagnosticModel : PageModel
 
     public List<TraceStep>? TraceSteps { get; set; }
     public bool TraceRan { get; set; }
+
+    // ========== Simulate ADFS Login (POST /GriffinDiagnostic?handler=SimulateAdfsLogin) ==========
+    // Builds a fake GriffinClaimsDto from admin-entered values and runs it through the EXACT
+    // same post-Griffin pipeline that AuthenticateUserAsync uses in production:
+    // DB lookup → IsActive → role-template backfill → hierarchy load → grant application →
+    // ClaimsPrincipal build. The simulator does NOT call HttpContext.SignInAsync — it only
+    // reports "what would have happened", so it cannot be used to impersonate a user. The
+    // resulting principal lives only inside SimulateResult for display purposes.
+    //
+    // This is the right tool when: Griffin successfully authenticates the user (we can see
+    // claims arrive in the diagnostic Recent Activity panel) but a downstream stage fails.
+    // Run the simulator with the SAME claim values to reproduce the failure offline and read
+    // the exact exception, stage code, and stack trace.
+    [BindProperty] public string? SimEmail { get; set; }
+    [BindProperty] public string? SimUniqueId { get; set; }
+    [BindProperty] public string? SimDisplayName { get; set; }
+    [BindProperty] public string? SimGivenName { get; set; }
+    [BindProperty] public string? SimSurname { get; set; }
+
+    public sealed class SimulateOutcome
+    {
+        public bool Success { get; set; }
+        public string? ErrorStage { get; set; }      // e.g. "UserLookup"
+        public string? ErrorCode { get; set; }       // e.g. "UserLookupQueryFailed (510)"
+        public string? ErrorToken { get; set; }      // e.g. "GRIFFIN-USERLOOKUP-510"
+        public string? ErrorDetail { get; set; }     // technical detail (admin-only page, safe to show)
+        public List<KeyValuePair<string, string>>? PrincipalClaims { get; set; }
+        public int DurationMs { get; set; }
+        public string? InputEcho { get; set; }       // what we sent into the pipeline, for sanity
+    }
+
+    public SimulateOutcome? SimResult { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -969,8 +1002,13 @@ public class GriffinDiagnosticModel : PageModel
         TraceRan = true;
         TraceSteps = new List<TraceStep>();
         var emailToTrace = TraceEmail.Trim();
+        // Match the exact pattern used in GriffinService.AuthenticateUserAsync — client-side
+        // ToLowerInvariant (locale-safe for ASCII emails), then column-side .ToLower() which EF
+        // translates to SQL LOWER(). ToLowerInvariant inside the EF expression is what crashed
+        // production as GRIFFIN-USERLOOKUP-510 — ironically the diagnostic tool had the same bug.
+        var emailToTraceLower = emailToTrace.ToLowerInvariant();
 
-        // Step 1: DB user lookup (mirrors GriffinService.cs:267-271)
+        // Step 1: DB user lookup (mirrors GriffinService.cs:327-331)
         var sw = System.Diagnostics.Stopwatch.StartNew();
         AppUser? user = null;
         try
@@ -979,7 +1017,7 @@ public class GriffinDiagnosticModel : PageModel
                 .IgnoreQueryFilters()
                 .Include(u => u.RoleTemplate)
                 .Include(u => u.JobType)
-                .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == emailToTrace.ToLowerInvariant());
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == emailToTraceLower);
             sw.Stop();
             TraceSteps.Add(new TraceStep
             {
@@ -1023,7 +1061,7 @@ public class GriffinDiagnosticModel : PageModel
         {
             var dupCount = await _dbContext.Users
                 .IgnoreQueryFilters()
-                .Where(u => u.Email.ToLowerInvariant() == emailToTrace.ToLowerInvariant())
+                .Where(u => u.Email.ToLower() == emailToTraceLower)
                 .CountAsync();
             sw.Stop();
             TraceSteps.Add(new TraceStep
@@ -1105,5 +1143,104 @@ public class GriffinDiagnosticModel : PageModel
     {
         _authDiagnostics.Clear();
         return RedirectToPage();
+    }
+
+    /// <summary>
+    /// Simulate the post-Griffin pipeline. Builds a fake claims DTO from form fields and runs
+    /// it through <see cref="IGriffinService.BuildPrincipalFromClaimsAsync"/> — the SAME code
+    /// path production uses after Griffin returns. Does NOT sign the admin in as the target.
+    /// </summary>
+    public async Task<IActionResult> OnPostSimulateAdfsLoginAsync()
+    {
+        // Re-render the standard page chrome (config checks, recent events) so the admin
+        // sees the simulator result inline with the rest of the diagnostic surface.
+        await OnGetAsync();
+
+        if (string.IsNullOrWhiteSpace(SimEmail) || string.IsNullOrWhiteSpace(SimUniqueId))
+        {
+            SimResult = new SimulateOutcome
+            {
+                Success = false,
+                ErrorStage = "InputValidation",
+                ErrorCode = "MissingRequiredField",
+                ErrorDetail = "Both Email and UniqueID are required — Griffin always returns these two fields for a successful auth. Provide values to reproduce the production pipeline.",
+                DurationMs = 0
+            };
+            return Page();
+        }
+
+        // Construct the exact DTO shape that GriffinClaimsDto.Parse would produce for a
+        // successful getClaims response. Mirror the post-parse sanitisation expectations
+        // (trim, no embedded CR/LF) so the simulator matches production behaviour byte-for-byte.
+        var simClaims = new GriffinClaimsDto
+        {
+            EmailAddress = SimEmail.Trim(),
+            UniqueID = SimUniqueId.Trim(),
+            DisplayName = (SimDisplayName ?? "").Trim(),
+            GivenName = (SimGivenName ?? "").Trim(),
+            Surname = (SimSurname ?? "").Trim()
+        };
+
+        var inputEcho = $"EmailAddress='{simClaims.EmailAddress}', UniqueID='{simClaims.UniqueID}', DisplayName='{simClaims.DisplayName}', GivenName='{simClaims.GivenName}', Surname='{simClaims.Surname}'";
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            // tokenForHash=null → BuildPrincipalFromClaimsAsync records the literal "simulated"
+            // as the Griffin:TokenHash claim, which is exactly what we want for diagnostics.
+            // The IP address tag is unique so audit logs distinguish simulator runs from real
+            // ADFS logins (in case the simulator is later swept by a security review).
+            var result = await _griffinService.BuildPrincipalFromClaimsAsync(
+                simClaims, tokenForHash: null, ipAddress: "diagnostic:simulator");
+            sw.Stop();
+
+            if (result.Success)
+            {
+                SimResult = new SimulateOutcome
+                {
+                    Success = true,
+                    DurationMs = (int)sw.ElapsedMilliseconds,
+                    InputEcho = inputEcho,
+                    PrincipalClaims = result.Value!.Claims
+                        .Select(c => new KeyValuePair<string, string>(c.Type, c.Value))
+                        .ToList()
+                };
+            }
+            else
+            {
+                var err = result.Error!;
+                SimResult = new SimulateOutcome
+                {
+                    Success = false,
+                    DurationMs = (int)sw.ElapsedMilliseconds,
+                    InputEcho = inputEcho,
+                    ErrorStage = err.Stage.ToString(),
+                    ErrorCode = $"{err.Code} ({(int)err.Code})",
+                    ErrorToken = err.ErrorToken,
+                    // Admin-only page (Owner role required) → safe to show full technical
+                    // detail. Production never echoes TechnicalDetail to end users — the
+                    // exhaustive switch in GriffinErrorMessages.cs:120 enforces that.
+                    ErrorDetail = err.TechnicalDetail
+                };
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The simulator's whole point is to surface raw exceptions — wrap one more layer
+            // in case something explodes ABOVE the BuildPrincipalFromClaimsAsync internal
+            // try/catches (e.g. DI resolution, the service itself throws synchronously).
+            sw.Stop();
+            SimResult = new SimulateOutcome
+            {
+                Success = false,
+                DurationMs = (int)sw.ElapsedMilliseconds,
+                InputEcho = inputEcho,
+                ErrorStage = "SimulatorWrapper",
+                ErrorCode = ex.GetType().Name,
+                ErrorDetail = $"{ex.Message}\n\nFull stack:\n{ex}"
+            };
+        }
+
+        return Page();
     }
 }

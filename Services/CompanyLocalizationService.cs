@@ -90,7 +90,9 @@ public class CompanyLocalizationService : ICompanyLocalizationService
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            query = query.Where(o => o.ResourceKey.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || o.OverrideValue.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+            // EF Core cannot translate Contains(s, StringComparison.X). Pre-lower client-side.
+            var searchLower = searchTerm.ToLowerInvariant();
+            query = query.Where(o => o.ResourceKey.ToLower().Contains(searchLower) || o.OverrideValue.ToLower().Contains(searchLower));
         }
 
         return await query

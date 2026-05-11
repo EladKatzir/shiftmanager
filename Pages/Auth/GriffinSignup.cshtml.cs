@@ -280,10 +280,12 @@ public class GriffinSignupModel : LocalizedPageModel
         }
 
         // Check if user already exists (case-insensitive, consistent with GriffinCallback).
-        // ToLowerInvariant (not ToLower) is load-bearing: a Turkish/Azerbaijani server locale
-        // would otherwise lowercase ASCII 'I' to 'ı' (dotless i), breaking matches like
-        // "user@ISIK.mil" against "user@isik.mil" stored in the DB.
-        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLowerInvariant() == Email.ToLowerInvariant()))
+        // CLIENT-SIDE: ToLowerInvariant on the search value (locale-immune, ASCII-safe for emails).
+        // COLUMN-SIDE: .ToLower() inside the EF expression — EF translates this to SQL LOWER(),
+        // which is locale-neutral at the SQL engine level. .ToLowerInvariant() has NO SQL mapping
+        // in EF Core and throws "could not be translated" at runtime (root cause of GRIFFIN-USERLOOKUP-510).
+        var emailLower = Email.ToLowerInvariant();
+        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLower() == emailLower))
         {
             Error = _localizer["Error_Signup_EmailExists"];
             return Page();
@@ -292,11 +294,14 @@ public class GriffinSignupModel : LocalizedPageModel
         // Check for existing pending request
         var selectedCompany = await _companyCacheService.GetCompanyAsync(CompanyId);
 
+        // Case-insensitive match across pending requests so "Foo@x.com" and "foo@x.com"
+        // collapse to one logical record (mirrors the user-existence check above).
+        var emailLowerJr = Email.ToLowerInvariant();
         var existingPendingRequest = await _db.UserJoinRequests
             .IgnoreQueryFilters()
             .Include(jr => jr.Company)
             .FirstOrDefaultAsync(jr =>
-                jr.Email == Email &&
+                jr.Email.ToLower() == emailLowerJr &&
                 jr.CompanyId == CompanyId &&
                 jr.RequestedRole == RequestedRole &&
                 jr.Status == JoinRequestStatus.Pending);
@@ -338,7 +343,7 @@ public class GriffinSignupModel : LocalizedPageModel
             await _auditLogService.LogUserActionAsync(0, "GriffinJoinRequestCreated", "UserJoinRequest", joinRequest.Id,
                 $"Griffin join request created by '{joinRequest.Email}' (UniqueID: {GriffinUniqueID}) for role {joinRequest.RequestedRole}");
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Failed to save Griffin join request for {Email}", Email);
             Error = _localizer["Error_AnErrorOccurred"];
@@ -366,7 +371,7 @@ public class GriffinSignupModel : LocalizedPageModel
                     capturedRequestId,
                     capturedCompanyId);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 var logger = sp.GetRequiredService<ILogger<GriffinSignupModel>>();
                 logger.LogError(ex, "Failed to notify owners about Griffin join request {RequestId}", capturedRequestId);

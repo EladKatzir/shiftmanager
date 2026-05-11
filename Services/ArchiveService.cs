@@ -140,7 +140,7 @@ public class ArchiveService : IArchiveService
             var totalRecords = preview.Counts.Values.Sum();
             preview.EstimatedSizeBytes = totalRecords * 500;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error previewing archive");
             throw;
@@ -215,7 +215,7 @@ public class ArchiveService : IArchiveService
             _logger.LogInformation("Archive created: CSV={CsvFile}, NDJSON={NdjsonFile}, Hash={Hash}",
                 result.CsvZipFileName, result.NdjsonZipFileName, result.Sha256Hash);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error creating archive");
             result.Error = ex.Message;
@@ -240,7 +240,7 @@ public class ArchiveService : IArchiveService
 
             return JsonSerializer.Deserialize<ArchiveMetadata>(latestLog.Details, _jsonOptions);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error retrieving latest archive");
             return null;
@@ -293,7 +293,7 @@ public class ArchiveService : IArchiveService
 
             return true;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error validating fresh archive");
             return false;
