@@ -279,8 +279,11 @@ public class GriffinSignupModel : LocalizedPageModel
             return Page();
         }
 
-        // Check if user already exists (case-insensitive, consistent with GriffinCallback)
-        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLower() == Email.ToLower()))
+        // Check if user already exists (case-insensitive, consistent with GriffinCallback).
+        // ToLowerInvariant (not ToLower) is load-bearing: a Turkish/Azerbaijani server locale
+        // would otherwise lowercase ASCII 'I' to 'ı' (dotless i), breaking matches like
+        // "user@ISIK.mil" against "user@isik.mil" stored in the DB.
+        if (await _db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLowerInvariant() == Email.ToLowerInvariant()))
         {
             Error = _localizer["Error_Signup_EmailExists"];
             return Page();

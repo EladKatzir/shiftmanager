@@ -92,6 +92,21 @@ public static class GriffinErrorMessages
             GriffinErrorCode.AutoProvisionFailed
                 => "ADFS authenticated you, but creating a ShiftManager account for you failed. A database error is the likely cause — check the server log.",
 
+            GriffinErrorCode.UserLookupQueryFailed
+                => "ADFS authenticated you, but looking up your account in the ShiftManager database failed. This usually points to a transient database connection problem — try again, and if it persists check /GriffinDiagnostic.",
+
+            GriffinErrorCode.RoleTemplateBackfillFailed
+                => "ADFS authenticated you, but updating your role-template assignment failed. Check /GriffinDiagnostic for the full exception detail.",
+
+            GriffinErrorCode.HierarchyLoadFailed
+                => "ADFS authenticated you, but loading your organizational hierarchy (project/area/molecule/company) failed. Check /GriffinDiagnostic for the full exception detail.",
+
+            GriffinErrorCode.GrantApplicationFailed
+                => "ADFS authenticated you, but applying your permission grants failed. Check /GriffinDiagnostic for the full exception detail.",
+
+            GriffinErrorCode.ClaimsPrincipalBuildFailed
+                => "ADFS authenticated you, but constructing your security principal failed. Check /GriffinDiagnostic for the full exception detail.",
+
             // SECURITY: Never echo TechnicalDetail to end users — it can contain raw URLs
             // (with the JWT in the query string), socket-error host paths, and stack traces
             // that leak internal topology. The technical detail still reaches admins via
@@ -136,6 +151,11 @@ public static class GriffinErrorMessages
                 or GriffinErrorCode.UserDeactivated
                 or GriffinErrorCode.AutoProvisionFailed
                 or GriffinErrorCode.UnhandledException
+                or GriffinErrorCode.UserLookupQueryFailed
+                or GriffinErrorCode.RoleTemplateBackfillFailed
+                or GriffinErrorCode.HierarchyLoadFailed
+                or GriffinErrorCode.GrantApplicationFailed
+                or GriffinErrorCode.ClaimsPrincipalBuildFailed
                 => loc["Auth_GriffinError_Remediation_ContactSysAdmin"].Value,
 
             _ => loc["Auth_GriffinError_Remediation_ContactSysAdmin"].Value

@@ -24,6 +24,8 @@ public class GriffinDiagnosticModel : PageModel
     private readonly IConfiguration _configuration;
     private readonly AppDbContext _dbContext;
     private readonly LinkGenerator _linkGenerator;
+    private readonly IGriffinAuthDiagnostics _authDiagnostics;
+    private readonly IHierarchyService _hierarchyService;
 
     public GriffinConfig? GriffinConfig { get; set; }
     public bool HasError { get; set; }
@@ -117,7 +119,9 @@ public class GriffinDiagnosticModel : PageModel
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
         AppDbContext dbContext,
-        LinkGenerator linkGenerator)
+        LinkGenerator linkGenerator,
+        IGriffinAuthDiagnostics authDiagnostics,
+        IHierarchyService hierarchyService)
     {
         _griffinConfigService = griffinConfigService;
         _griffinService = griffinService;
@@ -126,10 +130,36 @@ public class GriffinDiagnosticModel : PageModel
         _configuration = configuration;
         _dbContext = dbContext;
         _linkGenerator = linkGenerator;
+        _authDiagnostics = authDiagnostics;
+        _hierarchyService = hierarchyService;
     }
+
+    // ========== Recent auth activity (from IGriffinAuthDiagnostics) ==========
+    public IReadOnlyList<GriffinAuthEvent> RecentAuthEvents { get; set; } = Array.Empty<GriffinAuthEvent>();
+
+    // ========== Trace User Lookup (POST /GriffinDiagnostic?handler=TraceLookup) ==========
+    // Admin enters an email; we walk the exact lookup steps GriffinService runs during
+    // AuthenticateUserAsync, reporting outcome of EACH step. Lets the admin pinpoint
+    // which phase fails without needing a fresh ADFS hash to attempt full login.
+    [BindProperty] public string? TraceEmail { get; set; }
+
+    public sealed class TraceStep
+    {
+        public string Name { get; set; } = "";
+        public bool Success { get; set; }
+        public string Detail { get; set; } = "";
+        public int DurationMs { get; set; }
+    }
+
+    public List<TraceStep>? TraceSteps { get; set; }
+    public bool TraceRan { get; set; }
 
     public async Task OnGetAsync()
     {
+        // Snapshot the in-memory auth-event buffer up front so the recent-activity panel
+        // renders even if the other diagnostic steps throw partway through.
+        RecentAuthEvents = _authDiagnostics.GetRecent(50);
+
         try
         {
             Checks.Add("Starting comprehensive Griffin ADFS diagnostic...");
@@ -503,7 +533,14 @@ public class GriffinDiagnosticModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Diagnostic page failed");
-            ErrorMessage = $"Diagnostic failed: {ex.Message}\n\n{ex.StackTrace}";
+            // Do NOT echo the full stack trace into the rendered page — it exposes internal file
+            // paths (C:\Users\... or D:\inetpub\...) which is unnecessary OPSEC noise. Log the
+            // full exception server-side and show only a short summary in the UI. The Recent
+            // Auth Activity panel below DOES show full stacks because those came from the auth
+            // pipeline, which is the intended forensic surface; this is the diagnostic page's
+            // OWN failure path, which should be terse.
+            _logger.LogError(ex, "Griffin diagnostic page render failed");
+            ErrorMessage = $"Diagnostic page render failed: {ex.GetType().Name}: {ex.Message}";
             HasError = true;
         }
     }
@@ -766,14 +803,19 @@ public class GriffinDiagnosticModel : PageModel
             // Bare HttpClient (no factory). Deliberately chosen so this attempt isolates
             // *transport* variables — if it succeeds while the service path fails, the
             // delta is somewhere in our HttpClientFactory pipeline, not the URL contract.
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(timeoutSeconds) };
+            // Use the GriffinClient HttpClient (which carries the SkipSslValidation handler
+            // configuration). Using a bare `new HttpClient` here bypassed that, causing the
+            // raw diagnostic to FAIL with SSL errors on air-gapped deployments with self-signed
+            // certs even when the production login flow (via factory) succeeded — false negative.
+            var client = _httpClientFactory.CreateClient("GriffinClient");
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.Accept.Clear();
             req.Headers.Accept.ParseAdd("*/*");
-            using var response = await client.SendAsync(req);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+            using var response = await client.SendAsync(req, cts.Token);
             attempt.HttpStatus = (int)response.StatusCode;
             attempt.Success = response.IsSuccessStatusCode;
-            var body = await response.Content.ReadAsStringAsync();
+            var body = await response.Content.ReadAsStringAsync(cts.Token);
             attempt.ResponseBodyPreview = TruncateForDisplay(body);
         }
         catch (Exception ex)
@@ -841,14 +883,16 @@ public class GriffinDiagnosticModel : PageModel
         var sw = Stopwatch.StartNew();
         try
         {
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(timeoutSeconds) };
+            // Same factory-client rationale as RunRawAttemptAsync above.
+            var client = _httpClientFactory.CreateClient("GriffinClient");
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.Accept.Clear();
             req.Headers.Accept.ParseAdd("*/*");
-            using var response = await client.SendAsync(req);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+            using var response = await client.SendAsync(req, cts.Token);
             attempt.HttpStatus = (int)response.StatusCode;
             attempt.Success = response.IsSuccessStatusCode;
-            var body = await response.Content.ReadAsStringAsync();
+            var body = await response.Content.ReadAsStringAsync(cts.Token);
             attempt.ResponseBodyPreview = TruncateForDisplay(body);
         }
         catch (Exception ex)
@@ -900,5 +944,166 @@ public class GriffinDiagnosticModel : PageModel
             return url[..valStart] + masked + (ampersand < 0 ? string.Empty : url[ampersand..]);
         }
         return url;
+    }
+
+    // ============================================================================================
+    // Trace User Lookup (POST /GriffinDiagnostic?handler=TraceLookup)
+    //
+    // Admin enters an email; we walk the exact sequence GriffinService.AuthenticateUserAsync
+    // would run for that email, reporting outcome of EACH step. Lets an admin pinpoint exactly
+    // which phase fails for a specific user without needing a fresh Griffin hash.
+    //
+    // SECURITY-AUDITED: Page is gated by Grant:AdminAccess. Only does read queries —
+    // no SaveChangesAsync, no grant application (that would have side-effects).
+    // ============================================================================================
+    public async Task<IActionResult> OnPostTraceLookupAsync()
+    {
+        await OnGetAsync(); // re-populate the page state
+
+        if (string.IsNullOrWhiteSpace(TraceEmail))
+        {
+            Warnings.Add("Trace User Lookup requires an email address.");
+            return Page();
+        }
+
+        TraceRan = true;
+        TraceSteps = new List<TraceStep>();
+        var emailToTrace = TraceEmail.Trim();
+
+        // Step 1: DB user lookup (mirrors GriffinService.cs:267-271)
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        AppUser? user = null;
+        try
+        {
+            user = await _dbContext.Users
+                .IgnoreQueryFilters()
+                .Include(u => u.RoleTemplate)
+                .Include(u => u.JobType)
+                .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == emailToTrace.ToLowerInvariant());
+            sw.Stop();
+            TraceSteps.Add(new TraceStep
+            {
+                Name = "1. Lookup user by email (case-insensitive)",
+                Success = user != null,
+                Detail = user != null
+                    ? $"FOUND — Id={user.Id}, CompanyId={user.CompanyId}, Role={user.Role}, IsActive={user.IsActive}, RoleTemplateId={user.RoleTemplateId?.ToString() ?? "(null)"}, JobTypeId={user.JobTypeId?.ToString() ?? "(null)"}"
+                    : "NOT FOUND — no AppUser row matches this email (case-insensitive). User would be routed to GriffinSignup if FF_ALLOW_USERS_CREATION_VIA_ADFS is on; refusal page otherwise.",
+                DurationMs = (int)sw.ElapsedMilliseconds
+            });
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            TraceSteps.Add(new TraceStep
+            {
+                Name = "1. Lookup user by email (case-insensitive)",
+                Success = false,
+                Detail = $"EXCEPTION — {ex.GetType().Name}: {ex.Message}",
+                DurationMs = (int)sw.ElapsedMilliseconds
+            });
+            return Page();
+        }
+
+        if (user == null) return Page();
+
+        // Step 2: IsActive (mirrors GriffinService.cs:273-281)
+        TraceSteps.Add(new TraceStep
+        {
+            Name = "2. Check IsActive",
+            Success = user.IsActive,
+            Detail = user.IsActive
+                ? "Account is active."
+                : "Account is INACTIVE — login would fail with UserDeactivated (501).",
+            DurationMs = 0
+        });
+
+        // Step 3: Check for duplicate email rows (would surface a multi-company collision)
+        sw.Restart();
+        try
+        {
+            var dupCount = await _dbContext.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.Email.ToLowerInvariant() == emailToTrace.ToLowerInvariant())
+                .CountAsync();
+            sw.Stop();
+            TraceSteps.Add(new TraceStep
+            {
+                Name = "3. Duplicate-email collision check",
+                Success = dupCount == 1,
+                Detail = dupCount == 1
+                    ? "Exactly one row matches this email — no collision."
+                    : $"WARNING — {dupCount} rows match this email (case-insensitive). FirstOrDefaultAsync would return one non-deterministically.",
+                DurationMs = (int)sw.ElapsedMilliseconds
+            });
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            TraceSteps.Add(new TraceStep
+            {
+                Name = "3. Duplicate-email collision check",
+                Success = false,
+                Detail = $"EXCEPTION — {ex.GetType().Name}: {ex.Message}",
+                DurationMs = (int)sw.ElapsedMilliseconds
+            });
+        }
+
+        // Step 4: RoleTemplate state (mirrors GriffinService.cs:300-314)
+        TraceSteps.Add(new TraceStep
+        {
+            Name = "4. RoleTemplate state",
+            Success = true,
+            Detail = user.RoleTemplateId == null
+                ? $"RoleTemplateId is null. AuthenticateUserAsync would attempt backfill by mapping Role={user.Role} + JobType={user.JobType?.Name ?? "(null)"} → RoleTemplate.Key."
+                : $"RoleTemplate already assigned (Id={user.RoleTemplateId}, Key={user.RoleTemplate?.Key ?? "(deleted?)"}).",
+            DurationMs = 0
+        });
+
+        // Step 5: Hierarchy context load (mirrors GriffinService.cs:316)
+        sw.Restart();
+        try
+        {
+            var hierarchy = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
+            sw.Stop();
+            TraceSteps.Add(new TraceStep
+            {
+                Name = "5. Load hierarchy context",
+                Success = true,
+                Detail = hierarchy == null
+                    ? "Returned null. User is not in any hierarchy path — claims principal will have no Molecule/Area/Project claims (this is OK for some scenarios, e.g., Owner users)."
+                    : $"OK — Project={hierarchy.Path.Project?.Name ?? "(null)"}, Area={hierarchy.Path.Area?.Name ?? "(null)"}, Molecule={hierarchy.Path.Molecule?.Name ?? "(null)"}, Department={hierarchy.Path.Department?.Name ?? "(null)"}, JobType={hierarchy.JobType?.Name ?? "(null)"}, IsWorkforce={hierarchy.IsWorkforce}, IsTech={hierarchy.IsTech}",
+                DurationMs = (int)sw.ElapsedMilliseconds
+            });
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            TraceSteps.Add(new TraceStep
+            {
+                Name = "5. Load hierarchy context",
+                Success = false,
+                Detail = $"EXCEPTION — {ex.GetType().Name}: {ex.Message}\n\nFull stack:\n{ex}",
+                DurationMs = (int)sw.ElapsedMilliseconds
+            });
+            return Page();
+        }
+
+        // Step 6: Avatar / nav-claims sanity (would the principal-build code throw?)
+        TraceSteps.Add(new TraceStep
+        {
+            Name = "6. Claim-construction inputs (sanity check)",
+            Success = true,
+            Detail = $"DisplayName='{TruncateForDisplay(user.DisplayName ?? "")}', AvatarFileName='{TruncateForDisplay(user.AvatarFileName ?? "(null)")}'. SanitizeClaimString would strip CR/LF/NUL from these values before claim construction.",
+            DurationMs = 0
+        });
+
+        return Page();
+    }
+
+    // Clear the in-memory diagnostics ring buffer. Admin-only.
+    public IActionResult OnPostClearEventsAsync()
+    {
+        _authDiagnostics.Clear();
+        return RedirectToPage();
     }
 }

@@ -172,40 +172,44 @@ public partial class GriffinService : IGriffinService
             return GriffinApiResult<GriffinClaimsDto>.Fail(err);
         }
 
-        GriffinClaimsDto? claims;
-        try
-        {
-            claims = JsonSerializer.Deserialize<GriffinClaimsDto>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-        }
-        catch (JsonException ex)
+        // Use the flexible Parse factory instead of JsonSerializer.Deserialize directly —
+        // it normalizes property names (case + separator agnostic, so snake_case, kebab-case,
+        // and LDAP-style aliases all match) AND reports the actual keys present in the body so
+        // a missing-field error tells the admin exactly what Griffin DID send. The previous
+        // case-only matching produced silent empty fields on any non-casing variation and gave
+        // the admin no clue about the actual JSON shape.
+        var claims = GriffinClaimsDto.Parse(body, out var presentKeys);
+        if (claims == null)
         {
             var err = new GriffinApiError(
                 GriffinStage.ClaimsRetrieval,
                 GriffinErrorCode.UnreadableResponse,
-                $"getClaims body was not valid JSON: {ex.Message}. Body preview: '{TrimForLog(body)}'",
+                $"getClaims body could not be parsed as a JSON object. Body preview: '{TrimForLog(body)}'",
                 TryGetHost(url),
                 ResponsePreview: TrimForLog(body));
             LogGetClaimsInvalidJson(_logger, err.ErrorToken);
             return GriffinApiResult<GriffinClaimsDto>.Fail(err);
         }
 
-        if (claims == null)
-        {
-            var err = new GriffinApiError(GriffinStage.ClaimsRetrieval, GriffinErrorCode.EmptyResponse,
-                "getClaims deserialized to null", TryGetHost(url));
-            return GriffinApiResult<GriffinClaimsDto>.Fail(err);
-        }
+        // Format the actual top-level keys for inclusion in any missing-field error. This is
+        // the diagnostic surface Agent 2 identified as the #1 operational gap — when a field
+        // is missing, the admin needs to see what Griffin DID emit so they can update either
+        // the ADFS claim mapping or the alias list in GriffinClaimsDto.
+        var keysSummary = presentKeys.Count == 0
+            ? "(none)"
+            : string.Join(", ", presentKeys.Select(k => $"'{k}'"));
 
         if (string.IsNullOrWhiteSpace(claims.EmailAddress))
         {
             var err = new GriffinApiError(
                 GriffinStage.ClaimsRetrieval,
                 GriffinErrorCode.MissingEmailAddress,
-                "Claims JSON did not contain a non-empty EmailAddress field",
-                TryGetHost(url));
+                $"Claims JSON did not contain a recognized email field. "
+                + "Aliases tried: EmailAddress / Email / Mail / Upn / UserPrincipalName "
+                + "(matching is case- and separator-agnostic). "
+                + $"Top-level keys present in response: [{keysSummary}].",
+                TryGetHost(url),
+                ResponsePreview: TrimForLog(body));
             LogGetClaimsMissingEmail(_logger, err.ErrorToken);
             _securityLogger.LogSecurityThreat("MissingClaims",
                 "Griffin token claims missing EmailAddress — possible token tampering or Griffin misconfiguration", "unknown");
@@ -217,8 +221,11 @@ public partial class GriffinService : IGriffinService
             var err = new GriffinApiError(
                 GriffinStage.ClaimsRetrieval,
                 GriffinErrorCode.MissingUniqueId,
-                "Claims JSON did not contain a non-empty UniqueID field",
-                TryGetHost(url));
+                $"Claims JSON did not contain a recognized unique-id field. "
+                + "Aliases tried: UniqueID / Uid / Sub / UserId / EmployeeId / SubjectId. "
+                + $"Top-level keys present in response: [{keysSummary}].",
+                TryGetHost(url),
+                ResponsePreview: TrimForLog(body));
             LogGetClaimsMissingUniqueId(_logger, err.ErrorToken);
             return GriffinApiResult<GriffinClaimsDto>.Fail(err);
         }
@@ -303,12 +310,37 @@ public partial class GriffinService : IGriffinService
 
         var griffinClaims = claimsResult.Value!;
 
-        // SECURITY-AUDITED: SAFE — authentication must search across all companies to find user by email
-        var user = await _dbContext.Users
-            .IgnoreQueryFilters()
-            .Include(u => u.RoleTemplate)
-            .Include(u => u.JobType)
-            .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == griffinClaims.EmailAddress.ToLowerInvariant());
+        // Defence-in-depth: trim the email locally before the DB compare. The new
+        // GriffinClaimsDto.Parse already trims string scalars, but a future refactor or
+        // alternative call path (e.g. tests constructing the DTO directly) could bypass that.
+        // SQLite's `=` comparison does NOT strip trailing whitespace, so an untrimmed value
+        // would silently fail to match the DB row and produce a misleading UserNotRegistered.
+        var emailForLookup = (griffinClaims.EmailAddress ?? string.Empty).Trim();
+
+        // SECURITY-AUDITED: SAFE — authentication must search across all companies to find user by email.
+        // Wrapped in try/catch with a SPECIFIC error code so that EF/SQLite/translation failures
+        // surface as GRIFFIN-USERLOOKUP-510 instead of the generic GRIFFIN-USERLOOKUP-900 catch-all
+        // at the callback layer — that bare 900 told us nothing about which step actually threw.
+        AppUser? user;
+        try
+        {
+            user = await _dbContext.Users
+                .IgnoreQueryFilters()
+                .Include(u => u.RoleTemplate)
+                .Include(u => u.JobType)
+                .FirstOrDefaultAsync(u => u.Email.ToLowerInvariant() == emailForLookup.ToLowerInvariant());
+        }
+        // Filter out OperationCanceledException — that's a client-disconnect / IIS-timeout signal,
+        // not a Griffin failure. Recording it would fill the diagnostics buffer with noise and
+        // mask real errors. Let it propagate to the request-pipeline cancellation path.
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Griffin user lookup query failed for email {Email}", emailForLookup);
+            return GriffinApiResult<ClaimsPrincipal>.Fail(new GriffinApiError(
+                GriffinStage.UserLookup,
+                GriffinErrorCode.UserLookupQueryFailed,
+                $"User lookup query threw {ex.GetType().Name}: {ex.Message}"));
+        }
 
         if (user != null && !user.IsActive)
         {
@@ -337,35 +369,72 @@ public partial class GriffinService : IGriffinService
             return GriffinApiResult<ClaimsPrincipal>.Fail(err);
         }
 
-        // Login-time backfill safety net: if user has no RoleTemplate, derive from Role + JobType
+        // Login-time backfill safety net: if user has no RoleTemplate, derive from Role + JobType.
+        // Wrapped: SaveChangesAsync hits CompanyIdInterceptor + EF change-tracker, both of which
+        // have failure modes worth surfacing distinctly (e.g., FK violation on RoleTemplateId).
         if (user.RoleTemplateId == null)
         {
-            var templateKey = MapUserRoleToRoleTemplateKey(user.Role, user.JobType?.Name);
-            var template = await _dbContext.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == templateKey);
-            if (template != null)
+            try
             {
-                user.RoleTemplateId = template.Id;
-                user.RoleTemplate = template;
-                if (template.DerivedUserRole.HasValue)
-                    user.Role = template.DerivedUserRole.Value;
-                await _dbContext.SaveChangesAsync();
-                LogBackfilledRoleTemplate(_logger, template.Id, user.Id);
+                var templateKey = MapUserRoleToRoleTemplateKey(user.Role, user.JobType?.Name);
+                var template = await _dbContext.RoleTemplates.IgnoreQueryFilters().FirstOrDefaultAsync(rt => rt.Key == templateKey);
+                if (template != null)
+                {
+                    user.RoleTemplateId = template.Id;
+                    user.RoleTemplate = template;
+                    if (template.DerivedUserRole.HasValue)
+                        user.Role = template.DerivedUserRole.Value;
+                    await _dbContext.SaveChangesAsync();
+                    LogBackfilledRoleTemplate(_logger, template.Id, user.Id);
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Griffin role-template backfill failed for user {UserId}", user.Id);
+                return GriffinApiResult<ClaimsPrincipal>.Fail(new GriffinApiError(
+                    GriffinStage.UserLookup,
+                    GriffinErrorCode.RoleTemplateBackfillFailed,
+                    $"Role-template backfill threw {ex.GetType().Name}: {ex.Message}"));
             }
         }
 
-        var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
+        UserHierarchyContext? hierarchyContext;
+        try
+        {
+            hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(user.Id);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Griffin hierarchy load failed for user {UserId}", user.Id);
+            return GriffinApiResult<ClaimsPrincipal>.Fail(new GriffinApiError(
+                GriffinStage.UserLookup,
+                GriffinErrorCode.HierarchyLoadFailed,
+                $"Hierarchy load for user {user.Id} threw {ex.GetType().Name}: {ex.Message}"));
+        }
 
         if (user.RoleTemplateId.HasValue)
         {
-            var roleScope = new GrantScope(
-                ProjectId: hierarchyContext?.Path.Project?.Id,
-                AreaId: hierarchyContext?.Path.Area?.Id,
-                MoleculeId: hierarchyContext?.Path.Molecule?.Id,
-                DepartmentId: user.DepartmentId,
-                CompanyId: user.CompanyId,
-                JobTypeId: hierarchyContext?.JobType?.Id
-            );
-            await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
+            try
+            {
+                var roleScope = new GrantScope(
+                    ProjectId: hierarchyContext?.Path.Project?.Id,
+                    AreaId: hierarchyContext?.Path.Area?.Id,
+                    MoleculeId: hierarchyContext?.Path.Molecule?.Id,
+                    DepartmentId: user.DepartmentId,
+                    CompanyId: user.CompanyId,
+                    JobTypeId: hierarchyContext?.JobType?.Id
+                );
+                await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Griffin grant application failed for user {UserId} template {TemplateId}",
+                    user.Id, user.RoleTemplateId);
+                return GriffinApiResult<ClaimsPrincipal>.Fail(new GriffinApiError(
+                    GriffinStage.UserLookup,
+                    GriffinErrorCode.GrantApplicationFailed,
+                    $"Grant application for user {user.Id} threw {ex.GetType().Name}: {ex.Message}"));
+            }
         }
 
         // SECURITY: every value coming from griffinClaims is sanitised before becoming a
@@ -373,6 +442,11 @@ public partial class GriffinService : IGriffinService
         // or oversize strings into our auth principal even if its response is malicious or
         // a downstream ADFS user record contains weird characters. DisplayName falls back
         // through GivenName→UniqueID so we never set an empty Name claim.
+        // Wrapped: a Claim ctor null/empty failure or any pathological string here would
+        // otherwise bubble up as the generic GRIFFIN-USERLOOKUP-900 we just retired.
+        ClaimsPrincipal principal;
+        try
+        {
         var displayName = SanitizeClaimString(griffinClaims.DisplayName);
         var givenName = SanitizeClaimString(griffinClaims.GivenName);
         var safeUniqueId = SanitizeClaimString(griffinClaims.UniqueID, maxLength: 128);
@@ -420,8 +494,17 @@ public partial class GriffinService : IGriffinService
                 claims.Add(new Claim("DepartmentId", hierarchyContext.Path.Department.Id.ToString()));
         }
 
-        var identity = new ClaimsIdentity(claims, "Griffin");
-        var principal = new ClaimsPrincipal(identity);
+            var identity = new ClaimsIdentity(claims, "Griffin");
+            principal = new ClaimsPrincipal(identity);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Griffin ClaimsPrincipal build failed for user {UserId}", user.Id);
+            return GriffinApiResult<ClaimsPrincipal>.Fail(new GriffinApiError(
+                GriffinStage.UserLookup,
+                GriffinErrorCode.ClaimsPrincipalBuildFailed,
+                $"ClaimsPrincipal build for user {user.Id} threw {ex.GetType().Name}: {ex.Message}"));
+        }
 
         LogAuthenticationSuccess(_logger, user.Id, user.Email);
         _securityLogger.LogAuthenticationSuccess(user.Id, user.Email, user.Role.ToString(), ipAddress);

@@ -47,6 +47,16 @@ public enum GriffinErrorCode
     UserDeactivated = 501,
     AutoProvisionFailed = 502,
 
+    // Stage-specific instrumentation (added 2026-05-11 to replace bare UnhandledException
+    // bubble-ups during user lookup). Each value pinpoints WHICH sub-step of
+    // AuthenticateUserAsync threw, so the error token tells the admin where to look
+    // without needing to read server logs.
+    UserLookupQueryFailed = 510,        // EF query on Users threw (DB connection, query translation, etc.)
+    RoleTemplateBackfillFailed = 520,   // Backfill SaveChangesAsync threw
+    HierarchyLoadFailed = 530,          // IHierarchyService.GetUserHierarchyContextAsync threw
+    GrantApplicationFailed = 540,       // IGrantService.ApplyAutoGrantsAsync threw
+    ClaimsPrincipalBuildFailed = 550,   // Sanitization or Claim construction threw
+
     UnhandledException = 900,
 }
 

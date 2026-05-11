@@ -118,6 +118,11 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/Auth/Login");
     options.Conventions.AllowAnonymousToPage("/Auth/Signup");
     options.Conventions.AllowAnonymousToPage("/Auth/GriffinSignup");
+    // Belt-and-suspenders: the [AllowAnonymous] attribute on GriffinCallbackModel already
+    // overrides the AuthorizeFolder("/") convention, but listing it here too makes the
+    // anonymous status explicit + protects against middleware-ordering regressions where
+    // convention-based auth could otherwise short-circuit before the attribute is honored.
+    options.Conventions.AllowAnonymousToPage("/Auth/GriffinCallback");
     options.Conventions.AllowAnonymousToPage("/Api/Signup/GetSignupOptions");
     options.Conventions.AllowAnonymousToPage("/Public/Chores");
     options.Conventions.AllowAnonymousToPage("/Public/OnDuty");
@@ -252,6 +257,10 @@ builder.Services.AddScoped<IEmailApiLogService, EmailApiLogService>();
 builder.Services.AddScoped<IGriffinConfigService, GriffinConfigService>();
 builder.Services.AddScoped<IGriffinService, GriffinService>();
 builder.Services.AddScoped<IGriffinApiLogService, GriffinApiLogService>();
+// In-memory ring buffer of recent auth events (surfaced on /GriffinDiagnostic). Singleton:
+// each request must see the same buffer so cross-request visibility works for the admin
+// reading the diagnostic page after a different user just failed login.
+builder.Services.AddSingleton<IGriffinAuthDiagnostics, GriffinAuthDiagnostics>();
 // C-06: Configure memory cache with more frequent expiration scanning to prevent unbounded growth
 builder.Services.AddMemoryCache(options =>
 {

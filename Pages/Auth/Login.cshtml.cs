@@ -509,7 +509,15 @@ public partial class LoginModel : LocalizedPageModel
                     // returnUrl preservation. Lax is the correct mode for this exact pattern.
                     SameSite = SameSiteMode.Lax,
                     MaxAge = TimeSpan.FromMinutes(5),
-                    Path = "/Auth"
+                    // Belt-and-suspenders: set both MaxAge AND Expires. IE (still on some
+                    // military workstations) does not honor Max-Age and would otherwise treat
+                    // this as a session cookie. Expires uses the same 5-minute horizon.
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(5),
+                    // Path="/" so the cookie is visible at /Auth/GriffinCallback regardless
+                    // of IIS path-prefix configuration. The previous "/Auth" path scoping was
+                    // fragile under virtual-directory deployments. The cookie name itself
+                    // (griffin.returnUrl) is unique enough to avoid collisions site-wide.
+                    Path = "/"
                 });
                 LogGriffinReturnUrlStored(_logger, returnUrl);
             }

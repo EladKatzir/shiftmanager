@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -22,9 +23,15 @@ public class GriffinCallbackModel : LocalizedPageModel
     private readonly IFeatureFlagService _featureFlagService;
     private readonly ISecurityLogger _securityLogger;
     private readonly ILogger<GriffinCallbackModel> _logger;
+    private readonly IGriffinAuthDiagnostics _diagnostics;
     // SECURITY-AUDITED: SAFE — IgnoreQueryFilters used only for cross-company deactivated-user check
     // before tenant context is established; scoped by explicit email comparison
     private readonly AppDbContext _db;
+
+    // Captures the time spent inside OnGetAsync — recorded in the diagnostics buffer so
+    // an admin can see how long failed/successful login attempts actually took. Useful
+    // for spotting "Griffin is alive but slow" vs "Griffin is unreachable" patterns.
+    private readonly Stopwatch _sw = new();
 
     public string? PendingMessage { get; set; }
 
@@ -43,7 +50,8 @@ public class GriffinCallbackModel : LocalizedPageModel
         IFeatureFlagService featureFlagService,
         ISecurityLogger securityLogger,
         ILogger<GriffinCallbackModel> logger,
-        AppDbContext db)
+        AppDbContext db,
+        IGriffinAuthDiagnostics diagnostics)
         : base(localizer)
     {
         _griffinService = griffinService;
@@ -52,6 +60,7 @@ public class GriffinCallbackModel : LocalizedPageModel
         _securityLogger = securityLogger;
         _logger = logger;
         _db = db;
+        _diagnostics = diagnostics;
     }
 
     // Server-side token shape gate. Griffin tokens are SHA-256 hex hashes (~64 chars) on
@@ -79,6 +88,7 @@ public class GriffinCallbackModel : LocalizedPageModel
         [FromQuery(Name = "hasedToken")] string? hasedToken,
         string? returnUrl = null)
     {
+        _sw.Restart();
         // 1. Extract token — Griffin may send as "token", "HashedToken", or "hasedToken" (typo tolerated).
         var effectiveToken = token ?? hashedToken ?? hasedToken;
         if (string.IsNullOrEmpty(effectiveToken))
@@ -128,19 +138,36 @@ public class GriffinCallbackModel : LocalizedPageModel
         {
             authResult = await _griffinService.AuthenticateUserAsync(token, griffinConfig, ipAddress);
         }
-        catch (Exception ex)
+        // Exclude OperationCanceledException — that's the request being aborted, not a Griffin
+        // failure. Letting it propagate avoids polluting the diagnostics buffer with noise.
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Griffin AuthenticateUserAsync threw");
             _securityLogger.LogAuthenticationFailure("Griffin ADFS", ipAddress, ex.Message);
-            return ShowFailure(new GriffinApiError(
+            // Record the FULL exception (type, message, stack, inner chain) in the diagnostics
+            // ring buffer so /GriffinDiagnostic can render it. This is the bridge that lets an
+            // air-gapped admin see the actual exception without server-file access.
+            var err = new GriffinApiError(
                 GriffinStage.UserLookup,
                 GriffinErrorCode.UnhandledException,
-                $"AuthenticateUserAsync threw {ex.GetType().Name}: {ex.Message}"));
+                $"AuthenticateUserAsync threw {ex.GetType().Name}: {ex.Message}");
+            // Try to retrieve the email from the claims cache so the failure event isn't
+            // anonymous. The token was already validated above, so this almost-always hits
+            // the positive cache and is essentially free.
+            var emailForEvent = await TryGetClaimsEmailAsync(token, griffinConfig);
+            RecordFailure(err, ex, email: emailForEvent, ipAddress);
+            return ShowFailure(err);
         }
 
         if (!authResult.Success)
         {
             var err = authResult.Error!;
+            // Record EVERY service-side failure (covers the new stage-specific codes 510-550
+            // we just added in AuthenticateUserAsync). Even the "UserNotRegistered" path gets
+            // recorded so an admin can see which ADFS identities tried to sign in.
+            // Pull the email from claims cache so the failure event identifies the user.
+            var emailForEvent = await TryGetClaimsEmailAsync(token, griffinConfig);
+            RecordFailure(err, exception: null, email: emailForEvent, ipAddress);
 
             // Valid Griffin user with no ShiftManager account. The FF_ALLOW_USERS_CREATION_VIA_ADFS
             // feature flag (managed at /Owner/FeatureFlags) decides what happens next:
@@ -232,8 +259,27 @@ public class GriffinCallbackModel : LocalizedPageModel
         var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var email = principal.FindFirst(ClaimTypes.Email)?.Value;
         var role = principal.FindFirst(ClaimTypes.Role)?.Value;
+        int? parsedUidNullable = null;
         if (int.TryParse(userId, out var parsedUid))
+        {
             _securityLogger.LogAuthenticationSuccess(parsedUid, email ?? "", role ?? "", ipAddress);
+            parsedUidNullable = parsedUid;
+        }
+        _sw.Stop();
+        _diagnostics.Record(new GriffinAuthEvent(
+            TimestampUtc: DateTime.UtcNow,
+            Success: true,
+            FailureStage: null,
+            FailureCode: null,
+            ErrorToken: null,
+            Email: email,
+            IpAddress: ipAddress,
+            UserId: parsedUidNullable,
+            ExceptionType: null,
+            ExceptionMessage: null,
+            StackTrace: null,
+            TechnicalDetail: null,
+            DurationMs: (int)_sw.ElapsedMilliseconds));
 
         // 8. Resolve returnUrl — query first, cookie second.
         if (string.IsNullOrEmpty(returnUrl))
@@ -242,7 +288,10 @@ public class GriffinCallbackModel : LocalizedPageModel
             if (!string.IsNullOrEmpty(returnUrl))
                 _logger.LogDebug("Read returnUrl from cookie: {ReturnUrl}", returnUrl);
         }
-        Response.Cookies.Delete("griffin.returnUrl", new CookieOptions { Path = "/Auth" });
+        // Path="/" matches the cookie's scoping at Login.cshtml.cs (set with the same root
+        // path so it's visible across the whole site, including /Auth/GriffinCallback under
+        // IIS path-prefix deployments).
+        Response.Cookies.Delete("griffin.returnUrl", new CookieOptions { Path = "/" });
 
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return Redirect(returnUrl);
@@ -260,5 +309,72 @@ public class GriffinCallbackModel : LocalizedPageModel
         FailureStage = error.Stage.ToString();
         Error = msg.Title; // keep the legacy single-string Error populated for anything that reads it
         return Page();
+    }
+
+    /// <summary>
+    /// Capture a failure into the in-memory diagnostics buffer. Pulls the full exception
+    /// chain (type, message, stack trace) so the admin diagnostic page can render it.
+    /// </summary>
+    private void RecordFailure(GriffinApiError err, Exception? exception, string? email, string ipAddress)
+    {
+        _sw.Stop();
+        var (exType, exMessage, stackTrace) = ExtractExceptionDetail(exception);
+        _diagnostics.Record(new GriffinAuthEvent(
+            TimestampUtc: DateTime.UtcNow,
+            Success: false,
+            FailureStage: err.Stage,
+            FailureCode: err.Code,
+            ErrorToken: err.ErrorToken,
+            Email: email,
+            IpAddress: ipAddress,
+            UserId: null,
+            ExceptionType: exType,
+            ExceptionMessage: exMessage,
+            StackTrace: stackTrace,
+            TechnicalDetail: err.TechnicalDetail,
+            DurationMs: (int)_sw.ElapsedMilliseconds));
+        _sw.Restart(); // in case the request keeps running
+    }
+
+    /// <summary>
+    /// Best-effort retrieval of the validated ADFS email for diagnostic-event labeling. Hits the
+    /// positive claims cache populated by ValidateAndGetClaimsAsync; returns null if the cache
+    /// missed or the token is no longer valid. Wrapped in a permissive try/catch so a problem
+    /// here can never break the failure-reporting path.
+    /// </summary>
+    private async Task<string?> TryGetClaimsEmailAsync(string token, ShiftManager.Models.GriffinConfig config)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(config.BaseUrl)) return null;
+            var claimsResult = await _griffinService.ValidateAndGetClaimsAsync(
+                token, config.BaseUrl, config.TimeoutSeconds);
+            return claimsResult.Success ? claimsResult.Value?.EmailAddress : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Walk the inner-exception chain so wrapped exceptions (DbUpdateException → SqliteException → ...)
+    /// surface all the way down. Returns a single composite message and stack.
+    /// </summary>
+    private static (string? Type, string? Message, string? Stack) ExtractExceptionDetail(Exception? ex)
+    {
+        if (ex == null) return (null, null, null);
+        var types = new List<string>();
+        var messages = new List<string>();
+        for (var cur = ex; cur != null; cur = cur.InnerException)
+        {
+            types.Add(cur.GetType().FullName ?? cur.GetType().Name);
+            messages.Add(cur.Message);
+        }
+        return (
+            string.Join(" → ", types),
+            string.Join("  ||  ", messages),
+            ex.ToString()  // full stack including inner chain
+        );
     }
 }

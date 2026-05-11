@@ -1061,4 +1061,199 @@ public class GriffinServiceTests : IDisposable
         var err = new GriffinApiError(GriffinStage.TokenExchange, GriffinErrorCode.HttpNotFound, "detail");
         err.ErrorToken.Should().Be("GRIFFIN-TOKENEXCHANGE-203");
     }
+
+    // ============================================================================================
+    // GriffinClaimsDto.Parse — flexible property-name matching
+    //
+    // Lock in the property-name flexibility added in the 2026-05-11 hardening pass. The previous
+    // case-insensitive-only matcher silently produced empty fields on snake_case / kebab-case /
+    // LDAP-style aliases, which became the user-visible MissingEmailAddress error. The new Parse
+    // method normalizes names (strip separators + lowercase) and tries multiple aliases per field.
+    // ============================================================================================
+
+    [Theory]
+    [InlineData(@"{""EmailAddress"":""u@x.mil"",""UniqueID"":""1""}")]
+    [InlineData(@"{""emailaddress"":""u@x.mil"",""uniqueid"":""1""}")]
+    [InlineData(@"{""EMAIL_ADDRESS"":""u@x.mil"",""UNIQUE_ID"":""1""}")]
+    [InlineData(@"{""email-address"":""u@x.mil"",""unique-id"":""1""}")]
+    [InlineData(@"{""email.address"":""u@x.mil"",""unique.id"":""1""}")]
+    [InlineData(@"{""Email"":""u@x.mil"",""Sub"":""1""}")]
+    [InlineData(@"{""mail"":""u@x.mil"",""sub"":""1""}")]
+    [InlineData(@"{""upn"":""u@x.mil"",""uid"":""1""}")]
+    [InlineData(@"{""userPrincipalName"":""u@x.mil"",""subjectId"":""1""}")]
+    public void ClaimsDto_Parse_ExtractsBusinessFields_FromAnyAlias(string body)
+    {
+        var dto = GriffinClaimsDto.Parse(body, out _);
+        dto.Should().NotBeNull();
+        dto!.EmailAddress.Should().Be("u@x.mil");
+        dto.UniqueID.Should().Be("1");
+    }
+
+    [Fact]
+    public void ClaimsDto_Parse_TrimsWhitespaceInEmail()
+    {
+        // Defends against the Agent-2-identified bug: untrimmed Griffin email values would silently
+        // fail the DB lookup (SQLite `=` comparison does NOT strip trailing spaces).
+        var dto = GriffinClaimsDto.Parse(@"{""EmailAddress"":""  u@x.mil  "",""UniqueID"":""1""}", out _);
+        dto.Should().NotBeNull();
+        dto!.EmailAddress.Should().Be("u@x.mil");
+    }
+
+    [Fact]
+    public void ClaimsDto_Parse_NumericUniqueId_CoercedToString()
+    {
+        var dto = GriffinClaimsDto.Parse(@"{""EmailAddress"":""u@x.mil"",""UniqueID"":7108}", out _);
+        dto.Should().NotBeNull();
+        dto!.UniqueID.Should().Be("7108");
+    }
+
+    [Fact]
+    public void ClaimsDto_Parse_LargeNumericValue_NoExponentialNotation()
+    {
+        // Validates the GetDecimal-before-GetDouble fallback path. A double representation
+        // would render as "1.71234E+16" — confusing for a UniqueID.
+        var dto = GriffinClaimsDto.Parse(@"{""EmailAddress"":""u@x.mil"",""UniqueID"":17123456789012345}", out _);
+        dto.Should().NotBeNull();
+        dto!.UniqueID.Should().NotContain("E");
+        dto.UniqueID.Should().NotContain("e+");
+        dto.UniqueID.Should().Be("17123456789012345");
+    }
+
+    [Fact]
+    public void ClaimsDto_Parse_PopulatesPresentKeysForDiagnostics()
+    {
+        var dto = GriffinClaimsDto.Parse(@"{""foo"":1,""bar"":2,""baz"":3}", out var keys);
+        dto.Should().NotBeNull();
+        dto!.EmailAddress.Should().BeEmpty();
+        dto.UniqueID.Should().BeEmpty();
+        keys.Should().BeEquivalentTo(new[] { "foo", "bar", "baz" });
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("not json")]
+    [InlineData("[1,2,3]")]
+    [InlineData("null")]
+    [InlineData("\"just a string\"")]
+    public void ClaimsDto_Parse_NonObjectInput_ReturnsNull(string body)
+    {
+        var dto = GriffinClaimsDto.Parse(body, out _);
+        dto.Should().BeNull();
+    }
+
+    [Fact]
+    public void ClaimsDto_Parse_WrappedResponse_AutoUnwraps()
+    {
+        // Common API envelope pattern: {"data":{...}} or {"claims":{...}}. The Parse method
+        // unwraps one level when the root object has exactly one property whose value is an
+        // object AND none of the business-critical aliases appear at the root.
+        var dto = GriffinClaimsDto.Parse(
+            @"{""claims"":{""EmailAddress"":""u@x.mil"",""UniqueID"":""1""}}",
+            out _);
+        dto.Should().NotBeNull();
+        dto!.EmailAddress.Should().Be("u@x.mil");
+        dto.UniqueID.Should().Be("1");
+    }
+
+    [Fact]
+    public void ClaimsDto_Parse_RootWithBusinessKey_DoesNotUnwrap()
+    {
+        // If the root already has a recognized business field, don't unwrap — even if there's
+        // a nested object too.
+        var dto = GriffinClaimsDto.Parse(
+            @"{""EmailAddress"":""correct@x.mil"",""extra"":{""EmailAddress"":""wrong@x.mil""}}",
+            out _);
+        dto.Should().NotBeNull();
+        dto!.EmailAddress.Should().Be("correct@x.mil");
+    }
+
+    [Theory]
+    [InlineData("EmailAddress", "emailaddress")]
+    [InlineData("email_address", "emailaddress")]
+    [InlineData("EMAIL-ADDRESS", "emailaddress")]
+    [InlineData("Email.Address", "emailaddress")]
+    [InlineData("email address", "emailaddress")]
+    [InlineData("UniqueID", "uniqueid")]
+    [InlineData("user_id", "userid")]
+    public void ClaimsDto_Normalize_StripsSeparatorsAndLowercases(string input, string expected)
+    {
+        GriffinClaimsDto.Normalize(input).Should().Be(expected);
+    }
+
+    // ============================================================================================
+    // GriffinAuthDiagnostics — ring buffer behavior
+    // ============================================================================================
+
+    [Fact]
+    public void AuthDiagnostics_RecordAndGetRecent_ReturnsNewestFirst()
+    {
+        var diag = new GriffinAuthDiagnostics();
+        diag.Record(NewEvent("old@x.mil"));
+        diag.Record(NewEvent("new@x.mil"));
+
+        var recent = diag.GetRecent(10);
+        recent.Should().HaveCount(2);
+        recent[0].Email.Should().Be("new@x.mil");
+        recent[1].Email.Should().Be("old@x.mil");
+    }
+
+    [Fact]
+    public void AuthDiagnostics_CapsAtCapacity()
+    {
+        var diag = new GriffinAuthDiagnostics();
+        for (var i = 0; i < GriffinAuthDiagnostics.Capacity + 20; i++)
+            diag.Record(NewEvent($"u{i}@x.mil"));
+
+        diag.GetRecent(int.MaxValue).Should().HaveCount(GriffinAuthDiagnostics.Capacity);
+    }
+
+    [Fact]
+    public void AuthDiagnostics_Clear_EmptiesBuffer()
+    {
+        var diag = new GriffinAuthDiagnostics();
+        diag.Record(NewEvent("u@x.mil"));
+        diag.Clear();
+        diag.GetRecent().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AuthDiagnostics_GetRecent_LimitsToRequestedCount()
+    {
+        var diag = new GriffinAuthDiagnostics();
+        for (var i = 0; i < 10; i++)
+            diag.Record(NewEvent($"u{i}@x.mil"));
+
+        diag.GetRecent(3).Should().HaveCount(3);
+    }
+
+    private static GriffinAuthEvent NewEvent(string email) =>
+        new(DateTime.UtcNow, true, null, null, null, email, "127.0.0.1", null, null, null, null, null, 0);
+
+    // ============================================================================================
+    // GriffinErrorMessages — new stage-specific codes have user-friendly messages
+    // ============================================================================================
+
+    [Theory]
+    [InlineData(GriffinErrorCode.UserLookupQueryFailed)]
+    [InlineData(GriffinErrorCode.RoleTemplateBackfillFailed)]
+    [InlineData(GriffinErrorCode.HierarchyLoadFailed)]
+    [InlineData(GriffinErrorCode.GrantApplicationFailed)]
+    [InlineData(GriffinErrorCode.ClaimsPrincipalBuildFailed)]
+    public void ErrorMessages_NewStageCodes_DoNotEchoTechnicalDetail(GriffinErrorCode code)
+    {
+        // The old _-fallthrough branch leaked TechnicalDetail (with JWT in query string) to the
+        // user. Verify each new code has its own user-facing message that doesn't echo the
+        // technical detail.
+        var err = new GriffinApiError(GriffinStage.UserLookup, code,
+            "Sensitive technical detail with token=eyJhbGciOiJIUzI1NiJ9.payload.sig");
+        var loc = new Mock<Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources>>();
+        loc.Setup(l => l[It.IsAny<string>()]).Returns<string>(k =>
+            new Microsoft.Extensions.Localization.LocalizedString(k, k, false));
+
+        var msg = GriffinErrorMessages.Describe(err, loc.Object);
+
+        msg.Detail.Should().NotContain("eyJ");
+        msg.Detail.Should().NotContain("token=");
+        msg.Detail.Should().NotContain("Sensitive technical detail");
+    }
 }
