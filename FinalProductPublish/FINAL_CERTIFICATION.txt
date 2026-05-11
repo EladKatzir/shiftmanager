@@ -1,18 +1,18 @@
 ﻿================================================================================
                     PRODUCTION DEPLOYMENT CERTIFICATION
-                    ShiftManager Version 3.9.8
+                    ShiftManager Version 3.9.85
 ================================================================================
 
-CERTIFICATION DATE: 2026-05-11 09:21:29 UTC
-PACKAGE VERSION:    v3.9.8
-GIT COMMIT:         2b3d298
+CERTIFICATION DATE: 2026-05-11 15:02:33 UTC
+PACKAGE VERSION:    v3.9.85
+GIT COMMIT:         c7dd40a
 BUILD SYSTEM:       Automated Release Builder v1.0.0
 
 ================================================================================
 CERTIFICATION STATEMENT
 ================================================================================
 
-This document certifies that ShiftManager version 3.9.8 has successfully
+This document certifies that ShiftManager version 3.9.85 has successfully
 completed all required quality assurance processes and is APPROVED for
 production deployment in air-gapped Windows Server 2022 environments.
 
@@ -72,8 +72,8 @@ The following criteria have been met for production certification:
 
 6. VERSION CONTROL
    âœ… Git working tree clean at build time
-   âœ… Version tagged: v3.9.8
-   âœ… Commit documented: 2b3d298
+   âœ… Version tagged: v3.9.85
+   âœ… Commit documented: c7dd40a
    âœ… Build reproducible from tag
 
 ================================================================================
@@ -91,7 +91,7 @@ Air-Gapped Ready:   Yes - no internet connection required
 
 Distribution Files:
   ðŸ“¦ ProjectPublish/ folder (complete deployment)
-  ðŸ“¦ ShiftManager-v3.9.8-win-x64.zip (compressed package)
+  ðŸ“¦ ShiftManager-v3.9.85-win-x64.zip (compressed package)
   ðŸ”’ SHA256 checksum file (integrity verification)
   ðŸ“„ Release report (comprehensive documentation)
 
@@ -297,14 +297,14 @@ BUILD INFORMATION
 ================================================================================
 
 Build System:       Automated Release Builder v1.0.0
-Build Date:         2026-05-11 09:21:29 UTC
+Build Date:         2026-05-11 15:02:33 UTC
 Build Host:         Automated
 Build Type:         Release (optimized)
 Build Config:       Self-Contained
 Git Repository:     ShiftManager
 Git Branch:         update
-Git Commit:         2b3d298
-Git Tag:            v3.9.8
+Git Commit:         c7dd40a
+Git Tag:            v3.9.85
 
 Pipeline Stages:    10 (all passed)
 Scripts Executed:   11 (all successful)
@@ -321,13 +321,13 @@ by the ShiftManager Automated Release Builder system.
 Certification Authority:
   System:    ShiftManager Automated Release Builder
   Version:   1.0.0
-  Date:      2026-05-11 09:21:29 UTC
-  Signature: Git Tag v3.9.8 (2b3d298)
+  Date:      2026-05-11 15:02:33 UTC
+  Signature: Git Tag v3.9.85 (c7dd40a)
 
 Digital Verification:
   Package Checksum:  See SHA256 checksum file
-  Git Tag:          v3.9.8
-  Git Commit:       2b3d298
+  Git Tag:          v3.9.85
+  Git Commit:       c7dd40a
 
 This certification is valid and the package is approved for production
 deployment in air-gapped Windows Server 2022 environments.
@@ -338,11 +338,11 @@ FINAL APPROVAL
 
                        âœ… CERTIFIED FOR PRODUCTION USE
 
-ShiftManager v3.9.8 is hereby certified as production-ready and
+ShiftManager v3.9.85 is hereby certified as production-ready and
 approved for deployment.
 
 Date:               2026-05-11
-Version:            v3.9.8
+Version:            v3.9.85
 Status:             PRODUCTION READY
 Deployment:         APPROVED
 

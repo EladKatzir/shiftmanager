@@ -1,6 +1,6 @@
 ﻿================================================================================
                     SHIFTMANAGER QUICK START GUIDE
-                           Version 3.9.8
+                           Version 3.9.85
 ================================================================================
 
 Get ShiftManager running in 3 simple steps!
@@ -179,10 +179,10 @@ IMPORTANT REMINDERS
 VERSION INFORMATION
 ================================================================================
 
-Version:        3.9.8
+Version:        3.9.85
 Release Date:   2026-05-11
 Package Size:   166 MB
-Git Commit:     2b3d298
+Git Commit:     c7dd40a
 
 This is a self-contained deployment. No .NET installation required.
 

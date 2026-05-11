@@ -3851,49 +3851,34 @@
             </summary>
         </member>
         <member name="T:ShiftManager.Models.DTOs.GriffinClaimsDto">
-            <summary>
-            Represents user claims returned from Griffin ADFS /authorization/getClaims endpoint.
-            Field names match the actual Griffin API response (not standard ADFS claim names).
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.UniqueID">
-            <summary>Unique identifier for the user (e.g., "7108user@8200"). Coerced from numbers if needed.</summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.EmailAddress">
-            <summary>User's email address (used for user lookup in ShiftManager).</summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.DisplayName">
-            <summary>Full display name (may be OU path format, e.g., "blah/blah/user").</summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.GivenName">
-            <summary>First name / given name.</summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Surname">
-            <summary>
-            Family name / surname. Surfaced to the GriffinSignup form as a pre-filled
-            editable field. Empty when Griffin's getClaims response omits the field.
-            </summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Audience">
-            <summary>Audience claim — string OR array of strings per RFC 7519.</summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.IssuerLegacy">
-            <summary>Issuer claim using Griffin's historical non-standard key "iis".</summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.IssuerStandard">
-            <summary>Issuer claim using the RFC 7519 standard key "iss". Some Griffin deployments emit this instead of/alongside "iis".</summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.IssuedAt">
-            <summary>Issued-at — typically a JSON number (Unix epoch seconds).</summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.NotBefore">
-            <summary>Not-before — typically a JSON number (Unix epoch seconds).</summary>
-        </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Expiration">
-            <summary>Expiration — typically a JSON number (Unix epoch seconds).</summary>
+             <summary>
+             Represents user claims returned from Griffin ADFS /authorization/getClaims endpoint.
+            
+             PARSING POLICY: do NOT use <c>JsonSerializer.Deserialize&lt;GriffinClaimsDto&gt;</c> directly.
+             Use the static <see cref="M:ShiftManager.Models.DTOs.GriffinClaimsDto.Parse(System.String,System.Collections.Generic.IReadOnlyList{System.String}@)"/> factory below instead — it implements aggressive
+             property-name normalization (case + separator agnostic) and surfaces the list of keys
+             actually present in the response when a business-critical field is missing. The default
+             deserialization path (case-insensitive only) silently produces empty fields on any
+             non-casing variation (snake_case, kebab-case, LDAP-style names), which we observed
+             during the 2026-05-11 hardening pass.
+            
+             Field type policy:
+               - Business-critical fields (UniqueID, EmailAddress, DisplayName, GivenName, Surname):
+                 plain <c>string</c>. Coerced from JSON numbers/booleans/null via Parse.
+               - JWT-spec fields (aud, iss/iis, iat, nbf, exp): <c>JsonElement?</c> so any shape
+                 (number, string, array, null) survives parsing. These are reference/logging only.
+             </summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Issuer">
-            <summary>Pick whichever issuer field arrived (standard "iss" wins over legacy "iis").</summary>
+            <summary>Whichever issuer field arrived (RFC 7519 "iss" wins over legacy "iis").</summary>
+        </member>
+        <member name="M:ShiftManager.Models.DTOs.GriffinClaimsDto.Parse(System.String,System.Collections.Generic.IReadOnlyList{System.String}@)">
+            <summary>
+            Parse a Griffin getClaims response body into a DTO using aggressive name normalization.
+            Returns null if the body isn't a JSON object. The <paramref name="presentKeys"/> out
+            parameter is always populated with the top-level keys actually seen — even on a successful
+            parse — so the caller can include them in the error message when a critical field is empty.
+            </summary>
         </member>
         <member name="T:ShiftManager.Models.DTOs.JsonNumberOrStringConverter">
              <summary>
@@ -6302,6 +6287,26 @@
             Example: "john.doe@army.mil" → "jo***@army.mil"
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Auth.GriffinCallbackModel.RecordFailure(ShiftManager.Models.Support.GriffinApiError,System.Exception,System.String,System.String)">
+            <summary>
+            Capture a failure into the in-memory diagnostics buffer. Pulls the full exception
+            chain (type, message, stack trace) so the admin diagnostic page can render it.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Auth.GriffinCallbackModel.TryGetClaimsEmailAsync(System.String,ShiftManager.Models.GriffinConfig)">
+            <summary>
+            Best-effort retrieval of the validated ADFS email for diagnostic-event labeling. Hits the
+            positive claims cache populated by ValidateAndGetClaimsAsync; returns null if the cache
+            missed or the token is no longer valid. Wrapped in a permissive try/catch so a problem
+            here can never break the failure-reporting path.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Auth.GriffinCallbackModel.ExtractExceptionDetail(System.Exception)">
+            <summary>
+            Walk the inner-exception chain so wrapped exceptions (DbUpdateException → SqliteException → ...)
+            surface all the way down. Returns a single composite message and stack.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Pages.Auth.LoginModel.HideRegularLogin">
             <summary>
             When true, the email+password form, the divider, and the secondary
@@ -8087,6 +8092,22 @@
             Returns null if serialization fails.
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.GriffinAuthDiagnostics">
+             <summary>
+             Singleton, thread-safe, fixed-capacity ring buffer of Griffin auth events.
+             Holds the last <see cref="F:ShiftManager.Services.GriffinAuthDiagnostics.Capacity"/> events in memory only — no DB writes, no disk I/O,
+             no log file dependency. Survives across requests but is reset on app restart.
+            
+             Why singleton, not scoped: this is process-wide diagnostic state. Each request should
+             see the same buffer instance so an admin viewing the diagnostic page can read events
+             recorded by a different request's callback handler.
+            
+             Why not the database: writing on the auth hot-path adds latency and a failure dependency
+             (a DB hiccup during login would now create a SECOND failure for the diagnostic write).
+             The in-memory pattern matches the "telemetry on, persistence later" trade-off used
+             elsewhere in the project (e.g., performance metrics).
+             </summary>
+        </member>
         <member name="T:ShiftManager.Services.GriffinErrorMessages">
              <summary>
              Turns a <see cref="T:ShiftManager.Models.Support.GriffinApiError"/> into a three-part user-facing message
@@ -9164,6 +9185,43 @@
             </summary>
             <param name="retentionDays">Number of days to keep logs (default: 90)</param>
             <returns>Number of log entries deleted</returns>
+        </member>
+        <member name="T:ShiftManager.Services.IGriffinAuthDiagnostics">
+             <summary>
+             In-memory ring buffer of recent Griffin ADFS authentication events (success + failure).
+             Surfaces to the admin diagnostic page so an air-gapped operator can see WHAT broke
+             without needing access to the application log file or Windows Event Viewer.
+            
+             Singleton lifetime — the buffer must survive across requests. Thread-safe.
+            
+             PII handling: the email field is intentionally NOT masked here — the diagnostic page
+             is gated behind <c>Grant:AdminAccess</c> and the whole point of the surface is to let
+             an admin find out which user's login broke. The render layer is responsible for
+             applying display-time masking if it surfaces externally.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGriffinAuthDiagnostics.Record(ShiftManager.Services.GriffinAuthEvent)">
+            <summary>Record an auth attempt (success or failure).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGriffinAuthDiagnostics.GetRecent(System.Int32)">
+            <summary>Get the most recent N events, newest-first.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGriffinAuthDiagnostics.Clear">
+            <summary>Clear the buffer (admin-initiated; primarily for tests).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.GriffinAuthEvent">
+            <summary>
+            One Griffin auth attempt — failure or success. Captured at the GriffinCallback exit
+            points so it covers the full pipeline (transport → validate → claims → user lookup
+            → principal build).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.GriffinAuthEvent.#ctor(System.DateTime,System.Boolean,System.Nullable{ShiftManager.Models.Support.GriffinStage},System.Nullable{ShiftManager.Models.Support.GriffinErrorCode},System.String,System.String,System.String,System.Nullable{System.Int32},System.String,System.String,System.String,System.String,System.Int32)">
+            <summary>
+            One Griffin auth attempt — failure or success. Captured at the GriffinCallback exit
+            points so it covers the full pipeline (transport → validate → claims → user lookup
+            → principal build).
+            </summary>
         </member>
         <member name="T:ShiftManager.Services.IGriffinConfigService">
             <summary>
