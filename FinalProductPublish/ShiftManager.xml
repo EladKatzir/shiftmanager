@@ -3857,24 +3857,16 @@
             </summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.UniqueID">
-            <summary>
-            Unique identifier for the user (e.g., "7108user@8200")
-            </summary>
+            <summary>Unique identifier for the user (e.g., "7108user@8200"). Coerced from numbers if needed.</summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.EmailAddress">
-            <summary>
-            User's email address (used for user lookup in ShiftManager)
-            </summary>
+            <summary>User's email address (used for user lookup in ShiftManager).</summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.DisplayName">
-            <summary>
-            Full display name (may be OU path format, e.g., "blah/blah/user")
-            </summary>
+            <summary>Full display name (may be OU path format, e.g., "blah/blah/user").</summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.GivenName">
-            <summary>
-            First name / given name
-            </summary>
+            <summary>First name / given name.</summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Surname">
             <summary>
@@ -3883,29 +3875,43 @@
             </summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Audience">
-            <summary>
-            Audience
-            </summary>
+            <summary>Audience claim — string OR array of strings per RFC 7519.</summary>
         </member>
-        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Issuer">
-            <summary>
-            Issuer (Griffin uses "iis" instead of standard "iss")
-            </summary>
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.IssuerLegacy">
+            <summary>Issuer claim using Griffin's historical non-standard key "iis".</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.IssuerStandard">
+            <summary>Issuer claim using the RFC 7519 standard key "iss". Some Griffin deployments emit this instead of/alongside "iis".</summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.IssuedAt">
-            <summary>
-            Issued at timestamp
-            </summary>
+            <summary>Issued-at — typically a JSON number (Unix epoch seconds).</summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.NotBefore">
-            <summary>
-            Not before timestamp
-            </summary>
+            <summary>Not-before — typically a JSON number (Unix epoch seconds).</summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Expiration">
-            <summary>
-            Expiration timestamp
-            </summary>
+            <summary>Expiration — typically a JSON number (Unix epoch seconds).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Issuer">
+            <summary>Pick whichever issuer field arrived (standard "iss" wins over legacy "iis").</summary>
+        </member>
+        <member name="T:ShiftManager.Models.DTOs.JsonNumberOrStringConverter">
+             <summary>
+             Reads any JSON scalar (string, number, boolean, null) into a CLR <c>string</c>.
+            
+             Defensive measure for DTOs deserialising from external APIs whose contract isn't
+             strictly enforced (e.g. Griffin/ADFS may emit a UniqueID as either <c>"7108elad@8200"</c>
+             or <c>7108</c> depending on deployment). Without this converter, the default
+             System.Text.Json string-property reader throws <c>JsonException</c> on a JSON number
+             — and the whole deserialisation aborts, blocking login.
+            
+             Numbers use <c>InvariantCulture</c> so locale settings (Hebrew RTL, decimal-comma)
+             do not change the captured value.
+            
+             Objects and arrays are NOT supported here — apply this converter only to fields
+             whose semantic value is a scalar string. For fields that legitimately may be an
+             array (e.g. JWT <c>aud</c>), use <c>JsonElement?</c> instead.
+             </summary>
         </member>
         <member name="T:ShiftManager.Models.Dto.ProfileUpdateDto">
             <summary>
