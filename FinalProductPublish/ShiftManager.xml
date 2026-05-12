@@ -8025,17 +8025,30 @@
             </summary>
         </member>
         <member name="M:ShiftManager.Services.GrantService.CanUserGrantAsync(System.Int32,System.Int32,ShiftManager.Services.GrantScope)">
-            <summary>
-            Checks if a user can grant a specific grant type at the given scope.
-            User must have CanGive=true for the grant type and the scope must be
-            same or narrower than the user's grant scope.
-            </summary>
+             <summary>
+             Checks if a user can grant a specific grant type at the given scope.
+             User must have CanGive=true for the grant type and the scope must be
+             same or narrower than the user's grant scope.
+            
+             2026-05-12 audit fix: pre-resolves the target's hierarchy chain so ScopeCovers
+             can detect cross-area / cross-molecule over-granting. Without this, an Area-A
+             granter with CanGive=true could delegate to a target with MoleculeId from Area B,
+             because ScopeCovers had no way to know which area the target's molecule belonged to.
+             </summary>
         </member>
-        <member name="M:ShiftManager.Services.GrantService.ScopeCovers(ShiftManager.Models.Grant,ShiftManager.Services.GrantScope)">
-            <summary>
-            Determines if a grant's scope covers (is same or broader than) the target scope.
-            Broader scopes cover narrower scopes: Project > Area > Molecule > Company/Department
-            </summary>
+        <member name="M:ShiftManager.Services.GrantService.ScopeCovers(ShiftManager.Models.Grant,ShiftManager.Services.GrantScope,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32})">
+             <summary>
+             Determines if a grant's scope covers (is same or broader than) the target scope.
+             Broader scopes cover narrower scopes: Project > Area > Molecule > Company/Department.
+            
+             Pre-resolved hierarchy (targetMoleculeArea, targetCompanyMolecule, targetCompanyArea) is
+             passed in by CanUserGrantAsync so this method can detect cross-area / cross-molecule
+             over-granting WITHOUT being async (which would require touching every overload). The
+             2026-05-12 audit found that previously this method returned `!targetScope.AreaId.HasValue`
+             "for simplicity" — which silently let an Area-A granter cover a target whose Molecule
+             actually belonged to Area B. Same risk for Molecule-scoped granters covering
+             cross-molecule companies.
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.GrantService.AssignRoleTemplateGrantsAsync(System.Int32,System.String,ShiftManager.Services.GrantScope,System.Nullable{System.Int32})">
             <summary>
