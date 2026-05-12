@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -29,6 +30,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 // the GRIFFIN-USERLOOKUP-510 bug class.
 public class CompanyLocalizationServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly MemoryCache _cache;
     private readonly Mock<IAuditLogService> _auditLogMock;
@@ -40,10 +42,13 @@ public class CompanyLocalizationServiceTests : IDisposable
 
     public CompanyLocalizationServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _cache = new MemoryCache(new MemoryCacheOptions());
 
@@ -72,6 +77,7 @@ public class CompanyLocalizationServiceTests : IDisposable
     {
         _cache.Dispose();
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     /// <summary>

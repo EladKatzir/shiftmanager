@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class VacationApprovalApproveTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<IGrantService> _grantServiceMock;
     private readonly Mock<IHomeMaterialiserService> _materialiserMock;
@@ -36,11 +38,13 @@ public class VacationApprovalApproveTests : IDisposable
 
     public VacationApprovalApproveTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _grantServiceMock = new Mock<IGrantService>();
         var notificationServiceMock = new Mock<INotificationService>();
@@ -102,6 +106,7 @@ public class VacationApprovalApproveTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     /// <summary>

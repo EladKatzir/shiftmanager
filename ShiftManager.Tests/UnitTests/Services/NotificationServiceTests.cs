@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -26,6 +27,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class NotificationServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<ITenantResolver> _tenantResolverMock;
     private readonly Mock<IMailService> _mailServiceMock;
@@ -40,10 +42,13 @@ public class NotificationServiceTests : IDisposable
 
     public NotificationServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _tenantResolverMock = new Mock<ITenantResolver>();
         _tenantResolverMock.Setup(x => x.GetCurrentTenantId()).Returns(TestCompanyId);
@@ -83,6 +88,7 @@ public class NotificationServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<AppUser> CreateTestUserAsync(int id = 1, string email = "test@test.com")
@@ -190,9 +196,13 @@ public class NotificationServiceTests : IDisposable
     {
         // Arrange — don't create any user; the notification will still be saved
         // (UserNotification doesn't enforce FK in InMemory). Instead, test with
-        // a disposed context to trigger an error.
+        // a disposed context to trigger an error. Uses a LOCAL connection (not the
+        // fixture's readonly _sqliteConnection field) so this test can immediately
+        // dispose the DbContext without affecting other tests in the class.
+        using var localConn = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        localConn.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(localConn)
             .Options;
         var disposedDb = new AppDbContext(options);
         disposedDb.Dispose();

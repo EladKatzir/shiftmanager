@@ -3,6 +3,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
@@ -23,6 +24,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class ImportServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<ITenantResolver> _tenantResolverMock;
     private readonly Mock<IAuditLogService> _auditLogMock;
@@ -35,10 +37,13 @@ public class ImportServiceTests : IDisposable
 
     public ImportServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _tenantResolverMock = new Mock<ITenantResolver>();
         _tenantResolverMock.Setup(x => x.GetCurrentTenantId()).Returns(TestCompanyId);
@@ -68,6 +73,7 @@ public class ImportServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
         if (Directory.Exists(_tempDir))
         {
             Directory.Delete(_tempDir, recursive: true);

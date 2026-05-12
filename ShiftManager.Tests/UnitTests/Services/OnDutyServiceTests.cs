@@ -2,6 +2,7 @@ using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
@@ -18,6 +19,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class OnDutyServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly OnDutyService _service;
     private readonly Mock<IGrantService> _grantServiceMock;
@@ -28,11 +30,14 @@ public class OnDutyServiceTests : IDisposable
 
     public OnDutyServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         // Setup HTTP context with authenticated user
         var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
@@ -70,6 +75,7 @@ public class OnDutyServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private void SetupHakamGrantPermissions(bool canManage = true)

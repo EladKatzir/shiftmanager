@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,6 +13,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class HomeMaterialiserServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly HomeMaterialiserService _service;
 
@@ -21,12 +23,14 @@ public class HomeMaterialiserServiceTests : IDisposable
 
     public HomeMaterialiserServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         // Seed hierarchy
         _db.Areas.Add(new Area { Id = 1, ProjectId = 1, Name = "Area1", DisplayName = "Area 1" });
@@ -54,6 +58,7 @@ public class HomeMaterialiserServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     [Fact]

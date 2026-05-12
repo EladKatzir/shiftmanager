@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -13,6 +14,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class ApiKeyServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly ApiKeyService _service;
     private readonly Mock<ITenantResolver> _tenantResolverMock;
@@ -24,12 +26,14 @@ public class ApiKeyServiceTests : IDisposable
 
     public ApiKeyServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _tenantResolverMock = new Mock<ITenantResolver>();
         _tenantResolverMock.Setup(t => t.GetCurrentTenantId()).Returns(CompanyId);
@@ -51,6 +55,7 @@ public class ApiKeyServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private void SeedBaseData()

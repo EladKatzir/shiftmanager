@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -9,6 +10,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class ShiftGroupingServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly ShiftGroupingService _service;
 
@@ -17,12 +19,14 @@ public class ShiftGroupingServiceTests : IDisposable
 
     public ShiftGroupingServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _service = new ShiftGroupingService(_db);
 
         SeedBaseData();
@@ -31,6 +35,7 @@ public class ShiftGroupingServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private void SeedBaseData()

@@ -2,6 +2,7 @@ using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -23,6 +24,7 @@ namespace ShiftManager.Tests.IntegrationTests;
 /// </summary>
 public class MilitaryRankIntegrationTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<IFeatureFlagService> _mockFeatureFlagService;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
@@ -37,10 +39,13 @@ public class MilitaryRankIntegrationTests : IDisposable
 
     public MilitaryRankIntegrationTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase("MilitaryRankTestDb_" + Guid.NewGuid())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _mockFeatureFlagService = new Mock<IFeatureFlagService>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
@@ -549,5 +554,6 @@ public class MilitaryRankIntegrationTests : IDisposable
     public void Dispose()
     {
         _db?.Dispose();
+        _sqliteConnection.Dispose();
     }
 }

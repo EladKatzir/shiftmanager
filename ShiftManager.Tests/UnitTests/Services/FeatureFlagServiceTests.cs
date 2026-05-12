@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Localization;
@@ -22,16 +23,28 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class FeatureFlagServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly IMemoryCache _cache;
     private readonly FeatureFlagService _service;
 
     public FeatureFlagServiceTests()
     {
+        // Real SQLite (NOT EF Core In-Memory) so the production translator runs end-to-end.
+        // See GRIFFIN-USERLOOKUP-510 for the bug class this defends against.
+        // `Foreign Keys=False` preserves the relaxed FK semantics the previous In-Memory
+        // fixture used (existing tests reference CompanyId/UserId values without seeding
+        // parent rows). Real SQLite enforces FKs by default — disabling it here keeps the
+        // test contract unchanged while still exercising the SQL translator. Fixtures
+        // designed FROM SCRATCH against SQLite (e.g., SqliteTranslationGuardTests) leave
+        // FKs ON and seed parent rows explicitly.
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _cache = new MemoryCache(new MemoryCacheOptions());
         var loggerMock = new Mock<ILogger<FeatureFlagService>>();
@@ -46,6 +59,7 @@ public class FeatureFlagServiceTests : IDisposable
     {
         _cache.Dispose();
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     /// <summary>

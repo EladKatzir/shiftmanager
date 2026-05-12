@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -24,6 +25,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class EmailTemplateServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<ITenantResolver> _tenantResolverMock;
     private readonly Mock<IStringLocalizer<SharedResources>> _localizerMock;
@@ -33,10 +35,13 @@ public class EmailTemplateServiceTests : IDisposable
 
     public EmailTemplateServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _tenantResolverMock = new Mock<ITenantResolver>();
         _tenantResolverMock.Setup(x => x.GetCurrentTenantId()).Returns(TestCompanyId);
@@ -57,6 +62,7 @@ public class EmailTemplateServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     /// <summary>

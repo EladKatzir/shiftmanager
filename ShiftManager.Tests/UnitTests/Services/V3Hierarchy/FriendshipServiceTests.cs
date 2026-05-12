@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -20,16 +21,20 @@ namespace ShiftManager.Tests.UnitTests.Services.V3Hierarchy;
 /// </summary>
 public class FriendshipServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly FriendshipService _service;
 
     public FriendshipServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         var localizer = Mock.Of<IStringLocalizer<SharedResources>>();
         var logger = Mock.Of<ILogger<FriendshipService>>();
         _service = new FriendshipService(_db, localizer, logger);
@@ -38,6 +43,7 @@ public class FriendshipServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<(AppUser user1, AppUser user2, Company company1, Company company2)> SetupUsersAsync()

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -15,17 +16,21 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class RoleServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly RoleService _service;
     private readonly Mock<IGrantService> _grantServiceMock;
 
     public RoleServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _grantServiceMock = new Mock<IGrantService>();
 
         var localizer = new StringLocalizer<SharedResources>(
@@ -38,6 +43,7 @@ public class RoleServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<(AppUser User, RoleTemplate Template)> SeedUserAndTemplateAsync(

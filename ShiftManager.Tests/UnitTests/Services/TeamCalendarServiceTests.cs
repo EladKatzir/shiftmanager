@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -23,6 +24,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class TeamCalendarServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<ITenantResolver> _tenantResolverMock;
     private readonly TeamCalendarService _service;
@@ -32,10 +34,13 @@ public class TeamCalendarServiceTests : IDisposable
 
     public TeamCalendarServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _tenantResolverMock = new Mock<ITenantResolver>();
         _tenantResolverMock.Setup(x => x.GetCurrentTenantId()).Returns(TestCompanyId);
@@ -46,6 +51,7 @@ public class TeamCalendarServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<AppUser> CreateTestUserAsync(int id, string name)

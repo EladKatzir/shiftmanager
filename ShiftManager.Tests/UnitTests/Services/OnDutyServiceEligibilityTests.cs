@@ -1,6 +1,7 @@
 using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ShiftManager.Data;
@@ -13,16 +14,20 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class OnDutyServiceEligibilityTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly OnDutyService _service;
 
     public OnDutyServiceEligibilityTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         var mockFeatureFlagService = new Mock<IFeatureFlagService>();
         var mockGrantService = new Mock<IGrantService>();
         _service = new OnDutyService(_db, null!, null!, mockGrantService.Object, NullLogger<OnDutyService>.Instance, mockFeatureFlagService.Object, BusyServiceMockFactory.NoOp());
@@ -85,5 +90,9 @@ public class OnDutyServiceEligibilityTests : IDisposable
         isEligible.Should().BeFalse();
     }
 
-    public void Dispose() => _db.Dispose();
+    public void Dispose()
+    {
+        _db.Dispose();
+        _sqliteConnection.Dispose();
+    }
 }

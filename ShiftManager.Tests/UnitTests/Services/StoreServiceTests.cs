@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Localization;
@@ -14,6 +15,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class StoreServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly StoreService _service;
     private readonly IMemoryCache _cache;
@@ -22,12 +24,14 @@ public class StoreServiceTests : IDisposable
 
     public StoreServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _cache = new MemoryCache(new MemoryCacheOptions());
 
         var localizerMock = new Mock<IStringLocalizer<SharedResources>>();
@@ -52,6 +56,7 @@ public class StoreServiceTests : IDisposable
     {
         _cache.Dispose();
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     // --- CreateStoreAsync ---

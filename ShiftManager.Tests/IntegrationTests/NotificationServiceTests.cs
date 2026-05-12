@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -23,6 +24,7 @@ namespace ShiftManager.Tests.IntegrationTests;
 /// </summary>
 public class NotificationServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<ITenantResolver> _tenantResolver;
     private readonly Mock<IMailService> _mailService;
@@ -43,8 +45,10 @@ public class NotificationServiceTests : IDisposable
     public NotificationServiceTests()
     {
         // Use in-memory database (same pattern as SignupFlowTests)
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase("NotificationServiceTests_" + Guid.NewGuid())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         // Create tenant resolver mock BEFORE constructing db context
@@ -53,6 +57,7 @@ public class NotificationServiceTests : IDisposable
         _tenantResolver.Setup(t => t.HasTenant()).Returns(true);
 
         _db = new AppDbContext(options, _tenantResolver.Object);
+        _db.Database.EnsureCreated();
 
         // Mock IMailService — all methods return true (we're testing notifications, not email)
         _mailService = new Mock<IMailService>();
@@ -791,5 +796,9 @@ public class NotificationServiceTests : IDisposable
         notification!.RelatedEntityType.Should().Be("TimeOffRequest");
     }
 
-    public void Dispose() => _db?.Dispose();
+    public void Dispose()
+    {
+        _db?.Dispose();
+        _sqliteConnection.Dispose();
+    }
 }

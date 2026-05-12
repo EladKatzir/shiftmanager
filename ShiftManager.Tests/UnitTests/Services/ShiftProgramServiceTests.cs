@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -16,6 +17,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 // instead of catching exceptions, and unwrap result.Value when accessing the payload.
 public class ShiftProgramServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly ShiftProgramService _service;
 
@@ -27,12 +29,14 @@ public class ShiftProgramServiceTests : IDisposable
 
     public ShiftProgramServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         var localizerMock = new Mock<IStringLocalizer<SharedResources>>();
         localizerMock.Setup(l => l[It.IsAny<string>()])
@@ -50,6 +54,7 @@ public class ShiftProgramServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private void SeedBaseData()

@@ -1,6 +1,7 @@
 using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -24,17 +25,21 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class ShiftValidationTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly ShiftAssignmentService _service;
     private readonly Mock<IAppConfigCacheService> _configCacheMock;
 
     public ShiftValidationTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         var localizer = new Mock<IStringLocalizer<SharedResources>>();
         // Return the key as the localized string so we can identify messages
@@ -72,6 +77,7 @@ public class ShiftValidationTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     #region Helper: Hierarchy Setup

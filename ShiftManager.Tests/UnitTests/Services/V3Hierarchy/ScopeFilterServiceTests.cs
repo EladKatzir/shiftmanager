@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
@@ -17,6 +18,7 @@ namespace ShiftManager.Tests.UnitTests.Services.V3Hierarchy;
 /// </summary>
 public class ScopeFilterServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<IGrantService> _grantServiceMock;
     private readonly Mock<IHierarchyService> _hierarchyServiceMock;
@@ -26,11 +28,14 @@ public class ScopeFilterServiceTests : IDisposable
 
     public ScopeFilterServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _grantServiceMock = new Mock<IGrantService>();
         _hierarchyServiceMock = new Mock<IHierarchyService>();
         _userPreferenceServiceMock = new Mock<IUserPreferenceService>();
@@ -41,6 +46,7 @@ public class ScopeFilterServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private ScopeFilterService CreateService()

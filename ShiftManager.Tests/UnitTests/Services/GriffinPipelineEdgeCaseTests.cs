@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
@@ -193,5 +194,181 @@ public sealed class GriffinPipelineEdgeCaseTests : IAsyncLifetime
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once,
             "missing RoleTemplate should produce a warning log entry, not a silent no-op");
+    }
+
+    // =================================================================================
+    // Failure-mode matrix — one targeted test per stage-specific error code.
+    //
+    // Each test triggers the exact failure path that produces the code, asserts the
+    // result has the right Code, and verifies the ErrorToken format. The goal: PROVE
+    // each error code is REACHABLE via production code (not just defined in the enum)
+    // AND distinguishable from sibling codes. Combined with the exhaustive switch in
+    // GriffinErrorMessages.BuildDetail, this gives operators confidence that any
+    // production failure will surface with a specific, actionable code.
+    //
+    // Codes covered (the ones added by the 2026-05-11 instrumentation):
+    //   510 UserLookupQueryFailed       — EF query on Users threw
+    //   520 RoleTemplateBackfillFailed  — backfill SaveChangesAsync threw
+    //   530 HierarchyLoadFailed         — IHierarchyService threw
+    //   540 GrantApplicationFailed      — IGrantService.ApplyAutoGrantsAsync threw
+    //   550 ClaimsPrincipalBuildFailed  — Claim construction threw
+    //
+    // Codes already covered by earlier tests in this project:
+    //   500 UserNotRegistered           — BuildPrincipalFromClaimsAsync_UserNotFound_*
+    //   501 UserDeactivated             — BuildPrincipalFromClaimsAsync_InactiveUser_*
+    // =================================================================================
+
+    [Fact]
+    public async Task FailureMode_510_UserLookupQueryFailed_DisposedDbContext_SurfacesAs510()
+    {
+        // Dispose the connection BEFORE the lookup query runs → EF throws on the FirstOrDefaultAsync.
+        // The stage-510 try/catch should catch it and emit UserLookupQueryFailed.
+        await _conn.DisposeAsync();
+
+        var claims = new GriffinClaimsDto { EmailAddress = "x@x.mil", UniqueID = "X" };
+        var result = await _service.BuildPrincipalFromClaimsAsync(claims, null, "127.0.0.1");
+
+        result.Success.Should().BeFalse();
+        result.Error!.Code.Should().Be(GriffinErrorCode.UserLookupQueryFailed);
+        result.Error.ErrorToken.Should().Be("GRIFFIN-USERLOOKUP-510");
+        result.Error.TechnicalDetail.Should().Contain("User lookup query threw");
+    }
+
+    [Fact]
+    public async Task FailureMode_530_HierarchyLoadFailed_HierarchyServiceThrows_SurfacesAs530()
+    {
+        _db.Users.Add(new AppUser
+        {
+            Id = 1000, CompanyId = 1, Email = "h530@test.local",
+            DisplayName = "H530", Role = UserRole.Employee, IsActive = true
+        });
+        await _db.SaveChangesAsync();
+        // Make the hierarchy service throw — simulates a downstream service failure
+        // (e.g., HierarchyService internal NullReferenceException on a corrupted user state).
+        _hierarchyMock.Setup(h => h.GetUserHierarchyContextAsync(1000))
+            .ThrowsAsync(new InvalidOperationException("simulated hierarchy NRE"));
+
+        var claims = new GriffinClaimsDto { EmailAddress = "h530@test.local", UniqueID = "X" };
+        var result = await _service.BuildPrincipalFromClaimsAsync(claims, null, "127.0.0.1");
+
+        result.Success.Should().BeFalse();
+        result.Error!.Code.Should().Be(GriffinErrorCode.HierarchyLoadFailed);
+        result.Error.ErrorToken.Should().Be("GRIFFIN-USERLOOKUP-530");
+        result.Error.TechnicalDetail.Should().Contain("InvalidOperationException");
+        result.Error.TechnicalDetail.Should().Contain("simulated hierarchy NRE");
+    }
+
+    [Fact]
+    public async Task FailureMode_540_GrantApplicationFailed_GrantServiceThrows_SurfacesAs540()
+    {
+        // Seed a RoleTemplate so the user has a non-null RoleTemplateId — otherwise
+        // ApplyAutoGrantsAsync is skipped and we never reach stage 540.
+        _db.RoleTemplates.Add(new RoleTemplate
+        {
+            Id = 88, Key = "T540", NameKey = "T", IsActive = true
+        });
+        _db.Users.Add(new AppUser
+        {
+            Id = 1001, CompanyId = 1, RoleTemplateId = 88, Email = "g540@test.local",
+            DisplayName = "G540", Role = UserRole.Employee, IsActive = true
+        });
+        await _db.SaveChangesAsync();
+
+        // Hierarchy returns a minimal valid context (must be non-null so the defensive
+        // guard at stage 530 passes — we want to exercise 540 specifically, not 530).
+        _hierarchyMock.Setup(h => h.GetUserHierarchyContextAsync(1001))
+            .ReturnsAsync(new UserHierarchyContext(
+                UserId: 1001,
+                Path: new HierarchyPath(
+                    new Project { Id = 1, Name = "P", DisplayName = "P" },
+                    new Area { Id = 1, ProjectId = 1, Name = "A" },
+                    new Molecule { Id = 1, AreaId = 1, Name = "M" },
+                    new Company { Id = 1, Name = "C", Slug = "c", MoleculeId = 1 },
+                    null),
+                JobType: null, IsWorkforce: true, IsTech: false));
+
+        // Make the grant service throw — simulates ApplyAutoGrantsAsync hitting an FK
+        // violation, a DbUpdateException, or other DB-side failure during grant insert.
+        _grantMock.Setup(g => g.ApplyAutoGrantsAsync(1001, 88, It.IsAny<GrantScope>()))
+            .ThrowsAsync(new DbUpdateException("simulated grant insert FK violation"));
+
+        var claims = new GriffinClaimsDto { EmailAddress = "g540@test.local", UniqueID = "X" };
+        var result = await _service.BuildPrincipalFromClaimsAsync(claims, null, "127.0.0.1");
+
+        result.Success.Should().BeFalse();
+        result.Error!.Code.Should().Be(GriffinErrorCode.GrantApplicationFailed);
+        result.Error.ErrorToken.Should().Be("GRIFFIN-USERLOOKUP-540");
+        result.Error.TechnicalDetail.Should().Contain("Grant application for user 1001 threw");
+    }
+
+    [Fact]
+    public async Task FailureMode_520_RoleTemplateBackfillFailed_CodeAndMessageWired()
+    {
+        // RoleTemplateBackfillFailed (520) fires when the backfill SaveChangesAsync inside
+        // the `if (user.RoleTemplateId == null)` block throws. Triggering it via production
+        // code requires a SaveChangesAsync that throws AFTER a successful RoleTemplate query
+        // (e.g., concurrent modification of user state). That's a real but narrow window —
+        // hard to simulate in-process without invasive harness changes.
+        //
+        // Instead, exercise the error-message machinery directly to PROVE the code is wired
+        // into the exhaustive switch in GriffinErrorMessages.BuildDetail. If someone removes
+        // the case for 520, this test catches it as a generic "Unexpected error" fallback.
+        var err = new GriffinApiError(
+            GriffinStage.UserLookup,
+            GriffinErrorCode.RoleTemplateBackfillFailed,
+            "Role-template backfill threw DbUpdateConcurrencyException: stale row");
+
+        err.ErrorToken.Should().Be("GRIFFIN-USERLOOKUP-520");
+
+        var loc = new Mock<IStringLocalizer<ShiftManager.Resources.SharedResources>>();
+        loc.Setup(l => l[It.IsAny<string>()]).Returns<string>(k =>
+            new Microsoft.Extensions.Localization.LocalizedString(k, k, false));
+
+        var msg = GriffinErrorMessages.Describe(err, loc.Object);
+        // The exhaustive switch in BuildDetail covers 520 explicitly (not the generic _ branch).
+        msg.Detail.Should().NotContain("Unexpected error",
+            "code 520 must have its own user-facing message; falling through to the generic _ branch would leak less context to the admin");
+        msg.Detail.Should().Contain("role-template assignment failed");
+    }
+
+    [Fact]
+    public async Task FailureMode_550_ClaimsPrincipalBuildFailed_CodeAndMessageWired()
+    {
+        // ClaimsPrincipalBuildFailed (550) fires when Claim construction or sanitization
+        // throws (lines 454-506 in GriffinService). The actual trigger requires a
+        // pathological string that survives SanitizeClaimString but breaks the Claim ctor —
+        // not easily simulated in-process. The error-message machinery is what matters at
+        // this stage (the user sees a stable token + remediation; the admin reads the
+        // diagnostics ring buffer for the stack trace).
+        var err = new GriffinApiError(
+            GriffinStage.UserLookup,
+            GriffinErrorCode.ClaimsPrincipalBuildFailed,
+            "ClaimsPrincipal build for user 42 threw ArgumentException: invalid claim type");
+
+        err.ErrorToken.Should().Be("GRIFFIN-USERLOOKUP-550");
+
+        var loc = new Mock<IStringLocalizer<ShiftManager.Resources.SharedResources>>();
+        loc.Setup(l => l[It.IsAny<string>()]).Returns<string>(k =>
+            new Microsoft.Extensions.Localization.LocalizedString(k, k, false));
+
+        var msg = GriffinErrorMessages.Describe(err, loc.Object);
+        msg.Detail.Should().NotContain("Unexpected error",
+            "code 550 must have its own message — leaking to the generic _ branch hides the security principal as the failed stage");
+        msg.Detail.Should().Contain("constructing your security principal failed");
+    }
+
+    [Theory]
+    [InlineData(GriffinErrorCode.UserLookupQueryFailed, "GRIFFIN-USERLOOKUP-510")]
+    [InlineData(GriffinErrorCode.RoleTemplateBackfillFailed, "GRIFFIN-USERLOOKUP-520")]
+    [InlineData(GriffinErrorCode.HierarchyLoadFailed, "GRIFFIN-USERLOOKUP-530")]
+    [InlineData(GriffinErrorCode.GrantApplicationFailed, "GRIFFIN-USERLOOKUP-540")]
+    [InlineData(GriffinErrorCode.ClaimsPrincipalBuildFailed, "GRIFFIN-USERLOOKUP-550")]
+    public void FailureMode_AllStageCodes_HaveDistinctErrorTokens(GriffinErrorCode code, string expectedToken)
+    {
+        // Locks the contract that each stage-specific code has a unique, stable error token.
+        // If anyone renumbers an enum value, this test fails immediately — the token is the
+        // primary identifier admins quote when reporting auth failures.
+        var err = new GriffinApiError(GriffinStage.UserLookup, code, "test");
+        err.ErrorToken.Should().Be(expectedToken);
     }
 }

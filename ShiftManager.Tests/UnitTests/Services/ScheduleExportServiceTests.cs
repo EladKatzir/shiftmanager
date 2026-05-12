@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -14,6 +15,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class ScheduleExportServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly ScheduleExportService _service;
     private readonly Mock<ITenantResolver> _tenantResolverMock;
@@ -24,12 +26,14 @@ public class ScheduleExportServiceTests : IDisposable
 
     public ScheduleExportServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _tenantResolverMock = new Mock<ITenantResolver>();
         _companyCacheMock = new Mock<ICompanyCacheService>();
         _jobTypeServiceMock = new Mock<IJobTypeService>();
@@ -58,6 +62,7 @@ public class ScheduleExportServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     // --- CollectExportDataAsync ---

@@ -2,6 +2,7 @@ using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -21,6 +22,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class JusticeServiceChoreOnDutyEligibilityTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly JusticeService _service;
     private const int MoleculeId = 1;
@@ -28,11 +30,13 @@ public class JusticeServiceChoreOnDutyEligibilityTests : IDisposable
 
     public JusticeServiceChoreOnDutyEligibilityTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         var httpAccessor = new Mock<IHttpContextAccessor>();
         var ctx = new DefaultHttpContext();
@@ -76,7 +80,11 @@ public class JusticeServiceChoreOnDutyEligibilityTests : IDisposable
         await _db.SaveChangesAsync();
     }
 
-    public void Dispose() => _db.Dispose();
+    public void Dispose()
+    {
+        _db.Dispose();
+        _sqliteConnection.Dispose();
+    }
 
     [Fact]
     public async Task GetEligibleCandidates_ChoreHole_UserOnVacation_AppearsAsWarning_NotHardBlocked()

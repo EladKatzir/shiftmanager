@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Http;
 using Moq;
 using System.Security.Claims;
@@ -12,6 +13,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class DirectorServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
     private readonly Mock<IGrantService> _grantServiceMock;
@@ -26,10 +28,13 @@ public class DirectorServiceTests : IDisposable
     public DirectorServiceTests()
     {
         // Create InMemory database
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
         _grantServiceMock = new Mock<IGrantService>();
@@ -300,5 +305,6 @@ public class DirectorServiceTests : IDisposable
     public void Dispose()
     {
         _db?.Dispose();
+        _sqliteConnection.Dispose();
     }
 }

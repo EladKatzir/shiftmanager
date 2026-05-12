@@ -1,6 +1,7 @@
 using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -19,16 +20,20 @@ namespace ShiftManager.Tests.UnitTests.Services.V3Hierarchy;
 /// </summary>
 public class ShiftAssignmentServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly ShiftAssignmentService _service;
 
     public ShiftAssignmentServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         var localizer = Mock.Of<IStringLocalizer<SharedResources>>();
         var logger = Mock.Of<ILogger<ShiftAssignmentService>>();
@@ -50,6 +55,7 @@ public class ShiftAssignmentServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<TestHierarchy> SetupTestHierarchyAsync()

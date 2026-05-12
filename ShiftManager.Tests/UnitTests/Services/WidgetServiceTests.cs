@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Moq;
 using ShiftManager.Data;
@@ -11,6 +12,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class WidgetServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly WidgetService _service;
     private readonly Mock<IGrantService> _grantServiceMock;
@@ -19,12 +21,14 @@ public class WidgetServiceTests : IDisposable
 
     public WidgetServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _grantServiceMock = new Mock<IGrantService>();
         _storeServiceMock = new Mock<IStoreService>();
         _configServiceMock = new Mock<IQuickInfoConfigService>();
@@ -39,6 +43,7 @@ public class WidgetServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     // --- GetUserWidgetPreferencesAsync ---

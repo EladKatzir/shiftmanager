@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -20,15 +21,19 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class BusyServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly BusyService _service;
 
     public BusyServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         var localizerMock = new Mock<IStringLocalizer<SharedResources>>();
         localizerMock.Setup(l => l[It.IsAny<string>()])
@@ -52,7 +57,11 @@ public class BusyServiceTests : IDisposable
             configMock.Object);
     }
 
-    public void Dispose() => _db.Dispose();
+    public void Dispose()
+    {
+        _db.Dispose();
+        _sqliteConnection.Dispose();
+    }
 
     private async Task SeedMoleculeWithCompaniesAsync()
     {

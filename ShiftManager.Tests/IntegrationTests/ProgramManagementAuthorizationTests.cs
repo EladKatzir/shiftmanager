@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using FluentAssertions;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -17,14 +18,18 @@ namespace ShiftManager.Tests.IntegrationTests;
 /// </summary>
 public class ProgramManagementAuthorizationTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
 
     public ProgramManagementAuthorizationTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase("ProgramAuthTestDb_" + Guid.NewGuid())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         SeedTestData().Wait();
     }
@@ -316,5 +321,6 @@ public class ProgramManagementAuthorizationTests : IDisposable
     public void Dispose()
     {
         _db?.Dispose();
+        _sqliteConnection.Dispose();
     }
 }

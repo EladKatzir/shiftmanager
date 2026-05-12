@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Moq;
 using FluentAssertions;
 using ShiftManager.Data;
@@ -10,6 +11,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 
 public class AnnouncementServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<ITenantResolver> _tenantResolverMock;
     private readonly AnnouncementService _service;
@@ -17,10 +19,13 @@ public class AnnouncementServiceTests : IDisposable
     public AnnouncementServiceTests()
     {
         // Create InMemory database without tenant resolver to avoid query filters
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         _tenantResolverMock = new Mock<ITenantResolver>();
         _tenantResolverMock.Setup(x => x.GetCurrentTenantId()).Returns(1);
@@ -773,5 +778,6 @@ public class AnnouncementServiceTests : IDisposable
     public void Dispose()
     {
         _db?.Dispose();
+        _sqliteConnection.Dispose();
     }
 }

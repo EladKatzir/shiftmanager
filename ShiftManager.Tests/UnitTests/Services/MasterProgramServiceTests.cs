@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,7 @@ namespace ShiftManager.Tests.UnitTests.Services;
 // dependency interface was migrated too.
 public class MasterProgramServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly MasterProgramService _service;
     private readonly Mock<IShiftProgramService> _shiftProgramServiceMock;
@@ -28,12 +30,14 @@ public class MasterProgramServiceTests : IDisposable
 
     public MasterProgramServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _shiftProgramServiceMock = new Mock<IShiftProgramService>();
 
         var localizationMock = new Mock<ICompanyLocalizationService>();
@@ -70,6 +74,7 @@ public class MasterProgramServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<ShiftProgram> SeedProgramAsync(int id, string name, int shiftTypeId = 1)

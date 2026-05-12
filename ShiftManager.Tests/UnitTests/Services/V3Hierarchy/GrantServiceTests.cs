@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -14,17 +15,21 @@ namespace ShiftManager.Tests.UnitTests.Services.V3Hierarchy;
 /// </summary>
 public class GrantServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly GrantService _service;
     private readonly Mock<IHierarchyService> _hierarchyServiceMock;
 
     public GrantServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _hierarchyServiceMock = new Mock<IHierarchyService>();
         _service = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
     }
@@ -32,6 +37,7 @@ public class GrantServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<TestEntities> SetupTestEntitiesAsync()
@@ -443,17 +449,21 @@ public class GrantServiceTests : IDisposable
 /// </summary>
 public class RoleAssignmentTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly GrantService _grantService;
     private readonly Mock<IHierarchyService> _hierarchyServiceMock;
 
     public RoleAssignmentTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _hierarchyServiceMock = new Mock<IHierarchyService>();
         _grantService = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
     }
@@ -461,6 +471,7 @@ public class RoleAssignmentTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<RoleTestEntities> SetupRoleTestEntitiesAsync()
@@ -676,17 +687,21 @@ public class RoleAssignmentTests : IDisposable
 /// </summary>
 public class CanGiveDelegationTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly GrantService _grantService;
     private readonly Mock<IHierarchyService> _hierarchyServiceMock;
 
     public CanGiveDelegationTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _hierarchyServiceMock = new Mock<IHierarchyService>();
         _grantService = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
     }
@@ -694,6 +709,7 @@ public class CanGiveDelegationTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<CanGiveTestEntities> SetupCanGiveTestEntitiesAsync()
@@ -946,20 +962,25 @@ public class CanGiveDelegationTests : IDisposable
 /// </summary>
 public class AssignerRoleTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
 
     public AssignerRoleTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
     }
 
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     [Fact]
@@ -1145,6 +1166,7 @@ public class GrantTypeSeedTests
 /// </summary>
 public class GrantScopeResolutionTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly GrantService _grantService;
     private readonly Mock<IHierarchyService> _hierarchyServiceMock;
@@ -1160,11 +1182,14 @@ public class GrantScopeResolutionTests : IDisposable
 
     public GrantScopeResolutionTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _hierarchyServiceMock = new Mock<IHierarchyService>();
         _grantService = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
 
@@ -1231,6 +1256,7 @@ public class GrantScopeResolutionTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     [Fact]
@@ -1385,17 +1411,21 @@ public class GrantScopeResolutionTests : IDisposable
 /// </summary>
 public class GrantAuthPhase1Tests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly GrantService _service;
     private readonly Mock<IHierarchyService> _hierarchyServiceMock;
 
     public GrantAuthPhase1Tests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _hierarchyServiceMock = new Mock<IHierarchyService>();
         _service = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
     }
@@ -1403,6 +1433,7 @@ public class GrantAuthPhase1Tests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<(Project project, Area area, Molecule molecule, Company company1, Company company2, GrantType grantType, AppUser user)> SetupHierarchyAsync()
@@ -1519,17 +1550,21 @@ public class GrantAuthPhase1Tests : IDisposable
 /// </summary>
 public class GrantAutoGrantAndDelegationTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly GrantService _service;
     private readonly Mock<IHierarchyService> _hierarchyServiceMock;
 
     public GrantAutoGrantAndDelegationTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         _hierarchyServiceMock = new Mock<IHierarchyService>();
         _service = new GrantService(_db, _hierarchyServiceMock.Object, new Mock<IAuditLogService>().Object);
     }
@@ -1537,6 +1572,7 @@ public class GrantAutoGrantAndDelegationTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<AutoGrantTestEntities> SetupAutoGrantTestAsync()

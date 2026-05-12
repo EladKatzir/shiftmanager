@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using FluentAssertions;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -13,6 +14,7 @@ namespace ShiftManager.Tests.IntegrationTests;
 /// </summary>
 public class DirectorCrossTenantTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
 
     // Test data
@@ -29,10 +31,13 @@ public class DirectorCrossTenantTests : IDisposable
     public DirectorCrossTenantTests()
     {
         // Create InMemory database for testing
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase("DirectorCrossTenantTestDb_" + Guid.NewGuid())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         // Seed test data
         SeedTestData().Wait();
@@ -320,5 +325,6 @@ public class DirectorCrossTenantTests : IDisposable
     public void Dispose()
     {
         _db?.Dispose();
+        _sqliteConnection.Dispose();
     }
 }

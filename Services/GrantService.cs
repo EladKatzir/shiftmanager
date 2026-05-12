@@ -750,6 +750,11 @@ public class GrantService : IGrantService
     /// Checks if a user can grant a specific grant type at the given scope.
     /// User must have CanGive=true for the grant type and the scope must be
     /// same or narrower than the user's grant scope.
+    ///
+    /// 2026-05-12 audit fix: pre-resolves the target's hierarchy chain so ScopeCovers
+    /// can detect cross-area / cross-molecule over-granting. Without this, an Area-A
+    /// granter with CanGive=true could delegate to a target with MoleculeId from Area B,
+    /// because ScopeCovers had no way to know which area the target's molecule belonged to.
     /// </summary>
     public async Task<bool> CanUserGrantAsync(int granterId, int grantTypeId, GrantScope targetScope)
     {
@@ -761,10 +766,38 @@ public class GrantService : IGrantService
         if (!granterGrants.Any())
             return false;
 
+        // Resolve the target's hierarchy chain ONCE, so ScopeCovers can correctly handle
+        // the cross-area case (target has only MoleculeId; granter has AreaId — must verify
+        // the molecule belongs to the granter's area). Without these pre-resolved values
+        // the function previously fell through "for simplicity" and returned true regardless,
+        // letting an Area-A granter delegate to a molecule in Area B.
+        int? targetMoleculeArea = null;
+        int? targetCompanyMolecule = null;
+        int? targetCompanyArea = null;
+        if (targetScope.MoleculeId.HasValue)
+        {
+            targetMoleculeArea = await _db.Molecules.IgnoreQueryFilters()
+                .Where(m => m.Id == targetScope.MoleculeId.Value)
+                .Select(m => (int?)m.AreaId)
+                .FirstOrDefaultAsync();
+        }
+        if (targetScope.CompanyId.HasValue)
+        {
+            var cmp = await _db.Companies.IgnoreQueryFilters()
+                .Where(c => c.Id == targetScope.CompanyId.Value && c.Molecule != null)
+                .Select(c => new { c.MoleculeId, AreaId = (int?)c.Molecule!.AreaId })
+                .FirstOrDefaultAsync();
+            if (cmp != null)
+            {
+                targetCompanyMolecule = cmp.MoleculeId;
+                targetCompanyArea = cmp.AreaId;
+            }
+        }
+
         // Check if any of the granter's grants covers the target scope
         foreach (var grant in granterGrants)
         {
-            if (ScopeCovers(grant, targetScope))
+            if (ScopeCovers(grant, targetScope, targetMoleculeArea, targetCompanyMolecule, targetCompanyArea))
                 return true;
         }
 
@@ -773,9 +806,22 @@ public class GrantService : IGrantService
 
     /// <summary>
     /// Determines if a grant's scope covers (is same or broader than) the target scope.
-    /// Broader scopes cover narrower scopes: Project > Area > Molecule > Company/Department
+    /// Broader scopes cover narrower scopes: Project > Area > Molecule > Company/Department.
+    ///
+    /// Pre-resolved hierarchy (targetMoleculeArea, targetCompanyMolecule, targetCompanyArea) is
+    /// passed in by CanUserGrantAsync so this method can detect cross-area / cross-molecule
+    /// over-granting WITHOUT being async (which would require touching every overload). The
+    /// 2026-05-12 audit found that previously this method returned `!targetScope.AreaId.HasValue`
+    /// "for simplicity" — which silently let an Area-A granter cover a target whose Molecule
+    /// actually belonged to Area B. Same risk for Molecule-scoped granters covering
+    /// cross-molecule companies.
     /// </summary>
-    private bool ScopeCovers(Grant granterGrant, GrantScope targetScope)
+    private static bool ScopeCovers(
+        Grant granterGrant,
+        GrantScope targetScope,
+        int? targetMoleculeArea = null,
+        int? targetCompanyMolecule = null,
+        int? targetCompanyArea = null)
     {
         // Project scope covers everything
         if (granterGrant.ProjectId.HasValue)
@@ -787,7 +833,7 @@ public class GrantService : IGrantService
             return true;
         }
 
-        // Area scope covers molecules, companies, departments within that area
+        // Area scope covers molecules, companies, departments WITHIN THAT AREA.
         if (granterGrant.AreaId.HasValue)
         {
             if (targetScope.AreaId.HasValue)
@@ -795,12 +841,18 @@ public class GrantService : IGrantService
             // Area cannot cover project scope
             if (targetScope.ProjectId.HasValue)
                 return false;
-            // Area scope covers molecule/company/department if they're within the area
-            // For simplicity, require area match or narrower scope
-            return !targetScope.AreaId.HasValue;
+            // Cross-area check via pre-resolved hierarchy: target's Molecule must belong
+            // to granter's area; target's Company must belong (via its molecule) to it.
+            if (targetScope.MoleculeId.HasValue)
+                return targetMoleculeArea.HasValue && targetMoleculeArea == granterGrant.AreaId;
+            if (targetScope.CompanyId.HasValue)
+                return targetCompanyArea.HasValue && targetCompanyArea == granterGrant.AreaId;
+            // Target has Department / JobType only / Self — refuse delegation rather than
+            // assume coverage. Admin who really wants to delegate must scope explicitly.
+            return false;
         }
 
-        // Molecule scope covers companies, departments within that molecule
+        // Molecule scope covers companies, departments WITHIN THAT MOLECULE.
         if (granterGrant.MoleculeId.HasValue)
         {
             if (targetScope.MoleculeId.HasValue)
@@ -808,8 +860,11 @@ public class GrantService : IGrantService
             // Molecule cannot cover project or area scope
             if (targetScope.ProjectId.HasValue || targetScope.AreaId.HasValue)
                 return false;
-            // Molecule scope can cover company/department within molecule
-            return true;
+            // Cross-molecule check: target's Company must belong to granter's molecule.
+            if (targetScope.CompanyId.HasValue)
+                return targetCompanyMolecule.HasValue && targetCompanyMolecule == granterGrant.MoleculeId;
+            // Target Department / JobType-only / Self — refuse, same rationale as Area branch.
+            return false;
         }
 
         // Company scope

@@ -1,6 +1,7 @@
 using ShiftManager.Tests.Helpers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
@@ -20,18 +21,21 @@ namespace ShiftManager.Tests.UnitTests.Services;
 /// </summary>
 public class AssignShiftAsyncTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly ShiftAssignmentService _service;
     private const string HmacSecret = "test-hmac-secret-for-unit-tests";
 
     public AssignShiftAsyncTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         var localizer = Mock.Of<IStringLocalizer<SharedResources>>();
         var logger = Mock.Of<ILogger<ShiftAssignmentService>>();
@@ -60,6 +64,7 @@ public class AssignShiftAsyncTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     /// <summary>

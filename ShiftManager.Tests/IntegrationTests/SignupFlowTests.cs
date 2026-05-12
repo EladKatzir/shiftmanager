@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using FluentAssertions;
 using Moq;
 using Microsoft.Extensions.Localization;
@@ -32,6 +33,7 @@ namespace ShiftManager.Tests.IntegrationTests;
 /// </summary>
 public class SignupFlowTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly Mock<IFeatureFlagService> _featureFlags;
     private readonly Mock<IValidationService> _validation;
@@ -57,10 +59,13 @@ public class SignupFlowTests : IDisposable
 
     public SignupFlowTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase("SignupFlowTests_" + Guid.NewGuid())
+            .UseSqlite(_sqliteConnection)
             .Options;
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
 
         // Mock services
         _featureFlags = new Mock<IFeatureFlagService>();
@@ -631,5 +636,9 @@ public class SignupFlowTests : IDisposable
         jr.JobTypeId.Should().BeNull("AreaAdmin should never have JobTypeId");
     }
 
-    public void Dispose() => _db?.Dispose();
+    public void Dispose()
+    {
+        _db?.Dispose();
+        _sqliteConnection.Dispose();
+    }
 }

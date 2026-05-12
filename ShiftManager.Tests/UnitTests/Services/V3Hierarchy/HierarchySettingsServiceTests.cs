@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ShiftManager.Data;
@@ -15,16 +16,20 @@ namespace ShiftManager.Tests.UnitTests.Services.V3Hierarchy;
 /// </summary>
 public class HierarchySettingsServiceTests : IDisposable
 {
+    private readonly SqliteConnection _sqliteConnection;
     private readonly AppDbContext _db;
     private readonly HierarchySettingsService _service;
 
     public HierarchySettingsServiceTests()
     {
+        _sqliteConnection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        _sqliteConnection.Open();
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite(_sqliteConnection)
             .Options;
 
         _db = new AppDbContext(options);
+        _db.Database.EnsureCreated();
         var logger = Mock.Of<ILogger<HierarchySettingsService>>();
         _service = new HierarchySettingsService(_db, logger);
     }
@@ -32,6 +37,7 @@ public class HierarchySettingsServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        _sqliteConnection.Dispose();
     }
 
     private async Task<(Project project, Area area, Molecule molecule, Company company)> SetupHierarchyAsync()
