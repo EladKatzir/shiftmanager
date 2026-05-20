@@ -261,8 +261,14 @@ public class ProfileModel : LocalizedPageModel
             ? _localizer["Profile_Success_UpdatedWithProfessionalInfo"]
             : _localizer["Profile_Success_Updated"]).Value;
 
-        // Reload user data
+        // Reload user data + refresh the auth cookie so DisplayName / PreferredName / Email
+        // / AvatarFileName changes take effect on the very next page render without forcing
+        // a sign-out. See Helpers/ClaimsRefresher for the patch semantics.
         user = await _db.Users.FindAsync(userId);
+        if (user != null)
+        {
+            await Helpers.ClaimsRefresher.RefreshIfSelfAsync(HttpContext, userId, user);
+        }
         await LoadUserDataAsync(user!);
 
         return Page();
@@ -288,6 +294,11 @@ public class ProfileModel : LocalizedPageModel
         }
 
         var user = await _db.Users.FindAsync(userId);
+        if (user != null)
+        {
+            // Avatar removal also nulls user.AvatarFileName — drop the stale claim from the cookie.
+            await Helpers.ClaimsRefresher.RefreshIfSelfAsync(HttpContext, userId, user);
+        }
         await LoadUserDataAsync(user!);
 
         return Page();

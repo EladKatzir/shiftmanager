@@ -75,9 +75,22 @@ public partial class GriffinService
         Message = "Griffin getClaims missing UniqueID [{ErrorToken}]")]
     private static partial void LogGetClaimsMissingUniqueId(ILogger logger, string errorToken);
 
-    [LoggerMessage(EventId = 17034, Level = LogLevel.Debug,
-        Message = "Griffin claims retrieved for EmailAddress: {EmailAddress}")]
-    private static partial void LogClaimsRetrieved(ILogger logger, string emailAddress);
+    // Evidence-capture: logs the exact field names Griffin returned (presentKeys) plus the
+    // values extracted for DisplayName / GivenName / Surname. Email is already logged here so
+    // adding the other personal fields does not change net PII exposure — and these fields are
+    // the diagnostic surface admins need when an ADFS claim mapping starts returning the wrong
+    // attribute (e.g. unit name in the `name`/`cn` slot). Level = Information so it lands in
+    // production logs without enabling Debug. EventId unchanged (17034) — same call site,
+    // wider payload.
+    [LoggerMessage(EventId = 17034, Level = LogLevel.Information,
+        Message = "Griffin claims retrieved for {EmailAddress} | keys=[{PresentKeys}] DisplayName='{DisplayName}' GivenName='{GivenName}' Surname='{Surname}'")]
+    private static partial void LogClaimsRetrieved(
+        ILogger logger,
+        string emailAddress,
+        string presentKeys,
+        string displayName,
+        string givenName,
+        string surname);
 
     // ── ValidateAndGetClaimsAsync cache ────────────────────────────────────
 

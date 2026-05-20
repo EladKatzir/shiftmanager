@@ -21,6 +21,16 @@ namespace ShiftManager.Models.DTOs;
 ///     plain <c>string</c>. Coerced from JSON numbers/booleans/null via Parse.
 ///   - JWT-spec fields (aud, iss/iis, iat, nbf, exp): <c>JsonElement?</c> so any shape
 ///     (number, string, array, null) survives parsing. These are reference/logging only.
+///
+/// NAME-FIELD SOURCING (2026-05-17): <see cref="DisplayName"/> is deliberately sourced
+/// from the GivenName family of aliases (GivenName / FirstName / First / Forename), NOT
+/// from DisplayName / Name / Cn / CommonName. Background: in the production IDF/Griffin
+/// environment, the AD <c>name</c> / <c>cn</c> attributes carry the user's UNIT
+/// (e.g. "יחידה 8200 — Elad Katzir") rather than their personal name, because ADFS claim
+/// rules surface the org-prefixed CN. Using the unambiguous GivenName family ensures
+/// the value we hand downstream is the user's actual first name. The synthesized "full"
+/// display name (e.g. for the auto-creation flow in GriffinSignup) is composed from
+/// <c>GivenName + " " + Surname</c> at the call site — see Pages/Auth/GriffinSignup.cshtml.cs.
 /// </summary>
 public class GriffinClaimsDto
 {
@@ -59,10 +69,9 @@ public class GriffinClaimsDto
     {
         "UniqueID", "Uid", "Sub", "UserId", "EmployeeId", "SubjectId"
     };
-    private static readonly string[] DisplayNameAliases =
-    {
-        "DisplayName", "Name", "FullName", "Cn", "CommonName"
-    };
+    // NOTE: DisplayNameAliases used to live here ("DisplayName" / "Name" / "FullName" /
+    // "Cn" / "CommonName"). Removed 2026-05-17 — see class-level remark on NAME-FIELD
+    // SOURCING. The DisplayName property is now populated from GivenNameAliases.
     private static readonly string[] GivenNameAliases =
     {
         "GivenName", "FirstName", "First", "Forename"
@@ -138,7 +147,10 @@ public class GriffinClaimsDto
             {
                 UniqueID = ExtractScalar(rootElement, UniqueIdAliases),
                 EmailAddress = ExtractScalar(rootElement, EmailAliases),
-                DisplayName = ExtractScalar(rootElement, DisplayNameAliases),
+                // Deliberate: DisplayName sources from the GivenName alias family. See class-level
+                // NAME-FIELD SOURCING note — Griffin's "name"/"cn" carries unit-prefixed values
+                // ("יחידה …") in our environment, so we use the unambiguous given-name fields.
+                DisplayName = ExtractScalar(rootElement, GivenNameAliases),
                 GivenName = ExtractScalar(rootElement, GivenNameAliases),
                 Surname = ExtractScalar(rootElement, SurnameAliases),
                 Audience = ExtractElement(rootElement, "aud"),

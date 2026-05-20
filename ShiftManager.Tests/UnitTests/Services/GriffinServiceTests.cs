@@ -767,15 +767,20 @@ public class GriffinServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task AuthenticateUserAsync_SanitizesControlCharsInDisplayName()
+    public async Task AuthenticateUserAsync_SanitizesControlCharsInDbDisplayName()
     {
-        // A Griffin response (or upstream ADFS user record) containing CR/LF in DisplayName
-        // could otherwise inject log-line terminators into our Claims and structured logs.
-        // The SanitizeClaimString helper normalises CR/LF to space.
+        // After the 2026-05-17 claim-sourcing change, the Name claim is built from
+        // user.DisplayName (DB), not griffinClaims.DisplayName. Even though the Profile and
+        // Admin/EditProfile pages validate input length, a corrupt DB row (or a Griffin-side
+        // injection escaping that validation in some earlier migration) must not produce a
+        // CR/LF-laden Claim. SanitizeClaimString is the defense-in-depth layer; this test
+        // pins it on the new code path.
         _db.Users.Add(new AppUser
         {
             Id = 42, CompanyId = CompanyId,
-            Email = "weird@test.local", DisplayName = "weird",
+            Email = "weird@test.local",
+            // DB DisplayName contains CR + LF + NUL — must be neutralised in the Name claim.
+            DisplayName = "line1\r\nline2 extra",
             Role = UserRole.Employee, IsActive = true, RoleTemplateId = null
         });
         await _db.SaveChangesAsync();
@@ -792,10 +797,9 @@ public class GriffinServiceTests : IDisposable
                 callCount++;
                 if (callCount <= 1)
                     return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("\"true\"") };
-                // DisplayName contains CR + LF + NUL — all should be neutralised.
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Content = new StringContent("{\"UniqueID\":\"u\",\"EmailAddress\":\"weird@test.local\",\"DisplayName\":\"line1\\r\\nline2\\u0000extra\",\"GivenName\":\"safe\",\"iat\":1}")
+                    Content = new StringContent("{\"UniqueID\":\"u\",\"EmailAddress\":\"weird@test.local\",\"GivenName\":\"safe\",\"iat\":1}")
                 };
             });
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(handler.Object));
@@ -811,6 +815,111 @@ public class GriffinServiceTests : IDisposable
         nameClaim.Should().NotContain("\n");
         nameClaim.Should().NotContain("\0");
         nameClaim.Should().Be("line1  line2extra"); // CR + LF → 2 spaces; NUL dropped
+    }
+
+    [Fact]
+    public async Task BuildPrincipalFromClaimsAsync_DbDisplayNameWinsOverGriffin()
+    {
+        // Regression guard for Fix 1 (2026-05-17): once a user is authenticated to an existing
+        // AppUser, the Name claim MUST come from the DB row — never from griffinClaims.
+        // This prevents the "שלום יחידה" bug where ADFS sends an org-prefixed value in the
+        // displayName/cn slot, and also lets a user edit their display name in-app without
+        // having it silently overwritten on every login.
+        _db.Users.Add(new AppUser
+        {
+            Id = 100, CompanyId = CompanyId,
+            Email = "gabi@test.local",
+            DisplayName = "Gabriel Cohen", // canonical DB value
+            Role = UserRole.Employee, IsActive = true, RoleTemplateId = null
+        });
+        await _db.SaveChangesAsync();
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(100))
+            .ReturnsAsync((UserHierarchyContext?)null);
+
+        // Griffin sends a unit-prefixed name — must NOT reach the Name claim.
+        var griffinClaims = new GriffinClaimsDto
+        {
+            EmailAddress = "gabi@test.local",
+            UniqueID = "GRIFFIN-100",
+            DisplayName = "יחידה 8200 - Gabriel Cohen",
+            GivenName = "יחידה 8200 - Gabriel Cohen",
+            Surname = "Cohen"
+        };
+
+        var result = await _service.BuildPrincipalFromClaimsAsync(griffinClaims, tokenForHash: null, ipAddress: "test");
+
+        result.Success.Should().BeTrue();
+        result.Value!.FindFirst(System.Security.Claims.ClaimTypes.Name)!.Value.Should().Be("Gabriel Cohen");
+        result.Value.FindFirst(System.Security.Claims.ClaimTypes.GivenName)!.Value.Should().Be("Gabriel");
+        // Email also comes from DB — preserves canonical casing.
+        result.Value.FindFirst(System.Security.Claims.ClaimTypes.Email)!.Value.Should().Be("gabi@test.local");
+        // External identifier still comes from Griffin (audit trail link).
+        result.Value.FindFirst("Griffin:UniqueID")!.Value.Should().Be("GRIFFIN-100");
+    }
+
+    [Fact]
+    public async Task BuildPrincipalFromClaimsAsync_PreferredNameWinsForGivenNameClaim()
+    {
+        // Regression guard for Fix 1 (2026-05-17): user.PreferredName beats first-token-of
+        // DisplayName for the GivenName claim. Lets a user named "Gabriel" set PreferredName =
+        // "Gabi" and have the dashboard greeting / sidebar / page title use "Gabi".
+        _db.Users.Add(new AppUser
+        {
+            Id = 101, CompanyId = CompanyId,
+            Email = "gabi2@test.local",
+            DisplayName = "Gabriel Cohen",
+            PreferredName = "Gabi",
+            Role = UserRole.Employee, IsActive = true, RoleTemplateId = null
+        });
+        await _db.SaveChangesAsync();
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(101))
+            .ReturnsAsync((UserHierarchyContext?)null);
+
+        var griffinClaims = new GriffinClaimsDto
+        {
+            EmailAddress = "gabi2@test.local",
+            UniqueID = "GRIFFIN-101",
+            DisplayName = "Gabriel",
+            GivenName = "Gabriel"
+        };
+
+        var result = await _service.BuildPrincipalFromClaimsAsync(griffinClaims, tokenForHash: null, ipAddress: "test");
+
+        result.Success.Should().BeTrue();
+        // Full display name unchanged — Name claim is the canonical DB DisplayName.
+        result.Value!.FindFirst(System.Security.Claims.ClaimTypes.Name)!.Value.Should().Be("Gabriel Cohen");
+        // GivenName claim honours PreferredName — drives the dashboard greeting.
+        result.Value.FindFirst(System.Security.Claims.ClaimTypes.GivenName)!.Value.Should().Be("Gabi");
+    }
+
+    [Fact]
+    public void GriffinClaimsDto_Parse_DisplayNameSourcedFromGivenName_NotFromNameOrCn()
+    {
+        // Regression guard for Fix 2 (2026-05-17): GriffinClaimsDto.DisplayName is sourced
+        // from the GivenName alias family, NOT from name/cn/commonName/displayName/fullName.
+        // Background: in the production IDF ADFS environment, name/cn carries the user's UNIT
+        // ("יחידה …") and was leaking into our Name claim via the alias-matcher.
+        var body = """
+        {
+            "EmailAddress": "u@test.local",
+            "UniqueID": "u1",
+            "name": "יחידה 8200",
+            "cn": "יחידה 8200 / Gabriel Cohen",
+            "displayName": "יחידה 8200 / Gabriel Cohen",
+            "fullName": "Gabriel Cohen-Full",
+            "givenName": "Gabriel"
+        }
+        """;
+
+        var dto = GriffinClaimsDto.Parse(body, out var keys);
+
+        dto.Should().NotBeNull();
+        // Critical assertion: DisplayName takes the GIVEN NAME, not the ambiguous name/cn slot.
+        dto!.DisplayName.Should().Be("Gabriel");
+        dto.GivenName.Should().Be("Gabriel");
+        // Sanity: present-keys reporting still works.
+        keys.Should().Contain("name");
+        keys.Should().Contain("givenName");
     }
 
     [Fact]

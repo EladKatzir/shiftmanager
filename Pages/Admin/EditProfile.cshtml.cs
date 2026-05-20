@@ -479,6 +479,15 @@ public class EditProfileModel : LocalizedPageModel
             .Include(u => u.JobType)
             .Include(u => u.Department)
             .FirstOrDefaultAsync(u => u.Id == UserId);
+
+        // Refresh the auth cookie if the admin is editing their own profile — no-op
+        // for admin-editing-someone-else (their browser holds the cookie, not ours).
+        // See Helpers/ClaimsRefresher for the patch semantics.
+        if (targetUser != null)
+        {
+            await Helpers.ClaimsRefresher.RefreshIfSelfAsync(HttpContext, UserId, targetUser);
+        }
+
         await LoadUserDataAsync(targetUser!);
         await LoadOrganizationalOptionsAsync(targetUser!);
         await LoadRecentChangesAsync();
@@ -509,6 +518,14 @@ public class EditProfileModel : LocalizedPageModel
             .Include(u => u.JobType)
             .Include(u => u.Department)
             .FirstOrDefaultAsync(u => u.Id == UserId);
+
+        // Avatar removal nulls user.AvatarFileName — drop the stale claim from the
+        // admin's cookie if they just deleted their own avatar.
+        if (user != null)
+        {
+            await Helpers.ClaimsRefresher.RefreshIfSelfAsync(HttpContext, UserId, user);
+        }
+
         await LoadUserDataAsync(user!);
         await LoadOrganizationalOptionsAsync(user!);
         await LoadRecentChangesAsync();

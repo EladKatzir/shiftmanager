@@ -62,10 +62,18 @@ namespace ShiftManager.Pages.Home
         public bool IsDirector { get; set; }
         public bool IsOwner { get; set; }
         public string UserName { get; set; } = "";
+        public string FirstName { get; set; } = "";
 
         public async Task OnGetAsync()
         {
             UserName = User.FindFirst(ClaimTypes.Name)?.Value ?? "";
+            // GivenName claim is populated from user.PreferredName ?? first-token-of-DisplayName
+            // by GriffinService.BuildPrincipalFromClaimsAsync. Splitting UserName is the fallback
+            // for non-Griffin auth paths that don't emit GivenName.
+            var given = User.FindFirst(ClaimTypes.GivenName)?.Value;
+            FirstName = !string.IsNullOrWhiteSpace(given)
+                ? given
+                : (UserName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? UserName);
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out var userId))

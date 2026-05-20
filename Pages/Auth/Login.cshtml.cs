@@ -330,10 +330,23 @@ public partial class LoginModel : LocalizedPageModel
                 await _grantService.ApplyAutoGrantsAsync(user.Id, user.RoleTemplateId.Value, roleScope);
             }
 
+            // Parity with GriffinService.BuildPrincipalFromClaimsAsync (2026-05-17):
+            // GivenName drives the dashboard greeting / sidebar / page title via the
+            // _Layout firstName helper. PreferredName wins so a user named "Gabriel" who
+            // set their preferred name to "Gabi" sees "Gabi" instead of "Gabriel". Falls
+            // back to first-token-of-DisplayName when PreferredName is empty — identical
+            // to the legacy Name.Split('') heuristic, so existing users without a
+            // PreferredName see no behavior change.
+            var givenNameForClaim = !string.IsNullOrEmpty(user.PreferredName)
+                ? user.PreferredName!
+                : (user.DisplayName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? user.DisplayName);
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.DisplayName),
+                new Claim(ClaimTypes.GivenName, givenNameForClaim),
+                new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim("CompanyId", user.CompanyId.ToString())
             };

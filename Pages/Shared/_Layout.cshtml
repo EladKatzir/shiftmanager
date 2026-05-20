@@ -12,13 +12,20 @@
 @{
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
+    var givenName = user?.FindFirst(ClaimTypes.GivenName)?.Value;
     var role = user?.FindFirst(ClaimTypes.Role)?.Value ?? "";
     var roleTemplateKey = user?.FindFirst("RoleTemplateKey")?.Value;
     var jobTypeName = user?.FindFirst("JobTypeName")?.Value;
     var roleDisplay = string.IsNullOrEmpty(role) ? ""
         : ShiftManager.Helpers.RoleDisplayHelper.GetRoleDisplayName(Localizer, roleTemplateKey ?? role, jobTypeName);
     // All authorization now uses grant-based <require-grant> tag helpers
-    var firstName = name.Split(' ').FirstOrDefault() ?? name;
+    // Prefer GivenName claim (sourced from user.PreferredName ?? first-token-of-DisplayName) over
+    // splitting Name — fixes the "שלום יחידה" greeting bug where Griffin's `name`/`cn` carried
+    // the user's unit, and honors PreferredName (e.g. "Gabriel" → "Gabi"). Fallback splits the
+    // Name claim for safety / non-Griffin auth paths.
+    var firstName = !string.IsNullOrWhiteSpace(givenName)
+        ? givenName
+        : (name.Split(' ').FirstOrDefault() ?? name);
     var sidebarUserId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     var sidebarCompanyId = user?.FindFirst("CompanyId")?.Value;
     // Avatar URL only generated when user has an avatar (AvatarFileName claim set during login)

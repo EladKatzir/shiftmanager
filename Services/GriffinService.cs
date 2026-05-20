@@ -230,7 +230,7 @@ public partial class GriffinService : IGriffinService
             return GriffinApiResult<GriffinClaimsDto>.Fail(err);
         }
 
-        LogClaimsRetrieved(_logger, claims.EmailAddress);
+        LogClaimsRetrieved(_logger, claims.EmailAddress, keysSummary, claims.DisplayName, claims.GivenName, claims.Surname);
         return GriffinApiResult<GriffinClaimsDto>.Ok(claims);
     }
 
@@ -494,29 +494,55 @@ public partial class GriffinService : IGriffinService
             }
         }
 
-        // SECURITY: every value coming from griffinClaims is sanitised before becoming a
-        // Claim — Griffin cannot inject CR/LF (log injection), NUL bytes (log truncation),
-        // or oversize strings into our auth principal even if its response is malicious or
-        // a downstream ADFS user record contains weird characters. DisplayName falls back
-        // through GivenName→UniqueID so we never set an empty Name claim.
+        // SECURITY: every value flowing into a Claim is sanitised — neither Griffin nor our
+        // own DB can inject CR/LF (log injection), NUL bytes (log truncation), or oversize
+        // strings into the auth principal. Defense-in-depth: input validation on the Profile
+        // edit pages already constrains DB-side values, but we re-sanitise here so a corrupt
+        // row can never produce a malformed claim.
+        //
+        // CLAIM-SOURCING POLICY (2026-05-17):
+        //   • ClaimTypes.Name        ← user.DisplayName (DB)          — see note below (a)
+        //   • ClaimTypes.GivenName   ← user.PreferredName ?? first-token-of-DisplayName (DB)
+        //   • ClaimTypes.Email       ← user.Email (DB)                — DB casing is canonical
+        //   • ClaimTypes.NameIdentifier / Griffin:UniqueID ← Griffin (external identity)
+        //
+        // (a) Why DB-over-Griffin: AppUser fields are user-editable inside the app (e.g. a
+        //     user named "Gabriel" sets PreferredName = "Gabi", or fixes their display name's
+        //     spelling). Re-sourcing from Griffin on every login would silently overwrite those
+        //     edits in the active session. The external identifier (UniqueID/NameIdentifier)
+        //     still comes from Griffin so audit trails stay linked to ADFS.
+        //
+        // Fallback chain for Name: DisplayName → PreferredName → Email → UniqueID, so we never
+        // set an empty Name claim even on a corrupt user row.
+        //
         // Wrapped: a Claim ctor null/empty failure or any pathological string here would
         // otherwise bubble up as the generic GRIFFIN-USERLOOKUP-900 we just retired.
         ClaimsPrincipal principal;
         try
         {
-        var displayName = SanitizeClaimString(griffinClaims.DisplayName);
-        var givenName = SanitizeClaimString(griffinClaims.GivenName);
+        var dbDisplayName = SanitizeClaimString(user.DisplayName);
+        var dbPreferredName = SanitizeClaimString(user.PreferredName ?? string.Empty);
+        var dbEmail = SanitizeClaimString(user.Email, maxLength: 254); // RFC 5321 max
         var safeUniqueId = SanitizeClaimString(griffinClaims.UniqueID, maxLength: 128);
-        var safeEmail = SanitizeClaimString(griffinClaims.EmailAddress, maxLength: 254); // RFC 5321 max
-        if (string.IsNullOrEmpty(displayName)) displayName = givenName;
-        if (string.IsNullOrEmpty(displayName)) displayName = safeUniqueId;
+
+        // Name claim — DB DisplayName, with safe fallbacks so we never emit empty.
+        var nameForClaim = dbDisplayName;
+        if (string.IsNullOrEmpty(nameForClaim)) nameForClaim = dbPreferredName;
+        if (string.IsNullOrEmpty(nameForClaim)) nameForClaim = dbEmail;
+        if (string.IsNullOrEmpty(nameForClaim)) nameForClaim = safeUniqueId;
+
+        // GivenName claim — PreferredName beats first token of DisplayName so "Gabriel" can
+        // self-identify as "Gabi" in the dashboard greeting, sidebar, page title, etc.
+        var givenNameForClaim = !string.IsNullOrEmpty(dbPreferredName)
+            ? dbPreferredName
+            : (dbDisplayName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? dbDisplayName);
 
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString(CultureInfo.InvariantCulture)),
-            new Claim(ClaimTypes.Name, displayName),
-            new Claim(ClaimTypes.Email, safeEmail),
-            new Claim(ClaimTypes.GivenName, givenName),
+            new Claim(ClaimTypes.Name, nameForClaim),
+            new Claim(ClaimTypes.Email, dbEmail),
+            new Claim(ClaimTypes.GivenName, givenNameForClaim),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
             new Claim("CompanyId", user.CompanyId.ToString(CultureInfo.InvariantCulture)),
             new Claim("AuthMethod", "Griffin"),
