@@ -1,14 +1,14 @@
 ﻿================================================================================
                   SHIFTMANAGER DEPLOYMENT GUIDE
-                        Version 4.0.0
+                        Version 4.0.1
 ================================================================================
 
 Complete deployment manual for ShiftManager in air-gapped Windows Server 2022
 environments. This guide covers all deployment scenarios from quick testing
 to production Windows Service setup.
 
-Version:        4.0.0
-Release Date:   2026-05-12
+Version:        4.0.1
+Release Date:   2026-05-20
 Package Size:   166 MB
 Target OS:      Windows Server 2022 / Windows 10+ (64-bit)
 
@@ -140,7 +140,7 @@ SECTION 4.1: CONSOLE APPLICATION DEPLOYMENT
 For production use without Windows Service:
 
 Step 1: Extract Package
-  1. Copy ShiftManager-v4.0.0-win-x64.zip to target server
+  1. Copy ShiftManager-v4.0.1-win-x64.zip to target server
   2. Extract to installation folder (e.g., C:\ShiftManager)
   3. Verify 525 files extracted
 
@@ -646,12 +646,12 @@ Included Documentation:
 VERSION INFORMATION
 ================================================================================
 
-Guide Version:    4.0.0
-Release Date:     2026-05-12
+Guide Version:    4.0.1
+Release Date:     2026-05-20
 Package Size:     166 MB
-Git Commit:       d7300b0
+Git Commit:       59fc7b3
 
-This guide covers deployment for ShiftManager v4.0.0.
+This guide covers deployment for ShiftManager v4.0.1.
 
 ================================================================================
 END OF DEPLOYMENT GUIDE

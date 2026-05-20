@@ -1,6 +1,6 @@
 ﻿================================================================================
                     DEPLOYMENT VERIFICATION CHECKLIST
-                           Version 4.0.0
+                           Version 4.0.1
 ================================================================================
 
 This checklist confirms that the ProjectPublish package has been verified
@@ -10,9 +10,9 @@ and is ready for deployment to your air-gapped Windows Server 2022 environment.
 BUILD INFORMATION
 ================================================================================
 
-Version:        v4.0.0
-Build Date:     2026-05-12 10:15:38 UTC
-Git Commit:     d7300b0
+Version:        v4.0.1
+Build Date:     2026-05-20 19:11:24 UTC
+Git Commit:     59fc7b3
 Git Branch:     update
 
 Package Stats:
@@ -179,12 +179,12 @@ This ProjectPublish package has been:
    âœ… Tested automatically
    âœ… Verified for completeness
    âœ… Documented comprehensively
-   âœ… Tagged in git (v4.0.0)
+   âœ… Tagged in git (v4.0.1)
 
 Package is READY FOR PRODUCTION DEPLOYMENT.
 
 Verified by: ShiftManager Automated Release Builder v1.0.0
-Date: 2026-05-12 10:15:38 UTC
-Git Commit: d7300b0
+Date: 2026-05-20 19:11:24 UTC
+Git Commit: 59fc7b3
 
 ================================================================================

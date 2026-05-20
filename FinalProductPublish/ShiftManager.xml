@@ -958,6 +958,35 @@
             <param name="response">The HTTP response</param>
             <param name="etag">The ETag value for the resource</param>
         </member>
+        <member name="T:ShiftManager.Helpers.ClaimsRefresher">
+             <summary>
+             Re-mints the current request's auth cookie so display-time identity claims
+             (Name / GivenName / Email / AvatarFileName) reflect the latest AppUser values
+             immediately, instead of waiting for the next sign-out/sign-in.
+            
+             Background: ASP.NET Core cookie auth serialises Claims into the encrypted cookie
+             at SignInAsync time — there is no per-request DB read of AppUser. So a profile
+             edit silently desyncs the cookie until the cookie is re-minted or expires. This
+             helper closes that gap for the four claims that drive UI greetings and avatars.
+            
+             SCOPE — what this helper refreshes:
+               • <see cref="F:System.Security.Claims.ClaimTypes.Name"/>        ← <c>user.DisplayName</c>
+               • <see cref="F:System.Security.Claims.ClaimTypes.GivenName"/>   ← <c>user.PreferredName ?? FirstToken(DisplayName)</c>
+               • <see cref="F:System.Security.Claims.ClaimTypes.Email"/>       ← <c>user.Email</c>
+               • <c>"AvatarFileName"</c>              ← <c>user.AvatarFileName</c> (omitted when null/blank)
+            
+             Every OTHER claim from the existing principal is preserved verbatim — Role,
+             CompanyId, hierarchy IDs, RoleTemplateKey, AuthMethod, Griffin:UniqueID, etc.
+             The original ClaimsIdentity AuthenticationType is preserved too, so a Griffin
+             session stays "Griffin" and a local-password session stays "Cookies".
+            
+             SELF-EDIT GUARD: a no-op when the editor isn't editing themselves. Admin
+             EditProfile can target any user, but we cannot remotely refresh another user's
+             browser cookie — their session lives in their browser, not ours. They will see
+             the new values on their next login. The early-return lets call sites invoke this
+             unconditionally after a save without branching on "is this self-edit?".
+             </summary>
+        </member>
         <member name="T:ShiftManager.Helpers.DateTimeFormatHelper">
             <summary>
             Helper class for formatting dates and times according to the current culture.
@@ -3867,6 +3896,16 @@
                  plain <c>string</c>. Coerced from JSON numbers/booleans/null via Parse.
                - JWT-spec fields (aud, iss/iis, iat, nbf, exp): <c>JsonElement?</c> so any shape
                  (number, string, array, null) survives parsing. These are reference/logging only.
+            
+             NAME-FIELD SOURCING (2026-05-17): <see cref="P:ShiftManager.Models.DTOs.GriffinClaimsDto.DisplayName"/> is deliberately sourced
+             from the GivenName family of aliases (GivenName / FirstName / First / Forename), NOT
+             from DisplayName / Name / Cn / CommonName. Background: in the production IDF/Griffin
+             environment, the AD <c>name</c> / <c>cn</c> attributes carry the user's UNIT
+             (e.g. "יחידה 8200 — Elad Katzir") rather than their personal name, because ADFS claim
+             rules surface the org-prefixed CN. Using the unambiguous GivenName family ensures
+             the value we hand downstream is the user's actual first name. The synthesized "full"
+             display name (e.g. for the auto-creation flow in GriffinSignup) is composed from
+             <c>GivenName + " " + Surname</c> at the call site — see Pages/Auth/GriffinSignup.cshtml.cs.
              </summary>
         </member>
         <member name="P:ShiftManager.Models.DTOs.GriffinClaimsDto.Issuer">
