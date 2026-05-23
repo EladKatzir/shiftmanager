@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Api;
 using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
@@ -102,6 +103,18 @@ public class UserCompanyTransferService : IUserCompanyTransferService
             await _db.TeamCalendarMembers.IgnoreQueryFilters().Where(m => m.MemberUserId == userId).ExecuteDeleteAsync();
 
             // --- BUCKET 2 (Task 5): credentials/obligations ---
+            // BUCKET 2: credentials & active obligations.
+            // API keys are credentials for the OLD company — revoke. SECURITY-AUDITED: scoped to CreatedBy == userId.
+            await _db.ApiKeys.IgnoreQueryFilters().Where(k => k.CreatedBy == userId).ExecuteDeleteAsync();
+            // Pending API key requests by the user -> delete. SECURITY-AUDITED: scoped to RequestedBy == userId.
+            await _db.ApiKeyRequests.IgnoreQueryFilters()
+                .Where(r => r.RequestedBy == userId && r.Status == ApiKeyRequestStatus.Pending)
+                .ExecuteDeleteAsync();
+            // User is a named approver in old-company rules -> null the named approver (rule stays).
+            // SECURITY-AUDITED: scoped to ApproverUserId == userId.
+            await _db.VacationApprovalRules.IgnoreQueryFilters()
+                .Where(r => r.ApproverUserId == userId)
+                .ExecuteUpdateAsync(r => r.SetProperty(x => x.ApproverUserId, (int?)null));
             // --- BUCKET 3 (Task 6): owned team calendars ---
             // --- SCALAR FK RESET + CompanyId (Task 7) ---
             user.CompanyId = destCompanyId;

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Api;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
 
@@ -224,6 +225,21 @@ public class UserCompanyTransferServiceTests : IDisposable
         result.Success.Should().BeTrue();
         (await _db.Chores.IgnoreQueryFilters().FirstAsync(c => c.Id == choreId)).CanceledAt.Should().BeNull();
         (await _db.OnDuties.IgnoreQueryFilters().FirstAsync(o => o.Id == onDutyId)).CanceledAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Move_RevokesApiKeys_AndClearsApproverRules()
+    {
+        var (userId, src, dest) = await SeedAsync();
+        _db.ApiKeys.Add(new ApiKey { CompanyId = src, CreatedBy = userId, IsActive = true });
+        _db.VacationApprovalRules.Add(new VacationApprovalRule { CompanyId = src, ApproverUserId = userId, CreatedBy = userId + 1 });
+        await _db.SaveChangesAsync();
+
+        var result = await _svc.MoveUserToCompanyAsync(userId, dest, actingAdminId: userId + 999);
+        result.Success.Should().BeTrue();
+
+        (await _db.ApiKeys.IgnoreQueryFilters().CountAsync(k => k.CreatedBy == userId)).Should().Be(0);
+        (await _db.VacationApprovalRules.IgnoreQueryFilters().Where(r => r.ApproverUserId == userId).CountAsync()).Should().Be(0);
     }
 
     public void Dispose() { _db.Dispose(); _conn.Dispose(); }
