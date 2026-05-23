@@ -275,5 +275,25 @@ public class UserCompanyTransferServiceTests : IDisposable
         after.CompanyId.Should().Be(dest);
     }
 
+    [Fact]
+    public async Task Move_RevokesGrants_ReappliesForDest_AndCleansDirectorAndRoleAssignment()
+    {
+        var (userId, src, dest) = await SeedAsync();
+        _db.Grants.Add(new Grant { UserId = userId, GrantTypeId = 1, CompanyId = src, CanOwn = true });
+        _db.DirectorCompanies.Add(new DirectorCompany { UserId = userId, CompanyId = src, GrantedBy = 1, IsDeleted = false });
+        _db.UserRoleAssignments.Add(new UserRoleAssignment { UserId = userId, RoleTemplateId = 1, CompanyId = src, AssignedByUserId = 1, AssignedAt = DateTime.UtcNow, IsActive = true });
+        await _db.SaveChangesAsync();
+
+        var result = await _svc.MoveUserToCompanyAsync(userId, dest, actingAdminId: userId + 999);
+        result.Success.Should().BeTrue();
+
+        // Old-company grants / director mappings / role-assignment records removed.
+        (await _db.Grants.IgnoreQueryFilters().CountAsync(g => g.UserId == userId && g.CompanyId == src)).Should().Be(0);
+        (await _db.DirectorCompanies.IgnoreQueryFilters().CountAsync(d => d.UserId == userId && d.CompanyId == src)).Should().Be(0);
+        (await _db.UserRoleAssignments.IgnoreQueryFilters().CountAsync(a => a.UserId == userId && a.CompanyId == src)).Should().Be(0);
+        // Grants re-applied for the destination via the grant service.
+        _grants.Verify(g => g.AssignRoleTemplateGrantsAsync(userId, It.IsAny<string>(), It.IsAny<GrantScope>(), It.IsAny<int?>()), Times.Once);
+    }
+
     public void Dispose() { _db.Dispose(); _conn.Dispose(); }
 }

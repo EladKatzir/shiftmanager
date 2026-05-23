@@ -131,6 +131,70 @@ public class UserCompanyTransferService : IUserCompanyTransferService
             // RoleTemplateId is global/cross-tenant — KEEP it.
             user.CompanyId = destCompanyId;
             // --- GRANTS + DirectorCompany + UserRoleAssignment (Task 8) ---
+            // Resolve the role-template key (RoleTemplateId is kept). Fall back to the role mapper for legacy users.
+            string templateKey;
+            if (user.RoleTemplateId.HasValue)
+            {
+                templateKey = await _db.RoleTemplates.IgnoreQueryFilters()
+                    .Where(rt => rt.Id == user.RoleTemplateId.Value)
+                    .Select(rt => rt.Key)
+                    .FirstOrDefaultAsync() ?? Helpers.RoleTemplateMapper.MapUserRoleToRoleTemplateKey(user.Role, null);
+            }
+            else
+            {
+                templateKey = Helpers.RoleTemplateMapper.MapUserRoleToRoleTemplateKey(user.Role, null);
+            }
+
+            // Revoke all grants (Grant has no query filter; ExecuteDelete runs immediately within the tx).
+            // SECURITY-AUDITED: scoped to UserId == userId.
+            await _db.Grants.IgnoreQueryFilters().Where(g => g.UserId == userId).ExecuteDeleteAsync();
+
+            // Remove old DirectorCompany mappings. SECURITY-AUDITED: scoped to UserId == userId.
+            await _db.DirectorCompanies.IgnoreQueryFilters().Where(d => d.UserId == userId).ExecuteDeleteAsync();
+
+            // Remove old role-assignment records. SECURITY-AUDITED: scoped to UserId == userId.
+            await _db.UserRoleAssignments.IgnoreQueryFilters().Where(a => a.UserId == userId).ExecuteDeleteAsync();
+
+            // Build the destination scope and re-apply the template's grants for the new hierarchy.
+            var destScope = await _grantService.BuildRoleTemplateScopeAsync(templateKey, destCompanyId, jobTypeId: null);
+            await _grantService.AssignRoleTemplateGrantsAsync(userId, templateKey, destScope, grantedByUserId: actingAdminId);
+
+            // Record a destination-scoped role assignment (mirrors RoleService's assignment record).
+            if (user.RoleTemplateId.HasValue)
+            {
+                _db.UserRoleAssignments.Add(new UserRoleAssignment
+                {
+                    UserId = userId,
+                    RoleTemplateId = user.RoleTemplateId.Value,
+                    CompanyId = destScope.CompanyId,
+                    DepartmentId = destScope.DepartmentId,
+                    MoleculeId = destScope.MoleculeId,
+                    AreaId = destScope.AreaId,
+                    JobTypeId = destScope.JobTypeId,
+                    AssignedByUserId = actingAdminId,
+                    AssignedAt = DateTime.UtcNow,
+                    IsActive = true
+                });
+            }
+
+            // If the destination role is a director-type, recreate a DirectorCompany at the dest molecule HQ.
+            if (user.Role == UserRole.Director || user.Role == UserRole.AreaAdmin)
+            {
+                var destHqId = await _db.Companies.IgnoreQueryFilters() // SECURITY-AUDITED: HQ lookup by dest molecule
+                    .Where(c => c.MoleculeId == dest.MoleculeId && c.IsHeadquarters)
+                    .Select(c => c.Id).FirstOrDefaultAsync();
+                if (destHqId != 0)
+                {
+                    _db.DirectorCompanies.Add(new DirectorCompany
+                    {
+                        UserId = userId,
+                        CompanyId = destHqId,
+                        GrantedBy = actingAdminId,
+                        GrantedAt = DateTime.UtcNow,
+                        IsDeleted = false
+                    });
+                }
+            }
             // --- AVATAR (Task 9) ---
             // --- AUDIT (Task 10) ---
 
