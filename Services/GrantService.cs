@@ -969,6 +969,39 @@ public class GrantService : IGrantService
         return grantsAssigned;
     }
 
+    public async Task<GrantScope> BuildRoleTemplateScopeAsync(string roleTemplateKey, int companyId, int? jobTypeId)
+    {
+        var company = await _db.Companies
+            .IgnoreQueryFilters() // SECURITY-AUDITED: scope resolution by explicit companyId
+            .Include(c => c.Molecule)
+                .ThenInclude(m => m!.Area)
+                    .ThenInclude(a => a!.Project)
+            .FirstOrDefaultAsync(c => c.Id == companyId);
+
+        if (company == null)
+            return GrantScope.Company(companyId);
+
+        return roleTemplateKey switch
+        {
+            "BRDirector" => new GrantScope(CompanyId: companyId, MoleculeId: company.MoleculeId),
+            "Employee" => new GrantScope(CompanyId: companyId, MoleculeId: company.MoleculeId),
+            "Lead" => new GrantScope(CompanyId: companyId, MoleculeId: company.MoleculeId, JobTypeId: jobTypeId),
+            "MoleculeAdmin" or "Assigner" => company.MoleculeId.HasValue
+                ? GrantScope.Molecule(company.MoleculeId.Value)
+                : GrantScope.Company(companyId),
+            "AreaAdmin" => company.Molecule?.Area?.Id != null
+                ? GrantScope.Area(company.Molecule.Area.Id)
+                : GrantScope.Company(companyId),
+            "Director" => company.MoleculeId.HasValue
+                ? new GrantScope(MoleculeId: company.MoleculeId.Value, JobTypeId: jobTypeId)
+                : GrantScope.Company(companyId),
+            "Owner" => company.Molecule?.Area?.ProjectId != null
+                ? GrantScope.Project(company.Molecule.Area.ProjectId)
+                : GrantScope.Company(companyId),
+            _ => GrantScope.Company(companyId)
+        };
+    }
+
     /// <summary>
     /// Verifies a user's grants against their expected grants from role template.
     /// </summary>

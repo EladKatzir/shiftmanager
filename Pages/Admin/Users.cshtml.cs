@@ -2454,52 +2454,8 @@ public partial class UsersModel : LocalizedPageModel
     /// Builds the correct GrantScope based on the role template key.
     /// Looks up the company → molecule → area → project hierarchy to populate the right scope parameters.
     /// </summary>
-    private async Task<GrantScope> BuildGrantScopeForTemplateAsync(string roleTemplateKey, int companyId, int? jobTypeId)
-    {
-        // Load hierarchy: Company → Molecule → Area → Project (single query via Include chain)
-        var company = await _db.Companies
-            .IgnoreQueryFilters()
-            .Include(c => c.Molecule)
-                .ThenInclude(m => m!.Area)
-                    .ThenInclude(a => a!.Project)
-            .FirstOrDefaultAsync(c => c.Id == companyId);
-
-        if (company == null)
-            return GrantScope.Company(companyId); // Fallback
-
-        return roleTemplateKey switch
-        {
-            // Company-scoped templates — include MoleculeId so ETM grants resolve correctly
-            // (DetermineEffectiveScope pulls roleScope.MoleculeId for ExpandToMolecule mode).
-            "BRDirector" => new GrantScope(CompanyId: companyId, MoleculeId: company.MoleculeId),
-            "Employee" => new GrantScope(CompanyId: companyId, MoleculeId: company.MoleculeId),
-
-            // Lead — CompanyJobType scope (need CompanyId + JobTypeId + MoleculeId for ETM-mode grants)
-            "Lead" => new GrantScope(CompanyId: companyId, MoleculeId: company.MoleculeId, JobTypeId: jobTypeId),
-
-            // Molecule-scoped templates
-            "MoleculeAdmin" or "Assigner" => company.MoleculeId.HasValue
-                ? GrantScope.Molecule(company.MoleculeId.Value)
-                : GrantScope.Company(companyId),
-
-            // Area-scoped templates
-            "AreaAdmin" => company.Molecule?.Area?.Id != null
-                ? GrantScope.Area(company.Molecule.Area.Id)
-                : GrantScope.Company(companyId),
-
-            // Director — MoleculeJobType scope (need MoleculeId + JobTypeId)
-            "Director" => company.MoleculeId.HasValue
-                ? new GrantScope(MoleculeId: company.MoleculeId.Value, JobTypeId: jobTypeId)
-                : GrantScope.Company(companyId),
-
-            // Project-scoped templates
-            "Owner" => company.Molecule?.Area?.ProjectId != null
-                ? GrantScope.Project(company.Molecule.Area.ProjectId)
-                : GrantScope.Company(companyId),
-
-            _ => GrantScope.Company(companyId)
-        };
-    }
+    private Task<GrantScope> BuildGrantScopeForTemplateAsync(string roleTemplateKey, int companyId, int? jobTypeId)
+        => _grantService.BuildRoleTemplateScopeAsync(roleTemplateKey, companyId, jobTypeId);
 
     /// <summary>
     /// I-07: Bulk user import from CSV file.
