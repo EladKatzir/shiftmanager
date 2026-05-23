@@ -319,6 +319,7 @@ builder.Services.AddScoped<IScopeFilterService, ScopeFilterService>(); // A-018:
 // B-018: Concurrent Edit Conflict Detection
 builder.Services.AddScoped<IConcurrencyService, ConcurrencyService>();
 builder.Services.AddScoped<IWidgetService, WidgetService>();
+builder.Services.AddScoped<IUserCompanyTransferService, UserCompanyTransferService>();
 builder.Services.AddScoped<IStoreService, StoreService>();
 builder.Services.AddScoped<IQuickInfoConfigService, QuickInfoConfigService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
@@ -1327,7 +1328,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Seed Owner user's grants - GODMODE: ALL 134 grants at Project level
+    // Seed Owner user's grants - GODMODE: ALL 135 grants at Project level
     var ownerUserForGrants = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Role == UserRole.Owner);
     if (ownerUserForGrants != null)
     {
