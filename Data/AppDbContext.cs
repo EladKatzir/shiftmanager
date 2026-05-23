@@ -99,7 +99,7 @@ public class AppDbContext : DbContext
     public DbSet<ShiftGroupingCompany> ShiftGroupingCompanies => Set<ShiftGroupingCompany>();
     public DbSet<ShiftGroupingJobType> ShiftGroupingJobTypes => Set<ShiftGroupingJobType>();
 
-    // Grant System (134 built-in grants as of 2026-05-03, 12 role templates)
+    // Grant System (135 built-in grants as of 2026-05-23, 12 role templates)
     public DbSet<GrantType> GrantTypes => Set<GrantType>();
     public DbSet<Grant> Grants => Set<Grant>();
     public DbSet<RoleTemplate> RoleTemplates => Set<RoleTemplate>();
@@ -145,6 +145,12 @@ public class AppDbContext : DbContext
     // Vacation Approval Rules (tenant-scoped)
     // ========================================
     public DbSet<VacationApprovalRule> VacationApprovalRules => Set<VacationApprovalRule>();
+
+    // ========================================
+    // Distribution Lists (molecule-scoped, shared user groups for calendar organization)
+    // ========================================
+    public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
+    public DbSet<DistributionListMember> DistributionListMembers => Set<DistributionListMember>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -704,6 +710,13 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<TeamCalendar>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            // DistributionList: standard tenant filter for provenance/interceptor consistency.
+            // NOTE: real visibility scope is the molecule — DistributionListService deliberately bypasses
+            // this filter with IgnoreQueryFilters() + MoleculeId so lists are shared across all companies
+            // in a molecule (same pattern as ShiftCalendarService.GetUsersForCalendarAsync).
+            modelBuilder.Entity<DistributionList>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
             // EmailConfig: custom filter includes BOTH global (CompanyId = null) AND tenant-scoped configs
             modelBuilder.Entity<EmailConfig>()
                 .HasQueryFilter(e => e.CompanyId == null || e.CompanyId == _tenantResolver.GetCurrentTenantId());
@@ -955,6 +968,56 @@ public class AppDbContext : DbContext
             .HasOne(tcm => tcm.Member)
             .WithMany()
             .HasForeignKey(tcm => tcm.MemberUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure DistributionList (molecule-scoped, shared user groups for calendar organization)
+        modelBuilder.Entity<DistributionList>()
+            .Property(dl => dl.Name)
+            .UseCollation("NOCASE"); // case-insensitive (ASCII-folding; Hebrew has no case) — makes the unique index case-insensitive
+
+        modelBuilder.Entity<DistributionList>()
+            .HasIndex(dl => new { dl.MoleculeId, dl.Name })
+            .IsUnique(); // one list name per molecule (case-insensitive via Name's NOCASE collation)
+
+        modelBuilder.Entity<DistributionList>()
+            .HasIndex(dl => dl.CompanyId); // provenance lookups
+
+        modelBuilder.Entity<DistributionList>()
+            .HasOne(dl => dl.Company)
+            .WithMany()
+            .HasForeignKey(dl => dl.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<DistributionList>()
+            .HasOne(dl => dl.Molecule)
+            .WithMany()
+            .HasForeignKey(dl => dl.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<DistributionList>()
+            .HasOne(dl => dl.Creator)
+            .WithMany()
+            .HasForeignKey(dl => dl.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure DistributionListMember (join entity — tenancy scoped via parent list)
+        modelBuilder.Entity<DistributionListMember>()
+            .HasIndex(dlm => new { dlm.DistributionListId, dlm.UserId })
+            .IsUnique(); // one membership per (list, user)
+
+        modelBuilder.Entity<DistributionListMember>()
+            .HasIndex(dlm => dlm.UserId); // for querying a user's lists
+
+        modelBuilder.Entity<DistributionListMember>()
+            .HasOne(dlm => dlm.DistributionList)
+            .WithMany(dl => dl.Members)
+            .HasForeignKey(dlm => dlm.DistributionListId)
+            .OnDelete(DeleteBehavior.Cascade); // delete members when list deleted
+
+        modelBuilder.Entity<DistributionListMember>()
+            .HasOne(dlm => dlm.User)
+            .WithMany()
+            .HasForeignKey(dlm => dlm.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // ✅ PHASE 19: Configure GameScore entity

@@ -1,7 +1,7 @@
 # Grants & Permissions System — Complete Deep Dive
 
-> **Last Updated:** 2026-04-17
-> **Total Grant Types:** 132
+> **Last Updated:** 2026-05-23
+> **Total Grant Types:** 135
 > **Total Role Templates:** 11 (system) + custom
 > **Supersedes:** `GRANTS_AND_ROLES.md`, `GRANT-KEY-REFERENCE.md` (both outdated at 125 grants)
 
@@ -11,7 +11,7 @@
 
 1. [Architecture Overview](#1-architecture-overview)
 2. [What Are Grants?](#2-what-are-grants)
-3. [All 132 Grant Types](#3-all-132-grant-types)
+3. [All 135 Grant Types](#3-all-135-grant-types)
 4. [UserRole Enum](#4-userrole-enum)
 5. [Role Templates](#5-role-templates)
 6. [All 11 System Role Templates](#6-all-11-system-role-templates)
@@ -124,7 +124,7 @@ public enum GrantScopeMode
 
 ---
 
-## 3. All 132 Grant Types
+## 3. All 135 Grant Types
 
 ### Shift Grants (IDs 1-12)
 
@@ -384,6 +384,24 @@ public enum GrantScopeMode
 |----|-----|---------------|-------------|
 | 124 | `ReorderHierarchy` | Project | Reorder hierarchy |
 
+### Recent Additions (IDs 125–135)
+
+> Appended after this document's last full sync. **`Data/SeedData/GrantTypeSeed.cs` is the authoritative source** for exact IDs — a few rows in the tables above have drifted (e.g. `ReorderHierarchy` is actually ID 123 and `ManageHierarchy` ID 124).
+
+| ID | Key | Default Scope | Description |
+|----|-----|---------------|-------------|
+| 125 | `ManageHomeTypes` | Molecule | Manage home-rotation types |
+| 126 | `ManageStores` | Area | Manage store definitions & opening hours |
+| 127 | `ViewHakamOnCall` | Area | On-call widget: Hakam visibility |
+| 128 | `ViewCompanyOnCall` | Company | On-call widget: company on-call contacts |
+| 129 | `ViewShiftsMolecule` | Molecule | Scope switcher: molecule-level access |
+| 130 | `ViewShiftsArea` | Area | Scope switcher: area-level access |
+| 131 | `EditOnCallCalendar` | Area | Collaborative on-call calendar editing |
+| 132 | `EditAreaCalendarPalette` | Area | Per-area calendar color overrides |
+| 133 | `ViewJusticeTable` | Molecule | Justice workload-distribution analytics (read) |
+| 134 | `EditJusticeTargets` | Project | Edit Justice expected-count targets |
+| 135 | `ManageDistributionLists` | Molecule | Create/edit/delete calendar distribution lists — molecule-scoped, shared; floor = Lead (מפ"צ) and above + the molecule-scheduling roles (Assigner, DepartmentLead) |
+
 ---
 
 ## 4. UserRole Enum
@@ -392,7 +410,7 @@ The `UserRole` enum defines 7 roles. These are **NOT directly used for access co
 
 | Value | Role | Purpose |
 |-------|------|---------|
-| 0 | **Owner** | System administrator — all 132 grants at Project scope |
+| 0 | **Owner** | System administrator — all 135 grants at Project scope |
 | 1 | **Manager** | Company-level management (AlhutLead, TextLead, BRDirector, MoleculeAdmin, DepartmentLead) |
 | 2 | **Employee** | Standard user — view + self-service grants |
 | 3 | **Director** | Molecule-level oversight (AlhutDirector, TextDirector) |

@@ -374,6 +374,7 @@ builder.Services.AddScoped<TeamCalendarEventAggregator>();
 
 // Excel Calendars Services
 builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
+builder.Services.AddScoped<IDistributionListService, DistributionListService>();
 builder.Services.AddScoped<IChoreTypeService, ChoreTypeService>();
 builder.Services.AddScoped<IHomeTypeService, HomeTypeService>();
 builder.Services.AddScoped<IHomeMaterialiserService, HomeMaterialiserService>();

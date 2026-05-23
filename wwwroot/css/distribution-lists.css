@@ -1,0 +1,154 @@
+/*
+ * distribution-lists.css — by-user calendar "Lists" filter dropdown + manager/editor modal styling.
+ * Modals reuse components.css .modal/.modal__* (toggled via .is-open). Tokens use fallbacks to avoid
+ * unset behaviour if a variable is missing. Colored backgrounds always pair an explicit text color.
+ */
+
+/* ---- Toolbar control ---- */
+.dl-control { display: inline-flex; align-items: center; gap: var(--space-1, 4px); }
+
+.dl-dropdown { position: relative; display: inline-block; }
+
+.dl-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.35rem;
+    margin-inline-start: 0.35rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: var(--primary, #2563eb);
+    color: var(--primary-contrast, #ffffff) !important;
+}
+
+.dl-manage-btn { font-weight: 700; line-height: 1; }
+
+/* ---- Filter dropdown popover ---- */
+.dl-dropdown__menu {
+    position: absolute;
+    inset-inline-start: 0;
+    top: calc(100% + 4px);
+    z-index: var(--z-dropdown, 1100);
+    min-width: 16rem;
+    max-width: 22rem;
+    background: var(--surface, #ffffff);
+    color: var(--text, #1f2937);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    box-shadow: var(--shadow-lg, 0 10px 25px rgba(0, 0, 0, 0.15));
+    overflow: hidden;
+}
+[dir="rtl"] .dl-dropdown__menu { inset-inline-start: auto; inset-inline-end: 0; }
+
+.dl-dropdown__list { max-height: 18rem; overflow-y: auto; padding: var(--space-1, 4px); }
+
+.dl-dropdown__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    padding: var(--space-2, 8px);
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+}
+.dl-dropdown__item:hover { background: var(--surface-hover, rgba(0, 0, 0, 0.04)); }
+.dl-dropdown__item-name { flex: 1; font-weight: 500; }
+.dl-dropdown__item-count { font-size: 0.78rem; color: var(--text-muted, #6b7280); white-space: nowrap; }
+
+.dl-dropdown__empty,
+.dl-manager__empty,
+.dl-editor__empty {
+    padding: var(--space-3, 12px);
+    text-align: center;
+    color: var(--text-muted, #6b7280);
+    font-size: 0.88rem;
+}
+
+.dl-dropdown__footer {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2, 8px);
+    padding: var(--space-2, 8px);
+    border-top: 1px solid var(--border, #e5e7eb);
+}
+
+/* ---- Manager modal ---- */
+.dl-manager__list { display: flex; flex-direction: column; gap: var(--space-1, 4px); }
+
+.dl-manager__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2, 8px);
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+}
+.dl-manager__info { display: flex; flex-direction: column; min-width: 0; }
+.dl-manager__name { font-weight: 600; }
+.dl-manager__count { font-size: 0.78rem; color: var(--text-muted, #6b7280); }
+.dl-manager__actions { display: flex; gap: var(--space-1, 4px); flex-shrink: 0; }
+
+.dl-manager__confirm {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    flex-wrap: wrap;
+}
+.dl-manager__confirm-text { font-size: 0.85rem; color: var(--text, #1f2937); }
+
+/* ---- Editor modal ---- */
+.dl-req { color: var(--danger, #dc2626); }
+.dl-editor__count {
+    display: inline-block;
+    margin-top: var(--space-1, 4px);
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.dl-editor__users {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 22rem;
+    overflow-y: auto;
+    margin-top: var(--space-2, 8px);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    padding: var(--space-1, 4px);
+}
+
+.dl-editor__user {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    padding: var(--space-2, 8px);
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+}
+.dl-editor__user:hover { background: var(--surface-hover, rgba(0, 0, 0, 0.04)); }
+
+.dl-editor__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.dl-editor__avatar--initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: var(--primary-soft, #dbeafe);
+    color: var(--primary, #2563eb) !important;
+}
+
+.dl-editor__user-info { display: flex; flex-direction: column; min-width: 0; }
+.dl-editor__user-name { font-weight: 500; }
+.dl-editor__user-company { font-size: 0.76rem; color: var(--text-muted, #6b7280); }
+
+/* Distribution-list group section headers reuse the existing ExcelCalendarGroup styling — no overrides needed. */

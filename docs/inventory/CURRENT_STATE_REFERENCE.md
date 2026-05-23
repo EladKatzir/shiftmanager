@@ -168,7 +168,7 @@ Project (Owner)
 | Email | 2 | SendNotifications, ConfigureEmailSettings |
 | System | 4 | AdminAccess, SystemConfiguration, ViewAuditLog |
 
-**Total:** 125 defined grant types
+**Total:** 135 defined grant types (latest: `ManageDistributionLists` #135; the per-category breakdown above predates IDs 126–135 — see `Data/SeedData/GrantTypeSeed.cs`)
 
 ### 2.4 Role Assignment
 

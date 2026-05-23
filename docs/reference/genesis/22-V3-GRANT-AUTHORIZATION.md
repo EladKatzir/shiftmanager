@@ -37,7 +37,7 @@ ShiftManager V3 introduces a **grant-based authorization system** that replaces 
 | Aspect | V2 (Legacy) | V3 (Current) |
 |--------|-------------|--------------|
 | **Primary mechanism** | UserRole enum (0-6) | Grant-based with scope |
-| **Permission granularity** | 7 fixed roles | 125 grant types |
+| **Permission granularity** | 7 fixed roles | 135 grant types |
 | **Scope** | Company-only | Project/Area/Molecule/Company/Department/JobType |
 | **Delegation** | None | CanGive flag on grants |
 | **Role bundling** | Hardcoded | RoleTemplate with auto-grants |
@@ -306,7 +306,9 @@ public enum GrantScopeLevel
 }
 ```
 
-### System Grant Types (125 Built-in)
+### System Grant Types (135 Built-in)
+
+> Catalog below is not exhaustive for grants appended after this section's last sync (IDs 126–135, incl. `ManageDistributionLists`). **`Data/SeedData/GrantTypeSeed.cs` is the authoritative list.**
 
 **File:** `Data/SeedData/GrantTypeSeed.cs`
 

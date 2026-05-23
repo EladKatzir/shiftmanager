@@ -1046,8 +1046,28 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 134 grants (added ViewJusticeTable + EditJusticeTargets on 2026-05-03)
-        grantTypes.Should().HaveCount(134, "Should have exactly 134 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, store, collaborative on-call editing, per-area palette, and Justice analytics grants");
+        // Assert - 135 grants (added ManageDistributionLists on 2026-05-23)
+        grantTypes.Should().HaveCount(135, "Should have exactly 135 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, store, collaborative on-call editing, per-area palette, Justice analytics, and distribution-list grants");
+    }
+
+    [Fact]
+    public void ManageDistributionLists_Grant_AssignedToExpectedTemplatesOnly()
+    {
+        // Locks the manage-floor decision: ManageDistributionLists (#135) is assigned to Lead (מפ"צ) and above.
+        var grant = Data.SeedData.GrantTypeSeed.GetGrantTypes().Single(g => g.Key == "ManageDistributionLists");
+
+        var templateIds = Data.SeedData.RoleTemplateSeed.GetRoleTemplateGrants()
+            .Where(rg => rg.GrantTypeId == grant.Id)
+            .Select(rg => rg.RoleTemplateId)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
+
+        // Floor = Lead(3) and above + molecule-scheduling roles: BRDirector(2), Lead(3), Director(5),
+        // MoleculeAdmin(7), Assigner(8), DepartmentLead(9), AreaAdmin(10), Owner(11).
+        templateIds.Should().BeEquivalentTo(new[] { 2, 3, 5, 7, 8, 9, 10, 11 });
+        // Explicitly excluded: Employee(1) and Trainee(12).
+        templateIds.Should().NotContain(1).And.NotContain(12);
     }
 
     [Fact]

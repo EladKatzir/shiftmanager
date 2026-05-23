@@ -36,6 +36,7 @@ public class ShiftsModel : PageModel
     private readonly IChoreTypeService _choreTypeService;
     private readonly ICalendarTextEntryService _textEntryService;
     private readonly IJusticeService _justiceService;
+    private readonly IDistributionListService _distributionListService;
 
     public ShiftsModel(
         AppDbContext db,
@@ -50,7 +51,8 @@ public class ShiftsModel : PageModel
         ITraineeService traineeService,
         IChoreTypeService choreTypeService,
         ICalendarTextEntryService textEntryService,
-        IJusticeService justiceService)
+        IJusticeService justiceService,
+        IDistributionListService distributionListService)
     {
         _db = db;
         _calendarService = calendarService;
@@ -65,6 +67,7 @@ public class ShiftsModel : PageModel
         _choreTypeService = choreTypeService;
         _textEntryService = textEntryService;
         _justiceService = justiceService;
+        _distributionListService = distributionListService;
     }
 
     // Query parameters
@@ -89,6 +92,25 @@ public class ShiftsModel : PageModel
     [BindProperty(SupportsGet = true)]
     public bool JustMine { get; set; }
 
+    /// <summary>
+    /// CSV of selected distribution-list IDs (e.g. "1,2,3"). When non-empty, the by-user view is filtered
+    /// to those lists' members and grouped into one collapsible section per list. Persists across navigation.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? DistributionListIds { get; set; }
+
+    /// <summary>Parsed, de-duplicated selected distribution-list IDs (defensive int.TryParse per item).</summary>
+    public List<int> SelectedDistributionListIds =>
+        string.IsNullOrWhiteSpace(DistributionListIds)
+            ? new List<int>()
+            : DistributionListIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => int.TryParse(s, out var v) ? v : (int?)null)
+                .Where(v => v.HasValue)
+                .Select(v => v!.Value)
+                .Distinct()
+                .ToList();
+
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
     public bool CanEdit { get; set; }
@@ -96,6 +118,9 @@ public class ShiftsModel : PageModel
     // WriteOverviewNotes grant (company-scoped, every role has it). Lets non-assigning roles type
     // free-text notes on calendar cells. Slash commands still require CanEdit via data-can-assign.
     public bool CanWriteNote { get; set; }
+    // Distribution lists for the by-user "Lists" control. Filtering is open to all; CanManageLists gates the "+".
+    public bool CanManageLists { get; set; }
+    public List<DistributionListSummary> AvailableDistributionLists { get; set; } = new();
     public List<Molecule> AvailableMolecules { get; set; } = new();
     public List<JobType> AvailableJobTypes { get; set; } = new();
     public Molecule? SelectedMolecule { get; set; }
@@ -203,6 +228,14 @@ public class ShiftsModel : PageModel
         // Note-writing is broader than assignment: any user with WriteOverviewNotes (every role has it)
         // can type free-text on calendar cells. Check is unscoped — grant 110 is company-wide by default.
         CanWriteNote = CanEdit || await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
+
+        // Distribution lists for the by-user "Lists" control. Filtering by a list needs no grant (open to all
+        // viewers); CanManageLists (scoped to this molecule) gates the "+" manage button.
+        if (MoleculeId.HasValue)
+        {
+            AvailableDistributionLists = await _distributionListService.GetListsForMoleculeAsync(MoleculeId.Value);
+            CanManageLists = await _grantService.HasGrantWithScopeAsync(currentUserId, "ManageDistributionLists", moleculeId: MoleculeId);
+        }
 
         // Build calendar data based on mode
         // JobTypeId may be null for Tech molecules — service handles nullable jobTypeId
@@ -499,7 +532,14 @@ public class ShiftsModel : PageModel
         var rows = new List<ExcelCalendarRow>();
         List<ExcelCalendarGroup>? groups = null;
 
-        if (IsTechMolecule)
+        if (SelectedDistributionListIds.Any())
+        {
+            // Distribution-list grouping overrides default grouping (tech or flat) for ALL molecule types:
+            // one collapsible section per selected list, filtered to those lists' members (cross-company).
+            (rows, groups) = await BuildListGroupedRowsAsync(
+                users, SelectedDistributionListIds, moleculeId, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
+        }
+        else if (IsTechMolecule)
         {
             // SP3: Dynamic grouping for tech molecules — group by PrimaryShiftType or Company
             (rows, groups) = await BuildTechGroupedRowsAsync(
@@ -537,6 +577,89 @@ public class ShiftsModel : PageModel
             Rows = rows,
             Groups = groups
         };
+    }
+
+    /// <summary>
+    /// Builds collapsible sections for the by-user calendar — one section per selected distribution list,
+    /// filtered to that list's members present in the loaded (molecule + jobType) <paramref name="users"/> set.
+    /// A user in multiple selected lists appears once per section; the duplicate data-row-id is intentional and
+    /// safe (the calendar resolves interactions from the data-row-id attribute on the clicked cell, not a DOM id).
+    /// Reuses the same ExcelCalendarGroup rendering as the by-company / by-shift-type sections.
+    /// </summary>
+    private async Task<(List<ExcelCalendarRow> rows, List<ExcelCalendarGroup> groups)> BuildListGroupedRowsAsync(
+        List<AppUser> users,
+        List<int> selectedListIds,
+        int moleculeId,
+        List<ShiftInstance> instances,
+        List<ShiftAssignment> assignments,
+        Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
+        Dictionary<int, string> localizedShiftNames,
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
+        Dictionary<(int UserId, DateOnly Date), string> overviewNotes)
+    {
+        var rows = new List<ExcelCalendarRow>();
+        var groups = new List<ExcelCalendarGroup>();
+
+        // Lists with their member IDs (molecule-scoped, ordered by name). Cross-company members are expected.
+        var lists = await _distributionListService.GetListsWithMembersAsync(selectedListIds, moleculeId);
+        if (lists.Count == 0)
+            return (rows, groups);
+
+        // Only members present in the loaded user set are shown (respects active + jobType filtering upstream).
+        var usersById = users.ToDictionary(u => u.Id);
+
+        // Company names for the per-row company badge (lists span companies within the molecule).
+        // SECURITY-AUDITED: SAFE — scoped to CompanyIds of the molecule-derived user set.
+        var companyIds = users.Select(u => u.CompanyId).Distinct().ToList();
+        var companyLookup = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => companyIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.LocalizedName);
+
+        int sortOrder = 0;
+        foreach (var list in lists)
+        {
+            var groupId = $"dl-{list.Id}";
+
+            // Members present in this view, ordered by display name (consistent with GetUsersForCalendarAsync).
+            var members = list.MemberUserIds
+                .Where(usersById.ContainsKey)
+                .Select(id => usersById[id])
+                .OrderBy(u => u.DisplayName)
+                .ToList();
+
+            groups.Add(new ExcelCalendarGroup
+            {
+                Id = groupId,
+                Name = list.Name,
+                SortOrder = sortOrder++,
+                MemberCount = members.Count
+            });
+
+            foreach (var user in members)
+            {
+                // Keep Id = "user-{id}" so calendar interactions resolve the user correctly even when the same
+                // user appears under multiple selected lists (duplicate data-row-id is safe — attribute, not DOM id).
+                var row = new ExcelCalendarRow
+                {
+                    Id = $"user-{user.Id}",
+                    Label = user.DisplayName,
+                    GroupId = groupId,
+                    CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
+                };
+                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
+
+                var userShiftWindows = assignments
+                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
+                    .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
+                    .OrderBy(w => w.start)
+                    .ToList();
+                row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+                rows.Add(row);
+            }
+        }
+
+        return (rows, groups);
     }
 
     /// <summary>

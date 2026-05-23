@@ -15410,4 +15410,95 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="OverrideHelp" xml:space="preserve">
     <value>Comma-separated dates (yyyy-MM-dd) that override the standard rotation for this user.</value>
   </data>
+  <!-- Distribution Lists — molecule-scoped, shared user groups for organizing the by-user calendar -->
+  <data name="Grant_ManageDistributionLists" xml:space="preserve">
+    <value>Manage Distribution Lists</value>
+  </data>
+  <data name="Grant_ManageDistributionLists_Desc" xml:space="preserve">
+    <value>Allows creating, editing, and deleting molecule-wide distribution lists used to organize the by-user calendar. Available to Squad Leaders and above.</value>
+  </data>
+  <data name="DistributionLists" xml:space="preserve">
+    <value>Lists</value>
+  </data>
+  <data name="DistributionList_Manage" xml:space="preserve">
+    <value>Manage lists</value>
+  </data>
+  <data name="DistributionList_ManagerTitle" xml:space="preserve">
+    <value>Distribution Lists</value>
+  </data>
+  <data name="DistributionList_CreateNew" xml:space="preserve">
+    <value>Create new list</value>
+  </data>
+  <data name="DistributionList_CreateTitle" xml:space="preserve">
+    <value>New list</value>
+  </data>
+  <data name="DistributionList_EditTitle" xml:space="preserve">
+    <value>Edit list</value>
+  </data>
+  <data name="DistributionList_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="DistributionList_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="DistributionList_Name" xml:space="preserve">
+    <value>List name</value>
+  </data>
+  <data name="DistributionList_NamePlaceholder" xml:space="preserve">
+    <value>e.g. Blue-qualified</value>
+  </data>
+  <data name="DistributionList_SelectUsers" xml:space="preserve">
+    <value>Select members</value>
+  </data>
+  <data name="DistributionList_SearchUsers" xml:space="preserve">
+    <value>Search users...</value>
+  </data>
+  <data name="DistributionList_NoLists" xml:space="preserve">
+    <value>No distribution lists yet.</value>
+  </data>
+  <data name="DistributionList_NoUsers" xml:space="preserve">
+    <value>No users found.</value>
+  </data>
+  <data name="DistributionList_ConfirmDelete" xml:space="preserve">
+    <value>Delete this distribution list?</value>
+  </data>
+  <data name="DistributionList_Created" xml:space="preserve">
+    <value>Distribution list created.</value>
+  </data>
+  <data name="DistributionList_Updated" xml:space="preserve">
+    <value>Distribution list updated.</value>
+  </data>
+  <data name="DistributionList_Deleted" xml:space="preserve">
+    <value>Distribution list deleted.</value>
+  </data>
+  <data name="DistributionList_NameRequired" xml:space="preserve">
+    <value>List name is required.</value>
+  </data>
+  <data name="DistributionList_NameTaken" xml:space="preserve">
+    <value>A list with this name already exists in this molecule.</value>
+  </data>
+  <data name="DistributionList_SelectAtLeastOne" xml:space="preserve">
+    <value>Select at least one member.</value>
+  </data>
+  <data name="DistributionList_SaveFailed" xml:space="preserve">
+    <value>Could not save the distribution list.</value>
+  </data>
+  <data name="DistributionList_MemberCount" xml:space="preserve">
+    <value>{0} members</value>
+  </data>
+  <data name="DistributionList_SelectedCount" xml:space="preserve">
+    <value>{0} selected</value>
+  </data>
+  <data name="DistributionList_Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="DistributionList_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="DistributionList_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="DistributionList_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
 </root>
