@@ -15411,4 +15411,10 @@
   <data name="Error_MoveFailed" xml:space="preserve">
     <value>לא ניתן היה להשלים את ההעברה.</value>
   </data>
+  <data name="Users_MoveImpact_Summary" xml:space="preserve">
+    <value>ישפיע על: {0} משמרות, {1} בקשות חופשה, {2} מטלות, {3} בקשות החלפה, {4} תורנויות, {5} ניקודי משחק, {6} לוחות צוות (יועברו אליך), {7} מפתחות API יבוטלו.</value>
+  </data>
+  <data name="Users_MoveImpact_DirectorRemoval" xml:space="preserve">
+    <value>מסיר גישת מנהל מעל: {0}.</value>
+  </data>
 </root>

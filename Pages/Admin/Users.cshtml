@@ -1193,12 +1193,7 @@
                     const resp = await fetch('?handler=MoveImpact&userId=' + encodeURIComponent(currentUserId) + '&destCompanyId=' + encodeURIComponent(dest));
                     const data = await resp.json();
                     if (!data.ok) { impactBox.textContent = data.error || 'Error'; return; }
-                    const i = data.impact;
-                    impactBox.textContent =
-                        'shifts ' + i.futureShifts + ' · time-off ' + i.pendingOrFutureTimeOff +
-                        ' · chores ' + i.futureChores + ' · swaps ' + i.openSwapRequests +
-                        ' · on-duty ' + i.futureOnDuty + ' · scores ' + i.gameScores +
-                        ' · calendars→you ' + i.ownedTeamCalendars + ' · API keys ' + i.apiKeys;
+                    impactBox.textContent = data.summary || '';
                     confirmBtn.disabled = false;
                 } catch (e) {
                     impactBox.textContent = 'Error';

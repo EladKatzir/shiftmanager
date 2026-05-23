@@ -19,7 +19,16 @@ public partial class UsersModel
             return new JsonResult(new { ok = false, error = _localizer[authError].Value });
 
         var impact = await _userCompanyTransferService.GetMoveImpactAsync(userId, destCompanyId);
-        return new JsonResult(new { ok = true, impact });
+
+        // Build the human-readable summary server-side so it is localized AND independent of JSON casing.
+        var summary = _localizer["Users_MoveImpact_Summary",
+            impact.FutureShifts, impact.PendingOrFutureTimeOff, impact.FutureChores,
+            impact.OpenSwapRequests, impact.FutureOnDuty, impact.GameScores,
+            impact.OwnedTeamCalendars, impact.ApiKeys].Value;
+        if (impact.DirectorCompaniesRemoved.Count > 0)
+            summary += " " + _localizer["Users_MoveImpact_DirectorRemoval", string.Join(", ", impact.DirectorCompaniesRemoved)].Value;
+
+        return new JsonResult(new { ok = true, impact, summary });
     }
 
     /// <summary>Performs the move after re-checking authorization server-side.</summary>
