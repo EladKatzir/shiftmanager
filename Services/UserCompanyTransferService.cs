@@ -56,11 +56,12 @@ public class UserCompanyTransferService : IUserCompanyTransferService
             // --- BUCKET 1: personal operational data (soft-cancel where supported, else delete) ---
 
             // Future shift assignments: delete to free the slot. SECURITY-AUDITED: scoped to userId; future via ShiftInstance.WorkDate.
+            // IgnoreQueryFilters() is query-global in EF Core (disables the ShiftInstance nav filter too) — verified by Move_WithActiveFilters_DifferentTenant_StillClearsFutureShift
             await _db.ShiftAssignments.IgnoreQueryFilters()
                 .Where(sa => sa.UserId == userId && sa.ShiftInstance!.WorkDate >= today)
                 .ExecuteDeleteAsync();
 
-            // This user as trainer of others -> null the link. SECURITY-AUDITED: scoped to TraineeUserId == userId.
+            // Detach this user from any shift where they are the shadowing trainee (TraineeUserId). SECURITY-AUDITED: scoped to TraineeUserId == userId.
             await _db.ShiftAssignments.IgnoreQueryFilters()
                 .Where(sa => sa.TraineeUserId == userId)
                 .ExecuteUpdateAsync(s => s.SetProperty(a => a.TraineeUserId, (int?)null));
