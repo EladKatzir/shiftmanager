@@ -256,14 +256,9 @@ public class UserCompanyTransferService : IUserCompanyTransferService
                 }
             }
 
-            // --- AUDIT (Task 10) ---
-            // Two entries with EXPLICIT companyId so BOTH old- and new-company admins can see the move.
-            var auditDetail = $"userId={userId};from={sourceCompanyId};to={destCompanyId};by={actingAdminId}";
-            await _auditLogService.LogUserActionAsync(actingAdminId, sourceCompanyId, "UserMovedOut", "User", userId,
-                $"User {userId} moved to company {destCompanyId}", auditDetail);
-            await _auditLogService.LogUserActionAsync(actingAdminId, destCompanyId, "UserMovedIn", "User", userId,
-                $"User {userId} moved from company {sourceCompanyId}", auditDetail);
-
+            // Persist the move data with concurrency handling FIRST, so the concurrency-sensitive write
+            // is the wrapped one. (The audit overload below does its own SaveChanges and would otherwise
+            // pre-empt this wrapper, defeating the conflict handling.)
             var save = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
                 () => _db.SaveChangesAsync(), "UserCompanyMove", userId);
             if (!save.Success)
@@ -272,6 +267,16 @@ public class UserCompanyTransferService : IUserCompanyTransferService
                 CleanupCopiedFiles(copiedDestPaths);
                 return new MoveResult(false, "Error_ConcurrencyConflict");
             }
+
+            // --- AUDIT (Task 10) ---
+            // Two entries with EXPLICIT companyId so BOTH old- and new-company admins can see the move.
+            // Written after the data save (the audit overload swallows its own errors so it can't break
+            // the move) but before commit, so the audit rows commit atomically with the move.
+            var auditDetail = $"userId={userId};from={sourceCompanyId};to={destCompanyId};by={actingAdminId}";
+            await _auditLogService.LogUserActionAsync(actingAdminId, sourceCompanyId, "UserMovedOut", "User", userId,
+                $"User {userId} moved to company {destCompanyId}", auditDetail);
+            await _auditLogService.LogUserActionAsync(actingAdminId, destCompanyId, "UserMovedIn", "User", userId,
+                $"User {userId} moved from company {sourceCompanyId}", auditDetail);
 
             await tx.CommitAsync();
 
