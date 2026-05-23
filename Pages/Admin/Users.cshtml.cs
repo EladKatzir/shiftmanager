@@ -36,6 +36,7 @@ public partial class UsersModel : LocalizedPageModel
     private readonly IConcurrencyService _concurrencyService;
     private readonly ITenantResolver _tenantResolver;
     private readonly IHierarchyService _hierarchyService;
+    private readonly IUserCompanyTransferService _userCompanyTransferService;
 
     public UsersModel(
         IStringLocalizer<SharedResources> localizer,
@@ -52,7 +53,8 @@ public partial class UsersModel : LocalizedPageModel
         IJobTypeService jobTypeService,
         IConcurrencyService concurrencyService,
         ITenantResolver tenantResolver,
-        IHierarchyService hierarchyService)
+        IHierarchyService hierarchyService,
+        IUserCompanyTransferService userCompanyTransferService)
         : base(localizer)
     {
         _db = db;
@@ -69,6 +71,7 @@ public partial class UsersModel : LocalizedPageModel
         _concurrencyService = concurrencyService;
         _tenantResolver = tenantResolver;
         _hierarchyService = hierarchyService;
+        _userCompanyTransferService = userCompanyTransferService;
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, int? PrimaryShiftTypeId, string? PrimaryShiftTypeName, int? MoleculeId);
