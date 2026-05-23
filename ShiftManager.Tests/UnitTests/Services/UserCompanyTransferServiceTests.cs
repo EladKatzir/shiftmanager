@@ -242,5 +242,38 @@ public class UserCompanyTransferServiceTests : IDisposable
         (await _db.VacationApprovalRules.IgnoreQueryFilters().Where(r => r.ApproverUserId == userId).CountAsync()).Should().Be(0);
     }
 
+    [Fact]
+    public async Task Move_ReassignsOwnedTeamCalendars_ToActingAdmin()
+    {
+        var (userId, src, dest) = await SeedAsync();
+        var admin = userId + 999;
+        _db.TeamCalendars.Add(new TeamCalendar { CompanyId = src, OwnerId = userId, IsDeleted = false, Name = "tc" });
+        await _db.SaveChangesAsync();
+
+        var result = await _svc.MoveUserToCompanyAsync(userId, dest, actingAdminId: admin);
+        result.Success.Should().BeTrue();
+
+        // Calendar kept (not deleted) but ownership transferred off the moved user to the admin.
+        (await _db.TeamCalendars.IgnoreQueryFilters().CountAsync(t => t.OwnerId == userId)).Should().Be(0);
+        (await _db.TeamCalendars.IgnoreQueryFilters().CountAsync(t => t.OwnerId == admin)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Move_ResetsScalarFks_AndSetsDestCompany()
+    {
+        var (userId, _, dest) = await SeedAsync(); // seeds JobTypeId=5, DepartmentId=6, PrimaryShiftTypeId=7, HomeTypeId=8
+
+        var result = await _svc.MoveUserToCompanyAsync(userId, dest, actingAdminId: userId + 999);
+        result.Success.Should().BeTrue();
+
+        _db.ChangeTracker.Clear();
+        var after = await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId);
+        after.JobTypeId.Should().BeNull();
+        after.DepartmentId.Should().BeNull();
+        after.PrimaryShiftTypeId.Should().BeNull();
+        after.HomeTypeId.Should().BeNull();
+        after.CompanyId.Should().Be(dest);
+    }
+
     public void Dispose() { _db.Dispose(); _conn.Dispose(); }
 }

@@ -116,7 +116,19 @@ public class UserCompanyTransferService : IUserCompanyTransferService
                 .Where(r => r.ApproverUserId == userId)
                 .ExecuteUpdateAsync(r => r.SetProperty(x => x.ApproverUserId, (int?)null));
             // --- BUCKET 3 (Task 6): owned team calendars ---
+            // Shared asset the old company still needs: keep the calendar, transfer ownership to the acting admin.
+            // SECURITY-AUDITED: scoped to OwnerId == userId.
+            await _db.TeamCalendars.IgnoreQueryFilters()
+                .Where(t => t.OwnerId == userId)
+                .ExecuteUpdateAsync(t => t.SetProperty(x => x.OwnerId, actingAdminId));
+
             // --- SCALAR FK RESET + CompanyId (Task 7) ---
+            // Scalar FKs point at old-molecule/area-scoped rows — reset (admin re-assigns in dest).
+            user.JobTypeId = null;
+            user.DepartmentId = null;
+            user.PrimaryShiftTypeId = null;
+            user.HomeTypeId = null;
+            // RoleTemplateId is global/cross-tenant — KEEP it.
             user.CompanyId = destCompanyId;
             // --- GRANTS + DirectorCompany + UserRoleAssignment (Task 8) ---
             // --- AVATAR (Task 9) ---
