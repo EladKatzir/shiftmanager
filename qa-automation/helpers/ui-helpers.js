@@ -130,7 +130,11 @@ async function collectConsoleErrors(page) {
 async function verifyNoRawLocalizationKeys(page) {
     // Raw keys typically look like "Calendar_Empty_NoShiftsMine"
     const rawKeyPattern = /[A-Z][a-z]+_[A-Z][a-z]+_[A-Za-z]+/;
-    const bodyText = await page.locator('body').textContent();
+    // Use innerText (rendered, VISIBLE text) rather than textContent: textContent also includes
+    // inline <script> content, e.g. the window.AppLocalizer i18n dictionary emitted by
+    // _LocalizationScript.cshtml whose object KEYS (Justice_Panel_*, Conflict_*) are localized
+    // correctly but are not user-visible. We only want to flag raw keys actually shown to the user.
+    const bodyText = await page.locator('body').innerText();
     const matches = bodyText?.match(new RegExp(rawKeyPattern, 'g')) || [];
 
     // Filter out false positives (actual expected content)

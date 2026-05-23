@@ -444,7 +444,7 @@ test.describe('Module L: On-Duty Calendar Full Flow', () => {
   test('L-17: Public on-duty page loads without auth', async ({ page }) => {
     await logout(page);
 
-    const response = await page.goto('http://localhost:5000/Public/OnDuty');
+    const response = await page.goto('/Public/OnDuty');
     await page.waitForLoadState('networkidle');
 
     // ASSERT: Response was received
@@ -469,7 +469,7 @@ test.describe('Module L: On-Duty Calendar Full Flow', () => {
     await navigateTo(page, '/Calendar/OnCall');
     await expect(page.locator('.cal-page')).toBeVisible({ timeout: 15000 });
 
-    const contextB = await browser.newContext({ baseURL: 'http://localhost:5000' });
+    const contextB = await browser.newContext({ baseURL: process.env.APP_URL || 'http://localhost:5000' });
     const pageB = await contextB.newPage();
     await loginAsOwner(pageB);
     await navigateTo(pageB, '/Calendar/OnCall');
@@ -517,7 +517,7 @@ test.describe('Module L: On-Duty Calendar Extended (P1)', () => {
     const endDate = weekEnd.toISOString().split('T')[0];
 
     const response = await page.request.get(
-      `http://localhost:5000/Api/Calendar/GetOnCallData?areaId=${areaId}&startDate=${startDate}&endDate=${endDate}`
+      `/Api/Calendar/GetOnCallData?areaId=${areaId}&startDate=${startDate}&endDate=${endDate}`
     );
 
     // ASSERT: API responds (200 or 400 if invalid area)

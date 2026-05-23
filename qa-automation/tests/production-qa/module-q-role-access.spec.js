@@ -130,7 +130,7 @@ test.describe('Module Q: Director Role Access', () => {
     await login(page, 'dir.alhut@test', TEST_PASSWORD);
 
     // Navigate directly to Owner page
-    await page.goto('http://localhost:5000/Owner/Index');
+    await page.goto('/Owner/Index');
     await page.waitForLoadState('networkidle');
 
     const url = page.url();
@@ -197,7 +197,7 @@ test.describe('Module Q: Manager Role Access', () => {
   test('Q-manager-03: Manager is denied access to /Owner/Index', async ({ page }) => {
     await login(page, 'mgr.alhut.tz@test', TEST_PASSWORD);
 
-    await page.goto('http://localhost:5000/Owner/Index');
+    await page.goto('/Owner/Index');
     await page.waitForLoadState('networkidle');
 
     const url = page.url();
@@ -272,7 +272,7 @@ test.describe('Module Q: Employee Role Access', () => {
   test('Q-employee-03: Employee is denied access to /Owner/Index', async ({ page }) => {
     await login(page, 'emp.tz.alhut@test', TEST_PASSWORD);
 
-    await page.goto('http://localhost:5000/Owner/Index');
+    await page.goto('/Owner/Index');
     await page.waitForLoadState('networkidle');
 
     const url = page.url();
@@ -310,7 +310,7 @@ test.describe('Module Q: Employee Role Access', () => {
   test('Q-employee-06: Employee is denied access to /Admin/Users', async ({ page }) => {
     await login(page, 'emp.tz.alhut@test', TEST_PASSWORD);
 
-    await page.goto('http://localhost:5000/Admin/Users');
+    await page.goto('/Admin/Users');
     await page.waitForLoadState('networkidle');
 
     const url = page.url();
@@ -323,7 +323,7 @@ test.describe('Module Q: Employee Role Access', () => {
   test('Q-employee-07: Employee is denied access to /Admin/Config', async ({ page }) => {
     await login(page, 'emp.tz.alhut@test', TEST_PASSWORD);
 
-    await page.goto('http://localhost:5000/Admin/Config');
+    await page.goto('/Admin/Config');
     await page.waitForLoadState('networkidle');
 
     const url = page.url();
@@ -371,7 +371,7 @@ test.describe('Module Q: Trainee Role Access', () => {
   test('Q-trainee-03: Trainee is denied access to /Owner/Index', async ({ page }) => {
     await login(page, 'trainee.alhut@test', TEST_PASSWORD);
 
-    await page.goto('http://localhost:5000/Owner/Index');
+    await page.goto('/Owner/Index');
     await page.waitForLoadState('networkidle');
 
     const url = page.url();
@@ -441,7 +441,7 @@ test.describe('Module Q: Assigner Role Access', () => {
   test('Q-assigner-03: Assigner is denied access to /Owner/Index', async ({ page }) => {
     await login(page, 'assigner.oren@test', TEST_PASSWORD);
 
-    await page.goto('http://localhost:5000/Owner/Index');
+    await page.goto('/Owner/Index');
     await page.waitForLoadState('networkidle');
 
     const url = page.url();

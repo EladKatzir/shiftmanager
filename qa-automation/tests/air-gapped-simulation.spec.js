@@ -31,7 +31,7 @@ test.describe('Air-Gapped Environment Simulation', () => {
     ];
 
     for (const path of pagesToTest) {
-      await page.goto(`http://localhost:5000${path}`);
+      await page.goto(path);
       await page.waitForLoadState('domcontentloaded');
 
       // Verify page loads (no infinite spinner)

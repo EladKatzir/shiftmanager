@@ -276,7 +276,7 @@ test.describe('Network Performance & Efficiency', () => {
     ];
 
     for (const screen of screens) {
-      await page.goto(`http://localhost:5000${screen}`);
+      await page.goto(screen);
       await page.waitForLoadState('networkidle');
     }
 

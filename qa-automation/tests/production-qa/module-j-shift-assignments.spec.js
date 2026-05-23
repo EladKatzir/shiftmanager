@@ -525,7 +525,7 @@ test.describe('Module J: Shift Assignment Lifecycle', () => {
     await expect(calendarA).toBeVisible({ timeout: 15000 });
 
     // Create User B context
-    const contextB = await browser.newContext({ baseURL: 'http://localhost:5000' });
+    const contextB = await browser.newContext({ baseURL: process.env.APP_URL || 'http://localhost:5000' });
     const pageB = await contextB.newPage();
     await loginAsOwner(pageB);
     await navigateTo(pageB, '/Calendar/Shifts');
@@ -555,7 +555,7 @@ test.describe('Module J: Shift Assignment Lifecycle', () => {
     await expect(page.locator('.cal-page')).toBeVisible({ timeout: 15000 });
 
     // User B
-    const contextB = await browser.newContext({ baseURL: 'http://localhost:5000' });
+    const contextB = await browser.newContext({ baseURL: process.env.APP_URL || 'http://localhost:5000' });
     const pageB = await contextB.newPage();
     await loginAsOwner(pageB);
     await navigateTo(pageB, '/Calendar/Shifts');
