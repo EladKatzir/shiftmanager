@@ -8,6 +8,11 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["ShiftsCalendar"];
+    // Distribution-list filter param, appended to hand-built nav links so the selection persists across
+    // week navigation / mode toggles (the JS navigators already preserve it via URLSearchParams).
+    var dlParam = string.IsNullOrEmpty(Model.DistributionListIds)
+        ? ""
+        : $"&DistributionListIds={Uri.EscapeDataString(Model.DistributionListIds)}";
 }
 
 @* Breadcrumb *@
@@ -56,7 +61,7 @@
             </div>
 
             <div class="cal-toolbar__date-nav">
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode@dlParam"
                    class="btn btn-ghost cal-toolbar__nav-btn"
                    data-cal-nav="prev"
                    title="@Localizer["Previous"]">
@@ -75,7 +80,7 @@
                     </span>
                 </div>
 
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.NextStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.NextStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode@dlParam"
                    class="btn btn-ghost cal-toolbar__nav-btn"
                    data-cal-nav="next"
                    title="@Localizer["Next"]">
@@ -108,11 +113,11 @@
         @* Row 2: Mode toggles + Filter + Just Mine *@
         <div class="cal-toolbar__controls">
             <div class="cal-toolbar__toggle-group">
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=shift"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=shift@dlParam"
                    class="btn @(Model.Mode == "shift" ? "btn-primary" : "btn-ghost")">
                     @Localizer["ByShift"]
                 </a>
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=user"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=user@dlParam"
                    class="btn @(Model.Mode == "user" ? "btn-primary" : "btn-ghost")">
                     @Localizer["ByUser"]
                 </a>
@@ -133,7 +138,7 @@
             @if (Model.CanEdit)
             {
                 <div class="cal-toolbar__toggle-group">
-                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&CapacityMode=@(!Model.CapacityMode)"
+                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&CapacityMode=@(!Model.CapacityMode)@dlParam"
                        class="btn @(Model.CapacityMode ? "btn-primary" : "btn-ghost")">
                         @Localizer["CapacityMode"]
                     </a>
@@ -147,11 +152,71 @@
                     <span class="btn-icon"><icon name="search" /></span>
                     @Localizer["Filter"]
                 </button>
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@(!Model.JustMine)"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@(!Model.JustMine)@dlParam"
                    class="btn @(Model.JustMine ? "btn-primary" : "btn-ghost")">
                     @Localizer["JustMine"]
                 </a>
             </div>
+
+            @* Distribution Lists control — by-user view only. The dropdown (filter) is open to everyone;
+               the "+" manage button is gated by CanManageLists. Selection persists via DistributionListIds. *@
+            @if (Model.Mode == "user")
+            {
+                <span class="cal-toolbar__separator"></span>
+                <div class="cal-toolbar__toggle-group dl-control" id="dlControl" data-molecule-id="@Model.MoleculeId">
+                    <div class="dl-dropdown">
+                        <button type="button" id="dlDropdownToggle"
+                                class="btn @(Model.SelectedDistributionListIds.Any() ? "btn-primary" : "btn-ghost")"
+                                aria-haspopup="true" aria-expanded="false"
+                                onclick="window.DistributionLists && window.DistributionLists.toggleDropdown()">
+                            <span class="btn-icon"><icon name="users" /></span>
+                            <loc key="DistributionLists" />
+                            @if (Model.SelectedDistributionListIds.Any())
+                            {
+                                <span class="dl-badge">@Model.SelectedDistributionListIds.Count</span>
+                            }
+                        </button>
+                        <div class="dl-dropdown__menu" id="dlDropdownMenu" hidden>
+                            @if (Model.AvailableDistributionLists.Any())
+                            {
+                                <div class="dl-dropdown__list">
+                                    @foreach (var list in Model.AvailableDistributionLists)
+                                    {
+                                        <label class="dl-dropdown__item">
+                                            <input type="checkbox" class="dl-checkbox" value="@list.Id"
+                                                   @(Model.SelectedDistributionListIds.Contains(list.Id) ? "checked" : "") />
+                                            <span class="dl-dropdown__item-name">@list.Name</span>
+                                            <span class="dl-dropdown__item-count">@string.Format(Localizer["DistributionList_MemberCount"].Value, list.MemberCount)</span>
+                                        </label>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="dl-dropdown__empty"><loc key="DistributionList_NoLists" /></p>
+                            }
+                            <div class="dl-dropdown__footer">
+                                <button type="button" class="btn btn-ghost btn--sm"
+                                        onclick="window.DistributionLists && window.DistributionLists.clearSelection()">
+                                    <loc key="DistributionList_Clear" />
+                                </button>
+                                <button type="button" class="btn btn-primary btn--sm"
+                                        onclick="window.DistributionLists && window.DistributionLists.applySelection()">
+                                    <loc key="DistributionList_Apply" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    @if (Model.CanManageLists)
+                    {
+                        <button type="button" class="btn btn-ghost dl-manage-btn"
+                                onclick="window.DistributionLists && window.DistributionLists.openManager()"
+                                loc-title="DistributionList_Manage" loc-aria-label="DistributionList_Manage">
+                            <span class="btn-icon">+</span>
+                        </button>
+                    }
+                </div>
+            }
 
             @if (Model.CanWriteNote)
             {
@@ -233,6 +298,13 @@
     </div>
 </div>
 
+@* Distribution-list manager + editor modals — only when the user can manage lists (the filter dropdown
+   itself is server-rendered in the toolbar and needs no modal). *@
+@if (Model.Mode == "user" && Model.CanManageLists)
+{
+    <partial name="_DistributionListModals" />
+}
+
 @* Hidden select for bottom-sheet dropdown (Strategy 1 in getAvailableUsers) *@
 @if (Model.Mode == "user")
 {
@@ -305,6 +377,12 @@ else
     <link rel="stylesheet" href="~/css/calendar-quick-entry.css" asp-append-version="true" />
     <script src="~/js/calendar-quick-entry.js" asp-append-version="true"></script>
     <script src="~/js/excel-calendar-groups.js" asp-append-version="true"></script>
+    @* Distribution lists: filter dropdown (all users) + manager/editor modals (managers) — by-user view only *@
+    @if (Model.Mode == "user")
+    {
+        <link rel="stylesheet" href="~/css/distribution-lists.css" asp-append-version="true" />
+        <script src="~/js/distribution-lists.js" asp-append-version="true"></script>
+    }
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
     <script>

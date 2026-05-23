@@ -1,0 +1,88 @@
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@* Distribution-list manager + editor modals. Driven by wwwroot/js/distribution-lists.js.
+   Included from the Shifts calendar; only rendered/used when the user can manage lists. *@
+
+@* Localized strings the JS needs at runtime (avoids depending on the global AppLocalizer key set). *@
+@{
+    var dlLoc = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string>
+    {
+        ["memberCount"] = Localizer["DistributionList_MemberCount"].Value,
+        ["selectedCount"] = Localizer["DistributionList_SelectedCount"].Value,
+        ["confirmDelete"] = Localizer["DistributionList_ConfirmDelete"].Value,
+        ["nameRequired"] = Localizer["DistributionList_NameRequired"].Value,
+        ["selectAtLeastOne"] = Localizer["DistributionList_SelectAtLeastOne"].Value,
+        ["saveFailed"] = Localizer["DistributionList_SaveFailed"].Value,
+        ["noUsers"] = Localizer["DistributionList_NoUsers"].Value,
+        ["edit"] = Localizer["DistributionList_Edit"].Value,
+        ["delete"] = Localizer["DistributionList_Delete"].Value,
+        ["cancel"] = Localizer["DistributionList_Cancel"].Value,
+        ["createTitle"] = Localizer["DistributionList_CreateTitle"].Value,
+        ["editTitle"] = Localizer["DistributionList_EditTitle"].Value
+    });
+}
+<script type="application/json" id="dlLoc">@Html.Raw(dlLoc)</script>
+
+<div class="modal-backdrop dl-modal-backdrop" id="dlBackdrop"></div>
+
+@* Manager modal — lists existing lists with edit/delete + a "create new" action.
+   Visibility is controlled by the .is-open class (components.css .modal pattern), not the hidden attribute. *@
+<div class="modal dl-modal" id="dlManagerModal" role="dialog" aria-modal="true" aria-labelledby="dlManagerTitle">
+    <div class="modal__header">
+        <h2 class="modal__title" id="dlManagerTitle"><loc key="DistributionList_ManagerTitle" /></h2>
+        <button type="button" class="modal__close" loc-aria-label="DistributionList_Cancel"
+                onclick="window.DistributionLists && window.DistributionLists.closeManager()">&times;</button>
+    </div>
+    <div class="modal__body">
+        <div id="dlManagerList" class="dl-manager__list" aria-live="polite"></div>
+        <p id="dlManagerEmpty" class="dl-manager__empty" hidden><loc key="DistributionList_NoLists" /></p>
+    </div>
+    <div class="modal__footer">
+        <button type="button" class="btn btn-ghost"
+                onclick="window.DistributionLists && window.DistributionLists.closeManager()">
+            <loc key="DistributionList_Cancel" />
+        </button>
+        <button type="button" class="btn btn-primary"
+                onclick="window.DistributionLists && window.DistributionLists.openEditor(0)">
+            <span class="btn-icon">+</span> <loc key="DistributionList_CreateNew" />
+        </button>
+    </div>
+</div>
+
+@* Editor modal — create / edit a list (name + searchable member multi-select) *@
+<div class="modal modal--lg dl-modal" id="dlEditorModal" role="dialog" aria-modal="true" aria-labelledby="dlEditorTitle">
+    <div class="modal__header">
+        <h2 class="modal__title" id="dlEditorTitle"><loc key="DistributionList_CreateTitle" /></h2>
+        <button type="button" class="modal__close" loc-aria-label="DistributionList_Cancel"
+                onclick="window.DistributionLists && window.DistributionLists.closeEditor()">&times;</button>
+    </div>
+    <div class="modal__body">
+        <input type="hidden" id="dlEditorListId" value="0" />
+        <div class="form-group">
+            <label class="form-label" for="dlEditorName"><loc key="DistributionList_Name" /> <span class="dl-req">*</span></label>
+            <input type="text" id="dlEditorName" class="form-input" maxlength="80"
+                   placeholder="@Localizer["DistributionList_NamePlaceholder"]" />
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="dlEditorSearch"><loc key="DistributionList_SelectUsers" /></label>
+            <input type="text" id="dlEditorSearch" class="form-input"
+                   placeholder="@Localizer["DistributionList_SearchUsers"]"
+                   oninput="window.DistributionLists && window.DistributionLists.onUserSearch(this.value)" />
+            <span id="dlEditorSelectedCount" class="dl-editor__count" aria-live="polite"></span>
+        </div>
+        <div id="dlEditorUserList" class="dl-editor__users" aria-live="polite"></div>
+        <p id="dlEditorNoUsers" class="dl-editor__empty" hidden><loc key="DistributionList_NoUsers" /></p>
+    </div>
+    <div class="modal__footer">
+        <button type="button" class="btn btn-ghost"
+                onclick="window.DistributionLists && window.DistributionLists.closeEditor()">
+            <loc key="DistributionList_Cancel" />
+        </button>
+        <button type="button" class="btn btn-primary" id="dlEditorSave"
+                onclick="window.DistributionLists && window.DistributionLists.save()">
+            <loc key="DistributionList_Save" />
+        </button>
+    </div>
+</div>

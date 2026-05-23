@@ -1387,7 +1387,7 @@
 #### 1) Identity & Routing
 - **Route**: `/Calendar/Shifts`
 - **Purpose**: Excel-style shifts calendar -- primary deliverable for "Excel Calendars" feature.
-- **Query Params**: `MoleculeId`, `JobTypeId`, `Start`, `ViewMode`, `Mode`, `CapacityMode`, `JustMine`
+- **Query Params**: `MoleculeId`, `JobTypeId`, `Start`, `ViewMode`, `Mode`, `CapacityMode`, `JustMine`, `DistributionListIds`
 
 #### 2) Access Control & Scope
 - `[Authorize]`. Molecule-scoped. Edit gated by `AssignAlhutShifts`/`AssignTextShifts` grants.
@@ -1404,7 +1404,8 @@
 - Responsive breakpoints (768px, 480px) + print styles
 
 #### 5-9) Summary
-- Read-only page (shifts managed via Calendar/Table). SignalR real-time updates via `calendar-realtime.js`. XSS protection with `escapeHtml()`. Keyboard navigation (Alt+arrows, Ctrl+P). Friends highlighting via `/Api/Friends/Ids`. Lazy loading and bottom sheet for mobile. Services: `IShiftCalendarService`, `IGrantService`, `ICompanyContext`, `IJobTypeService`.
+- Read-only page (shifts managed via Calendar/Table). SignalR real-time updates via `calendar-realtime.js`. XSS protection with `escapeHtml()`. Keyboard navigation (Alt+arrows, Ctrl+P). Friends highlighting via `/Api/Friends/Ids`. Lazy loading and bottom sheet for mobile. Services: `IShiftCalendarService`, `IGrantService`, `ICompanyContext`, `IJobTypeService`, `IDistributionListService`.
+- **Distribution Lists (תפוצות)**: by-user view has a `[ Lists ▾ ] [ + ]` control. The dropdown (open to everyone) filters the view into one collapsible section per selected list via `DistributionListIds`; the `+` (gated by `ManageDistributionLists`) opens manager/editor modals (`_DistributionListModals.cshtml` + `distribution-lists.js`) that call AJAX handlers on `/Calendar/ManageDistributionLists`. Lists are molecule-scoped and shared across companies.
 
 ---
 

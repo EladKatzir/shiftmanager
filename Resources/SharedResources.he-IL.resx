@@ -15405,4 +15405,95 @@
   <data name="OverrideHelp" xml:space="preserve">
     <value>תאריכים מופרדים בפסיקים (yyyy-MM-dd) שמחליפים את הרוטציה הסטנדרטית למשתמש זה.</value>
   </data>
+  <!-- Distribution Lists (תפוצות) -->
+  <data name="Grant_ManageDistributionLists" xml:space="preserve">
+    <value>ניהול רשימות תפוצה</value>
+  </data>
+  <data name="Grant_ManageDistributionLists_Desc" xml:space="preserve">
+    <value>מאפשר יצירה, עריכה ומחיקה של רשימות תפוצה ברמת המולקולה, המשמשות לארגון לוח השנה לפי משתמש. זמין למפ"צ ומעלה.</value>
+  </data>
+  <data name="DistributionLists" xml:space="preserve">
+    <value>תפוצות</value>
+  </data>
+  <data name="DistributionList_Manage" xml:space="preserve">
+    <value>ניהול רשימות</value>
+  </data>
+  <data name="DistributionList_ManagerTitle" xml:space="preserve">
+    <value>רשימות תפוצה</value>
+  </data>
+  <data name="DistributionList_CreateNew" xml:space="preserve">
+    <value>יצירת רשימה חדשה</value>
+  </data>
+  <data name="DistributionList_CreateTitle" xml:space="preserve">
+    <value>רשימה חדשה</value>
+  </data>
+  <data name="DistributionList_EditTitle" xml:space="preserve">
+    <value>עריכת רשימה</value>
+  </data>
+  <data name="DistributionList_Edit" xml:space="preserve">
+    <value>עריכה</value>
+  </data>
+  <data name="DistributionList_Delete" xml:space="preserve">
+    <value>מחיקה</value>
+  </data>
+  <data name="DistributionList_Name" xml:space="preserve">
+    <value>שם הרשימה</value>
+  </data>
+  <data name="DistributionList_NamePlaceholder" xml:space="preserve">
+    <value>לדוגמה: מוסמכי כחול</value>
+  </data>
+  <data name="DistributionList_SelectUsers" xml:space="preserve">
+    <value>בחירת חברים</value>
+  </data>
+  <data name="DistributionList_SearchUsers" xml:space="preserve">
+    <value>חיפוש משתמשים...</value>
+  </data>
+  <data name="DistributionList_NoLists" xml:space="preserve">
+    <value>אין עדיין רשימות תפוצה.</value>
+  </data>
+  <data name="DistributionList_NoUsers" xml:space="preserve">
+    <value>לא נמצאו משתמשים.</value>
+  </data>
+  <data name="DistributionList_ConfirmDelete" xml:space="preserve">
+    <value>למחוק את רשימת התפוצה הזו?</value>
+  </data>
+  <data name="DistributionList_Created" xml:space="preserve">
+    <value>רשימת התפוצה נוצרה.</value>
+  </data>
+  <data name="DistributionList_Updated" xml:space="preserve">
+    <value>רשימת התפוצה עודכנה.</value>
+  </data>
+  <data name="DistributionList_Deleted" xml:space="preserve">
+    <value>רשימת התפוצה נמחקה.</value>
+  </data>
+  <data name="DistributionList_NameRequired" xml:space="preserve">
+    <value>נדרש שם לרשימה.</value>
+  </data>
+  <data name="DistributionList_NameTaken" xml:space="preserve">
+    <value>כבר קיימת רשימה בשם זה במולקולה.</value>
+  </data>
+  <data name="DistributionList_SelectAtLeastOne" xml:space="preserve">
+    <value>יש לבחור לפחות חבר אחד.</value>
+  </data>
+  <data name="DistributionList_SaveFailed" xml:space="preserve">
+    <value>לא ניתן לשמור את רשימת התפוצה.</value>
+  </data>
+  <data name="DistributionList_MemberCount" xml:space="preserve">
+    <value>{0} חברים</value>
+  </data>
+  <data name="DistributionList_SelectedCount" xml:space="preserve">
+    <value>{0} נבחרו</value>
+  </data>
+  <data name="DistributionList_Apply" xml:space="preserve">
+    <value>החלה</value>
+  </data>
+  <data name="DistributionList_Clear" xml:space="preserve">
+    <value>ניקוי</value>
+  </data>
+  <data name="DistributionList_Save" xml:space="preserve">
+    <value>שמירה</value>
+  </data>
+  <data name="DistributionList_Cancel" xml:space="preserve">
+    <value>ביטול</value>
+  </data>
 </root>

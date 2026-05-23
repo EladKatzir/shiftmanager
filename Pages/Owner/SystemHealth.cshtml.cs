@@ -12,7 +12,7 @@ namespace ShiftManager.Pages.Owner;
 /// <summary>
 /// System Health Dashboard - Monitor application health and performance
 /// </summary>
-// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner page requires Grant:AdminAccess (all ~134 grants)
+// SECURITY-AUDITED: All IgnoreQueryFilters() in this class are SAFE — Owner page requires Grant:AdminAccess (all ~135 grants)
 [Authorize(Policy = "Grant:AdminAccess")]
 public class SystemHealthModel : PageModel
 {

@@ -332,6 +332,15 @@ public static class GrantTypeSeed
         grants.Add(new GrantType { Id = id++, Key = "ViewJusticeTable", NameKey = "Grant_ViewJusticeTable", DescriptionKey = "Grant_ViewJusticeTable_Desc", Category = GrantCategory.Analytics, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
         grants.Add(new GrantType { Id = id++, Key = "EditJusticeTargets", NameKey = "Grant_EditJusticeTargets", DescriptionKey = "Grant_EditJusticeTargets_Desc", Category = GrantCategory.Analytics, DefaultScope = GrantScopeLevel.Project, IsSystem = true });
 
+        // ============================================
+        // Distribution Lists (2026-05-23)
+        // ManageDistributionLists: create/edit/delete molecule-scoped, shared user groups used to organize
+        // the by-user shift calendar into collapsible sections. Floor = Lead (מפ"צ) and above. Filtering by
+        // lists needs NO grant (open to everyone viewing the calendar). Scoped to molecule; edit/delete
+        // re-verify the grant against the LIST's stored MoleculeId to prevent IDOR.
+        // ============================================
+        grants.Add(new GrantType { Id = id++, Key = "ManageDistributionLists", NameKey = "Grant_ManageDistributionLists", DescriptionKey = "Grant_ManageDistributionLists_Desc", Category = GrantCategory.UserManagement, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+
         return grants;
     }
 }
