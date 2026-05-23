@@ -11,6 +11,14 @@ public class ExcelCalendarTableViewModel
     public string CalendarType { get; set; } = "shifts"; // shifts, chores, oncall, overview
     public List<ExcelCalendarRow> Rows { get; set; } = new();
     public List<ExcelCalendarGroup>? Groups { get; set; }
+
+    /// <summary>
+    /// Localization NameKeys of the grant(s) that would unlock editing this calendar. Populated only
+    /// when <see cref="IsReadOnly"/> is true AND an obtainable grant exists (empty for genuinely
+    /// view-only calendars such as Overview). Drives the read-only banner's "?" help button, which
+    /// tells the user exactly which permission to request.
+    /// </summary>
+    public List<string> RequiredGrantNameKeys { get; set; } = new();
 }
 
 public class ExcelCalendarRow

@@ -62,6 +62,7 @@
             <div class="cal-toolbar__date-nav">
                 <a href="?MoleculeId=@Model.MoleculeId&Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&ChoreTypeFilter=@Model.ChoreTypeFilter"
                    class="btn btn-ghost cal-toolbar__nav-btn"
+                   data-cal-nav="prev"
                    title="@Localizer["Previous"]">
                     <span class="nav-icon">&larr;</span>
                     <span class="nav-text">@Localizer["Previous"]</span>
@@ -80,6 +81,7 @@
 
                 <a href="?MoleculeId=@Model.MoleculeId&Start=@Model.NextStart&ViewMode=@Model.ViewMode&ChoreTypeFilter=@Model.ChoreTypeFilter"
                    class="btn btn-ghost cal-toolbar__nav-btn"
+                   data-cal-nav="next"
                    title="@Localizer["Next"]">
                     <span class="nav-text">@Localizer["Next"]</span>
                     <span class="nav-icon">&rarr;</span>
@@ -219,6 +221,7 @@
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-keyboard-nav.js" asp-append-version="true"></script>
     <link rel="stylesheet" href="~/css/calendar-quick-entry.css" asp-append-version="true" />
     <script src="~/js/calendar-quick-entry.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>

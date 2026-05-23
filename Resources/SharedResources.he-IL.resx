@@ -10451,6 +10451,39 @@
   <data name="Calendar_ReadOnlyMode" xml:space="preserve">
     <value>מצב קריאה בלבד</value>
   </data>
+  <data name="Calendar_ReadOnlyHelp_AriaLabel" xml:space="preserve">
+    <value>מדוע לוח השנה הוא לקריאה בלבד?</value>
+  </data>
+  <data name="Calendar_ReadOnlyHelp_Intro" xml:space="preserve">
+    <value>לוח שנה זה הוא לקריאה בלבד מכיוון שאין לך הרשאה לערוך אותו. כדי לבצע שינויים דרושה אחת מההרשאות הבאות:</value>
+  </data>
+  <data name="Calendar_ReadOnlyHelp_AskAdmin" xml:space="preserve">
+    <value>אנא בקש ממנהל המערכת להעניק לך גישה.</value>
+  </data>
+  <data name="Grant_AssignAlhutShifts" xml:space="preserve">
+    <value>שיבוץ משמרות אלחוט</value>
+  </data>
+  <data name="Grant_AssignTextShifts" xml:space="preserve">
+    <value>שיבוץ משמרות טקסט</value>
+  </data>
+  <data name="Grant_AssignBRShifts" xml:space="preserve">
+    <value>שיבוץ משמרות ב"ר</value>
+  </data>
+  <data name="Grant_AssignTechShifts" xml:space="preserve">
+    <value>שיבוץ משמרות טכנולוגיות</value>
+  </data>
+  <data name="Grant_AssignChores" xml:space="preserve">
+    <value>שיבוץ מטלות</value>
+  </data>
+  <data name="Grant_ManageOnDuty" xml:space="preserve">
+    <value>ניהול כוננויות</value>
+  </data>
+  <data name="Grant_AssignHakamDuties" xml:space="preserve">
+    <value>שיבוץ כוננויות חק"מ</value>
+  </data>
+  <data name="Grant_AssignKatzinDuties" xml:space="preserve">
+    <value>שיבוץ כוננויות קצין</value>
+  </data>
   <data name="ShiftType" xml:space="preserve">
     <value>סוג משמרת</value>
   </data>

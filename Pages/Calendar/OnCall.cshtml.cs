@@ -71,6 +71,8 @@ public class OnCallModel : PageModel
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
     public bool CanEdit { get; set; }
+    // Grant NameKeys that would unlock editing when read-only; empty when CanEdit. Drives the "?" help.
+    public List<string> RequiredGrantNameKeys { get; set; } = new();
     // See Shifts.cshtml.cs for rationale: quick-entry toggle visible to any user with WriteOverviewNotes.
     public bool CanWriteNote { get; set; }
     public List<Area> AvailableAreas { get; set; } = new();
@@ -157,6 +159,12 @@ public class OnCallModel : PageModel
             || await _grantService.HasGrantAsync(currentUserId, "AssignKatzinDuties")
             || await _grantService.HasGrantAsync(currentUserId, "EditOnCallCalendar");
         CanWriteNote = CanEdit || await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
+
+        // When read-only, surface which on-call grant(s) the user is missing in the "?" help button.
+        RequiredGrantNameKeys = CanEdit
+            ? new List<string>()
+            : await _grantService.GetGrantNameKeysAsync(
+                "ManageOnDuty", "AssignHakamDuties", "AssignKatzinDuties", "EditOnCallCalendar");
 
         // Build calendar data (duty types as rows, dates as columns)
         await BuildDutyTypeBasedCalendarAsync();
@@ -428,7 +436,8 @@ public class OnCallModel : PageModel
             IsReadOnly = !CanEdit,
             CalendarType = "oncall",
             Rows = rows,
-            Groups = null // No grouping for duty types
+            Groups = null, // No grouping for duty types
+            RequiredGrantNameKeys = RequiredGrantNameKeys
         };
     }
 

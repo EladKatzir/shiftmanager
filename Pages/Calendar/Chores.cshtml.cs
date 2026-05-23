@@ -76,6 +76,8 @@ public class ChoresModel : PageModel
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
     public bool CanEdit { get; set; }
+    // Grant NameKeys that would unlock editing when read-only; empty when CanEdit. Drives the "?" help.
+    public List<string> RequiredGrantNameKeys { get; set; } = new();
     // See Shifts.cshtml.cs for rationale: quick-entry toggle visible to any user with WriteOverviewNotes.
     public bool CanWriteNote { get; set; }
     public List<Molecule> AvailableMolecules { get; set; } = new();
@@ -148,6 +150,11 @@ public class ChoresModel : PageModel
         // Check edit permission
         CanEdit = await _grantService.HasGrantAsync(currentUserId, "AssignChores");
         CanWriteNote = CanEdit || await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
+
+        // When read-only, surface the grant the user is missing in the calendar's "?" help button.
+        RequiredGrantNameKeys = CanEdit
+            ? new List<string>()
+            : await _grantService.GetGrantNameKeysAsync("AssignChores");
 
         // Build calendar data
         if (MoleculeId.HasValue)
@@ -310,7 +317,8 @@ public class ChoresModel : PageModel
             IsReadOnly = !CanEdit,
             CalendarType = "chores",
             Rows = rows,
-            Groups = groups.Any() ? groups : null
+            Groups = groups.Any() ? groups : null,
+            RequiredGrantNameKeys = RequiredGrantNameKeys
         };
     }
 

@@ -92,6 +92,9 @@ public class ShiftsModel : PageModel
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
     public bool CanEdit { get; set; }
+    // Grant NameKeys that would unlock editing when the calendar is read-only; empty when CanEdit.
+    // Surfaced by the read-only banner's "?" help button so the user knows which grant to request.
+    public List<string> RequiredGrantNameKeys { get; set; } = new();
     // Controls visibility of the quick-entry toggle button. True if user can assign (CanEdit) OR has
     // WriteOverviewNotes grant (company-scoped, every role has it). Lets non-assigning roles type
     // free-text notes on calendar cells. Slash commands still require CanEdit via data-can-assign.
@@ -203,6 +206,13 @@ public class ShiftsModel : PageModel
         // Note-writing is broader than assignment: any user with WriteOverviewNotes (every role has it)
         // can type free-text on calendar cells. Check is unscoped — grant 110 is company-wide by default.
         CanWriteNote = CanEdit || await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
+
+        // When read-only, resolve which assignment grant(s) the user is missing so the calendar's
+        // read-only banner can tell them exactly what to request from an administrator.
+        RequiredGrantNameKeys = CanEdit
+            ? new List<string>()
+            : await _grantService.GetGrantNameKeysAsync(
+                "AssignAlhutShifts", "AssignTextShifts", "AssignBRShifts", "AssignTechShifts");
 
         // Build calendar data based on mode
         // JobTypeId may be null for Tech molecules — service handles nullable jobTypeId
@@ -417,7 +427,8 @@ public class ShiftsModel : PageModel
             ViewMode = ViewMode,
             IsReadOnly = !CanEdit,
             CalendarType = "shifts",
-            Rows = rows
+            Rows = rows,
+            RequiredGrantNameKeys = RequiredGrantNameKeys
         };
     }
 
@@ -535,7 +546,8 @@ public class ShiftsModel : PageModel
             IsReadOnly = !CanEdit,
             CalendarType = "shifts",
             Rows = rows,
-            Groups = groups
+            Groups = groups,
+            RequiredGrantNameKeys = RequiredGrantNameKeys
         };
     }
 

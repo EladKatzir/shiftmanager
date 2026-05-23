@@ -19,7 +19,23 @@
 @if (Model.IsReadOnly)
 {
     <div class="excel-calendar__readonly-banner">
-        <loc key="Calendar_ReadOnlyMode" />
+        <span class="excel-calendar__readonly-text"><loc key="Calendar_ReadOnlyMode" /></span>
+        @if (Model.RequiredGrantNameKeys.Any())
+        {
+            <button type="button" class="excel-calendar__readonly-help"
+                    loc-aria-label="Calendar_ReadOnlyHelp_AriaLabel"
+                    loc-title="Calendar_ReadOnlyHelp_AriaLabel"
+                    onclick="window.showReadOnlyGrantHelp && window.showReadOnlyGrantHelp(this)">?</button>
+            @* Hidden, fully-localized payload; the "?" button reads this to build the FeedbackModal message. *@
+            <span class="excel-calendar__readonly-help-data" hidden
+                  data-intro="@Localizer["Calendar_ReadOnlyHelp_Intro"]"
+                  data-ask="@Localizer["Calendar_ReadOnlyHelp_AskAdmin"]">
+                @foreach (var nameKey in Model.RequiredGrantNameKeys)
+                {
+                    <span class="excel-calendar__readonly-help-grant">@Localizer[nameKey]</span>
+                }
+            </span>
+        }
     </div>
 }
 
