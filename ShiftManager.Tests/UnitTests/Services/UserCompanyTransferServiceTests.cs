@@ -295,5 +295,44 @@ public class UserCompanyTransferServiceTests : IDisposable
         _grants.Verify(g => g.AssignRoleTemplateGrantsAsync(userId, It.IsAny<string>(), It.IsAny<GrantScope>(), It.IsAny<int?>()), Times.Once);
     }
 
+    [Fact]
+    public async Task Move_MigratesAvatarFiles_ToDestFolder()
+    {
+        var (userId, src, dest) = await SeedAsync();
+
+        // Set AvatarFileName via the tracked entity (so the move's load sees it, not a stale null).
+        var u = await _db.Users.FirstAsync(x => x.Id == userId);
+        u.AvatarFileName = $"{userId}.jpg";
+        await _db.SaveChangesAsync();
+
+        var root = _env.Object.WebRootPath;
+        var srcDir = System.IO.Path.Combine(root, "avatars", src.ToString());
+        System.IO.Directory.CreateDirectory(srcDir);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(srcDir, $"{userId}.jpg"), "full");
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(srcDir, $"{userId}_thumb.jpg"), "thumb");
+
+        var result = await _svc.MoveUserToCompanyAsync(userId, dest, actingAdminId: userId + 999);
+        result.Success.Should().BeTrue();
+
+        var destDir = System.IO.Path.Combine(root, "avatars", dest.ToString());
+        System.IO.File.Exists(System.IO.Path.Combine(destDir, $"{userId}.jpg")).Should().BeTrue();
+        System.IO.File.Exists(System.IO.Path.Combine(destDir, $"{userId}_thumb.jpg")).Should().BeTrue();
+        // Old-folder copies removed after commit.
+        System.IO.File.Exists(System.IO.Path.Combine(srcDir, $"{userId}.jpg")).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Move_WritesAuditForBothCompanies()
+    {
+        var (userId, src, dest) = await SeedAsync();
+        var admin = userId + 999;
+
+        var result = await _svc.MoveUserToCompanyAsync(userId, dest, actingAdminId: admin);
+        result.Success.Should().BeTrue();
+
+        _audit.Verify(a => a.LogUserActionAsync(admin, src, "UserMovedOut", "User", userId, It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _audit.Verify(a => a.LogUserActionAsync(admin, dest, "UserMovedIn", "User", userId, It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
     public void Dispose() { _db.Dispose(); _conn.Dispose(); }
 }

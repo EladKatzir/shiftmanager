@@ -50,6 +50,7 @@ public class UserCompanyTransferService : IUserCompanyTransferService
         if (user.CompanyId == destCompanyId) return new MoveResult(false, "Error_MoveSameCompany");
 
         var sourceCompanyId = user.CompanyId;
+        var copiedDestPaths = new List<string>(); // dest avatar files copied pre-commit; cleaned up if the tx rolls back
 
         using var tx = await _db.Database.BeginTransactionAsync();
         try
@@ -196,24 +197,74 @@ public class UserCompanyTransferService : IUserCompanyTransferService
                 }
             }
             // --- AVATAR (Task 9) ---
+            // Copy avatar files to the dest folder BEFORE commit. AvatarService.GetAvatarUrl resolves the
+            // path via the CURRENT tenant, so the file must already exist under the destination company.
+            if (!string.IsNullOrEmpty(user.AvatarFileName))
+            {
+                var srcAvatarDir = Path.Combine(_env.WebRootPath, "avatars", sourceCompanyId.ToString());
+                var destAvatarDir = Path.Combine(_env.WebRootPath, "avatars", destCompanyId.ToString());
+                Directory.CreateDirectory(destAvatarDir);
+                foreach (var name in new[] { $"{userId}.jpg", $"{userId}_thumb.jpg" })
+                {
+                    var from = Path.Combine(srcAvatarDir, name);
+                    var to = Path.Combine(destAvatarDir, name);
+                    if (File.Exists(from))
+                    {
+                        File.Copy(from, to, overwrite: true);
+                        copiedDestPaths.Add(to);
+                    }
+                }
+            }
+
             // --- AUDIT (Task 10) ---
+            // Two entries with EXPLICIT companyId so BOTH old- and new-company admins can see the move.
+            var auditDetail = $"userId={userId};from={sourceCompanyId};to={destCompanyId};by={actingAdminId}";
+            await _auditLogService.LogUserActionAsync(actingAdminId, sourceCompanyId, "UserMovedOut", "User", userId,
+                $"User {userId} moved to company {destCompanyId}", auditDetail);
+            await _auditLogService.LogUserActionAsync(actingAdminId, destCompanyId, "UserMovedIn", "User", userId,
+                $"User {userId} moved from company {sourceCompanyId}", auditDetail);
 
             var save = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
                 () => _db.SaveChangesAsync(), "UserCompanyMove", userId);
             if (!save.Success)
             {
                 await tx.RollbackAsync();
+                CleanupCopiedFiles(copiedDestPaths);
                 return new MoveResult(false, "Error_ConcurrencyConflict");
             }
 
             await tx.CommitAsync();
+
+            // Post-commit: remove old-folder avatar copies (DB is already correct; best-effort).
+            if (!string.IsNullOrEmpty(user.AvatarFileName))
+            {
+                var oldAvatarDir = Path.Combine(_env.WebRootPath, "avatars", sourceCompanyId.ToString());
+                foreach (var name in new[] { $"{userId}.jpg", $"{userId}_thumb.jpg" })
+                {
+                    var p = Path.Combine(oldAvatarDir, name);
+                    try { if (File.Exists(p)) File.Delete(p); }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    { _logger.LogWarning(ex, "Failed deleting old avatar {Path}", p); }
+                }
+            }
             return new MoveResult(true);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "User move failed: user {UserId} -> company {DestCompanyId}", userId, destCompanyId);
             try { await tx.RollbackAsync(); } catch { /* tx already done */ }
+            CleanupCopiedFiles(copiedDestPaths); // a rolled-back move must not leave orphan files in the dest folder
             return new MoveResult(false, "Error_MoveFailed");
+        }
+    }
+
+    private void CleanupCopiedFiles(IEnumerable<string> paths)
+    {
+        foreach (var p in paths)
+        {
+            try { if (File.Exists(p)) File.Delete(p); }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            { _logger.LogWarning(ex, "Failed cleaning up copied avatar {Path}", p); }
         }
     }
 }
