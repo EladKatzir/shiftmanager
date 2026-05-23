@@ -1005,11 +1005,12 @@ public class AssignerRoleTests : IDisposable
         employeeGrantTypeIds.Should().BeSubsetOf(assignerGrantTypeIds,
             "Assigner should have all Employee grants");
 
-        // Assigner = Employee + AssignChores(17) + ViewAllUsers(34) + ViewJusticeTable(133)
-        // (3 extras — ViewAllUsers added 2026-04-18 to give molecule-wide AssignChores its user visibility;
-        //  ViewJusticeTable added 2026-05-03 for Justice analytics page access at Assigner's molecule scope)
-        assignerGrants.Should().HaveCount(employeeGrants.Count + 3,
-            "Assigner = Employee + AssignChores + ViewAllUsers + ViewJusticeTable");
+        // Assigner = Employee + AssignChores(17) + ViewAllUsers(34) + ViewJusticeTable(133) + ManageDistributionLists(135)
+        // (4 extras — ViewAllUsers added 2026-04-18 to give molecule-wide AssignChores its user visibility;
+        //  ViewJusticeTable added 2026-05-03 for Justice analytics page access at Assigner's molecule scope;
+        //  ManageDistributionLists added 2026-05-23 — Assigner manages calendar distribution lists at its molecule scope)
+        assignerGrants.Should().HaveCount(employeeGrants.Count + 4,
+            "Assigner = Employee + AssignChores + ViewAllUsers + ViewJusticeTable + ManageDistributionLists");
 
         // AssignChores (grant ID 17) should be area-scoped (2026-04-25 policy expansion:
         // Assigner reaches across the whole area to assign chores; other Assigner grants stay SAR)
