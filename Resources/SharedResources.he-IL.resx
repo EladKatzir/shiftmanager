@@ -15496,4 +15496,49 @@
   <data name="DistributionList_Cancel" xml:space="preserve">
     <value>ביטול</value>
   </data>
+  <data name="Users_Move" xml:space="preserve">
+    <value>העברה</value>
+  </data>
+  <data name="Users_MoveTitle" xml:space="preserve">
+    <value>העברת משתמש לחברה אחרת</value>
+  </data>
+  <data name="Users_MoveDestination" xml:space="preserve">
+    <value>חברת יעד</value>
+  </data>
+  <data name="Users_MoveSelectCompany" xml:space="preserve">
+    <value>בחר חברה…</value>
+  </data>
+  <data name="Users_MoveConfirm" xml:space="preserve">
+    <value>העבר משתמש</value>
+  </data>
+  <data name="Users_MoveSuccess" xml:space="preserve">
+    <value>המשתמש הועבר בהצלחה.</value>
+  </data>
+  <data name="Error_MoveSelf" xml:space="preserve">
+    <value>לא ניתן להעביר את עצמך.</value>
+  </data>
+  <data name="Error_MoveSameCompany" xml:space="preserve">
+    <value>המשתמש כבר נמצא בחברה זו.</value>
+  </data>
+  <data name="Error_MoveDestHq" xml:space="preserve">
+    <value>לא ניתן להעביר משתמש לחברת מטה.</value>
+  </data>
+  <data name="Error_NoPermissionSourceCompany" xml:space="preserve">
+    <value>אין לך הרשאה לחברה הנוכחית של המשתמש.</value>
+  </data>
+  <data name="Error_NoPermissionDestCompany" xml:space="preserve">
+    <value>אין לך הרשאה לחברת היעד.</value>
+  </data>
+  <data name="Error_NoPermissionMoveRole" xml:space="preserve">
+    <value>אין לך הרשאה להקצות את תפקיד המשתמש הזה.</value>
+  </data>
+  <data name="Error_MoveFailed" xml:space="preserve">
+    <value>לא ניתן היה להשלים את ההעברה.</value>
+  </data>
+  <data name="Users_MoveImpact_Summary" xml:space="preserve">
+    <value>ישפיע על: {0} משמרות, {1} בקשות חופשה, {2} מטלות, {3} בקשות החלפה, {4} תורנויות, {5} ניקודי משחק, {6} לוחות צוות (יועברו אליך), {7} מפתחות API יבוטלו.</value>
+  </data>
+  <data name="Users_MoveImpact_DirectorRemoval" xml:space="preserve">
+    <value>מסיר גישת מנהל מעל: {0}.</value>
+  </data>
 </root>

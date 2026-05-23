@@ -1041,6 +1041,11 @@
                                 <icon name="trash" />
                             </button>
                         </form>
+                        <button type="button" class="btn btn-sm js-move-user"
+                                data-user-id="@u.Id" data-user-name="@u.DisplayName" data-user-company="@u.CompanyName"
+                                title="@Localizer["Users_MoveTitle"]">
+                            @Localizer["Users_Move"]
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -1123,9 +1128,78 @@
     </form>
 </div>
 
+@* Move user between companies — destination picker + impact preview *@
+<dialog id="moveUserDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:480px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+    <form method="post" asp-page-handler="MoveUser" id="moveUserForm" style="margin:0; padding:1.5rem;">
+        @Html.AntiForgeryToken()
+        <h2 class="section-title" style="margin-top:0;">@Localizer["Users_MoveTitle"]</h2>
+        <p id="moveUserName" style="font-weight:600; margin:0.25rem 0 1rem; color:var(--text);"></p>
+        <input type="hidden" name="userId" id="moveUserId" />
+
+        <label for="moveDestCompany" style="display:block; margin-bottom:0.35rem;">@Localizer["Users_MoveDestination"]</label>
+        <select id="moveDestCompany" name="destCompanyId" class="form-input" style="width:100%; margin-bottom:1rem;" required>
+            <option value="">@Localizer["Users_MoveSelectCompany"]</option>
+            @foreach (var company in Model.AvailableCompanies)
+            {
+                <option value="@company.Id">@company.LocalizedName</option>
+            }
+        </select>
+
+        <div id="moveImpact" aria-live="polite" style="background:var(--surface-soft); padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem; font-size:0.85rem; min-height:1.5rem; color:var(--text); white-space:pre-line;"></div>
+
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button type="button" class="btn" id="moveCancelBtn">@Localizer["Button_Cancel"]</button>
+            <button type="submit" class="btn btn-danger" id="moveConfirmBtn" disabled>@Localizer["Users_MoveConfirm"]</button>
+        </div>
+    </form>
+</dialog>
+
 @section Scripts {
     <script>
         const selectedText = '@(Localizer["Selected"].Value.Trim())';
+
+        // --- Move user between companies (destination picker + impact preview) ---
+        (function () {
+            const dlg = document.getElementById('moveUserDialog');
+            if (!dlg) return;
+            const idField = document.getElementById('moveUserId');
+            const nameLabel = document.getElementById('moveUserName');
+            const destSelect = document.getElementById('moveDestCompany');
+            const impactBox = document.getElementById('moveImpact');
+            const confirmBtn = document.getElementById('moveConfirmBtn');
+            let currentUserId = null;
+
+            document.querySelectorAll('.js-move-user').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    currentUserId = btn.dataset.userId;
+                    idField.value = currentUserId;
+                    nameLabel.textContent = btn.dataset.userName + (btn.dataset.userCompany ? ' — ' + btn.dataset.userCompany : '');
+                    destSelect.value = '';
+                    impactBox.textContent = '';
+                    confirmBtn.disabled = true;
+                    dlg.showModal();
+                });
+            });
+
+            const cancelBtn = document.getElementById('moveCancelBtn');
+            if (cancelBtn) cancelBtn.addEventListener('click', function () { dlg.close(); });
+
+            destSelect.addEventListener('change', async function () {
+                const dest = destSelect.value;
+                confirmBtn.disabled = true;
+                if (!dest) { impactBox.textContent = ''; return; }
+                impactBox.textContent = '…';
+                try {
+                    const resp = await fetch('?handler=MoveImpact&userId=' + encodeURIComponent(currentUserId) + '&destCompanyId=' + encodeURIComponent(dest));
+                    const data = await resp.json();
+                    if (!data.ok) { impactBox.textContent = data.error || 'Error'; return; }
+                    impactBox.textContent = data.summary || '';
+                    confirmBtn.disabled = false;
+                } catch (e) {
+                    impactBox.textContent = 'Error';
+                }
+            });
+        })();
 
         // Client-side user table search filter
         function filterUserTable(query) {

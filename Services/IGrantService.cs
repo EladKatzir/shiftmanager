@@ -56,6 +56,8 @@ public interface IGrantService
 
     // Role template grant assignment for onboarding
     Task<int> AssignRoleTemplateGrantsAsync(int userId, string roleTemplateKey, GrantScope scope, int? grantedByUserId = null);
+    /// <summary>Builds the GrantScope for a role template key against a target company's hierarchy.</summary>
+    Task<GrantScope> BuildRoleTemplateScopeAsync(string roleTemplateKey, int companyId, int? jobTypeId);
     Task<GrantVerificationResult> VerifyUserGrantsAsync(int userId);
     Task<List<GrantVerificationResult>> VerifyAllUserGrantsAsync();
     Task<int> RepairUserGrantsAsync(int userId, int? repairedByUserId = null);

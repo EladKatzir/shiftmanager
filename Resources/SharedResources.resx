@@ -15534,4 +15534,49 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="DistributionList_Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
+  <data name="Users_Move" xml:space="preserve">
+    <value>Move</value>
+  </data>
+  <data name="Users_MoveTitle" xml:space="preserve">
+    <value>Move user to another company</value>
+  </data>
+  <data name="Users_MoveDestination" xml:space="preserve">
+    <value>Destination company</value>
+  </data>
+  <data name="Users_MoveSelectCompany" xml:space="preserve">
+    <value>Select a company…</value>
+  </data>
+  <data name="Users_MoveConfirm" xml:space="preserve">
+    <value>Move user</value>
+  </data>
+  <data name="Users_MoveSuccess" xml:space="preserve">
+    <value>User moved successfully.</value>
+  </data>
+  <data name="Error_MoveSelf" xml:space="preserve">
+    <value>You cannot move yourself.</value>
+  </data>
+  <data name="Error_MoveSameCompany" xml:space="preserve">
+    <value>The user is already in that company.</value>
+  </data>
+  <data name="Error_MoveDestHq" xml:space="preserve">
+    <value>Cannot move a user into a headquarters company.</value>
+  </data>
+  <data name="Error_NoPermissionSourceCompany" xml:space="preserve">
+    <value>You don't have permission over the user's current company.</value>
+  </data>
+  <data name="Error_NoPermissionDestCompany" xml:space="preserve">
+    <value>You don't have permission over the destination company.</value>
+  </data>
+  <data name="Error_NoPermissionMoveRole" xml:space="preserve">
+    <value>You don't have permission to assign this user's role.</value>
+  </data>
+  <data name="Error_MoveFailed" xml:space="preserve">
+    <value>The move could not be completed.</value>
+  </data>
+  <data name="Users_MoveImpact_Summary" xml:space="preserve">
+    <value>Will affect: {0} shifts, {1} time-off, {2} chores, {3} swap requests, {4} on-duty, {5} game scores, {6} team calendars (reassigned to you), {7} API keys revoked.</value>
+  </data>
+  <data name="Users_MoveImpact_DirectorRemoval" xml:space="preserve">
+    <value>Removes director access over: {0}.</value>
+  </data>
 </root>
