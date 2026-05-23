@@ -12,6 +12,9 @@ public interface IAuditLogService
 {
     Task LogAsync(string action, string entityType, int? entityId, string description, string? details = null);
     Task LogUserActionAsync(int userId, string action, string entityType, int? entityId, string description, string? details = null);
+    /// <summary>Writes an audit entry under an EXPLICIT company (not the current tenant).
+    /// Used by cross-company operations like user moves.</summary>
+    Task LogUserActionAsync(int userId, int companyId, string action, string entityType, int? entityId, string description, string? details = null);
     Task LogSystemActionAsync(string action, string entityType, int? entityId, string description, string? details = null);
     Task<List<AuditLog>> GetRecentLogsAsync(int count = 10);
 }
@@ -90,6 +93,55 @@ public class AuditLogService : IAuditLogService
             var auditLog = new AuditLog
             {
                 CompanyId = _tenantResolver.GetCurrentTenantId(),
+                UserId = userId,
+                UserEmail = user.Email,
+                UserDisplayName = user.DisplayName,
+                Action = action,
+                EntityType = entityType,
+                EntityId = entityId,
+                Description = description,
+                Details = details,
+                Timestamp = DateTime.UtcNow,
+                IpAddress = ipAddress,
+                UserAgent = userAgent
+            };
+
+            _db.AuditLogs.Add(auditLog);
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Audit log created: {Action} by {UserEmail} on {EntityType}:{EntityId}",
+                action, user.Email, entityType, entityId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error logging user action {Action} for user {UserId}", action, userId);
+            // Don't throw - audit logging should never break the main operation
+        }
+    }
+
+    /// <summary>
+    /// Log an action performed by a specific user under an EXPLICIT company (not the current tenant).
+    /// Used by cross-company operations like user moves.
+    /// </summary>
+    public async Task LogUserActionAsync(int userId, int companyId, string action, string entityType, int? entityId, string description, string? details = null)
+    {
+        try
+        {
+            // Fetch user details — still create audit entry even if user was deleted
+            var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                _logger.LogWarning("User {UserId} not found for audit log — creating log with placeholder", userId);
+                user = new AppUser { Id = userId, Email = $"deleted-user-{userId}", DisplayName = $"User #{userId} (deleted)" };
+            }
+
+            var httpContext = _httpContextAccessor.HttpContext;
+            var ipAddress = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "Unknown";
+            var userAgent = httpContext?.Request?.Headers["User-Agent"].ToString() ?? "Unknown";
+
+            var auditLog = new AuditLog
+            {
+                CompanyId = companyId,
                 UserId = userId,
                 UserEmail = user.Email,
                 UserDisplayName = user.DisplayName,
