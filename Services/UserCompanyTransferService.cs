@@ -31,8 +31,48 @@ public class UserCompanyTransferService : IUserCompanyTransferService
         _logger = logger;
     }
 
-    public Task<MoveImpact> GetMoveImpactAsync(int userId, int destCompanyId)
-        => throw new NotImplementedException();
+    public async Task<MoveImpact> GetMoveImpactAsync(int userId, int destCompanyId)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var user = await _db.Users.IgnoreQueryFilters().AsNoTracking() // SECURITY-AUDITED: preview by explicit id
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+            return new MoveImpact(0, 0, 0, 0, 0, 0, 0, 0, 0, false, false, false, false,
+                Array.Empty<string>(), new[] { "User not found" });
+
+        // SECURITY-AUDITED: each count scoped to userId; read-only preview, mirrors the move's predicates.
+        var futureShifts = await _db.ShiftAssignments.IgnoreQueryFilters()
+            .CountAsync(sa => sa.UserId == userId && sa.ShiftInstance!.WorkDate >= today);
+        var timeOff = await _db.TimeOffRequests.IgnoreQueryFilters()
+            .CountAsync(t => t.UserId == userId && (t.Status == RequestStatus.Pending
+                || t.Status == RequestStatus.PendingSecondApproval
+                || (t.Status == RequestStatus.Approved && t.EndDate >= today)));
+        var chores = await _db.Chores.IgnoreQueryFilters()
+            .CountAsync(c => c.UserId == userId && c.Date >= today && c.CanceledAt == null);
+        var swaps = await _db.SwapRequests.IgnoreQueryFilters()
+            .CountAsync(sr => (sr.FromUserId == userId || sr.ToUserId == userId)
+                && (sr.Status == RequestStatus.Pending || sr.Status == RequestStatus.PendingSecondApproval));
+        var onDuty = await _db.OnDuties.IgnoreQueryFilters()
+            .CountAsync(o => o.UserId == userId && o.Date >= today && o.CanceledAt == null);
+        var games = await _db.GameScores.IgnoreQueryFilters().CountAsync(g => g.UserId == userId);
+        var ownedCals = await _db.TeamCalendars.IgnoreQueryFilters().CountAsync(t => t.OwnerId == userId);
+        var apiKeys = await _db.ApiKeys.IgnoreQueryFilters().CountAsync(k => k.CreatedBy == userId);
+        var approverRules = await _db.VacationApprovalRules.IgnoreQueryFilters().CountAsync(r => r.ApproverUserId == userId);
+
+        var directorCompanies = await _db.DirectorCompanies.IgnoreQueryFilters()
+            .Where(d => d.UserId == userId)
+            .Join(_db.Companies.IgnoreQueryFilters(), d => d.CompanyId, c => c.Id, (d, c) => c.Name)
+            .ToListAsync();
+
+        return new MoveImpact(
+            futureShifts, timeOff, chores, swaps, onDuty, games, ownedCals, apiKeys, approverRules,
+            WillResetJobType: user.JobTypeId.HasValue,
+            WillResetDepartment: user.DepartmentId.HasValue,
+            WillResetPrimaryShiftType: user.PrimaryShiftTypeId.HasValue,
+            WillResetHomeType: user.HomeTypeId.HasValue,
+            DirectorCompaniesRemoved: directorCompanies,
+            Warnings: Array.Empty<string>());
+    }
 
     public async Task<MoveResult> MoveUserToCompanyAsync(int userId, int destCompanyId, int actingAdminId)
     {

@@ -334,5 +334,29 @@ public class UserCompanyTransferServiceTests : IDisposable
         _audit.Verify(a => a.LogUserActionAsync(admin, dest, "UserMovedIn", "User", userId, It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
+    [Fact]
+    public async Task GetMoveImpact_CountsMatchSeededData()
+    {
+        var (userId, _, dest) = await SeedAsync(); // 1 future shift, 1 pending time-off, 1 chore, 1 on-duty, 1 game score
+
+        var impact = await _svc.GetMoveImpactAsync(userId, dest);
+
+        impact.FutureShifts.Should().Be(1);
+        impact.PendingOrFutureTimeOff.Should().Be(1);
+        impact.FutureChores.Should().Be(1);
+        impact.FutureOnDuty.Should().Be(1);
+        impact.GameScores.Should().Be(1);
+        impact.WillResetJobType.Should().BeTrue();
+        impact.WillResetHomeType.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetMoveImpact_UnknownUser_ReturnsZeroWithWarning()
+    {
+        var impact = await _svc.GetMoveImpactAsync(userId: 999999, destCompanyId: 1);
+        impact.FutureShifts.Should().Be(0);
+        impact.Warnings.Should().NotBeEmpty();
+    }
+
     public void Dispose() { _db.Dispose(); _conn.Dispose(); }
 }
