@@ -358,5 +358,44 @@ public class UserCompanyTransferServiceTests : IDisposable
         impact.Warnings.Should().NotBeEmpty();
     }
 
+    [Fact]
+    public async Task Move_WithRoleTemplate_RecreatesRoleAssignmentScopedToDest()
+    {
+        var (userId, _, dest) = await SeedAsync();
+        var u = await _db.Users.FirstAsync(x => x.Id == userId);
+        u.RoleTemplateId = 1; // having a template fires the recreation path
+        await _db.SaveChangesAsync();
+
+        var result = await _svc.MoveUserToCompanyAsync(userId, dest, actingAdminId: userId + 999);
+        result.Success.Should().BeTrue();
+
+        var assignments = await _db.UserRoleAssignments.IgnoreQueryFilters().Where(a => a.UserId == userId).ToListAsync();
+        assignments.Should().ContainSingle();
+        assignments[0].RoleTemplateId.Should().Be(1);
+        assignments[0].IsActive.Should().BeTrue();
+        // CompanyId comes from the mocked BuildRoleTemplateScopeAsync (GrantScope(CompanyId: 2)) — proves dest scope was used.
+        assignments[0].CompanyId.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Move_DirectorRole_RecreatesDirectorCompanyAtDestHq()
+    {
+        var (userId, _, dest) = await SeedAsync();
+        var destMoleculeId = (await _db.Companies.IgnoreQueryFilters().FirstAsync(c => c.Id == dest)).MoleculeId;
+        var hq = new Company { MoleculeId = destMoleculeId, Name = "HQ", DisplayName = "HQ", IsHeadquarters = true };
+        _db.Companies.Add(hq); await _db.SaveChangesAsync();
+
+        var u = await _db.Users.FirstAsync(x => x.Id == userId);
+        u.Role = UserRole.Director;
+        await _db.SaveChangesAsync();
+
+        var result = await _svc.MoveUserToCompanyAsync(userId, dest, actingAdminId: userId + 999);
+        result.Success.Should().BeTrue();
+
+        var dc = await _db.DirectorCompanies.IgnoreQueryFilters().Where(d => d.UserId == userId).ToListAsync();
+        dc.Should().ContainSingle();
+        dc[0].CompanyId.Should().Be(hq.Id); // recreated at the destination molecule's HQ
+    }
+
     public void Dispose() { _db.Dispose(); _conn.Dispose(); }
 }
