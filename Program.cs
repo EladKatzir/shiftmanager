@@ -1328,7 +1328,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Seed Owner user's grants - GODMODE: ALL 135 grants at Project level
+    // Seed Owner user's grants - GODMODE: ALL 134 grants at Project level
     var ownerUserForGrants = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Role == UserRole.Owner);
     if (ownerUserForGrants != null)
     {
