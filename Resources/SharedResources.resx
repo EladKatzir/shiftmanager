@@ -15061,6 +15061,78 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Justice_Panel_LoadFailed" xml:space="preserve"><value>Couldn't load Justice data.</value></data>
   <data name="Justice_Panel_PreviewLoadFailed" xml:space="preserve"><value>Couldn't compute preview.</value></data>
   <data name="Justice_Panel_CandidatesLoadFailed" xml:space="preserve"><value>Couldn't load candidates.</value></data>
+  <!-- Justice redesign (B2) — new keys added 2026-05-24 -->
+  <data name="Justice_Eyebrow" xml:space="preserve"><value>Fairness</value></data>
+  <data name="Justice_CappedRole_Banner" xml:space="preserve"><value>Some molecules are visible at area level only — user-level breakdown is unavailable for locked rows.</value></data>
+  <data name="Justice_CappedRole_Aria" xml:space="preserve"><value>Notice: some rows are locked to molecule-level view.</value></data>
+  <data name="Justice_FairnessBasis" xml:space="preserve"><value>Fairness basis</value></data>
+  <data name="Justice_Basis_BySize" xml:space="preserve"><value>By team size</value></data>
+  <data name="Justice_Basis_EqualShare" xml:space="preserve"><value>Equal share</value></data>
+  <data name="Justice_Period" xml:space="preserve"><value>Period</value></data>
+  <data name="Justice_PeriodPresets_Aria" xml:space="preserve"><value>Quick period presets</value></data>
+  <data name="Justice_Preset_ThisMonth" xml:space="preserve"><value>This month</value></data>
+  <data name="Justice_Preset_LastMonth" xml:space="preserve"><value>Last month</value></data>
+  <data name="Justice_Preset_Last3M" xml:space="preserve"><value>Last 3 months</value></data>
+  <data name="Justice_From" xml:space="preserve"><value>From</value></data>
+  <data name="Justice_To" xml:space="preserve"><value>To</value></data>
+  <data name="Justice_DrillInto" xml:space="preserve"><value>Drill into</value></data>
+  <data name="Justice_DrillInto_Placeholder" xml:space="preserve"><value>Select…</value></data>
+  <data name="Justice_DrillInto_Aria" xml:space="preserve"><value>Drill-into selection menu</value></data>
+  <data name="Justice_DrillMenu_Companies" xml:space="preserve"><value>Companies</value></data>
+  <data name="Justice_DrillMenu_Molecules" xml:space="preserve"><value>Molecules</value></data>
+  <data name="Justice_DrillMenu_Units" xml:space="preserve"><value>Units</value></data>
+  <data name="Justice_DrillMenu_AllUsersInMolecule" xml:space="preserve"><value>All users in molecule</value></data>
+  <data name="Justice_AB_Compare" xml:space="preserve"><value>Compare periods</value></data>
+  <data name="Justice_AB_From" xml:space="preserve"><value>Compare from</value></data>
+  <data name="Justice_AB_To" xml:space="preserve"><value>Compare to</value></data>
+  <data name="Justice_AB_ClearTitle" xml:space="preserve"><value>Clear A/B comparison</value></data>
+  <data name="Justice_AB_ActiveAria" xml:space="preserve"><value>A/B comparison active — click to clear</value></data>
+  <data name="Justice_AB_Label" xml:space="preserve"><value>active</value></data>
+  <data name="Justice_AB_Active" xml:space="preserve"><value>A/B comparison active.</value></data>
+  <data name="Justice_AB_DeltaHint" xml:space="preserve"><value>Δ columns show period-A minus period-B.</value></data>
+  <data name="Justice_AB_Close" xml:space="preserve"><value>Dismiss A/B hint bar</value></data>
+  <data name="Justice_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Justice_GaugeEyebrow" xml:space="preserve"><value>Equity gauge</value></data>
+  <data name="Justice_GaugeAria" xml:space="preserve"><value>Equity gauge: spread index {0}, rating {1}</value></data>
+  <data name="Justice_SpreadIndex" xml:space="preserve"><value>Spread index</value></data>
+  <data name="Justice_SeverityAria" xml:space="preserve"><value>Severity: {0} out of 4</value></data>
+  <data name="Justice_BandLegend_Aria" xml:space="preserve"><value>Band legend</value></data>
+  <data name="Justice_Band_Over" xml:space="preserve"><value>Over</value></data>
+  <data name="Justice_Band_SoftOver" xml:space="preserve"><value>Slightly over</value></data>
+  <data name="Justice_Band_Balanced" xml:space="preserve"><value>Balanced</value></data>
+  <data name="Justice_Band_SoftUnder" xml:space="preserve"><value>Slightly under</value></data>
+  <data name="Justice_Band_Under" xml:space="preserve"><value>Under</value></data>
+  <data name="Justice_MostOver_Aria" xml:space="preserve"><value>Most overloaded</value></data>
+  <data name="Justice_MostUnder_Aria" xml:space="preserve"><value>Most underloaded</value></data>
+  <data name="Justice_DonutEyebrow" xml:space="preserve"><value>Work distribution</value></data>
+  <data name="Justice_DonutAria" xml:space="preserve"><value>Donut chart: {0} total work units distributed across entities</value></data>
+  <data name="Justice_DonutTotal" xml:space="preserve"><value>Total</value></data>
+  <data name="Justice_DonutLegend_Aria" xml:space="preserve"><value>Donut chart legend</value></data>
+  <data name="Justice_BandKey_Aria" xml:space="preserve"><value>Deviation band key</value></data>
+  <data name="Justice_Table_Aria" xml:space="preserve"><value>Justice table</value></data>
+  <data name="Justice_Col_PctTotal" xml:space="preserve"><value>% of total</value></data>
+  <data name="Justice_Col_ExpectedPct" xml:space="preserve"><value>Expected %</value></data>
+  <data name="Justice_Col_VsOther" xml:space="preserve"><value>vs other period</value></data>
+  <data name="Justice_Col_Trend" xml:space="preserve"><value>Trend</value></data>
+  <data name="Justice_BasisTag_BySize_Title" xml:space="preserve"><value>Basis: proportional to team size</value></data>
+  <data name="Justice_BasisTag_Equal_Title" xml:space="preserve"><value>Basis: equal share per entity</value></data>
+  <data name="Justice_DrillArrow_Title" xml:space="preserve"><value>Drill into {0}</value></data>
+  <data name="Justice_DrillArrow_Label" xml:space="preserve"><value>Drill in</value></data>
+  <data name="Justice_LockBadge" xml:space="preserve"><value>Locked</value></data>
+  <data name="Justice_LockBadge_Title" xml:space="preserve"><value>This row is locked to molecule-level — user breakdown unavailable.</value></data>
+  <data name="Justice_LockBadge_Aria" xml:space="preserve"><value>Locked row — user-level breakdown unavailable</value></data>
+  <data name="Justice_DevPill_Aria" xml:space="preserve"><value>Deviation: {0}, band: {1}</value></data>
+  <data name="Justice_Trend_Aria" xml:space="preserve"><value>Trend sparkline</value></data>
+  <data name="Justice_Ribbon_Label" xml:space="preserve"><value>Equity ribbon</value></data>
+  <data name="Justice_ReminderCard_Title" xml:space="preserve"><value>Drill deeper</value></data>
+  <data name="Justice_ReminderCard_Body" xml:space="preserve"><value>You are viewing molecule level. Drill into a company or view all users directly.</value></data>
+  <data name="Justice_ReminderCard_PathA_Label" xml:space="preserve"><value>Option A</value></data>
+  <data name="Justice_ReminderCard_PathA_Action" xml:space="preserve"><value>Click any company row</value></data>
+  <data name="Justice_ReminderCard_PathA_Hint" xml:space="preserve"><value>Opens the user breakdown for that company.</value></data>
+  <data name="Justice_ReminderCard_PathB_Label" xml:space="preserve"><value>Option B</value></data>
+  <data name="Justice_ReminderCard_PathB_Action" xml:space="preserve"><value>View all users in molecule</value></data>
+  <data name="Justice_ReminderCard_PathB_Hint" xml:space="preserve"><value>Shows all users in {0} side by side.</value></data>
+  <data name="Justice_ReminderCard_PathB_Aria" xml:space="preserve"><value>View all users in molecule: {0}</value></data>
   <data name="AreaPalette_PreviewBadge_Morning" xml:space="preserve"><value>Morning</value></data>
   <data name="AreaPalette_PreviewBadge_Afternoon" xml:space="preserve"><value>Afternoon</value></data>
   <data name="AreaPalette_PreviewBadge_Night" xml:space="preserve"><value>Night</value></data>

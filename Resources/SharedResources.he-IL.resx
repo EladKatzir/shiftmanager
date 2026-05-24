@@ -15027,6 +15027,78 @@
   <data name="Justice_Panel_LoadFailed" xml:space="preserve"><value>לא ניתן לטעון נתוני צדק.</value></data>
   <data name="Justice_Panel_PreviewLoadFailed" xml:space="preserve"><value>לא ניתן לחשב תצוגה מקדימה.</value></data>
   <data name="Justice_Panel_CandidatesLoadFailed" xml:space="preserve"><value>לא ניתן לטעון מועמדים.</value></data>
+  <!-- Justice redesign (B2) — new keys added 2026-05-24 -->
+  <data name="Justice_Eyebrow" xml:space="preserve"><value>צדק</value></data>
+  <data name="Justice_CappedRole_Banner" xml:space="preserve"><value>חלק מהמולקולות גלויות ברמת המרחב בלבד — פירוט ברמת משתמש אינו זמין לשורות נעולות.</value></data>
+  <data name="Justice_CappedRole_Aria" xml:space="preserve"><value>הודעה: חלק מהשורות נעולות לתצוגת מולקולה בלבד.</value></data>
+  <data name="Justice_FairnessBasis" xml:space="preserve"><value>בסיס הוגנות</value></data>
+  <data name="Justice_Basis_BySize" xml:space="preserve"><value>לפי גודל צוות</value></data>
+  <data name="Justice_Basis_EqualShare" xml:space="preserve"><value>חלק שווה</value></data>
+  <data name="Justice_Period" xml:space="preserve"><value>תקופה</value></data>
+  <data name="Justice_PeriodPresets_Aria" xml:space="preserve"><value>קיצורי תקופה מהירים</value></data>
+  <data name="Justice_Preset_ThisMonth" xml:space="preserve"><value>החודש</value></data>
+  <data name="Justice_Preset_LastMonth" xml:space="preserve"><value>חודש שעבר</value></data>
+  <data name="Justice_Preset_Last3M" xml:space="preserve"><value>3 חודשים אחרונים</value></data>
+  <data name="Justice_From" xml:space="preserve"><value>מ-</value></data>
+  <data name="Justice_To" xml:space="preserve"><value>עד</value></data>
+  <data name="Justice_DrillInto" xml:space="preserve"><value>התעמק ב-</value></data>
+  <data name="Justice_DrillInto_Placeholder" xml:space="preserve"><value>בחר…</value></data>
+  <data name="Justice_DrillInto_Aria" xml:space="preserve"><value>תפריט בחירה להתעמקות</value></data>
+  <data name="Justice_DrillMenu_Companies" xml:space="preserve"><value>חברות</value></data>
+  <data name="Justice_DrillMenu_Molecules" xml:space="preserve"><value>מולקולות</value></data>
+  <data name="Justice_DrillMenu_Units" xml:space="preserve"><value>יחידות</value></data>
+  <data name="Justice_DrillMenu_AllUsersInMolecule" xml:space="preserve"><value>כל המשתמשים במולקולה</value></data>
+  <data name="Justice_AB_Compare" xml:space="preserve"><value>השוואת תקופות</value></data>
+  <data name="Justice_AB_From" xml:space="preserve"><value>השווה מ-</value></data>
+  <data name="Justice_AB_To" xml:space="preserve"><value>השווה עד</value></data>
+  <data name="Justice_AB_ClearTitle" xml:space="preserve"><value>נקה השוואת A/B</value></data>
+  <data name="Justice_AB_ActiveAria" xml:space="preserve"><value>השוואת A/B פעילה — לחץ לביטול</value></data>
+  <data name="Justice_AB_Label" xml:space="preserve"><value>פעיל</value></data>
+  <data name="Justice_AB_Active" xml:space="preserve"><value>השוואת A/B פעילה.</value></data>
+  <data name="Justice_AB_DeltaHint" xml:space="preserve"><value>עמודות Δ מציגות תקופה-A פחות תקופה-B.</value></data>
+  <data name="Justice_AB_Close" xml:space="preserve"><value>סגור את סרגל ה-A/B</value></data>
+  <data name="Justice_Close" xml:space="preserve"><value>סגור</value></data>
+  <data name="Justice_GaugeEyebrow" xml:space="preserve"><value>מד שוויון</value></data>
+  <data name="Justice_GaugeAria" xml:space="preserve"><value>מד שוויון: מדד פיזור {0}, דירוג {1}</value></data>
+  <data name="Justice_SpreadIndex" xml:space="preserve"><value>מדד פיזור</value></data>
+  <data name="Justice_SeverityAria" xml:space="preserve"><value>חומרה: {0} מתוך 4</value></data>
+  <data name="Justice_BandLegend_Aria" xml:space="preserve"><value>מקרא פסי סטייה</value></data>
+  <data name="Justice_Band_Over" xml:space="preserve"><value>עמוס</value></data>
+  <data name="Justice_Band_SoftOver" xml:space="preserve"><value>עמוס קלות</value></data>
+  <data name="Justice_Band_Balanced" xml:space="preserve"><value>מאוזן</value></data>
+  <data name="Justice_Band_SoftUnder" xml:space="preserve"><value>קל מדי</value></data>
+  <data name="Justice_Band_Under" xml:space="preserve"><value>תת-עומס</value></data>
+  <data name="Justice_MostOver_Aria" xml:space="preserve"><value>עמוס ביותר</value></data>
+  <data name="Justice_MostUnder_Aria" xml:space="preserve"><value>פחות עמוס ביותר</value></data>
+  <data name="Justice_DonutEyebrow" xml:space="preserve"><value>התפלגות עבודה</value></data>
+  <data name="Justice_DonutAria" xml:space="preserve"><value>תרשים עוגה: {0} יחידות עבודה מחולקות בין הישויות</value></data>
+  <data name="Justice_DonutTotal" xml:space="preserve"><value>סה"כ</value></data>
+  <data name="Justice_DonutLegend_Aria" xml:space="preserve"><value>מקרא תרשים העוגה</value></data>
+  <data name="Justice_BandKey_Aria" xml:space="preserve"><value>מפתח פסי סטייה</value></data>
+  <data name="Justice_Table_Aria" xml:space="preserve"><value>טבלת צדק</value></data>
+  <data name="Justice_Col_PctTotal" xml:space="preserve"><value>% מהכלל</value></data>
+  <data name="Justice_Col_ExpectedPct" xml:space="preserve"><value>% צפוי</value></data>
+  <data name="Justice_Col_VsOther" xml:space="preserve"><value>מול תקופה אחרת</value></data>
+  <data name="Justice_Col_Trend" xml:space="preserve"><value>מגמה</value></data>
+  <data name="Justice_BasisTag_BySize_Title" xml:space="preserve"><value>בסיס: יחסי לגודל הצוות</value></data>
+  <data name="Justice_BasisTag_Equal_Title" xml:space="preserve"><value>בסיס: חלק שווה לכל ישות</value></data>
+  <data name="Justice_DrillArrow_Title" xml:space="preserve"><value>התעמק ב-{0}</value></data>
+  <data name="Justice_DrillArrow_Label" xml:space="preserve"><value>כניסה</value></data>
+  <data name="Justice_LockBadge" xml:space="preserve"><value>נעול</value></data>
+  <data name="Justice_LockBadge_Title" xml:space="preserve"><value>שורה זו נעולה לרמת מולקולה — פירוט משתמשים אינו זמין.</value></data>
+  <data name="Justice_LockBadge_Aria" xml:space="preserve"><value>שורה נעולה — פירוט ברמת משתמש אינו זמין</value></data>
+  <data name="Justice_DevPill_Aria" xml:space="preserve"><value>סטייה: {0}, פס: {1}</value></data>
+  <data name="Justice_Trend_Aria" xml:space="preserve"><value>גרף מגמה</value></data>
+  <data name="Justice_Ribbon_Label" xml:space="preserve"><value>סרגל שוויון</value></data>
+  <data name="Justice_ReminderCard_Title" xml:space="preserve"><value>התעמק עוד</value></data>
+  <data name="Justice_ReminderCard_Body" xml:space="preserve"><value>אתה צופה ברמת מולקולה. התעמק לחברה ספציפית או צפה בכל המשתמשים ישירות.</value></data>
+  <data name="Justice_ReminderCard_PathA_Label" xml:space="preserve"><value>אפשרות א'</value></data>
+  <data name="Justice_ReminderCard_PathA_Action" xml:space="preserve"><value>לחץ על שורת חברה</value></data>
+  <data name="Justice_ReminderCard_PathA_Hint" xml:space="preserve"><value>פותח את פירוט המשתמשים לחברה זו.</value></data>
+  <data name="Justice_ReminderCard_PathB_Label" xml:space="preserve"><value>אפשרות ב'</value></data>
+  <data name="Justice_ReminderCard_PathB_Action" xml:space="preserve"><value>כל המשתמשים במולקולה</value></data>
+  <data name="Justice_ReminderCard_PathB_Hint" xml:space="preserve"><value>מציג את כל המשתמשים ב-{0} זה לצד זה.</value></data>
+  <data name="Justice_ReminderCard_PathB_Aria" xml:space="preserve"><value>צפה בכל המשתמשים במולקולה: {0}</value></data>
   <data name="AreaPalette_PreviewBadge_Morning" xml:space="preserve"><value>בוקר</value></data>
   <data name="AreaPalette_PreviewBadge_Afternoon" xml:space="preserve"><value>צהריים</value></data>
   <data name="AreaPalette_PreviewBadge_Night" xml:space="preserve"><value>לילה</value></data>
