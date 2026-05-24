@@ -1093,16 +1093,27 @@ public class JusticeService : IJusticeService
             JusticeWorkType.Shift => await BuildShiftHolesAsync(q, ct),
             JusticeWorkType.Chore => await BuildChoreHolesAsync(q, ct),
             JusticeWorkType.OnDuty => await BuildOnDutyHolesAsync(q, ct),
-            JusticeWorkType.All => (await Task.WhenAll(
-                                        BuildShiftHolesAsync(q, ct),
-                                        BuildChoreHolesAsync(q, ct),
-                                        BuildOnDutyHolesAsync(q, ct)))
-                                    .SelectMany(h => h)
-                                    .OrderBy(h => h.Date)
-                                    .Take(WhereToFocusTopN)
-                                    .ToList(),
+            JusticeWorkType.All => await BuildAllHolesSequentialAsync(q, ct),
             _ => new List<UnfilledHole>()
         };
+    }
+
+    /// <summary>
+    /// Sequential fallback for <see cref="JusticeWorkType.All"/>: awaits each builder in turn
+    /// to avoid concurrent access on the shared <see cref="AppDbContext"/> (EF Core scoped services
+    /// are not thread-safe).
+    /// </summary>
+    private async Task<List<UnfilledHole>> BuildAllHolesSequentialAsync(JusticeQuery q, CancellationToken ct)
+    {
+        var shifts  = await BuildShiftHolesAsync(q, ct);
+        var chores  = await BuildChoreHolesAsync(q, ct);
+        var onDuty  = await BuildOnDutyHolesAsync(q, ct);
+        return shifts
+            .Concat(chores)
+            .Concat(onDuty)
+            .OrderBy(h => h.Date)
+            .Take(WhereToFocusTopN)
+            .ToList();
     }
 
     private async Task<List<UnfilledHole>> BuildShiftHolesAsync(JusticeQuery q, CancellationToken ct)

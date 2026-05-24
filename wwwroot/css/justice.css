@@ -633,6 +633,12 @@ svg { display: block; flex-shrink: 0; }
 .verdict-badge.moderate { background: var(--warning-soft); color: var(--warning); box-shadow: var(--shadow-warning); }
 .verdict-badge.fair     { background: var(--success-soft); color: var(--success); box-shadow: var(--shadow-success); }
 .verdict-badge.heavy    { background: var(--danger-soft);  color: var(--danger);  box-shadow: var(--shadow-danger); }
+/* Numeric severity classes (sev-0 … sev-4) — emitted by the server as sev-@SpreadSeverity */
+.verdict-badge.sev-0 { background: var(--success-soft); color: var(--success) !important; box-shadow: var(--shadow-success); }
+.verdict-badge.sev-1 { background: var(--success-soft); color: var(--success) !important; }
+.verdict-badge.sev-2 { background: var(--warning-soft); color: var(--warning) !important; box-shadow: var(--shadow-warning); }
+.verdict-badge.sev-3 { background: var(--danger-soft);  color: var(--danger)  !important; box-shadow: var(--shadow-danger); }
+.verdict-badge.sev-4 { background: var(--danger-soft);  color: var(--danger)  !important; box-shadow: var(--shadow-danger); }
 
 /* Gauge legend */
 .gauge-legend {
@@ -872,6 +878,7 @@ table.jt tbody tr.locked:hover { background: repeating-linear-gradient(135deg, t
   transition: transform 150ms var(--overshoot), color 150ms;
   flex-shrink: 0;
 }
+[dir="rtl"] .drill-arr { transform: scaleX(-1); display: inline-block; }
 
 /* Share bar in share column */
 .share-bar-wrap { display: flex; align-items: center; gap: 0.5rem; min-width: 80px; }
@@ -897,6 +904,19 @@ table.jt tbody tr.locked:hover { background: repeating-linear-gradient(135deg, t
 .dev-band-notarget  { background: var(--surface-soft); color: var(--text-muted) !important; border: 1px solid var(--border); }
 [data-theme="dark"] .dev-band-softunder { color: var(--accent) !important; }
 [data-theme="dark"] .dev-band-under     { color: var(--accent) !important; }
+
+/* SVG stroke for donut segments and sparkline polylines */
+.donut-seg.dev-band-over,      polyline.dev-band-over      { stroke: var(--danger); }
+.donut-seg.dev-band-softover,  polyline.dev-band-softover  { stroke: var(--warning); }
+.donut-seg.dev-band-balanced,  polyline.dev-band-balanced  { stroke: var(--success); }
+.donut-seg.dev-band-softunder, polyline.dev-band-softunder { stroke: var(--accent); }
+.donut-seg.dev-band-under,     polyline.dev-band-under     { stroke: var(--primary); }
+/* Sparkline end-dot fill */
+circle.dev-band-over     { fill: var(--danger); }
+circle.dev-band-softover { fill: var(--warning); }
+circle.dev-band-balanced { fill: var(--success); }
+circle.dev-band-softunder{ fill: var(--accent); }
+circle.dev-band-under    { fill: var(--primary); }
 /* Dark fix: warning-text (#1A1F2B) on warning-soft (#3D3520) was dark-on-dark.
    Use the light warning hue for legible soft-over pills in dark mode. */
 [data-theme="dark"] .dev-band-softover  { color: var(--warning) !important; }

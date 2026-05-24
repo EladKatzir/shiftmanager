@@ -292,9 +292,9 @@
 {
     <div class="ab-hint anim-fade-in anim-d200" role="status" aria-live="polite">
         <strong><loc key="Justice_AB_Active" /></strong>
-        <span class="ab-period-pill ab-period-pill-a">A: @Model.EffectivePeriodStart.ToString("MMM yyyy")</span>
-        <span style="color:var(--text-muted);font-size:0.72rem;">vs</span>
-        <span class="ab-period-pill ab-period-pill-b">B: @Model.CompareFrom.Value.ToString("MMM yyyy")</span>
+        <span class="ab-period-pill ab-period-pill-a"><span dir="ltr">A: @Model.EffectivePeriodStart.ToString("MMM yyyy", System.Globalization.CultureInfo.CurrentUICulture)</span></span>
+        <span style="color:var(--text-muted);font-size:0.72rem;"><loc key="Justice_AB_Vs" /></span>
+        <span class="ab-period-pill ab-period-pill-b"><span dir="ltr">B: @Model.CompareFrom.Value.ToString("MMM yyyy", System.Globalization.CultureInfo.CurrentUICulture)</span></span>
         <span style="color:var(--text-muted);font-size:0.72rem;"><loc key="Justice_AB_DeltaHint" /></span>
         <button class="btn btn--ghost ab-hint-close"
                 aria-label="@Localizer["Justice_AB_Close"]"
@@ -421,14 +421,14 @@ else
             @for (int si = 0; si < 4; si++)
             {
               <span class="sev-dot @(si < v.SpreadSeverity ? "filled sev-" + v.SpreadSeverity : "")"
-                    title="@(si + 1) of 4"></span>
+                    title="@Localizer["Justice_SeverityDot_Title", si + 1]"></span>
             }
           </div>
         </div>
       </div>
 
       @* Verdict badge *@
-      <div class="verdict-badge @v.SpreadSeverity" role="status" aria-live="polite">
+      <div class="verdict-badge sev-@(v.SpreadSeverity)" role="status" aria-live="polite">
         @Localizer[v.SpreadLabelKey]
       </div>
 
@@ -617,7 +617,9 @@ else
     {
       var activeBandFn3 = (JusticeRow r) => Model.Basis == FairnessBasis.EqualShare ? r.BandEqual : r.Band;
       bool showCompare  = Model.Comparison is not null;
-      string basisTagText  = Model.Basis == FairnessBasis.EqualShare ? "≈ equal" : "by size";
+      string basisTagText  = Model.Basis == FairnessBasis.EqualShare
+          ? Localizer["Justice_Basis_EqualShare"].Value
+          : Localizer["Justice_Basis_BySize"].Value;
       string basisTagTitle = Model.Basis == FairnessBasis.EqualShare
           ? "Justice_BasisTag_Equal_Title"
           : "Justice_BasisTag_BySize_Title";
@@ -804,7 +806,6 @@ else
                     }
                     var lastX = ((sparkVals.Count - 1) * spStep).ToString("F0", CultureInfo.InvariantCulture);
                     var lastY = SparkY(sparkVals[^1]);
-                    var sparkColor = $"var(--dev-band-{activeBand.ToString().ToLowerInvariant()}-color, currentColor)";
                     <svg width="72" height="22" viewBox="0 0 72 22" aria-label="@Localizer["Justice_Trend_Aria"]" role="img"
                          @(isLocked ? "style=\"opacity:.6;\"" : "")>
                       <polyline points="@pts.ToString()"

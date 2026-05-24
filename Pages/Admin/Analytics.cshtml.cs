@@ -260,7 +260,14 @@ public class AnalyticsModel : LocalizedPageModel
             var devPct = GetActiveDeviationPercent(row);
             var dev = devPct.HasValue ? $"{devPct.Value:F1}" : "";
             var band = GetActiveBand(row);
-            var safeName = $"\"{row.Name.Replace("\"", "\"\"")}\"";
+            // Neutralize spreadsheet formula injection (OWASP CSV injection)
+            var rawName = row.Name;
+            if (rawName.Length > 0 && (rawName[0] == '=' || rawName[0] == '+' || rawName[0] == '-' ||
+                rawName[0] == '@' || rawName[0] == '\t' || rawName[0] == '\r'))
+            {
+                rawName = "'" + rawName;
+            }
+            var safeName = $"\"{rawName.Replace("\"", "\"\"")}\"";
             csv.AppendLine($"{safeName},{row.Actual:F0},{actualShare},{expected:F2},{expectedShareStr},{dev},{band},{Basis}");
         }
 
