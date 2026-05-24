@@ -8,11 +8,64 @@
  * which fetches fresh data via AJAX and updates the DOM in place.
  * Falls back to full page reload if CalendarRealtime is not initialized.
  */
-function triggerCalendarRefresh() {
-    // Full page reload after mutations — the shadow refresh (CalendarRealtime.refresh)
-    // only handles partial cell updates via selectors that may not match the current DOM.
-    // A full reload guarantees the user sees the new state after assign/unassign.
-    location.reload();
+async function triggerCalendarRefresh() {
+    const grid = document.querySelector('.excel-calendar');
+
+    // Legacy Month/Week/Day calendars render .calendar-cell (not .excel-calendar) and have no
+    // in-place swap target — fall back to a full reload there to preserve existing behavior.
+    if (!grid) {
+        location.reload();
+        return;
+    }
+
+    // Capture scroll position + keyboard focus BEFORE the swap. This is the entire point of the
+    // fix: assigning a user near the bottom/right of the grid must not jump the view to the top.
+    const scrollLeft = grid.scrollLeft;
+    const scrollTop = grid.scrollTop;
+    const windowY = window.scrollY;
+    const active = document.activeElement;
+    const focusedCell = active && active.closest ? active.closest('.excel-calendar__cell') : null;
+    const focusRowId = focusedCell ? focusedCell.getAttribute('data-row-id') : null;
+    const focusDate = focusedCell ? focusedCell.getAttribute('data-date') : null;
+
+    try {
+        // Re-fetch the current calendar view (all state lives in the query string) and swap only the
+        // grid. Full-grid replacement is robust where the abandoned per-cell shadow refresh was not,
+        // and click handlers are delegated on document so they keep working on the new DOM.
+        const response = await fetch(window.location.href, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            cache: 'no-store'
+        });
+        if (!response.ok) { location.reload(); return; }
+
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const fresh = doc.querySelector('.excel-calendar');
+        if (!fresh) { location.reload(); return; }
+
+        grid.replaceWith(fresh);
+
+        // Restore scroll position (.excel-calendar is the overflow:auto scroll container) + window.
+        fresh.scrollLeft = scrollLeft;
+        fresh.scrollTop = scrollTop;
+        window.scrollTo(0, windowY);
+
+        // Restore keyboard focus to the edited cell if it still exists after the refresh.
+        if (focusRowId && focusDate && window.CSS && CSS.escape) {
+            const cell = fresh.querySelector(
+                '.excel-calendar__cell[data-row-id="' + CSS.escape(focusRowId) +
+                '"][data-date="' + CSS.escape(focusDate) + '"]');
+            if (cell) cell.focus({ preventScroll: true });
+        }
+
+        // Let load-time modules (lazy rows, group toggles, keyboard nav) re-bind to the new grid.
+        document.dispatchEvent(new CustomEvent('calendar:grid-refreshed', { detail: { grid: fresh } }));
+    } catch (err) {
+        // Network/parse failure → guarantee correctness by falling back to a full reload.
+        if (window.console && console.warn) console.warn('[calendar] in-place refresh failed; reloading', err);
+        location.reload();
+    }
 }
 
 // Localized error messages
@@ -40,6 +93,33 @@ function getCurrentCulture() {
     const htmlLang = document.documentElement.lang || 'en-US';
     return htmlLang.startsWith('he') ? 'he-IL' : 'en-US';
 }
+
+/**
+ * Read-only calendar "?" help. Builds a localized message naming the grant(s) the user is missing
+ * (rendered server-side into the hidden .excel-calendar__readonly-help-data node) and shows it via
+ * FeedbackModal, so the user knows exactly which permission to request from an administrator.
+ */
+window.showReadOnlyGrantHelp = function (btn) {
+    const banner = btn && btn.closest('.excel-calendar__readonly-banner');
+    const data = banner && banner.querySelector('.excel-calendar__readonly-help-data');
+    if (!data) return;
+    const intro = (data.getAttribute('data-intro') || '').trim();
+    const ask = (data.getAttribute('data-ask') || '').trim();
+    const grants = Array.prototype.slice
+        .call(data.querySelectorAll('.excel-calendar__readonly-help-grant'))
+        .map(function (el) { return el.textContent.trim(); })
+        .filter(Boolean);
+    const parts = [];
+    if (intro) parts.push(intro);
+    if (grants.length) parts.push(grants.join(', '));
+    if (ask) parts.push(ask);
+    const message = parts.join(' ');
+    if (window.FeedbackModal && typeof window.FeedbackModal.show === 'function') {
+        window.FeedbackModal.show('info', message);
+    } else if (window.console && console.warn) {
+        console.warn('[calendar] FeedbackModal unavailable; read-only help:', message);
+    }
+};
 
 // Default confirm handler routes through FeedbackModal.confirm so warnings render
 // with category-colored badges and a localized OK/Cancel button pair instead of a

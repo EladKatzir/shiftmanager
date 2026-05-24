@@ -771,7 +771,7 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 106, ETA));  // CanBeAssignedNOC
 
         // ============================================
-        // OWNER (Template 11) — 134 grants at ETP (ALL grant types, ALL canGive)
+        // OWNER (Template 11) — 135 grants at ETP (ALL grant types, ALL canGive)
         // Self-scoped grants stay SAR. Every other grant at ETP with canGive:true.
         // ============================================
         // Self-scoped grants (SAR)
@@ -1031,6 +1031,25 @@ public static class RoleTemplateSeed
         // ============================================
         grants.Add(G(10, 134, ETA));                  // AreaAdmin — area-scoped overrides
         grants.Add(G(11, 134, ETP, canGive: true));   // Owner — project-wide
+
+        // ============================================
+        // ManageDistributionLists (ID 135) — Calendar distribution lists (2026-05-23)
+        // Floor = Lead (מפ"צ) and above + the molecule-scheduling roles (Assigner, DepartmentLead).
+        // Molecule-scoped management of shared user groups used to organize the by-user shift calendar
+        // into collapsible sections. Filtering by lists needs NO grant (open to everyone). Edit/delete
+        // re-verify the grant against the LIST's stored MoleculeId (IDOR guard).
+        // Assigner (8) uses SAR (its RoleTemplate scope IS Molecule, so SAR resolves to molecule and keeps
+        // the AssignerRoleTests "inherited grants stay SAR" invariant); DepartmentLead (9) uses ETM to expand
+        // its Department-scoped role up to the molecule. Employee (1) + Trainee (12) intentionally excluded.
+        // ============================================
+        grants.Add(G(3, 135, ETM));                   // Lead (מפ"צ) — molecule
+        grants.Add(G(2, 135, ETM));                   // BRDirector (קב"ר) — molecule
+        grants.Add(G(5, 135, ETM));                   // Director (מ"מ) — molecule
+        grants.Add(G(7, 135, ETM));                   // MoleculeAdmin (מפק"מ) — molecule
+        grants.Add(G(8, 135, SAR));                   // Assigner (משבץ) — molecule (role scope is Molecule)
+        grants.Add(G(9, 135, ETM));                   // DepartmentLead (מפקד מחלקה טכנית) — expand Department → molecule
+        grants.Add(G(10, 135, ETA));                  // AreaAdmin (קב"ב) — area
+        grants.Add(G(11, 135, ETP, canGive: true));   // Owner — project
 
         return grants;
     }

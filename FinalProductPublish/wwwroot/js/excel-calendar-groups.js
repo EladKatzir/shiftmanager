@@ -50,15 +50,19 @@
         });
     }
 
-    function initGroups() {
+    // Re-apply persisted collapse state to the current DOM. Extracted so it can run both on load
+    // and after an in-place grid refresh (the server re-renders all groups expanded).
+    function applyPersistedCollapse() {
         const collapsed = getCollapsedGroups();
-
-        // Apply persisted collapse state on load
         for (const groupId of Object.keys(collapsed)) {
             toggleGroup(groupId, true);
         }
+    }
 
-        // Attach click handlers to group headers
+    function initGroups() {
+        applyPersistedCollapse();
+
+        // Attach click handlers to group headers (delegated on document — survives grid refresh)
         document.addEventListener('click', function (e) {
             const header = e.target.closest('.excel-calendar__group-header');
             if (!header) return;
@@ -96,4 +100,8 @@
     } else {
         initGroups();
     }
+
+    // After an in-place grid refresh the click handler is still bound (delegated on document), but the
+    // freshly server-rendered groups come back expanded — re-apply the user's collapse state.
+    document.addEventListener('calendar:grid-refreshed', applyPersistedCollapse);
 })();

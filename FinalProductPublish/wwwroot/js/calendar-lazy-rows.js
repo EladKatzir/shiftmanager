@@ -111,4 +111,8 @@
     } else {
         init();
     }
+
+    // Re-run after an in-place grid refresh: the swapped-in grid is server-rendered with every row
+    // visible and no sentinel, so lazy-loading must be re-applied.
+    document.addEventListener('calendar:grid-refreshed', init);
 })();

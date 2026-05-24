@@ -2811,6 +2811,18 @@
         <member name="M:ShiftManager.Migrations.RemoveGriffinProvisioningFields.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddDistributionLists">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDistributionLists.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDistributionLists.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDistributionLists.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -3879,6 +3891,66 @@
             When this assignment was soft-deleted (null if active)
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.DistributionList">
+             <summary>
+             A named, shared group of users scoped to a Molecule (e.g. "מוסמכי כחול" / blue-qualified,
+             "מחזיקי משמרת הבנה"). Used to organize the by-user shift calendar into collapsible sections —
+             one section per selected list. Created/edited/deleted by managers (ManageDistributionLists grant,
+             floor = Lead/מפ"צ and above).
+            
+             Scope note: although this entity implements <see cref="T:ShiftManager.Models.IBelongsToCompany"/> (so the
+             CompanyIdInterceptor stamps the creator's CompanyId for provenance and a standard tenant query
+             filter applies), the REAL visibility scope is the <see cref="P:ShiftManager.Models.DistributionList.MoleculeId"/>. Lists are shared across
+             all companies in a molecule, so reads go through DistributionListService which uses
+             IgnoreQueryFilters() + MoleculeId scoping — mirroring ShiftCalendarService.GetUsersForCalendarAsync,
+             the established cross-company-within-molecule pattern. Hard-delete (no soft-delete flag): deleting a
+             list removes the row and cascades its members.
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DistributionList.CompanyId">
+            <summary>
+            Provenance / tenant stamp — auto-set by CompanyIdInterceptor on insert (the creator's company).
+            NOT the visibility scope; see <see cref="P:ShiftManager.Models.DistributionList.MoleculeId"/>.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DistributionList.MoleculeId">
+            <summary>
+            The molecule this list belongs to and is visible within. Set explicitly by the service on create
+            (the interceptor only stamps CompanyId, never MoleculeId).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DistributionList.Name">
+            <summary>
+            List name (1-80 chars). Case-insensitive unique within a molecule.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DistributionList.CreatedBy">
+            <summary>
+            User who created the list.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.DistributionListMember">
+            <summary>
+            Many-to-many join between a <see cref="P:ShiftManager.Models.DistributionListMember.DistributionList"/> and a member <see cref="T:ShiftManager.Models.AppUser"/>.
+            Does NOT implement IBelongsToCompany — membership is scoped through its parent list (and members may
+            span multiple companies within the molecule). Deleted by cascade when the parent list is deleted.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DistributionListMember.DistributionListId">
+            <summary>
+            The list this membership belongs to.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DistributionListMember.UserId">
+            <summary>
+            The member user (any active user within the list's molecule, across companies).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DistributionListMember.AddedAt">
+            <summary>
+            When this member was added to the list.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.DTOs.GriffinClaimsDto">
              <summary>
              Represents user claims returned from Griffin ADFS /authorization/getClaims endpoint.
@@ -4355,6 +4427,14 @@
             show one row per company inside it".
             </summary>
         </member>
+        <member name="F:ShiftManager.Models.JusticeLevel.UsersInMolecule">
+            <summary>
+            All active users pooled across every company in a molecule.
+            Each row carries a <see cref="P:ShiftManager.Services.JusticeRow.GroupLabel"/> tagging
+            which company the user belongs to.
+            Precondition: JusticeQuery.Scope == Molecule &amp;&amp; ScopeId != null.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.JusticeWorkType">
             <summary>
             Work item category being measured.
@@ -4366,6 +4446,15 @@
             <summary>
             Period bucket for per-user expected counts.
             E.g., "3 chores per month per user" -> PeriodKind=PerMonth, ExpectedCount=3.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.FairnessBasis">
+            <summary>
+            How "Expected" is derived for each row in the Justice table.
+            BySize = capacity/target-weighted (default, today's behavior).
+            EqualShare = the actual total split evenly across rows
+            (everyone expected to carry the same — distance-from-mean semantics,
+            matching the UI's "≈ equal = total ÷ N").
             </summary>
         </member>
         <member name="T:ShiftManager.Models.JusticeTarget">
@@ -5801,6 +5890,31 @@
              Phase 2 adds the What-If simulator, settings modal, and decision-support widgets.
              </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.Basis">
+            <summary>
+            Fairness basis: BySize (capacity/target-weighted, default) or EqualShare (total ÷ N).
+            Carried through to <see cref="P:ShiftManager.Services.JusticeQuery.Basis"/>.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.CompareFrom">
+            <summary>
+            A/B comparison: start of the compare period (period B). When both CompareFrom and
+            CompareTo are provided the service computes per-row deltas between the primary and compare periods.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.CompareTo">
+            <summary>
+            A/B comparison: end of the compare period (period B).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.Comparison">
+            <summary>
+            Populated when both <see cref="P:ShiftManager.Pages.Admin.AnalyticsModel.CompareFrom"/> and <see cref="P:ShiftManager.Pages.Admin.AnalyticsModel.CompareTo"/> are provided
+            and form a valid range. When set, <see cref="P:ShiftManager.Pages.Admin.AnalyticsModel.View"/> is reassigned to
+            <see cref="P:ShiftManager.Services.JusticeComparisonViewModel.Primary"/> so row-level <c>DeltaVsCompare</c>
+            values are available to the view.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.CompanyOptions">
             <summary>
             Companies the current user can pick as the scope target. Populated for all levels but
@@ -5815,6 +5929,31 @@
         <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.AreaOptions">
             <summary>
             Areas the current user can pick (drilled from molecules they can access).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.AnalyticsModel.CanDrillScopeAsync(System.Int32,ShiftManager.Models.JusticeScope,System.Int32,System.Threading.CancellationToken)">
+             <summary>
+             DRILL authorization (A5) — distinct from <see cref="M:ShiftManager.Pages.Admin.AnalyticsModel.UserCanAccessScopeAsync(System.Int32,ShiftManager.Models.JusticeScope,System.Int32,System.Threading.CancellationToken)"/>.
+            
+             Returns true only when the requested scope is genuinely within the user's OWN subtree, i.e.
+             a scope they may navigate INTO (not merely read as a sibling for comparison). This is the
+             strict gate that blocks cross-scope drill-through: a sibling molecule/company is rendered as
+             a readable comparison row, but a request that drills into its scopeId must be forbidden.
+            
+             Rules:
+               • Company scope → companyId must be in GetAccessibleCompanyIdsForGrantAsync.
+               • Molecule scope → moleculeId must be in GetAccessibleMoleculeIdsForGrantAsync.
+               • Area scope → areaId must be in GetAccessibleAreaIdsForGrantAsync (area contains an
+                 accessible molecule OR is covered by an area/project grant). The area is the top of the
+                 comparison tier; an accessible area is drillable.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.AnalyticsModel.ComputeDrillableChildIdsAsync(System.Int32,ShiftManager.Models.JusticeScope,System.Int32,ShiftManager.Models.JusticeLevel,System.Threading.CancellationToken)">
+            <summary>
+            Computes the set of CHILD-row ids at the current <paramref name="level"/> that the user may
+            DRILL into. Sibling rows the user can only read are excluded from this set (so the service
+            flags them IsDrillable=false) but are still returned for comparison. Returns null at user
+            levels (terminal rows — no drill-down).
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Admin.CompaniesModel.ContainsDangerousContent(System.String)">
@@ -5919,6 +6058,20 @@
             I-07: Bulk user import from CSV file.
             Expected CSV format: Email,DisplayName,Password,Role,Phone,DepartmentName
             First row is treated as header and skipped.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnGetMoveImpactAsync(System.Int32,System.Int32)">
+            <summary>Read-only impact preview for the move modal (AJAX). Returns JSON.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostMoveUserAsync(System.Int32,System.Int32)">
+            <summary>Performs the move after re-checking authorization server-side.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.AuthorizeMoveAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Returns a localization key describing the failure, or null when the move is authorized.
+            Gate: admin must hold EditCompanyUsers for BOTH source and destination (yielding the
+            molecule/area/owner matrix), AND be permitted to assign the target user's role in the
+            destination (CanAssignRoleAsync — same gate role-changes use, blocks downgrading a higher admin).
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Admin.UsersModel.__LogBatchApprovalSuccessStruct">
@@ -6434,6 +6587,23 @@
             Displays premium cards for Shifts, Chores, On-Call, and Overview calendars.
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Calendar.ManageDistributionListsModel">
+            <summary>
+            AJAX-only endpoint backing the distribution-list manager modal embedded in the Shifts calendar.
+            Not navigated to directly — all handlers return JSON. Authenticated; mutation handlers are gated by the
+            ManageDistributionLists grant (re-checked inside the service against the LIST's stored molecule — IDOR guard).
+            Reads (molecule users / list detail) require the manage grant too, since they only feed the manage modal.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ManageDistributionListsModel.OnGetMoleculeUsersAsync(System.Int32,System.String)">
+            <summary>GET: active users in the molecule (cross-company) for the member picker. Managers only.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ManageDistributionListsModel.OnGetListAsync(System.Int32,System.Int32)">
+            <summary>GET: one list's detail (name + member IDs) for the edit modal. Managers only.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ManageDistributionListsModel.MapResult(ShiftManager.Services.DistributionListResult,System.String)">
+            <summary>Maps a service outcome to a JSON response with the right HTTP status + localized message.</summary>
+        </member>
         <member name="T:ShiftManager.Pages.Calendar.MonthModel">
             <summary>
             ✅ PHASE 20: Monthly calendar view - Read-only unified view of shifts, chores, and on-duty
@@ -6529,6 +6699,24 @@
             <summary>
             Excel-style Shifts Calendar page - Primary deliverable for Excel Calendars feature.
             Supports shift-based and user-based view modes with molecule/job type filtering.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.DistributionListIds">
+            <summary>
+            CSV of selected distribution-list IDs (e.g. "1,2,3"). When non-empty, the by-user view is filtered
+            to those lists' members and grouped into one collapsible section per list. Persists across navigation.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.SelectedDistributionListIds">
+            <summary>Parsed, de-duplicated selected distribution-list IDs (defensive int.TryParse per item).</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.BuildListGroupedRowsAsync(System.Collections.Generic.List{ShiftManager.Models.AppUser},System.Collections.Generic.List{System.Int32},System.Int32,System.Collections.Generic.List{ShiftManager.Models.ShiftInstance},System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},ShiftManager.Services.FyiOverlayData},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}}},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.String})">
+            <summary>
+            Builds collapsible sections for the by-user calendar — one section per selected distribution list,
+            filtered to that list's members present in the loaded (molecule + jobType) <paramref name="users"/> set.
+            A user in multiple selected lists appears once per section; the duplicate data-row-id is intentional and
+            safe (the calendar resolves interactions from the data-row-id attribute on the clicked cell, not a DOM id).
+            Reuses the same ExcelCalendarGroup rendering as the by-company / by-shift-type sections.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.BuildTechGroupedRowsAsync(System.Collections.Generic.List{ShiftManager.Models.AppUser},System.Collections.Generic.List{ShiftManager.Models.ShiftInstance},System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},ShiftManager.Services.FyiOverlayData},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Int32,System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}}},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.String})">
@@ -7439,6 +7627,10 @@
             Service interface for audit logging
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IAuditLogService.LogUserActionAsync(System.Int32,System.Int32,System.String,System.String,System.Nullable{System.Int32},System.String,System.String)">
+            <summary>Writes an audit entry under an EXPLICIT company (not the current tenant).
+            Used by cross-company operations like user moves.</summary>
+        </member>
         <member name="T:ShiftManager.Services.AuditLogService">
             <summary>
             Service for logging all significant actions in the system for compliance and auditing
@@ -7452,6 +7644,12 @@
         <member name="M:ShiftManager.Services.AuditLogService.LogUserActionAsync(System.Int32,System.String,System.String,System.Nullable{System.Int32},System.String,System.String)">
             <summary>
             Log an action performed by a specific user
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.AuditLogService.LogUserActionAsync(System.Int32,System.Int32,System.String,System.String,System.Nullable{System.Int32},System.String,System.String)">
+            <summary>
+            Log an action performed by a specific user under an EXPLICIT company (not the current tenant).
+            Used by cross-company operations like user moves.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.AuditLogService.LogSystemActionAsync(System.String,System.String,System.Nullable{System.Int32},System.String,System.String)">
@@ -7852,6 +8050,9 @@
             belongs to a company the caller manages) must be performed at the call site.
             </remarks>
         </member>
+        <member name="M:ShiftManager.Services.DistributionListService.ValidateAsync(System.Int32,System.String,System.Collections.Generic.IReadOnlyCollection{System.Int32},System.Nullable{System.Int32})">
+            <summary>Validates name presence/uniqueness and that every member belongs to the molecule (cross-company OK).</summary>
+        </member>
         <member name="T:ShiftManager.Services.EmailApiLogService">
             <summary>
             Service for managing email API diagnostic logs.
@@ -8126,6 +8327,20 @@
             <summary>
             Maps UserRole enum + JobType name to the correct RoleTemplate key.
             Delegates to centralized RoleTemplateMapper to ensure consistency across codebase.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.GrantServiceExtensions">
+            <summary>
+            Convenience helpers built on top of <see cref="T:ShiftManager.Services.IGrantService"/>.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.GrantServiceExtensions.GetGrantNameKeysAsync(ShiftManager.Services.IGrantService,System.String[])">
+            <summary>
+            Resolves the localization NameKeys for the supplied grant keys, preserving the order of
+            <paramref name="grantKeys"/> and skipping any key that does not resolve. Used to tell a user
+            which grant(s) would unlock a read-only calendar. Reads the authoritative
+            <see cref="P:ShiftManager.Models.GrantType.NameKey"/> stored on each grant type rather than assuming the
+            "Grant_{Key}" naming convention.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.GriffinApiLogService">
@@ -8798,6 +9013,54 @@
             Employee: cannot assign any role
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.DistributionListOutcome">
+            <summary>
+            Outcome of a distribution-list mutation. Maps to an HTTP status + a localized message in the handler.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.DistributionListSummary">
+            <summary>Lightweight summary for the toolbar dropdown and the manager modal list.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.DistributionListSummary.#ctor(System.Int32,System.String,System.Int32)">
+            <summary>Lightweight summary for the toolbar dropdown and the manager modal list.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.DistributionListDetail">
+            <summary>Full detail for the edit modal.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.DistributionListDetail.#ctor(System.Int32,System.String,System.Int32,System.Collections.Generic.List{System.Int32})">
+            <summary>Full detail for the edit modal.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.DistributionListWithMembers">
+            <summary>A list plus its ordered member user IDs, used to build the grouped calendar view.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.DistributionListWithMembers.#ctor(System.Int32,System.String,System.Collections.Generic.List{System.Int32})">
+            <summary>A list plus its ordered member user IDs, used to build the grouped calendar view.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.IDistributionListService">
+            <summary>
+            Manages molecule-scoped, shared distribution lists used to organize the by-user shift calendar.
+            All reads are molecule-scoped (cross-company within the molecule); mutations are gated by the
+            ManageDistributionLists grant re-checked against the list's stored molecule (IDOR guard).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDistributionListService.GetListsForMoleculeAsync(System.Int32)">
+            <summary>Lists in a molecule with member counts (ordered by name). Read access is open to all viewers.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDistributionListService.GetListsWithMembersAsync(System.Collections.Generic.IEnumerable{System.Int32},System.Int32)">
+            <summary>Selected lists with their ordered member user IDs (ordered by list name) — drives the grouped calendar view.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDistributionListService.GetListDetailAsync(System.Int32,System.Int32)">
+            <summary>One list's detail for the edit modal, or null if it does not belong to the molecule.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDistributionListService.CreateAsync(System.Int32,System.Int32,System.String,System.Collections.Generic.IReadOnlyCollection{System.Int32})">
+            <summary>Create a list in the given molecule. Re-checks the caller's grant and validates members/name.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDistributionListService.UpdateAsync(System.Int32,System.Int32,System.String,System.Collections.Generic.IReadOnlyCollection{System.Int32})">
+            <summary>Update a list (molecule derived from the persisted list). Re-checks grant + validates.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDistributionListService.DeleteAsync(System.Int32,System.Int32)">
+            <summary>Delete a list (molecule derived from the persisted list). Re-checks grant. Cascades members.</summary>
+        </member>
         <member name="T:ShiftManager.Services.IEmailApiLogService">
             <summary>
             Service for managing email API diagnostic logs.
@@ -9190,6 +9453,18 @@
             Self-target (callerId == targetUserId) always allowed.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IGrantService.GetAccessibleAreaIdsForGrantAsync(System.Int32,System.String)">
+            <summary>
+            Returns the distinct Area ids the user can access for the given grant. An area is accessible
+            if the user can access at least one molecule in it (via the molecule cascade) OR the user
+            holds an Area/Project-scoped grant covering it (so an area with no molecules is still
+            reported when an explicit area/project grant covers it). Mirrors the IgnoreQueryFilters
+            cross-tenant semantics of <see cref="M:ShiftManager.Services.IGrantService.GetAccessibleMoleculeIdsForGrantAsync(System.Int32,System.String)"/>.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGrantService.BuildRoleTemplateScopeAsync(System.String,System.Int32,System.Nullable{System.Int32})">
+            <summary>Builds the GrantScope for a role template key against a target company's hierarchy.</summary>
+        </member>
         <member name="T:ShiftManager.Services.GrantVerificationResult">
             <summary>
             Result of grant verification for a user.
@@ -9523,7 +9798,56 @@
         <member name="M:ShiftManager.Services.IJusticeService.GetJusticeViewAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
             <summary>
             Build the full Justice view: rows at the requested level, spread index, most-over/most-under.
+            Equivalent to calling the comparison-tier overload with <c>drillableChildIds: null</c>
+            (every row drillable — backward compatible).
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJusticeService.GetJusticeViewAsync(ShiftManager.Services.JusticeQuery,System.Collections.Generic.IReadOnlyCollection{System.Int32},System.Threading.CancellationToken)">
+            <summary>
+            A5 comparison-tier overload. Builds the same view as <see cref="M:ShiftManager.Services.IJusticeService.GetJusticeViewAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)"/>
+            but marks each row's <see cref="P:ShiftManager.Services.JusticeRow.IsDrillable"/> based on <paramref name="drillableChildIds"/>:
+            a row is drillable iff <paramref name="drillableChildIds"/> is null OR contains the row's Id.
+            ALL rows are still returned (the comparison tier is intact — capped users can READ siblings
+            to rank them, but may only DRILL into their own subtree). Passing null reproduces the legacy
+            behavior exactly (every row drillable).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJusticeService.GetJusticeViewAsync(ShiftManager.Services.JusticeQuery,System.Collections.Generic.IReadOnlyCollection{System.Int32},System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            A6 sparkline overload. Same as the A5 overload but also populates <see cref="P:ShiftManager.Services.JusticeRow.Sparkline"/>
+            on each row when <paramref name="includeSparklines"/> is <c>true</c>.
+            When false the sparkline is omitted (null), incurring no extra DB cost — use this in
+            the fast-path callers (calendar drawer, eligibility ranking, what-if preview).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJusticeService.GetComparisonViewAsync(ShiftManager.Services.JusticeQuery,ShiftManager.Services.JusticeQuery,System.Collections.Generic.IReadOnlyCollection{System.Int32},System.Threading.CancellationToken)">
+             <summary>
+             A7: A/B period comparison. Runs BOTH views sequentially (never concurrently — the
+             underlying <see cref="!:AppDbContext"/> is not thread-safe), then computes per-row deltas.
+            
+             The returned <see cref="P:ShiftManager.Services.JusticeComparisonViewModel.Primary"/> carries sparklines
+             (<c>includeSparklines: true</c>) and has every row's
+             <see cref="P:ShiftManager.Services.JusticeRow.DeltaVsCompare"/> populated.
+             The <see cref="P:ShiftManager.Services.JusticeComparisonViewModel.Compare"/> view is returned as-is
+             (no sparklines, DeltaVsCompare == null on every row).
+            
+             <paramref name="drillableChildIds"/> is forwarded to BOTH calls so drill-capping
+             is consistent across the comparison.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IJusticeService.GetSparklineSeriesAsync(ShiftManager.Services.JusticeQuery,System.Int32,System.Threading.CancellationToken)">
+             <summary>
+             A6: Computes <paramref name="buckets"/> consecutive calendar-month work-item counts,
+             ending at the month that contains <paramref name="baseQuery"/>.PeriodEnd.
+             Honoring the same work-type filter and exclusions as <see cref="M:ShiftManager.Services.IJusticeService.GetJusticeViewAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)"/>.
+            
+             Return value: rowId → List&lt;decimal&gt; of length <paramref name="buckets"/>, ordered
+             oldest → newest. Rows that had zero work in the entire span are included with all-zeros
+             only if they appear in the scope; rows outside the scope are absent.
+            
+             IMPORTANT: does NOT issue per-month DB round-trips. Pulls the full (rowKey, Date) set
+             for the span in one query per work-type and buckets in memory.
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.IJusticeService.GetTargetsAsync(System.Threading.CancellationToken)">
             <summary>
@@ -10267,6 +10591,13 @@
             Get all trainees in a company
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IUserCompanyTransferService.GetMoveImpactAsync(System.Int32,System.Int32)">
+            <summary>Read-only: counts of what a move of <paramref name="userId"/> to
+            <paramref name="destCompanyId"/> would clear/affect. Does not mutate anything.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IUserCompanyTransferService.MoveUserToCompanyAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>Transactional clean transfer. Assumes the caller has already authorized the move.</summary>
+        </member>
         <member name="T:ShiftManager.Services.IUserPreferenceService">
             <summary>
             ✅ PHASE 20: Service for managing user preferences (cookie-based)
@@ -10400,12 +10731,51 @@
              math goes nonsense when the toggle flips.
              </summary>
         </member>
+        <member name="M:ShiftManager.Services.JusticeService.GetComparisonViewAsync(ShiftManager.Services.JusticeQuery,ShiftManager.Services.JusticeQuery,System.Collections.Generic.IReadOnlyCollection{System.Int32},System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.GetSparklineSeriesAsync(ShiftManager.Services.JusticeQuery,System.Int32,System.Threading.CancellationToken)">
+             <summary>
+             Computes <paramref name="buckets"/> consecutive calendar-month work-item counts ending
+             at the month that contains <paramref name="baseQuery"/>.PeriodEnd.
+            
+             Algorithm:
+               1. Build the <paramref name="buckets"/> month windows (each = [firstOfMonth, lastOfMonth]).
+               2. Issue AT MOST one query per enabled work-type over the full span [firstBucketStart..lastBucketEnd],
+                  pulling (userId, Date) pairs — no per-month round trips.
+               3. Bucket in memory by month index.
+               4. Attribute to the level's row key:
+                    UsersInCompany       → userId
+                    CompaniesInMolecule  → user's CompanyId
+                    MoleculesInArea      → user's company's MoleculeId
+               5. Return rowId → List&lt;decimal&gt;[buckets], oldest→newest.
+                  Rows in scope that had zero work are included with all-zeros.
+             </summary>
+        </member>
         <member name="M:ShiftManager.Services.JusticeService.ResolveExpectedForCompanyOrMolecule(ShiftManager.Services.JusticeQuery,ShiftManager.Models.JusticeScope,System.Int32,System.Int32,System.Decimal,System.Collections.Generic.List{ShiftManager.Models.JusticeTarget})">
             <summary>
             Compute total expected for a Company or Molecule scope (used at row-level aggregation in
             the Companies-in-Molecule and Molecules-in-Area views). Headcount-based per-user rollup
             when no explicit override exists at this scope.
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.ComputeSharesAndBothBases(System.Collections.Generic.List{ShiftManager.Services.JusticeRow},ShiftManager.Services.JusticeQuery)">
+             <summary>
+             Enriches each row with both fairness-basis metrics and per-row share fields so
+             the front-end can toggle between BySize and EqualShare without a round-trip.
+            
+             Contract (called AFTER the row builders, BEFORE spread/sort):
+               • Rows as received are the BySize output (Expected = capacity/target-weighted).
+               • <see cref="P:ShiftManager.Services.JusticeRow.ExpectedBySize"/> captures that as-built Expected.
+               • <see cref="P:ShiftManager.Services.JusticeRow.ExpectedEqual"/> = Σ Actual / N for every row.
+               • <see cref="P:ShiftManager.Services.JusticeRow.ActualShare"/> = Actual / Σ Actual (null when Σ == 0).
+               • <see cref="P:ShiftManager.Services.JusticeRow.ExpectedShareBySize"/> = ExpectedBySize / Σ ExpectedBySize (null when Σ == 0).
+               • <see cref="P:ShiftManager.Services.JusticeRow.ExpectedShareEqual"/> = 1 / N.
+               • <see cref="P:ShiftManager.Services.JusticeRow.DeviationPercentEqual"/> and <see cref="P:ShiftManager.Services.JusticeRow.BandEqual"/>
+                 are computed against ExpectedEqual.
+               • PRIMARY fields (<c>Expected</c>, <c>DeviationPercent</c>, <c>Band</c>) are set to
+                 the ACTIVE basis (<paramref name="q"/>.Basis), replicating A3's behavior exactly.
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.JusticeService.ComputeSpreadIndex(System.Collections.Generic.List{ShiftManager.Services.JusticeRow})">
             <summary>
@@ -10425,12 +10795,29 @@
             holes regardless of work type.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.JusticeService.BuildChoreHolesAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
+        <member name="M:ShiftManager.Services.JusticeService.BuildAllHolesSequentialAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
             <summary>
-            Phase 2d: chore holes are user-date pairs where a genuinely under-loaded user has no chore
-            on a given date. "Under-loaded" reuses the existing Justice band math (Under or SoftUnder)
-            so this list stays consistent with the verdict strip and Justice Table.
+            Sequential fallback for <see cref="F:ShiftManager.Models.JusticeWorkType.All"/>: awaits each builder in turn
+            to avoid concurrent access on the shared <see cref="T:ShiftManager.Data.AppDbContext"/> (EF Core scoped services
+            are not thread-safe).
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeService.BuildChoreHolesAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
+             <summary>
+             Phase 2d: chore holes are user-date pairs where a genuinely under-loaded user has no chore
+             on a given date. "Under-loaded" reuses the existing Justice band math (Under or SoftUnder)
+             so this list stays consistent with the verdict strip and Justice Table.
+            
+             A8: Refactored to eliminate the per-company N+1 — previously called BuildUsersInCompanyAsync
+             once per company (each doing its own DB round-trips). Now uses a bounded number of queries
+             regardless of how many companies are in scope:
+               1. CountActualPerUserAsync — one pass across ALL companies (chore work-type).
+               2. One batch users query — loads user→company + display name for all companies at once.
+               3. One GROUP BY headcount query — headcount per company.
+               4. Per-user expected is then computed in-memory via ResolvePerUserChoreOrOnDuty
+                  using the already-loaded targets list.
+             The banding / deviation math is identical to the old BuildUsersInCompanyAsync path.
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.JusticeService.BuildOnDutyHolesAsync(ShiftManager.Services.JusticeQuery,System.Threading.CancellationToken)">
             <summary>
@@ -10488,7 +10875,7 @@
             when the user lands without parameters.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.JusticeQuery.#ctor(ShiftManager.Models.JusticeScope,System.Nullable{System.Int32},System.DateOnly,System.DateOnly,ShiftManager.Models.JusticeWorkType,System.Boolean,ShiftManager.Models.JusticeLevel)">
+        <member name="M:ShiftManager.Services.JusticeQuery.#ctor(ShiftManager.Models.JusticeScope,System.Nullable{System.Int32},System.DateOnly,System.DateOnly,ShiftManager.Models.JusticeWorkType,System.Boolean,ShiftManager.Models.JusticeLevel,ShiftManager.Models.FairnessBasis)">
             <summary>
             All inputs required to render the Justice analytics page.
             Bound from the query string of /Admin/Analytics. Defaults filled in by the page model
@@ -10511,10 +10898,116 @@
             <summary>
             One row in the Justice table — represents a user, company, or molecule depending on Level.
             </summary>
+            <remarks>
+            Positional constructor (7 args) is the builder contract — all call sites use it.
+            The additional <c>init</c>-only properties (A4) carry both fairness bases so the
+            front-end can toggle without a round-trip.
+            </remarks>
         </member>
         <member name="M:ShiftManager.Services.JusticeRow.#ctor(System.Int32,System.String,System.String,System.Decimal,System.Decimal,System.Nullable{System.Decimal},ShiftManager.Services.DeviationBand)">
             <summary>
             One row in the Justice table — represents a user, company, or molecule depending on Level.
+            </summary>
+            <remarks>
+            Positional constructor (7 args) is the builder contract — all call sites use it.
+            The additional <c>init</c>-only properties (A4) carry both fairness bases so the
+            front-end can toggle without a round-trip.
+            </remarks>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.ActualShare">
+            <summary>Actual / Σ Actual across all rows in the view. Null when Σ Actual == 0.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.ExpectedBySize">
+            <summary>Expected under the BySize basis (capacity / target-weighted).</summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.ExpectedEqual">
+            <summary>Expected under the EqualShare basis (= Σ Actual / N).</summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.ExpectedShareBySize">
+            <summary>ExpectedBySize / Σ ExpectedBySize across all rows. Null when Σ == 0.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.ExpectedShareEqual">
+            <summary>= 1 / N (equal fraction per row).</summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.DeviationPercentEqual">
+            <summary>Deviation % computed against ExpectedEqual. Null when ExpectedEqual == 0.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.BandEqual">
+            <summary>Deviation band computed against ExpectedEqual.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.IsDrillable">
+            <summary>
+            Whether the current user may DRILL into this row (navigate to <c>?scopeId={Id}</c>).
+            Rows outside the user's own subtree are rendered for COMPARISON (read) but are not
+            drillable. Defaults to <c>true</c> so the legacy 1-arg view path and the calendar
+            drawers stay backward compatible (every row drillable when no cap is supplied).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.Sparkline">
+            <summary>
+            Monthly work-item counts for the 6 calendar months ending at the query's
+            <c>PeriodEnd</c>, ordered oldest → newest. Populated only when the caller
+            requests sparklines via <c>includeSparklines: true</c>; null otherwise.
+            All-zeros list is used for rows that had no work in the span (never null when requested).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.DeltaVsCompare">
+            <summary>
+            Difference between this row's Actual in the PRIMARY period and the same row's Actual
+            in the COMPARE period: <c>Primary.Actual - Compare.Actual</c>.
+            Populated only on the Primary rows returned by
+            <see cref="M:ShiftManager.Services.IJusticeService.GetComparisonViewAsync(ShiftManager.Services.JusticeQuery,ShiftManager.Services.JusticeQuery,System.Collections.Generic.IReadOnlyCollection{System.Int32},System.Threading.CancellationToken)"/>; null otherwise (including on
+            every row in the Compare view).
+            A missing row on either side is treated as Actual == 0.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeRow.GroupLabel">
+            <summary>
+            Company name tag used in the <see cref="F:ShiftManager.Models.JusticeLevel.UsersInMolecule"/>
+            view to identify which company each pooled user belongs to.
+            Null for all other levels.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.JusticeComparisonViewModel">
+            <summary>
+            Result of an A/B period comparison. Holds two full <see cref="T:ShiftManager.Services.JusticeViewModel"/>
+            instances plus a pre-computed delta dictionary for efficient rendering.
+            </summary>
+            <param name="Primary">The primary (period A) Justice view. Each row's
+            <see cref="P:ShiftManager.Services.JusticeRow.DeltaVsCompare"/> is populated.</param>
+            <param name="Compare">The compare (period B) Justice view. Rows are returned as-is;
+            <see cref="P:ShiftManager.Services.JusticeRow.DeltaVsCompare"/> is null on all rows.</param>
+            <param name="ActualDeltaByRowId">
+            <c>Primary.Actual - Compare.Actual</c> for every row id present in EITHER view.
+            A row absent from one view contributes 0 on that side.
+            </param>
+        </member>
+        <member name="M:ShiftManager.Services.JusticeComparisonViewModel.#ctor(ShiftManager.Services.JusticeViewModel,ShiftManager.Services.JusticeViewModel,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Decimal})">
+            <summary>
+            Result of an A/B period comparison. Holds two full <see cref="T:ShiftManager.Services.JusticeViewModel"/>
+            instances plus a pre-computed delta dictionary for efficient rendering.
+            </summary>
+            <param name="Primary">The primary (period A) Justice view. Each row's
+            <see cref="P:ShiftManager.Services.JusticeRow.DeltaVsCompare"/> is populated.</param>
+            <param name="Compare">The compare (period B) Justice view. Rows are returned as-is;
+            <see cref="P:ShiftManager.Services.JusticeRow.DeltaVsCompare"/> is null on all rows.</param>
+            <param name="ActualDeltaByRowId">
+            <c>Primary.Actual - Compare.Actual</c> for every row id present in EITHER view.
+            A row absent from one view contributes 0 on that side.
+            </param>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeComparisonViewModel.Primary">
+            <summary>The primary (period A) Justice view. Each row's
+            <see cref="P:ShiftManager.Services.JusticeRow.DeltaVsCompare"/> is populated.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeComparisonViewModel.Compare">
+            <summary>The compare (period B) Justice view. Rows are returned as-is;
+            <see cref="P:ShiftManager.Services.JusticeRow.DeltaVsCompare"/> is null on all rows.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.JusticeComparisonViewModel.ActualDeltaByRowId">
+            <summary>
+            <c>Primary.Actual - Compare.Actual</c> for every row id present in EITHER view.
+            A row absent from one view contributes 0 on that side.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.DeviationBand">
@@ -11929,6 +12422,14 @@
         <member name="P:ShiftManager.ViewComponents.ErrorBannerModel.FallbackTitle">
             <summary>
             Optional fallback title
+            </summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.RequiredGrantNameKeys">
+            <summary>
+            Localization NameKeys of the grant(s) that would unlock editing this calendar. Populated only
+            when <see cref="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.IsReadOnly"/> is true AND an obtainable grant exists (empty for genuinely
+            view-only calendars such as Overview). Drives the read-only banner's "?" help button, which
+            tells the user exactly which permission to request.
             </summary>
         </member>
         <member name="T:ShiftManager.ViewComponents.HierarchyTreeViewComponent">
