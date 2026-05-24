@@ -116,8 +116,8 @@
            the localised string. We swap between the two opt elements' texts. */
         var bysizeOpt = basisSwitch ? basisSwitch.querySelector('[data-basis="bysize"]') : null;
         var equalOpt  = basisSwitch ? basisSwitch.querySelector('[data-basis="equal"]')  : null;
-        var bysizeText = bysizeOpt ? bysizeOpt.textContent.trim() : 'by size';
-        var equalText  = equalOpt  ? equalOpt.textContent.trim()  : '≈ equal';
+        var bysizeText = bysizeOpt ? bysizeOpt.textContent.trim() : '';
+        var equalText  = equalOpt  ? equalOpt.textContent.trim()  : '';
         var newTagText = isBySize ? bysizeText : equalText;
 
         /* ── Per-row updates ── */

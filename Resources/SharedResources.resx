@@ -15091,11 +15091,13 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Justice_AB_Active" xml:space="preserve"><value>A/B comparison active.</value></data>
   <data name="Justice_AB_DeltaHint" xml:space="preserve"><value>Δ columns show period-A minus period-B.</value></data>
   <data name="Justice_AB_Close" xml:space="preserve"><value>Dismiss A/B hint bar</value></data>
+  <data name="Justice_AB_Vs" xml:space="preserve"><value>vs</value></data>
   <data name="Justice_Close" xml:space="preserve"><value>Close</value></data>
   <data name="Justice_GaugeEyebrow" xml:space="preserve"><value>Equity gauge</value></data>
   <data name="Justice_GaugeAria" xml:space="preserve"><value>Equity gauge: spread index {0}, rating {1}</value></data>
   <data name="Justice_SpreadIndex" xml:space="preserve"><value>Spread index</value></data>
   <data name="Justice_SeverityAria" xml:space="preserve"><value>Severity: {0} out of 4</value></data>
+  <data name="Justice_SeverityDot_Title" xml:space="preserve"><value>{0} of 4</value></data>
   <data name="Justice_BandLegend_Aria" xml:space="preserve"><value>Band legend</value></data>
   <data name="Justice_Band_Over" xml:space="preserve"><value>Over</value></data>
   <data name="Justice_Band_SoftOver" xml:space="preserve"><value>Slightly over</value></data>

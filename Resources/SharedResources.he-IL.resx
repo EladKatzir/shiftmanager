@@ -14971,7 +14971,7 @@
   <data name="Justice_WorkType_All" xml:space="preserve"><value>הכול</value></data>
   <data name="Justice_WorkType_Shift" xml:space="preserve"><value>משמרות</value></data>
   <data name="Justice_WorkType_Chore" xml:space="preserve"><value>מטלות</value></data>
-  <data name="Justice_WorkType_OnDuty" xml:space="preserve"><value>תורנויות</value></data>
+  <data name="Justice_WorkType_OnDuty" xml:space="preserve"><value>כוננויות</value></data>
   <data name="Justice_ExcludeExempt" xml:space="preserve"><value>אל תכלול משמרות בית / לא מחובר</value></data>
   <data name="Justice_Apply" xml:space="preserve"><value>החל</value></data>
   <data name="Justice_Verdict_Heading" xml:space="preserve"><value>פסק דין</value></data>
@@ -15057,11 +15057,13 @@
   <data name="Justice_AB_Active" xml:space="preserve"><value>השוואת A/B פעילה.</value></data>
   <data name="Justice_AB_DeltaHint" xml:space="preserve"><value>עמודות Δ מציגות תקופה-A פחות תקופה-B.</value></data>
   <data name="Justice_AB_Close" xml:space="preserve"><value>סגור את סרגל ה-A/B</value></data>
+  <data name="Justice_AB_Vs" xml:space="preserve"><value>לעומת</value></data>
   <data name="Justice_Close" xml:space="preserve"><value>סגור</value></data>
   <data name="Justice_GaugeEyebrow" xml:space="preserve"><value>מד שוויון</value></data>
   <data name="Justice_GaugeAria" xml:space="preserve"><value>מד שוויון: מדד פיזור {0}, דירוג {1}</value></data>
   <data name="Justice_SpreadIndex" xml:space="preserve"><value>מדד פיזור</value></data>
   <data name="Justice_SeverityAria" xml:space="preserve"><value>חומרה: {0} מתוך 4</value></data>
+  <data name="Justice_SeverityDot_Title" xml:space="preserve"><value>{0} מתוך 4</value></data>
   <data name="Justice_BandLegend_Aria" xml:space="preserve"><value>מקרא פסי סטייה</value></data>
   <data name="Justice_Band_Over" xml:space="preserve"><value>עמוס</value></data>
   <data name="Justice_Band_SoftOver" xml:space="preserve"><value>עמוס קלות</value></data>
@@ -15069,7 +15071,7 @@
   <data name="Justice_Band_SoftUnder" xml:space="preserve"><value>קל מדי</value></data>
   <data name="Justice_Band_Under" xml:space="preserve"><value>תת-עומס</value></data>
   <data name="Justice_MostOver_Aria" xml:space="preserve"><value>עמוס ביותר</value></data>
-  <data name="Justice_MostUnder_Aria" xml:space="preserve"><value>פחות עמוס ביותר</value></data>
+  <data name="Justice_MostUnder_Aria" xml:space="preserve"><value>הפחות עמוס</value></data>
   <data name="Justice_DonutEyebrow" xml:space="preserve"><value>התפלגות עבודה</value></data>
   <data name="Justice_DonutAria" xml:space="preserve"><value>תרשים עוגה: {0} יחידות עבודה מחולקות בין הישויות</value></data>
   <data name="Justice_DonutTotal" xml:space="preserve"><value>סה"כ</value></data>
@@ -15091,7 +15093,7 @@
   <data name="Justice_Trend_Aria" xml:space="preserve"><value>גרף מגמה</value></data>
   <data name="Justice_Ribbon_Label" xml:space="preserve"><value>סרגל שוויון</value></data>
   <data name="Justice_ReminderCard_Title" xml:space="preserve"><value>התעמק עוד</value></data>
-  <data name="Justice_ReminderCard_Body" xml:space="preserve"><value>אתה צופה ברמת מולקולה. התעמק לחברה ספציפית או צפה בכל המשתמשים ישירות.</value></data>
+  <data name="Justice_ReminderCard_Body" xml:space="preserve"><value>אתם צופים ברמת מולקולה. התעמקו לחברה ספציפית או צפו בכל המשתמשים ישירות.</value></data>
   <data name="Justice_ReminderCard_PathA_Label" xml:space="preserve"><value>אפשרות א'</value></data>
   <data name="Justice_ReminderCard_PathA_Action" xml:space="preserve"><value>לחץ על שורת חברה</value></data>
   <data name="Justice_ReminderCard_PathA_Hint" xml:space="preserve"><value>פותח את פירוט המשתמשים לחברה זו.</value></data>
