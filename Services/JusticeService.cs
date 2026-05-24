@@ -358,6 +358,8 @@ public class JusticeService : IJusticeService
             if (q.ExcludeExemptShifts)
             {
                 shiftQ = shiftQ.Where(a => a.ShiftInstance.ShiftType.Key != ShiftType.KEY_HOME
+                                         && a.ShiftInstance.ShiftType.Key != ShiftType.KEY_HOME_AM
+                                         && a.ShiftInstance.ShiftType.Key != ShiftType.KEY_HOME_PM
                                          && a.ShiftInstance.ShiftType.Key != ShiftType.KEY_OFFLINE);
             }
             var shiftRows = await shiftQ
@@ -438,6 +440,8 @@ public class JusticeService : IJusticeService
         if (q.ExcludeExemptShifts)
         {
             query = query.Where(si => si.ShiftType.Key != ShiftType.KEY_HOME
+                                    && si.ShiftType.Key != ShiftType.KEY_HOME_AM
+                                    && si.ShiftType.Key != ShiftType.KEY_HOME_PM
                                     && si.ShiftType.Key != ShiftType.KEY_OFFLINE);
         }
         var rows = await query
@@ -651,6 +655,8 @@ public class JusticeService : IJusticeService
         if (q.ExcludeExemptShifts)
         {
             query = query.Where(si => si.ShiftType.Key != ShiftType.KEY_HOME
+                                    && si.ShiftType.Key != ShiftType.KEY_HOME_AM
+                                    && si.ShiftType.Key != ShiftType.KEY_HOME_PM
                                     && si.ShiftType.Key != ShiftType.KEY_OFFLINE);
         }
 
