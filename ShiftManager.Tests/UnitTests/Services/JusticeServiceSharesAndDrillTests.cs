@@ -43,6 +43,12 @@ public class JusticeServiceSharesAndDrillTests : IDisposable
     private const int CompanyBId = 2;   // headcount = 4, actuals = 6
     private const int CompanyCId = 3;   // headcount = 6, actuals = 6
 
+    // A5: two additional (empty) molecules in the same area so MoleculesInArea returns 3 sibling
+    // rows for the comparison-tier drillability test. They carry no companies/users/chores, so they
+    // do not affect any CompaniesInMolecule(Molecule 1) assertions in this fixture.
+    private const int MoleculeTwoId   = 2;
+    private const int MoleculeThreeId = 3;
+
     private static readonly int[] UsersA = { 101, 102 };
     private static readonly int[] UsersB = { 201, 202, 203, 204 };
     private static readonly int[] UsersC = { 301, 302, 303, 304, 305, 306 };
@@ -106,7 +112,10 @@ public class JusticeServiceSharesAndDrillTests : IDisposable
     private void SeedAll()
     {
         _db.Areas.Add(new Area { Id = AreaId, ProjectId = 0, Name = "Area1", DisplayName = "Area1" });
-        _db.Molecules.Add(new Molecule { Id = MoleculeId, AreaId = AreaId, Name = "Mol1", DisplayName = "Mol1" });
+        _db.Molecules.AddRange(
+            new Molecule { Id = MoleculeId, AreaId = AreaId, Name = "Mol1", DisplayName = "Mol1" },
+            new Molecule { Id = MoleculeTwoId, AreaId = AreaId, Name = "Mol2", DisplayName = "Mol2" },
+            new Molecule { Id = MoleculeThreeId, AreaId = AreaId, Name = "Mol3", DisplayName = "Mol3" });
         _db.Companies.AddRange(
             new Company { Id = CompanyAId, MoleculeId = MoleculeId, Name = "CoA", DisplayName = "CoA" },
             new Company { Id = CompanyBId, MoleculeId = MoleculeId, Name = "CoB", DisplayName = "CoB" },
@@ -437,5 +446,67 @@ public class JusticeServiceSharesAndDrillTests : IDisposable
             row.DeviationPercentEqual.Should().HaveValue(
                 $"Row {row.Id}: DeviationPercentEqual must always be populated");
         });
+    }
+
+    // ==================================================================
+    // A5 — comparison-tier visibility: IsDrillable flag via the new overload
+    // ==================================================================
+
+    private static JusticeQuery MakeMoleculesInAreaQuery() => new JusticeQuery(
+        Scope: JusticeScope.Area,
+        ScopeId: AreaId,
+        PeriodStart: new DateOnly(2026, 5, 1),
+        PeriodEnd: new DateOnly(2026, 5, 31),
+        WorkType: JusticeWorkType.Chore,
+        ExcludeExemptShifts: false,
+        Level: JusticeLevel.MoleculesInArea,
+        Basis: FairnessBasis.BySize);
+
+    /// <summary>
+    /// When drillableChildIds = {Molecule 1}, ONLY the Molecule-1 row is marked IsDrillable,
+    /// while ALL three molecule rows are still returned (the comparison tier stays intact).
+    /// </summary>
+    [Fact]
+    public async Task NewOverload_DrillableSet_MarksOnlyMatchingRowsDrillable_ButReturnsAll()
+    {
+        var drillable = new[] { MoleculeId }; // user's own subtree only
+
+        var vm = await _service.GetJusticeViewAsync(MakeMoleculesInAreaQuery(), drillable, CancellationToken.None);
+
+        // All three sibling molecules are still present — comparison tier intact.
+        vm.Rows.Select(r => r.Id).Should().BeEquivalentTo(new[] { MoleculeId, MoleculeTwoId, MoleculeThreeId },
+            "all sibling molecules must still be returned for ranking/comparison");
+
+        vm.Rows.Single(r => r.Id == MoleculeId).IsDrillable.Should().BeTrue(
+            "Molecule 1 is in the drillable set — own subtree");
+        vm.Rows.Single(r => r.Id == MoleculeTwoId).IsDrillable.Should().BeFalse(
+            "Molecule 2 is a readable sibling, NOT drillable");
+        vm.Rows.Single(r => r.Id == MoleculeThreeId).IsDrillable.Should().BeFalse(
+            "Molecule 3 is a readable sibling, NOT drillable");
+    }
+
+    /// <summary>
+    /// Backward compatibility: when drillableChildIds is null (the 1-arg overload contract),
+    /// EVERY row is drillable.
+    /// </summary>
+    [Fact]
+    public async Task NewOverload_NullDrillableSet_MarksAllRowsDrillable()
+    {
+        var vm = await _service.GetJusticeViewAsync(MakeMoleculesInAreaQuery(), drillableChildIds: null, CancellationToken.None);
+
+        vm.Rows.Should().AllSatisfy(r => r.IsDrillable.Should().BeTrue(
+            "null drillableChildIds means no capping — all rows drillable (backward compatible)"));
+    }
+
+    /// <summary>
+    /// The legacy 1-arg overload must keep its old behavior: every row drillable.
+    /// </summary>
+    [Fact]
+    public async Task LegacyOneArgOverload_LeavesAllRowsDrillable()
+    {
+        var vm = await _service.GetJusticeViewAsync(MakeMoleculesInAreaQuery(), CancellationToken.None);
+
+        vm.Rows.Should().AllSatisfy(r => r.IsDrillable.Should().BeTrue(
+            "the 1-arg overload delegates with drillableChildIds: null — all rows drillable"));
     }
 }

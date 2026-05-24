@@ -58,7 +58,10 @@ public class JusticeService : IJusticeService
         return await _db.JusticeTargets.IgnoreQueryFilters().AsNoTracking().ToListAsync(ct);
     }
 
-    public async Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, CancellationToken ct = default)
+    public Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, CancellationToken ct = default)
+        => GetJusticeViewAsync(q, drillableChildIds: null, ct);
+
+    public async Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct = default)
     {
         // Targets cache: load once per request so ResolveExpected doesn't round-trip the DB
         // for each row.
@@ -69,9 +72,9 @@ public class JusticeService : IJusticeService
 
         var rows = q.Level switch
         {
-            JusticeLevel.UsersInCompany => await BuildUsersInCompanyAsync(q, targets, ct),
-            JusticeLevel.CompaniesInMolecule => await BuildCompaniesInMoleculeAsync(q, targets, ct),
-            JusticeLevel.MoleculesInArea => await BuildMoleculesInAreaAsync(q, targets, ct),
+            JusticeLevel.UsersInCompany => await BuildUsersInCompanyAsync(q, targets, drillableChildIds, ct),
+            JusticeLevel.CompaniesInMolecule => await BuildCompaniesInMoleculeAsync(q, targets, drillableChildIds, ct),
+            JusticeLevel.MoleculesInArea => await BuildMoleculesInAreaAsync(q, targets, drillableChildIds, ct),
             _ => new List<JusticeRow>()
         };
 
@@ -117,7 +120,12 @@ public class JusticeService : IJusticeService
     // Row builders — one per JusticeLevel
     // -----------------------------------------------------------------------------------
 
-    private async Task<List<JusticeRow>> BuildUsersInCompanyAsync(JusticeQuery q, List<JusticeTarget> targets, CancellationToken ct)
+    // A5: a row is drillable iff the caller did not supply a cap (null) OR the cap contains the row id.
+    // User-level rows are terminal (no drill-down), so IsDrillable is irrelevant there and left true.
+    private static bool IsRowDrillable(IReadOnlyCollection<int>? drillableChildIds, int rowId)
+        => drillableChildIds == null || drillableChildIds.Contains(rowId);
+
+    private async Task<List<JusticeRow>> BuildUsersInCompanyAsync(JusticeQuery q, List<JusticeTarget> targets, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct)
     {
         if (q.Scope != JusticeScope.Company || q.ScopeId is null)
             return new List<JusticeRow>();
@@ -165,7 +173,11 @@ public class JusticeService : IJusticeService
                 Actual: actual,
                 Expected: perUserExpected,
                 DeviationPercent: devPct,
-                Band: band));
+                Band: band)
+            {
+                // User rows are terminal; honor the cap if one was supplied (defaults to true).
+                IsDrillable = IsRowDrillable(drillableChildIds, u.Id)
+            });
         }
         return rows;
     }
@@ -212,7 +224,7 @@ public class JusticeService : IJusticeService
         return globalTarget.ExpectedCount * PeriodMultiplier(q, globalTarget.PeriodKind);
     }
 
-    private async Task<List<JusticeRow>> BuildCompaniesInMoleculeAsync(JusticeQuery q, List<JusticeTarget> targets, CancellationToken ct)
+    private async Task<List<JusticeRow>> BuildCompaniesInMoleculeAsync(JusticeQuery q, List<JusticeTarget> targets, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct)
     {
         if (q.Scope != JusticeScope.Molecule || q.ScopeId is null)
             return new List<JusticeRow>();
@@ -262,12 +274,15 @@ public class JusticeService : IJusticeService
                 Actual: actual,
                 Expected: expected,
                 DeviationPercent: devPct,
-                Band: band));
+                Band: band)
+            {
+                IsDrillable = IsRowDrillable(drillableChildIds, c.Id)
+            });
         }
         return rows;
     }
 
-    private async Task<List<JusticeRow>> BuildMoleculesInAreaAsync(JusticeQuery q, List<JusticeTarget> targets, CancellationToken ct)
+    private async Task<List<JusticeRow>> BuildMoleculesInAreaAsync(JusticeQuery q, List<JusticeTarget> targets, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct)
     {
         if (q.Scope != JusticeScope.Area || q.ScopeId is null)
             return new List<JusticeRow>();
@@ -329,7 +344,10 @@ public class JusticeService : IJusticeService
                 Actual: moleculeActual,
                 Expected: expected,
                 DeviationPercent: devPct,
-                Band: band));
+                Band: band)
+            {
+                IsDrillable = IsRowDrillable(drillableChildIds, m.Id)
+            });
         }
         return rows;
     }
@@ -603,38 +621,6 @@ public class JusticeService : IJusticeService
     }
 
     // -----------------------------------------------------------------------------------
-    // Fairness-basis transformation (A3) — kept for reference; logic folded into A4 above
-    // -----------------------------------------------------------------------------------
-
-    /// <summary>
-    /// Transforms a row list to use the EqualShare fairness basis.
-    /// Each row's Expected is replaced with <c>Σ rows.Actual / rows.Count</c>
-    /// (equal split of the actual total — distance-from-mean semantics), then
-    /// DeviationPercent and Band are recomputed via <see cref="ComputeDeviation"/>.
-    /// Rows whose Expected resolves to 0 (i.e. the list is empty or all-zero) keep
-    /// their original NoTarget band so the UI renders the "no target" pill.
-    ///
-    /// NOTE: No longer called from <see cref="GetJusticeViewAsync"/>. The equivalent
-    /// logic lives in <see cref="ComputeSharesAndBothBases"/> which handles both bases
-    /// in one pass. Kept here for clarity and to avoid a breaking change for any
-    /// future callers that reference it directly.
-    /// </summary>
-    private List<JusticeRow> ApplyEqualShareBasis(List<JusticeRow> rows)
-    {
-        if (rows.Count == 0) return rows;
-
-        var equalExpected = rows.Sum(r => r.Actual) / rows.Count;
-
-        var result = new List<JusticeRow>(rows.Count);
-        foreach (var row in rows)
-        {
-            var (devPct, band) = ComputeDeviation(row.Actual, equalExpected);
-            result.Add(row with { Expected = equalExpected, DeviationPercent = devPct, Band = band });
-        }
-        return result;
-    }
-
-    // -----------------------------------------------------------------------------------
     // Deviation math
     // -----------------------------------------------------------------------------------
 
@@ -830,7 +816,9 @@ public class JusticeService : IJusticeService
         foreach (var cid in companyIds)
         {
             var perCompanyQuery = q with { Scope = JusticeScope.Company, ScopeId = cid, Level = JusticeLevel.UsersInCompany, WorkType = JusticeWorkType.Chore };
-            var rows = await BuildUsersInCompanyAsync(perCompanyQuery, targets, ct);
+            // Drill-capping is irrelevant for the internal "where to focus" hole-finding path —
+            // it produces per-user holes, not a navigable comparison tier. Pass null (all drillable).
+            var rows = await BuildUsersInCompanyAsync(perCompanyQuery, targets, drillableChildIds: null, ct);
             foreach (var r in rows) allRows.Add((r, cid));
         }
 

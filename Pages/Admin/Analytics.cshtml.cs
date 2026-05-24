@@ -108,12 +108,30 @@ public class AnalyticsModel : LocalizedPageModel
             return Page();
         }
 
-        // Authorization: confirm the requested ScopeId is within what the user can see.
+        // Authorization (READ / comparison tier): confirm the requested ScopeId is within what the
+        // user can SEE. A capped user may read a scope to rank its sibling children even when they
+        // can only drill into their own subtree.
         if (!await UserCanAccessScopeAsync(userId, Scope, ScopeId.Value, ct))
         {
             _logger.LogWarning("Justice access denied for user {UserId} on scope {Scope} id {ScopeId}", userId, Scope, ScopeId);
             return Forbid();
         }
+
+        // Authorization (DRILL): a request that navigates INTO a scope must target the user's own
+        // subtree. This is the security core of A5 — a sibling scope is visible as a comparison row
+        // but drilling into it (?scopeId=<sibling>) must be rejected even though it is readable.
+        // The read check above can be (and is, for Area top-level) deliberately broader; this check
+        // is the strict gate that prevents cross-scope drill-through.
+        if (!await CanDrillScopeAsync(userId, Scope, ScopeId.Value, ct))
+        {
+            _logger.LogWarning("Justice drill denied for user {UserId} on scope {Scope} id {ScopeId} (readable-not-drillable)", userId, Scope, ScopeId);
+            return Forbid();
+        }
+
+        // Compute which child rows the user may drill into at the CURRENT level. Sibling rows the
+        // user can only read (not drill) are still returned for comparison, but flagged
+        // IsDrillable=false so the front-end disables their drill affordance.
+        var drillableChildIds = await ComputeDrillableChildIdsAsync(userId, Scope, ScopeId.Value, Level, ct);
 
         var query = new JusticeQuery(
             Scope: Scope,
@@ -126,7 +144,7 @@ public class AnalyticsModel : LocalizedPageModel
 
         try
         {
-            View = await _justiceService.GetJusticeViewAsync(query, ct);
+            View = await _justiceService.GetJusticeViewAsync(query, drillableChildIds, ct);
         }
         catch (Exception ex)
         {
@@ -301,6 +319,91 @@ public class AnalyticsModel : LocalizedPageModel
                 }
             default:
                 return false;
+        }
+    }
+
+    /// <summary>
+    /// DRILL authorization (A5) — distinct from <see cref="UserCanAccessScopeAsync"/>.
+    ///
+    /// Returns true only when the requested scope is genuinely within the user's OWN subtree, i.e.
+    /// a scope they may navigate INTO (not merely read as a sibling for comparison). This is the
+    /// strict gate that blocks cross-scope drill-through: a sibling molecule/company is rendered as
+    /// a readable comparison row, but a request that drills into its scopeId must be forbidden.
+    ///
+    /// Rules:
+    ///   • Company scope → companyId must be in GetAccessibleCompanyIdsForGrantAsync.
+    ///   • Molecule scope → moleculeId must be in GetAccessibleMoleculeIdsForGrantAsync.
+    ///   • Area scope → areaId must be in GetAccessibleAreaIdsForGrantAsync (area contains an
+    ///     accessible molecule OR is covered by an area/project grant). The area is the top of the
+    ///     comparison tier; an accessible area is drillable.
+    /// </summary>
+    private async Task<bool> CanDrillScopeAsync(int userId, JusticeScope scope, int scopeId, CancellationToken ct)
+    {
+        switch (scope)
+        {
+            case JusticeScope.Company:
+                {
+                    var ids = await _grantService.GetAccessibleCompanyIdsForGrantAsync(userId, "ViewJusticeTable");
+                    return ids.Contains(scopeId);
+                }
+            case JusticeScope.Molecule:
+                {
+                    var ids = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "ViewJusticeTable");
+                    return ids.Contains(scopeId);
+                }
+            case JusticeScope.Area:
+                {
+                    var ids = await _grantService.GetAccessibleAreaIdsForGrantAsync(userId, "ViewJusticeTable");
+                    return ids.Contains(scopeId);
+                }
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Computes the set of CHILD-row ids at the current <paramref name="level"/> that the user may
+    /// DRILL into. Sibling rows the user can only read are excluded from this set (so the service
+    /// flags them IsDrillable=false) but are still returned for comparison. Returns null at user
+    /// levels (terminal rows — no drill-down).
+    /// </summary>
+    private async Task<IReadOnlyCollection<int>?> ComputeDrillableChildIdsAsync(int userId, JusticeScope scope, int scopeId, JusticeLevel level, CancellationToken ct)
+    {
+        switch (level)
+        {
+            case JusticeLevel.MoleculesInArea:
+                {
+                    // drillable child molecules = accessible molecules ∩ molecules-in-this-area.
+                    var accessible = await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "ViewJusticeTable");
+                    if (accessible.Count == 0) return Array.Empty<int>();
+                    var accessibleSet = accessible.ToHashSet();
+                    // SECURITY: IgnoreQueryFilters — molecules in the viewed area may span tenants;
+                    // the result is intersected with the grant-authorized accessible set below.
+                    var moleculesInArea = await _db.Molecules
+                        .IgnoreQueryFilters()
+                        .Where(m => m.AreaId == scopeId)
+                        .Select(m => m.Id)
+                        .ToListAsync(ct);
+                    return moleculesInArea.Where(accessibleSet.Contains).ToList();
+                }
+            case JusticeLevel.CompaniesInMolecule:
+                {
+                    // drillable child companies = accessible companies ∩ companies-in-this-molecule.
+                    var accessible = await _grantService.GetAccessibleCompanyIdsForGrantAsync(userId, "ViewJusticeTable");
+                    if (accessible.Count == 0) return Array.Empty<int>();
+                    var accessibleSet = accessible.ToHashSet();
+                    // SECURITY: IgnoreQueryFilters — companies in the viewed molecule may span tenants;
+                    // the result is intersected with the grant-authorized accessible set below.
+                    var companiesInMolecule = await _db.Companies
+                        .IgnoreQueryFilters()
+                        .Where(c => c.MoleculeId == scopeId)
+                        .Select(c => c.Id)
+                        .ToListAsync(ct);
+                    return companiesInMolecule.Where(accessibleSet.Contains).ToList();
+                }
+            default:
+                // UsersInCompany — rows are terminal; no drill-down, leave uncapped (all drillable).
+                return null;
         }
     }
 }

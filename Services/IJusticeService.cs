@@ -10,8 +10,20 @@ public interface IJusticeService
 {
     /// <summary>
     /// Build the full Justice view: rows at the requested level, spread index, most-over/most-under.
+    /// Equivalent to calling the comparison-tier overload with <c>drillableChildIds: null</c>
+    /// (every row drillable — backward compatible).
     /// </summary>
     Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery query, CancellationToken ct = default);
+
+    /// <summary>
+    /// A5 comparison-tier overload. Builds the same view as <see cref="GetJusticeViewAsync(JusticeQuery, CancellationToken)"/>
+    /// but marks each row's <see cref="JusticeRow.IsDrillable"/> based on <paramref name="drillableChildIds"/>:
+    /// a row is drillable iff <paramref name="drillableChildIds"/> is null OR contains the row's Id.
+    /// ALL rows are still returned (the comparison tier is intact — capped users can READ siblings
+    /// to rank them, but may only DRILL into their own subtree). Passing null reproduces the legacy
+    /// behavior exactly (every row drillable).
+    /// </summary>
+    Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery query, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct = default);
 
     /// <summary>
     /// Returns all configured targets (defaults + overrides) visible to the current tenant.

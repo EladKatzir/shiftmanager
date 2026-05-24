@@ -67,6 +67,15 @@ public sealed record JusticeRow(
     public decimal? DeviationPercentEqual { get; init; }
     /// <summary>Deviation band computed against ExpectedEqual.</summary>
     public DeviationBand BandEqual { get; init; }
+
+    // A5: comparison-tier visibility ──────────────────────────────────────────────────
+    /// <summary>
+    /// Whether the current user may DRILL into this row (navigate to <c>?scopeId={Id}</c>).
+    /// Rows outside the user's own subtree are rendered for COMPARISON (read) but are not
+    /// drillable. Defaults to <c>true</c> so the legacy 1-arg view path and the calendar
+    /// drawers stay backward compatible (every row drillable when no cap is supplied).
+    /// </summary>
+    public bool IsDrillable { get; init; } = true;
 }
 
 /// <summary>
