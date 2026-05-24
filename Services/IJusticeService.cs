@@ -34,6 +34,25 @@ public interface IJusticeService
     Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery query, IReadOnlyCollection<int>? drillableChildIds, bool includeSparklines, CancellationToken ct = default);
 
     /// <summary>
+    /// A7: A/B period comparison. Runs BOTH views sequentially (never concurrently — the
+    /// underlying <see cref="AppDbContext"/> is not thread-safe), then computes per-row deltas.
+    ///
+    /// The returned <see cref="JusticeComparisonViewModel.Primary"/> carries sparklines
+    /// (<c>includeSparklines: true</c>) and has every row's
+    /// <see cref="JusticeRow.DeltaVsCompare"/> populated.
+    /// The <see cref="JusticeComparisonViewModel.Compare"/> view is returned as-is
+    /// (no sparklines, DeltaVsCompare == null on every row).
+    ///
+    /// <paramref name="drillableChildIds"/> is forwarded to BOTH calls so drill-capping
+    /// is consistent across the comparison.
+    /// </summary>
+    Task<JusticeComparisonViewModel> GetComparisonViewAsync(
+        JusticeQuery periodA,
+        JusticeQuery periodB,
+        IReadOnlyCollection<int>? drillableChildIds,
+        CancellationToken ct = default);
+
+    /// <summary>
     /// A6: Computes <paramref name="buckets"/> consecutive calendar-month work-item counts,
     /// ending at the month that contains <paramref name="baseQuery"/>.PeriodEnd.
     /// Honoring the same work-type filter and exclusions as <see cref="GetJusticeViewAsync"/>.

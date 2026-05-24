@@ -85,7 +85,39 @@ public sealed record JusticeRow(
     /// All-zeros list is used for rows that had no work in the span (never null when requested).
     /// </summary>
     public IReadOnlyList<decimal>? Sparkline { get; init; }
+
+    // A7: A/B period comparison delta ─────────────────────────────────────────────────
+    /// <summary>
+    /// Difference between this row's Actual in the PRIMARY period and the same row's Actual
+    /// in the COMPARE period: <c>Primary.Actual - Compare.Actual</c>.
+    /// Populated only on the Primary rows returned by
+    /// <see cref="IJusticeService.GetComparisonViewAsync"/>; null otherwise (including on
+    /// every row in the Compare view).
+    /// A missing row on either side is treated as Actual == 0.
+    /// </summary>
+    public decimal? DeltaVsCompare { get; init; }
 }
+
+// ===================================================================================
+// A7: A/B period comparison view model.
+// ===================================================================================
+
+/// <summary>
+/// Result of an A/B period comparison. Holds two full <see cref="JusticeViewModel"/>
+/// instances plus a pre-computed delta dictionary for efficient rendering.
+/// </summary>
+/// <param name="Primary">The primary (period A) Justice view. Each row's
+/// <see cref="JusticeRow.DeltaVsCompare"/> is populated.</param>
+/// <param name="Compare">The compare (period B) Justice view. Rows are returned as-is;
+/// <see cref="JusticeRow.DeltaVsCompare"/> is null on all rows.</param>
+/// <param name="ActualDeltaByRowId">
+/// <c>Primary.Actual - Compare.Actual</c> for every row id present in EITHER view.
+/// A row absent from one view contributes 0 on that side.
+/// </param>
+public sealed record JusticeComparisonViewModel(
+    JusticeViewModel Primary,
+    JusticeViewModel Compare,
+    IReadOnlyDictionary<int, decimal> ActualDeltaByRowId);
 
 /// <summary>
 /// Color/severity bucket for the deviation pill. Asymmetric on purpose:

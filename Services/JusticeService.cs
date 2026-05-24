@@ -64,6 +64,46 @@ public class JusticeService : IJusticeService
     public Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct = default)
         => GetJusticeViewAsync(q, drillableChildIds, includeSparklines: false, ct);
 
+    /// <inheritdoc/>
+    public async Task<JusticeComparisonViewModel> GetComparisonViewAsync(
+        JusticeQuery periodA,
+        JusticeQuery periodB,
+        IReadOnlyCollection<int>? drillableChildIds,
+        CancellationToken ct = default)
+    {
+        // CRITICAL: run sequentially — AppDbContext is NOT thread-safe; concurrent async ops throw.
+        var primary = await GetJusticeViewAsync(periodA, drillableChildIds, includeSparklines: true, ct);
+        var compare = await GetJusticeViewAsync(periodB, drillableChildIds, includeSparklines: false, ct);
+
+        // Build the actual-by-rowId lookup for all row ids present in EITHER view.
+        var primaryActuals = primary.Rows.ToDictionary(r => r.Id, r => r.Actual);
+        var compareActuals = compare.Rows.ToDictionary(r => r.Id, r => r.Actual);
+
+        // Union of all row ids from both views.
+        var allIds = new HashSet<int>(primaryActuals.Keys);
+        allIds.UnionWith(compareActuals.Keys);
+
+        var deltaById = new Dictionary<int, decimal>(allIds.Count);
+        foreach (var id in allIds)
+        {
+            var pActual = primaryActuals.GetValueOrDefault(id, 0m);
+            var cActual = compareActuals.GetValueOrDefault(id, 0m);
+            deltaById[id] = pActual - cActual;
+        }
+
+        // Rebuild Primary rows with DeltaVsCompare populated; preserve existing sort order and all other fields.
+        var enrichedRows = primary.Rows
+            .Select(row => row with { DeltaVsCompare = deltaById.GetValueOrDefault(row.Id, row.Actual) })
+            .ToList();
+
+        var enrichedPrimary = primary with { Rows = enrichedRows };
+
+        return new JusticeComparisonViewModel(
+            Primary: enrichedPrimary,
+            Compare: compare,
+            ActualDeltaByRowId: deltaById);
+    }
+
     public async Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, IReadOnlyCollection<int>? drillableChildIds, bool includeSparklines, CancellationToken ct = default)
     {
         // Targets cache: load once per request so ResolveExpected doesn't round-trip the DB
