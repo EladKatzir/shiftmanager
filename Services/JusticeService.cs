@@ -52,14 +52,20 @@ public class JusticeService : IJusticeService
 
     public async Task<List<JusticeTarget>> GetTargetsAsync(CancellationToken ct = default)
     {
-        return await _db.JusticeTargets.AsNoTracking().ToListAsync(ct);
+        // SECURITY: IgnoreQueryFilters is required here — scope already gated at page-model
+        // boundary; cross-company admins must see company-scoped overrides for all companies
+        // in the viewed scope.
+        return await _db.JusticeTargets.IgnoreQueryFilters().AsNoTracking().ToListAsync(ct);
     }
 
     public async Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, CancellationToken ct = default)
     {
         // Targets cache: load once per request so ResolveExpected doesn't round-trip the DB
         // for each row.
-        var targets = await _db.JusticeTargets.AsNoTracking().ToListAsync(ct);
+        // SECURITY: IgnoreQueryFilters is required here — scope already gated at page-model
+        // boundary; cross-company admins must see company-scoped overrides for all companies
+        // in the viewed scope.
+        var targets = await _db.JusticeTargets.IgnoreQueryFilters().AsNoTracking().ToListAsync(ct);
 
         var rows = q.Level switch
         {
@@ -691,7 +697,10 @@ public class JusticeService : IJusticeService
         if (companyIds.Length == 0) return new List<UnfilledHole>();
 
         // Separate target load — BuildWhereToFocusAsync runs independently of GetJusticeViewAsync.
-        var targets = await _db.JusticeTargets.AsNoTracking().ToListAsync(ct);
+        // SECURITY: IgnoreQueryFilters is required here — scope already gated at page-model
+        // boundary; cross-company admins must see company-scoped overrides for all companies
+        // in the viewed scope.
+        var targets = await _db.JusticeTargets.IgnoreQueryFilters().AsNoTracking().ToListAsync(ct);
 
         // Build user-level rows per company in scope. Reuse BuildUsersInCompanyAsync to keep math
         // identical to the verdict strip. The query passed in must be at Company scope per the
