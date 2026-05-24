@@ -34,6 +34,11 @@ public sealed record JusticeViewModel(
 /// <summary>
 /// One row in the Justice table — represents a user, company, or molecule depending on Level.
 /// </summary>
+/// <remarks>
+/// Positional constructor (7 args) is the builder contract — all call sites use it.
+/// The additional <c>init</c>-only properties (A4) carry both fairness bases so the
+/// front-end can toggle without a round-trip.
+/// </remarks>
 public sealed record JusticeRow(
     int Id,
     string Name,
@@ -41,7 +46,28 @@ public sealed record JusticeRow(
     decimal Actual,
     decimal Expected,
     decimal? DeviationPercent,          // null when Expected == 0 (no target / no capacity); render "no target" pill
-    DeviationBand Band);
+    DeviationBand Band)
+{
+    // A4: per-row share fields (basis-independent) ─────────────────────────────────
+    /// <summary>Actual / Σ Actual across all rows in the view. Null when Σ Actual == 0.</summary>
+    public decimal? ActualShare { get; init; }
+
+    // A4: both fairness-basis values — always precomputed regardless of active basis ──
+    /// <summary>Expected under the BySize basis (capacity / target-weighted).</summary>
+    public decimal ExpectedBySize { get; init; }
+    /// <summary>Expected under the EqualShare basis (= Σ Actual / N).</summary>
+    public decimal ExpectedEqual { get; init; }
+
+    /// <summary>ExpectedBySize / Σ ExpectedBySize across all rows. Null when Σ == 0.</summary>
+    public decimal? ExpectedShareBySize { get; init; }
+    /// <summary>= 1 / N (equal fraction per row).</summary>
+    public decimal? ExpectedShareEqual { get; init; }
+
+    /// <summary>Deviation % computed against ExpectedEqual. Null when ExpectedEqual == 0.</summary>
+    public decimal? DeviationPercentEqual { get; init; }
+    /// <summary>Deviation band computed against ExpectedEqual.</summary>
+    public DeviationBand BandEqual { get; init; }
+}
 
 /// <summary>
 /// Color/severity bucket for the deviation pill. Asymmetric on purpose:

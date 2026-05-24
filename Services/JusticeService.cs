@@ -75,12 +75,10 @@ public class JusticeService : IJusticeService
             _ => new List<JusticeRow>()
         };
 
-        // A3: if EqualShare basis, recompute Expected/deviation before spread/sort so all
-        // downstream computations (spread index, mostOver/mostUnder, sort) reflect the active basis.
-        if (q.Basis == FairnessBasis.EqualShare)
-        {
-            rows = ApplyEqualShareBasis(rows);
-        }
+        // A4: precompute both bases + share fields so the front-end can toggle without a round-trip.
+        // This also sets the PRIMARY fields (Expected/DeviationPercent/Band) to the active basis,
+        // replacing the standalone A3 ApplyEqualShareBasis call.
+        rows = ComputeSharesAndBothBases(rows, q);
 
         var validRows = rows.Where(r => r.Band != DeviationBand.NoTarget && r.DeviationPercent.HasValue).ToList();
 
@@ -527,7 +525,85 @@ public class JusticeService : IJusticeService
     }
 
     // -----------------------------------------------------------------------------------
-    // Fairness-basis transformation (A3)
+    // A4: Dual-basis precompute + share fields
+    // -----------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Enriches each row with both fairness-basis metrics and per-row share fields so
+    /// the front-end can toggle between BySize and EqualShare without a round-trip.
+    ///
+    /// Contract (called AFTER the row builders, BEFORE spread/sort):
+    ///   • Rows as received are the BySize output (Expected = capacity/target-weighted).
+    ///   • <see cref="JusticeRow.ExpectedBySize"/> captures that as-built Expected.
+    ///   • <see cref="JusticeRow.ExpectedEqual"/> = Σ Actual / N for every row.
+    ///   • <see cref="JusticeRow.ActualShare"/> = Actual / Σ Actual (null when Σ == 0).
+    ///   • <see cref="JusticeRow.ExpectedShareBySize"/> = ExpectedBySize / Σ ExpectedBySize (null when Σ == 0).
+    ///   • <see cref="JusticeRow.ExpectedShareEqual"/> = 1 / N.
+    ///   • <see cref="JusticeRow.DeviationPercentEqual"/> and <see cref="JusticeRow.BandEqual"/>
+    ///     are computed against ExpectedEqual.
+    ///   • PRIMARY fields (<c>Expected</c>, <c>DeviationPercent</c>, <c>Band</c>) are set to
+    ///     the ACTIVE basis (<paramref name="q"/>.Basis), replicating A3's behavior exactly.
+    /// </summary>
+    private List<JusticeRow> ComputeSharesAndBothBases(List<JusticeRow> rows, JusticeQuery q)
+    {
+        if (rows.Count == 0) return rows;
+
+        int n = rows.Count;
+        decimal sumActual = rows.Sum(r => r.Actual);
+        decimal equalExpected = sumActual / n;
+        decimal sumExpectedBySize = rows.Sum(r => r.Expected);
+
+        var result = new List<JusticeRow>(n);
+        foreach (var row in rows)
+        {
+            // --- Shares (basis-independent) ---
+            decimal? actualShare = sumActual > 0m ? row.Actual / sumActual : (decimal?)null;
+            decimal? expectedShareBySize = sumExpectedBySize > 0m ? row.Expected / sumExpectedBySize : (decimal?)null;
+            decimal? expectedShareEqual = 1m / n;
+
+            // --- Equal-basis deviation ---
+            var (devPctEqual, bandEqual) = ComputeDeviation(row.Actual, equalExpected);
+
+            // --- Active-basis primary fields ---
+            decimal primaryExpected;
+            decimal? primaryDevPct;
+            DeviationBand primaryBand;
+
+            if (q.Basis == FairnessBasis.EqualShare)
+            {
+                primaryExpected = equalExpected;
+                primaryDevPct   = devPctEqual;
+                primaryBand     = bandEqual;
+            }
+            else
+            {
+                // BySize: keep as built (row.Expected / row.DeviationPercent / row.Band are already correct).
+                primaryExpected = row.Expected;
+                primaryDevPct   = row.DeviationPercent;
+                primaryBand     = row.Band;
+            }
+
+            result.Add(row with
+            {
+                // Primary (active basis)
+                Expected        = primaryExpected,
+                DeviationPercent = primaryDevPct,
+                Band            = primaryBand,
+                // Both bases
+                ExpectedBySize        = row.Expected,   // as built = BySize
+                ExpectedEqual         = equalExpected,
+                ActualShare           = actualShare,
+                ExpectedShareBySize   = expectedShareBySize,
+                ExpectedShareEqual    = expectedShareEqual,
+                DeviationPercentEqual = devPctEqual,
+                BandEqual             = bandEqual,
+            });
+        }
+        return result;
+    }
+
+    // -----------------------------------------------------------------------------------
+    // Fairness-basis transformation (A3) — kept for reference; logic folded into A4 above
     // -----------------------------------------------------------------------------------
 
     /// <summary>
@@ -537,6 +613,11 @@ public class JusticeService : IJusticeService
     /// DeviationPercent and Band are recomputed via <see cref="ComputeDeviation"/>.
     /// Rows whose Expected resolves to 0 (i.e. the list is empty or all-zero) keep
     /// their original NoTarget band so the UI renders the "no target" pill.
+    ///
+    /// NOTE: No longer called from <see cref="GetJusticeViewAsync"/>. The equivalent
+    /// logic lives in <see cref="ComputeSharesAndBothBases"/> which handles both bases
+    /// in one pass. Kept here for clarity and to avoid a breaking change for any
+    /// future callers that reference it directly.
     /// </summary>
     private List<JusticeRow> ApplyEqualShareBasis(List<JusticeRow> rows)
     {
