@@ -375,7 +375,7 @@ test.describe('Module K: Chore Calendar Full Flow', () => {
   test('K-15: Public chores page loads without auth', async ({ page }) => {
     await logout(page);
 
-    const response = await page.goto('http://localhost:5000/Public/Chores');
+    const response = await page.goto('/Public/Chores');
     await page.waitForLoadState('networkidle');
 
     // ASSERT: Response was received
@@ -444,7 +444,7 @@ test.describe('Module K: Chore Calendar Extended (P1)', () => {
 
     // Call the API
     const response = await page.request.get(
-      `http://localhost:5000/Api/Calendar/GetChoresData?moleculeId=${moleculeId}&startDate=${startDate}&endDate=${endDate}`
+      `/Api/Calendar/GetChoresData?moleculeId=${moleculeId}&startDate=${startDate}&endDate=${endDate}`
     );
 
     // ASSERT: API responds successfully

@@ -124,7 +124,7 @@ test.describe('Module P: Tenant Isolation', () => {
     await login(page, 'emp.tz.alhut@test', TEST_PASSWORD);
 
     // Navigate to a shift ID that almost certainly does not exist for this company
-    const response = await page.goto('http://localhost:5000/Calendar/Shifts?ShiftInstanceId=99999');
+    const response = await page.goto('/Calendar/Shifts?ShiftInstanceId=99999');
     await page.waitForLoadState('networkidle');
 
     // ASSERT: Response was received

@@ -430,7 +430,7 @@ test.describe('Module M: Overview Calendar Extended (P1)', () => {
     const endDate = weekEnd.toISOString().split('T')[0];
 
     const response = await page.request.get(
-      `http://localhost:5000/Api/Calendar/GetOverviewData?startDate=${startDate}&endDate=${endDate}`
+      `/Api/Calendar/GetOverviewData?startDate=${startDate}&endDate=${endDate}`
     );
 
     // ASSERT: API responds (200 or 400)

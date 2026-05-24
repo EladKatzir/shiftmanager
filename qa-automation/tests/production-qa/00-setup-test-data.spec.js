@@ -32,7 +32,7 @@ test.describe.serial('Phase 1: Setup Test Data', () => {
   // Setup-01  Verify the application is running and the login form is visible
   // -------------------------------------------------------------------------
   test('Setup-01: Verify login page loads with form controls', async ({ page }) => {
-    const response = await page.goto('http://localhost:5000/Auth/Login');
+    const response = await page.goto('/Auth/Login');
     expect(response.status()).toBeLessThan(500);
     await page.waitForLoadState('networkidle');
 
