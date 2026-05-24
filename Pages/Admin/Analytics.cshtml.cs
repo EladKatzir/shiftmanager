@@ -53,9 +53,36 @@ public class AnalyticsModel : LocalizedPageModel
     [BindProperty(SupportsGet = true, Name = "from")] public DateOnly? PeriodStart { get; set; }
     [BindProperty(SupportsGet = true, Name = "to")] public DateOnly? PeriodEnd { get; set; }
 
+    // ----- new query parameters (B3a) -------------------------------------------------------
+
+    /// <summary>
+    /// Fairness basis: BySize (capacity/target-weighted, default) or EqualShare (total ÷ N).
+    /// Carried through to <see cref="JusticeQuery.Basis"/>.
+    /// </summary>
+    [BindProperty(SupportsGet = true, Name = "basis")] public FairnessBasis Basis { get; set; } = FairnessBasis.BySize;
+
+    /// <summary>
+    /// A/B comparison: start of the compare period (period B). When both CompareFrom and
+    /// CompareTo are provided the service computes per-row deltas between the primary and compare periods.
+    /// </summary>
+    [BindProperty(SupportsGet = true, Name = "cmpFrom")] public DateOnly? CompareFrom { get; set; }
+
+    /// <summary>
+    /// A/B comparison: end of the compare period (period B).
+    /// </summary>
+    [BindProperty(SupportsGet = true, Name = "cmpTo")] public DateOnly? CompareTo { get; set; }
+
     // ----- view model surface --------------------------------------------------------------
 
     public JusticeViewModel? View { get; private set; }
+
+    /// <summary>
+    /// Populated when both <see cref="CompareFrom"/> and <see cref="CompareTo"/> are provided
+    /// and form a valid range. When set, <see cref="View"/> is reassigned to
+    /// <see cref="JusticeComparisonViewModel.Primary"/> so row-level <c>DeltaVsCompare</c>
+    /// values are available to the view.
+    /// </summary>
+    public JusticeComparisonViewModel? Comparison { get; private set; }
 
     /// <summary>
     /// Companies the current user can pick as the scope target. Populated for all levels but
@@ -140,11 +167,33 @@ public class AnalyticsModel : LocalizedPageModel
             PeriodEnd: EffectivePeriodEnd,
             WorkType: WorkType,
             ExcludeExemptShifts: ExcludeExemptShifts,
-            Level: Level);
+            Level: Level,
+            Basis: Basis);
 
         try
         {
-            View = await _justiceService.GetJusticeViewAsync(query, drillableChildIds, ct);
+            // A/B comparison: run when both compare bounds are provided and form a valid range.
+            bool hasCompare = CompareFrom.HasValue && CompareTo.HasValue && CompareTo.Value >= CompareFrom.Value;
+            if (hasCompare)
+            {
+                var compareQuery = query with
+                {
+                    PeriodStart = CompareFrom!.Value,
+                    PeriodEnd = CompareTo!.Value
+                };
+
+                // GetComparisonViewAsync populates Primary rows with DeltaVsCompare and includes sparklines.
+                Comparison = await _justiceService.GetComparisonViewAsync(query, compareQuery, drillableChildIds, ct);
+
+                // Assign Primary as the surface View so the existing template can render rows with
+                // DeltaVsCompare populated.
+                View = Comparison.Primary;
+            }
+            else
+            {
+                // Standard (non-comparison) path with sparklines enabled.
+                View = await _justiceService.GetJusticeViewAsync(query, drillableChildIds, includeSparklines: true, ct);
+            }
         }
         catch (Exception ex)
         {
@@ -178,8 +227,16 @@ public class AnalyticsModel : LocalizedPageModel
             return Forbid();
         }
 
-        var query = new JusticeQuery(Scope, ScopeId, start, end, WorkType, ExcludeExemptShifts, Level);
+        // Include Basis in the export query so the Expected / share columns match the active basis.
+        var query = new JusticeQuery(Scope, ScopeId, start, end, WorkType, ExcludeExemptShifts, Level, Basis);
         var view = await _justiceService.GetJusticeViewAsync(query, ct);
+
+        // Helper: pick the Expected and ExpectedShare values that match the active Basis so
+        // the CSV columns are consistent with what the user sees on the page.
+        decimal GetActiveExpected(JusticeRow r) => Basis == FairnessBasis.EqualShare ? r.ExpectedEqual : r.ExpectedBySize;
+        decimal? GetActiveExpectedShare(JusticeRow r) => Basis == FairnessBasis.EqualShare ? r.ExpectedShareEqual : r.ExpectedShareBySize;
+        decimal? GetActiveDeviationPercent(JusticeRow r) => Basis == FairnessBasis.EqualShare ? r.DeviationPercentEqual : r.DeviationPercent;
+        string GetActiveBand(JusticeRow r) => (Basis == FairnessBasis.EqualShare ? r.BandEqual : r.Band).ToString();
 
         var csv = new StringBuilder();
         csv.AppendLine($"Justice Report");
@@ -189,16 +246,25 @@ public class AnalyticsModel : LocalizedPageModel
         csv.AppendLine($"Work Type,{WorkType}");
         csv.AppendLine($"Period,{start:yyyy-MM-dd},{end:yyyy-MM-dd}");
         csv.AppendLine($"Exclude Exempt Shifts,{ExcludeExemptShifts}");
+        csv.AppendLine($"Basis,{Basis}");
         csv.AppendLine($"Spread Index,{view.SpreadIndex:F2}");
         csv.AppendLine();
-        csv.AppendLine("Name,Actual,Expected,Deviation %,Band");
+        // Columns: Name | Actual | % of total (ActualShare) | Expected | Expected % of total (ExpectedShare) | Deviation % | Band | Basis
+        csv.AppendLine("Name,Actual,% of total,Expected,Expected % of total,Deviation %,Band,Basis");
         foreach (var row in view.Rows)
         {
-            var dev = row.DeviationPercent.HasValue ? $"{row.DeviationPercent.Value:F1}" : "";
-            csv.AppendLine($"\"{row.Name.Replace("\"", "\"\"")}\",{row.Actual:F0},{row.Expected:F2},{dev},{row.Band}");
+            var actualShare = row.ActualShare.HasValue ? $"{row.ActualShare.Value * 100m:F1}%" : "";
+            var expected = GetActiveExpected(row);
+            var expectedShare = GetActiveExpectedShare(row);
+            var expectedShareStr = expectedShare.HasValue ? $"{expectedShare.Value * 100m:F1}%" : "";
+            var devPct = GetActiveDeviationPercent(row);
+            var dev = devPct.HasValue ? $"{devPct.Value:F1}" : "";
+            var band = GetActiveBand(row);
+            var safeName = $"\"{row.Name.Replace("\"", "\"\"")}\"";
+            csv.AppendLine($"{safeName},{row.Actual:F0},{actualShare},{expected:F2},{expectedShareStr},{dev},{band},{Basis}");
         }
 
-        var fileName = $"Justice_{Level}_{start:yyyyMMdd}_{end:yyyyMMdd}.csv";
+        var fileName = $"Justice_{Level}_{Basis}_{start:yyyyMMdd}_{end:yyyyMMdd}.csv";
         // UTF-8 BOM for Hebrew Excel compatibility — same trick the legacy page used.
         var preamble = Encoding.UTF8.GetPreamble();
         var bytes = Encoding.UTF8.GetBytes(csv.ToString());
@@ -260,15 +326,19 @@ public class AnalyticsModel : LocalizedPageModel
     private void NormalizeScopeAndLevelDefaults()
     {
         // Each level is paired with exactly one scope kind. If they conflict, prefer the level.
+        // UsersInMolecule uses Molecule scope (same as CompaniesInMolecule — filter to one molecule,
+        // show one row per pooled user across all companies in that molecule).
         Scope = Level switch
         {
             JusticeLevel.UsersInCompany => JusticeScope.Company,
             JusticeLevel.CompaniesInMolecule => JusticeScope.Molecule,
             JusticeLevel.MoleculesInArea => JusticeScope.Area,
+            JusticeLevel.UsersInMolecule => JusticeScope.Molecule,
             _ => Scope
         };
 
         // If no ScopeId set yet, pick the first accessible option for the chosen level.
+        // UsersInMolecule shares the Molecule options list (same scope kind as CompaniesInMolecule).
         if (ScopeId is null)
         {
             ScopeId = Level switch
@@ -276,6 +346,7 @@ public class AnalyticsModel : LocalizedPageModel
                 JusticeLevel.UsersInCompany => CompanyOptions.FirstOrDefault()?.Id,
                 JusticeLevel.CompaniesInMolecule => MoleculeOptions.FirstOrDefault()?.Id,
                 JusticeLevel.MoleculesInArea => AreaOptions.FirstOrDefault()?.Id,
+                JusticeLevel.UsersInMolecule => MoleculeOptions.FirstOrDefault()?.Id,
                 _ => null
             };
         }
@@ -288,6 +359,7 @@ public class AnalyticsModel : LocalizedPageModel
                 JusticeLevel.UsersInCompany => CompanyOptions.Any(o => o.Id == ScopeId),
                 JusticeLevel.CompaniesInMolecule => MoleculeOptions.Any(o => o.Id == ScopeId),
                 JusticeLevel.MoleculesInArea => AreaOptions.Any(o => o.Id == ScopeId),
+                JusticeLevel.UsersInMolecule => MoleculeOptions.Any(o => o.Id == ScopeId),
                 _ => false
             };
             if (!inOptions) ScopeId = null;
@@ -401,6 +473,9 @@ public class AnalyticsModel : LocalizedPageModel
                         .ToListAsync(ct);
                     return companiesInMolecule.Where(accessibleSet.Contains).ToList();
                 }
+            case JusticeLevel.UsersInMolecule:
+                // Pooled users across all companies in the molecule — rows are terminal (no drill-down).
+                return null;
             default:
                 // UsersInCompany — rows are terminal; no drill-down, leave uncapped (all drillable).
                 return null;
