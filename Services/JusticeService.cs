@@ -1069,6 +1069,16 @@ public class JusticeService : IJusticeService
     /// Phase 2d: chore holes are user-date pairs where a genuinely under-loaded user has no chore
     /// on a given date. "Under-loaded" reuses the existing Justice band math (Under or SoftUnder)
     /// so this list stays consistent with the verdict strip and Justice Table.
+    ///
+    /// A8: Refactored to eliminate the per-company N+1 — previously called BuildUsersInCompanyAsync
+    /// once per company (each doing its own DB round-trips). Now uses a bounded number of queries
+    /// regardless of how many companies are in scope:
+    ///   1. CountActualPerUserAsync — one pass across ALL companies (chore work-type).
+    ///   2. One batch users query — loads user→company + display name for all companies at once.
+    ///   3. One GROUP BY headcount query — headcount per company.
+    ///   4. Per-user expected is then computed in-memory via ResolvePerUserChoreOrOnDuty
+    ///      using the already-loaded targets list.
+    /// The banding / deviation math is identical to the old BuildUsersInCompanyAsync path.
     /// </summary>
     private async Task<List<UnfilledHole>> BuildChoreHolesAsync(JusticeQuery q, CancellationToken ct)
     {
@@ -1081,17 +1091,54 @@ public class JusticeService : IJusticeService
         // in the viewed scope.
         var targets = await _db.JusticeTargets.IgnoreQueryFilters().AsNoTracking().ToListAsync(ct);
 
-        // Build user-level rows per company in scope. Reuse BuildUsersInCompanyAsync to keep math
-        // identical to the verdict strip. The query passed in must be at Company scope per the
-        // existing precondition; iterate once per company under the molecule/area.
-        var allRows = new List<(JusticeRow row, int companyId)>();
-        foreach (var cid in companyIds)
+        // --- A8: batched replacement for the per-company BuildUsersInCompanyAsync loop ---
+
+        // 1. Per-user actuals — ONE query spanning ALL companies.
+        var choreQuery = q with { WorkType = JusticeWorkType.Chore };
+        var userActuals = await CountActualPerUserAsync(choreQuery, companyIds, ct);
+
+        // 2. All active users across all companies — ONE query.
+        // SECURITY: IgnoreQueryFilters required for cross-company analytics; scope-gated upstream.
+        var allUsers = await _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive)
+            .Select(u => new { u.Id, u.DisplayName, u.CompanyId, u.AvatarFileName })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        if (allUsers.Count == 0) return new List<UnfilledHole>();
+
+        // 3. Headcount per company — ONE query (same GROUP BY used in BuildCompaniesInMoleculeAsync).
+        var headcountByCompany = allUsers
+            .GroupBy(u => u.CompanyId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        // 4. Build per-user rows in-memory, mirroring BuildUsersInCompanyAsync logic exactly.
+        //    Users are returned from DB in insertion order; we preserve that order here so that
+        //    the stable OrderByDescending below produces the same result as the old per-company
+        //    path (which iterated companyIds in DB order and users within each company in DB order).
+        var allRows = new List<(JusticeRow row, int companyId)>(allUsers.Count);
+        foreach (var u in allUsers)
         {
-            var perCompanyQuery = q with { Scope = JusticeScope.Company, ScopeId = cid, Level = JusticeLevel.UsersInCompany, WorkType = JusticeWorkType.Chore };
-            // Drill-capping is irrelevant for the internal "where to focus" hole-finding path —
-            // it produces per-user holes, not a navigable comparison tier. Pass null (all drillable).
-            var rows = await BuildUsersInCompanyAsync(perCompanyQuery, targets, drillableChildIds: null, ct);
-            foreach (var r in rows) allRows.Add((r, cid));
+            var headcount = headcountByCompany.GetValueOrDefault(u.CompanyId, 0);
+            var perUserExpected = headcount > 0
+                ? ResolvePerUserChoreOrOnDuty(choreQuery, JusticeWorkType.Chore, u.CompanyId, headcount, targets)
+                : 0m;
+
+            var actual = userActuals.GetValueOrDefault(u.Id, 0m);
+            var (devPct, band) = ComputeDeviation(actual, perUserExpected);
+            var row = new JusticeRow(
+                Id: u.Id,
+                Name: u.DisplayName ?? $"#{u.Id}",
+                AvatarUrl: BuildAvatarThumbUrl(u.AvatarFileName, u.CompanyId, u.Id),
+                Actual: actual,
+                Expected: perUserExpected,
+                DeviationPercent: devPct,
+                Band: band)
+            {
+                IsDrillable = true  // user rows are terminal; IsDrillable is irrelevant for holes
+            };
+            allRows.Add((row, u.CompanyId));
         }
 
         // Filter to genuinely under-loaded users (negative deviation banded as Under or SoftUnder).
