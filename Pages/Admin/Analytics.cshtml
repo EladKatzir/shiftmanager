@@ -6,17 +6,31 @@
 @using ShiftManager.Resources
 @using ShiftManager.Services
 @using ShiftManager.ViewComponents
+@using System.Globalization
 @inject IStringLocalizer<SharedResources> Localizer
 @{
     ViewData["Title"] = Localizer["Justice_PageTitle"];
     Layout = "_Layout";
+    var v = Model.View;
+    var isUserLevel = Model.Level == JusticeLevel.UsersInCompany || Model.Level == JusticeLevel.UsersInMolecule;
+    var isMoleculeLevel = Model.Level == JusticeLevel.CompaniesInMolecule;
+    var isAreaLevel = Model.Level == JusticeLevel.MoleculesInArea;
+    var hasAnyLockedRows = v?.Rows?.Any(r => !r.IsDrillable) ?? false;
+    IEnumerable<AnalyticsModel.ScopeOption> scopeOptions = Model.Level switch {
+        JusticeLevel.UsersInCompany      => Model.CompanyOptions,
+        JusticeLevel.CompaniesInMolecule => Model.MoleculeOptions,
+        JusticeLevel.MoleculesInArea     => Model.AreaOptions,
+        JusticeLevel.UsersInMolecule     => Model.MoleculeOptions,
+        _                                => Enumerable.Empty<AnalyticsModel.ScopeOption>()
+    };
+    var currentScopeName = scopeOptions.FirstOrDefault(o => o.Id == Model.ScopeId)?.Name ?? "";
+    // Drillable children list (rows where IsDrillable=true and not a user-level terminal)
+    var drillableRows = v?.Rows?.Where(r => r.IsDrillable && !isUserLevel).ToList()
+                        ?? new List<JusticeRow>();
+    // For donut SVG math
+    const double CircumferenceR80 = 502.65;
+    const double GapPx = 2.1; // ~1.5deg gap between segments
 }
-
-@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
-{
-    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
-    new BreadcrumbItem { Label = Localizer["Justice_PageTitle"], IsActive = true }
-})
 
 @section Styles {
     <link rel="stylesheet" href="~/css/justice.css" asp-append-version="true" />
@@ -26,262 +40,875 @@
     <script src="~/js/justice.js" asp-append-version="true" defer></script>
 }
 
+@* ── Breadcrumb ─────────────────────────────────────────────── *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Justice_PageTitle"], Url = "/Admin/Analytics" },
+    new BreadcrumbItem { Label = currentScopeName, IsActive = string.IsNullOrEmpty(currentScopeName) }
+})
+
 <div class="justice-page" data-page="justice">
-    <header class="page-header justice-header">
-        <div>
-            <h1 class="page-title"><loc key="Justice_PageTitle" /></h1>
-            <p class="page-subtitle"><loc key="Justice_Subtitle" /></p>
-        </div>
-        <div class="justice-header-actions">
-            <require-grant key="EditJusticeTargets">
-                <button type="button" class="btn btn--secondary" disabled title="@Localizer["Justice_Targets_ComingPhase2"]">
-                    <icon name="settings" size="sm" />
-                    <span><loc key="Justice_Targets" /></span>
-                </button>
-            </require-grant>
-            <a class="btn btn--primary" asp-page-handler="ExportCsv"
-               asp-route-scope="@Model.Scope"
-               asp-route-scopeId="@Model.ScopeId"
-               asp-route-level="@Model.Level"
-               asp-route-workType="@Model.WorkType"
-               asp-route-excludeExempt="@Model.ExcludeExemptShifts"
-               asp-route-from="@Model.EffectivePeriodStart.ToString("yyyy-MM-dd")"
-               asp-route-to="@Model.EffectivePeriodEnd.ToString("yyyy-MM-dd")">
-                <icon name="download" size="sm" />
-                <span><loc key="Justice_ExportCsv" /></span>
-            </a>
-        </div>
-    </header>
 
-    @* ========== Scope strip ========== *@
-    <form method="get" class="justice-filter-card section-card" id="justice-filter-form">
-        <div class="filter-row">
-            <label class="filter-field">
-                <span class="filter-field__label"><loc key="Justice_Level" /></span>
-                <select name="level" class="form-select" data-justice-onchange>
-                    <option value="@JusticeLevel.UsersInCompany" selected="@(Model.Level == JusticeLevel.UsersInCompany)">@Localizer["Justice_Level_UsersInCompany"]</option>
-                    <option value="@JusticeLevel.CompaniesInMolecule" selected="@(Model.Level == JusticeLevel.CompaniesInMolecule)">@Localizer["Justice_Level_CompaniesInMolecule"]</option>
-                    <option value="@JusticeLevel.MoleculesInArea" selected="@(Model.Level == JusticeLevel.MoleculesInArea)">@Localizer["Justice_Level_MoleculesInArea"]</option>
-                </select>
-            </label>
+@* ── Capped-role info banner (Area level with locked rows) ──── *@
+@if (isAreaLevel && hasAnyLockedRows)
+{
+    <div class="capped-role-banner anim-fade-in" role="note" aria-label="@Localizer["Justice_CappedRole_Aria"]">
+        <span class="banner-icon" aria-hidden="true">ℹ</span>
+        <span><loc key="Justice_CappedRole_Banner" /></span>
+    </div>
+}
 
-            @{
-                var pickerLabel = Model.Level switch
-                {
-                    JusticeLevel.UsersInCompany => Localizer["Justice_Pick_Company"].Value,
-                    JusticeLevel.CompaniesInMolecule => Localizer["Justice_Pick_Molecule"].Value,
-                    JusticeLevel.MoleculesInArea => Localizer["Justice_Pick_Area"].Value,
-                    _ => ""
-                };
-                IEnumerable<AnalyticsModel.ScopeOption> options = Model.Level switch
-                {
-                    JusticeLevel.UsersInCompany => Model.CompanyOptions,
-                    JusticeLevel.CompaniesInMolecule => Model.MoleculeOptions,
-                    JusticeLevel.MoleculesInArea => Model.AreaOptions,
-                    _ => Enumerable.Empty<AnalyticsModel.ScopeOption>()
-                };
-            }
-            <label class="filter-field">
-                <span class="filter-field__label">@pickerLabel</span>
-                <select name="scopeId" class="form-select" data-justice-onchange>
-                    @if (!options.Any())
-                    {
-                        <option value=""><loc key="Justice_Pick_None" /></option>
-                    }
-                    else
-                    {
-                        foreach (var opt in options)
+@* ── Page header ─────────────────────────────────────────────── *@
+<header class="page-header anim-fade-up">
+    <div class="header-left">
+        <span class="page-eyebrow">
+            <span class="eyebrow-dot" aria-hidden="true"></span>
+            <loc key="Justice_Eyebrow" />
+        </span>
+        <h1 class="page-title"><loc key="Justice_PageTitle" /></h1>
+        <p class="page-subtitle"><loc key="Justice_Subtitle" /></p>
+    </div>
+    <div class="header-actions">
+        <require-grant key="EditJusticeTargets">
+            <button type="button" class="btn btn--secondary" disabled title="@Localizer["Justice_Targets_ComingPhase2"]">
+                <icon name="settings" size="sm" />
+                <span><loc key="Justice_Targets" /></span>
+            </button>
+        </require-grant>
+        <a class="btn btn--primary" asp-page-handler="ExportCsv"
+           asp-route-scope="@Model.Scope"
+           asp-route-scopeId="@Model.ScopeId"
+           asp-route-level="@Model.Level"
+           asp-route-workType="@Model.WorkType"
+           asp-route-excludeExempt="@Model.ExcludeExemptShifts"
+           asp-route-basis="@Model.Basis"
+           asp-route-from="@Model.EffectivePeriodStart.ToString("yyyy-MM-dd")"
+           asp-route-to="@Model.EffectivePeriodEnd.ToString("yyyy-MM-dd")">
+            <icon name="download" size="sm" />
+            <span><loc key="Justice_ExportCsv" /></span>
+        </a>
+    </div>
+</header>
+
+@* ═══════════════════════════════════════════════════════════════
+   CONTROLS BAR
+═══════════════════════════════════════════════════════════════ *@
+<div class="controls-shell anim-fade-up anim-d100">
+    <div class="controls-inner">
+
+        @* Work-type pills *@
+        <div class="filter-field" style="flex:0 0 auto;">
+            <span class="filter-label" id="wt-label"><loc key="Justice_WorkType" /></span>
+            <div class="worktype-selector" role="group" aria-labelledby="wt-label">
+                <a class="wt-pill wt-pill--all @(Model.WorkType == JusticeWorkType.All ? "active" : "")"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = JusticeWorkType.All, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd"), cmpFrom = Model.CompareFrom?.ToString("yyyy-MM-dd"), cmpTo = Model.CompareTo?.ToString("yyyy-MM-dd") })"
+                   aria-pressed="@(Model.WorkType == JusticeWorkType.All ? "true" : "false")">
+                    <span class="wt-dot-pill" aria-hidden="true"></span><loc key="Justice_WorkType_All" />
+                </a>
+                <a class="wt-pill wt-pill--shifts @(Model.WorkType == JusticeWorkType.Shift ? "active" : "")"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = JusticeWorkType.Shift, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd"), cmpFrom = Model.CompareFrom?.ToString("yyyy-MM-dd"), cmpTo = Model.CompareTo?.ToString("yyyy-MM-dd") })"
+                   aria-pressed="@(Model.WorkType == JusticeWorkType.Shift ? "true" : "false")">
+                    <span class="wt-dot-pill" aria-hidden="true"></span><loc key="Justice_WorkType_Shift" />
+                </a>
+                <a class="wt-pill wt-pill--chores @(Model.WorkType == JusticeWorkType.Chore ? "active" : "")"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = JusticeWorkType.Chore, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd"), cmpFrom = Model.CompareFrom?.ToString("yyyy-MM-dd"), cmpTo = Model.CompareTo?.ToString("yyyy-MM-dd") })"
+                   aria-pressed="@(Model.WorkType == JusticeWorkType.Chore ? "true" : "false")">
+                    <span class="wt-dot-pill" aria-hidden="true"></span><loc key="Justice_WorkType_Chore" />
+                </a>
+                <a class="wt-pill wt-pill--onduty @(Model.WorkType == JusticeWorkType.OnDuty ? "active" : "")"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = JusticeWorkType.OnDuty, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd"), cmpFrom = Model.CompareFrom?.ToString("yyyy-MM-dd"), cmpTo = Model.CompareTo?.ToString("yyyy-MM-dd") })"
+                   aria-pressed="@(Model.WorkType == JusticeWorkType.OnDuty ? "true" : "false")">
+                    <span class="wt-dot-pill" aria-hidden="true"></span><loc key="Justice_WorkType_OnDuty" />
+                </a>
+            </div>
+        </div>
+
+        <div class="ctrl-divider" aria-hidden="true"></div>
+
+        @* Fairness basis toggle *@
+        <div class="filter-field" style="flex:0 0 auto;">
+            <span class="filter-label" id="basis-label"><loc key="Justice_FairnessBasis" /></span>
+            <div class="basis-switch" role="group" aria-labelledby="basis-label" data-basis-toggle>
+                <a class="basis-opt @(Model.Basis == FairnessBasis.BySize ? "active" : "")"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts, basis = FairnessBasis.BySize, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd"), cmpFrom = Model.CompareFrom?.ToString("yyyy-MM-dd"), cmpTo = Model.CompareTo?.ToString("yyyy-MM-dd") })"
+                   data-basis="bysize"
+                   aria-pressed="@(Model.Basis == FairnessBasis.BySize ? "true" : "false")">
+                    <loc key="Justice_Basis_BySize" />
+                </a>
+                <a class="basis-opt @(Model.Basis == FairnessBasis.EqualShare ? "active" : "")"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts, basis = FairnessBasis.EqualShare, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd"), cmpFrom = Model.CompareFrom?.ToString("yyyy-MM-dd"), cmpTo = Model.CompareTo?.ToString("yyyy-MM-dd") })"
+                   data-basis="equal"
+                   aria-pressed="@(Model.Basis == FairnessBasis.EqualShare ? "true" : "false")">
+                    <loc key="Justice_Basis_EqualShare" />
+                </a>
+            </div>
+        </div>
+
+        <div class="ctrl-divider" aria-hidden="true"></div>
+
+        @* Period — presets + date inputs *@
+        <div class="filter-field" style="flex:0 0 auto;">
+            <span class="filter-label"><loc key="Justice_Period" /></span>
+            <div class="time-presets" role="group" aria-label="@Localizer["Justice_PeriodPresets_Aria"]">
+                @{
+                    var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+                    var thisMonthStart = new DateOnly(today.Year, today.Month, 1);
+                    var lastMonthStart = thisMonthStart.AddMonths(-1);
+                    var lastMonthEnd   = thisMonthStart.AddDays(-1);
+                    var last3Start     = thisMonthStart.AddMonths(-3);
+                    bool isThisMonth  = Model.EffectivePeriodStart == thisMonthStart && Model.EffectivePeriodEnd >= today.AddDays(-1);
+                    bool isLastMonth  = Model.EffectivePeriodStart == lastMonthStart && Model.EffectivePeriodEnd == lastMonthEnd;
+                    bool isLast3      = Model.EffectivePeriodStart == last3Start && !isThisMonth && !isLastMonth;
+                }
+                <a class="preset-btn @(isThisMonth ? "active" : "")"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = thisMonthStart.ToString("yyyy-MM-dd"), to = today.ToString("yyyy-MM-dd"), cmpFrom = Model.CompareFrom?.ToString("yyyy-MM-dd"), cmpTo = Model.CompareTo?.ToString("yyyy-MM-dd") })"
+                   aria-pressed="@(isThisMonth ? "true" : "false")"><loc key="Justice_Preset_ThisMonth" /></a>
+                <a class="preset-btn @(isLastMonth ? "active" : "")"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = lastMonthStart.ToString("yyyy-MM-dd"), to = lastMonthEnd.ToString("yyyy-MM-dd"), cmpFrom = Model.CompareFrom?.ToString("yyyy-MM-dd"), cmpTo = Model.CompareTo?.ToString("yyyy-MM-dd") })"
+                   aria-pressed="@(isLastMonth ? "true" : "false")"><loc key="Justice_Preset_LastMonth" /></a>
+                <a class="preset-btn @(isLast3 ? "active" : "")"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = last3Start.ToString("yyyy-MM-dd"), to = today.ToString("yyyy-MM-dd"), cmpFrom = Model.CompareFrom?.ToString("yyyy-MM-dd"), cmpTo = Model.CompareTo?.ToString("yyyy-MM-dd") })"
+                   aria-pressed="@(isLast3 ? "true" : "false")"><loc key="Justice_Preset_Last3M" /></a>
+            </div>
+        </div>
+
+        @* Period date inputs *@
+        <form method="get" class="period-input-group" id="justice-period-form">
+            <input type="hidden" name="scope"        value="@Model.Scope" />
+            <input type="hidden" name="scopeId"      value="@Model.ScopeId" />
+            <input type="hidden" name="level"        value="@Model.Level" />
+            <input type="hidden" name="workType"     value="@Model.WorkType" />
+            <input type="hidden" name="excludeExempt" value="@Model.ExcludeExemptShifts" />
+            <input type="hidden" name="basis"        value="@Model.Basis" />
+            <input type="hidden" name="cmpFrom"      value="@Model.CompareFrom?.ToString("yyyy-MM-dd")" />
+            <input type="hidden" name="cmpTo"        value="@Model.CompareTo?.ToString("yyyy-MM-dd")" />
+            <span><loc key="Justice_From" /></span>
+            <input type="date" name="from" class="period-input" value="@Model.EffectivePeriodStart.ToString("yyyy-MM-dd")" aria-label="@Localizer["Justice_PeriodStart"]" />
+            <span><loc key="Justice_To" /></span>
+            <input type="date" name="to"   class="period-input" value="@Model.EffectivePeriodEnd.ToString("yyyy-MM-dd")" aria-label="@Localizer["Justice_PeriodEnd"]" />
+            <noscript><button type="submit" class="btn btn--secondary" style="height:30px;font-size:0.78rem;padding:0 0.6rem;"><loc key="Justice_Apply" /></button></noscript>
+        </form>
+
+        <div class="ctrl-divider" aria-hidden="true"></div>
+
+        @* Drill-Into dropdown *@
+        @if (v != null && drillableRows.Any())
+        {
+            <div class="filter-field" style="flex:0 0 auto;">
+                <span class="filter-label" id="drill-label"><loc key="Justice_DrillInto" /></span>
+                <div class="drill-into" id="drillIntoCtrl">
+                    <button class="drill-into-btn" type="button"
+                            aria-haspopup="listbox" aria-expanded="false"
+                            aria-labelledby="drill-label"
+                            onclick="this.closest('.drill-into').classList.toggle('open');this.setAttribute('aria-expanded', this.closest('.drill-into').classList.contains('open'))">
+                        <span><loc key="Justice_DrillInto_Placeholder" /></span>
+                        <span class="drill-into-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="drill-menu" role="listbox" aria-label="@Localizer["Justice_DrillInto_Aria"]">
+                        <div class="drill-menu-label">
+                            @if (isMoleculeLevel) { <loc key="Justice_DrillMenu_Companies" /> }
+                            else if (isAreaLevel)  { <loc key="Justice_DrillMenu_Molecules" /> }
+                            else                   { <loc key="Justice_DrillMenu_Units" /> }
+                        </div>
+                        @foreach (var dr in drillableRows)
                         {
-                            <option value="@opt.Id" selected="@(Model.ScopeId == opt.Id)">@opt.Name</option>
+                            var activeBand = Model.Basis == FairnessBasis.EqualShare ? dr.BandEqual : dr.Band;
+                            var activeDev  = Model.Basis == FairnessBasis.EqualShare ? dr.DeviationPercentEqual : dr.DeviationPercent;
+                            // Navigate into this child — level goes one deeper
+                            var childLevel = isMoleculeLevel ? JusticeLevel.UsersInCompany
+                                           : isAreaLevel     ? JusticeLevel.CompaniesInMolecule
+                                           : Model.Level;
+                            <a class="drill-menu-item" role="option"
+                               href="@Url.Page("/Admin/Analytics", null, new { scope = (isMoleculeLevel ? JusticeScope.Company : JusticeScope.Molecule), scopeId = dr.Id, level = childLevel, workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd") })">
+                                <span class="dm-dot dev-band-@activeBand.ToString().ToLowerInvariant()" aria-hidden="true"></span>
+                                @dr.Name
+                                @if (activeDev.HasValue)
+                                {
+                                    <span class="dm-dev">@FormatDeviation(activeDev)</span>
+                                }
+                            </a>
                         }
-                    }
-                </select>
-            </label>
+                        @if (isMoleculeLevel && Model.ScopeId.HasValue)
+                        {
+                            <div class="drill-menu-sep" aria-hidden="true"></div>
+                            <a class="drill-menu-item dm-molecule" role="option"
+                               href="@Url.Page("/Admin/Analytics", null, new { scope = JusticeScope.Molecule, scopeId = Model.ScopeId, level = JusticeLevel.UsersInMolecule, workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd") })">
+                                <span class="dm-icon" aria-hidden="true">⤵</span>
+                                <loc key="Justice_DrillMenu_AllUsersInMolecule" />
+                                <span class="dm-count" aria-hidden="true">@(v.Rows.Sum(r => (int)r.Actual))</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
 
-            <label class="filter-field">
-                <span class="filter-field__label"><loc key="Justice_PeriodStart" /></span>
-                <input type="date" name="from" class="form-input" value="@Model.EffectivePeriodStart.ToString("yyyy-MM-dd")" data-justice-onchange />
-            </label>
-            <label class="filter-field">
-                <span class="filter-field__label"><loc key="Justice_PeriodEnd" /></span>
-                <input type="date" name="to" class="form-input" value="@Model.EffectivePeriodEnd.ToString("yyyy-MM-dd")" data-justice-onchange />
-            </label>
+            <div class="ctrl-divider" aria-hidden="true"></div>
+        }
 
-            <label class="filter-field">
-                <span class="filter-field__label"><loc key="Justice_WorkType" /></span>
-                <select name="workType" class="form-select" data-justice-onchange>
-                    <option value="@JusticeWorkType.All" selected="@(Model.WorkType == JusticeWorkType.All)">@Localizer["Justice_WorkType_All"]</option>
-                    <option value="@JusticeWorkType.Shift" selected="@(Model.WorkType == JusticeWorkType.Shift)">@Localizer["Justice_WorkType_Shift"]</option>
-                    <option value="@JusticeWorkType.Chore" selected="@(Model.WorkType == JusticeWorkType.Chore)">@Localizer["Justice_WorkType_Chore"]</option>
-                    <option value="@JusticeWorkType.OnDuty" selected="@(Model.WorkType == JusticeWorkType.OnDuty)">@Localizer["Justice_WorkType_OnDuty"]</option>
-                </select>
-            </label>
+        @* A/B compare badge (when active) *@
+        @if (Model.Comparison is not null)
+        {
+            <div style="display:flex;align-items:flex-end;flex:0 0 auto;">
+                <a class="ab-mode-badge"
+                   href="@Url.Page("/Admin/Analytics", null, new { scope = Model.Scope, scopeId = Model.ScopeId, level = Model.Level, workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd") })"
+                   title="@Localizer["Justice_AB_ClearTitle"]"
+                   aria-label="@Localizer["Justice_AB_ActiveAria"]">
+                    <span>A/B</span>
+                    <span style="font-weight:400;font-size:0.68rem;opacity:.85"><loc key="Justice_AB_Label" /></span>
+                    <span aria-hidden="true">✕</span>
+                </a>
+            </div>
+        }
+        else
+        {
+            @* A/B compare form — two date inputs, submit navigates *@
+            <div class="filter-field" style="flex:0 0 auto;">
+                <span class="filter-label"><loc key="Justice_AB_Compare" /></span>
+                <form method="get" class="period-input-group" style="gap:0.3rem;" id="justice-ab-form">
+                    <input type="hidden" name="scope"        value="@Model.Scope" />
+                    <input type="hidden" name="scopeId"      value="@Model.ScopeId" />
+                    <input type="hidden" name="level"        value="@Model.Level" />
+                    <input type="hidden" name="workType"     value="@Model.WorkType" />
+                    <input type="hidden" name="excludeExempt" value="@Model.ExcludeExemptShifts" />
+                    <input type="hidden" name="basis"        value="@Model.Basis" />
+                    <input type="hidden" name="from"         value="@Model.EffectivePeriodStart.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="to"           value="@Model.EffectivePeriodEnd.ToString("yyyy-MM-dd")" />
+                    <input type="date" name="cmpFrom" class="period-input" value="@Model.CompareFrom?.ToString("yyyy-MM-dd")"
+                           aria-label="@Localizer["Justice_AB_From"]" placeholder="yyyy-mm-dd" />
+                    <span>–</span>
+                    <input type="date" name="cmpTo"   class="period-input" value="@Model.CompareTo?.ToString("yyyy-MM-dd")"
+                           aria-label="@Localizer["Justice_AB_To"]" placeholder="yyyy-mm-dd" />
+                    <noscript><button type="submit" class="btn btn--secondary" style="height:30px;font-size:0.78rem;padding:0 0.6rem;"><loc key="Justice_Apply" /></button></noscript>
+                </form>
+            </div>
+        }
 
-            <label class="filter-toggle">
-                <input type="checkbox" name="excludeExempt" value="true" @(Model.ExcludeExemptShifts ? "checked" : "") data-justice-onchange />
-                <span><loc key="Justice_ExcludeExempt" /></span>
-            </label>
+    </div>
+</div><!-- /controls-shell -->
 
-            <noscript>
-                <button type="submit" class="btn btn--secondary"><loc key="Justice_Apply" /></button>
-            </noscript>
+@* ── A/B compare hint bar ─────────────────────────────────────── *@
+@if (Model.Comparison is not null && Model.CompareFrom.HasValue && Model.CompareTo.HasValue)
+{
+    <div class="ab-hint anim-fade-in anim-d200" role="status" aria-live="polite">
+        <strong><loc key="Justice_AB_Active" /></strong>
+        <span class="ab-period-pill ab-period-pill-a">A: @Model.EffectivePeriodStart.ToString("MMM yyyy")</span>
+        <span style="color:var(--text-muted);font-size:0.72rem;">vs</span>
+        <span class="ab-period-pill ab-period-pill-b">B: @Model.CompareFrom.Value.ToString("MMM yyyy")</span>
+        <span style="color:var(--text-muted);font-size:0.72rem;"><loc key="Justice_AB_DeltaHint" /></span>
+        <button class="btn btn--ghost ab-hint-close"
+                aria-label="@Localizer["Justice_AB_Close"]"
+                onclick="this.closest('.ab-hint').style.display='none'">
+            <loc key="Justice_Close" />
+        </button>
+    </div>
+}
+
+@* ═══════════════════════════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════════════════════════ *@
+@if (v is null)
+{
+    <div class="empty-state section-card">
+        <div class="empty-state-icon"><icon name="bar-chart-3" size="lg" /></div>
+        <h2><loc key="Justice_Empty_PickScope" /></h2>
+        <p class="text-subtle"><loc key="Justice_Empty_PickScope_Hint" /></p>
+    </div>
+}
+else
+{
+@* ═══════════════════════════════════════════════════════════════
+   HERO ZONE — Fairness Gauge (left) + Share Donut (right)
+═══════════════════════════════════════════════════════════════ *@
+<div class="hero-zone">
+
+  @* ── LEFT: FAIRNESS GAUGE ────────────────────────────────── *@
+  <div class="hero-chart-shell anim-fade-up anim-d200">
+    <div class="hero-chart-inner">
+
+      <div class="chart-eyebrow">
+        <span class="chart-eyebrow-dot" style="background:var(--accent);" aria-hidden="true"></span>
+        <loc key="Justice_GaugeEyebrow" />
+      </div>
+
+      @{
+        // Gauge: map rows to 5 band buckets, each arc proportional to row count
+        // The gauge shows the DISTRIBUTION of rows across bands (not a severity arc fill).
+        // Circumference at r=80: 502.7. We rotate SVG -90deg so 12-o'clock is the start.
+        const double gCirc = 502.7;
+        double gOver = 0, gSoftOver = 0, gBalanced = 0, gSoftUnder = 0, gUnder = 0;
+        int totalRows = v.Rows.Count;
+        if (totalRows > 0)
+        {
+            var activeBandFn = (JusticeRow r) => Model.Basis == FairnessBasis.EqualShare ? r.BandEqual : r.Band;
+            gOver      = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.Over)      / totalRows * gCirc;
+            gSoftOver  = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.SoftOver)  / totalRows * gCirc;
+            gBalanced  = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.Balanced)  / totalRows * gCirc;
+            gSoftUnder = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.SoftUnder) / totalRows * gCirc;
+            gUnder     = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.Under)     / totalRows * gCirc;
+        }
+        // Cumulative offsets (negated for stroke-dashoffset)
+        double gOff0 = 0;
+        double gOff1 = -(gOver);
+        double gOff2 = -(gOver + gSoftOver);
+        double gOff3 = -(gOver + gSoftOver + gBalanced);
+        double gOff4 = -(gOver + gSoftOver + gBalanced + gSoftUnder);
+        string GF(double d) => d.ToString("F1", CultureInfo.InvariantCulture);
+      }
+
+      <div class="gauge-wrap" role="img"
+           aria-label="@Localizer["Justice_GaugeAria", v.SpreadIndex.ToString("F2"), Localizer[v.SpreadLabelKey]]">
+        <svg class="gauge-svg" width="200" height="200" viewBox="0 0 200 200">
+          <defs>
+            <filter id="gauge-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          @* Track ring *@
+          <circle class="gauge-track" cx="100" cy="100" r="80" />
+          @* Over *@
+          @if (gOver > 0.01)
+          {
+          <circle class="gauge-seg gauge-seg--over gauge-seg-anim" cx="100" cy="100" r="80"
+                  stroke-dasharray="@GF(gOver) @GF(gCirc)"
+                  stroke-dashoffset="@GF(gOff0)"
+                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff0);" />
+          }
+          @* Soft Over *@
+          @if (gSoftOver > 0.01)
+          {
+          <circle class="gauge-seg gauge-seg--softover gauge-seg-anim" cx="100" cy="100" r="80"
+                  stroke-dasharray="@GF(gSoftOver) @GF(gCirc)"
+                  stroke-dashoffset="@GF(gOff1)"
+                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff1);" />
+          }
+          @* Balanced *@
+          @if (gBalanced > 0.01)
+          {
+          <circle class="gauge-seg gauge-seg--balanced gauge-seg-anim" cx="100" cy="100" r="80"
+                  stroke-dasharray="@GF(gBalanced) @GF(gCirc)"
+                  stroke-dashoffset="@GF(gOff2)"
+                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff2);"
+                  filter="url(#gauge-glow)" />
+          }
+          @* Soft Under *@
+          @if (gSoftUnder > 0.01)
+          {
+          <circle class="gauge-seg gauge-seg--softunder gauge-seg-anim" cx="100" cy="100" r="80"
+                  stroke-dasharray="@GF(gSoftUnder) @GF(gCirc)"
+                  stroke-dashoffset="@GF(gOff3)"
+                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff3);" />
+          }
+          @* Under *@
+          @if (gUnder > 0.01)
+          {
+          <circle class="gauge-seg gauge-seg--under gauge-seg-anim" cx="100" cy="100" r="80"
+                  stroke-dasharray="@GF(gUnder) @GF(gCirc)"
+                  stroke-dashoffset="@GF(gOff4)"
+                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff4);" />
+          }
+          @* Outer decorative dash ring *@
+          <circle cx="100" cy="100" r="92"
+                  fill="none" stroke="var(--border)" stroke-width="1"
+                  stroke-dasharray="3 8" opacity="0.35" />
+        </svg>
+
+        <div class="gauge-center">
+          <div class="spread-number" dir="ltr">@v.SpreadIndex.ToString("F2")</div>
+          <div class="spread-sublabel"><loc key="Justice_SpreadIndex" /></div>
+          <div class="severity-dots" aria-label="@Localizer["Justice_SeverityAria", v.SpreadSeverity]" role="img">
+            @for (int si = 0; si < 4; si++)
+            {
+              <span class="sev-dot @(si < v.SpreadSeverity ? "filled sev-" + v.SpreadSeverity : "")"
+                    title="@(si + 1) of 4"></span>
+            }
+          </div>
         </div>
-    </form>
+      </div>
 
-    @if (Model.View is null)
+      @* Verdict badge *@
+      <div class="verdict-badge @v.SpreadSeverity" role="status" aria-live="polite">
+        @Localizer[v.SpreadLabelKey]
+      </div>
+
+      @* Band legend *@
+      <div class="gauge-legend" role="list" aria-label="@Localizer["Justice_BandLegend_Aria"]">
+        <div class="gl-item" role="listitem">
+          <span class="gl-swatch dev-band-over" aria-hidden="true"></span><loc key="Justice_Band_Over" />
+        </div>
+        <div class="gl-item" role="listitem">
+          <span class="gl-swatch dev-band-softover" aria-hidden="true"></span><loc key="Justice_Band_SoftOver" />
+        </div>
+        <div class="gl-item" role="listitem">
+          <span class="gl-swatch dev-band-balanced" aria-hidden="true"></span><loc key="Justice_Band_Balanced" />
+        </div>
+        <div class="gl-item" role="listitem">
+          <span class="gl-swatch dev-band-softunder" aria-hidden="true"></span><loc key="Justice_Band_SoftUnder" />
+        </div>
+        <div class="gl-item" role="listitem">
+          <span class="gl-swatch dev-band-under" aria-hidden="true"></span><loc key="Justice_Band_Under" />
+        </div>
+      </div>
+
+      @* Most-Over / Most-Under callouts *@
+      <div class="gauge-callout-row" style="width:100%;">
+        <div class="gcallout over" role="region" aria-label="@Localizer["Justice_MostOver_Aria"]">
+          <div class="gcallout-tag"><loc key="Justice_MostOver" /></div>
+          @if (v.MostOver is not null)
+          {
+            <div class="gcallout-name">@v.MostOver.Name</div>
+            <div class="gcallout-dev over" dir="ltr">▲ @FormatDeviation(v.MostOver.DeviationPercent)</div>
+          }
+          else
+          {
+            <div class="gcallout-name text-subtle"><loc key="Justice_None" /></div>
+          }
+        </div>
+        <div class="gcallout under" role="region" aria-label="@Localizer["Justice_MostUnder_Aria"]">
+          <div class="gcallout-tag"><loc key="Justice_MostUnder" /></div>
+          @if (v.MostUnder is not null)
+          {
+            <div class="gcallout-name">@v.MostUnder.Name</div>
+            <div class="gcallout-dev under" dir="ltr">▼ @FormatDeviation(v.MostUnder.DeviationPercent)</div>
+          }
+          else
+          {
+            <div class="gcallout-name text-subtle"><loc key="Justice_None" /></div>
+          }
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /fairness gauge -->
+
+  @* ── RIGHT: SHARE DONUT ──────────────────────────────────── *@
+  <div class="hero-chart-shell anim-fade-up anim-d300">
+    <div class="hero-chart-inner">
+
+      <div class="chart-eyebrow">
+        <span class="chart-eyebrow-dot" style="background:var(--chore);" aria-hidden="true"></span>
+        <loc key="Justice_DonutEyebrow" />
+      </div>
+
+      @{
+        // Share donut: each row = one arc. Arc length = row.ActualShare * circumference.
+        // A small gap of GapPx between arcs.
+        // We reserve (N * GapPx) total gap space from the circumference.
+        const double dCirc = 502.65;
+        const double dGap  = 2.1;
+        var donutRows = v.Rows.OrderByDescending(r => r.Actual).ToList();
+        int dN = donutRows.Count;
+        double totalGap = dN > 1 ? dN * dGap : 0;
+        double availArc = dCirc - totalGap;
+        decimal totalActual = donutRows.Sum(r => r.Actual);
+
+        // Precompute arc lengths and cumulative offsets
+        var arcs = new List<(double len, double offset)>();
+        double cumOffset = 0;
+        foreach (var dr2 in donutRows)
+        {
+            double share = totalActual > 0 ? (double)(dr2.Actual / totalActual) : (dN > 0 ? 1.0 / dN : 0);
+            double len   = share * availArc;
+            arcs.Add((len, cumOffset));
+            cumOffset += len + dGap;
+        }
+        var activeBandFn2 = (JusticeRow r) => Model.Basis == FairnessBasis.EqualShare ? r.BandEqual : r.Band;
+      }
+
+      <div class="donut-wrap" role="img"
+           aria-label="@Localizer["Justice_DonutAria", (int)totalActual]">
+        <svg class="donut-svg" width="200" height="200" viewBox="0 0 200 200"
+             style="transform:rotate(-90deg);overflow:visible;">
+          @* Track ring *@
+          <circle cx="100" cy="100" r="80"
+                  fill="none" stroke="var(--surface-soft)" stroke-width="22" />
+          @for (int di = 0; di < donutRows.Count; di++)
+          {
+            var dr2 = donutRows[di];
+            var (arcLen, arcOff) = arcs[di];
+            var dBand = activeBandFn2(dr2);
+            var bandCss = BandCssClass(dBand);
+            var shareStr = dr2.ActualShare.HasValue ? $"{dr2.ActualShare.Value * 100m:F1}%" : "";
+            <circle cx="100" cy="100" r="80"
+                    fill="none" stroke-width="22" stroke-linecap="butt"
+                    class="donut-seg @bandCss"
+                    stroke-dasharray="@arcLen.ToString("F1", CultureInfo.InvariantCulture) @dCirc.ToString("F2", CultureInfo.InvariantCulture)"
+                    stroke-dashoffset="@((-arcOff).ToString("F1", CultureInfo.InvariantCulture))"
+                    style="opacity:.88;"
+                    aria-label="@dr2.Name @shareStr" />
+          }
+          @* Outer decorative tick ring *@
+          <circle cx="100" cy="100" r="94"
+                  fill="none" stroke="var(--border)" stroke-width="1"
+                  stroke-dasharray="2 7" opacity="0.3" />
+        </svg>
+
+        <div class="donut-center" aria-hidden="true">
+          <div class="donut-center-val" dir="ltr">@((int)totalActual)</div>
+          <div class="donut-center-label"><loc key="Justice_DonutTotal" /></div>
+        </div>
+      </div>
+
+      @* Per-row legend *@
+      <div class="donut-legend" role="list" aria-label="@Localizer["Justice_DonutLegend_Aria"]"
+           style="@(donutRows.Count > 10 ? "max-height:240px;overflow-y:auto;" : "")">
+        @foreach (var dr2 in donutRows)
+        {
+          var dBand = activeBandFn2(dr2);
+          var dDev  = Model.Basis == FairnessBasis.EqualShare ? dr2.DeviationPercentEqual : dr2.DeviationPercent;
+          var shareStr = dr2.ActualShare.HasValue ? $"{dr2.ActualShare.Value * 100m:F1}%" : "";
+          <div class="dl-item" role="listitem">
+            <span class="dl-swatch dev-band-@dBand.ToString().ToLowerInvariant()" aria-hidden="true"></span>
+            <span class="dl-name">
+              @dr2.Name
+              @if (!string.IsNullOrEmpty(dr2.GroupLabel))
+              {
+                <span class="group-tag">@dr2.GroupLabel</span>
+              }
+            </span>
+            <span class="dl-share" dir="ltr">@shareStr · @((int)dr2.Actual)</span>
+            <span class="dl-dev @dBand.ToString().ToLowerInvariant()">
+              @BandIcon(dBand) @FormatDeviation(dDev)
+            </span>
+          </div>
+        }
+      </div>
+
+      @* Band key (shape + label) *@
+      <div class="band-key-row" role="list" aria-label="@Localizer["Justice_BandKey_Aria"]">
+        <span class="band-key-pill bkp-over"      role="listitem">▲▲ <loc key="Justice_Band_Over" /></span>
+        <span class="band-key-pill bkp-softover"  role="listitem">▲ <loc key="Justice_Band_SoftOver" /></span>
+        <span class="band-key-pill bkp-balanced"  role="listitem">■ <loc key="Justice_Band_Balanced" /></span>
+        <span class="band-key-pill bkp-softunder" role="listitem">▼ <loc key="Justice_Band_SoftUnder" /></span>
+        <span class="band-key-pill bkp-under"     role="listitem">▼▼ <loc key="Justice_Band_Under" /></span>
+      </div>
+
+    </div>
+  </div><!-- /share donut -->
+
+</div><!-- /hero-zone -->
+
+@* ═══════════════════════════════════════════════════════════════
+   RANKED TABLE — 8 columns
+═══════════════════════════════════════════════════════════════ *@
+<div class="table-shell anim-fade-up anim-d400">
+  <div class="table-inner">
+
+    <div class="table-header-bar">
+      <div>
+        <div class="table-title"><loc key="Justice_Table_Heading" /></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <span class="table-meta">
+          @v.Rows.Count <loc key="Justice_Rows" />
+        </span>
+      </div>
+    </div>
+
+    @if (v.Rows.Count == 0)
     {
-        <div class="empty-state section-card">
-            <div class="empty-state-icon"><icon name="bar-chart-3" size="lg" /></div>
-            <h2><loc key="Justice_Empty_PickScope" /></h2>
-            <p class="text-subtle"><loc key="Justice_Empty_PickScope_Hint" /></p>
-        </div>
+      <div class="success-state">
+        <icon name="check-circle" size="md" />
+        <p><loc key="Justice_NothingToBalance" /></p>
+      </div>
     }
     else
     {
-        var v = Model.View;
-
-        @* ========== Verdict strip ========== *@
-        <section class="justice-verdict section-card" aria-labelledby="verdict-heading">
-            <div class="verdict-line">
-                <h2 id="verdict-heading" class="verdict-heading">
-                    <icon name="sliders" size="sm" />
-                    <loc key="Justice_Verdict_Heading" />
-                </h2>
-                <span class="verdict-spread-pill" data-severity="@v.SpreadSeverity" dir="ltr">
-                    <span class="verdict-spread-number">@v.SpreadIndex.ToString("F2")</span>
-                    <span class="verdict-spread-glyph" aria-hidden="true">
-                        @for (int i = 0; i < 5; i++)
-                        {
-                            <span class="dot @(i <= v.SpreadSeverity ? "dot--filled" : "")"></span>
-                        }
-                    </span>
-                    <span class="verdict-spread-label">@Localizer[v.SpreadLabelKey]</span>
-                </span>
-            </div>
-
-            @if (v.Rows.Any())
+      var activeBandFn3 = (JusticeRow r) => Model.Basis == FairnessBasis.EqualShare ? r.BandEqual : r.Band;
+      bool showCompare  = Model.Comparison is not null;
+      string basisTagText  = Model.Basis == FairnessBasis.EqualShare ? "≈ equal" : "by size";
+      string basisTagTitle = Model.Basis == FairnessBasis.EqualShare
+          ? "Justice_BasisTag_Equal_Title"
+          : "Justice_BasisTag_BySize_Title";
+      <div class="table-wrap">
+        <table class="jt" aria-label="@Localizer["Justice_Table_Aria"]">
+          <thead>
+            <tr>
+              <th scope="col"><loc key="Justice_Col_Name" /></th>
+              <th scope="col" class="num"><loc key="Justice_Col_Actual" /></th>
+              <th scope="col" class="num"><loc key="Justice_Col_PctTotal" /></th>
+              <th scope="col" class="num"><loc key="Justice_Col_Expected" /></th>
+              <th scope="col" class="num"><loc key="Justice_Col_ExpectedPct" /></th>
+              <th scope="col"><loc key="Justice_Col_Deviation" /></th>
+              @if (showCompare)
+              {
+                <th scope="col" class="num"><loc key="Justice_Col_VsOther" /></th>
+              }
+              <th scope="col"><loc key="Justice_Col_Trend" /></th>
+            </tr>
+          </thead>
+          <tbody>
+            @{int rowIdx = 0;}
+            @foreach (var row in v.Rows)
             {
-                <div class="equity-ribbon" role="img" aria-label="@Localizer["Justice_EquityRibbon_Aria"]">
-                    @foreach (var row in v.Rows.OrderBy(r => r.Name))
+              var activeBand   = activeBandFn3(row);
+              var activeDev    = Model.Basis == FairnessBasis.EqualShare ? row.DeviationPercentEqual : row.DeviationPercent;
+              var activeExp    = Model.Basis == FairnessBasis.EqualShare ? row.ExpectedEqual         : row.ExpectedBySize;
+              var activeExpShr = Model.Basis == FairnessBasis.EqualShare ? row.ExpectedShareEqual    : row.ExpectedShareBySize;
+              var isLocked     = !row.IsDrillable;
+              var shareBarPct  = row.ActualShare.HasValue ? (row.ActualShare.Value * 100m) : 0m;
+              var expSharePct  = activeExpShr.HasValue    ? (activeExpShr.Value * 100m)    : 0m;
+              // Drill href — only for non-user, drillable rows
+              string drillHref = "";
+              if (!isUserLevel && row.IsDrillable)
+              {
+                var childLevel2 = isMoleculeLevel ? JusticeLevel.UsersInCompany
+                                : isAreaLevel     ? JusticeLevel.CompaniesInMolecule
+                                : Model.Level;
+                var childScope  = isMoleculeLevel ? JusticeScope.Company : JusticeScope.Molecule;
+                drillHref = Url.Page("/Admin/Analytics", null, new {
+                    scope = childScope, scopeId = row.Id, level = childLevel2,
+                    workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts,
+                    basis = Model.Basis,
+                    from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"),
+                    to   = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd")
+                }) ?? "";
+              }
+              var animDelay = (620 + rowIdx * 40) + "ms";
+              rowIdx++;
+              <tr class="@(isLocked ? "locked" : (string.IsNullOrEmpty(drillHref) ? "" : "drillable")) table-row-anim"
+                  style="animation-delay:@animDelay;"
+                  @(string.IsNullOrEmpty(drillHref) ? "" : "tabindex=\"0\" role=\"row\"")
+                  @(string.IsNullOrEmpty(drillHref) ? "" : $"data-drill-href=\"{drillHref}\"")
+                  aria-label="@row.Name">
+                <td>
+                  <div class="row-name-cell">
+                    @* Avatar / initials *@
+                    @if (!string.IsNullOrEmpty(row.AvatarUrl) && isUserLevel)
                     {
-                        var weight = row.Actual <= 0 ? 1m : row.Actual;
-                        <span class="equity-segment dev-band-@row.Band.ToString().ToLowerInvariant()"
-                              style="flex: @weight.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                              title="@row.Name @row.Actual.ToString("F0")">
-                        </span>
+                      <avatar src="@row.AvatarUrl" name="@row.Name" size="sm" />
                     }
-                </div>
-            }
-
-            <div class="verdict-callouts">
-                <div class="callout callout--over">
-                    <span class="callout-label"><loc key="Justice_MostOver" /></span>
-                    <span class="callout-value">
-                        @if (v.MostOver is not null)
-                        {
-                            @v.MostOver.Name <span dir="ltr">(@FormatDeviation(v.MostOver.DeviationPercent))</span>
-                        }
-                        else
-                        {
-                            <span class="text-subtle"><loc key="Justice_None" /></span>
-                        }
+                    else if (isUserLevel)
+                    {
+                      <div class="row-avatar-init" aria-hidden="true">@GetInitials(row.Name)</div>
+                    }
+                    else
+                    {
+                      <div class="row-avatar-init" aria-hidden="true"
+                           style="@(isLocked ? "opacity:.6;" : "")">@GetInitials(row.Name)</div>
+                    }
+                    <div>
+                      <span class="row-name-text">@row.Name</span>
+                      @* GroupLabel company tag (UsersInMolecule) *@
+                      @if (!string.IsNullOrEmpty(row.GroupLabel))
+                      {
+                        <span class="group-tag">@row.GroupLabel</span>
+                      }
+                      @* Drill arrow for drillable non-user rows *@
+                      @if (!isUserLevel && row.IsDrillable)
+                      {
+                        <span class="drill-arr" aria-hidden="true"
+                              title="@Localizer["Justice_DrillArrow_Title", row.Name]">
+                          › <loc key="Justice_DrillArrow_Label" />
+                        </span>
+                      }
+                      @* Lock badge for comparison-only rows *@
+                      @if (isLocked)
+                      {
+                        <span class="lock-badge"
+                              title="@Localizer["Justice_LockBadge_Title"]"
+                              aria-label="@Localizer["Justice_LockBadge_Aria"]">
+                          🔒 <loc key="Justice_LockBadge" />
+                        </span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                @* Actual *@
+                <td class="num" dir="ltr">@row.Actual.ToString("F0")</td>
+                @* % of total with mini share bar *@
+                <td class="num" dir="ltr">
+                  <div class="share-bar-wrap">
+                    <div class="share-bar" dir="ltr">
+                      <div class="share-fill dev-band-@activeBand.ToString().ToLowerInvariant()"
+                           style="width:@shareBarPct.ToString("F1", CultureInfo.InvariantCulture)%;@(isLocked ? "opacity:.7;" : "")"
+                           aria-hidden="true"></div>
+                    </div>
+                    <span>@(row.ActualShare.HasValue ? $"{shareBarPct:F1}%" : "—")</span>
+                  </div>
+                </td>
+                @* Expected + basis tag; data-* attrs for JS basis toggle *@
+                <td class="num" dir="ltr"
+                    data-exp-bysize="@row.ExpectedBySize.ToString("F1", CultureInfo.InvariantCulture)"
+                    data-exp-equal="@row.ExpectedEqual.ToString("F1", CultureInfo.InvariantCulture)">
+                  <span class="expected-cell">
+                    @activeExp.ToString("F1", CultureInfo.InvariantCulture)
+                    <span class="basis-tag" title="@Localizer[basisTagTitle]">@basisTagText</span>
+                  </span>
+                </td>
+                @* Expected % of total *@
+                <td class="num expected-share" dir="ltr"
+                    data-expshare-bysize="@(row.ExpectedShareBySize.HasValue ? $"{row.ExpectedShareBySize.Value * 100m:F1}%" : "—")"
+                    data-expshare-equal="@(row.ExpectedShareEqual.HasValue ? $"{row.ExpectedShareEqual.Value * 100m:F1}%" : "—")">
+                  @(activeExpShr.HasValue ? $"{expSharePct:F1}%" : "—")
+                </td>
+                @* Deviation pill with band icon + color *@
+                <td data-dev-bysize="@FormatDeviation(row.DeviationPercent)"
+                    data-dev-equal="@FormatDeviation(row.DeviationPercentEqual)"
+                    data-band-bysize="@row.Band.ToString().ToLowerInvariant()"
+                    data-band-equal="@row.BandEqual.ToString().ToLowerInvariant()">
+                  @if (activeDev.HasValue)
+                  {
+                    <span class="dev-pill dev-band-@activeBand.ToString().ToLowerInvariant()"
+                          aria-label="@Localizer["Justice_DevPill_Aria", FormatDeviation(activeDev), Localizer["Justice_Band_" + activeBand.ToString()]]"
+                          @(isLocked ? "style=\"opacity:.7;\"" : "")>
+                      <span class="dev-icon" aria-hidden="true">@BandIcon(activeBand)</span>@FormatDeviation(activeDev)
                     </span>
-                </div>
-                <div class="callout callout--under">
-                    <span class="callout-label"><loc key="Justice_MostUnder" /></span>
-                    <span class="callout-value">
-                        @if (v.MostUnder is not null)
-                        {
-                            @v.MostUnder.Name <span dir="ltr">(@FormatDeviation(v.MostUnder.DeviationPercent))</span>
-                        }
-                        else
-                        {
-                            <span class="text-subtle"><loc key="Justice_None" /></span>
-                        }
+                  }
+                  else
+                  {
+                    <span class="dev-pill dev-band-notarget" @(isLocked ? "style=\"opacity:.7;\"" : "")>
+                      <loc key="Justice_NoTarget" />
                     </span>
-                </div>
-            </div>
-        </section>
-
-        @* ========== Justice Table ========== *@
-        <section class="section-card">
-            <div class="section-header">
-                <h2 class="section-title"><loc key="Justice_Table_Heading" /></h2>
-                <span class="text-subtle">@v.Rows.Count <loc key="Justice_Rows" /></span>
-            </div>
-
-            @if (v.Rows.Count == 0)
-            {
-                <div class="success-state">
-                    <icon name="check-circle" size="md" />
-                    <p><loc key="Justice_NothingToBalance" /></p>
-                </div>
+                  }
+                </td>
+                @* vs other month (A/B delta) — only when comparison is active *@
+                @if (showCompare)
+                {
+                  <td class="num" dir="ltr">
+                    @if (row.DeltaVsCompare.HasValue)
+                    {
+                      var delta = row.DeltaVsCompare.Value;
+                      var deltaCss = delta > 0 ? "delta-up" : (delta < 0 ? "delta-down" : "delta-flat");
+                      var deltaSymbol = delta > 0 ? "▲" : (delta < 0 ? "▼" : "—");
+                      <span class="delta-badge @deltaCss" @(isLocked ? "style=\"opacity:.7;\"" : "")>
+                        @deltaSymbol @(delta != 0 ? Math.Abs(delta).ToString("F0") : "0")
+                      </span>
+                    }
+                    else
+                    {
+                      <span class="text-subtle">—</span>
+                    }
+                  </td>
+                }
+                @* Trend sparkline — inline SVG from Sparkline data *@
+                <td>
+                  @if (row.Sparkline is not null && row.Sparkline.Count >= 2)
+                  {
+                    var sparkVals = row.Sparkline.ToList();
+                    var sparkMax  = sparkVals.Max();
+                    var sparkMin  = sparkVals.Min();
+                    var sparkRange = sparkMax - sparkMin;
+                    // Map to Y: high values = small Y (inverted SVG coords). Range 3..19 in 22px height
+                    string SparkY(decimal val) {
+                      if (sparkRange == 0) return "11";
+                      return ((3m + (1m - (val - sparkMin) / sparkRange) * 16m)).ToString("F1", CultureInfo.InvariantCulture);
+                    }
+                    var pts = new System.Text.StringBuilder();
+                    double spStep = sparkVals.Count > 1 ? 72.0 / (sparkVals.Count - 1) : 0;
+                    for (int si2 = 0; si2 < sparkVals.Count; si2++)
+                    {
+                      if (si2 > 0) pts.Append(' ');
+                      pts.Append($"{(si2 * spStep).ToString("F0", CultureInfo.InvariantCulture)},{SparkY(sparkVals[si2])}");
+                    }
+                    var lastX = ((sparkVals.Count - 1) * spStep).ToString("F0", CultureInfo.InvariantCulture);
+                    var lastY = SparkY(sparkVals[^1]);
+                    var sparkColor = $"var(--dev-band-{activeBand.ToString().ToLowerInvariant()}-color, currentColor)";
+                    <svg width="72" height="22" viewBox="0 0 72 22" aria-label="@Localizer["Justice_Trend_Aria"]" role="img"
+                         @(isLocked ? "style=\"opacity:.6;\"" : "")>
+                      <polyline points="@pts.ToString()"
+                                fill="none" class="dev-band-@activeBand.ToString().ToLowerInvariant()"
+                                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                                @(isLocked ? "stroke-dasharray=\"4 2\"" : "") />
+                      <circle cx="@lastX" cy="@lastY" r="3" class="dev-band-@activeBand.ToString().ToLowerInvariant()" />
+                    </svg>
+                  }
+                  else
+                  {
+                    <span class="text-subtle" style="font-size:0.7rem;">—</span>
+                  }
+                </td>
+              </tr>
             }
-            else
-            {
-                <div class="table-wrapper">
-                    <table class="data-table justice-table">
-                        <thead>
-                            <tr>
-                                <th><loc key="Justice_Col_Name" /></th>
-                                <th class="num"><loc key="Justice_Col_Actual" /></th>
-                                <th class="num"><loc key="Justice_Col_Expected" /></th>
-                                <th class="num"><loc key="Justice_Col_Deviation" /></th>
-                                <th><loc key="Justice_Col_Bar" /></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var row in v.Rows)
-                            {
-                                <tr>
-                                    <td>
-                                        <div class="row-name">
-                                            @if (!string.IsNullOrEmpty(row.AvatarUrl))
-                                            {
-                                                <img src="@row.AvatarUrl" alt="" class="row-avatar" loading="lazy"
-                                                     onerror="this.onerror=null;this.style.display='none';this.nextElementSibling?.classList.add('row-avatar-fallback--visible');" />
-                                                <span class="row-avatar-fallback">@GetInitials(row.Name)</span>
-                                            }
-                                            else if (Model.Level == JusticeLevel.UsersInCompany)
-                                            {
-                                                <span class="row-avatar-fallback row-avatar-fallback--visible">@GetInitials(row.Name)</span>
-                                            }
-                                            <span class="row-name-text">@row.Name</span>
-                                        </div>
-                                    </td>
-                                    <td class="num" dir="ltr">@row.Actual.ToString("F0")</td>
-                                    <td class="num" dir="ltr">@row.Expected.ToString("F1")</td>
-                                    <td class="num">
-                                        <span class="dev-pill dev-band-@row.Band.ToString().ToLowerInvariant()" dir="ltr">
-                                            @FormatDeviation(row.DeviationPercent)
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if (row.DeviationPercent.HasValue)
-                                        {
-                                            var dev = row.DeviationPercent.Value;
-                                            var clamped = Math.Max(-100m, Math.Min(100m, dev));
-                                            // Map -100..0..+100 to 0..50..100 percent on the bar.
-                                            var barPos = (50m + clamped / 2m).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
-                                            <span class="dev-bar" dir="ltr" aria-hidden="true">
-                                                <span class="dev-bar-zero"></span>
-                                                <span class="dev-bar-marker dev-band-@row.Band.ToString().ToLowerInvariant()" style="left: @(barPos)%"></span>
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-subtle"><loc key="Justice_NoTarget" /></span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </section>
+          </tbody>
+        </table>
+      </div>
     }
-</div>
+
+  </div>
+</div><!-- /table-shell -->
+
+@* ═══════════════════════════════════════════════════════════════
+   DISTRIBUTION RIBBON
+═══════════════════════════════════════════════════════════════ *@
+@if (v.Rows.Any())
+{
+  <div class="equity-ribbon-row">
+    <div class="ribbon-label">
+      <loc key="Justice_Ribbon_Label" />
+    </div>
+    <div class="equity-ribbon"
+         role="img"
+         aria-label="@Localizer["Justice_EquityRibbon_Aria"]">
+      @{
+        var ribbonBandFn = (JusticeRow r) => Model.Basis == FairnessBasis.EqualShare ? r.BandEqual : r.Band;
+        var ribbonRows = v.Rows.OrderByDescending(r => ribbonBandFn(r)).ToList();
+      }
+      @foreach (var rrow in ribbonRows)
+      {
+        var rBand = ribbonBandFn(rrow);
+        var weight = rrow.Actual <= 0 ? 1m : rrow.Actual;
+        <span class="eq-seg eq-seg-@rBand.ToString().ToLowerInvariant()"
+              style="flex:@weight.ToString("F0", CultureInfo.InvariantCulture);"
+              title="@rrow.Name — @rrow.Actual.ToString("F0") (@FormatDeviation(Model.Basis == FairnessBasis.EqualShare ? rrow.DeviationPercentEqual : rrow.DeviationPercent))">
+        </span>
+      }
+    </div>
+  </div>
+}
+
+@* ═══════════════════════════════════════════════════════════════
+   REMINDER CARD (molecule level: two drill paths)
+═══════════════════════════════════════════════════════════════ *@
+@if (isMoleculeLevel && Model.ScopeId.HasValue && drillableRows.Any())
+{
+  <div class="anim-fade-up anim-d700"
+       style="margin-top:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:1rem 1.5rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;box-shadow:var(--shadow-sm);">
+    <div style="flex:1;min-width:200px;">
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.25rem;">
+        <loc key="Justice_ReminderCard_Title" />
+      </div>
+      <div style="font-size:0.875rem;font-weight:600;color:var(--text);">
+        <loc key="Justice_ReminderCard_Body" />
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+      @* Path A: click a company row *@
+      <div style="display:flex;flex-direction:column;gap:0.25rem;align-items:flex-start;padding:0.75rem 1rem;background:var(--surface-soft);border:1px solid var(--border);border-radius:var(--radius-lg);min-width:210px;">
+        <span style="font-size:0.67rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);">
+          <loc key="Justice_ReminderCard_PathA_Label" />
+        </span>
+        <span style="font-size:0.82rem;font-weight:600;color:var(--text);">
+          <loc key="Justice_ReminderCard_PathA_Action" />
+        </span>
+        <span style="font-size:0.72rem;color:var(--text-muted);">
+          <loc key="Justice_ReminderCard_PathA_Hint" />
+        </span>
+      </div>
+      @* Path B: all users in molecule *@
+      <div style="display:flex;flex-direction:column;gap:0.25rem;align-items:flex-start;padding:0.75rem 1rem;background:var(--chore-soft);border:1.5px solid var(--chore);border-radius:var(--radius-lg);min-width:210px;">
+        <span style="font-size:0.67rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);">
+          <loc key="Justice_ReminderCard_PathB_Label" />
+        </span>
+        <a class="drill-chip-branch"
+           style="font-size:0.82rem;"
+           href="@Url.Page("/Admin/Analytics", null, new { scope = JusticeScope.Molecule, scopeId = Model.ScopeId, level = JusticeLevel.UsersInMolecule, workType = Model.WorkType, excludeExempt = Model.ExcludeExemptShifts, basis = Model.Basis, from = Model.EffectivePeriodStart.ToString("yyyy-MM-dd"), to = Model.EffectivePeriodEnd.ToString("yyyy-MM-dd") })"
+           aria-label="@Localizer["Justice_ReminderCard_PathB_Aria", currentScopeName]">
+          <span aria-hidden="true">⤵</span>
+          <loc key="Justice_ReminderCard_PathB_Action" />
+        </a>
+        <span style="font-size:0.72rem;color:var(--text-muted);">
+          <loc key="Justice_ReminderCard_PathB_Hint" />
+        </span>
+      </div>
+    </div>
+  </div>
+}
+
+}@* end else (v is not null) *@
+
+</div>@* /justice-page *@
 
 @functions {
     string FormatDeviation(decimal? pct)
@@ -298,4 +925,15 @@
         if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpperInvariant();
         return $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant();
     }
+
+    string BandIcon(DeviationBand band) => band switch {
+        DeviationBand.Over      => "▲▲",
+        DeviationBand.SoftOver  => "▲",
+        DeviationBand.Balanced  => "■",
+        DeviationBand.SoftUnder => "▼",
+        DeviationBand.Under     => "▼▼",
+        _                       => "—"
+    };
+
+    string BandCssClass(DeviationBand band) => "dev-band-" + band.ToString().ToLowerInvariant();
 }
