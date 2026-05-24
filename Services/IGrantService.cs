@@ -42,6 +42,16 @@ public interface IGrantService
     // Scope resolution - determines which entities a user can access based on their grants
     Task<List<int>> GetAccessibleCompanyIdsForGrantAsync(int userId, string grantKey);
     Task<List<int>> GetAccessibleMoleculeIdsForGrantAsync(int userId, string grantKey);
+
+    /// <summary>
+    /// Returns the distinct Area ids the user can access for the given grant. An area is accessible
+    /// if the user can access at least one molecule in it (via the molecule cascade) OR the user
+    /// holds an Area/Project-scoped grant covering it (so an area with no molecules is still
+    /// reported when an explicit area/project grant covers it). Mirrors the IgnoreQueryFilters
+    /// cross-tenant semantics of <see cref="GetAccessibleMoleculeIdsForGrantAsync"/>.
+    /// </summary>
+    Task<List<int>> GetAccessibleAreaIdsForGrantAsync(int userId, string grantKey);
+
     Task<bool> HasGrantForCompanyAsync(int userId, string grantKey, int targetCompanyId);
 
     // Grant management

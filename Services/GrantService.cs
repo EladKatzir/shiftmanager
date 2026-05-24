@@ -477,6 +477,68 @@ public class GrantService : IGrantService
         return moleculeIds.ToList();
     }
 
+    public async Task<List<int>> GetAccessibleAreaIdsForGrantAsync(int userId, string grantKey)
+    {
+        var grantType = await GetGrantTypeByKeyAsync(grantKey);
+        if (grantType == null)
+            return new List<int>();
+
+        var grants = await _db.Grants
+            .Where(g => g.UserId == userId && g.GrantTypeId == grantType.Id && g.CanOwn)
+            .ToListAsync();
+
+        if (!grants.Any())
+            return new List<int>();
+
+        var areaIds = new HashSet<int>();
+
+        // Primary path: an area is accessible if the user can access ≥1 molecule in it. This reuses
+        // the molecule cascade (project/area/molecule/company/self) so the area set is exactly the
+        // set of areas containing a molecule the user can reach. This is the same reachability rule
+        // the page-model uses for the area-level scope picker.
+        var accessibleMoleculeIds = await GetAccessibleMoleculeIdsForGrantAsync(userId, grantKey);
+        if (accessibleMoleculeIds.Count > 0)
+        {
+            // SECURITY-AUDITED: SAFE — bounded by accessibleMoleculeIds, which are themselves the
+            // grant-authorized molecule set from GetAccessibleMoleculeIdsForGrantAsync.
+            var moleculeAreaIds = await _db.Molecules
+                .IgnoreQueryFilters()
+                .Where(m => accessibleMoleculeIds.Contains(m.Id))
+                .Select(m => m.AreaId)
+                .Distinct()
+                .ToListAsync();
+            foreach (var id in moleculeAreaIds)
+                areaIds.Add(id);
+        }
+
+        // Secondary path: an explicit Area/Project-scoped grant covers its area(s) even when that
+        // area contains no molecules (the molecule cascade above would miss an empty area).
+        foreach (var grant in grants)
+        {
+            // Project scope - all areas in project.
+            if (grant.ProjectId.HasValue)
+            {
+                // SECURITY-AUDITED: SAFE — scoped by grant's ProjectId; resolves areas within granted project scope
+                var projectAreaIds = await _db.Areas
+                    .IgnoreQueryFilters()
+                    .Where(a => a.ProjectId == grant.ProjectId.Value)
+                    .Select(a => a.Id)
+                    .ToListAsync();
+                foreach (var id in projectAreaIds)
+                    areaIds.Add(id);
+                continue;
+            }
+
+            // Area scope - just that area.
+            if (grant.AreaId.HasValue)
+            {
+                areaIds.Add(grant.AreaId.Value);
+            }
+        }
+
+        return areaIds.ToList();
+    }
+
     public async Task<bool> HasGrantForCompanyAsync(int userId, string grantKey, int targetCompanyId)
     {
         var accessibleCompanyIds = await GetAccessibleCompanyIdsForGrantAsync(userId, grantKey);
