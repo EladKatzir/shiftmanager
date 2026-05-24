@@ -24,7 +24,14 @@ public enum JusticeLevel
 {
     UsersInCompany = 0,
     CompaniesInMolecule = 1,
-    MoleculesInArea = 2
+    MoleculesInArea = 2,
+    /// <summary>
+    /// All active users pooled across every company in a molecule.
+    /// Each row carries a <see cref="ShiftManager.Services.JusticeRow.GroupLabel"/> tagging
+    /// which company the user belongs to.
+    /// Precondition: JusticeQuery.Scope == Molecule &amp;&amp; ScopeId != null.
+    /// </summary>
+    UsersInMolecule = 3
 }
 
 /// <summary>

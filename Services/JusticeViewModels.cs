@@ -96,6 +96,14 @@ public sealed record JusticeRow(
     /// A missing row on either side is treated as Actual == 0.
     /// </summary>
     public decimal? DeltaVsCompare { get; init; }
+
+    // A9: cross-company pool label ────────────────────────────────────────────────────
+    /// <summary>
+    /// Company name tag used in the <see cref="ShiftManager.Models.JusticeLevel.UsersInMolecule"/>
+    /// view to identify which company each pooled user belongs to.
+    /// Null for all other levels.
+    /// </summary>
+    public string? GroupLabel { get; init; }
 }
 
 // ===================================================================================

@@ -118,6 +118,7 @@ public class JusticeService : IJusticeService
             JusticeLevel.UsersInCompany => await BuildUsersInCompanyAsync(q, targets, drillableChildIds, ct),
             JusticeLevel.CompaniesInMolecule => await BuildCompaniesInMoleculeAsync(q, targets, drillableChildIds, ct),
             JusticeLevel.MoleculesInArea => await BuildMoleculesInAreaAsync(q, targets, drillableChildIds, ct),
+            JusticeLevel.UsersInMolecule => await BuildUsersInMoleculeAsync(q, targets, drillableChildIds, ct),
             _ => new List<JusticeRow>()
         };
 
@@ -410,6 +411,87 @@ public class JusticeService : IJusticeService
         return rows;
     }
 
+    // A9: all users pooled across every company in a molecule, with per-row company tag.
+    private async Task<List<JusticeRow>> BuildUsersInMoleculeAsync(JusticeQuery q, List<JusticeTarget> targets, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct)
+    {
+        if (q.Scope != JusticeScope.Molecule || q.ScopeId is null)
+            return new List<JusticeRow>();
+
+        var moleculeId = q.ScopeId.Value;
+
+        // SECURITY: IgnoreQueryFilters is required — Justice viewer may span tenants (Owner/AreaAdmin);
+        // scope-gated upstream via IGrantService.GetAccessibleCompanyIdsForGrantAsync.
+        var companies = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.MoleculeId == moleculeId)
+            .Select(c => new { c.Id, c.Name })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        if (companies.Count == 0) return new List<JusticeRow>();
+
+        var companyIds = companies.Select(c => c.Id).ToArray();
+
+        // Build a fast lookup: companyId → company name (for GroupLabel).
+        var companyNameById = companies.ToDictionary(c => c.Id, c => c.Name ?? $"Company #{c.Id}");
+
+        // Load all ACTIVE users across all companies in ONE query.
+        // SECURITY: IgnoreQueryFilters required — cross-company molecule-level pool.
+        var users = await _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive)
+            .Select(u => new { u.Id, u.DisplayName, u.AvatarFileName, u.CompanyId })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        if (users.Count == 0) return new List<JusticeRow>();
+
+        // Per-company headcount derived in-memory from the already-loaded user list.
+        var headcountByCompany = users
+            .GroupBy(u => u.CompanyId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        // Per-company shift capacity (one batch query; skipped for Chore/OnDuty-only queries).
+        Dictionary<int, decimal> capacityByCompany = new();
+        if (q.WorkType is JusticeWorkType.Shift or JusticeWorkType.All)
+        {
+            capacityByCompany = await SumShiftCapacityPerCompanyAsync(q, companyIds, ct);
+        }
+
+        // Per-user actuals — ONE query spanning ALL companies in the molecule.
+        var userActuals = await CountActualPerUserAsync(q, companyIds, ct);
+
+        var rows = new List<JusticeRow>(users.Count);
+        foreach (var u in users)
+        {
+            var headcount = headcountByCompany.GetValueOrDefault(u.CompanyId, 0);
+            var capacity  = capacityByCompany.GetValueOrDefault(u.CompanyId, 0m);
+
+            // Per-user expected uses the user's OWN company context — headcount and capacity are
+            // NOT pooled across companies (doing so would mix companies with very different workloads
+            // and produce meaningless expected values for individual users).
+            var perUserExpected = ResolvePerUserExpected(q, u.CompanyId, headcount, capacity, targets);
+
+            var actual = userActuals.GetValueOrDefault(u.Id, 0m);
+            var (devPct, band) = ComputeDeviation(actual, perUserExpected);
+
+            rows.Add(new JusticeRow(
+                Id: u.Id,
+                Name: u.DisplayName ?? $"#{u.Id}",
+                AvatarUrl: BuildAvatarThumbUrl(u.AvatarFileName, u.CompanyId, u.Id),
+                Actual: actual,
+                Expected: perUserExpected,
+                DeviationPercent: devPct,
+                Band: band)
+            {
+                // User rows are terminal (leaf nodes) — IsDrillable is irrelevant; honor cap anyway.
+                IsDrillable = IsRowDrillable(drillableChildIds, u.Id),
+                GroupLabel  = companyNameById[u.CompanyId]
+            });
+        }
+        return rows;
+    }
+
     // -----------------------------------------------------------------------------------
     // Actual count queries (Shift / Chore / OnDuty / All)
     // -----------------------------------------------------------------------------------
@@ -646,6 +728,20 @@ public class JusticeService : IJusticeService
                 if (companyToMolecule.TryGetValue(u.CompanyId, out var molId))
                     userToRowKey[u.Id] = molId;
             }
+        }
+        else if (baseQuery.Level == JusticeLevel.UsersInMolecule)
+        {
+            // A9: Row key = userId (same as UsersInCompany but scoped to an entire molecule).
+            // companyIds already contains all companies in the molecule (resolved above).
+            if (baseQuery.Scope != JusticeScope.Molecule || baseQuery.ScopeId is null)
+                return new Dictionary<int, List<decimal>>();
+            var usersInMolecule = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive)
+                .Select(u => u.Id)
+                .ToListAsync(ct);
+            userToRowKey = usersInMolecule.ToDictionary(uid => uid, uid => uid);
+            rowKeys = usersInMolecule.ToHashSet();
         }
         else
         {
