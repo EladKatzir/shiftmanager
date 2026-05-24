@@ -14,7 +14,8 @@ public sealed record JusticeQuery(
     DateOnly PeriodEnd,
     JusticeWorkType WorkType,
     bool ExcludeExemptShifts,
-    JusticeLevel Level);
+    JusticeLevel Level,
+    FairnessBasis Basis = FairnessBasis.BySize);
 
 /// <summary>
 /// Top-level result for the Justice page.

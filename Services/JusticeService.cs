@@ -75,6 +75,13 @@ public class JusticeService : IJusticeService
             _ => new List<JusticeRow>()
         };
 
+        // A3: if EqualShare basis, recompute Expected/deviation before spread/sort so all
+        // downstream computations (spread index, mostOver/mostUnder, sort) reflect the active basis.
+        if (q.Basis == FairnessBasis.EqualShare)
+        {
+            rows = ApplyEqualShareBasis(rows);
+        }
+
         var validRows = rows.Where(r => r.Band != DeviationBand.NoTarget && r.DeviationPercent.HasValue).ToList();
 
         var spreadIndex = ComputeSpreadIndex(validRows);
@@ -517,6 +524,33 @@ public class JusticeService : IJusticeService
             _ => DaysPerMonth
         };
         return days / unitDays;
+    }
+
+    // -----------------------------------------------------------------------------------
+    // Fairness-basis transformation (A3)
+    // -----------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Transforms a row list to use the EqualShare fairness basis.
+    /// Each row's Expected is replaced with <c>Σ rows.Actual / rows.Count</c>
+    /// (equal split of the actual total — distance-from-mean semantics), then
+    /// DeviationPercent and Band are recomputed via <see cref="ComputeDeviation"/>.
+    /// Rows whose Expected resolves to 0 (i.e. the list is empty or all-zero) keep
+    /// their original NoTarget band so the UI renders the "no target" pill.
+    /// </summary>
+    private List<JusticeRow> ApplyEqualShareBasis(List<JusticeRow> rows)
+    {
+        if (rows.Count == 0) return rows;
+
+        var equalExpected = rows.Sum(r => r.Actual) / rows.Count;
+
+        var result = new List<JusticeRow>(rows.Count);
+        foreach (var row in rows)
+        {
+            var (devPct, band) = ComputeDeviation(row.Actual, equalExpected);
+            result.Add(row with { Expected = equalExpected, DeviationPercent = devPct, Band = band });
+        }
+        return result;
     }
 
     // -----------------------------------------------------------------------------------

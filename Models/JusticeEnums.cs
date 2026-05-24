@@ -50,3 +50,12 @@ public enum PeriodKind
     PerMonth = 1,
     PerQuarter = 2
 }
+
+/// <summary>
+/// How "Expected" is derived for each row in the Justice table.
+/// BySize = capacity/target-weighted (default, today's behavior).
+/// EqualShare = the actual total split evenly across rows
+/// (everyone expected to carry the same — distance-from-mean semantics,
+/// matching the UI's "≈ equal = total ÷ N").
+/// </summary>
+public enum FairnessBasis { BySize = 0, EqualShare = 1 }
