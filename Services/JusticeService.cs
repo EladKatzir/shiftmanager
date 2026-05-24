@@ -59,9 +59,12 @@ public class JusticeService : IJusticeService
     }
 
     public Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, CancellationToken ct = default)
-        => GetJusticeViewAsync(q, drillableChildIds: null, ct);
+        => GetJusticeViewAsync(q, drillableChildIds: null, includeSparklines: false, ct);
 
-    public async Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct = default)
+    public Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct = default)
+        => GetJusticeViewAsync(q, drillableChildIds, includeSparklines: false, ct);
+
+    public async Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery q, IReadOnlyCollection<int>? drillableChildIds, bool includeSparklines, CancellationToken ct = default)
     {
         // Targets cache: load once per request so ResolveExpected doesn't round-trip the DB
         // for each row.
@@ -104,6 +107,21 @@ public class JusticeService : IJusticeService
         rows = rows
             .OrderByDescending(r => r.DeviationPercent.HasValue ? Math.Abs(r.DeviationPercent.Value) : -1m)
             .ToList();
+
+        // A6: optionally enrich each row with a 6-month sparkline series.
+        // Skipped entirely (null Sparkline) when includeSparklines=false to avoid extra DB cost.
+        if (includeSparklines && rows.Count > 0)
+        {
+            const int SparklineBuckets = 6;
+            var sparklines = await GetSparklineSeriesAsync(q, SparklineBuckets, ct);
+            var allZeros = Enumerable.Repeat(0m, SparklineBuckets).ToList() as IReadOnlyList<decimal>;
+            rows = rows
+                .Select(r => r with
+                {
+                    Sparkline = sparklines.TryGetValue(r.Id, out var s) ? s : allZeros
+                })
+                .ToList();
+        }
 
         return new JusticeViewModel(
             Query: q,
@@ -472,6 +490,220 @@ public class JusticeService : IJusticeService
             .Select(g => new { CompanyId = g.Key, Total = g.Sum(si => si.StaffingRequired) })
             .ToListAsync(ct);
         return rows.ToDictionary(r => r.CompanyId, r => (decimal)r.Total);
+    }
+
+    // -----------------------------------------------------------------------------------
+    // A6: Sparkline series
+    // -----------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Computes <paramref name="buckets"/> consecutive calendar-month work-item counts ending
+    /// at the month that contains <paramref name="baseQuery"/>.PeriodEnd.
+    ///
+    /// Algorithm:
+    ///   1. Build the <paramref name="buckets"/> month windows (each = [firstOfMonth, lastOfMonth]).
+    ///   2. Issue AT MOST one query per enabled work-type over the full span [firstBucketStart..lastBucketEnd],
+    ///      pulling (userId, Date) pairs — no per-month round trips.
+    ///   3. Bucket in memory by month index.
+    ///   4. Attribute to the level's row key:
+    ///        UsersInCompany       → userId
+    ///        CompaniesInMolecule  → user's CompanyId
+    ///        MoleculesInArea      → user's company's MoleculeId
+    ///   5. Return rowId → List&lt;decimal&gt;[buckets], oldest→newest.
+    ///      Rows in scope that had zero work are included with all-zeros.
+    /// </summary>
+    public async Task<Dictionary<int, List<decimal>>> GetSparklineSeriesAsync(
+        JusticeQuery baseQuery, int buckets, CancellationToken ct = default)
+    {
+        if (buckets <= 0) return new Dictionary<int, List<decimal>>();
+
+        // --- 1. Build bucket windows ---
+        // The last bucket ends at the last day of the month containing PeriodEnd.
+        var lastBucketEnd   = new DateOnly(baseQuery.PeriodEnd.Year, baseQuery.PeriodEnd.Month,
+                                           DateTime.DaysInMonth(baseQuery.PeriodEnd.Year, baseQuery.PeriodEnd.Month));
+        // Walk back (buckets-1) months for the first bucket.
+        var firstBucketStart = lastBucketEnd.AddMonths(-(buckets - 1));
+        firstBucketStart = new DateOnly(firstBucketStart.Year, firstBucketStart.Month, 1);
+
+        // Build (start, end) pairs for each bucket index 0..buckets-1.
+        var bucketStarts = new DateOnly[buckets];
+        var bucketEnds   = new DateOnly[buckets];
+        for (int i = 0; i < buckets; i++)
+        {
+            var monthStart = firstBucketStart.AddMonths(i);
+            var monthEnd   = new DateOnly(monthStart.Year, monthStart.Month,
+                                          DateTime.DaysInMonth(monthStart.Year, monthStart.Month));
+            bucketStarts[i] = monthStart;
+            bucketEnds[i]   = monthEnd;
+        }
+
+        // Cap to today (same convention as CountActualPerUserAsync).
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var spanEnd = lastBucketEnd < today ? lastBucketEnd : today;
+
+        // --- 2. Determine the company IDs in scope ---
+        // We reuse ResolveScopeCompanyIdsAsync which already handles all three scope kinds.
+        var companyIds = await ResolveScopeCompanyIdsAsync(baseQuery, ct);
+
+        // --- 3. Build row-key maps for non-user levels ---
+        // userToRowKey: userId → the row ID to accumulate into (userId / companyId / moleculeId).
+        Dictionary<int, int> userToRowKey;
+        HashSet<int> rowKeys; // all valid row keys in scope (needed for all-zeros padding)
+
+        if (baseQuery.Level == JusticeLevel.UsersInCompany)
+        {
+            // Row key = userId. Valid row keys = all active users in scope company.
+            if (baseQuery.Scope != JusticeScope.Company || baseQuery.ScopeId is null)
+                return new Dictionary<int, List<decimal>>();
+            var usersInCompany = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.CompanyId == baseQuery.ScopeId.Value && u.IsActive)
+                .Select(u => u.Id)
+                .ToListAsync(ct);
+            userToRowKey = usersInCompany.ToDictionary(uid => uid, uid => uid);
+            rowKeys = usersInCompany.ToHashSet();
+        }
+        else if (baseQuery.Level == JusticeLevel.CompaniesInMolecule)
+        {
+            // Row key = companyId. Need userId → companyId map.
+            if (baseQuery.Scope != JusticeScope.Molecule || baseQuery.ScopeId is null)
+                return new Dictionary<int, List<decimal>>();
+            var companiesInMolecule = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => c.MoleculeId == baseQuery.ScopeId.Value)
+                .Select(c => c.Id)
+                .ToListAsync(ct);
+            rowKeys = companiesInMolecule.ToHashSet();
+
+            var usersInScope = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive)
+                .Select(u => new { u.Id, u.CompanyId })
+                .ToListAsync(ct);
+            userToRowKey = usersInScope.ToDictionary(u => u.Id, u => u.CompanyId);
+        }
+        else if (baseQuery.Level == JusticeLevel.MoleculesInArea)
+        {
+            // Row key = moleculeId. Need userId → moleculeId via company.
+            if (baseQuery.Scope != JusticeScope.Area || baseQuery.ScopeId is null)
+                return new Dictionary<int, List<decimal>>();
+            var companiesWithMolecule = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => c.MoleculeId != null && companyIds.Contains(c.Id))
+                .Select(c => new { c.Id, MoleculeId = c.MoleculeId!.Value })
+                .ToListAsync(ct);
+            var companyToMolecule = companiesWithMolecule.ToDictionary(c => c.Id, c => c.MoleculeId);
+            rowKeys = companiesWithMolecule.Select(c => c.MoleculeId).ToHashSet();
+
+            var usersInScope = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive)
+                .Select(u => new { u.Id, u.CompanyId })
+                .ToListAsync(ct);
+            userToRowKey = new Dictionary<int, int>();
+            foreach (var u in usersInScope)
+            {
+                if (companyToMolecule.TryGetValue(u.CompanyId, out var molId))
+                    userToRowKey[u.Id] = molId;
+            }
+        }
+        else
+        {
+            return new Dictionary<int, List<decimal>>();
+        }
+
+        // --- 4. Initialise accumulator: rowKey → bucket totals ---
+        var accum = new Dictionary<int, decimal[]>();
+        foreach (var rk in rowKeys)
+            accum[rk] = new decimal[buckets];
+
+        // Helper: given a date, return the bucket index (0-based oldest) or -1 if outside span.
+        int BucketIndex(DateOnly d)
+        {
+            for (int i = 0; i < buckets; i++)
+                if (d >= bucketStarts[i] && d <= bucketEnds[i])
+                    return i;
+            return -1;
+        }
+
+        // --- 5. Query work items for the full span, bucket in memory ---
+
+        if (baseQuery.WorkType is JusticeWorkType.Shift or JusticeWorkType.All)
+        {
+            // SECURITY: IgnoreQueryFilters required for cross-company analytics; scope-gated upstream.
+            var shiftQ = _db.ShiftAssignments
+                .IgnoreQueryFilters()
+                .Where(a => a.UserId != null
+                            && companyIds.Contains(a.CompanyId)
+                            && a.ShiftInstance.WorkDate >= firstBucketStart
+                            && a.ShiftInstance.WorkDate <= spanEnd);
+            if (baseQuery.ExcludeExemptShifts)
+            {
+                shiftQ = shiftQ.Where(a => a.ShiftInstance.ShiftType.Key != ShiftType.KEY_HOME
+                                          && a.ShiftInstance.ShiftType.Key != ShiftType.KEY_HOME_AM
+                                          && a.ShiftInstance.ShiftType.Key != ShiftType.KEY_HOME_PM
+                                          && a.ShiftInstance.ShiftType.Key != ShiftType.KEY_OFFLINE);
+            }
+            var shiftRows = await shiftQ
+                .Select(a => new { UserId = a.UserId!.Value, Date = a.ShiftInstance.WorkDate })
+                .ToListAsync(ct);
+
+            foreach (var r in shiftRows)
+            {
+                if (!userToRowKey.TryGetValue(r.UserId, out var rk)) continue;
+                if (!accum.TryGetValue(rk, out var arr)) continue;
+                int bi = BucketIndex(r.Date);
+                if (bi >= 0) arr[bi]++;
+            }
+        }
+
+        if (baseQuery.WorkType is JusticeWorkType.Chore or JusticeWorkType.All)
+        {
+            // SECURITY: IgnoreQueryFilters required for cross-company analytics; scope-gated upstream.
+            var choreRows = await _db.Chores
+                .IgnoreQueryFilters()
+                .Where(c => companyIds.Contains(c.CompanyId)
+                            && c.CanceledAt == null
+                            && c.Date >= firstBucketStart
+                            && c.Date <= spanEnd)
+                .Select(c => new { c.UserId, c.Date })
+                .ToListAsync(ct);
+
+            foreach (var r in choreRows)
+            {
+                if (!userToRowKey.TryGetValue(r.UserId, out var rk)) continue;
+                if (!accum.TryGetValue(rk, out var arr)) continue;
+                int bi = BucketIndex(r.Date);
+                if (bi >= 0) arr[bi]++;
+            }
+        }
+
+        if (baseQuery.WorkType is JusticeWorkType.OnDuty or JusticeWorkType.All)
+        {
+            // OnDuty has no CompanyId; restrict by joining to Users — same pattern as CountActualPerUserAsync.
+            // SECURITY NOTE: OnDuty is intentionally global; scope is enforced by the user→company join.
+            var dutyRows = await _db.OnDuties
+                .Where(od => od.CanceledAt == null
+                             && od.Date >= firstBucketStart
+                             && od.Date <= spanEnd
+                             && _db.Users.IgnoreQueryFilters()
+                                  .Any(u => u.Id == od.UserId && companyIds.Contains(u.CompanyId)))
+                .Select(od => new { od.UserId, od.Date })
+                .ToListAsync(ct);
+
+            foreach (var r in dutyRows)
+            {
+                if (!userToRowKey.TryGetValue(r.UserId, out var rk)) continue;
+                if (!accum.TryGetValue(rk, out var arr)) continue;
+                int bi = BucketIndex(r.Date);
+                if (bi >= 0) arr[bi]++;
+            }
+        }
+
+        // --- 6. Materialise into the return type ---
+        return accum.ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value.ToList());
     }
 
     // -----------------------------------------------------------------------------------

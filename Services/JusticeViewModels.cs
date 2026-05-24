@@ -76,6 +76,15 @@ public sealed record JusticeRow(
     /// drawers stay backward compatible (every row drillable when no cap is supplied).
     /// </summary>
     public bool IsDrillable { get; init; } = true;
+
+    // A6: per-row sparkline series ────────────────────────────────────────────────────
+    /// <summary>
+    /// Monthly work-item counts for the 6 calendar months ending at the query's
+    /// <c>PeriodEnd</c>, ordered oldest → newest. Populated only when the caller
+    /// requests sparklines via <c>includeSparklines: true</c>; null otherwise.
+    /// All-zeros list is used for rows that had no work in the span (never null when requested).
+    /// </summary>
+    public IReadOnlyList<decimal>? Sparkline { get; init; }
 }
 
 /// <summary>

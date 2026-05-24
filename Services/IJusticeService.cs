@@ -26,6 +26,28 @@ public interface IJusticeService
     Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery query, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct = default);
 
     /// <summary>
+    /// A6 sparkline overload. Same as the A5 overload but also populates <see cref="JusticeRow.Sparkline"/>
+    /// on each row when <paramref name="includeSparklines"/> is <c>true</c>.
+    /// When false the sparkline is omitted (null), incurring no extra DB cost — use this in
+    /// the fast-path callers (calendar drawer, eligibility ranking, what-if preview).
+    /// </summary>
+    Task<JusticeViewModel> GetJusticeViewAsync(JusticeQuery query, IReadOnlyCollection<int>? drillableChildIds, bool includeSparklines, CancellationToken ct = default);
+
+    /// <summary>
+    /// A6: Computes <paramref name="buckets"/> consecutive calendar-month work-item counts,
+    /// ending at the month that contains <paramref name="baseQuery"/>.PeriodEnd.
+    /// Honoring the same work-type filter and exclusions as <see cref="GetJusticeViewAsync"/>.
+    ///
+    /// Return value: rowId → List&lt;decimal&gt; of length <paramref name="buckets"/>, ordered
+    /// oldest → newest. Rows that had zero work in the entire span are included with all-zeros
+    /// only if they appear in the scope; rows outside the scope are absent.
+    ///
+    /// IMPORTANT: does NOT issue per-month DB round-trips. Pulls the full (rowKey, Date) set
+    /// for the span in one query per work-type and buckets in memory.
+    /// </summary>
+    Task<Dictionary<int, List<decimal>>> GetSparklineSeriesAsync(JusticeQuery baseQuery, int buckets, CancellationToken ct = default);
+
+    /// <summary>
     /// Returns all configured targets (defaults + overrides) visible to the current tenant.
     /// Phase 1 callers use this only to display the read-only "current targets" summary;
     /// the editable settings modal lands in Phase 2.
