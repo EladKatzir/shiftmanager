@@ -30,7 +30,7 @@
             </div>
 
             @* View mode selector *@
-            <div class="overview-calendar__selector">
+            <div class="overview-calendar__selector cal-toolbar__primary">
                 <label for="viewModeSelect">@Localizer["ViewMode"]</label>
                 <select id="viewModeSelect" class="form-select" onchange="updateCalendarFilters()">
                     <option value="week" selected="@(Model.ViewMode == "week")">@Localizer["Week"]</option>
@@ -40,18 +40,27 @@
             </div>
 
             @* Users filter selector *@
-            <div class="overview-calendar__selector">
+            <div class="overview-calendar__selector cal-toolbar__primary">
                 <label for="usersFilter">@Localizer["UsersFilter"]</label>
                 <select id="usersFilter" class="form-select" onchange="updateCalendarFilters()">
                     <option value="active" selected="@(Model.UsersFilter == "active" || string.IsNullOrEmpty(Model.UsersFilter))">@Localizer["ActiveUsers"]</option>
                     <option value="inactive" selected="@(Model.UsersFilter == "inactive")">@Localizer["InactiveUsers"]</option>
                 </select>
             </div>
+
+            @* Mobile-only Tools overflow trigger — surfaces controls hidden at <768px. *@
+            <button type="button"
+                    class="btn btn-ghost cal-toolbar__overflow-trigger"
+                    loc-aria-label="Calendar_Tools_Overflow_AriaLabel"
+                    onclick="window.CalendarToolsOverflow && window.CalendarToolsOverflow.open()">
+                <loc key="Calendar_Tools_Overflow_Label" />
+                <span aria-hidden="true">▾</span>
+            </button>
         </div>
 
         <div class="overview-calendar__toolbar-row">
             @* Date navigation *@
-            <div class="overview-calendar__date-nav">
+            <div class="overview-calendar__date-nav cal-toolbar__primary">
                 <a href="?Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&UsersFilter=@Model.UsersFilter&JustMine=@Model.JustMine"
                    class="btn btn-ghost overview-calendar__nav-btn"
                    title="@Localizer["Previous"]">
@@ -183,12 +192,30 @@
             </p>
         </div>
     }
+
+    @* Mobile Tools overflow sheet — clones of the hidden toolbar controls
+       are injected at open() time so the originals remain the source of
+       truth (event handlers and form bindings unmodified). *@
+    <div id="calendarToolsSheet" class="bottom-sheet calendar-tools-sheet" hidden aria-modal="true" role="dialog">
+        <div class="bottom-sheet__content">
+            <div class="bottom-sheet__header">
+                <h3><loc key="Calendar_Tools_Overflow_Label" /></h3>
+                <button type="button" class="bottom-sheet__close"
+                        loc-aria-label="Aria_CloseDialog"
+                        onclick="window.CalendarToolsOverflow && window.CalendarToolsOverflow.close()">×</button>
+            </div>
+            <div class="bottom-sheet__body" id="calendarToolsSheetBody">
+                @* Cloned controls are injected here at open() time so server state stays source of truth *@
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-sticky-shadows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-tools-overflow.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/calendar-realtime.js" asp-append-version="true"></script>
     <script>

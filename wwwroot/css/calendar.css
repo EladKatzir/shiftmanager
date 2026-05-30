@@ -3349,6 +3349,94 @@
     justify-content: center;
 }
 
+/* ============================================================================
+   MOBILE TOOLBAR COLLAPSE — Tools overflow sheet (Task 16, Spec §2/§11)
+   At <768px the sticky toolbar can only safely host the most-used primary
+   controls (date nav, view mode, molecule/area selector). The rest move
+   into a bottom-sheet "Tools" overflow. .cal-toolbar__primary is the
+   opt-in marker for "stay visible on mobile".
+   ============================================================================ */
+@media (max-width: 768px) {
+    /* Hide secondary toolbar controls; surface them in a "Tools ▾" overflow. */
+    .cal-toolbar__toggle-group:not(.cal-toolbar__primary),
+    .cal-toolbar__selector:not(.cal-toolbar__primary),
+    .cal-toolbar .quick-entry-toggle,
+    .cal-toolbar .quick-entry-help-btn,
+    .cal-toolbar .dl-control {
+        display: none;
+    }
+
+    /* Show the Tools overflow trigger. */
+    .cal-toolbar__overflow-trigger {
+        display: inline-flex;
+    }
+
+    /* Pinned + condensed at <768px = even tighter padding (recovers
+       another sliver of vertical space when the user has scrolled). */
+    .cal-toolbar.is-pinned.is-condensed {
+        padding: var(--space-1);
+    }
+}
+
+@media (min-width: 769px) {
+    /* Trigger is mobile-only; hide it on desktop where all controls fit. */
+    .cal-toolbar__overflow-trigger {
+        display: none;
+    }
+}
+
+/* Minimal styling for the Tools sheet header/close — the base
+   .bottom-sheet / .bottom-sheet__content / .bottom-sheet__body styles
+   are reused from the assignment bottom-sheet (above). Only the
+   header/close pair are unique to this sheet. */
+.calendar-tools-sheet .bottom-sheet__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.calendar-tools-sheet .bottom-sheet__header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.calendar-tools-sheet .bottom-sheet__close {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.calendar-tools-sheet .bottom-sheet__close:hover,
+.calendar-tools-sheet .bottom-sheet__close:focus-visible {
+    background: var(--surface-soft);
+}
+
+/* Stack cloned toolbar controls vertically inside the sheet so they're
+   tap-friendly on phones (the original .cal-toolbar__row uses flex-wrap
+   which compresses them too tightly for touch). */
+.calendar-tools-sheet .bottom-sheet__body > * {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
 /* ========================================
    COLORBLIND ACCESSIBILITY PATTERNS (B-12)
    Each shift type gets a unique pattern overlay alongside its color,

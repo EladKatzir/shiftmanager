@@ -26,7 +26,7 @@
     @* Toolbar — Row 1: Selectors + Date Nav + Print *@
     <div class="cal-toolbar">
         <div class="cal-toolbar__row">
-            <div class="cal-toolbar__selector">
+            <div class="cal-toolbar__selector cal-toolbar__primary">
                 <label for="moleculeSelect">@Localizer["Molecule"]</label>
                 <select id="moleculeSelect" class="form-select" onchange="updateCalendarFilters()">
                     @foreach (var molecule in Model.AvailableMolecules)
@@ -51,7 +51,7 @@
             </div>
             }
 
-            <div class="cal-toolbar__selector">
+            <div class="cal-toolbar__selector cal-toolbar__primary">
                 <label for="viewModeSelect">@Localizer["ViewMode"]</label>
                 <select id="viewModeSelect" class="form-select" onchange="updateCalendarFilters()">
                     <option value="week" selected="@(Model.ViewMode == "week")">@Localizer["Week"]</option>
@@ -60,7 +60,7 @@
                 </select>
             </div>
 
-            <div class="cal-toolbar__date-nav">
+            <div class="cal-toolbar__date-nav cal-toolbar__primary">
                 <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode@dlParam"
                    class="btn btn-ghost cal-toolbar__nav-btn"
                    data-cal-nav="prev"
@@ -108,6 +108,15 @@
                 };
             }
             <partial name="_JusticePanel" model="justicePanelModel" />
+
+            @* Mobile-only Tools overflow trigger — surfaces controls hidden at <768px. *@
+            <button type="button"
+                    class="btn btn-ghost cal-toolbar__overflow-trigger"
+                    loc-aria-label="Calendar_Tools_Overflow_AriaLabel"
+                    onclick="window.CalendarToolsOverflow && window.CalendarToolsOverflow.open()">
+                <loc key="Calendar_Tools_Overflow_Label" />
+                <span aria-hidden="true">▾</span>
+            </button>
         </div>
 
         @* Row 2: Mode toggles + Filter + Just Mine *@
@@ -283,6 +292,23 @@
             </p>
         </div>
     }
+
+    @* Mobile Tools overflow sheet — clones of the hidden toolbar controls
+       are injected at open() time so the originals remain the source of
+       truth (event handlers and form bindings unmodified). *@
+    <div id="calendarToolsSheet" class="bottom-sheet calendar-tools-sheet" hidden aria-modal="true" role="dialog">
+        <div class="bottom-sheet__content">
+            <div class="bottom-sheet__header">
+                <h3><loc key="Calendar_Tools_Overflow_Label" /></h3>
+                <button type="button" class="bottom-sheet__close"
+                        loc-aria-label="Aria_CloseDialog"
+                        onclick="window.CalendarToolsOverflow && window.CalendarToolsOverflow.close()">×</button>
+            </div>
+            <div class="bottom-sheet__body" id="calendarToolsSheetBody">
+                @* Cloned controls are injected here at open() time so server state stays source of truth *@
+            </div>
+        </div>
+    </div>
 </div>
 
 @* Filter Modal *@
@@ -380,6 +406,7 @@ else
     <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
     <script src="~/js/calendar-keyboard-nav.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-tools-overflow.js" asp-append-version="true"></script>
 
     @* Justice in-context drawer (Phase 2) *@
     <link rel="stylesheet" href="~/css/justice-panel.css" asp-append-version="true" />
