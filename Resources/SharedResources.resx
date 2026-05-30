@@ -10494,6 +10494,45 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Calendar_ReadOnlyHelp_AskAdmin" xml:space="preserve">
     <value>Please ask your administrator to grant you access.</value>
   </data>
+  <data name="Calendar_StickyToolbar_AriaLabel" xml:space="preserve">
+    <value>Calendar controls</value>
+  </data>
+  <data name="Calendar_StickyHeader_AriaLabel" xml:space="preserve">
+    <value>Calendar dates</value>
+  </data>
+  <data name="Calendar_PinnedGroup_AriaLabel" xml:space="preserve">
+    <value>Pinned group header</value>
+  </data>
+  <data name="Calendar_RowLabel_ColumnHeader" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Calendar_NextGroup" xml:space="preserve">
+    <value>Next group</value>
+  </data>
+  <data name="Calendar_ScrollHint_Horizontal" xml:space="preserve">
+    <value>Scroll horizontally to see more dates</value>
+  </data>
+  <data name="Calendar_ScrollHint_Vertical" xml:space="preserve">
+    <value>Scroll down to see more rows</value>
+  </data>
+  <data name="Calendar_RowMode_Shifts" xml:space="preserve">
+    <value>Shifts</value>
+  </data>
+  <data name="Calendar_RowMode_Users" xml:space="preserve">
+    <value>People</value>
+  </data>
+  <data name="Calendar_RowMode_Duty" xml:space="preserve">
+    <value>Duty</value>
+  </data>
+  <data name="Calendar_RowMode_Chores" xml:space="preserve">
+    <value>Chores</value>
+  </data>
+  <data name="Calendar_Tools_Overflow_Label" xml:space="preserve">
+    <value>Tools</value>
+  </data>
+  <data name="Calendar_Tools_Overflow_AriaLabel" xml:space="preserve">
+    <value>More calendar tools</value>
+  </data>
   <data name="Grant_AssignAlhutShifts" xml:space="preserve">
     <value>Assign Alhut Shifts</value>
   </data>

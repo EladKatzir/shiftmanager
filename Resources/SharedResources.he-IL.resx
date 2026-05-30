@@ -10460,6 +10460,45 @@
   <data name="Calendar_ReadOnlyHelp_AskAdmin" xml:space="preserve">
     <value>אנא בקש ממנהל המערכת להעניק לך גישה.</value>
   </data>
+  <data name="Calendar_StickyToolbar_AriaLabel" xml:space="preserve">
+    <value>פקדי לוח שנה</value>
+  </data>
+  <data name="Calendar_StickyHeader_AriaLabel" xml:space="preserve">
+    <value>תאריכי לוח שנה</value>
+  </data>
+  <data name="Calendar_PinnedGroup_AriaLabel" xml:space="preserve">
+    <value>כותרת קבוצה מוצמדת</value>
+  </data>
+  <data name="Calendar_RowLabel_ColumnHeader" xml:space="preserve">
+    <value>שם</value>
+  </data>
+  <data name="Calendar_NextGroup" xml:space="preserve">
+    <value>קבוצה הבאה</value>
+  </data>
+  <data name="Calendar_ScrollHint_Horizontal" xml:space="preserve">
+    <value>גלול אופקית לראות תאריכים נוספים</value>
+  </data>
+  <data name="Calendar_ScrollHint_Vertical" xml:space="preserve">
+    <value>גלול מטה לראות שורות נוספות</value>
+  </data>
+  <data name="Calendar_RowMode_Shifts" xml:space="preserve">
+    <value>משמרות</value>
+  </data>
+  <data name="Calendar_RowMode_Users" xml:space="preserve">
+    <value>אנשים</value>
+  </data>
+  <data name="Calendar_RowMode_Duty" xml:space="preserve">
+    <value>תורנות</value>
+  </data>
+  <data name="Calendar_RowMode_Chores" xml:space="preserve">
+    <value>מטלות</value>
+  </data>
+  <data name="Calendar_Tools_Overflow_Label" xml:space="preserve">
+    <value>כלים</value>
+  </data>
+  <data name="Calendar_Tools_Overflow_AriaLabel" xml:space="preserve">
+    <value>כלי לוח שנה נוספים</value>
+  </data>
   <data name="Grant_AssignAlhutShifts" xml:space="preserve">
     <value>שיבוץ משמרות אלחוט</value>
   </data>
