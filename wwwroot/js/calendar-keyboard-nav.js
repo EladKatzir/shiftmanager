@@ -46,7 +46,46 @@
     }
 
     function focusCell(cell) {
-        if (cell) cell.focus();
+        if (!cell) return;
+        cell.focus();
+
+        // Pull the cell fully into view inside the calendar's scroll container.
+        // Without this, arrow-key navigation can leave the focused cell behind a
+        // sticky element (date row, row label, or group band).
+        cell.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+
+        // Nudge for sticky obstruction. scrollIntoView('nearest') doesn't account
+        // for the sticky elements covering the leading edges of the viewport.
+        var container = cell.closest('.excel-calendar');
+        if (!container) return;
+
+        var containerRect = container.getBoundingClientRect();
+        var cellRect = cell.getBoundingClientRect();
+        var styles = getComputedStyle(container);
+        var headerHeight = parseInt(styles.getPropertyValue('--excel-calendar-header-height') || '44', 10);
+        var rowLabelEl = container.querySelector('.excel-calendar__row-label');
+        var rowLabelWidth = rowLabelEl ? rowLabelEl.getBoundingClientRect().width : 150;
+
+        // Vertical nudge: if cell top is within `headerHeight` of container top.
+        var topGap = cellRect.top - (containerRect.top + headerHeight);
+        if (topGap < 0) {
+            container.scrollBy({ top: topGap, behavior: 'auto' });
+        }
+
+        // Horizontal nudge: respect writing direction.
+        if (isRtl()) {
+            // Row label sticks on the RIGHT in RTL; expose cells hidden behind it.
+            var rightGap = (containerRect.right - rowLabelWidth) - cellRect.right;
+            if (rightGap < 0) {
+                container.scrollBy({ left: -rightGap, behavior: 'auto' });
+            }
+        } else {
+            // Row label sticks on the LEFT in LTR; expose cells hidden behind it.
+            var leftGap = cellRect.left - (containerRect.left + rowLabelWidth);
+            if (leftGap < 0) {
+                container.scrollBy({ left: leftGap, behavior: 'auto' });
+            }
+        }
     }
 
     // Navigate to the prev/next period; remember which edge cell to focus once the new page loads.
