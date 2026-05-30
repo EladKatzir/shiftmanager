@@ -79,4 +79,21 @@ public class CalendarStickyTokenTests
         var tokens = LoadTokens();
         tokens.Should().ContainKey("excel-calendar-header-height");
     }
+
+    [Fact]
+    public void DropdownZIndex_IsAboveStickyCorner()
+    {
+        var tokens = LoadTokens();
+        tokens.Should().ContainKey("z-dropdown");
+        tokens.Should().ContainKey("z-sticky-corner");
+
+        var dropdown = int.Parse(tokens["z-dropdown"]);
+        var corner   = int.Parse(tokens["z-sticky-corner"]);
+
+        dropdown.Should().BeGreaterThanOrEqualTo(corner,
+            "dropdown menus must paint above the sticky corner — " +
+            "otherwise the DL dropdown opens behind the sticky thead when " +
+            "the toolbar pins. This was a latent bug fixed alongside the " +
+            "sticky toolbar in the 2026-05-29 calendar-sticky-headers PR.");
+    }
 }

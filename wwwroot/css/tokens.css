@@ -411,7 +411,10 @@
 
 :root {
   --z-base: 0;
-  --z-dropdown: 1000;
+  /* Bumped from 1000 to 1060 on 2026-05-29 so dropdowns survive above
+     the new sticky-corner tier (1023). Without this, the DL dropdown menu
+     opens BELOW the sticky thead when the toolbar pins. */
+  --z-dropdown: 1060;
 
   /* Sticky tiers — calendar uses all five; data tables use first two.
      NEVER reorder. Locked by ShiftManager.Tests/UnitTests/Css/CalendarStickyTokenTests. */

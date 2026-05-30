@@ -31,7 +31,9 @@
     position: absolute;
     inset-inline-start: 0;
     top: calc(100% + 4px);
-    z-index: var(--z-dropdown, 1100);
+    /* Use --z-popover (1060) explicitly. The raw 1100 fallback was a
+       holdover from before --z-dropdown existed. */
+    z-index: var(--z-popover, var(--z-dropdown, 1060));
     min-width: 16rem;
     max-width: 22rem;
     background: var(--surface, #ffffff);
