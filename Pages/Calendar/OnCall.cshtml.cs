@@ -440,7 +440,8 @@ public class OnCallModel : PageModel
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
         CalendarData.RowMode = "Duty";
-        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0);
+        // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
+        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
     }
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForDutyType(

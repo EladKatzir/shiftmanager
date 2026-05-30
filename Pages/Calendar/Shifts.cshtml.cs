@@ -464,7 +464,9 @@ public class ShiftsModel : PageModel
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
         CalendarData.RowMode = "Shifts";
-        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0);
+        // +1 for the <thead> column-header row so aria-rowcount matches ARIA 1.2 §6.6.4
+        // (rowcount includes ALL <tr> elements, not just <tbody> rows).
+        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
     }
 
     private async Task BuildUserBasedCalendarAsync(int moleculeId, int? jobTypeId)
@@ -591,8 +593,10 @@ public class ShiftsModel : PageModel
             Groups = groups,
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
-        CalendarData.RowMode = Mode == "user" ? "Users" : "Shifts";
-        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0);
+        // BuildUserBasedCalendarAsync only runs when Mode == "user" (see OnGet routing).
+        CalendarData.RowMode = "Users";
+        // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
+        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
     }
 
     /// <summary>

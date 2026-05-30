@@ -28,8 +28,11 @@ public class ExcelCalendarTableViewModel
     public string RowMode { get; set; } = "Shifts";
 
     /// <summary>
-    /// Total row count INCLUDING group-header rows. Used as aria-rowcount
-    /// on the &lt;table&gt; for screen-reader "row N of M" context.
+    /// Total row count INCLUDING the &lt;thead&gt; column-header row AND group-header rows.
+    /// Per ARIA 1.2 §6.6.4, aria-rowcount represents the total &lt;tr&gt; count in the
+    /// logical table; the column header is row 1, the first data row is row 2 (the
+    /// aria-rowindex tracking in Task 13 starts at 2 inside &lt;tbody&gt; for that reason).
+    /// Caller PageModels must set this as Rows.Count + (Groups?.Count ?? 0) + 1.
     /// </summary>
     public int TotalRows { get; set; }
 

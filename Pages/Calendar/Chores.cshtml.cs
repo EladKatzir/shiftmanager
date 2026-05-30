@@ -321,7 +321,8 @@ public class ChoresModel : PageModel
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
         CalendarData.RowMode = "Chores";
-        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0);
+        // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
+        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
     }
 
     private async Task<List<AppUser>> GetUsersForMoleculeAsync(int moleculeId)
