@@ -119,4 +119,24 @@
     } else {
         init();
     }
+
+    // Next-group jump. Delegated handler — survives bands being toggled.
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.excel-calendar__next-group-btn');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();   // don't trigger the band's chevron-toggle
+
+        var nextId = btn.getAttribute('data-next-group');
+        var target = document.querySelector(
+            '.excel-calendar__group-header[data-group-id="' + nextId + '"]'
+        );
+        if (!target) return;
+
+        var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        target.scrollIntoView({
+            block: 'start',
+            behavior: reducedMotion ? 'auto' : 'smooth'
+        });
+    });
 })();

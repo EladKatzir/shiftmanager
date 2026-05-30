@@ -60,8 +60,13 @@
             @{ var ariaRowIndex = 2; }
             @if (Model.Groups != null)
             {
-                foreach (var group in Model.Groups.OrderBy(g => g.SortOrder))
+                var sortedGroups = Model.Groups.OrderBy(g => g.SortOrder).ToList();
+                for (var gi = 0; gi < sortedGroups.Count; gi++)
                 {
+                    var group = sortedGroups[gi];
+                    var hasNextGroup = gi < sortedGroups.Count - 1;
+                    var nextGroupId = hasNextGroup ? sortedGroups[gi + 1].Id : "";
+
                     <tr class="excel-calendar__group-header @(group.IsCollapsed ? "is-collapsed" : "")"
                         data-group-id="@group.Id"
                         aria-rowindex="@ariaRowIndex">
@@ -75,6 +80,16 @@
                                           data-group-total="@group.MemberCount">(@group.MemberCount)</span>
                                 }
                                 <span class="excel-calendar__group-grip" title="@Localizer["DragToReorder"]">⋮⋮</span>
+                                @if (hasNextGroup)
+                                {
+                                    <button type="button"
+                                            class="excel-calendar__next-group-btn"
+                                            data-next-group="@nextGroupId"
+                                            loc-aria-label="Calendar_NextGroup"
+                                            loc-title="Calendar_NextGroup">
+                                        ↓
+                                    </button>
+                                }
                             </div>
                         </td>
                     </tr>

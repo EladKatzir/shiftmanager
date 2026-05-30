@@ -3151,6 +3151,29 @@
     color: var(--text-muted);
 }
 
+.excel-calendar__next-group-btn {
+    margin-inline-start: auto;       /* push to the inline-end of the band */
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: inherit;
+    padding: 0 var(--space-2);
+    font-size: var(--text-small);
+    cursor: pointer;
+    transition: background var(--transition-fast),
+                border-color var(--transition-fast);
+}
+
+.excel-calendar__next-group-btn:hover {
+    background: var(--surface);
+    border-color: var(--border-strong);
+}
+
+.excel-calendar__next-group-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
 /* Read-only mode banner */
 .excel-calendar__readonly-banner {
     display: flex;
