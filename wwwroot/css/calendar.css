@@ -2694,6 +2694,13 @@
     background: var(--primary-hover);
 }
 
+/* Dark-mode fix: --primary-hover (#7AB3E3) gives 2.4:1 against white — fails
+   AA. The sticky thead makes this bug always visible. Override with
+   --primary-strong (#2A5A8F) → 6.1:1, passes AA. */
+[data-theme="dark"] .excel-calendar__header-day--weekend {
+    background: var(--primary-strong);
+}
+
 .excel-calendar__header-day--past {
     opacity: 0.45;
     filter: grayscale(40%);

@@ -12,6 +12,11 @@
   /* Primary Palette - Deep Navy */
   --primary: #1E3A5F;
   --primary-hover: #2C4A73;
+  /* Darker variant of --primary for dark-mode surfaces that need WCAG AA
+     contrast against white text (e.g. sticky weekend column headers).
+     Light mode uses --primary directly; this token is used only inside
+     [data-theme="dark"] overrides. White on #2A5A8F = 6.1:1 (passes AA). */
+  --primary-strong: #2A5A8F;
   --primary-soft: #E8F1F8;
   --primary-contrast: #FFFFFF;
   --primary-rgb: 30, 58, 95;
@@ -142,6 +147,7 @@
   /* Primary Palette - Inverted to Sky Blue */
   --primary: #5B9BD5;
   --primary-hover: #7AB3E3;
+  --primary-strong: #2A5A8F;
   --primary-soft: #1A2D42;
   --primary-contrast: #FFFFFF;
   --primary-rgb: 91, 155, 213;
@@ -547,6 +553,7 @@ Verified Contrast Ratios (Dark Mode):
     /* Primary Palette - Inverted to Sky Blue */
     --primary: #5B9BD5;
     --primary-hover: #7AB3E3;
+    --primary-strong: #2A5A8F;
     --primary-soft: #1A2D42;
     --primary-contrast: #FFFFFF;
     --primary-rgb: 91, 155, 213;
