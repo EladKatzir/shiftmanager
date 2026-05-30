@@ -23,14 +23,20 @@
     var SHEET_BODY_ID = 'calendarToolsSheetBody';
 
     // Mirror of the mobile-CSS hide list (see calendar.css mobile block).
-    // Keep these two lists in sync — anything hidden by CSS but missing
-    // from this list will be invisible AND missing from the overflow.
+    // Keep these two lists in sync (with calendar.css @media (max-width: 768px))
+    // — anything hidden by CSS but missing from this list will be invisible
+    // AND missing from the overflow. Overview's toolbar uses .overview-calendar__*
+    // class namespace (Task 6.5 aliased the wrapper but not the children), so
+    // mobile selectors target BOTH namespaces.
     var HIDDEN_SELECTORS = [
         '.cal-toolbar__toggle-group:not(.cal-toolbar__primary)',
         '.cal-toolbar__selector:not(.cal-toolbar__primary)',
         '.cal-toolbar .quick-entry-toggle',
         '.cal-toolbar .quick-entry-help-btn',
-        '.cal-toolbar .dl-control'
+        '.cal-toolbar .dl-control',
+        // Overview-specific (overview-calendar__* namespace)
+        '.overview-calendar__selector:not(.cal-toolbar__primary)',
+        '.overview-calendar__company-badge'
     ];
 
     function open() {

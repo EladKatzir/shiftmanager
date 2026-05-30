@@ -3357,12 +3357,17 @@
    opt-in marker for "stay visible on mobile".
    ============================================================================ */
 @media (max-width: 768px) {
-    /* Hide secondary toolbar controls; surface them in a "Tools ▾" overflow. */
+    /* Hide secondary toolbar controls; surface them in a "Tools ▾" overflow.
+       Overview's toolbar uses .overview-calendar__* namespace (Task 6.5 aliased
+       the wrapper but not the children), so we target both namespaces. Keep this
+       list in sync with HIDDEN_SELECTORS in wwwroot/js/calendar-tools-overflow.js. */
     .cal-toolbar__toggle-group:not(.cal-toolbar__primary),
     .cal-toolbar__selector:not(.cal-toolbar__primary),
     .cal-toolbar .quick-entry-toggle,
     .cal-toolbar .quick-entry-help-btn,
-    .cal-toolbar .dl-control {
+    .cal-toolbar .dl-control,
+    .overview-calendar__selector:not(.cal-toolbar__primary),
+    .overview-calendar__company-badge {
         display: none;
     }
 
