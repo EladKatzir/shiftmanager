@@ -306,7 +306,13 @@ th { text-align: left; }
 
 .app-shell {
   display: flex;
-  min-height: 100vh;
+  /* Was: min-height: 100vh. Switched to a hard height so the flex chain
+     below can claim a deterministic height for the calendar's inner scroll.
+     100vh kept as a fallback for browsers without 100dvh support
+     (Chrome < 108, Edge < 108, Safari < 15.4, Firefox < 101); modern
+     browsers pick up the dvh value because it appears second. */
+  height: 100vh;
+  height: 100dvh;
   background: var(--bg);
 }
 
@@ -424,6 +430,11 @@ th { text-align: left; }
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* Mirror of min-width: 0 — required so the calendar's inner scroll
+     can take ownership instead of forcing a body-level scrollbar.
+     Without this the flex item's default min-height of `auto` would
+     expand to fit its content and break the height-locked chain. */
+  min-height: 0;
 }
 
 .app-header {
@@ -471,8 +482,20 @@ th { text-align: left; }
   line-height: 1.2;
 }
 
+/* The <main class="app-content"> is the page slot. Pages that opt into a
+   full-bleed flex-column layout (like .cal-page) need flex-column + min-height:0
+   to propagate the chain that lets .excel-calendar claim the inner scroll.
+   Pages that don't (e.g. /Home) overflow naturally — `overflow: auto` here
+   makes .app-content itself the scroll container instead of letting overflow
+   bubble up to the body. This preserves `.app-sidebar { position: sticky; top: 0 }`
+   inside .app-shell (which is now height-locked to 100dvh); if the body were
+   the scroll authority the sidebar would scroll away with the page. */
 .app-content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   padding: 1.5rem;
   width: 100%;
   margin: 0;

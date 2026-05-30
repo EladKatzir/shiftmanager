@@ -2175,6 +2175,15 @@
    ======================================== */
 
 .cal-page {
+    /* Flex-column chain link: .app-shell → .app-main → .app-content →
+       .cal-page → .excel-calendar. min-height: 0 lets .excel-calendar
+       (the inner scroller) shrink to claim ownership of overflow.
+       Without it the chain breaks at this node and the body becomes the
+       scroll authority, defeating sticky on the calendar header. */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
     padding: 1rem;
 }
 
@@ -2578,8 +2587,15 @@
    ======================================== */
 
 .excel-calendar {
+    /* Inner scroll on both axes. Sticky elements inside use this as their
+       containing block. Flex chain (.app-shell → .app-main → .app-content
+       → .cal-page → .excel-calendar) provides the height — no magic number.
+       Per-link `min-height: 0` is load-bearing; if any link loses it the
+       flex chain collapses and the body becomes the scroll authority,
+       defeating sticky. */
+    flex: 1 1 auto;
+    min-height: 0;
     overflow: auto;
-    max-height: calc(100vh - 200px);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface);
