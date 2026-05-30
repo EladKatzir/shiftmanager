@@ -2196,6 +2196,28 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+
+    /* Sticky to .cal-page scope (sibling of .excel-calendar, NOT inside it).
+       Pinning detected via .cal-toolbar-sentinel element above the toolbar
+       (injected by Default.cshtml, observed by calendar-sticky-shadows.js). */
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    transition: box-shadow var(--transition-fast),
+                padding var(--transition-fast);
+}
+
+/* Only sticky when there's actually a calendar to scroll. Without this,
+   .cal-empty pages would have a useless pinned toolbar over empty space. */
+.cal-page:not(:has(.excel-calendar)) .cal-toolbar {
+    position: static;
+}
+
+/* Pinned-state shadow (applied by JS when sentinel leaves viewport).
+   .is-pinned is toggled by calendar-sticky-shadows.js (Task 10). */
+.cal-toolbar.is-pinned {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-strong);
 }
 
 /* Row 1: selectors + date nav + print */
@@ -2616,7 +2638,7 @@
 .excel-calendar__header {
     position: sticky;
     top: 0;
-    z-index: var(--z-sticky);
+    z-index: var(--z-sticky-header);
     background: var(--primary);
     color: var(--primary-contrast) !important;
 }
@@ -2697,7 +2719,7 @@
  * RTL note: in Hebrew the cells visually sit on the right but `left: 0` still
  * pins them to the left edge of the scroll container, which is wrong for RTL.
  * That swap from `left: 0` to `inset-inline-start: 0` is Task 8's scope, not
- * this task's. Token swap to `--z-sticky-col` is Task 7's scope.
+ * this task's.
  *
  * Regression guard: see CalendarStickyRtlSweepTests (Task 8) and the Playwright
  * baseline at tests/visual/sticky-headers/baseline.spec.js (Task 19).
@@ -2705,7 +2727,7 @@
 .excel-calendar__row-label {
     position: sticky;
     left: 0;                                /* becomes inset-inline-start in Task 8 */
-    z-index: calc(var(--z-sticky) - 1);     /* becomes var(--z-sticky-col) in Task 7 */
+    z-index: var(--z-sticky-col);
     background: var(--surface);
     font-weight: var(--font-medium);
     padding: var(--space-3);
@@ -2738,7 +2760,7 @@
     position: sticky;
     top: 0;
     left: 0;
-    z-index: calc(var(--z-sticky) + 1);
+    z-index: var(--z-sticky-corner);
     background: var(--primary);
     color: var(--primary-contrast) !important;
 }
@@ -3006,6 +3028,13 @@
     text-align: center;
     font-size: var(--text-small);
     border-bottom: 1px solid var(--warning);
+
+    /* Second-tier sticky beneath the toolbar. Top offset uses --cal-toolbar-height
+       (set by calendar-sticky-shadows.js via ResizeObserver in Task 10) with a
+       64px fallback if JS is disabled or before Task 10 runs. */
+    position: sticky;
+    top: var(--cal-toolbar-height, 64px);
+    z-index: var(--z-sticky);
 }
 
 /* "?" help button: explains which grant the user is missing. Bordered (no fill) by default to
