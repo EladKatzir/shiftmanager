@@ -2668,11 +2668,44 @@
     opacity: 0.9;
 }
 
-/* Sticky first column */
+/* Sticky Zone B (left column).
+ *
+ * Root cause of pre-2026-05-29 failure: the OLD `.excel-calendar { max-height:
+ * calc(100vh - 200px); overflow: auto }` rule made the .excel-calendar div the
+ * sticky containing block AND the inner scroll container, but the height was a
+ * magic number computed against the viewport rather than the available flex
+ * space. Under common layouts (sidebar collapsed, narrow viewport, dock open)
+ * the magic number overshot the actual room available; the .excel-calendar
+ * grew taller than its parent and `overflow: auto` on .excel-calendar never
+ * activated horizontally — the body became the scroll authority. With the
+ * scroll authority outside the sticky containing block, position:sticky on
+ * .excel-calendar__row-label had nothing to stick to and the cell scrolled
+ * with the rest of the table.
+ *
+ * Fix: Task 4 replaced the magic-number max-height with a flex-column chain
+ * (.app-shell h:100dvh → .app-main min-h:0 → .app-content min-h:0,overflow:auto
+ * → .cal-page min-h:0 → .excel-calendar flex:1,min-h:0,overflow:auto). The
+ * inner scroll now lives on .excel-calendar by construction, and that div IS
+ * the sticky containing block for this rule. Verified 2026-05-30: in LTR with
+ * scrollLeft={0,200,500,978,max}, all .excel-calendar__row-label cells stay
+ * pinned at x = .excel-calendar.left across all scroll positions. No CSS
+ * change required in this task — the ancestor chain is also clean of
+ * sticky-breaking transform/filter/perspective/contain/will-change/clip-path
+ * properties (audited Task 5), and border-collapse: separate is correctly set
+ * on .excel-calendar__table (line 2605).
+ *
+ * RTL note: in Hebrew the cells visually sit on the right but `left: 0` still
+ * pins them to the left edge of the scroll container, which is wrong for RTL.
+ * That swap from `left: 0` to `inset-inline-start: 0` is Task 8's scope, not
+ * this task's. Token swap to `--z-sticky-col` is Task 7's scope.
+ *
+ * Regression guard: see CalendarStickyRtlSweepTests (Task 8) and the Playwright
+ * baseline at tests/visual/sticky-headers/baseline.spec.js (Task 19).
+ */
 .excel-calendar__row-label {
     position: sticky;
-    left: 0;
-    z-index: calc(var(--z-sticky) - 1);
+    left: 0;                                /* becomes inset-inline-start in Task 8 */
+    z-index: calc(var(--z-sticky) - 1);     /* becomes var(--z-sticky-col) in Task 7 */
     background: var(--surface);
     font-weight: var(--font-medium);
     padding: var(--space-3);
