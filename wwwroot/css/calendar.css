@@ -2220,6 +2220,23 @@
     border-color: var(--border-strong);
 }
 
+/* Auto-condense: applied by calendar-sticky-shadows.js after 200px of
+   vertical scroll on the .excel-calendar viewport. Recovers ~30px of
+   vertical space on small screens while keeping the toolbar reachable.
+   Padding compression animates via the transition declared on .cal-toolbar
+   (Task 7: transition: box-shadow var(--transition-fast), padding var(--transition-fast)). */
+.cal-toolbar.is-pinned.is-condensed {
+    padding: var(--space-1) var(--space-2);
+}
+
+.cal-toolbar.is-pinned.is-condensed .cal-toolbar__selector label {
+    display: none;
+}
+
+.cal-toolbar.is-pinned.is-condensed .nav-text {
+    display: none;
+}
+
 /* Row 1: selectors + date nav + print */
 .cal-toolbar__row {
     display: flex;
