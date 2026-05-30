@@ -2814,6 +2814,38 @@
     }
 }
 
+/* Scroll-state sentinels — invisible 1×1 markers that the IntersectionObserver
+   in calendar-sticky-shadows.js watches to set .is-scrolled-* classes. They
+   carry no visual weight, no pointer-events, and exist solely so a low-cost
+   IO callback can flip the scroll-state classes that drive the edge shadows
+   declared above. Positioned absolute relative to .excel-calendar (which has
+   position: relative below) so they sit at the leading edges of the scroll
+   container's content origin. */
+.excel-calendar__scroll-sentinel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+    background: transparent;
+}
+.excel-calendar__scroll-sentinel--y {
+    top: 0;
+    inset-inline-start: 0;
+}
+.excel-calendar__scroll-sentinel--x {
+    top: 0;
+    inset-inline-start: 0;
+}
+.excel-calendar { position: relative; }   /* required so sentinels position to it */
+
+/* Toolbar sentinel — invisible 1px-tall marker that sits immediately above
+   the .cal-toolbar. When it leaves the viewport, the toolbar pins. */
+.cal-toolbar-sentinel {
+    height: 1px;
+    width: 100%;
+    pointer-events: none;
+}
+
 /* Data cells */
 .excel-calendar__cell {
     padding: var(--space-2);
