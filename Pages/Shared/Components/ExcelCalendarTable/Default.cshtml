@@ -71,7 +71,8 @@
                                 <span class="excel-calendar__group-name" data-editable="true">@group.Name</span>
                                 @if (group.MemberCount > 0)
                                 {
-                                    <span class="excel-calendar__group-count">(@group.MemberCount)</span>
+                                    <span class="excel-calendar__group-count"
+                                          data-group-total="@group.MemberCount">(@group.MemberCount)</span>
                                 }
                                 <span class="excel-calendar__group-grip" title="@Localizer["DragToReorder"]">⋮⋮</span>
                             </div>

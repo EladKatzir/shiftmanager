@@ -569,6 +569,7 @@ else
                 if (!match) hidden++;
             });
             closeFilterModal();
+            window.updateGroupCounts && window.updateGroupCounts();
         }
 
         function clearFilter() {
@@ -578,6 +579,7 @@ else
                 }
             });
             closeFilterModal();
+            window.updateGroupCounts && window.updateGroupCounts();
         }
 
         // Keyboard navigation

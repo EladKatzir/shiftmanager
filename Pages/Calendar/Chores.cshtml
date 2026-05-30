@@ -364,6 +364,7 @@
                 row.style.display = match ? '' : 'none';
             });
             closeFilterModal();
+            window.updateGroupCounts && window.updateGroupCounts();
         }
 
         function clearFilter() {
@@ -373,6 +374,7 @@
                 }
             });
             closeFilterModal();
+            window.updateGroupCounts && window.updateGroupCounts();
         }
 
         // Keyboard navigation

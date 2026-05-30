@@ -108,3 +108,28 @@
     // freshly server-rendered groups come back expanded — re-apply the user's collapse state.
     document.addEventListener('calendar:grid-refreshed', applyPersistedCollapse);
 })();
+
+/**
+ * Recompute (visible/total) for each group band based on which child rows
+ * are currently visible. Called from applyFilter / clearFilter in
+ * Pages/Calendar/Shifts.cshtml (and siblings).
+ *
+ * - If all rows of a group are visible, show "(total)"
+ * - If some rows are hidden, show "(visible/total)"
+ */
+window.updateGroupCounts = function () {
+    const counts = document.querySelectorAll('.excel-calendar__group-count[data-group-total]');
+    counts.forEach(function (countEl) {
+        const band = countEl.closest('.excel-calendar__group-header');
+        if (!band) return;
+        const groupId = band.getAttribute('data-group-id');
+        const total = parseInt(countEl.getAttribute('data-group-total'), 10);
+        const rows = document.querySelectorAll(
+            'tr[data-group-id="' + groupId + '"]:not(.excel-calendar__group-header)'
+        );
+        const visible = Array.prototype.filter.call(rows, function (r) {
+            return r.style.display !== 'none' && !r.hasAttribute('hidden');
+        }).length;
+        countEl.textContent = visible === total ? '(' + total + ')' : '(' + visible + '/' + total + ')';
+    });
+};
