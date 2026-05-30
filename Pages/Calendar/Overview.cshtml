@@ -117,6 +117,15 @@
         </div>
     </div>
 
+    @* Sticky readonly banner — pinned as second tier below the toolbar.
+       Moved OUT of the ExcelCalendarTable component so it lives in .cal-page
+       scope and can stick relative to the page, not the calendar viewport. *@
+    <partial name="_CalendarReadonlyBanner" model="@(new ShiftManager.Pages.Shared.CalendarReadonlyBannerModel
+    {
+        IsReadOnly = Model.CalendarData.IsReadOnly,
+        RequiredGrantNameKeys = Model.CalendarData.RequiredGrantNameKeys
+    })" />
+
     @* Calendar Table *@
     @if (Model.CalendarData.Rows.Any())
     {

@@ -16,29 +16,6 @@
     var totalColCount = days.Count + 1 + (hasWeeklyHours ? 1 : 0);
 }
 
-@if (Model.IsReadOnly)
-{
-    <div class="excel-calendar__readonly-banner">
-        <span class="excel-calendar__readonly-text"><loc key="Calendar_ReadOnlyMode" /></span>
-        @if (Model.RequiredGrantNameKeys.Any())
-        {
-            <button type="button" class="excel-calendar__readonly-help"
-                    loc-aria-label="Calendar_ReadOnlyHelp_AriaLabel"
-                    loc-title="Calendar_ReadOnlyHelp_AriaLabel"
-                    onclick="window.showReadOnlyGrantHelp && window.showReadOnlyGrantHelp(this)">?</button>
-            @* Hidden, fully-localized payload; the "?" button reads this to build the FeedbackModal message. *@
-            <span class="excel-calendar__readonly-help-data" hidden
-                  data-intro="@Localizer["Calendar_ReadOnlyHelp_Intro"]"
-                  data-ask="@Localizer["Calendar_ReadOnlyHelp_AskAdmin"]">
-                @foreach (var nameKey in Model.RequiredGrantNameKeys)
-                {
-                    <span class="excel-calendar__readonly-help-grant">@Localizer[nameKey]</span>
-                }
-            </span>
-        }
-    </div>
-}
-
 <div class="excel-calendar @(isCompact ? "excel-calendar--compact" : "")"
      data-calendar-type="@Model.CalendarType"
      data-start-date="@Model.StartDate.ToString("yyyy-MM-dd")"
