@@ -24,7 +24,7 @@
 
     <table class="excel-calendar__table" role="grid" aria-rowcount="@Model.TotalRows">
         <thead class="excel-calendar__header">
-            <tr>
+            <tr aria-rowindex="1">
                 <th class="excel-calendar__corner" scope="col" data-mode="@Model.RowMode.ToLowerInvariant()">
                     <span class="visually-hidden"><loc key="Calendar_RowLabel_ColumnHeader" /></span>
                     <span class="excel-calendar__mode-token" aria-hidden="true">
@@ -57,11 +57,14 @@
             </tr>
         </thead>
         <tbody>
+            @{ var ariaRowIndex = 2; }
             @if (Model.Groups != null)
             {
                 foreach (var group in Model.Groups.OrderBy(g => g.SortOrder))
                 {
-                    <tr class="excel-calendar__group-header @(group.IsCollapsed ? "is-collapsed" : "")" data-group-id="@group.Id">
+                    <tr class="excel-calendar__group-header @(group.IsCollapsed ? "is-collapsed" : "")"
+                        data-group-id="@group.Id"
+                        aria-rowindex="@ariaRowIndex">
                         <td colspan="@totalColCount" style="@(group.Color != null ? $"--group-color: {group.Color}" : "")">
                             <div class="excel-calendar__group-toggle">
                                 <span class="excel-calendar__group-chevron @(group.IsCollapsed ? "excel-calendar__group-chevron--collapsed" : "")">▼</span>
@@ -74,11 +77,10 @@
                             </div>
                         </td>
                     </tr>
+                    ariaRowIndex++;
 
                     foreach (var row in Model.Rows.Where(r => r.GroupId == group.Id))
                     {
-                        var rowStyle = row.Color != null ? $"--row-color: {row.Color}" : "";
-                        var rowHiddenStyle = group.IsCollapsed ? "display: none;" : "";
                         @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ExcelCalendarRowViewModel
                         {
                             Row = row,
@@ -86,8 +88,10 @@
                             Today = today,
                             IsReadOnly = Model.IsReadOnly,
                             IsCollapsed = group.IsCollapsed,
-                            HasWeeklyHours = hasWeeklyHours
+                            HasWeeklyHours = hasWeeklyHours,
+                            RowIndex = ariaRowIndex
                         })
+                        ariaRowIndex++;
                     }
                 }
 
@@ -101,8 +105,10 @@
                         Today = today,
                         IsReadOnly = Model.IsReadOnly,
                         IsCollapsed = false,
-                        HasWeeklyHours = hasWeeklyHours
+                        HasWeeklyHours = hasWeeklyHours,
+                        RowIndex = ariaRowIndex
                     })
+                    ariaRowIndex++;
                 }
             }
             else
@@ -116,8 +122,10 @@
                         Today = today,
                         IsReadOnly = Model.IsReadOnly,
                         IsCollapsed = false,
-                        HasWeeklyHours = hasWeeklyHours
+                        HasWeeklyHours = hasWeeklyHours,
+                        RowIndex = ariaRowIndex
                     })
+                    ariaRowIndex++;
                 }
             }
         </tbody>
@@ -133,5 +141,6 @@
         public bool IsReadOnly { get; set; }
         public bool IsCollapsed { get; set; }
         public bool HasWeeklyHours { get; set; }
+        public int RowIndex { get; set; }   // 1-based aria-rowindex; thead = 1, first body row = 2
     }
 }

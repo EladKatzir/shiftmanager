@@ -15,7 +15,10 @@
     var hiddenStyle = isCollapsed ? "display: none;" : "";
 }
 
-<tr data-row-id="@row.Id" data-group-id="@(row.GroupId ?? "")" style="@style @hiddenStyle">
+<tr data-row-id="@row.Id"
+    data-group-id="@(row.GroupId ?? "")"
+    aria-rowindex="@Model.RowIndex"
+    style="@style @hiddenStyle">
     <td class="excel-calendar__row-label">
         <div class="excel-calendar__row-label-content">
             <span class="excel-calendar__row-label-name">
