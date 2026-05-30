@@ -2643,11 +2643,15 @@
     color: var(--primary-contrast) !important;
 }
 
+/* Reduced from 2px → 1px so the scroll-activated shadow (.is-scrolled-y)
+   doesn't visually double-up with a heavy bottom border at rest.
+   The header's var(--primary) background still provides strong at-rest
+   separation from the white/surface body cells below. */
 .excel-calendar__header th {
     padding: var(--space-3);
     font-weight: var(--font-semibold);
     text-align: center;
-    border-bottom: 2px solid var(--border-strong);
+    border-bottom: 1px solid var(--border-strong);
     white-space: nowrap;
     color: var(--primary-contrast);
 }
@@ -2731,6 +2735,16 @@
     white-space: nowrap;
 }
 
+/* Scroll-activated edge shadow (LTR). Class `.is-scrolled-x` toggled by JS. */
+.excel-calendar.is-scrolled-x .excel-calendar__row-label {
+    box-shadow: var(--shadow-sticky-inline);
+}
+
+/* RTL: flip shadow x offset (box-shadow is physical — no logical equivalent). */
+[dir="rtl"] .excel-calendar.is-scrolled-x .excel-calendar__row-label {
+    box-shadow: var(--shadow-sticky-inline-rtl);
+}
+
 .excel-calendar__row-label .company-badge {
     display: inline-flex;
     align-items: center;
@@ -2758,6 +2772,41 @@
     z-index: var(--z-sticky-corner);
     background: var(--primary);
     color: var(--primary-contrast) !important;
+}
+
+/* Corner shadows on either axis (corner is sticky on both top and inset-inline-start). */
+.excel-calendar.is-scrolled-x .excel-calendar__corner,
+.excel-calendar.is-scrolled-y .excel-calendar__corner {
+    box-shadow: var(--shadow-sticky-block),
+                var(--shadow-sticky-inline);
+}
+
+[dir="rtl"] .excel-calendar.is-scrolled-x .excel-calendar__corner,
+[dir="rtl"] .excel-calendar.is-scrolled-y .excel-calendar__corner {
+    box-shadow: var(--shadow-sticky-block),
+                var(--shadow-sticky-inline-rtl);
+}
+
+/* Scroll-activated block-axis shadow when content slides under the thead. */
+.excel-calendar.is-scrolled-y .excel-calendar__header {
+    box-shadow: var(--shadow-sticky-block);
+}
+
+/* Forced-colors (Windows high-contrast) mode: box-shadow is often ignored.
+   Replace edge shadows with solid CanvasText borders — always-on, scroll-
+   independent. Forced-colors users don't need motion cues; they need
+   static separators that survive the system theme.
+   See spec §7.3 / §9.3. */
+@media (forced-colors: active) {
+    .excel-calendar__row-label,
+    .excel-calendar__corner {
+        border-inline-end: 2px solid CanvasText;
+    }
+    .excel-calendar__header,
+    .excel-calendar__group-header td,
+    .cal-toolbar {
+        border-bottom: 2px solid CanvasText;
+    }
 }
 
 /* Data cells */
