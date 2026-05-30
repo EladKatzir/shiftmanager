@@ -32,13 +32,16 @@
         }
         saveCollapsedGroups(collapsed);
 
-        // Toggle chevron
+        // Toggle chevron and collapsed band class
         const header = document.querySelector(`.excel-calendar__group-header[data-group-id="${groupId}"]`);
         if (header) {
             const chevron = header.querySelector('.excel-calendar__group-chevron');
             if (chevron) {
                 chevron.classList.toggle('excel-calendar__group-chevron--collapsed', isCollapsed);
             }
+            // .is-collapsed disables sticky positioning on the band (prevents double-border
+            // glitch when the band is the only visible row of its group).
+            header.classList.toggle('is-collapsed', isCollapsed);
         }
 
         // Toggle rows

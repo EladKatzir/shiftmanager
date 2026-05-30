@@ -55,7 +55,7 @@
             {
                 foreach (var group in Model.Groups.OrderBy(g => g.SortOrder))
                 {
-                    <tr class="excel-calendar__group-header" data-group-id="@group.Id">
+                    <tr class="excel-calendar__group-header @(group.IsCollapsed ? "is-collapsed" : "")" data-group-id="@group.Id">
                         <td colspan="@totalColCount" style="@(group.Color != null ? $"--group-color: {group.Color}" : "")">
                             <div class="excel-calendar__group-toggle">
                                 <span class="excel-calendar__group-chevron @(group.IsCollapsed ? "excel-calendar__group-chevron--collapsed" : "")">▼</span>

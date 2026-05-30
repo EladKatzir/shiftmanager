@@ -3059,10 +3059,32 @@
 }
 
 .excel-calendar__group-header td {
+    /* Sticky applied to <td> inside <tr>. Sticky on <tr> is unreliable
+       cross-browser; sticky on the td with full colspan paints reliably.
+       Stack-and-replace behavior: as the next group's band scrolls up to
+       meet this one, sticky naturally releases this band (its tr exits
+       the viewport) and the next band takes its place. */
+    position: sticky;
+    top: var(--excel-calendar-header-height, 44px);   /* Below sticky thead */
+    z-index: var(--z-sticky-group);
+
+    /* Existing visual styles preserved */
+    background: var(--surface-soft);
     padding: var(--space-2) var(--space-3);
     font-weight: var(--font-semibold);
     border-top: 2px solid var(--border-strong);
     border-inline-start: 4px solid var(--group-color, var(--primary));
+}
+
+/* Scroll-activated shadow on pinned bands (Task 10 wires the .is-pinned class). */
+.excel-calendar.is-group-pinned .excel-calendar__group-header.is-pinned td {
+    box-shadow: var(--shadow-sticky-block);
+}
+
+/* Collapsed groups: band IS the only visible row of its group. Don't sticky —
+   pinning would create a double-border glitch as the band sits on top of itself. */
+.excel-calendar__group-header.is-collapsed td {
+    position: static;
 }
 
 .excel-calendar__group-count {
