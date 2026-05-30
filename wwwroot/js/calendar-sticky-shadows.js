@@ -36,15 +36,21 @@
         xToken.setAttribute('aria-hidden', 'true');
         calendar.prepend(yToken, xToken);
 
+        // Axis discrimination via rootMargin. Both sentinels share the same
+        // (0, 0) position inside the calendar, so a naive observer with no
+        // rootMargin fires on ANY scroll direction. The fix: extend the
+        // observer's effective root horizontally (for ioY) and vertically
+        // (for ioX) by 100% on each side, so the orthogonal axis can never
+        // push the sentinel out of the root. Only the targeted axis matters.
         const ioY = new IntersectionObserver(
             (entries) => calendar.classList.toggle(SCROLL_Y_CLASS, !entries[0].isIntersecting),
-            { root: calendar, threshold: 0 }
+            { root: calendar, rootMargin: '0px 100% 0px 100%', threshold: 0 }
         );
         ioY.observe(yToken);
 
         const ioX = new IntersectionObserver(
             (entries) => calendar.classList.toggle(SCROLL_X_CLASS, !entries[0].isIntersecting),
-            { root: calendar, threshold: 0 }
+            { root: calendar, rootMargin: '100% 0px 100% 0px', threshold: 0 }
         );
         ioX.observe(xToken);
 
