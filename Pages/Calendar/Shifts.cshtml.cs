@@ -463,6 +463,8 @@ public class ShiftsModel : PageModel
             Rows = rows,
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
+        CalendarData.RowMode = "Shifts";
+        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0);
     }
 
     private async Task BuildUserBasedCalendarAsync(int moleculeId, int? jobTypeId)
@@ -589,6 +591,8 @@ public class ShiftsModel : PageModel
             Groups = groups,
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
+        CalendarData.RowMode = Mode == "user" ? "Users" : "Shifts";
+        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0);
     }
 
     /// <summary>

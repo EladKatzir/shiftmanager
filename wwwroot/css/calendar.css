@@ -2792,6 +2792,21 @@
                 var(--shadow-sticky-inline-rtl);
 }
 
+/* Mode token inside the sticky corner cell (spec §5.6). */
+.excel-calendar__mode-token {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-small);
+    font-weight: var(--font-semibold);
+    /* Color inherits from .excel-calendar__corner (var(--primary-contrast)). */
+}
+
+.excel-calendar__mode-chevron {
+    font-size: 0.75em;
+    opacity: 0.7;
+}
+
 /* Scroll-activated block-axis shadow when content slides under the thead. */
 .excel-calendar.is-scrolled-y .excel-calendar__header {
     box-shadow: var(--shadow-sticky-block);

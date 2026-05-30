@@ -320,6 +320,8 @@ public class ChoresModel : PageModel
             Groups = groups.Any() ? groups : null,
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
+        CalendarData.RowMode = "Chores";
+        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0);
     }
 
     private async Task<List<AppUser>> GetUsersForMoleculeAsync(int moleculeId)

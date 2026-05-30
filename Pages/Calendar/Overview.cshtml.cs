@@ -247,6 +247,8 @@ public class OverviewModel : PageModel
             CalendarType = "overview",
             Rows = rows
         };
+        CalendarData.RowMode = "Shifts";
+        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0);
     }
 
     private async Task<Dictionary<(int UserId, DateOnly Date), bool>> LoadVacationsAsync()

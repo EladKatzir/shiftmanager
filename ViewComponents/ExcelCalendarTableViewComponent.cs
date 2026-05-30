@@ -19,6 +19,24 @@ public class ExcelCalendarTableViewModel
     /// tells the user exactly which permission to request.
     /// </summary>
     public List<string> RequiredGrantNameKeys { get; set; } = new();
+
+    /// <summary>
+    /// What each row represents. PascalCase ("Shifts" | "Users" | "Duty" | "Chores")
+    /// so it appends directly to the resx key "Calendar_RowMode_" + RowMode.
+    /// Used by the sticky corner-cell mode token (spec §5.6).
+    /// </summary>
+    public string RowMode { get; set; } = "Shifts";
+
+    /// <summary>
+    /// Total row count INCLUDING group-header rows. Used as aria-rowcount
+    /// on the &lt;table&gt; for screen-reader "row N of M" context.
+    /// </summary>
+    public int TotalRows { get; set; }
+
+    /// <summary>
+    /// resx key for the mode label, computed from RowMode.
+    /// </summary>
+    public string RowModeLabelKey => $"Calendar_RowMode_{RowMode}";
 }
 
 public class ExcelCalendarRow

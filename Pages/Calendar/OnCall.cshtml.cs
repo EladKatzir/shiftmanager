@@ -439,6 +439,8 @@ public class OnCallModel : PageModel
             Groups = null, // No grouping for duty types
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
+        CalendarData.RowMode = "Duty";
+        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0);
     }
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForDutyType(

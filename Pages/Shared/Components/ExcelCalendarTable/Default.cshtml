@@ -22,10 +22,16 @@
      data-end-date="@Model.EndDate.ToString("yyyy-MM-dd")"
      data-readonly="@Model.IsReadOnly.ToString().ToLower()">
 
-    <table class="excel-calendar__table" role="grid">
+    <table class="excel-calendar__table" role="grid" aria-rowcount="@Model.TotalRows">
         <thead class="excel-calendar__header">
             <tr>
-                <th class="excel-calendar__corner" scope="col"></th>
+                <th class="excel-calendar__corner" scope="col" data-mode="@Model.RowMode.ToLowerInvariant()">
+                    <span class="visually-hidden"><loc key="Calendar_RowLabel_ColumnHeader" /></span>
+                    <span class="excel-calendar__mode-token" aria-hidden="true">
+                        <loc key="@Model.RowModeLabelKey" />
+                        <span class="excel-calendar__mode-chevron">▾</span>
+                    </span>
+                </th>
                 @foreach (var day in days)
                 {
                     var dayIndex = (int)day.DayOfWeek;
