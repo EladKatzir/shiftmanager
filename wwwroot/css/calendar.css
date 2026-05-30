@@ -2774,7 +2774,12 @@
     color: var(--primary-contrast) !important;
 }
 
-/* Corner shadows on either axis (corner is sticky on both top and inset-inline-start). */
+/* Corner shadows on either axis (corner is sticky on both top and inset-inline-start).
+   Deliberate design: both shadows render whenever ANY scroll is active, treating the corner
+   as a static "I am the most-pinned point" anchor (per spec §7.2 "corner reads as highest")
+   rather than as axis-accurate directional cues. This matches Excel/Sheets frozen-pane
+   intersection styling. Revisit during Task 20 visual baselines if the right-edge shadow
+   during pure vertical scroll reads as a false cue in practice. */
 .excel-calendar.is-scrolled-x .excel-calendar__corner,
 .excel-calendar.is-scrolled-y .excel-calendar__corner {
     box-shadow: var(--shadow-sticky-block),
