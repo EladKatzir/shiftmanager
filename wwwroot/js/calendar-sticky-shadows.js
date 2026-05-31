@@ -13,9 +13,18 @@
 (function () {
     'use strict';
 
+    // Full-page reload architecture — no SPA navigation, so no observer disconnect
+    // is needed. If the project ever moves to SPA navigation, disconnect all
+    // IntersectionObservers and ResizeObservers here on page unmount.
+
     const SCROLL_X_CLASS = 'is-scrolled-x';
     const SCROLL_Y_CLASS = 'is-scrolled-y';
     const GROUP_PIN_CLASS = 'is-group-pinned';
+    // .is-pinned is a shared class name — used distinctly by:
+    //   .cal-toolbar.is-pinned        — toolbar pinned to .cal-page top
+    //   .excel-calendar__group-header.is-pinned — group band pinned to thead bottom
+    // Disambiguated by selector context in calendar.css; named twice here for
+    // semantic clarity even though both constants resolve to the same string.
     const BAND_PIN_CLASS = 'is-pinned';
     const TOOLBAR_PIN_CLASS = 'is-pinned';
     const TOOLBAR_CONDENSE_CLASS = 'is-condensed';
@@ -54,7 +63,10 @@
         );
         ioX.observe(xToken);
 
-        // Group bands — pin detection.
+        // Group band pin detection — toggles .is-pinned on each band's <tr> when it
+        // scrolls behind the sticky thead. Consumed by:
+        //   .excel-calendar.is-group-pinned .excel-calendar__group-header.is-pinned td
+        //     { box-shadow: var(--shadow-sticky-block) } in calendar.css
         const bands = calendar.querySelectorAll('.excel-calendar__group-header');
         bands.forEach((band) => {
             const headerHeight = parseInt(

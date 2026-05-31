@@ -419,11 +419,13 @@
   --z-base: 0;
   /* Bumped from 1000 to 1060 on 2026-05-29 so dropdowns survive above
      the new sticky-corner tier (1023). Without this, the DL dropdown menu
-     opens BELOW the sticky thead when the toolbar pins. */
+     opens BELOW the sticky thead when the toolbar pins.
+     Regression guard: ShiftManager.Tests/UnitTests/Css/CalendarStickyTokenTests.cs
+     DropdownZIndex_IsAboveStickyCorner. */
   --z-dropdown: 1060;
 
   /* Sticky tiers — calendar uses all five; data tables use first two.
-     NEVER reorder. Locked by ShiftManager.Tests/UnitTests/Css/CalendarStickyTokenTests. */
+     NEVER reorder. Locked by ShiftManager.Tests/UnitTests/Css/CalendarStickyTokenTests.cs. */
   --z-sticky-col: 1019;
   --z-sticky: 1020;
   --z-sticky-group: 1021;

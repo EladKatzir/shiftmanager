@@ -49,6 +49,10 @@
         if (!cell) return;
         cell.focus();
 
+        // behavior: 'auto' (instant) is deliberate — smooth scrolling during rapid
+        // arrow-key navigation creates visible lag that fights the user's input
+        // rhythm. Use 'auto' for focus-restoration scrolls, 'smooth' only for
+        // discrete user-initiated jumps (e.g. next-group button in Task 18).
         // Pull the cell fully into view inside the calendar's scroll container.
         // Without this, arrow-key navigation can leave the focused cell behind a
         // sticky element (date row, row label, or group band).
@@ -65,6 +69,8 @@
         var headerHeight = parseInt(styles.getPropertyValue('--excel-calendar-header-height') || '44', 10);
         var rowLabelEl = container.querySelector('.excel-calendar__row-label');
         var rowLabelWidth = rowLabelEl ? rowLabelEl.getBoundingClientRect().width : 150;
+        // 150 matches calendar.css { .excel-calendar__row-label { min-width: 150px } } —
+        // keep these two values in sync.
 
         // Vertical nudge: if cell top is within `headerHeight` of container top.
         var topGap = cellRect.top - (containerRect.top + headerHeight);

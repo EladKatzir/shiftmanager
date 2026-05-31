@@ -2204,16 +2204,22 @@
     position: sticky;
     top: 0;
     z-index: var(--z-sticky);
-    transition: box-shadow var(--transition-fast),
-                padding var(--transition-fast);
+    transition: box-shadow var(--transition-fast),      /* .is-pinned fade-in (Task 10) */
+                padding var(--transition-fast);          /* condense animation (Task 15 auto-condense) */
 }
 
-/* Only sticky when there's actually a calendar to scroll. Without this,
-   .cal-empty pages would have a useless pinned toolbar over empty space. */
+/* Only sticky when the inner scroll container (.excel-calendar) exists.
+   Without this, pages with no data rows (which render .cal-empty instead)
+   would show a pointlessly pinned toolbar over static content.
+   :has() requires Chrome 105+ / Safari 15.4+ / Firefox 121+; older browsers
+   silently keep position:sticky on empty pages — minor cosmetic issue. */
 .cal-page:not(:has(.excel-calendar)) .cal-toolbar {
     position: static;
 }
 
+/* .is-pinned is a shared toggle class — each sticky element (toolbar here,
+   group bands in .excel-calendar__group-header.is-pinned below) adds its
+   own compound rule. Disambiguated by selector context. */
 /* Pinned-state shadow (applied by JS when sentinel leaves viewport).
    .is-pinned is toggled by calendar-sticky-shadows.js (Task 10). */
 .cal-toolbar.is-pinned {
@@ -2746,7 +2752,7 @@
  * on .excel-calendar__table (line 2605).
  *
  * Regression guard: see CalendarStickyRtlSweepTests (Task 8) and the Playwright
- * baseline at tests/visual/sticky-headers/baseline.spec.js (Task 19).
+ * baseline at tests/visual/sticky-headers/baseline.spec.js (Task 20).
  */
 .excel-calendar__row-label {
     position: sticky;
@@ -2794,6 +2800,8 @@
     position: sticky;
     top: 0;
     inset-inline-start: 0;
+    /* Corner must exceed both --z-sticky-group (1021) and --z-sticky-header (1022)
+       to render at the top-left intersection without either axis claiming it. */
     z-index: var(--z-sticky-corner);
     background: var(--primary);
     color: var(--primary-contrast) !important;
@@ -2847,6 +2855,9 @@
     .excel-calendar__corner {
         border-inline-end: 2px solid CanvasText;
     }
+    /* .cal-toolbar included even though it's outside the scroll-shadow family:
+       it's a sticky surface where box-shadow is also ignored under forced-colors,
+       so it needs the same static separator. */
     .excel-calendar__header,
     .excel-calendar__group-header td,
     .cal-toolbar {
@@ -3109,20 +3120,26 @@
     z-index: var(--z-sticky-group);
 
     /* Existing visual styles preserved */
-    background: var(--surface-soft);
+    background: var(--surface-soft);  /* required here even though .tr has it too — sticky td paints independently of its tr */
     padding: var(--space-2) var(--space-3);
     font-weight: var(--font-semibold);
     border-top: 2px solid var(--border-strong);
     border-inline-start: 4px solid var(--group-color, var(--primary));
 }
 
-/* Scroll-activated shadow on pinned bands (Task 10 wires the .is-pinned class). */
+/* Two-class coupling: .is-group-pinned (on .excel-calendar) AND .is-pinned
+   (on the band) must BOTH be set. calendar-sticky-shadows.js maintains this
+   contract — see ./calendar-sticky-shadows.js wireCalendar() group-observer. */
 .excel-calendar.is-group-pinned .excel-calendar__group-header.is-pinned td {
     box-shadow: var(--shadow-sticky-block);
 }
 
 /* Collapsed groups: band IS the only visible row of its group. Don't sticky —
    pinning would create a double-border glitch as the band sits on top of itself. */
+/* Specificity note: .is-collapsed override below has (0,2,1); the base rule
+   above has (0,1,1). The collapse override correctly wins via specificity
+   without !important. If a future selector restructure raises the base
+   specificity, the override needs to match. */
 .excel-calendar__group-header.is-collapsed td {
     position: static;
 }

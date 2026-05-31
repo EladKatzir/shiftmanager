@@ -38,6 +38,7 @@ public class ExcelCalendarTableViewModel
 
     /// <summary>
     /// resx key for the mode label, computed from RowMode.
+    /// Defaults to "Calendar_RowMode_Shifts" for unset instances (RowMode initializer = "Shifts").
     /// </summary>
     public string RowModeLabelKey => $"Calendar_RowMode_{RowMode}";
 }

@@ -25,6 +25,9 @@
     <table class="excel-calendar__table" role="grid" aria-rowcount="@Model.TotalRows">
         <thead class="excel-calendar__header">
             <tr aria-rowindex="1">
+                @* data-mode is a future CSS/JS hook for mode-specific column styles
+                   (e.g. .excel-calendar__corner[data-mode="users"] { ... } could add a
+                   user-row indicator). No current consumers; do not remove as dead code. *@
                 <th class="excel-calendar__corner" scope="col" data-mode="@Model.RowMode.ToLowerInvariant()">
                     <span class="visually-hidden"><loc key="Calendar_RowLabel_ColumnHeader" /></span>
                     <span class="excel-calendar__mode-token" aria-hidden="true">
@@ -57,7 +60,7 @@
             </tr>
         </thead>
         <tbody>
-            @{ var ariaRowIndex = 2; }
+            @{ var ariaRowIndex = 2; }   @* thead is aria-rowindex="1", so body starts at 2 *@
             @if (Model.Groups != null)
             {
                 var sortedGroups = Model.Groups.OrderBy(g => g.SortOrder).ToList();

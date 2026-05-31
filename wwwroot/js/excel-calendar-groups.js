@@ -53,6 +53,10 @@
         });
     }
 
+    // applyPersistedCollapse is idempotent: toggleGroup() calls classList.toggle()
+    // with an explicit boolean force-value, which is a no-op when the class is
+    // already in the requested state. So this function is safe to call after a
+    // full server re-render that already baked .is-collapsed into the HTML.
     // Re-apply persisted collapse state to the current DOM. Extracted so it can run both on load
     // and after an in-place grid refresh (the server re-renders all groups expanded).
     function applyPersistedCollapse() {
