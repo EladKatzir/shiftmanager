@@ -10476,10 +10476,10 @@
     <value>קבוצה הבאה</value>
   </data>
   <data name="Calendar_ScrollHint_Horizontal" xml:space="preserve">
-    <value>גלול אופקית לראות תאריכים נוספים</value>
+    <value>לגלול אופקית לראות תאריכים נוספים</value>
   </data>
   <data name="Calendar_ScrollHint_Vertical" xml:space="preserve">
-    <value>גלול מטה לראות שורות נוספות</value>
+    <value>לגלול מטה לראות שורות נוספות</value>
   </data>
   <data name="Calendar_RowMode_Shifts" xml:space="preserve">
     <value>משמרות</value>
