@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 using FluentAssertions;
+using ShiftManager.Tests.Helpers;
 
 namespace ShiftManager.Tests.UnitTests.Localization;
 
@@ -29,9 +30,12 @@ public class CalendarStickyKeyParityTests
 
     private static (HashSet<string> En, HashSet<string> He) LoadKeys()
     {
-        var repoRoot = LocateRepoRoot();
+        var repoRoot = CssTestHelpers.LocateRepoRoot();
         var enPath = Path.Combine(repoRoot, "Resources", "SharedResources.resx");
         var hePath = Path.Combine(repoRoot, "Resources", "SharedResources.he-IL.resx");
+
+        File.Exists(enPath).Should().BeTrue($"English resx must exist at {enPath}");
+        File.Exists(hePath).Should().BeTrue($"Hebrew resx must exist at {hePath}");
 
         return (ExtractKeys(enPath), ExtractKeys(hePath));
     }
@@ -44,33 +48,24 @@ public class CalendarStickyKeyParityTests
             .ToHashSet(StringComparer.Ordinal);
     }
 
-    private static string LocateRepoRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "ShiftManager.csproj")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("ShiftManager.csproj not found");
-    }
-
     [Fact]
     public void AllRequiredKeysPresentInBothLanguages()
     {
         var (en, he) = LoadKeys();
-        var missingEn = RequiredKeys.Where(k => !en.Contains(k)).ToList();
-        var missingHe = RequiredKeys.Where(k => !he.Contains(k)).ToList();
-
-        missingEn.Should().BeEmpty("English resx must contain every Calendar_* sticky key");
-        missingHe.Should().BeEmpty("Hebrew resx must contain every Calendar_* sticky key");
+        var failures = new List<string>();
+        foreach (var key in RequiredKeys)
+        {
+            if (!en.Contains(key)) failures.Add($"Missing in English (.resx): {key}");
+            if (!he.Contains(key)) failures.Add($"Missing in Hebrew (he-IL.resx): {key}");
+        }
+        failures.Should().BeEmpty(
+            "every Calendar_* sticky key must be present in both English and Hebrew resx files");
     }
 
     [Fact]
     public void HebrewValuesAreNonEmpty()
     {
-        var repoRoot = LocateRepoRoot();
+        var repoRoot = CssTestHelpers.LocateRepoRoot();
         var hePath = Path.Combine(repoRoot, "Resources", "SharedResources.he-IL.resx");
         var doc = XDocument.Load(hePath);
         var heValues = doc.Descendants("data")

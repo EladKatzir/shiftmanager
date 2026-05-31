@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using FluentAssertions;
+using ShiftManager.Tests.Helpers;
 
 namespace ShiftManager.Tests.UnitTests.Css;
 
@@ -15,30 +16,11 @@ public class CalendarStickyTokenTests
 
     private static Dictionary<string, string> LoadTokens()
     {
-        var repoRoot = LocateRepoRoot();
-        var path = Path.Combine(repoRoot, "wwwroot", "css", "tokens.css");
-        File.Exists(path).Should().BeTrue($"tokens.css must exist at {path}");
-
-        var css = File.ReadAllText(path);
+        var css = CssTestHelpers.ReadRepoFile("wwwroot", "css", "tokens.css");
         return TokenRegex.Matches(css)
             .Cast<Match>()
             .GroupBy(m => m.Groups["name"].Value)
             .ToDictionary(g => g.Key, g => g.First().Groups["value"].Value.Trim());
-    }
-
-    private static int ParseZ(string raw) =>
-        int.Parse(raw.Split(' ', '/', '*')[0].TrimEnd(';').Trim());
-
-    private static string LocateRepoRoot()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null)
-        {
-            if (File.Exists(Path.Combine(dir.FullName, "ShiftManager.csproj")))
-                return dir.FullName;
-            dir = dir.Parent;
-        }
-        throw new DirectoryNotFoundException("ShiftManager.csproj not found above " + AppContext.BaseDirectory);
     }
 
     [Fact]
