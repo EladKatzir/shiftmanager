@@ -2642,6 +2642,10 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
+    /* position:relative is required so the 1×1 scroll sentinels inside
+       (.excel-calendar__scroll-sentinel--y / --x) anchor to this container.
+       See wwwroot/js/calendar-sticky-shadows.js wireCalendar(). */
+    position: relative;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface);
@@ -2887,8 +2891,6 @@
     top: 0;
     inset-inline-start: 0;
 }
-.excel-calendar { position: relative; }   /* required so sentinels position to it */
-
 /* Toolbar sentinel — invisible 1px-tall marker that sits immediately above
    the .cal-toolbar. When it leaves the viewport, the toolbar pins. */
 .cal-toolbar-sentinel {

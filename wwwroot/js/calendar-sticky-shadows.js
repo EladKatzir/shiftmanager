@@ -67,12 +67,16 @@
         // scrolls behind the sticky thead. Consumed by:
         //   .excel-calendar.is-group-pinned .excel-calendar__group-header.is-pinned td
         //     { box-shadow: var(--shadow-sticky-block) } in calendar.css
+        // Read --excel-calendar-header-height once — it's a CSS custom property on
+        // the calendar element, identical for every band. Was previously computed
+        // inside the loop, costing one getComputedStyle call per group.
+        const headerHeight = parseInt(
+            getComputedStyle(calendar).getPropertyValue('--excel-calendar-header-height') || '44',
+            10
+        );
+
         const bands = calendar.querySelectorAll('.excel-calendar__group-header');
         bands.forEach((band) => {
-            const headerHeight = parseInt(
-                getComputedStyle(calendar).getPropertyValue('--excel-calendar-header-height') || '44',
-                10
-            );
             const ioBand = new IntersectionObserver(
                 (entries) => {
                     const pinned = !entries[0].isIntersecting;
@@ -85,19 +89,21 @@
             ioBand.observe(band);
         });
 
+        // Toolbar reference stable for page lifetime (full-page-reload architecture).
+        // Closed over by the scroll listener below to avoid querying the DOM per frame.
+        const toolbar = calendar.closest('.cal-page')?.querySelector('.cal-toolbar');
+
         // Condense listener.
         let lastScrollTop = 0;
         calendar.addEventListener('scroll', () => {
             if (calendar.scrollTop === lastScrollTop) return;
             lastScrollTop = calendar.scrollTop;
+            if (!toolbar) return;
             requestAnimationFrame(() => {
-                const toolbar = calendar.closest('.cal-page')?.querySelector('.cal-toolbar');
-                if (toolbar) {
-                    toolbar.classList.toggle(
-                        TOOLBAR_CONDENSE_CLASS,
-                        calendar.scrollTop > CONDENSE_THRESHOLD
-                    );
-                }
+                toolbar.classList.toggle(
+                    TOOLBAR_CONDENSE_CLASS,
+                    calendar.scrollTop > CONDENSE_THRESHOLD
+                );
             });
         }, { passive: true });
     }

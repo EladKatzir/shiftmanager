@@ -15,6 +15,14 @@
 (function () {
     'use strict';
 
+    // Cached at init — --excel-calendar-header-height is a :root token that
+    // never changes at runtime. Reading it once avoids a style recalculation
+    // per arrow-key navigation event.
+    var _headerHeight = parseInt(
+        getComputedStyle(document.documentElement).getPropertyValue('--excel-calendar-header-height') || '44',
+        10
+    );
+
     // Navigable cells carry data-date. The weekly-total cell has class excel-calendar__cell but no
     // data-date, so this selector naturally excludes it.
     var CELL_SELECTOR = '.excel-calendar__cell[data-date]';
@@ -65,8 +73,7 @@
 
         var containerRect = container.getBoundingClientRect();
         var cellRect = cell.getBoundingClientRect();
-        var styles = getComputedStyle(container);
-        var headerHeight = parseInt(styles.getPropertyValue('--excel-calendar-header-height') || '44', 10);
+        var headerHeight = _headerHeight;
         var rowLabelEl = container.querySelector('.excel-calendar__row-label');
         var rowLabelWidth = rowLabelEl ? rowLabelEl.getBoundingClientRect().width : 150;
         // 150 matches calendar.css { .excel-calendar__row-label { min-width: 150px } } —
