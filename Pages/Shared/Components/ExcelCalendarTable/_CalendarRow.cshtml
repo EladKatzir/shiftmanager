@@ -1,7 +1,7 @@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
-@model dynamic
+@model ShiftManager.ViewComponents.ExcelCalendarRowViewModel
 
 @{
     ShiftManager.ViewComponents.ExcelCalendarRow row = Model.Row;
@@ -17,7 +17,7 @@
 
 <tr data-row-id="@row.Id"
     data-group-id="@(row.GroupId ?? "")"
-    aria-rowindex="@Model.RowIndex"
+    aria-rowindex="@(Model.RowIndex >= 1 ? Model.RowIndex.ToString() : null)"
     style="@style @hiddenStyle">
     <td class="excel-calendar__row-label">
         <div class="excel-calendar__row-label-content">

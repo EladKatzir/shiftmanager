@@ -1,6 +1,7 @@
 @page
 @model ShiftManager.Pages.Calendar.OnCallModel
 @using ShiftManager.ViewComponents
+@using ShiftManager.Pages.Shared
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
@@ -176,7 +177,7 @@
     @* Sticky readonly banner — pinned as second tier below the toolbar.
        Moved OUT of the ExcelCalendarTable component so it lives in .cal-page
        scope and can stick relative to the page, not the calendar viewport. *@
-    <partial name="_CalendarReadonlyBanner" model="@(new ShiftManager.Pages.Shared.CalendarReadonlyBannerModel
+    <partial name="_CalendarReadonlyBanner" model="@(new CalendarReadonlyBannerModel
     {
         IsReadOnly = Model.CalendarData.IsReadOnly,
         RequiredGrantNameKeys = Model.CalendarData.RequiredGrantNameKeys

@@ -10486,6 +10486,7 @@
   </data>
   <data name="Calendar_RowMode_Users" xml:space="preserve">
     <value>אנשים</value>
+    <comment>מפתח "Users" — מתאים לערך RowMode הPascalCase של C#. הטקסט "אנשים" ידידותי יותר מ"משתמשים".</comment>
   </data>
   <data name="Calendar_RowMode_Duty" xml:space="preserve">
     <value>תורנות</value>

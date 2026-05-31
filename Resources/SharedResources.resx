@@ -10520,6 +10520,7 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Calendar_RowMode_Users" xml:space="preserve">
     <value>People</value>
+    <comment>Key suffix is "Users" because it matches the C# RowMode enum value used as the resx key path. UI copy intentionally says "People" — friendlier than "Users".</comment>
   </data>
   <data name="Calendar_RowMode_Duty" xml:space="preserve">
     <value>Duty</value>

@@ -70,7 +70,7 @@
                     var hasNextGroup = gi < sortedGroups.Count - 1;
                     var nextGroupId = hasNextGroup ? sortedGroups[gi + 1].Id : "";
 
-                    <tr class="excel-calendar__group-header @(group.IsCollapsed ? "is-collapsed" : "")"
+                    <tr class="excel-calendar__group-header@(group.IsCollapsed ? " is-collapsed" : "")"
                         data-group-id="@group.Id"
                         aria-rowindex="@ariaRowIndex">
                         <td colspan="@totalColCount" style="@(group.Color != null ? $"--group-color: {group.Color}" : "")">
@@ -100,7 +100,7 @@
 
                     foreach (var row in Model.Rows.Where(r => r.GroupId == group.Id))
                     {
-                        @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ExcelCalendarRowViewModel
+                        @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ShiftManager.ViewComponents.ExcelCalendarRowViewModel
                         {
                             Row = row,
                             Days = days,
@@ -117,7 +117,7 @@
                 @* Rows without group *@
                 foreach (var row in Model.Rows.Where(r => r.GroupId == null))
                 {
-                    @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ExcelCalendarRowViewModel
+                    @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ShiftManager.ViewComponents.ExcelCalendarRowViewModel
                     {
                         Row = row,
                         Days = days,
@@ -134,7 +134,7 @@
             {
                 foreach (var row in Model.Rows)
                 {
-                    @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ExcelCalendarRowViewModel
+                    @await Html.PartialAsync("~/Pages/Shared/Components/ExcelCalendarTable/_CalendarRow.cshtml", new ShiftManager.ViewComponents.ExcelCalendarRowViewModel
                     {
                         Row = row,
                         Days = days,
@@ -150,16 +150,3 @@
         </tbody>
     </table>
 </div>
-
-@functions {
-    public class ExcelCalendarRowViewModel
-    {
-        public ShiftManager.ViewComponents.ExcelCalendarRow Row { get; set; } = new();
-        public List<DateOnly> Days { get; set; } = new();
-        public DateOnly Today { get; set; }
-        public bool IsReadOnly { get; set; }
-        public bool IsCollapsed { get; set; }
-        public bool HasWeeklyHours { get; set; }
-        public int RowIndex { get; set; }   // 1-based aria-rowindex; thead = 1, first body row = 2
-    }
-}
