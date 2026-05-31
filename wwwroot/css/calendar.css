@@ -2174,12 +2174,13 @@
    Used by Shifts, Chores, OnCall pages
    ======================================== */
 
+/* .cal-page is a flex column that distributes height to:
+   1. .cal-toolbar (natural height — flex: 0 0 auto implicit)
+   2. .excel-calendar__readonly-banner (when present — natural height)
+   3. .excel-calendar (flex: 1 1 auto; min-height: 0 — claims remaining space)
+   Invariant: do NOT add fixed-height elements below .excel-calendar; the
+   flex math assumes the calendar is the last child and consumes remainder. */
 .cal-page {
-    /* Flex-column chain link: .app-shell → .app-main → .app-content →
-       .cal-page → .excel-calendar. min-height: 0 lets .excel-calendar
-       (the inner scroller) shrink to claim ownership of overflow.
-       Without it the chain breaks at this node and the body becomes the
-       scroll authority, defeating sticky on the calendar header. */
     display: flex;
     flex-direction: column;
     flex: 1;

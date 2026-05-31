@@ -92,13 +92,22 @@ The current implementation **intends** this via `position: sticky` on the date r
 └─ .app-main  (flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0)   ← adds min-height: 0
    ├─ .app-header  (flex: 0 0 auto)
    └─ <main class="app-content" id="main-content"
-            style="display: flex; flex-direction: column; flex: 1; min-height: 0">
+            style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto">
       └─ .cal-page  (display: flex; flex-direction: column; flex: 1; min-height: 0)
          ├─ .cal-toolbar  (position: sticky; top: 0; z-index: var(--z-sticky); flex: 0 0 auto)
          ├─ .excel-calendar__readonly-banner  (position: sticky; top: var(--toolbar-h); z-index: var(--z-sticky); flex: 0 0 auto)  ← MOVED HERE from inside .excel-calendar
          └─ .excel-calendar  (flex: 1 1 auto; min-height: 0; overflow: auto)   ← no more max-height
             └─ .excel-calendar__table  (border-collapse: separate; min-width: 100%; width: max-content)
 ```
+
+**Why `.app-content` carries `overflow: auto`.** Discovered during Task 4
+implementation (commit `36edfba`): without `overflow: auto` on `.app-content`,
+non-calendar pages whose content exceeds `100dvh` lose `.app-sidebar` stickiness
+because overflow bubbles to the body. Adding `overflow: auto` to `.app-content`
+makes IT the scroll container for non-calendar pages, preserving sidebar
+stickiness inside the height-locked shell. For calendar pages this addition is
+a no-op because `.cal-page` (with `flex: 1; min-height: 0`) fills `.app-content`
+exactly without overflow.
 
 **Critical invariant.** Every link in the flex chain must have `min-height: 0` (or `min-width: 0` for horizontal). Without it, flex defaults to `min-height: auto` which equals content height, defeating the shrink-to-fit behavior that lets the calendar fill the remaining viewport.
 
