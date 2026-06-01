@@ -2174,7 +2174,17 @@
    Used by Shifts, Chores, OnCall pages
    ======================================== */
 
+/* .cal-page is a flex column that distributes height to:
+   1. .cal-toolbar (natural height — flex: 0 0 auto implicit)
+   2. .excel-calendar__readonly-banner (when present — natural height)
+   3. .excel-calendar (flex: 1 1 auto; min-height: 0 — claims remaining space)
+   Invariant: do NOT add fixed-height elements below .excel-calendar; the
+   flex math assumes the calendar is the last child and consumes remainder. */
 .cal-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
     padding: 1rem;
 }
 
@@ -2187,6 +2197,51 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+
+    /* Sticky to .cal-page scope (sibling of .excel-calendar, NOT inside it).
+       Pinning detected via .cal-toolbar-sentinel element above the toolbar
+       (injected by Default.cshtml, observed by calendar-sticky-shadows.js). */
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    transition: box-shadow var(--transition-fast),      /* .is-pinned fade-in (Task 10) */
+                padding var(--transition-fast);          /* condense animation (Task 15 auto-condense) */
+}
+
+/* Only sticky when the inner scroll container (.excel-calendar) exists.
+   Without this, pages with no data rows (which render .cal-empty instead)
+   would show a pointlessly pinned toolbar over static content.
+   :has() requires Chrome 105+ / Safari 15.4+ / Firefox 121+; older browsers
+   silently keep position:sticky on empty pages — minor cosmetic issue. */
+.cal-page:not(:has(.excel-calendar)) .cal-toolbar {
+    position: static;
+}
+
+/* .is-pinned is a shared toggle class — each sticky element (toolbar here,
+   group bands in .excel-calendar__group-header.is-pinned below) adds its
+   own compound rule. Disambiguated by selector context. */
+/* Pinned-state shadow (applied by JS when sentinel leaves viewport).
+   .is-pinned is toggled by calendar-sticky-shadows.js (Task 10). */
+.cal-toolbar.is-pinned {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-strong);
+}
+
+/* Auto-condense: applied by calendar-sticky-shadows.js after 200px of
+   vertical scroll on the .excel-calendar viewport. Recovers ~30px of
+   vertical space on small screens while keeping the toolbar reachable.
+   Padding compression animates via the transition declared on .cal-toolbar
+   (Task 7: transition: box-shadow var(--transition-fast), padding var(--transition-fast)). */
+.cal-toolbar.is-pinned.is-condensed {
+    padding: var(--space-1) var(--space-2);
+}
+
+.cal-toolbar.is-pinned.is-condensed .cal-toolbar__selector label {
+    display: none;
+}
+
+.cal-toolbar.is-pinned.is-condensed .nav-text {
+    display: none;
 }
 
 /* Row 1: selectors + date nav + print */
@@ -2578,8 +2633,19 @@
    ======================================== */
 
 .excel-calendar {
+    /* Inner scroll on both axes. Sticky elements inside use this as their
+       containing block. Flex chain (.app-shell → .app-main → .app-content
+       → .cal-page → .excel-calendar) provides the height — no magic number.
+       Per-link `min-height: 0` is load-bearing; if any link loses it the
+       flex chain collapses and the body becomes the scroll authority,
+       defeating sticky. */
+    flex: 1 1 auto;
+    min-height: 0;
     overflow: auto;
-    max-height: calc(100vh - 200px);
+    /* position:relative is required so the 1×1 scroll sentinels inside
+       (.excel-calendar__scroll-sentinel--y / --x) anchor to this container.
+       See wwwroot/js/calendar-sticky-shadows.js wireCalendar(). */
+    position: relative;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface);
@@ -2600,16 +2666,20 @@
 .excel-calendar__header {
     position: sticky;
     top: 0;
-    z-index: var(--z-sticky);
+    z-index: var(--z-sticky-header);
     background: var(--primary);
     color: var(--primary-contrast) !important;
 }
 
+/* Reduced from 2px → 1px so the scroll-activated shadow (.is-scrolled-y)
+   doesn't visually double-up with a heavy bottom border at rest.
+   The header's var(--primary) background still provides strong at-rest
+   separation from the white/surface body cells below. */
 .excel-calendar__header th {
     padding: var(--space-3);
     font-weight: var(--font-semibold);
     text-align: center;
-    border-bottom: 2px solid var(--border-strong);
+    border-bottom: 1px solid var(--border-strong);
     white-space: nowrap;
     color: var(--primary-contrast);
 }
@@ -2635,6 +2705,13 @@
     background: var(--primary-hover);
 }
 
+/* Dark-mode fix: --primary-hover (#7AB3E3) gives 2.4:1 against white — fails
+   AA. The sticky thead makes this bug always visible. Override with
+   --primary-strong (#2A5A8F) → 6.1:1, passes AA. */
+[data-theme="dark"] .excel-calendar__header-day--weekend {
+    background: var(--primary-strong);
+}
+
 .excel-calendar__header-day--past {
     opacity: 0.45;
     filter: grayscale(40%);
@@ -2652,17 +2729,55 @@
     opacity: 0.9;
 }
 
-/* Sticky first column */
+/* Sticky Zone B (left column).
+ *
+ * Root cause of pre-2026-05-29 failure: the OLD `.excel-calendar { max-height:
+ * calc(100vh - 200px); overflow: auto }` rule made the .excel-calendar div the
+ * sticky containing block AND the inner scroll container, but the height was a
+ * magic number computed against the viewport rather than the available flex
+ * space. Under common layouts (sidebar collapsed, narrow viewport, dock open)
+ * the magic number overshot the actual room available; the .excel-calendar
+ * grew taller than its parent and `overflow: auto` on .excel-calendar never
+ * activated horizontally — the body became the scroll authority. With the
+ * scroll authority outside the sticky containing block, position:sticky on
+ * .excel-calendar__row-label had nothing to stick to and the cell scrolled
+ * with the rest of the table.
+ *
+ * Fix: Task 4 replaced the magic-number max-height with a flex-column chain
+ * (.app-shell h:100dvh → .app-main min-h:0 → .app-content min-h:0,overflow:auto
+ * → .cal-page min-h:0 → .excel-calendar flex:1,min-h:0,overflow:auto). The
+ * inner scroll now lives on .excel-calendar by construction, and that div IS
+ * the sticky containing block for this rule. Verified 2026-05-30: in LTR with
+ * scrollLeft={0,200,500,978,max}, all .excel-calendar__row-label cells stay
+ * pinned at x = .excel-calendar.left across all scroll positions. No CSS
+ * change required in this task — the ancestor chain is also clean of
+ * sticky-breaking transform/filter/perspective/contain/will-change/clip-path
+ * properties (audited Task 5), and border-collapse: separate is correctly set
+ * on .excel-calendar__table (line 2605).
+ *
+ * Regression guard: see CalendarStickyRtlSweepTests (Task 8) and the Playwright
+ * baseline at tests/visual/sticky-headers/baseline.spec.js (Task 20).
+ */
 .excel-calendar__row-label {
     position: sticky;
-    left: 0;
-    z-index: calc(var(--z-sticky) - 1);
+    inset-inline-start: 0;
+    z-index: var(--z-sticky-col);
     background: var(--surface);
     font-weight: var(--font-medium);
     padding: var(--space-3);
     border-inline-end: 1px solid var(--border);
     min-width: 150px;
     white-space: nowrap;
+}
+
+/* Scroll-activated edge shadow (LTR). Class `.is-scrolled-x` toggled by JS. */
+.excel-calendar.is-scrolled-x .excel-calendar__row-label {
+    box-shadow: var(--shadow-sticky-inline);
+}
+
+/* RTL: flip shadow x offset (box-shadow is physical — no logical equivalent). */
+[dir="rtl"] .excel-calendar.is-scrolled-x .excel-calendar__row-label {
+    box-shadow: var(--shadow-sticky-inline-rtl);
 }
 
 .excel-calendar__row-label .company-badge {
@@ -2688,10 +2803,100 @@
 .excel-calendar__corner {
     position: sticky;
     top: 0;
-    left: 0;
-    z-index: calc(var(--z-sticky) + 1);
+    inset-inline-start: 0;
+    /* Corner must exceed both --z-sticky-group (1021) and --z-sticky-header (1022)
+       to render at the top-left intersection without either axis claiming it. */
+    z-index: var(--z-sticky-corner);
     background: var(--primary);
     color: var(--primary-contrast) !important;
+}
+
+/* Corner shadows on either axis (corner is sticky on both top and inset-inline-start).
+   Deliberate design: both shadows render whenever ANY scroll is active, treating the corner
+   as a static "I am the most-pinned point" anchor (per spec §7.2 "corner reads as highest")
+   rather than as axis-accurate directional cues. This matches Excel/Sheets frozen-pane
+   intersection styling. Revisit during Task 20 visual baselines if the right-edge shadow
+   during pure vertical scroll reads as a false cue in practice. */
+.excel-calendar.is-scrolled-x .excel-calendar__corner,
+.excel-calendar.is-scrolled-y .excel-calendar__corner {
+    box-shadow: var(--shadow-sticky-block),
+                var(--shadow-sticky-inline);
+}
+
+[dir="rtl"] .excel-calendar.is-scrolled-x .excel-calendar__corner,
+[dir="rtl"] .excel-calendar.is-scrolled-y .excel-calendar__corner {
+    box-shadow: var(--shadow-sticky-block),
+                var(--shadow-sticky-inline-rtl);
+}
+
+/* Mode token inside the sticky corner cell (spec §5.6). */
+.excel-calendar__mode-token {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-small);
+    font-weight: var(--font-semibold);
+    /* Color inherits from .excel-calendar__corner (var(--primary-contrast)). */
+}
+
+.excel-calendar__mode-chevron {
+    font-size: 0.75em;
+    opacity: 0.7;
+}
+
+/* Scroll-activated block-axis shadow when content slides under the thead. */
+.excel-calendar.is-scrolled-y .excel-calendar__header {
+    box-shadow: var(--shadow-sticky-block);
+}
+
+/* Forced-colors (Windows high-contrast) mode: box-shadow is often ignored.
+   Replace edge shadows with solid CanvasText borders — always-on, scroll-
+   independent. Forced-colors users don't need motion cues; they need
+   static separators that survive the system theme.
+   See spec §7.3 / §9.3. */
+@media (forced-colors: active) {
+    .excel-calendar__row-label,
+    .excel-calendar__corner {
+        border-inline-end: 2px solid CanvasText;
+    }
+    /* .cal-toolbar included even though it's outside the scroll-shadow family:
+       it's a sticky surface where box-shadow is also ignored under forced-colors,
+       so it needs the same static separator. */
+    .excel-calendar__header,
+    .excel-calendar__group-header td,
+    .cal-toolbar {
+        border-bottom: 2px solid CanvasText;
+    }
+}
+
+/* Scroll-state sentinels — invisible 1×1 markers that the IntersectionObserver
+   in calendar-sticky-shadows.js watches to set .is-scrolled-* classes. They
+   carry no visual weight, no pointer-events, and exist solely so a low-cost
+   IO callback can flip the scroll-state classes that drive the edge shadows
+   declared above. Positioned absolute relative to .excel-calendar (which has
+   position: relative below) so they sit at the leading edges of the scroll
+   container's content origin. */
+.excel-calendar__scroll-sentinel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+    background: transparent;
+}
+.excel-calendar__scroll-sentinel--y {
+    top: 0;
+    inset-inline-start: 0;
+}
+.excel-calendar__scroll-sentinel--x {
+    top: 0;
+    inset-inline-start: 0;
+}
+/* Toolbar sentinel — invisible 1px-tall marker that sits immediately above
+   the .cal-toolbar. When it leaves the viewport, the toolbar pins. */
+.cal-toolbar-sentinel {
+    height: 1px;
+    width: 100%;
+    pointer-events: none;
 }
 
 /* Data cells */
@@ -2907,10 +3112,38 @@
 }
 
 .excel-calendar__group-header td {
+    /* Sticky applied to <td> inside <tr>. Sticky on <tr> is unreliable
+       cross-browser; sticky on the td with full colspan paints reliably.
+       Stack-and-replace behavior: as the next group's band scrolls up to
+       meet this one, sticky naturally releases this band (its tr exits
+       the viewport) and the next band takes its place. */
+    position: sticky;
+    top: var(--excel-calendar-header-height, 44px);   /* Below sticky thead */
+    z-index: var(--z-sticky-group);
+
+    /* Existing visual styles preserved */
+    background: var(--surface-soft);  /* required here even though .tr has it too — sticky td paints independently of its tr */
     padding: var(--space-2) var(--space-3);
     font-weight: var(--font-semibold);
     border-top: 2px solid var(--border-strong);
     border-inline-start: 4px solid var(--group-color, var(--primary));
+}
+
+/* Two-class coupling: .is-group-pinned (on .excel-calendar) AND .is-pinned
+   (on the band) must BOTH be set. calendar-sticky-shadows.js maintains this
+   contract — see ./calendar-sticky-shadows.js wireCalendar() group-observer. */
+.excel-calendar.is-group-pinned .excel-calendar__group-header.is-pinned td {
+    box-shadow: var(--shadow-sticky-block);
+}
+
+/* Collapsed groups: band IS the only visible row of its group. Don't sticky —
+   pinning would create a double-border glitch as the band sits on top of itself. */
+/* Specificity note: .is-collapsed override below has (0,2,1); the base rule
+   above has (0,1,1). The collapse override correctly wins via specificity
+   without !important. If a future selector restructure raises the base
+   specificity, the override needs to match. */
+.excel-calendar__group-header.is-collapsed td {
+    position: static;
 }
 
 .excel-calendar__group-count {
@@ -2945,6 +3178,29 @@
     color: var(--text-muted);
 }
 
+.excel-calendar__next-group-btn {
+    margin-inline-start: auto;       /* push to the inline-end of the band */
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: inherit;
+    padding: 0 var(--space-2);
+    font-size: var(--text-small);
+    cursor: pointer;
+    transition: background var(--transition-fast),
+                border-color var(--transition-fast);
+}
+
+.excel-calendar__next-group-btn:hover {
+    background: var(--surface);
+    border-color: var(--border-strong);
+}
+
+.excel-calendar__next-group-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
 /* Read-only mode banner */
 .excel-calendar__readonly-banner {
     display: flex;
@@ -2957,6 +3213,13 @@
     text-align: center;
     font-size: var(--text-small);
     border-bottom: 1px solid var(--warning);
+
+    /* Second-tier sticky beneath the toolbar. Top offset uses --cal-toolbar-height
+       (set by calendar-sticky-shadows.js via ResizeObserver in Task 10) with a
+       64px fallback if JS is disabled or before Task 10 runs. */
+    position: sticky;
+    top: var(--cal-toolbar-height, 64px);
+    z-index: var(--z-sticky);
 }
 
 /* "?" help button: explains which grant the user is missing. Bordered (no fill) by default to
@@ -3134,6 +3397,99 @@
     min-height: 48px;
     font-size: 1rem;
     justify-content: center;
+}
+
+/* ============================================================================
+   MOBILE TOOLBAR COLLAPSE — Tools overflow sheet (Task 16, Spec §2/§11)
+   At <768px the sticky toolbar can only safely host the most-used primary
+   controls (date nav, view mode, molecule/area selector). The rest move
+   into a bottom-sheet "Tools" overflow. .cal-toolbar__primary is the
+   opt-in marker for "stay visible on mobile".
+   ============================================================================ */
+@media (max-width: 768px) {
+    /* Hide secondary toolbar controls; surface them in a "Tools ▾" overflow.
+       Overview's toolbar uses .overview-calendar__* namespace (Task 6.5 aliased
+       the wrapper but not the children), so we target both namespaces. Keep this
+       list in sync with HIDDEN_SELECTORS in wwwroot/js/calendar-tools-overflow.js. */
+    .cal-toolbar__toggle-group:not(.cal-toolbar__primary),
+    .cal-toolbar__selector:not(.cal-toolbar__primary),
+    .cal-toolbar .quick-entry-toggle,
+    .cal-toolbar .quick-entry-help-btn,
+    .cal-toolbar .dl-control,
+    .overview-calendar__selector:not(.cal-toolbar__primary),
+    .overview-calendar__company-badge {
+        display: none;
+    }
+
+    /* Show the Tools overflow trigger. */
+    .cal-toolbar__overflow-trigger {
+        display: inline-flex;
+    }
+
+    /* Pinned + condensed at <768px = even tighter padding (recovers
+       another sliver of vertical space when the user has scrolled). */
+    .cal-toolbar.is-pinned.is-condensed {
+        padding: var(--space-1);
+    }
+}
+
+@media (min-width: 769px) {
+    /* Trigger is mobile-only; hide it on desktop where all controls fit. */
+    .cal-toolbar__overflow-trigger {
+        display: none;
+    }
+}
+
+/* Minimal styling for the Tools sheet header/close — the base
+   .bottom-sheet / .bottom-sheet__content / .bottom-sheet__body styles
+   are reused from the assignment bottom-sheet (above). Only the
+   header/close pair are unique to this sheet. */
+.calendar-tools-sheet .bottom-sheet__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.calendar-tools-sheet .bottom-sheet__header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.calendar-tools-sheet .bottom-sheet__close {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.calendar-tools-sheet .bottom-sheet__close:hover,
+.calendar-tools-sheet .bottom-sheet__close:focus-visible {
+    background: var(--surface-soft);
+}
+
+/* Stack cloned toolbar controls vertically inside the sheet so they're
+   tap-friendly on phones (the original .cal-toolbar__row uses flex-wrap
+   which compresses them too tightly for touch). */
+.calendar-tools-sheet .bottom-sheet__body > * {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
 }
 
 /* ========================================

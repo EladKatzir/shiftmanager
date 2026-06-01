@@ -7,11 +7,14 @@
    1. SIDEBAR BASE
    ======================================== */
 
+/* height: 100% inherits from .app-shell { height: 100dvh } — the shell is the
+   height authority since the 2026-05-29 sticky-headers plan. Reverting to
+   100vh would create a mobile ghost overflow when the address bar transitions. */
 .app-sidebar {
   position: sticky;
   top: 0;
   width: var(--sidebar-width);
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;

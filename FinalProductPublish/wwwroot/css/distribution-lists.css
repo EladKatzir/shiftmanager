@@ -31,7 +31,10 @@
     position: absolute;
     inset-inline-start: 0;
     top: calc(100% + 4px);
-    z-index: var(--z-dropdown, 1100);
+    /* The raw 1100 fallback was a historical holdover from before --z-dropdown
+       existed — 1060 matches the popover/dropdown tier and is safely above
+       --z-sticky-corner: 1023. */
+    z-index: var(--z-popover, var(--z-dropdown, 1060));
     min-width: 16rem;
     max-width: 22rem;
     background: var(--surface, #ffffff);

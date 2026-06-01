@@ -32,13 +32,16 @@
         }
         saveCollapsedGroups(collapsed);
 
-        // Toggle chevron
+        // Toggle chevron and collapsed band class
         const header = document.querySelector(`.excel-calendar__group-header[data-group-id="${groupId}"]`);
         if (header) {
             const chevron = header.querySelector('.excel-calendar__group-chevron');
             if (chevron) {
                 chevron.classList.toggle('excel-calendar__group-chevron--collapsed', isCollapsed);
             }
+            // .is-collapsed disables sticky positioning on the band (prevents double-border
+            // glitch when the band is the only visible row of its group).
+            header.classList.toggle('is-collapsed', isCollapsed);
         }
 
         // Toggle rows
@@ -50,6 +53,10 @@
         });
     }
 
+    // applyPersistedCollapse is idempotent: toggleGroup() calls classList.toggle()
+    // with an explicit boolean force-value, which is a no-op when the class is
+    // already in the requested state. So this function is safe to call after a
+    // full server re-render that already baked .is-collapsed into the HTML.
     // Re-apply persisted collapse state to the current DOM. Extracted so it can run both on load
     // and after an in-place grid refresh (the server re-renders all groups expanded).
     function applyPersistedCollapse() {
@@ -105,3 +112,28 @@
     // freshly server-rendered groups come back expanded — re-apply the user's collapse state.
     document.addEventListener('calendar:grid-refreshed', applyPersistedCollapse);
 })();
+
+/**
+ * Recompute (visible/total) for each group band based on which child rows
+ * are currently visible. Called from applyFilter / clearFilter in
+ * Pages/Calendar/Shifts.cshtml (and siblings).
+ *
+ * - If all rows of a group are visible, show "(total)"
+ * - If some rows are hidden, show "(visible/total)"
+ */
+window.updateGroupCounts = function () {
+    const counts = document.querySelectorAll('.excel-calendar__group-count[data-group-total]');
+    counts.forEach(function (countEl) {
+        const band = countEl.closest('.excel-calendar__group-header');
+        if (!band) return;
+        const groupId = band.getAttribute('data-group-id');
+        const total = parseInt(countEl.getAttribute('data-group-total'), 10);
+        const rows = document.querySelectorAll(
+            'tr[data-group-id="' + groupId + '"]:not(.excel-calendar__group-header)'
+        );
+        const visible = Array.prototype.filter.call(rows, function (r) {
+            return r.style.display !== 'none' && !r.hasAttribute('hidden');
+        }).length;
+        countEl.textContent = visible === total ? '(' + total + ')' : '(' + visible + '/' + total + ')';
+    });
+};

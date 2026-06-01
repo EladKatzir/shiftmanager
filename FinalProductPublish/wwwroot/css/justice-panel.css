@@ -46,6 +46,12 @@
     color: var(--text);
     box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
     border-inline-start: 1px solid var(--border);
+    /* z-index: 1100 deliberately exceeds --z-dropdown (1060), --z-sticky-corner
+       (1023), and --z-modal (1050). Justice panel is a high-priority overlay
+       that should cover dropdowns and the sticky-thead corner. If the sticky-headers
+       plan's tier tokens are ever reordered (see tokens.css §Z-INDEX SCALE),
+       verify this raw 1100 still dominates the relevant tiers. Audit triggered by
+       the 2026-05-29 calendar-sticky-headers PR — current relationship verified safe. */
     z-index: 1100;
     display: flex;
     flex-direction: column;

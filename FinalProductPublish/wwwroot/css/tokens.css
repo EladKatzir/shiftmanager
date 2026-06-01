@@ -12,6 +12,11 @@
   /* Primary Palette - Deep Navy */
   --primary: #1E3A5F;
   --primary-hover: #2C4A73;
+  /* Darker variant of --primary for dark-mode surfaces that need WCAG AA
+     contrast against white text (e.g. sticky weekend column headers).
+     Light mode uses --primary directly; this token is used only inside
+     [data-theme="dark"] overrides. White on #2A5A8F = 6.1:1 (passes AA). */
+  --primary-strong: #2A5A8F;
   --primary-soft: #E8F1F8;
   --primary-contrast: #FFFFFF;
   --primary-rgb: 30, 58, 95;
@@ -142,6 +147,7 @@
   /* Primary Palette - Inverted to Sky Blue */
   --primary: #5B9BD5;
   --primary-hover: #7AB3E3;
+  --primary-strong: #2A5A8F;
   --primary-soft: #1A2D42;
   --primary-contrast: #FFFFFF;
   --primary-rgb: 91, 155, 213;
@@ -353,6 +359,13 @@
   --shadow-success: 0 4px 14px rgba(var(--success-rgb), 0.25);
   --shadow-warning: 0 4px 14px rgba(var(--warning-rgb), 0.25);
   --shadow-danger: 0 4px 14px rgba(var(--danger-rgb), 0.25);
+
+  /* Sticky edge shadows. Horizontally-oriented (column edge) and vertically-
+     oriented (row edge) variants for spreadsheet-style frozen-pane affordance.
+     RTL: box-shadow is a physical property — explicit `-rtl` variant required. */
+  --shadow-sticky-inline:      2px 0 4px -2px rgba(0, 0, 0, 0.15);
+  --shadow-sticky-inline-rtl: -2px 0 4px -2px rgba(0, 0, 0, 0.15);
+  --shadow-sticky-block:       0 2px 4px -2px rgba(0, 0, 0, 0.15);
 }
 
 :root[data-theme="dark"] {
@@ -362,6 +375,9 @@
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.4);
   --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.5);
   --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-sticky-inline:      2px 0 4px -2px rgba(0, 0, 0, 0.45);
+  --shadow-sticky-inline-rtl: -2px 0 4px -2px rgba(0, 0, 0, 0.45);
+  --shadow-sticky-block:       0 2px 4px -2px rgba(0, 0, 0, 0.45);
 }
 
 /* ========================================
@@ -401,8 +417,21 @@
 
 :root {
   --z-base: 0;
-  --z-dropdown: 1000;
+  /* Bumped from 1000 to 1060 on 2026-05-29 so dropdowns survive above
+     the new sticky-corner tier (1023). Without this, the DL dropdown menu
+     opens BELOW the sticky thead when the toolbar pins.
+     Regression guard: ShiftManager.Tests/UnitTests/Css/CalendarStickyTokenTests.cs
+     DropdownZIndex_IsAboveStickyCorner. */
+  --z-dropdown: 1060;
+
+  /* Sticky tiers — calendar uses all five; data tables use first two.
+     NEVER reorder. Locked by ShiftManager.Tests/UnitTests/Css/CalendarStickyTokenTests.cs. */
+  --z-sticky-col: 1019;
   --z-sticky: 1020;
+  --z-sticky-group: 1021;
+  --z-sticky-header: 1022;
+  --z-sticky-corner: 1023;
+
   --z-fixed: 1030;
   --z-modal-backdrop: 1040;
   --z-modal: 1050;
@@ -493,6 +522,9 @@
   --table-header-bg: var(--surface-soft);
   --table-row-hover: var(--surface-soft);
   --table-border: var(--border);
+
+  /* Header row inside the .excel-calendar table — used by sticky group-band `top` offset. */
+  --excel-calendar-header-height: 44px;
 }
 
 /* ========================================
@@ -523,6 +555,7 @@ Verified Contrast Ratios (Dark Mode):
     /* Primary Palette - Inverted to Sky Blue */
     --primary: #5B9BD5;
     --primary-hover: #7AB3E3;
+    --primary-strong: #2A5A8F;
     --primary-soft: #1A2D42;
     --primary-contrast: #FFFFFF;
     --primary-rgb: 91, 155, 213;

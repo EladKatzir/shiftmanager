@@ -12432,6 +12432,28 @@
             tells the user exactly which permission to request.
             </summary>
         </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.RowMode">
+            <summary>
+            What each row represents. PascalCase ("Shifts" | "Users" | "Duty" | "Chores")
+            so it appends directly to the resx key "Calendar_RowMode_" + RowMode.
+            Used by the sticky corner-cell mode token (spec §5.6).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.TotalRows">
+            <summary>
+            Total row count INCLUDING the &lt;thead&gt; column-header row AND group-header rows.
+            Per ARIA 1.2 §6.6.4, aria-rowcount represents the total &lt;tr&gt; count in the
+            logical table; the column header is row 1, the first data row is row 2 (the
+            aria-rowindex tracking in Task 13 starts at 2 inside &lt;tbody&gt; for that reason).
+            Caller PageModels must set this as Rows.Count + (Groups?.Count ?? 0) + 1.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.RowModeLabelKey">
+            <summary>
+            resx key for the mode label, computed from RowMode.
+            Defaults to "Calendar_RowMode_Shifts" for unset instances (RowMode initializer = "Shifts").
+            </summary>
+        </member>
         <member name="T:ShiftManager.ViewComponents.HierarchyTreeViewComponent">
             <summary>
             ViewComponent for the interactive Hierarchy Tree with drag-drop reordering.
