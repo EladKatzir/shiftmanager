@@ -819,6 +819,13 @@ table.jt td.num {
   text-align: end; font-variant-numeric: tabular-nums;
   font-size: 12.5px;
 }
+/* RTL column alignment fix: numeric value cells carry dir="ltr" (so numbers/signs like "▲ 12"
+   render correctly), which makes their `text-align: end` resolve to the physical RIGHT. The
+   matching `th.num` has no dir override, so its `text-align: end` resolves against the page's RTL
+   direction → physical LEFT, leaving headers misaligned over their values in Hebrew. Pin the
+   numeric headers to the right in RTL so they sit directly above the dir="ltr" values. LTR is
+   unaffected (end = right for both there). */
+[dir="rtl"] table.jt th.num { text-align: right; }
 table.jt tbody tr { transition: background 120ms; }
 table.jt tbody tr:hover { background: var(--surface-soft); }
 

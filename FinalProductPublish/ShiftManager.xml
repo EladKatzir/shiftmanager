@@ -2823,6 +2823,30 @@
         <member name="M:ShiftManager.Migrations.AddDistributionLists.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddDayAtLabelToTimeOffRequest">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDayAtLabelToTimeOffRequest.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDayAtLabelToTimeOffRequest.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDayAtLabelToTimeOffRequest.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddShowBackupToQuickInfoConfig">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShowBackupToQuickInfoConfig.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShowBackupToQuickInfoConfig.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShowBackupToQuickInfoConfig.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -4764,6 +4788,22 @@
             Service MUST always scope queries by moleculeId explicitly.
             </summary>
         </member>
+        <member name="F:ShiftManager.Models.QuickInfoConfig.PrimaryHakamEntityId">
+            <summary>
+            EntityId of the built-in primary on-duty Hakam section (OnDutyType.Hakam == 0).
+            Unlike custom on-duty types (which live in OnDutyTypeConfigs with TypeValue &gt; 1),
+            the primary Hakam is an enum value with no config row, so it must be represented
+            explicitly by a section using this sentinel EntityId.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.QuickInfoConfig.ShowBackup">
+            <summary>
+            For the primary-Hakam OnCallRole section (EntityId == <see cref="F:ShiftManager.Models.QuickInfoConfig.PrimaryHakamEntityId"/>):
+            when true, the widget also renders the backup Hakam (the configured backup on-duty type)
+            as an additional contact under the same Hakam heading. Default false = primary only.
+            Ignored for any other section type or EntityId.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.Results.OperationResult">
              <summary>
              Project-wide operation result for service methods that do not return a value.
@@ -5542,6 +5582,12 @@
             Browser information (parsed from user agent)
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.TimeOffRequest.Label">
+            <summary>
+            Free-text location/activity for a "Day at [X]" request (Type == DayAt) — e.g. "beach".
+            Rendered on the calendar as "{Label} day" / "יום {Label}". Null for Vacation/After. (Issue 4)
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.TimeOffRequest.ApproverId">
             <summary>
             Optional: Specific approver user ID (must be Manager, Director, or Owner).
@@ -5970,6 +6016,13 @@
         <member name="M:ShiftManager.Pages.Admin.CompaniesModel.GenerateSlug(System.String)">
             <summary>
             Generates a URL-safe slug from a name: lowercase, non-alphanumeric chars → hyphens, trimmed.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.EditProfileModel.CanEditTargetAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            True when <paramref name="editorUserId"/> may edit the user in <paramref name="targetCompanyId"/>.
+            Cross-company edits within a molecule are allowed for managers whose EditCompanyUsers grant is
+            molecule-scoped (e.g. Molecule Admin / Director / Area Admin / Owner). Editing self is always allowed.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Admin.IndexModel">
@@ -6473,6 +6526,12 @@
             POST: saves the config (delete-and-reinsert pattern via IQuickInfoConfigService).
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Api.Widget.AvailableItemDto.SupportsBackup">
+            <summary>
+            True only for the primary-Hakam row (EntityId 0): the config UI renders an extra
+            "show backup Hakam" sub-toggle for it.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Auth.ForgotPasswordModel.RedactEmail(System.String)">
             <summary>
             E-01: Redact email for safe logging. Shows first 2 chars + domain.
@@ -6882,6 +6941,9 @@
             Success message to display to the user (localized).
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.My.RequestsModel.TimeOffRequestForm.Label">
+            <summary>Free-text location for a "Day at [X]" request (Type == DayAt). Issue 4.</summary>
+        </member>
         <member name="T:ShiftManager.Pages.My.SettingsModel">
             <summary>
             Phase 6: User settings page for managing notification preferences
@@ -6913,6 +6975,22 @@
             Blueprints - Manage ShiftTypes (shift definitions) with scope-aware permissions.
             Supports Company, Molecule, and Area scoped shift types.
             Grant-based authorization: EditShiftTypes for edit/delete, CreateShiftTypes for create.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Owner.BlueprintsModel.MissingNameKeyShifts">
+            <summary>
+            Shift types (within the current molecule view) whose NameKey is missing. Surfaced so the
+            banner can list exactly which items are affected and the inline "Add name keys" modal can
+            preview the keys that will be assigned.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostAddNamekeysAsync">
+            <summary>
+            Inline replacement for the old (broken) "PopulateNameKeys" form handler. Assigns the canonical
+            <c>ShiftType_{Key}_Name</c> NameKey to every shift type that is currently missing one — the same
+            convention <see cref="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostCreateShiftTypeAsync"/> uses for new shift types. Idempotent: a
+            shift type that already has a NameKey is left untouched. Returns JSON so the page can stay inline
+            (fetch + reload) instead of a full-page redirect.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.CheckEditGrantForShiftTypeAsync(System.Int32,ShiftManager.Models.ShiftType)">
@@ -9448,8 +9526,11 @@
         <member name="M:ShiftManager.Services.IGrantService.CanReachUserForNoteAsync(System.Int32,System.Int32)">
             <summary>
             Verifies note-writing access to the target user's company.
-            Manager tier (any assign grant) → accessible-company set from assign grants (may be cross-company within molecule).
-            Note-only tier (WriteOverviewNotes alone) → caller's own company only.
+            Note tier (WriteOverviewNotes) → the grant's resolved accessible-company set. Molecule members
+              hold it at molecule scope (Issue 3), so they reach any company in their molecule; a purely
+              company-scoped note grant reaches only its own company.
+            Manager tier (any assign grant) → additionally the accessible-company set from assign grants
+              (can extend beyond the note scope, e.g. an AreaAdmin's area-wide reach).
             Self-target (callerId == targetUserId) always allowed.
             </summary>
         </member>
@@ -10194,6 +10275,21 @@
         <member name="T:ShiftManager.Services.QuickInfoConfigItem">
             <summary>
             DTO for save operations on QuickInfoConfig.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Services.QuickInfoConfigItem.ShowBackup">
+            <summary>
+            For the primary-Hakam section (EntityId == <see cref="F:ShiftManager.Models.QuickInfoConfig.PrimaryHakamEntityId"/>):
+            when true the widget also shows the backup Hakam. See <see cref="P:ShiftManager.Models.QuickInfoConfig.ShowBackup"/>.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IQuickInfoConfigService.GetBackupHakamTypeValueAsync">
+            <summary>
+            Resolves "the configured backup Hakam" on-duty type value: the lowest-numbered active
+            custom on-duty type (OnDutyTypeConfig with TypeValue &gt; 1). By seed convention this is
+            the "Backup-hakam" type (TypeValue == 2). Returns null when no custom type is configured.
+            Single source of truth used by the default-config builder, the widget renderer, and the
+            config API so the three never diverge on what "backup" means.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.RateLimitInfo">
@@ -11487,13 +11583,20 @@
         <member name="M:ShiftManager.Services.QuickInfoConfigService.GetDefaultConfigAsync(System.Int32)">
             <summary>
             Compute default config on-the-fly (NOT persisted).
-            Returns OnCallRoles first (from OnDutyTypeConfigs), then Stores for the molecule's area.
+            Always begins with the built-in primary-Hakam section (EntityId 0, ShowBackup off) so the
+            primary Hakam is visible by default — it has no OnDutyTypeConfig row and was previously
+            invisible. Then the remaining active custom on-duty types (excluding any TypeValue 0 row and
+            the configured backup type, which is folded into the Hakam section's ShowBackup toggle),
+            then Stores for the molecule's area.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.QuickInfoConfigService.HasConfigAsync(System.Int32)">
             <summary>
             Check whether any QuickInfoConfig entries exist for a molecule.
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.QuickInfoConfigService.GetBackupHakamTypeValueAsync">
+            <inheritdoc />
         </member>
         <member name="T:ShiftManager.Services.RateLimitingService">
             <summary>
@@ -11741,6 +11844,13 @@
             Priority: Vacation > After > On-Duty > Home > Shift > Chore > Free
             (Home is promoted above plain Shift so the unified HOME marker wins
             when a user has a HOME assignment — Task 24.)
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.TeamCalendarEventAggregator.BuildDayAtLabel(System.String)">
+            <summary>
+            Builds the calendar label for a "Day at [X]" request: "{X} day" (English) / "יום {X}" (Hebrew).
+            Culture-aware via CurrentUICulture (set per-request). Falls back to a bare "Day"/"יום" if no label.
+            The free-text portion (X) is user-supplied and intentionally not localized.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.TeamCalendarEventAggregator.DateIsInTimeOffRange(System.DateOnly,ShiftManager.Services.VacationEvent)">
@@ -12037,6 +12147,14 @@
         <member name="M:ShiftManager.Services.WidgetService.BuildMoleculeBasedWidgetAsync(System.Int32,System.Int32,System.Int32)">
             <summary>
             New molecule-based widget path using QuickInfoConfig + OnDuty table + Store statuses.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.WidgetService.BuildOnCallContactAsync(System.Int32,System.String,System.DateOnly)">
+            <summary>
+            Builds a single on-call <see cref="T:ShiftManager.Services.ContactInfo"/> for the given on-duty type value on a date:
+            the assigned active user if one exists, otherwise an unassigned placeholder carrying the role
+            name. Shared by the primary-Hakam, backup-Hakam, and custom on-duty sections so they render
+            identically.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.WidgetService.BuildGrantBasedWidgetAsync(System.Int32,System.Int32)">

@@ -354,9 +354,16 @@ function showToast(message, type = 'info') {
   }, displayTime);
 }
 
-// Add keyboard shortcuts for calendar navigation
+// Add keyboard shortcuts for the v1 calendar pages (Month / Week / Day / Table).
+// IMPORTANT: the v2 "Excel" calendars (Shifts / Chores / OnCall / Overview) ship their own
+// cell-level keyboard navigation in calendar-keyboard-nav.js. Both listeners live on `document`,
+// so without this guard a plain ArrowLeft/Right here would ALSO fire on a v2 page and click a
+// stray `a[href*="Calendar/Month"]` link — yanking the user off the grid (observed as an
+// unexpected page refresh / redirect to the week view, or Chores -> Shifts). Bail out whenever a
+// v2 excel-calendar is present so this handler only governs the v1 pages it was written for.
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (document.querySelector('.excel-calendar')) return; // v2 page owns its keyboard nav
 
   if (e.key === 'ArrowLeft' || e.key === 'h') {
     const prevButton = document.querySelector('a[href*="Calendar/Month"]:first-child');
