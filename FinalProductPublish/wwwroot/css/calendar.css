@@ -3025,6 +3025,21 @@
     color: var(--info);
 }
 
+/* "Day at [X]" time-off — a labeled text chip ("יום {Label}"), distinct from the vacation palm-tree.
+   Pairs background + explicit text color so it stays readable in both themes (project contrast rule). */
+.excel-calendar__badge--dayat {
+    background: var(--warning-soft, #fef3c7);
+    color: var(--warning, #92400e);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0 0.35rem;
+    border-radius: 6px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .excel-calendar__badge--chore {
     background: var(--warning-soft);
     color: var(--warning);

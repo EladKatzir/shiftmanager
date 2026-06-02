@@ -153,5 +153,16 @@
 .dl-editor__user-info { display: flex; flex-direction: column; min-width: 0; }
 .dl-editor__user-name { font-weight: 500; }
 .dl-editor__user-company { font-size: 0.76rem; color: var(--text-muted, #6b7280); }
+/* "Already in a list" flag shown in the member picker (tooltip lists the names). Background+text paired. */
+.dl-editor__user-inlist {
+    align-self: flex-start;
+    margin-top: 2px;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    background: var(--warning-soft, #fef3c7);
+    color: var(--warning, #92400e) !important;
+}
 
 /* Distribution-list group section headers reuse the existing ExcelCalendarGroup styling — no overrides needed. */

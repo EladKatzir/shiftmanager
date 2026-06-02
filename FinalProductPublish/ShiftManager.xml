@@ -9130,6 +9130,12 @@
         <member name="M:ShiftManager.Services.IDistributionListService.GetListDetailAsync(System.Int32,System.Int32)">
             <summary>One list's detail for the edit modal, or null if it does not belong to the molecule.</summary>
         </member>
+        <member name="M:ShiftManager.Services.IDistributionListService.GetMembershipNamesAsync(System.Int32)">
+            <summary>
+            For the editor's member picker: maps each molecule user already in ≥1 list to that list's name(s).
+            Lets the create/edit modal clearly flag users who are already assigned elsewhere. Users in no list are absent.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.IDistributionListService.CreateAsync(System.Int32,System.Int32,System.String,System.Collections.Generic.IReadOnlyCollection{System.Int32})">
             <summary>Create a list in the given molecule. Re-checks the caller's grant and validates members/name.</summary>
         </member>
