@@ -42,7 +42,14 @@ param(
     [switch]$SkipTests,
 
     [Parameter()]
-    [switch]$CommitChanges
+    [switch]$CommitChanges,
+
+    # Forwarded to Build-Release.ps1 to skip its git tag/push stage. Needed in non-interactive /
+    # CI environments where the automated `git push` of the release tag cannot authenticate.
+    # The wrapper's "Next steps" already instructs tagging+pushing manually, so this is consistent
+    # with the intended workflow (it does NOT skip the FinalProductPublish replace).
+    [Parameter()]
+    [switch]$SkipGit
 )
 
 Set-StrictMode -Version Latest
@@ -464,9 +471,10 @@ try {
         # FIX: use parameter splatting (named binding) to avoid positional-binding drift
         $buildParams = @{ Version = $Version }
         if ($SkipTests) { $buildParams.SkipTests = $true }
+        if ($SkipGit)   { $buildParams.SkipGit   = $true }
         $buildParams.SkipReport = $true  # Skip report generation to avoid PSCustomObject parameter passing issues
 
-        $preview = "-Version $Version" + ($(if ($SkipTests) { " -SkipTests" } else { "" })) + " -SkipReport"
+        $preview = "-Version $Version" + ($(if ($SkipTests) { " -SkipTests" } else { "" })) + ($(if ($SkipGit) { " -SkipGit" } else { "" })) + " -SkipReport"
         Write-Log -Level INFO -Message ("Running: {0} {1} (wd={2})" -f $BuildScript, $preview, $RepoRoot)
 
         Push-Location $RepoRoot
