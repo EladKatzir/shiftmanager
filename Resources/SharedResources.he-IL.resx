@@ -2085,6 +2085,9 @@
   <data name="DayAt_LabelRequired" xml:space="preserve">
     <value>נא להזין מיקום עבור היום.</value>
   </data>
+  <data name="DayAt_CalendarBadge" xml:space="preserve">
+    <value>יום {0}</value>
+  </data>
   <data name="VacationTypeDescription" xml:space="preserve">
     <value>חופשה רגילה מתחילה בחצות, חופשה אחרי תורנות מתחילה ב-16:00</value>
   </data>
@@ -15594,6 +15597,12 @@
   </data>
   <data name="DistributionList_SearchUsers" xml:space="preserve">
     <value>חיפוש משתמשים...</value>
+  </data>
+  <data name="DistributionList_OtherGroup" xml:space="preserve">
+    <value>ללא רשימה</value>
+  </data>
+  <data name="DistributionList_InAList" xml:space="preserve">
+    <value>כבר ברשימה</value>
   </data>
   <data name="DistributionList_NoLists" xml:space="preserve">
     <value>אין עדיין רשימות תפוצה.</value>

@@ -11,7 +11,10 @@ public record FyiOverlayData(
     bool HasVacation,
     List<FyiOverlayItem> ChoreItems,
     List<FyiOverlayItem> OnDutyItems,
-    List<string> OtherShifts
+    List<string> OtherShifts,
+    // "Day at [X]" time-off (TimeOffType.DayAt): the free-text label the user entered, rendered on the
+    // calendar as "יום {Label}" / "Day {Label}" instead of the vacation palm-tree. Null when none. (Issue: day-X)
+    string? DayAtLabel = null
 )
 {
     /// <summary>Backward-compatible: true if any chore items exist.</summary>

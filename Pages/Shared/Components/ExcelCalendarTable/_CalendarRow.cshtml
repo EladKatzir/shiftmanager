@@ -188,6 +188,13 @@
                         {
                             <span class="excel-calendar__badge excel-calendar__badge--vacation" title="@Localizer["Vacation"]"><icon name="palm-tree" size="sm" /></span>
                         }
+                        @if (!string.IsNullOrEmpty(cell.Overlay.DayAtLabel))
+                        {
+                            @* "Day at [X]" time-off — show the user-entered label ("יום {Label}"), NOT the
+                               vacation palm-tree (Issue: day-X rendered as vacation symbol). *@
+                            var dayAtText = string.Format(Localizer["DayAt_CalendarBadge"].Value, cell.Overlay.DayAtLabel);
+                            <span class="excel-calendar__badge excel-calendar__badge--dayat" title="@dayAtText">@dayAtText</span>
+                        }
                         @if (cell.Overlay.HasTextEntry)
                         {
                             @foreach (var txt in cell.Overlay.TextEntryTexts)

@@ -477,6 +477,7 @@ public class ChoresModel : PageModel
                 cell.Overlay = new ExcelCalendarOverlay
                 {
                     HasVacation = overlay.HasVacation,
+                    DayAtLabel = overlay.DayAtLabel,
                     HasOnDuty = overlay.HasOnDuty,
                     OtherItems = overlay.OtherShifts
                 };

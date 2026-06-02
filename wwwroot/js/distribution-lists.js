@@ -224,12 +224,21 @@
                 var avatar = u.avatarUrl
                     ? '<img class="dl-editor__avatar" src="' + escapeHtml(u.avatarUrl) + '" alt="" loading="lazy" />'
                     : '<span class="dl-editor__avatar dl-editor__avatar--initials">' + escapeHtml(initials(u.displayName)) + '</span>';
+                // Clear indication that this user is already a member of one or more lists (tooltip names them).
+                var lists = u.lists || [];
+                var inListTag = lists.length
+                    ? '<span class="dl-editor__user-inlist" title="' + escapeHtml(lists.join(', ')) + '">' +
+                          escapeHtml(t('inAList', 'Already in a list')) +
+                          (lists.length > 1 ? ' (' + lists.length + ')' : '') +
+                      '</span>'
+                    : '';
                 row.innerHTML =
                     '<input type="checkbox" class="dl-user-checkbox" value="' + u.id + '"' + (selectedUserIds.has(u.id) ? ' checked' : '') + ' />' +
                     avatar +
                     '<span class="dl-editor__user-info">' +
                     '<span class="dl-editor__user-name">' + escapeHtml(u.displayName) + '</span>' +
                     '<span class="dl-editor__user-company">' + escapeHtml(u.companyName) + '</span>' +
+                    inListTag +
                     '</span>';
                 var cb = row.querySelector('.dl-user-checkbox');
                 cb.addEventListener('change', function () {

@@ -2260,6 +2260,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="DayAt_LabelRequired" xml:space="preserve">
     <value>Please enter a location for the day.</value>
   </data>
+  <data name="DayAt_CalendarBadge" xml:space="preserve">
+    <value>Day {0}</value>
+  </data>
   <data name="VacationTypeDescription" xml:space="preserve">
     <value>Regular vacation starts at midnight, after-duty vacation starts at 4:00 PM</value>
   </data>
@@ -15632,6 +15635,12 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="DistributionList_SearchUsers" xml:space="preserve">
     <value>Search users...</value>
+  </data>
+  <data name="DistributionList_OtherGroup" xml:space="preserve">
+    <value>No list</value>
+  </data>
+  <data name="DistributionList_InAList" xml:space="preserve">
+    <value>Already in a list</value>
   </data>
   <data name="DistributionList_NoLists" xml:space="preserve">
     <value>No distribution lists yet.</value>

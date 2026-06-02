@@ -500,7 +500,13 @@ public class ShiftCalendarService : IShiftCalendarService
         {
             for (var date = start; date <= end; date = date.AddDays(1))
             {
-                var hasVacation = timeOffRequests.Any(t => t.UserId == userId && t.StartDate <= date && t.EndDate >= date);
+                // Vacation/After render as the palm-tree badge; "Day at [X]" (DayAt) renders as its own
+                // "יום {Label}" badge and must NOT be folded into HasVacation (Issue: day-X showed as vacation).
+                var dayTimeOff = timeOffRequests
+                    .Where(t => t.UserId == userId && t.StartDate <= date && t.EndDate >= date)
+                    .ToList();
+                var hasVacation = dayTimeOff.Any(t => t.Type != TimeOffType.DayAt);
+                var dayAtLabel = dayTimeOff.FirstOrDefault(t => t.Type == TimeOffType.DayAt)?.Label;
 
                 var choreItems = choreLookup[(userId, date)]
                     .Select(c =>
@@ -532,9 +538,9 @@ public class ShiftCalendarService : IShiftCalendarService
                     .Select(s => s.ShiftTypeName)
                     .ToList();
 
-                if (hasVacation || choreItems.Count > 0 || onDutyItems.Count > 0 || otherShifts.Any())
+                if (hasVacation || dayAtLabel != null || choreItems.Count > 0 || onDutyItems.Count > 0 || otherShifts.Any())
                 {
-                    result[(userId, date)] = new FyiOverlayData(hasVacation, choreItems, onDutyItems, otherShifts);
+                    result[(userId, date)] = new FyiOverlayData(hasVacation, choreItems, onDutyItems, otherShifts, dayAtLabel);
                 }
             }
         }

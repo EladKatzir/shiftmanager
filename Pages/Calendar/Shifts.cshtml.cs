@@ -636,6 +636,11 @@ public class ShiftsModel : PageModel
             .Where(c => companyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, c => c.LocalizedName);
 
+        // Tracks every user already placed under a selected list, so the trailing "Other" group can hold
+        // everyone else. The view is a PARTITION of all loaded users (selected lists + Other), not a filter
+        // down to list members — selecting lists divides the calendar, it never hides non-members. (Issue: lists)
+        var placedUserIds = new HashSet<int>();
+
         int sortOrder = 0;
         foreach (var list in lists)
         {
@@ -647,6 +652,9 @@ public class ShiftsModel : PageModel
                 .Select(id => usersById[id])
                 .OrderBy(u => u.DisplayName)
                 .ToList();
+
+            foreach (var m in members)
+                placedUserIds.Add(m.Id);
 
             groups.Add(new ExcelCalendarGroup
             {
@@ -665,6 +673,44 @@ public class ShiftsModel : PageModel
                     Id = $"user-{user.Id}",
                     Label = user.DisplayName,
                     GroupId = groupId,
+                    CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
+                };
+                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
+
+                var userShiftWindows = assignments
+                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
+                    .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
+                    .OrderBy(w => w.start)
+                    .ToList();
+                row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+                rows.Add(row);
+            }
+        }
+
+        // Trailing "Other" section: every loaded user not in any selected list, so the calendar shows ALL
+        // users divided by lists rather than filtering down to list members. Omitted when everyone is listed.
+        var otherUsers = users
+            .Where(u => !placedUserIds.Contains(u.Id))
+            .OrderBy(u => u.DisplayName)
+            .ToList();
+        if (otherUsers.Count > 0)
+        {
+            const string otherGroupId = "dl-other";
+            groups.Add(new ExcelCalendarGroup
+            {
+                Id = otherGroupId,
+                Name = _localizer["DistributionList_OtherGroup"],
+                SortOrder = sortOrder++,
+                MemberCount = otherUsers.Count
+            });
+
+            foreach (var user in otherUsers)
+            {
+                var row = new ExcelCalendarRow
+                {
+                    Id = $"user-{user.Id}",
+                    Label = user.DisplayName,
+                    GroupId = otherGroupId,
                     CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
                 };
                 row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
@@ -1041,6 +1087,7 @@ public class ShiftsModel : PageModel
                 cell.Overlay = new ExcelCalendarOverlay
                 {
                     HasVacation = overlay.HasVacation,
+                    DayAtLabel = overlay.DayAtLabel,
                     HasChore = overlay.HasChore,
                     HasOnDuty = overlay.HasOnDuty,
                     OtherItems = overlay.OtherShifts

@@ -258,7 +258,7 @@ public class OverviewModel : PageModel
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
     }
 
-    private async Task<Dictionary<(int UserId, DateOnly Date), bool>> LoadVacationsAsync()
+    private async Task<Dictionary<(int UserId, DateOnly Date), (bool HasVacation, string? DayAtLabel)>> LoadVacationsAsync()
     {
         // Get approved time-off requests for users in date range
         var userIds = Users.Select(u => u.Id).ToList();
@@ -270,15 +270,22 @@ public class OverviewModel : PageModel
                         t.Status == RequestStatus.Approved)
             .ToListAsync();
 
-        // Expand time-off requests to per-day records
-        var result = new Dictionary<(int UserId, DateOnly Date), bool>();
+        // Expand time-off requests to per-day records. Vacation/After → HasVacation (palm-tree badge);
+        // "Day at [X]" (DayAt) → its own DayAtLabel so it renders as "יום {Label}", never the vacation
+        // symbol (Issue: day-X showed as vacation). Independent flags so a day can carry both if needed.
+        var result = new Dictionary<(int UserId, DateOnly Date), (bool HasVacation, string? DayAtLabel)>();
         foreach (var timeOff in timeOffRequests)
         {
             for (var date = timeOff.StartDate; date <= timeOff.EndDate; date = date.AddDays(1))
             {
                 if (date >= StartDate && date <= EndDate)
                 {
-                    result[(timeOff.UserId, date)] = true;
+                    result.TryGetValue((timeOff.UserId, date), out var existing);
+                    if (timeOff.Type == TimeOffType.DayAt)
+                        existing.DayAtLabel = timeOff.Label;
+                    else
+                        existing.HasVacation = true;
+                    result[(timeOff.UserId, date)] = existing;
                 }
             }
         }
@@ -423,7 +430,7 @@ public class OverviewModel : PageModel
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
         int userId,
-        Dictionary<(int UserId, DateOnly Date), bool> vacations,
+        Dictionary<(int UserId, DateOnly Date), (bool HasVacation, string? DayAtLabel)> vacations,
         Dictionary<(int UserId, DateOnly Date), List<OverviewShiftItem>> shifts,
         Dictionary<(int UserId, DateOnly Date), List<string>> chores,
         Dictionary<(int UserId, DateOnly Date), List<string>> onDuties,
@@ -492,14 +499,17 @@ public class OverviewModel : PageModel
             cell.Assignments = assignments;
 
             // Add overlay data
-            var hasVacationFlag = vacations.TryGetValue(key, out var hasVacation) && hasVacation;
+            vacations.TryGetValue(key, out var timeOff);
+            var hasVacationFlag = timeOff.HasVacation;
+            var dayAtLabel = timeOff.DayAtLabel;
             var hasTextEntries = quickEntries.TryGetValue(key, out var entryTexts) && entryTexts.Count > 0;
 
-            if (hasVacationFlag || hasTextEntries)
+            if (hasVacationFlag || dayAtLabel != null || hasTextEntries)
             {
                 cell.Overlay = new ExcelCalendarOverlay
                 {
-                    HasVacation = hasVacationFlag
+                    HasVacation = hasVacationFlag,
+                    DayAtLabel = dayAtLabel
                 };
 
                 // Cross-visibility: show QuickEntry text entries from Shifts/Chores/OnCall as 📝 badge

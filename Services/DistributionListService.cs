@@ -66,6 +66,22 @@ public class DistributionListService : IDistributionListService
             .FirstOrDefaultAsync();
     }
 
+    public async Task<Dictionary<int, List<string>>> GetMembershipNamesAsync(int moleculeId)
+    {
+        // One flat query of (UserId, ListName) for every membership in the molecule's lists, grouped client-side.
+        var rows = await _db.DistributionListMembers
+            .IgnoreQueryFilters()
+            .Where(m => m.DistributionList.MoleculeId == moleculeId)
+            .Select(m => new { m.UserId, ListName = m.DistributionList.Name })
+            .ToListAsync();
+
+        return rows
+            .GroupBy(r => r.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(r => r.ListName).OrderBy(n => n).ToList());
+    }
+
     public async Task<DistributionListResult> CreateAsync(int actingUserId, int moleculeId, string name, IReadOnlyCollection<int> userIds)
     {
         if (!await CanManageAsync(actingUserId, moleculeId))

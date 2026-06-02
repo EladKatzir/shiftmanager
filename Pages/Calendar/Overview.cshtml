@@ -146,7 +146,11 @@
         @* Note editing modal *@
         @if (Model.CanEditNotes)
         {
-            <div id="noteModal" class="modal" role="dialog" aria-labelledby="noteModalTitle" aria-modal="true" hidden>
+            @* Uses the .modal--fullscreen-wrapper pattern (backdrop + centered content), shown via the
+               .is-open class — NOT the bare .modal box or the [hidden] attribute. The previous class="modal"
+               + hidden-toggle left the dialog visibility:hidden/opacity:0 at all times, so it was invisible
+               and notes could be neither edited nor deleted. (Issue: notes can't be deleted) *@
+            <div id="noteModal" class="modal--fullscreen-wrapper" role="dialog" aria-labelledby="noteModalTitle" aria-modal="true">
                 <div class="modal__backdrop" onclick="closeNoteModal()"></div>
                 <div class="modal__content modal__content--small">
                     <div class="modal__header">
@@ -302,12 +306,16 @@
             document.getElementById('deleteNoteBtn').hidden = !existingNote;
 
             const modal = document.getElementById('noteModal');
-            modal.hidden = false;
+            // Shown via .is-open (the .modal--fullscreen-wrapper pattern), not the [hidden] attribute —
+            // the component is opacity:0/visibility:hidden until .is-open is added. (Issue: notes can't be deleted)
+            modal.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
             document.getElementById('noteText').focus();
         }
 
         function closeNoteModal() {
-            document.getElementById('noteModal').hidden = true;
+            document.getElementById('noteModal').classList.remove('is-open');
+            document.body.style.overflow = '';
             currentUserId = null;
             currentDate = null;
         }

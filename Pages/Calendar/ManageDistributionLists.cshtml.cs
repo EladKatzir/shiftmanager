@@ -79,13 +79,18 @@ public class ManageDistributionListsModel : PageModel
             .Where(c => companyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, c => c.LocalizedName);
 
+        // Existing list membership per user, so the editor can clearly flag people already in a list.
+        var membershipNames = await _distributionListService.GetMembershipNamesAsync(moleculeId);
+
         var result = users.Select(u => new
         {
             id = u.Id,
             displayName = u.DisplayName,
             companyName = companyNames.GetValueOrDefault(u.CompanyId, ""),
             // Cross-company avatar: use the user's OWN CompanyId path, never the caller's tenant.
-            avatarUrl = string.IsNullOrWhiteSpace(u.AvatarFileName) ? "" : $"/avatars/{u.CompanyId}/{u.Id}_thumb.jpg"
+            avatarUrl = string.IsNullOrWhiteSpace(u.AvatarFileName) ? "" : $"/avatars/{u.CompanyId}/{u.Id}_thumb.jpg",
+            // Names of lists this user already belongs to (empty when none) — drives the "already in a list" tag.
+            lists = membershipNames.GetValueOrDefault(u.Id) ?? new List<string>()
         });
 
         return new JsonResult(new { ok = true, users = result });

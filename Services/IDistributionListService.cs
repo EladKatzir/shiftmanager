@@ -44,6 +44,12 @@ public interface IDistributionListService
     /// <summary>One list's detail for the edit modal, or null if it does not belong to the molecule.</summary>
     Task<DistributionListDetail?> GetListDetailAsync(int listId, int moleculeId);
 
+    /// <summary>
+    /// For the editor's member picker: maps each molecule user already in ≥1 list to that list's name(s).
+    /// Lets the create/edit modal clearly flag users who are already assigned elsewhere. Users in no list are absent.
+    /// </summary>
+    Task<Dictionary<int, List<string>>> GetMembershipNamesAsync(int moleculeId);
+
     /// <summary>Create a list in the given molecule. Re-checks the caller's grant and validates members/name.</summary>
     Task<DistributionListResult> CreateAsync(int actingUserId, int moleculeId, string name, IReadOnlyCollection<int> userIds);
 

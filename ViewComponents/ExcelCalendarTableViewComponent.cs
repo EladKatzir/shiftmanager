@@ -105,6 +105,9 @@ public class ExcelCalendarAssignment
 public class ExcelCalendarOverlay
 {
     public bool HasVacation { get; set; }
+    // "Day at [X]" time-off label (TimeOffType.DayAt). Non-null → render as a "יום {Label}" badge
+    // instead of the vacation palm-tree. (Issue: day-X rendered as vacation symbol)
+    public string? DayAtLabel { get; set; }
     public bool HasChore { get; set; }
     public bool HasOnDuty { get; set; }
     public bool HasTextEntry { get; set; }
