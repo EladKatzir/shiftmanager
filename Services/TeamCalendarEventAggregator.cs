@@ -167,6 +167,33 @@ public class TeamCalendarEventAggregator
             }
         }
 
+        // Handle "Day at [X]" (Issue 4): same date window as Vacation, but render the free-text label
+        // as "{X} day" / "יום {X}". Reuses the Vacation partial-day logic for full-day vs 1PM extension.
+        if (vacation.Type == TimeOffType.DayAt)
+        {
+            var dayAtLabel = BuildDayAtLabel(vacation.Label);
+            return GetVacationPartialType(date, vacation) switch
+            {
+                VacationPartialType.FullDay => new DayStatus
+                {
+                    Type = DayStatusType.Vacation,
+                    Label = dayAtLabel,
+                    TimeRange = null,
+                    Metadata = "DayAt",
+                    TargetUrl = "/Admin/TimeOff"
+                },
+                VacationPartialType.ExtensionUntil1PM => new DayStatus
+                {
+                    Type = DayStatusType.VacationPartial,
+                    Label = dayAtLabel,
+                    TimeRange = "Until 13:00",
+                    Metadata = "DayAt",
+                    TargetUrl = "/Admin/TimeOff"
+                },
+                _ => null
+            };
+        }
+
         // Handle Vacation type
         var vacationPartialType = GetVacationPartialType(date, vacation);
 
@@ -195,6 +222,19 @@ public class TeamCalendarEventAggregator
             default:
                 return null;
         }
+    }
+
+    /// <summary>
+    /// Builds the calendar label for a "Day at [X]" request: "{X} day" (English) / "יום {X}" (Hebrew).
+    /// Culture-aware via CurrentUICulture (set per-request). Falls back to a bare "Day"/"יום" if no label.
+    /// The free-text portion (X) is user-supplied and intentionally not localized.
+    /// </summary>
+    private static string BuildDayAtLabel(string? label)
+    {
+        var x = (label ?? string.Empty).Trim();
+        var isHe = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "he";
+        if (string.IsNullOrEmpty(x)) return isHe ? "יום" : "Day";
+        return isHe ? $"יום {x}" : $"{x} day";
     }
 
     /// <summary>
@@ -440,7 +480,8 @@ public class TeamCalendarEventAggregator
                 UserId = t.UserId,
                 StartDate = t.StartDate,
                 EndDate = t.EndDate,
-                Type = t.Type
+                Type = t.Type,
+                Label = t.Label
             })
             .ToListAsync();
     }
@@ -538,6 +579,7 @@ public class VacationEvent
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
     public TimeOffType Type { get; set; }
+    public string? Label { get; set; } // free-text location for DayAt requests (Issue 4)
 }
 
 public class ShiftEvent

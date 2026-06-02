@@ -76,8 +76,16 @@ public class GrantService : IGrantService
             .FirstOrDefaultAsync();
         if (targetUser == null) return false;
 
-        // Non-self writes require an actual assign grant — Employees/Trainees (note-only tier)
-        // can only write on their own row. EditOnCallCalendar (grant 131) is explicitly NOT
+        // Note tier (Issue 3): WriteOverviewNotes is molecule-scoped for every molecule member, so a
+        // holder may annotate any user whose company falls within the grant's RESOLVED scope. The
+        // grant scope stays the single source of truth — a company-scoped note grant still reaches
+        // only its own company; a molecule/area/project-expanded grant reaches correspondingly wider.
+        // This is what lets all molecule members write free-text on any calendar within their molecule.
+        var noteScopeCompanies = await GetAccessibleCompanyIdsForGrantAsync(callerId, "WriteOverviewNotes");
+        if (noteScopeCompanies.Contains(targetUser.CompanyId)) return true;
+
+        // Manager tier: an actual assign grant can extend reach beyond the note scope (e.g. an
+        // AreaAdmin's area-wide assign grants). EditOnCallCalendar (grant 131) is explicitly NOT
         // counted here: it's a scoped on-call editing grant, not a general note-write elevator.
         if (!await HasAnyAssignGrantAsync(callerId)) return false;
 

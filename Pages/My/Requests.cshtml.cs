@@ -222,6 +222,16 @@ public partial class RequestsModel : LocalizedPageModel
                 TimeOffRequest.EndDate = TimeOffRequest.StartDate;
             }
 
+            // "Day at [X]" (Issue 4): a single day at a free-text location. Force single-day and require the label.
+            if (TimeOffRequest.Type == TimeOffType.DayAt)
+            {
+                TimeOffRequest.EndDate = TimeOffRequest.StartDate;
+                if (string.IsNullOrWhiteSpace(TimeOffRequest.Label))
+                {
+                    ModelState.AddModelError("TimeOffRequest.Label", _localizer["DayAt_LabelRequired"]);
+                }
+            }
+
             // Custom validation for date range (only for regular vacation)
             if (TimeOffRequest.Type == TimeOffType.Vacation && TimeOffRequest.EndDate < TimeOffRequest.StartDate)
             {
@@ -280,6 +290,7 @@ public partial class RequestsModel : LocalizedPageModel
                 StartDate = TimeOffRequest.StartDate,
                 EndDate = TimeOffRequest.EndDate,
                 Type = TimeOffRequest.Type,
+                Label = TimeOffRequest.Type == TimeOffType.DayAt ? TimeOffRequest.Label?.Trim() : null, // Issue 4
                 Reason = TimeOffRequest.Reason,
                 ApproverId = TimeOffRequest.ApproverId > 0 ? TimeOffRequest.ApproverId : null,
                 Private = TimeOffRequest.Private,
@@ -460,6 +471,10 @@ public partial class RequestsModel : LocalizedPageModel
 
         [Required]
         public TimeOffType Type { get; set; } = TimeOffType.Vacation;
+
+        /// <summary>Free-text location for a "Day at [X]" request (Type == DayAt). Issue 4.</summary>
+        [StringLength(50)]
+        public string? Label { get; set; }
 
         [StringLength(500)]
         public string Reason { get; set; } = "";

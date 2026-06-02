@@ -243,7 +243,13 @@ public class OverviewModel : PageModel
             StartDate = StartDate,
             EndDate = EndDate,
             ViewMode = ViewMode,
-            IsReadOnly = true, // Overview is always read-only for assignments
+            // Issue 7: Overview is no longer hard-locked to view-only. It stays read-only for
+            // ASSIGNMENTS (assignment slash-menu is gated by data-can-assign / CanEdit elsewhere and
+            // never enabled here), but note / free-text editing is opened to anyone who holds
+            // WriteOverviewNotes — Molecule Admins, קב"ר, and (Issue 3) every molecule member. Driving
+            // IsReadOnly from the same note-edit grant removes the misleading "view only" banner and
+            // makes the cells interactive for those roles instead of inert.
+            IsReadOnly = !CanEditNotes,
             CalendarType = "overview",
             Rows = rows
         };

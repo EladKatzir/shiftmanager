@@ -262,11 +262,21 @@
                 var checkboxes = document.querySelectorAll('#quickInfoConfigBody input[data-section-type]');
                 for (var i = 0; i < checkboxes.length; i++) {
                     var cb = checkboxes[i];
+                    var sectionType = parseInt(cb.getAttribute('data-section-type'), 10);
+                    var entityId = parseInt(cb.getAttribute('data-entity-id'), 10);
+
+                    // A row may own a nested "show backup" sub-toggle (primary-Hakam row only).
+                    var showBackup = false;
+                    var backupCb = document.querySelector(
+                        '#quickInfoConfigBody input[data-backup-for="' + sectionType + '-' + entityId + '"]');
+                    if (backupCb) showBackup = backupCb.checked;
+
                     items.push({
-                        sectionType: parseInt(cb.getAttribute('data-section-type'), 10),
-                        entityId: parseInt(cb.getAttribute('data-entity-id'), 10),
+                        sectionType: sectionType,
+                        entityId: entityId,
                         displayOrder: order++,
-                        isEnabled: cb.checked
+                        isEnabled: cb.checked,
+                        showBackup: showBackup
                     });
                 }
 
@@ -299,12 +309,14 @@
             var body = document.getElementById('quickInfoConfigBody');
             var html = '';
 
-            // Build lookup of enabled items: key = "sectionType-entityId"
+            // Build lookups keyed by "sectionType-entityId"
             var enabledMap = {};
+            var showBackupMap = {};
             if (data.items) {
                 for (var i = 0; i < data.items.length; i++) {
                     var item = data.items[i];
                     enabledMap[item.sectionType + '-' + item.entityId] = item.isEnabled;
+                    showBackupMap[item.sectionType + '-' + item.entityId] = !!item.showBackup;
                 }
             }
 
@@ -326,6 +338,19 @@
                     if (dt.icon) html += dt.icon + ' ';
                     html += escapeHtml(dt.name);
                     html += '</span></label>';
+
+                    // Primary-Hakam row owns a nested "show backup Hakam" sub-toggle.
+                    if (dt.supportsBackup) {
+                        var backupChecked = showBackupMap.hasOwnProperty(dtKey) ? showBackupMap[dtKey] : false;
+                        var backupId = 'qi-duty-' + dt.entityId + '-backup';
+                        html += '<label class="form-check" style="margin-bottom: var(--space-2); margin-inline-start: var(--space-5);">';
+                        html += '<input type="checkbox" class="form-check__input" id="' + backupId + '"';
+                        html += ' data-backup-for="' + dt.sectionType + '-' + dt.entityId + '"';
+                        if (backupChecked) html += ' checked';
+                        html += '>';
+                        html += '<span class="form-check__label">@Localizer["Widget_ShowBackup"]</span>';
+                        html += '</label>';
+                    }
                 }
                 html += '</div>';
             }

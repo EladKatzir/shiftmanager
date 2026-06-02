@@ -722,6 +722,17 @@
         drawer = document.querySelector('[data-justice-drawer]');
         if (!trigger || !drawer) return;
 
+        // Portal the drawer to <body>. The partial renders it inside .cal-toolbar, which is
+        // position:sticky with z-index:var(--z-sticky) (1020) — a stacking context. A position:fixed
+        // descendant has its z-index resolved WITHIN that context, so the drawer's z-index:1100 was
+        // capped at the toolbar's 1020 slot and the sticky calendar header (1022, in the sibling
+        // .excel-calendar context) painted over it. Re-parenting to <body> puts the drawer in the
+        // root stacking context where its 1100 dominates as intended. Same pattern as the tooltip
+        // portal in site.js. Idempotent across the calendar's in-place grid refreshes.
+        if (drawer.parentElement !== document.body) {
+            document.body.appendChild(drawer);
+        }
+
         endpoint = trigger.getAttribute('data-justice-endpoint');
         calendarKind = trigger.getAttribute('data-justice-kind');
 

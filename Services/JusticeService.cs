@@ -292,7 +292,7 @@ public class JusticeService : IJusticeService
 
         var companies = await _db.Companies
             .IgnoreQueryFilters() // SECURITY: Justice viewer may span tenants (Owner/AreaAdmin); scope-gated upstream.
-            .Where(c => c.MoleculeId == moleculeId)
+            .Where(c => c.MoleculeId == moleculeId && !c.IsHeadquarters) // HQ companies are excluded from justice tables (Issue 12)
             .Select(c => new { c.Id, c.Name })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -362,7 +362,7 @@ public class JusticeService : IJusticeService
         // Companies grouped by their molecule, so we can sum work per molecule via company list.
         var companiesByMolecule = await _db.Companies
             .IgnoreQueryFilters()
-            .Where(c => c.MoleculeId != null && moleculeIds.Contains(c.MoleculeId.Value))
+            .Where(c => c.MoleculeId != null && moleculeIds.Contains(c.MoleculeId.Value) && !c.IsHeadquarters) // exclude HQ from area rollup (Issue 12)
             .Select(c => new { c.Id, MoleculeId = c.MoleculeId!.Value })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -423,7 +423,7 @@ public class JusticeService : IJusticeService
         // scope-gated upstream via IGrantService.GetAccessibleCompanyIdsForGrantAsync.
         var companies = await _db.Companies
             .IgnoreQueryFilters()
-            .Where(c => c.MoleculeId == moleculeId)
+            .Where(c => c.MoleculeId == moleculeId && !c.IsHeadquarters) // exclude HQ companies (Issue 12)
             .Select(c => new { c.Id, c.Name })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -692,7 +692,7 @@ public class JusticeService : IJusticeService
                 return new Dictionary<int, List<decimal>>();
             var companiesInMolecule = await _db.Companies
                 .IgnoreQueryFilters()
-                .Where(c => c.MoleculeId == baseQuery.ScopeId.Value)
+                .Where(c => c.MoleculeId == baseQuery.ScopeId.Value && !c.IsHeadquarters) // exclude HQ from spread row-keys (Issue 12)
                 .Select(c => c.Id)
                 .ToListAsync(ct);
             rowKeys = companiesInMolecule.ToHashSet();
@@ -1394,12 +1394,13 @@ public class JusticeService : IJusticeService
             JusticeScope.Company => new[] { q.ScopeId.Value },
             JusticeScope.Molecule => await _db.Companies
                 .IgnoreQueryFilters()
-                .Where(c => c.MoleculeId == q.ScopeId.Value)
+                .Where(c => c.MoleculeId == q.ScopeId.Value && !c.IsHeadquarters) // exclude HQ work from counts (Issue 12)
                 .Select(c => c.Id)
                 .ToArrayAsync(ct),
             JusticeScope.Area => await _db.Companies
                 .IgnoreQueryFilters()
                 .Where(c => c.MoleculeId != null
+                            && !c.IsHeadquarters // exclude HQ work from counts (Issue 12)
                             && _db.Molecules.IgnoreQueryFilters()
                                   .Any(m => m.Id == c.MoleculeId && m.AreaId == q.ScopeId.Value))
                 .Select(c => c.Id)

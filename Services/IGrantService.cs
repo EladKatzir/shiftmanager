@@ -26,8 +26,11 @@ public interface IGrantService
 
     /// <summary>
     /// Verifies note-writing access to the target user's company.
-    /// Manager tier (any assign grant) → accessible-company set from assign grants (may be cross-company within molecule).
-    /// Note-only tier (WriteOverviewNotes alone) → caller's own company only.
+    /// Note tier (WriteOverviewNotes) → the grant's resolved accessible-company set. Molecule members
+    ///   hold it at molecule scope (Issue 3), so they reach any company in their molecule; a purely
+    ///   company-scoped note grant reaches only its own company.
+    /// Manager tier (any assign grant) → additionally the accessible-company set from assign grants
+    ///   (can extend beyond the note scope, e.g. an AreaAdmin's area-wide reach).
     /// Self-target (callerId == targetUserId) always allowed.
     /// </summary>
     Task<bool> CanReachUserForNoteAsync(int callerId, int targetUserId);

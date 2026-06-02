@@ -196,7 +196,12 @@ public class IndexModel : PageModel
         foreach (var vacation in vacations)
         {
             var days = (vacation.EndDate.DayNumber - vacation.StartDate.DayNumber) + 1;
-            var typeLabel = vacation.Type == TimeOffType.Vacation ? "Vacation" : "After";
+            var typeLabel = vacation.Type switch
+            {
+                TimeOffType.Vacation => "Vacation",
+                TimeOffType.DayAt => string.IsNullOrWhiteSpace(vacation.Label) ? "Day" : $"{vacation.Label.Trim()} day", // Issue 4
+                _ => "After"
+            };
             var metadata = days == 1 ? "1 day" : $"{days} days";
 
             items.Add(new TimelineItem(

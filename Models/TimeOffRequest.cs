@@ -14,6 +14,12 @@ public class TimeOffRequest : IBelongsToCompany
     public DateOnly EndDate { get; set; }
     public TimeOffType Type { get; set; } = TimeOffType.Vacation;
     public string? Reason { get; set; }
+
+    /// <summary>
+    /// Free-text location/activity for a "Day at [X]" request (Type == DayAt) — e.g. "beach".
+    /// Rendered on the calendar as "{Label} day" / "יום {Label}". Null for Vacation/After. (Issue 4)
+    /// </summary>
+    public string? Label { get; set; }
     public RequestStatus Status { get; set; } = RequestStatus.Pending;
 
     /// <summary>
@@ -60,6 +66,7 @@ public class TimeOffRequest : IBelongsToCompany
         {
             TimeOffType.Vacation => StartDate.ToDateTime(TimeOnly.MinValue),
             TimeOffType.After => StartDate.ToDateTime(new TimeOnly(16, 0)),
+            TimeOffType.DayAt => StartDate.ToDateTime(TimeOnly.MinValue), // same full-day window as Vacation (Issue 4)
             _ => StartDate.ToDateTime(TimeOnly.MinValue)
         };
     }
@@ -75,6 +82,7 @@ public class TimeOffRequest : IBelongsToCompany
         {
             TimeOffType.Vacation => EndDate.AddDays(1).ToDateTime(new TimeOnly(13, 0)),
             TimeOffType.After => StartDate.AddDays(1).ToDateTime(new TimeOnly(13, 0)),
+            TimeOffType.DayAt => EndDate.AddDays(1).ToDateTime(new TimeOnly(13, 0)), // same full-day window as Vacation (Issue 4)
             _ => EndDate.ToDateTime(new TimeOnly(23, 59, 59))
         };
     }

@@ -45,9 +45,17 @@
                             <select asp-for="TimeOffRequest.Type" id="vacationType" class="form-select">
                                 <option value="0">@Localizer["RegularVacation"]</option>
                                 <option value="1">@Localizer["AfterDutyVacation"]</option>
+                                <option value="2">@Localizer["DayAtVacation"]</option>
                             </select>
                             <span asp-validation-for="TimeOffRequest.Type" class="validation-error"></span>
                             <p class="form-hint"><loc key="VacationTypeDescription" /></p>
+                        </div>
+
+                        @* "Day at [X]" free-text location — shown only when DayAt is selected (Issue 4) *@
+                        <div class="form-group" id="dayAtLabelContainer" style="display:none;">
+                            <label asp-for="TimeOffRequest.Label" class="form-label"><loc key="DayAt_LabelField" /></label>
+                            <input asp-for="TimeOffRequest.Label" id="dayAtLabel" type="text" class="form-input" maxlength="50" placeholder="@Localizer["DayAt_LabelPlaceholder"]" />
+                            <span asp-validation-for="TimeOffRequest.Label" class="validation-error"></span>
                         </div>
 
                         <div class="form-row">
@@ -653,19 +661,22 @@
         document.addEventListener('DOMContentLoaded', function() {
             const vacationType = document.getElementById('vacationType');
             const endDateContainer = document.getElementById('endDateContainer');
+            const dayAtLabelContainer = document.getElementById('dayAtLabelContainer');
 
-            if (vacationType && endDateContainer) {
-                // Toggle end date visibility based on vacation type
-                function toggleEndDate() {
-                    if (vacationType.value === '1') { // AfterDutyVacation (single day)
-                        endDateContainer.style.display = 'none';
-                    } else {
-                        endDateContainer.style.display = 'block';
+            if (vacationType) {
+                // After ('1') and Day-at ('2') are single-day → hide end date; Day-at also shows the free-text location.
+                function toggleFields() {
+                    const v = vacationType.value;
+                    if (endDateContainer) {
+                        endDateContainer.style.display = (v === '1' || v === '2') ? 'none' : 'block';
+                    }
+                    if (dayAtLabelContainer) {
+                        dayAtLabelContainer.style.display = (v === '2') ? 'block' : 'none';
                     }
                 }
 
-                vacationType.addEventListener('change', toggleEndDate);
-                toggleEndDate(); // Initialize on page load
+                vacationType.addEventListener('change', toggleFields);
+                toggleFields(); // Initialize on page load
             }
         });
     </script>

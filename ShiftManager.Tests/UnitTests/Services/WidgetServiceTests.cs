@@ -344,6 +344,79 @@ public class WidgetServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task BuildOnCallWidgetAsync_MoleculeBased_ShowBackup_AddsBackupContactUnderHakam()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        // Primary-Hakam section with ShowBackup ON.
+        _configServiceMock.Setup(c => c.HasConfigAsync(1)).ReturnsAsync(true);
+        _configServiceMock.Setup(c => c.GetConfigForMoleculeAsync(1)).ReturnsAsync(new List<QuickInfoConfig>
+        {
+            new QuickInfoConfig
+            {
+                Id = 1, MoleculeId = 1, SectionType = QuickInfoSectionType.OnCallRole,
+                EntityId = 0, DisplayOrder = 0, IsEnabled = true, ShowBackup = true
+            }
+        });
+        // The configured backup type is TypeValue 2.
+        _configServiceMock.Setup(c => c.GetBackupHakamTypeValueAsync()).ReturnsAsync(2);
+
+        _db.OnDutyTypeConfigs.Add(new OnDutyTypeConfig
+        {
+            Id = 1, TypeValue = 2, NameEn = "Backup-hakam", NameHe = "חקם רזרבה", IsActive = true
+        });
+
+        _db.Users.AddRange(
+            new AppUser { Id = 10, Email = "primary@test.com", DisplayName = "Primary Hakam", CompanyId = 1, IsActive = true, Role = UserRole.Employee, Phone = "050-1111111" },
+            new AppUser { Id = 11, Email = "backup@test.com", DisplayName = "Backup Hakam", CompanyId = 1, IsActive = true, Role = UserRole.Employee, Phone = "050-2222222" }
+        );
+        _db.OnDuties.AddRange(
+            new OnDuty { Id = 1, UserId = 10, Date = today, Type = OnDutyType.Hakam },
+            new OnDuty { Id = 2, UserId = 11, Date = today, Type = (OnDutyType)2 } // backup type value
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.BuildOnCallWidgetAsync(1, currentCompanyId: 1, moleculeId: 1);
+
+        // Both primary and backup render under the Hakam slot.
+        result.Contacts.Should().HaveCount(2);
+        result.Contacts[0].UserId.Should().Be(10);
+        result.Contacts[0].Name.Should().Be("Primary Hakam");
+        result.Contacts[0].Role.Should().Be("Hakam");
+        result.Contacts[1].UserId.Should().Be(11);
+        result.Contacts[1].Name.Should().Be("Backup Hakam");
+        result.Contacts[1].Role.Should().Be("Backup-hakam");
+    }
+
+    [Fact]
+    public async Task BuildOnCallWidgetAsync_MoleculeBased_PrimaryHakam_ShowBackupOff_PrimaryOnly()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        _configServiceMock.Setup(c => c.HasConfigAsync(1)).ReturnsAsync(true);
+        _configServiceMock.Setup(c => c.GetConfigForMoleculeAsync(1)).ReturnsAsync(new List<QuickInfoConfig>
+        {
+            new QuickInfoConfig
+            {
+                Id = 1, MoleculeId = 1, SectionType = QuickInfoSectionType.OnCallRole,
+                EntityId = 0, DisplayOrder = 0, IsEnabled = true, ShowBackup = false
+            }
+        });
+
+        _db.Users.Add(new AppUser { Id = 10, Email = "primary@test.com", DisplayName = "Primary Hakam", CompanyId = 1, IsActive = true, Role = UserRole.Employee });
+        _db.OnDuties.Add(new OnDuty { Id = 1, UserId = 10, Date = today, Type = OnDutyType.Hakam });
+        await _db.SaveChangesAsync();
+
+        var result = await _service.BuildOnCallWidgetAsync(1, currentCompanyId: 1, moleculeId: 1);
+
+        // ShowBackup off → only the primary, and the backup resolver is never consulted.
+        result.Contacts.Should().HaveCount(1);
+        result.Contacts[0].UserId.Should().Be(10);
+        result.Contacts[0].Role.Should().Be("Hakam");
+        _configServiceMock.Verify(c => c.GetBackupHakamTypeValueAsync(), Times.Never);
+    }
+
+    [Fact]
     public async Task BuildOnCallWidgetAsync_MoleculeBased_NoConfig_UsesDefaults()
     {
         _configServiceMock.Setup(c => c.HasConfigAsync(1)).ReturnsAsync(false);

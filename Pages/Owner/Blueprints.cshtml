@@ -59,16 +59,25 @@
     @* Inline alerts removed - feedback now flows through the unified _Layout.cshtml bridge *@
 
     @* MIGRATION HELPER: Populate NameKeys (one-time after OpsConsoleScheduler migration) *@
-    @if (Model.ShiftTypes.Any(st => string.IsNullOrWhiteSpace(st.NameKey)))
+    @if (Model.MissingNameKeyShifts.Any())
     {
-        <div class="alert alert-warning">
+        <div class="alert alert-warning namekey-banner" id="missingNameKeyBanner" data-banner="namekeys">
+            <button type="button" class="namekey-banner__dismiss" onclick="dismissNameKeyBanner()"
+                    title="@Localizer["Blueprints_Dismiss"]" aria-label="@Localizer["Blueprints_Dismiss"]">&times;</button>
             <strong>@Localizer["Blueprints_MigrationRequired"]</strong>
             @Localizer["Blueprints_MigrationDesc"]
-            <form method="post" asp-page-handler="PopulateNameKeys" style="display: inline;">
-                <button type="submit" class="btn btn-sm btn-warning" style="margin-inline-start: 10px;">
-                    <icon name="settings" /> <loc key="Blueprints_PopulateNameKeys" />
-                </button>
-            </form>
+            <div class="namekey-banner__list">
+                <span class="namekey-banner__list-label">@Localizer["Blueprints_MissingNameKeysLabel"]</span>
+                <ul>
+                    @foreach (var st in Model.MissingNameKeyShifts)
+                    {
+                        <li><code>@st.Key</code></li>
+                    }
+                </ul>
+            </div>
+            <button type="button" class="btn btn-sm btn-warning" onclick="openAddNameKeysModal()" style="margin-top: 8px;">
+                <icon name="settings" /> <loc key="Blueprints_PopulateNameKeys" />
+            </button>
         </div>
     }
 
@@ -321,6 +330,31 @@
     </div>
 </div>
 
+@* Add Name Keys Modal (inline replacement for the old PopulateNameKeys redirect) *@
+<div id="addNameKeysModal" class="blueprint-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="addNameKeysTitle">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="addNameKeysTitle"><loc key="Blueprints_AddNameKeysTitle">Add Name Keys</loc></h3>
+                <button type="button" class="close-modal" onclick="closeAddNameKeysModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>@Localizer["Blueprints_AddNameKeysDesc"]</p>
+                <ul class="namekey-preview">
+                    @foreach (var st in Model.MissingNameKeyShifts)
+                    {
+                        <li><code>@st.Key</code> &rarr; <code>ShiftType_@(st.Key)_Name</code></li>
+                    }
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeAddNameKeysModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                <button type="button" class="btn btn-primary" id="addNameKeysConfirm" onclick="confirmAddNameKeys()"><loc key="Blueprints_AddNameKeysConfirm">Add Name Keys</loc></button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @* Edit Time Modal *@
 <div id="editTimeModal" class="blueprint-modal" style="display: none;">
     <div class="modal-dialog">
@@ -448,6 +482,84 @@
                 }
             });
         }
+
+        // --- Missing NameKey banner + inline "Add Name Keys" modal ---
+        const NAMEKEY_BANNER_DISMISS_KEY = 'blueprints-namekey-banner-dismissed';
+
+        function dismissNameKeyBanner() {
+            const banner = document.getElementById('missingNameKeyBanner');
+            if (banner) banner.style.display = 'none';
+            try { sessionStorage.setItem(NAMEKEY_BANNER_DISMISS_KEY, '1'); } catch (e) { /* private mode */ }
+        }
+        window.dismissNameKeyBanner = dismissNameKeyBanner;
+
+        // Honor a prior dismissal for this session.
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                if (sessionStorage.getItem(NAMEKEY_BANNER_DISMISS_KEY) === '1') {
+                    const banner = document.getElementById('missingNameKeyBanner');
+                    if (banner) banner.style.display = 'none';
+                }
+            } catch (e) { /* private mode */ }
+        });
+
+        function openAddNameKeysModal() {
+            const m = document.getElementById('addNameKeysModal');
+            if (!m) return;
+            m.style.display = 'flex';
+            m.classList.add('is-open');
+        }
+        window.openAddNameKeysModal = openAddNameKeysModal;
+
+        function closeAddNameKeysModal() {
+            const m = document.getElementById('addNameKeysModal');
+            if (!m) return;
+            m.classList.remove('is-open');
+            m.style.display = 'none';
+        }
+        window.closeAddNameKeysModal = closeAddNameKeysModal;
+
+        async function confirmAddNameKeys() {
+            const btn = document.getElementById('addNameKeysConfirm');
+            if (btn) btn.disabled = true;
+            try {
+                const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                const response = await fetch('/Owner/Blueprints?handler=AddNamekeys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': tokenInput ? tokenInput.value : ''
+                    }
+                });
+
+                let result = null;
+                try { result = await response.json(); } catch (e) { /* non-JSON body */ }
+
+                if (response.ok && result && result.success) {
+                    closeAddNameKeysModal();
+                    location.reload();
+                    return;
+                }
+                const serverError = result && result.error ? result.error : null;
+                window.FeedbackModal.show('error', serverError || '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+            } catch (err) {
+                console.error('Failed to add name keys', err);
+                window.FeedbackModal.show('error', '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+        window.confirmAddNameKeys = confirmAddNameKeys;
+
+        // Backdrop click closes the add-name-keys modal (only present when there are missing keys).
+        (function () {
+            const m = document.getElementById('addNameKeysModal');
+            if (m) {
+                m.addEventListener('click', function (e) {
+                    if (e.target === this) closeAddNameKeysModal();
+                });
+            }
+        })();
 
         // Edit Name Modal
         document.querySelectorAll('.edit-name-btn').forEach(btn => {
@@ -898,5 +1010,46 @@
 
     .close-modal:hover {
         color: var(--text);
+    }
+
+    .namekey-banner {
+        position: relative;
+    }
+
+    .namekey-banner__dismiss {
+        position: absolute;
+        top: 8px;
+        inset-inline-end: 10px;
+        background: none;
+        border: none;
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--text-muted);
+    }
+
+    .namekey-banner__dismiss:hover {
+        color: var(--text);
+    }
+
+    .namekey-banner__list {
+        margin: 8px 0;
+    }
+
+    .namekey-banner__list-label {
+        font-weight: 600;
+    }
+
+    .namekey-banner__list ul,
+    .namekey-preview {
+        margin: 4px 0 0;
+        padding-inline-start: 1.25rem;
+    }
+
+    .namekey-banner__list code,
+    .namekey-preview code {
+        background: var(--surface-soft);
+        padding: 1px 5px;
+        border-radius: 3px;
     }
 </style>

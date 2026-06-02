@@ -58,7 +58,9 @@ public enum JoinRequestStatus
 public enum TimeOffType
 {
     Vacation = 0,  // Full vacation: StartDate 00:00 to EndDate+1 13:00
-    After = 1      // Half day: StartDate 16:00 to StartDate+1 13:00
+    After = 1,     // Half day: StartDate 16:00 to StartDate+1 13:00
+    DayAt = 2      // "Day at [X]" — free-text location in TimeOffRequest.Label. Same date window + approval
+                   // flow as Vacation, but tracked separately and NOT counted against the vacation quota (Issue 4)
 }
 
 /// <summary>

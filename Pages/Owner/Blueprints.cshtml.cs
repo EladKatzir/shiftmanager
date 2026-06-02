@@ -52,6 +52,13 @@ public class BlueprintsModel : PageModel
     }
 
     public List<ShiftType> ShiftTypes { get; set; } = new();
+
+    /// <summary>
+    /// Shift types (within the current molecule view) whose NameKey is missing. Surfaced so the
+    /// banner can list exactly which items are affected and the inline "Add name keys" modal can
+    /// preview the keys that will be assigned.
+    /// </summary>
+    public List<ShiftType> MissingNameKeyShifts { get; set; } = new();
     // Success / Error properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
 
     // Molecule selector
@@ -121,6 +128,11 @@ public class BlueprintsModel : PageModel
             .OrderByDescending(st => (int)st.Scope) // Area(2) first, Molecule(1), Company(0)
             .ThenBy(st => st.SortOrder)
             .ThenBy(st => st.Start)
+            .ToList();
+
+        // Items missing a NameKey — drives the banner list + the inline add-keys modal preview.
+        MissingNameKeyShifts = ShiftTypes
+            .Where(st => string.IsNullOrWhiteSpace(st.NameKey))
             .ToList();
 
         // Determine create permissions
@@ -318,6 +330,56 @@ public class BlueprintsModel : PageModel
         {
             _logger.LogError(ex, "Failed to update shift times");
             return new JsonResult(new { success = false, error = "Failed to update shift times" });
+        }
+    }
+
+    /// <summary>
+    /// Inline replacement for the old (broken) "PopulateNameKeys" form handler. Assigns the canonical
+    /// <c>ShiftType_{Key}_Name</c> NameKey to every shift type that is currently missing one — the same
+    /// convention <see cref="OnPostCreateShiftTypeAsync"/> uses for new shift types. Idempotent: a
+    /// shift type that already has a NameKey is left untouched. Returns JSON so the page can stay inline
+    /// (fetch + reload) instead of a full-page redirect.
+    /// </summary>
+    public async Task<IActionResult> OnPostAddNamekeysAsync()
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+
+            // Match the view/banner predicate exactly (IsNullOrWhiteSpace is not reliably SQL-translatable,
+            // and the ShiftTypes table is small) — load then filter in memory.
+            var all = await _db.ShiftTypes.ToListAsync();
+            var missing = all.Where(st => string.IsNullOrWhiteSpace(st.NameKey)).ToList();
+
+            if (missing.Count == 0)
+                return new JsonResult(new { success = true, count = 0 });
+
+            foreach (var st in missing)
+                st.NameKey = $"ShiftType_{st.Key}_Name";
+
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftType");
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            // Invalidate caches for every affected scope so the resolved names refresh.
+            foreach (var st in missing)
+            {
+                if (st.CompanyId.HasValue) _shiftTypeCache.InvalidateCache(st.CompanyId.Value);
+                if (st.MoleculeId.HasValue) _shiftTypeCache.InvalidateMoleculeCache(st.MoleculeId.Value, st.JobTypeId);
+                if (st.AreaId.HasValue) _shiftTypeCache.InvalidateAreaCache(st.AreaId.Value, st.JobTypeId);
+            }
+
+            await _auditLogService.LogAsync("ShiftTypeNameKeysPopulated", "ShiftType", 0,
+                $"Populated NameKey for {missing.Count} shift type(s) missing one.");
+            _logger.LogInformation("Populated NameKeys for {Count} shift types by User {UserId}", missing.Count, userId);
+
+            return new JsonResult(new { success = true, count = missing.Count });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to populate NameKeys");
+            return new JsonResult(new { success = false, error = "Failed to populate name keys" }) { StatusCode = 500 };
         }
     }
 

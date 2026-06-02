@@ -247,7 +247,8 @@ public class VacationApprovalService : IVacationApprovalService
         var threshold = settings?.DualApprovalDayThreshold ?? 7;
 
         var lengthDays = request.EndDate.DayNumber - request.StartDate.DayNumber + 1;
-        bool requiresDual = request.Type == TimeOffType.Vacation && lengthDays > threshold;
+        // DayAt uses the identical approval flow as Vacation (incl. dual-approval threshold) — Issue 4.
+        bool requiresDual = (request.Type == TimeOffType.Vacation || request.Type == TimeOffType.DayAt) && lengthDays > threshold;
 
         // Determine the approver's tier. Tiers are disjoint by RoleTemplate Key.
         // Alhut/Text (JobTypeId 1 or 3) → first=Lead, second=Director (same JobTypeId)
@@ -721,8 +722,8 @@ public class VacationApprovalService : IVacationApprovalService
         {
             await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
 
-            // For vacation cancellations, restore rotation HOME shifts
-            if (request.Type == TimeOffType.Vacation)
+            // For vacation (and DayAt — same flow, Issue 4) cancellations, restore rotation HOME shifts
+            if (request.Type == TimeOffType.Vacation || request.Type == TimeOffType.DayAt)
             {
                 await _materialiser.RestoreRotationHomeAsync(request.UserId, request.StartDate, request.EndDate);
             }

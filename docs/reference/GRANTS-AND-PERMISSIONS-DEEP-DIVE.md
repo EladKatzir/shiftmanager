@@ -471,8 +471,8 @@ A **RoleTemplate** is a named bundle of auto-grants provisioned when a user is a
 
 ### Employee (ID=1)
 - **Scope:** Implicit | **UserRole:** Employee | **SortOrder:** 100
-- **19 grants** (all SAR/company-scoped):
-  - Base: ViewShifts, ViewChores, ViewDuties, ViewVacations, RequestVacation, RequestSwap, ViewCompanyCalendar, ViewCompanyUsers, ViewGrants, ViewHierarchy, WriteOverviewNotes
+- **19 grants** (SAR/company-scoped, **except `WriteOverviewNotes` which is `ExpandToMolecule`** — see note below):
+  - Base: ViewShifts, ViewChores, ViewDuties, ViewVacations, RequestVacation, RequestSwap, ViewCompanyCalendar, ViewCompanyUsers, ViewGrants, ViewHierarchy, `WriteOverviewNotes` *(molecule-scoped: 2026-06-01 Issue #3 "molecule-wide free-text" — overview notes are writable across the whole molecule, not just the writer's company. Every template that holds grant 110 now assigns it at ExpandToMolecule or broader, none at SameAsRole.)*
   - Shift calendars: ViewAlhutShiftCalendar, ViewTextShiftCalendar, ViewBRShiftCalendar, ViewHakamShiftCalendar
   - Eligibility (UseOwnJobType): CanBeAssignedAlhutShifts, CanBeAssignedTextShifts, CanBeAssignedBRShifts, CanBeAssignedHakamShifts
 

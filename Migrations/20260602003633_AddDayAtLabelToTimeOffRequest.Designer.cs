@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShiftManager.Data;
 
@@ -10,9 +11,11 @@ using ShiftManager.Data;
 namespace ShiftManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260602003633_AddDayAtLabelToTimeOffRequest")]
+    partial class AddDayAtLabelToTimeOffRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -2288,9 +2291,6 @@ namespace ShiftManager.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("SectionType")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowBackup")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

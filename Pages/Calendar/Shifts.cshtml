@@ -123,11 +123,15 @@
         @* Row 2: Mode toggles + Filter + Just Mine *@
         <div class="cal-toolbar__controls">
             <div class="cal-toolbar__toggle-group">
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=shift@dlParam"
+                @* @(dlParam) — NOT @dlParam: "Mode=shift@dlParam" trips Razor's email-address heuristic
+                   (alphanumeric@alphanumeric), so @dlParam would render literally and Mode would bind as
+                   "shift@dlParam"/"user@dlParam" — matching neither branch and leaving the calendar stuck on
+                   by-shift. The parenthesised form forces a code transition. (Issue 2) *@
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=shift@(dlParam)"
                    class="btn @(Model.Mode == "shift" ? "btn-primary" : "btn-ghost")">
                     @Localizer["ByShift"]
                 </a>
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=user@dlParam"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=user@(dlParam)"
                    class="btn @(Model.Mode == "user" ? "btn-primary" : "btn-ghost")">
                     @Localizer["ByUser"]
                 </a>

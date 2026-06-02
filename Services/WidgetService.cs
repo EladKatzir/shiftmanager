@@ -104,7 +104,8 @@ public class WidgetService : IWidgetService
                     SectionType = c.SectionType,
                     EntityId = c.EntityId,
                     DisplayOrder = c.DisplayOrder,
-                    IsEnabled = c.IsEnabled
+                    IsEnabled = c.IsEnabled,
+                    ShowBackup = c.ShowBackup
                 })
                 .ToList();
         }
@@ -117,53 +118,38 @@ public class WidgetService : IWidgetService
         {
             if (item.SectionType == QuickInfoSectionType.OnCallRole)
             {
-                // Get duty type display name for the section header
-                var dutyTypeConfig = await _context.OnDutyTypeConfigs
-                    .FirstOrDefaultAsync(dt => dt.TypeValue == item.EntityId);
-                var roleName = dutyTypeConfig != null
-                    ? (isHebrew ? (dutyTypeConfig.NameHe ?? dutyTypeConfig.NameEn) : dutyTypeConfig.NameEn)
-                    : "On-Call";
-
-                // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
-                var onDutyEntry = await _context.OnDuties
-                    .IgnoreQueryFilters()
-                    .Where(od => od.Date == targetDate
-                        && (int)od.Type == item.EntityId
-                        && od.CanceledAt == null)
-                    .Join(
-                        _context.Users.IgnoreQueryFilters().Where(u => u.IsActive),
-                        od => od.UserId,
-                        u => u.Id,
-                        (od, u) => new { u.Id, u.DisplayName, u.Phone, u.Rank, u.AvatarFileName, u.CompanyId })
-                    .FirstOrDefaultAsync();
-
-                if (onDutyEntry != null)
+                if (item.EntityId == QuickInfoConfig.PrimaryHakamEntityId)
                 {
-                    contacts.Add(new ContactInfo
+                    // Built-in primary Hakam (OnDutyType.Hakam == 0) — no OnDutyTypeConfig row exists,
+                    // so the role name is the localized "Hakam" literal (matches GetCurrentHakamAsync).
+                    var primaryName = isHebrew ? "חק\"ם" : "Hakam";
+                    contacts.Add(await BuildOnCallContactAsync(item.EntityId, primaryName, targetDate));
+
+                    // Additive backup: when ShowBackup is on, also render the configured backup type
+                    // (lowest active custom on-duty type) as a second contact under the same heading.
+                    if (item.ShowBackup)
                     {
-                        UserId = onDutyEntry.Id,
-                        Name = onDutyEntry.DisplayName,
-                        Role = roleName,
-                        PhoneNumber = onDutyEntry.Phone ?? "",
-                        AvatarInitial = GetInitial(onDutyEntry.DisplayName),
-                        AvatarUrl = GetThumbnailUrl(onDutyEntry.Id, onDutyEntry.CompanyId, onDutyEntry.AvatarFileName),
-                        ContactType = ContactType.Hakam,
-                        Rank = onDutyEntry.Rank
-                    });
+                        var backupTypeValue = await _configService.GetBackupHakamTypeValueAsync();
+                        if (backupTypeValue.HasValue)
+                        {
+                            var backupConfig = await _context.OnDutyTypeConfigs
+                                .FirstOrDefaultAsync(dt => dt.TypeValue == backupTypeValue.Value);
+                            var backupName = backupConfig != null
+                                ? (isHebrew ? (backupConfig.NameHe ?? backupConfig.NameEn) : backupConfig.NameEn)
+                                : (isHebrew ? "חק\"ם רזרבה" : "Backup-hakam");
+                            contacts.Add(await BuildOnCallContactAsync(backupTypeValue.Value, backupName, targetDate));
+                        }
+                    }
                 }
                 else
                 {
-                    // No one assigned for this role today — show placeholder
-                    contacts.Add(new ContactInfo
-                    {
-                        UserId = 0,
-                        Name = roleName,
-                        Role = roleName,
-                        PhoneNumber = "",
-                        AvatarInitial = "?",
-                        AvatarUrl = null,
-                        ContactType = ContactType.Hakam
-                    });
+                    // Custom on-duty type — display name comes from its OnDutyTypeConfig row.
+                    var dutyTypeConfig = await _context.OnDutyTypeConfigs
+                        .FirstOrDefaultAsync(dt => dt.TypeValue == item.EntityId);
+                    var roleName = dutyTypeConfig != null
+                        ? (isHebrew ? (dutyTypeConfig.NameHe ?? dutyTypeConfig.NameEn) : dutyTypeConfig.NameEn)
+                        : "On-Call";
+                    contacts.Add(await BuildOnCallContactAsync(item.EntityId, roleName, targetDate));
                 }
             }
             else if (item.SectionType == QuickInfoSectionType.Store)
@@ -185,6 +171,55 @@ public class WidgetService : IWidgetService
             IsCollapsed = preferences.OnCallWidgetCollapsed,
             ShowOfficeNumbers = preferences.ShowOfficeNumbers,
             LastUpdated = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Builds a single on-call <see cref="ContactInfo"/> for the given on-duty type value on a date:
+    /// the assigned active user if one exists, otherwise an unassigned placeholder carrying the role
+    /// name. Shared by the primary-Hakam, backup-Hakam, and custom on-duty sections so they render
+    /// identically.
+    /// </summary>
+    private async Task<ContactInfo> BuildOnCallContactAsync(int typeValue, string roleName, DateOnly targetDate)
+    {
+        // Security: IgnoreQueryFilters — on-call contacts are cross-company by design
+        var onDutyEntry = await _context.OnDuties
+            .IgnoreQueryFilters()
+            .Where(od => od.Date == targetDate
+                && (int)od.Type == typeValue
+                && od.CanceledAt == null)
+            .Join(
+                _context.Users.IgnoreQueryFilters().Where(u => u.IsActive),
+                od => od.UserId,
+                u => u.Id,
+                (od, u) => new { u.Id, u.DisplayName, u.Phone, u.Rank, u.AvatarFileName, u.CompanyId })
+            .FirstOrDefaultAsync();
+
+        if (onDutyEntry != null)
+        {
+            return new ContactInfo
+            {
+                UserId = onDutyEntry.Id,
+                Name = onDutyEntry.DisplayName,
+                Role = roleName,
+                PhoneNumber = onDutyEntry.Phone ?? "",
+                AvatarInitial = GetInitial(onDutyEntry.DisplayName),
+                AvatarUrl = GetThumbnailUrl(onDutyEntry.Id, onDutyEntry.CompanyId, onDutyEntry.AvatarFileName),
+                ContactType = ContactType.Hakam,
+                Rank = onDutyEntry.Rank
+            };
+        }
+
+        // No one assigned for this role today — show placeholder
+        return new ContactInfo
+        {
+            UserId = 0,
+            Name = roleName,
+            Role = roleName,
+            PhoneNumber = "",
+            AvatarInitial = "?",
+            AvatarUrl = null,
+            ContactType = ContactType.Hakam
         };
     }
 

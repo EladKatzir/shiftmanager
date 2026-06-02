@@ -64,6 +64,8 @@ public class QuickInfoConfigService : IQuickInfoConfigService
                     EntityId = item.EntityId,
                     DisplayOrder = item.DisplayOrder,
                     IsEnabled = item.IsEnabled,
+                    // ShowBackup only carries meaning on the primary-Hakam section; harmless on others.
+                    ShowBackup = item.ShowBackup,
                     CreatedBy = userId,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -88,7 +90,11 @@ public class QuickInfoConfigService : IQuickInfoConfigService
 
     /// <summary>
     /// Compute default config on-the-fly (NOT persisted).
-    /// Returns OnCallRoles first (from OnDutyTypeConfigs), then Stores for the molecule's area.
+    /// Always begins with the built-in primary-Hakam section (EntityId 0, ShowBackup off) so the
+    /// primary Hakam is visible by default — it has no OnDutyTypeConfig row and was previously
+    /// invisible. Then the remaining active custom on-duty types (excluding any TypeValue 0 row and
+    /// the configured backup type, which is folded into the Hakam section's ShowBackup toggle),
+    /// then Stores for the molecule's area.
     /// </summary>
     public async Task<List<QuickInfoConfigItem>> GetDefaultConfigAsync(int moleculeId)
     {
@@ -107,6 +113,17 @@ public class QuickInfoConfigService : IQuickInfoConfigService
         var items = new List<QuickInfoConfigItem>();
         int order = 0;
 
+        // Always lead with the built-in primary Hakam (OnDutyType.Hakam == 0). It is an enum value
+        // with no OnDutyTypeConfig row, so without this explicit section it never appears.
+        items.Add(new QuickInfoConfigItem
+        {
+            SectionType = QuickInfoSectionType.OnCallRole,
+            EntityId = QuickInfoConfig.PrimaryHakamEntityId,
+            DisplayOrder = order++,
+            IsEnabled = true,
+            ShowBackup = false
+        });
+
         // Get all active OnDutyTypeConfigs (global, no area filter)
         var dutyTypes = await _db.OnDutyTypeConfigs
             .AsNoTracking()
@@ -114,8 +131,17 @@ public class QuickInfoConfigService : IQuickInfoConfigService
             .OrderBy(t => t.TypeValue)
             .ToListAsync();
 
+        // "The configured backup type" is the lowest active custom type (TypeValue > 1). It is surfaced
+        // through the primary-Hakam section's ShowBackup toggle, so it must NOT also appear standalone.
+        var backupTypeValue = dutyTypes.FirstOrDefault(t => t.TypeValue > QuickInfoConfig.PrimaryHakamEntityId + 1)?.TypeValue;
+
         foreach (var dt in dutyTypes)
         {
+            // Skip a TypeValue 0 row (already represented by the prepended primary section) and the
+            // backup type (folded into ShowBackup). Lead (TypeValue 1) and other customs stay standalone.
+            if (dt.TypeValue == QuickInfoConfig.PrimaryHakamEntityId) continue;
+            if (backupTypeValue.HasValue && dt.TypeValue == backupTypeValue.Value) continue;
+
             items.Add(new QuickInfoConfigItem
             {
                 SectionType = QuickInfoSectionType.OnCallRole,
@@ -152,5 +178,18 @@ public class QuickInfoConfigService : IQuickInfoConfigService
     public async Task<bool> HasConfigAsync(int moleculeId)
     {
         return await _db.QuickInfoConfigs.AnyAsync(q => q.MoleculeId == moleculeId);
+    }
+
+    /// <inheritdoc />
+    public async Task<int?> GetBackupHakamTypeValueAsync()
+    {
+        // Lowest active custom on-duty type (TypeValue > 1). By seed convention this is "Backup-hakam"
+        // (TypeValue 2). Nullable so callers can no-op when no custom type exists.
+        return await _db.OnDutyTypeConfigs
+            .AsNoTracking()
+            .Where(t => t.IsActive && t.TypeValue > QuickInfoConfig.PrimaryHakamEntityId + 1)
+            .OrderBy(t => t.TypeValue)
+            .Select(t => (int?)t.TypeValue)
+            .FirstOrDefaultAsync();
     }
 }

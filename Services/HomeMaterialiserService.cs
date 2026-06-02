@@ -83,7 +83,7 @@ public class HomeMaterialiserService : IHomeMaterialiserService
 
         // Vacation supersedes rotation: when an Approved Vacation covers rotation HOME days,
         // delete those rotation rows (§7.3 first half).
-        if (req.Status == RequestStatus.Approved && req.Type == TimeOffType.Vacation)
+        if (req.Status == RequestStatus.Approved && (req.Type == TimeOffType.Vacation || req.Type == TimeOffType.DayAt))
         {
             var rotationToRemove = await _db.ShiftAssignments.IgnoreQueryFilters()
                 .Include(sa => sa.ShiftInstance).ThenInclude(si => si.ShiftType)
@@ -129,7 +129,7 @@ public class HomeMaterialiserService : IHomeMaterialiserService
             rows.Add((req.StartDate, ShiftType.KEY_HOME_PM));
             rows.Add((req.StartDate.AddDays(1), ShiftType.KEY_HOME_AM));
         }
-        else if (req.Type == TimeOffType.Vacation)
+        else if (req.Type == TimeOffType.Vacation || req.Type == TimeOffType.DayAt) // DayAt materialises HOME like Vacation (Issue 4)
         {
             for (var d = req.StartDate; d <= req.EndDate; d = d.AddDays(1))
                 rows.Add((d, ShiftType.KEY_HOME));

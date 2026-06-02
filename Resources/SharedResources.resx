@@ -2248,6 +2248,18 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="AfterDutyVacation" xml:space="preserve">
     <value>After-Duty Vacation</value>
   </data>
+  <data name="DayAtVacation" xml:space="preserve">
+    <value>Day at…</value>
+  </data>
+  <data name="DayAt_LabelField" xml:space="preserve">
+    <value>Location / activity</value>
+  </data>
+  <data name="DayAt_LabelPlaceholder" xml:space="preserve">
+    <value>e.g. beach</value>
+  </data>
+  <data name="DayAt_LabelRequired" xml:space="preserve">
+    <value>Please enter a location for the day.</value>
+  </data>
   <data name="VacationTypeDescription" xml:space="preserve">
     <value>Regular vacation starts at midnight, after-duty vacation starts at 4:00 PM</value>
   </data>
@@ -12057,6 +12069,21 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Blueprints_PopulateNameKeys" xml:space="preserve">
     <value>Populate NameKeys Now</value>
   </data>
+  <data name="Blueprints_Dismiss" xml:space="preserve">
+    <value>Dismiss</value>
+  </data>
+  <data name="Blueprints_MissingNameKeysLabel" xml:space="preserve">
+    <value>Affected shift types:</value>
+  </data>
+  <data name="Blueprints_AddNameKeysTitle" xml:space="preserve">
+    <value>Add Name Keys</value>
+  </data>
+  <data name="Blueprints_AddNameKeysDesc" xml:space="preserve">
+    <value>The following shift types will be assigned a name key:</value>
+  </data>
+  <data name="Blueprints_AddNameKeysConfirm" xml:space="preserve">
+    <value>Add Name Keys</value>
+  </data>
   <data name="Blueprints_ShiftKeyHint" xml:space="preserve">
     <value>Uppercase, e.g., CUSTOM_DAY</value>
   </data>
@@ -14183,6 +14210,12 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Widget_OnCallRoles" xml:space="preserve">
     <value>On-Call Roles</value>
+  </data>
+  <data name="Widget_HakamRole" xml:space="preserve">
+    <value>Hakam</value>
+  </data>
+  <data name="Widget_ShowBackup" xml:space="preserve">
+    <value>Also show backup Hakam</value>
   </data>
   <data name="Widget_Stores" xml:space="preserve">
     <value>Stores</value>

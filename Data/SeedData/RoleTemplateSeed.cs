@@ -219,7 +219,7 @@ public static class RoleTemplateSeed
         grants.Add(G(1, 117, SAR));  // ViewCompanyUsers
         grants.Add(G(1, 35, SAR));   // ViewGrants
         grants.Add(G(1, 39, SAR));   // ViewHierarchy
-        grants.Add(G(1, 110, SAR));  // WriteOverviewNotes
+        grants.Add(G(1, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(1, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(1, 62, SAR));   // ViewTextShiftCalendar
         grants.Add(G(1, 63, SAR));   // ViewBRShiftCalendar
@@ -243,7 +243,7 @@ public static class RoleTemplateSeed
         grants.Add(G(12, 117, SAR));  // ViewCompanyUsers
         grants.Add(G(12, 35, SAR));   // ViewGrants
         grants.Add(G(12, 39, SAR));   // ViewHierarchy
-        grants.Add(G(12, 110, SAR));  // WriteOverviewNotes
+        grants.Add(G(12, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(12, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(12, 62, SAR));   // ViewTextShiftCalendar
         grants.Add(G(12, 63, SAR));   // ViewBRShiftCalendar
@@ -267,7 +267,7 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 117, SAR));  // ViewCompanyUsers
         grants.Add(G(8, 35, SAR));   // ViewGrants
         grants.Add(G(8, 39, SAR));   // ViewHierarchy
-        grants.Add(G(8, 110, SAR));  // WriteOverviewNotes
+        grants.Add(G(8, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(8, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(8, 62, SAR));   // ViewTextShiftCalendar
         grants.Add(G(8, 63, SAR));   // ViewBRShiftCalendar
@@ -296,7 +296,7 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 117, SAR));  // ViewCompanyUsers
         grants.Add(G(3, 35, SAR));   // ViewGrants
         grants.Add(G(3, 39, SAR));   // ViewHierarchy
-        grants.Add(G(3, 110, SAR));  // WriteOverviewNotes
+        grants.Add(G(3, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(3, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(3, 62, SAR));   // ViewTextShiftCalendar
         grants.Add(G(3, 63, SAR));   // ViewBRShiftCalendar
@@ -355,7 +355,7 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 117, SAR));
         grants.Add(G(2, 35, SAR));
         grants.Add(G(2, 39, SAR));
-        grants.Add(G(2, 110, SAR));
+        grants.Add(G(2, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(2, 61, SAR));
         grants.Add(G(2, 62, SAR));
         grants.Add(G(2, 63, SAR));
@@ -598,7 +598,7 @@ public static class RoleTemplateSeed
         grants.Add(G(9, 117, SAR));
         grants.Add(G(9, 35, SAR));
         grants.Add(G(9, 39, SAR));
-        grants.Add(G(9, 110, SAR));
+        grants.Add(G(9, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(9, 61, SAR));
         grants.Add(G(9, 62, SAR));
         grants.Add(G(9, 63, SAR));

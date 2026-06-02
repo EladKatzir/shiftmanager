@@ -27,6 +27,7 @@ public class EditProfileModel : LocalizedPageModel
     private readonly IAuditLogService _auditLogService;
     private readonly IRoleService _roleService;
     private readonly IJobTypeService _jobTypeService;
+    private readonly IGrantService _grantService;
 
     public EditProfileModel(
         IStringLocalizer<SharedResources> localizer,
@@ -36,7 +37,8 @@ public class EditProfileModel : LocalizedPageModel
         ITenantResolver tenantResolver,
         IAuditLogService auditLogService,
         IRoleService roleService,
-        IJobTypeService jobTypeService)
+        IJobTypeService jobTypeService,
+        IGrantService grantService)
         : base(localizer)
     {
         _db = db;
@@ -46,6 +48,18 @@ public class EditProfileModel : LocalizedPageModel
         _auditLogService = auditLogService;
         _roleService = roleService;
         _jobTypeService = jobTypeService;
+        _grantService = grantService;
+    }
+
+    /// <summary>
+    /// True when <paramref name="editorUserId"/> may edit the user in <paramref name="targetCompanyId"/>.
+    /// Cross-company edits within a molecule are allowed for managers whose EditCompanyUsers grant is
+    /// molecule-scoped (e.g. Molecule Admin / Director / Area Admin / Owner). Editing self is always allowed.
+    /// </summary>
+    private async Task<bool> CanEditTargetAsync(int editorUserId, int targetUserId, int targetCompanyId)
+    {
+        if (editorUserId == targetUserId) return true;
+        return await _grantService.HasGrantForCompanyAsync(editorUserId, "EditCompanyUsers", targetCompanyId);
     }
 
     [BindProperty(SupportsGet = true)]
@@ -140,20 +154,35 @@ public class EditProfileModel : LocalizedPageModel
             return BadRequest(_localizer["Error_InvalidUserId"].Value);
         }
 
+        var editorUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(editorUserIdClaim, out var editorUserId))
+        {
+            return BadRequest(_localizer["Error_InvalidUserClaim"].Value);
+        }
+
+        // Load the target ACROSS tenants. A Molecule Admin (and Director/AreaAdmin/Owner) holds
+        // EditCompanyUsers at molecule+ scope and may legitimately edit users in OTHER companies of
+        // their molecule — the tenant filter would hide those users, so we bypass it here and let the
+        // grant-scope check below be the access boundary. (Issue 1: cross-company molecule-admin edits.)
         var user = await _db.Users
+            .IgnoreQueryFilters()
             .Include(u => u.JobType)
             .Include(u => u.Department)
             .FirstOrDefaultAsync(u => u.Id == UserId);
         if (user == null)
         {
-            return NotFound();
+            TempData["ErrorMessage"] = _localizer["TargetUserNotFound"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage("/Admin/Users");
         }
 
-        // Verify same company
-        var companyId = _tenantResolver.GetCurrentTenantId();
-        if (user.CompanyId != companyId)
+        if (!await CanEditTargetAsync(editorUserId, user.Id, user.CompanyId))
         {
-            return Forbid();
+            // Clear, actionable message instead of a bare 403/400 — the editor lacks EditCompanyUsers
+            // for this user's company (e.g. a different molecule).
+            TempData["ErrorMessage"] = _localizer["UnauthorizedAccess"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage("/Admin/Users");
         }
 
         await LoadUserDataAsync(user);
@@ -336,18 +365,23 @@ public class EditProfileModel : LocalizedPageModel
         {
             return BadRequest(_localizer["Error_InvalidUserClaim"].Value);
         }
-        var targetUser = await _db.Users.FindAsync(UserId);
+        // Load ACROSS tenants so a molecule admin can edit users in other companies of their molecule
+        // (Issue 1). The grant-scope check below — mirrored inside ProfileService.UpdateProfileAsync —
+        // is the access boundary.
+        var targetUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == UserId);
 
         if (targetUser == null)
         {
-            return NotFound();
+            TempData["ErrorMessage"] = _localizer["TargetUserNotFound"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage("/Admin/Users");
         }
 
-        // Verify same company
-        var companyId = _tenantResolver.GetCurrentTenantId();
-        if (targetUser.CompanyId != companyId)
+        if (!await CanEditTargetAsync(editorUserId, targetUser.Id, targetUser.CompanyId))
         {
-            return Forbid();
+            TempData["ErrorMessage"] = _localizer["UnauthorizedAccess"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage("/Admin/Users");
         }
 
         // Handle avatar upload first
@@ -474,8 +508,10 @@ public class EditProfileModel : LocalizedPageModel
 
         TempData["SuccessMessage"] = _localizer["Success_ProfileUpdated"].Value;
 
-        // Reload user data
+        // Reload user data — IgnoreQueryFilters so a cross-company (other-molecule-company) target is
+        // still found after save; otherwise the tenant filter returns null and LoadUserDataAsync NPEs.
         targetUser = await _db.Users
+            .IgnoreQueryFilters()
             .Include(u => u.JobType)
             .Include(u => u.Department)
             .FirstOrDefaultAsync(u => u.Id == UserId);

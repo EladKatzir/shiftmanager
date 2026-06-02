@@ -65,7 +65,8 @@ public class SaveQuickInfoConfigModel : PageModel
                         SectionType = c.SectionType,
                         EntityId = c.EntityId,
                         IsEnabled = c.IsEnabled,
-                        DisplayOrder = c.DisplayOrder
+                        DisplayOrder = c.DisplayOrder,
+                        ShowBackup = c.ShowBackup
                     })
                     .ToList()
                 : (await _configService.GetDefaultConfigAsync(moleculeId))
@@ -74,24 +75,48 @@ public class SaveQuickInfoConfigModel : PageModel
                         SectionType = c.SectionType,
                         EntityId = c.EntityId,
                         IsEnabled = c.IsEnabled,
-                        DisplayOrder = c.DisplayOrder
+                        DisplayOrder = c.DisplayOrder,
+                        ShowBackup = c.ShowBackup
                     })
                     .ToList();
 
             // Get available duty types (global, active only)
             var isHebrew = CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "he";
-            var dutyTypes = await _db.OnDutyTypeConfigs
+
+            // The configured backup type is folded into the primary-Hakam row's ShowBackup toggle,
+            // so it must not also appear as a standalone selectable duty type.
+            var backupTypeValue = await _configService.GetBackupHakamTypeValueAsync();
+
+            var customDutyTypes = await _db.OnDutyTypeConfigs
                 .AsNoTracking()
-                .Where(t => t.IsActive)
+                .Where(t => t.IsActive
+                    && t.TypeValue != QuickInfoConfig.PrimaryHakamEntityId
+                    && (backupTypeValue == null || t.TypeValue != backupTypeValue))
                 .OrderBy(t => t.TypeValue)
                 .Select(t => new AvailableItemDto
                 {
                     SectionType = QuickInfoSectionType.OnCallRole,
                     EntityId = t.TypeValue,
                     Name = isHebrew ? (t.NameHe ?? t.NameEn) : t.NameEn,
-                    Icon = t.Icon
+                    Icon = t.Icon,
+                    SupportsBackup = false
                 })
                 .ToListAsync();
+
+            // Lead with the built-in primary Hakam (EntityId 0) — it has no OnDutyTypeConfig row, and
+            // it owns the "show backup" sub-toggle.
+            var dutyTypes = new List<AvailableItemDto>
+            {
+                new AvailableItemDto
+                {
+                    SectionType = QuickInfoSectionType.OnCallRole,
+                    EntityId = QuickInfoConfig.PrimaryHakamEntityId,
+                    Name = _localizer["Widget_HakamRole"].Value,
+                    Icon = null,
+                    SupportsBackup = true
+                }
+            };
+            dutyTypes.AddRange(customDutyTypes);
 
             // Get available stores for the molecule's area
             var areaId = await _db.Molecules
@@ -192,7 +217,8 @@ public class SaveQuickInfoConfigModel : PageModel
                 SectionType = i.SectionType,
                 EntityId = i.EntityId,
                 DisplayOrder = i.DisplayOrder,
-                IsEnabled = i.IsEnabled
+                IsEnabled = i.IsEnabled,
+                ShowBackup = i.ShowBackup
             }).ToList();
 
             var (success, message) = await _configService.SaveConfigAsync(request.MoleculeId, userId, items);
@@ -243,6 +269,7 @@ public class ConfigItemDto
     public int EntityId { get; set; }
     public int DisplayOrder { get; set; }
     public bool IsEnabled { get; set; } = true;
+    public bool ShowBackup { get; set; } = false;
 }
 
 public class AvailableItemDto
@@ -251,4 +278,10 @@ public class AvailableItemDto
     public int EntityId { get; set; }
     public string Name { get; set; } = "";
     public string? Icon { get; set; }
+
+    /// <summary>
+    /// True only for the primary-Hakam row (EntityId 0): the config UI renders an extra
+    /// "show backup Hakam" sub-toggle for it.
+    /// </summary>
+    public bool SupportsBackup { get; set; } = false;
 }

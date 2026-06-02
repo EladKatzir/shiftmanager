@@ -189,10 +189,12 @@ public class QuickInfoConfigServiceTests : IDisposable
 
         var result = await _service.GetDefaultConfigAsync(TestMoleculeId);
 
-        // 2 active duty types + 2 stores in our area
+        // primary Hakam (prepended, replacing the TypeValue=0 config row) + Lead + 2 stores in our area.
+        // No active custom type (TypeValue>1) exists, so nothing is folded as backup.
         result.Should().HaveCount(4);
         result[0].SectionType.Should().Be(QuickInfoSectionType.OnCallRole);
-        result[0].EntityId.Should().Be(0); // Hakam TypeValue
+        result[0].EntityId.Should().Be(0); // primary Hakam
+        result[0].ShowBackup.Should().BeFalse(); // default off
         result[1].SectionType.Should().Be(QuickInfoSectionType.OnCallRole);
         result[1].EntityId.Should().Be(1); // Lead TypeValue
         result[2].SectionType.Should().Be(QuickInfoSectionType.Store);
@@ -204,6 +206,27 @@ public class QuickInfoConfigServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task GetDefaultConfigAsync_BackupHakamType_FoldedIntoPrimary_NotStandalone()
+    {
+        // TypeValue 2 = Backup-hakam (the configured backup), TypeValue 3 = an unrelated custom type.
+        _db.OnDutyTypeConfigs.AddRange(
+            new OnDutyTypeConfig { Id = 1, TypeValue = 2, NameEn = "Backup-hakam", NameHe = "חקם רזרבה", IsActive = true },
+            new OnDutyTypeConfig { Id = 2, TypeValue = 3, NameEn = "Driver", NameHe = "נהג", IsActive = true }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetDefaultConfigAsync(TestMoleculeId);
+
+        // primary Hakam (prepended) + Driver(3). Backup-hakam(2) is folded into the Hakam ShowBackup
+        // toggle, so it must NOT appear as a standalone section.
+        result.Should().HaveCount(2);
+        result[0].EntityId.Should().Be(0); // primary Hakam
+        result[0].ShowBackup.Should().BeFalse();
+        result[1].EntityId.Should().Be(3); // Driver, standalone
+        result.Should().NotContain(i => i.SectionType == QuickInfoSectionType.OnCallRole && i.EntityId == 2);
+    }
+
+    [Fact]
     public async Task GetDefaultConfigAsync_MoleculeNotFound_ReturnsEmpty()
     {
         var result = await _service.GetDefaultConfigAsync(999);
@@ -212,10 +235,61 @@ public class QuickInfoConfigServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetDefaultConfigAsync_NoDutyTypesOrStores_ReturnsEmpty()
+    public async Task GetDefaultConfigAsync_NoDutyTypesOrStores_ReturnsPrimaryHakamOnly()
     {
+        // The primary Hakam (OnDutyType.Hakam == 0) has no config row but must always be present.
         var result = await _service.GetDefaultConfigAsync(TestMoleculeId);
 
-        result.Should().BeEmpty();
+        result.Should().HaveCount(1);
+        result[0].SectionType.Should().Be(QuickInfoSectionType.OnCallRole);
+        result[0].EntityId.Should().Be(0);
+        result[0].ShowBackup.Should().BeFalse();
+    }
+
+    // --- GetBackupHakamTypeValueAsync ---
+
+    [Fact]
+    public async Task GetBackupHakamTypeValueAsync_ReturnsLowestActiveCustomType()
+    {
+        _db.OnDutyTypeConfigs.AddRange(
+            new OnDutyTypeConfig { Id = 1, TypeValue = 0, NameEn = "Hakam", NameHe = "", IsActive = true },  // built-in, excluded
+            new OnDutyTypeConfig { Id = 2, TypeValue = 3, NameEn = "Driver", NameHe = "", IsActive = true },
+            new OnDutyTypeConfig { Id = 3, TypeValue = 2, NameEn = "Backup-hakam", NameHe = "", IsActive = true }
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetBackupHakamTypeValueAsync();
+
+        result.Should().Be(2); // lowest TypeValue > 1
+    }
+
+    [Fact]
+    public async Task GetBackupHakamTypeValueAsync_NoActiveCustomType_ReturnsNull()
+    {
+        _db.OnDutyTypeConfigs.AddRange(
+            new OnDutyTypeConfig { Id = 1, TypeValue = 0, NameEn = "Hakam", NameHe = "", IsActive = true },
+            new OnDutyTypeConfig { Id = 2, TypeValue = 2, NameEn = "Backup-hakam", NameHe = "", IsActive = false } // inactive
+        );
+        await _db.SaveChangesAsync();
+
+        var result = await _service.GetBackupHakamTypeValueAsync();
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SaveConfigAsync_PersistsShowBackup()
+    {
+        var items = new List<QuickInfoConfigItem>
+        {
+            new() { SectionType = QuickInfoSectionType.OnCallRole, EntityId = 0, DisplayOrder = 0, IsEnabled = true, ShowBackup = true }
+        };
+
+        var (success, _) = await _service.SaveConfigAsync(TestMoleculeId, userId: 1, items);
+
+        success.Should().BeTrue();
+        var saved = await _db.QuickInfoConfigs.SingleAsync(q => q.MoleculeId == TestMoleculeId);
+        saved.EntityId.Should().Be(0);
+        saved.ShowBackup.Should().BeTrue();
     }
 }

@@ -2073,6 +2073,18 @@
   <data name="AfterDutyVacation" xml:space="preserve">
     <value>אפטר</value>
   </data>
+  <data name="DayAtVacation" xml:space="preserve">
+    <value>יום ב…</value>
+  </data>
+  <data name="DayAt_LabelField" xml:space="preserve">
+    <value>מיקום / פעילות</value>
+  </data>
+  <data name="DayAt_LabelPlaceholder" xml:space="preserve">
+    <value>לדוגמה: חוף</value>
+  </data>
+  <data name="DayAt_LabelRequired" xml:space="preserve">
+    <value>נא להזין מיקום עבור היום.</value>
+  </data>
   <data name="VacationTypeDescription" xml:space="preserve">
     <value>חופשה רגילה מתחילה בחצות, חופשה אחרי תורנות מתחילה ב-16:00</value>
   </data>
@@ -12023,6 +12035,21 @@
   <data name="Blueprints_PopulateNameKeys" xml:space="preserve">
     <value>אכלס NameKeys עכשיו</value>
   </data>
+  <data name="Blueprints_Dismiss" xml:space="preserve">
+    <value>סגור</value>
+  </data>
+  <data name="Blueprints_MissingNameKeysLabel" xml:space="preserve">
+    <value>סוגי משמרות מושפעים:</value>
+  </data>
+  <data name="Blueprints_AddNameKeysTitle" xml:space="preserve">
+    <value>הוספת מפתחות שם</value>
+  </data>
+  <data name="Blueprints_AddNameKeysDesc" xml:space="preserve">
+    <value>לסוגי המשמרות הבאים יוקצה מפתח שם:</value>
+  </data>
+  <data name="Blueprints_AddNameKeysConfirm" xml:space="preserve">
+    <value>הוסף מפתחות שם</value>
+  </data>
   <data name="Blueprints_ShiftKeyHint" xml:space="preserve">
     <value>אותיות גדולות, למשל CUSTOM_DAY</value>
   </data>
@@ -14149,6 +14176,12 @@
   </data>
   <data name="Widget_OnCallRoles" xml:space="preserve">
     <value>תורנויות</value>
+  </data>
+  <data name="Widget_HakamRole" xml:space="preserve">
+    <value>חק"ם</value>
+  </data>
+  <data name="Widget_ShowBackup" xml:space="preserve">
+    <value>הצג גם חק"ם רזרבה</value>
   </data>
   <data name="Widget_Stores" xml:space="preserve">
     <value>חנויות</value>

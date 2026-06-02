@@ -342,10 +342,11 @@ public class GrantServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CanReachUserForNoteAsync_NoteOnlyTier_SameCompanyPeer_ReturnsFalse()
+    public async Task CanReachUserForNoteAsync_NoGrants_PeerTarget_ReturnsFalse()
     {
         var entities = await SetupTestEntitiesAsync();
-        // Caller is in Companies[0]; target also in Companies[0]. No assign grants for caller.
+        // Caller has NO note/assign grant. (The endpoint gates HasCalendarNotePermissionAsync first;
+        // this verifies the reach check itself rejects when the caller holds nothing.)
         var target = new AppUser
         {
             CompanyId = entities.Companies[0].Id,
@@ -360,14 +361,19 @@ public class GrantServiceTests : IDisposable
 
         var result = await _service.CanReachUserForNoteAsync(entities.User.Id, target.Id);
 
-        result.Should().BeFalse("note-only tier (no assign grants) can only write on own row — same-company peers are rejected");
+        result.Should().BeFalse("a caller with no note or assign grant cannot reach any other user");
     }
 
     [Fact]
-    public async Task CanReachUserForNoteAsync_NoteOnlyTier_DifferentCompany_ReturnsFalse()
+    public async Task CanReachUserForNoteAsync_NoteTier_CompanyScoped_DifferentCompany_ReturnsFalse()
     {
         var entities = await SetupTestEntitiesAsync();
-        // Target in Companies[1]; caller in Companies[0]. No assign grants → note-only tier.
+        // Caller holds a COMPANY-scoped WriteOverviewNotes (Companies[0]); target in Companies[1].
+        var writeNotes = new GrantType { Key = "WriteOverviewNotes", NameKey = "Grant_WriteOverviewNotes", Category = GrantCategory.Shift };
+        _db.GrantTypes.Add(writeNotes);
+        await _db.SaveChangesAsync();
+        await _service.GrantAsync(entities.User.Id, writeNotes.Id, GrantScope.Company(entities.Companies[0].Id));
+
         var target = new AppUser
         {
             CompanyId = entities.Companies[1].Id,
@@ -382,7 +388,35 @@ public class GrantServiceTests : IDisposable
 
         var result = await _service.CanReachUserForNoteAsync(entities.User.Id, target.Id);
 
-        result.Should().BeFalse("note-only tier must reject cross-company targets");
+        result.Should().BeFalse("a company-scoped note grant must not reach other companies (scope is the source of truth)");
+    }
+
+    [Fact]
+    public async Task CanReachUserForNoteAsync_NoteTier_MoleculeScoped_DifferentCompanySameMolecule_ReturnsTrue()
+    {
+        var entities = await SetupTestEntitiesAsync();
+        // Issue 3: molecule members hold WriteOverviewNotes at MOLECULE scope, so they can annotate
+        // any user within their molecule — including peers in a different company of the same molecule.
+        var writeNotes = new GrantType { Key = "WriteOverviewNotes", NameKey = "Grant_WriteOverviewNotes", Category = GrantCategory.Shift };
+        _db.GrantTypes.Add(writeNotes);
+        await _db.SaveChangesAsync();
+        await _service.GrantAsync(entities.User.Id, writeNotes.Id, GrantScope.Molecule(entities.Molecule.Id));
+
+        var target = new AppUser
+        {
+            CompanyId = entities.Companies[1].Id, // different company, same molecule
+            Email = "molpeer@test.com",
+            DisplayName = "Molecule Peer",
+            IsActive = true,
+            PasswordHash = Array.Empty<byte>(),
+            PasswordSalt = Array.Empty<byte>()
+        };
+        _db.Users.Add(target);
+        await _db.SaveChangesAsync();
+
+        var result = await _service.CanReachUserForNoteAsync(entities.User.Id, target.Id);
+
+        result.Should().BeTrue("molecule-scoped WriteOverviewNotes reaches any company within the molecule (Issue 3)");
     }
 
     [Fact]
@@ -1025,8 +1059,18 @@ public class AssignerRoleTests : IDisposable
         viewAllUsersGrant!.ScopeMode.Should().Be(GrantScopeMode.ExpandToArea,
             "Assigner's ViewAllUsers should be area-scoped to match AssignChores reach");
 
-        // All inherited (non-assigner-specific) grants should be SAR (not widened)
-        var inheritedGrants = assignerGrants.Where(g => g.GrantTypeId != 17 && g.GrantTypeId != 34).ToList();
+        // WriteOverviewNotes (grant ID 110) is widened to molecule scope (2026-06-01 #3 "molecule-wide
+        // free-text" policy: overview notes are writable across the whole molecule, not just the writer's
+        // company). So it is NOT SAR — it is ExpandToMolecule for the Assigner template.
+        var writeOverviewNotesGrant = assignerGrants.FirstOrDefault(g => g.GrantTypeId == 110);
+        writeOverviewNotesGrant.Should().NotBeNull("Assigner inherits WriteOverviewNotes grant");
+        writeOverviewNotesGrant!.ScopeMode.Should().Be(GrantScopeMode.ExpandToMolecule,
+            "Assigner's WriteOverviewNotes should be molecule-scoped per the molecule-wide free-text policy");
+
+        // All other inherited (non-widened) grants should remain SAR.
+        var inheritedGrants = assignerGrants
+            .Where(g => g.GrantTypeId != 17 && g.GrantTypeId != 34 && g.GrantTypeId != 110)
+            .ToList();
         inheritedGrants.Should().AllSatisfy(g =>
         {
             g.ScopeMode.Should().Be(GrantScopeMode.SameAsRole,
