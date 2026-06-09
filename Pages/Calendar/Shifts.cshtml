@@ -182,7 +182,7 @@
                         <button type="button" class="btn btn-ghost" id="enterDraftBtn"
                                 data-molecule-id="@Model.MoleculeId" data-job-type-id="@(Model.JobTypeId?.ToString() ?? "")"
                                 data-week-start="@Model.StartDate.ToString("yyyy-MM-dd")" data-week-end="@Model.EndDate.ToString("yyyy-MM-dd")">
-                            <span class="btn-icon"><icon name="edit-3" /></span>
+                            <span class="btn-icon"><icon name="pencil" /></span>
                             @Localizer["Draft_Enter"]
                         </button>
                     }
@@ -291,7 +291,7 @@
     @if (Model.DraftMode && Model.ActiveDraftId != null)
     {
         <div class="cal-draft-banner" role="status">
-            <span class="cal-draft-banner__icon" aria-hidden="true"><icon name="edit-3" /></span>
+            <span class="cal-draft-banner__icon" aria-hidden="true"><icon name="pencil" /></span>
             <span class="cal-draft-banner__text">@Localizer["Draft_BannerText"]</span>
         </div>
     }
