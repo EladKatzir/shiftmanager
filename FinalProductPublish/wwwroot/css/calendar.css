@@ -2530,6 +2530,120 @@
     border-top: 1px solid var(--border);
 }
 
+/* Category-filter additions: constrain the dialog so the body scrolls while header + search stay pinned. */
+.cal-filter-modal__dialog {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 160px);
+}
+
+.cal-filter-modal__sticky {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.cal-filter-modal__sticky .form-control {
+    flex: 1 1 auto;
+    width: auto;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.cal-filter-modal__sticky #filterOnlyMeBtn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.cal-filter-modal__body {
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.cal-filter-modal__section-label {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
+.cal-filter-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.cal-filter-cat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.5rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text);
+}
+
+.cal-filter-cat-item:hover {
+    background: var(--surface-soft);
+}
+
+.cal-filter-cat-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    cursor: pointer;
+}
+
+.cal-filter-empty {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Draft Mode (Epic 4): unmistakable sandbox affordance. */
+.cal-page--draft {
+    outline: 3px solid var(--warning, #d97706);
+    outline-offset: -3px;
+    border-radius: 8px;
+}
+
+.cal-draft-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    margin: 0.5rem 0;
+    background: var(--warning-soft, #fef3c7);
+    color: var(--text);
+    border-inline-start: 4px solid var(--warning, #d97706);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky-header, 1022);
+}
+
+.cal-draft-banner__icon { display: inline-flex; color: var(--warning, #d97706); }
+
+/* Affordance: the People/Shifts column header opens the filter modal. */
+.excel-calendar__corner[data-mode] {
+    cursor: pointer;
+}
+
+.excel-calendar__corner[data-mode]:hover .excel-calendar__mode-chevron {
+    color: var(--primary);
+}
+
 /* Responsive: compact horizontal layout on mobile */
 @media (max-width: 768px) {
     .cal-toolbar__row {

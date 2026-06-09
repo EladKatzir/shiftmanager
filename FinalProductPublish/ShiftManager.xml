@@ -2847,6 +2847,85 @@
         <member name="M:ShiftManager.Migrations.AddShowBackupToQuickInfoConfig.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddShiftCategories">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShiftCategories.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShiftCategories.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShiftCategories.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.BackfillShiftCategoriesFromPrimaryShiftType">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillShiftCategoriesFromPrimaryShiftType.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillShiftCategoriesFromPrimaryShiftType.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillShiftCategoriesFromPrimaryShiftType.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddDraftMode">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDraftMode.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDraftMode.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDraftMode.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.DropPrimaryShiftTypeId">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.DropPrimaryShiftTypeId.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.DropPrimaryShiftTypeId.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.DropPrimaryShiftTypeId.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.ShiftCategoryBackfillSql">
+             <summary>
+             The raw SQLite statements that migrate legacy <c>AppUser.PrimaryShiftTypeId</c> into the new
+             <c>DoesShifts</c> flag + <c>ShiftCategory</c> membership model. Held here as shared constants so the
+             <c>BackfillShiftCategoriesFromPrimaryShiftType</c> migration and its regression test execute the
+             EXACT same SQL — no drift between what ships and what is verified.
+            
+             Safeguards baked into the SQL:
+               * Molecule resolved via COALESCE(st.MoleculeId, company.MoleculeId) so company-scoped primary
+                 shift types still find a home molecule.
+               * Synthesized category Name embeds the source shift-type id ("DisplayName [id]") so the
+                 (MoleculeId, Name) unique index can never collide; DisplayName stays clean for the UI.
+               * <see cref="F:ShiftManager.Migrations.ShiftCategoryBackfillSql.EnforceParticipationInvariant"/> clears DoesShifts for any user whose primary type
+                 had no resolvable molecule — enforcing: DoesShifts = true ⇒ user has ≥ 1 category.
+             </summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ShiftCategoryBackfillSql.MarkParticipants">
+            <summary>1) Mark shift participants.</summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ShiftCategoryBackfillSql.CreateCategories">
+            <summary>2) Create one category per distinct primary shift type that resolves to a molecule.</summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ShiftCategoryBackfillSql.MapUsers">
+            <summary>3) Map each participating user to the category derived from their primary shift type.</summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ShiftCategoryBackfillSql.EnforceParticipationInvariant">
+            <summary>4) Enforce invariant: a user with no resolvable category is not marked as doing shifts.</summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ShiftCategoryBackfillSql.Forward">
+            <summary>The forward backfill, in order.</summary>
+        </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
             <summary>
             Back-to-back shift warning (shifts with insufficient rest)
@@ -3530,11 +3609,11 @@
             User's primary role template. When set, AppUser.Role is auto-derived from RoleTemplate.DerivedUserRole.
             </summary>
         </member>
-        <member name="P:ShiftManager.Models.AppUser.PrimaryShiftTypeId">
+        <member name="P:ShiftManager.Models.AppUser.DoesShifts">
             <summary>
-            Which shift type this user primarily operates (for calendar grouping).
-            NULL = user doesn't do shifts → appears in company group.
-            Points to a ShiftType which may belong to a different company (cross-tenant FK via IgnoreQueryFilters).
+            Whether this user participates in shift scheduling. TRUE → the user is grouped under their
+            shift category accordion(s) in the by-user calendar; FALSE → under their company header.
+            Replaces the retired PrimaryShiftTypeId overload (see DoesShifts + ShiftCategories).
             </summary>
         </member>
         <member name="P:ShiftManager.Models.AppUser.HomeTypeId">
@@ -3543,10 +3622,10 @@
             NULL = no rotation assigned.
             </summary>
         </member>
-        <member name="P:ShiftManager.Models.AppUser.PrimaryShiftType">
+        <member name="P:ShiftManager.Models.AppUser.ShiftCategories">
             <summary>
-            SECURITY-AUDITED: Cross-tenant FK — PrimaryShiftType may belong to a different company.
-            Load via IgnoreQueryFilters() when needed.
+            Categories this user participates in (many-to-many). Only meaningful when DoesShifts is true.
+            A user in several categories renders as a mirrored row under each.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.AreaCalendarPalette">
@@ -3973,6 +4052,30 @@
         <member name="P:ShiftManager.Models.DistributionListMember.AddedAt">
             <summary>
             When this member was added to the list.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.DraftCell">
+            <summary>
+            A single touched shift-cell within a <see cref="P:ShiftManager.Models.DraftCell.DraftSession"/> — identified by (ShiftTypeId, WorkDate).
+            <see cref="P:ShiftManager.Models.DraftCell.BaselineUserIds"/> is the snapshot of the live assignees captured the first time the assigner
+            touched the cell; <see cref="P:ShiftManager.Models.DraftCell.StagedUserIds"/> is the draft's desired set. At commit, if the live cell's
+            current assignees still equal the baseline the staged set is applied; otherwise the cell is a conflict.
+            User ids are stored as a sorted, comma-separated string so equality is a plain string compare.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftCell.BaselineUserIds">
+            <summary>Sorted CSV of live user ids when the cell was first touched (the optimistic baseline).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftCell.StagedUserIds">
+            <summary>Sorted CSV of the draft's desired user ids for this cell.</summary>
+        </member>
+        <member name="T:ShiftManager.Models.DraftSession">
+            <summary>
+            A private, per-assigner sandbox over one molecule+week of the shift calendar (Epic 4 — Draft Mode).
+            Edits made while a session is Active are staged in <see cref="T:ShiftManager.Models.DraftCell"/> rows and never touch the
+            live board or fire SignalR; committing reconciles only the touched cells into the live schedule with
+            optimistic, per-cell conflict detection. Molecule-scoped (no tenant filter) so an assigner can stage
+            changes across the companies of their molecule, exactly like the live calendar.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.DTOs.GriffinClaimsDto">
@@ -4924,6 +5027,21 @@
             NOTE: [Timestamp] is a no-op on SQLite (no rowversion support). Kept for SQL Server migration compatibility.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.ShiftCategory">
+             <summary>
+             A molecule-scoped, functional grouping of shift elements (e.g. "Yekev", which owns
+             "Yekev Morning", "Yekev Night"). A ShiftType belongs to at most one category via
+             <see cref="P:ShiftManager.Models.ShiftType.CategoryId"/>. Users participate in shifts (AppUser.DoesShifts) and are
+             mapped to one or more categories via <see cref="T:ShiftManager.Models.UserShiftCategory"/> — the basis for grouping
+             the by-user and by-shift calendars.
+            
+             This is a DISTINCT axis from <see cref="T:ShiftManager.Models.ShiftGrouping"/> (geographic, e.g. Tzafon/Darom,
+             membership by company/job-type). A shift type may carry both a ShiftGroupingId and a CategoryId.
+            
+             Like <see cref="T:ShiftManager.Models.ShiftType"/>, this entity is NOT tenant-filtered (no IBelongsToCompany);
+             visibility is molecule-scoped via MoleculeId.
+             </summary>
+        </member>
         <member name="P:ShiftManager.Models.ShiftInstance.Concurrency">
             <summary>
             Legacy concurrency field (manually incremented).
@@ -5717,6 +5835,14 @@
             Null for requests created before this field was added.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.UserShiftCategory">
+            <summary>
+            Many-to-many join between a user and the shift categories they participate in. A user with
+            AppUser.DoesShifts = true appears under EACH mapped category as a (mirrored) calendar row;
+            DoesShifts = false means the user appears under their company header instead. The many-to-many
+            shape is what lets one user belong to several categories at once (e.g. Yekev AND Hazon).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.Validation.ChoreAssignmentValidation">
              <summary>
              Result of <see cref="M:ShiftManager.Services.IChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)"/> — mirrors the
@@ -6093,6 +6219,26 @@
         </member>
         <member name="P:ShiftManager.Pages.Admin.UsersModel.JobTypesByCompany">
             <summary>Maps companyId → list of valid jobTypeIds, for client-side filtering in the add-user form.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.AuthorizeUserEditAsync(System.Int32)">
+            <summary>
+            Shared edit gate for the DoesShifts / category handlers — mirrors the JobType/Toggle handlers:
+            loads the (cross-company) user and confirms the caller holds AdminAccess or EditCompanyUsers for
+            the user's company. Returns the resolved user + caller id, or a localized error string.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnGetDoesShiftsImpactAsync(System.Int32)">
+            <summary>Future-shift impact preview (AJAX) for the "turn off Participates in Shifts" confirm.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostDoesShiftsAsync(System.Int32,System.Boolean,System.Boolean)">
+            <summary>
+            Master "Participates in Shifts" toggle. When turning OFF, <paramref name="deleteFutureShifts"/>
+            controls whether the user's future shift assignments are vacated (UserId nulled) or kept.
+            Category memberships are intentionally preserved so toggling back ON restores the prior mapping.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostUserCategoriesAsync(ShiftManager.Pages.Admin.UsersModel.UserCategoriesRequest)">
+            <summary>Replaces a user's shift-category memberships (AJAX). Ids are validated against the user's molecule.</summary>
         </member>
         <member name="M:ShiftManager.Pages.Admin.UsersModel.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole,System.String)">
             <summary>
@@ -6760,6 +6906,12 @@
             Supports shift-based and user-based view modes with molecule/job type filtering.
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.DraftMode">
+            <summary>When true, the by-shift/by-user calendar renders the viewer's private draft overlay (Epic 4).</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.ActiveDraftId">
+            <summary>The active draft session id for the current viewer+molecule+week (null when not drafting).</summary>
+        </member>
         <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.DistributionListIds">
             <summary>
             CSV of selected distribution-list IDs (e.g. "1,2,3"). When non-empty, the by-user view is filtered
@@ -6778,11 +6930,35 @@
             Reuses the same ExcelCalendarGroup rendering as the by-company / by-shift-type sections.
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.BuildTechGroupedRowsAsync(System.Collections.Generic.List{ShiftManager.Models.AppUser},System.Collections.Generic.List{ShiftManager.Models.ShiftInstance},System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},ShiftManager.Services.FyiOverlayData},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Int32,System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}}},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.String})">
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.BuildUserRow(ShiftManager.Models.AppUser,System.String,System.String,System.String,System.Collections.Generic.List{ShiftManager.Models.ShiftInstance},System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},ShiftManager.Services.FyiOverlayData},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}}},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.String})">
             <summary>
-            SP3: Build grouped rows for tech molecule user-mode calendar.
-            Groups users by PrimaryShiftType (shift-type sections) or by Company (for non-shift users).
-            Within shift-type groups, splits into regulars and trainees (localized via _localizer).
+            Builds a single by-user calendar row (cells + weekly hours), shared by every by-user grouping
+            strategy. <paramref name="groupId"/> places it under a collapsible section; <paramref name="companyName"/>
+            drives the per-row company badge (null to suppress, e.g. inside a company group where it is redundant).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.BuildCategoryGroupedRowsAsync(System.Collections.Generic.List{ShiftManager.Models.AppUser},System.Int32,System.Collections.Generic.List{ShiftManager.Models.ShiftInstance},System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},ShiftManager.Services.FyiOverlayData},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}}},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.String})">
+            <summary>
+            Default by-user grouping (replaces the legacy PrimaryShiftType/tech + flat paths). Users with
+            DoesShifts = true render under EACH ShiftCategory they belong to — the same user appears as a
+            MIRRORED row under multiple category accordions (duplicate data-row-id is safe; the calendar
+            resolves interactions from the cell's data-row-id attribute, not a DOM id). Everyone else — and
+            any participant who is not mapped to a category — falls under their Company header.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.BuildShiftCategoryGroupsAsync(System.Int32,System.Collections.Generic.List{ShiftManager.ViewComponents.ExcelCalendarRow})">
+            <summary>
+            Groups the by-shift view rows by their owning ShiftCategory. Returns null (flat layout) when no shift
+            type in the molecule is categorized, so molecules not yet using categories are unaffected. Shift rows
+            already carry their GroupId ("category-{id}" or null); uncategorized rows collect under an "Other" group.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.ApplyDraftOverlayAsync(System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Draft Mode (Epic 4): overlays the viewer's active draft onto the live assignments for rendering —
+            touched cells show their STAGED assignees (synthetic, in-memory <see cref="T:ShiftManager.Models.ShiftAssignment"/>s)
+            instead of the live ones. Sets <see cref="P:ShiftManager.Pages.Calendar.ShiftsModel.ActiveDraftId"/>. Returns the live list unchanged when
+            not in draft mode or no active draft exists.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.OnGetJusticeAsync(System.Threading.CancellationToken)">
@@ -6814,6 +6990,9 @@
         </member>
         <member name="P:ShiftManager.Pages.Calendar.TableModel.IsMoleculeMode">
             <summary>True when Calendar/Table is operating in molecule-scoped mode (MoleculeId + JobTypeId both set, or Tech molecule).</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.TableModel.AssignEmployeeRequest.DraftSessionId">
+            <summary>When set, the assignment is STAGED into this draft sandbox instead of written live.</summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.TableModel.OnPostDetachInstanceAsync(ShiftManager.Pages.Calendar.TableModel.DetachInstanceRequest)">
             <summary>
@@ -9145,6 +9324,54 @@
         <member name="M:ShiftManager.Services.IDistributionListService.DeleteAsync(System.Int32,System.Int32)">
             <summary>Delete a list (molecule derived from the persisted list). Re-checks grant. Cascades members.</summary>
         </member>
+        <member name="T:ShiftManager.Services.DraftOverlayCell">
+            <summary>One staged shift-cell in a draft: the desired assignees for (ShiftTypeId, WorkDate).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftOverlayCell.#ctor(System.Int32,System.DateOnly,System.Collections.Generic.List{System.Int32})">
+            <summary>One staged shift-cell in a draft: the desired assignees for (ShiftTypeId, WorkDate).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.DraftConflict">
+            <summary>A touched cell whose live state drifted from the draft baseline (optimistic conflict).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftConflict.#ctor(System.Int32,System.DateOnly)">
+            <summary>A touched cell whose live state drifted from the draft baseline (optimistic conflict).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.DraftValidationIssue">
+            <summary>A staged assignment a validation pass rejected at commit (e.g. a double-booking).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftValidationIssue.#ctor(System.Int32,System.DateOnly,System.Int32,System.String)">
+            <summary>A staged assignment a validation pass rejected at commit (e.g. a double-booking).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.DraftCommitResult">
+            <summary>
+            Outcome of committing a draft. When <see cref="P:ShiftManager.Services.DraftCommitResult.Conflicts"/> is non-empty NOTHING is applied
+            (resolve-and-retry). <see cref="P:ShiftManager.Services.DraftCommitResult.ValidationIssues"/> lists staged assignments that were skipped
+            because they failed validation; everything else in those cells still applied.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftCommitResult.#ctor(System.Boolean,System.Int32,System.Collections.Generic.List{ShiftManager.Services.DraftConflict},System.Collections.Generic.List{ShiftManager.Services.DraftValidationIssue})">
+            <summary>
+            Outcome of committing a draft. When <see cref="P:ShiftManager.Services.DraftCommitResult.Conflicts"/> is non-empty NOTHING is applied
+            (resolve-and-retry). <see cref="P:ShiftManager.Services.DraftCommitResult.ValidationIssues"/> lists staged assignments that were skipped
+            because they failed validation; everything else in those cells still applied.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IDraftModeService">
+            <summary>
+            Draft Mode (Epic 4): a private, per-assigner sandbox over one molecule+week of the shift calendar.
+            Staging never touches the live board or fires SignalR; committing reconciles only the touched cells
+            into live with optimistic, per-cell conflict detection plus a final validation pass.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftModeService.StageAssignAsync(System.Int32,System.Int32,System.DateOnly,System.Int32)">
+            <summary>Stages adding a user to a shift-cell. Captures the live baseline on first touch.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftModeService.StageClearAsync(System.Int32,System.Int32,System.DateOnly,System.Int32)">
+            <summary>Stages removing a user from a shift-cell. Captures the live baseline on first touch.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftModeService.GetOverlayAsync(System.Int32)">
+            <summary>The staged assignees for every touched cell — used to overlay the calendar render.</summary>
+        </member>
         <member name="T:ShiftManager.Services.IEmailApiLogService">
             <summary>
             Service for managing email API diagnostic logs.
@@ -10596,6 +10823,36 @@
             <summary>
             Gets users eligible for a specific shift type based on EligibleCompanyIds and RequiresOfficerRank.
             </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IShiftCategoryService">
+            <summary>
+            Manages molecule-scoped shift <see cref="T:ShiftManager.Models.ShiftCategory"/> entities: CRUD, the shift-type↔category
+            assignment (<see cref="P:ShiftManager.Models.ShiftType.CategoryId"/>), and per-user membership (<see cref="T:ShiftManager.Models.UserShiftCategory"/>).
+            Categories are the functional grouping that drives the by-shift and by-user calendar layouts and
+            supersedes the legacy <c>AppUser.PrimaryShiftTypeId</c>. Distinct from the geographic
+            <see cref="T:ShiftManager.Models.ShiftGrouping"/> axis.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftCategoryService.CreateAsync(System.Int32,System.String,System.String,System.String)">
+            <summary>Creates a category. Returns null if the (molecule, name) pair already exists.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftCategoryService.RenameAsync(System.Int32,System.String,System.String,System.String)">
+            <summary>Renames/recolors a category. Returns false on not-found or a (molecule, name) collision.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftCategoryService.DeleteAsync(System.Int32)">
+            <summary>Hard-deletes a category: cascades its memberships and nulls its shift types' CategoryId (FK SetNull).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftCategoryService.GetUsageAsync(System.Int32)">
+            <summary>Counts the shift types owned by, and users mapped to, a category (for delete-impact preview).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftCategoryService.AssignShiftTypeAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Sets (or clears, when categoryId is null) a shift type's owning category. The category must live in
+            the same molecule the shift type resolves to. Returns false on not-found / cross-molecule mismatch.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftCategoryService.SetUserCategoriesAsync(System.Int32,System.Collections.Generic.IReadOnlyCollection{System.Int32})">
+            <summary>Replaces a user's category memberships with exactly the supplied set (within one molecule).</summary>
         </member>
         <member name="T:ShiftManager.Services.IShiftProgramService">
              <summary>
@@ -12548,6 +12805,13 @@
             Optional fallback title
             </summary>
         </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarRowViewModel.DraftSessionId">
+            <summary>Active Draft Mode session id (Epic 4); non-null → render shift-chip × as a draft-clear.</summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.DraftSessionId">
+            <summary>Active Draft Mode session id (Epic 4). When set, the grid renders the sandbox overlay and
+            the remove (×) on shift chips stages a draft-clear instead of a live delete.</summary>
+        </member>
         <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.RequiredGrantNameKeys">
             <summary>
             Localization NameKeys of the grant(s) that would unlock editing this calendar. Populated only
@@ -12577,6 +12841,10 @@
             resx key for the mode label, computed from RowMode.
             Defaults to "Calendar_RowMode_Shifts" for unset instances (RowMode initializer = "Shifts").
             </summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarAssignment.ShiftTypeId">
+            <summary>Owning shift type — set ONLY for real shift assignments (not text/chore/overlay chips).
+            Drives Draft Mode removal (× → stage-clear by shiftType+date+user) and is null elsewhere.</summary>
         </member>
         <member name="T:ShiftManager.ViewComponents.HierarchyTreeViewComponent">
             <summary>

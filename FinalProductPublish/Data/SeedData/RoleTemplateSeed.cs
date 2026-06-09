@@ -771,7 +771,7 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 106, ETA));  // CanBeAssignedNOC
 
         // ============================================
-        // OWNER (Template 11) — 135 grants at ETP (ALL grant types, ALL canGive)
+        // OWNER (Template 11) — 136 grants at ETP (ALL grant types, ALL canGive)
         // Self-scoped grants stay SAR. Every other grant at ETP with canGive:true.
         // ============================================
         // Self-scoped grants (SAR)
@@ -1050,6 +1050,22 @@ public static class RoleTemplateSeed
         grants.Add(G(9, 135, ETM));                   // DepartmentLead (מפקד מחלקה טכנית) — expand Department → molecule
         grants.Add(G(10, 135, ETA));                  // AreaAdmin (קב"ב) — area
         grants.Add(G(11, 135, ETP, canGive: true));   // Owner — project
+
+        // ============================================
+        // ManageShiftCategories (ID 136) — Shift categories (2026-06-09)
+        // Floor = Assigner/Lead and above. Molecule-scoped management of functional shift categories
+        // (e.g. "Yekev" that own shift elements) on the Blueprints page. Mirrors the ManageDistributionLists
+        // floor: Assigner (8) uses SAR (role scope IS Molecule); DepartmentLead (9) uses ETM to expand
+        // Department → molecule. Employee (1) + Trainee (12) intentionally excluded.
+        // ============================================
+        grants.Add(G(3, 136, ETM));                   // Lead (מפ"צ) — molecule
+        grants.Add(G(2, 136, ETM));                   // BRDirector (קב"ר) — molecule
+        grants.Add(G(5, 136, ETM));                   // Director (מ"מ) — molecule
+        grants.Add(G(7, 136, ETM));                   // MoleculeAdmin (מפק"מ) — molecule
+        grants.Add(G(8, 136, SAR));                   // Assigner (משבץ) — molecule (role scope is Molecule)
+        grants.Add(G(9, 136, ETM));                   // DepartmentLead (מפקד מחלקה טכנית) — expand Department → molecule
+        grants.Add(G(10, 136, ETA));                  // AreaAdmin (קב"ב) — area
+        grants.Add(G(11, 136, ETP, canGive: true));   // Owner — project
 
         return grants;
     }

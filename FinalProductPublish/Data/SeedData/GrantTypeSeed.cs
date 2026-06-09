@@ -341,6 +341,15 @@ public static class GrantTypeSeed
         // ============================================
         grants.Add(new GrantType { Id = id++, Key = "ManageDistributionLists", NameKey = "Grant_ManageDistributionLists", DescriptionKey = "Grant_ManageDistributionLists_Desc", Category = GrantCategory.UserManagement, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
 
+        // ============================================
+        // Shift Categories (2026-06-09)
+        // ManageShiftCategories: create/edit/delete molecule-scoped shift categories (functional groupings
+        // like "Yekev" that own shift elements) and assign shift types + users to them. Managed on the
+        // Blueprints page. Floor = Assigner/Lead and above. Scoped to molecule; create/edit/delete re-verify
+        // the grant against the category's MoleculeId to prevent IDOR.
+        // ============================================
+        grants.Add(new GrantType { Id = id++, Key = "ManageShiftCategories", NameKey = "Grant_ManageShiftCategories", DescriptionKey = "Grant_ManageShiftCategories_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+
         return grants;
     }
 }

@@ -384,7 +384,9 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
             body: JSON.stringify({
                 shiftTypeId: parseInt(shiftTypeId),
                 date: date,
-                userId: parseInt(assigneeId)
+                userId: parseInt(assigneeId),
+                // Draft Mode (Epic 4): when set, the assignment is staged into the private sandbox.
+                draftSessionId: window.__draftSessionId || null
             })
         });
 
@@ -909,17 +911,27 @@ async function submitQuickAdd(date) {
         } else if (calendarType === 'oncall') {
             deleteItem('onduty', assignmentId);
         } else {
-            // Shifts — call ClearAssignment
+            // Shifts — in Draft Mode (Epic 4) the × stages a clear into the sandbox (by shiftType+date+user);
+            // in live mode it clears the slot by assignment id.
             if (assignmentEl) {
                 assignmentEl.style.opacity = '0.3';
                 assignmentEl.style.pointerEvents = 'none';
             }
 
-            fetch('/Calendar/Table?handler=ClearAssignment', {
+            var draftId = window.__draftSessionId;
+            var shiftTypeIdAttr = btn.dataset.shiftTypeId || (assignmentEl && assignmentEl.dataset.shiftTypeId) || '';
+            var userIdAttr = btn.dataset.userId || (assignmentEl && assignmentEl.dataset.userId) || '';
+            var cellEl = assignmentEl ? assignmentEl.closest('.excel-calendar__cell') : null;
+            var dateAttr = cellEl ? cellEl.dataset.date : null;
+            var isDraftClear = draftId && shiftTypeIdAttr && userIdAttr && dateAttr;
+
+            fetch(isDraftClear ? '/Calendar/Table?handler=DraftClear' : '/Calendar/Table?handler=ClearAssignment', {
                 method: 'POST',
                 headers: getTablePostHeaders(),
                 credentials: 'same-origin',
-                body: JSON.stringify({ assignmentId: assignmentId })
+                body: JSON.stringify(isDraftClear
+                    ? { draftSessionId: parseInt(draftId, 10), shiftTypeId: parseInt(shiftTypeIdAttr, 10), date: dateAttr, userId: parseInt(userIdAttr, 10) }
+                    : { assignmentId: assignmentId })
             })
             .then(function (r) { return r.json(); })
             .then(function (result) {

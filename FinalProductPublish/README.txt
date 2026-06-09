@@ -77,7 +77,7 @@ FILES IN THIS FOLDER:
 
 ðŸ“¦ Runtime & Dependencies:
    530 files                    â† .NET runtime + all dependencies
-   Total size: 167 MB
+   Total size: 168 MB
 
 ================================================================================
 DEFAULT CREDENTIALS:
@@ -232,9 +232,9 @@ All dependencies are included. No internet connection required.
 
 Questions? See DEPLOYMENT_GUIDE.txt for comprehensive documentation.
 
-Version: v5.1.1
-Package Date: 2026-06-02
-Package Size: 167 MB
+Version: v5.2.0
+Package Date: 2026-06-09
+Package Size: 168 MB
 Deployment Type: Self-Contained
 
 ================================================================================

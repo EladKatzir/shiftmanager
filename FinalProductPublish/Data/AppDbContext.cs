@@ -99,6 +99,14 @@ public class AppDbContext : DbContext
     public DbSet<ShiftGroupingCompany> ShiftGroupingCompanies => Set<ShiftGroupingCompany>();
     public DbSet<ShiftGroupingJobType> ShiftGroupingJobTypes => Set<ShiftGroupingJobType>();
 
+    // Shift Categories (molecule-scoped functional grouping of shift elements + per-user membership)
+    public DbSet<ShiftCategory> ShiftCategories => Set<ShiftCategory>();
+    public DbSet<UserShiftCategory> UserShiftCategories => Set<UserShiftCategory>();
+
+    // Draft Mode (per-assigner sandbox over a molecule+week of the shift calendar)
+    public DbSet<DraftSession> DraftSessions => Set<DraftSession>();
+    public DbSet<DraftCell> DraftCells => Set<DraftCell>();
+
     // Grant System (135 built-in grants as of 2026-05-23, 12 role templates)
     public DbSet<GrantType> GrantTypes => Set<GrantType>();
     public DbSet<Grant> Grants => Set<Grant>();
@@ -1179,6 +1187,76 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict);
 
         // ========================================
+        // ShiftCategory Configurations
+        // ShiftCategory: NO query filter — molecule-scoped visibility (like ShiftType/ShiftGrouping),
+        // not tenant-based. Filtered explicitly by MoleculeId at every call site.
+        // ========================================
+
+        modelBuilder.Entity<ShiftCategory>()
+            .HasOne(sc => sc.Molecule)
+            .WithMany()
+            .HasForeignKey(sc => sc.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Lookup index + unique category name within a molecule
+        modelBuilder.Entity<ShiftCategory>()
+            .HasIndex(sc => sc.MoleculeId);
+        modelBuilder.Entity<ShiftCategory>()
+            .HasIndex(sc => new { sc.MoleculeId, sc.Name })
+            .IsUnique();
+
+        // ShiftType → ShiftCategory: a shift element belongs to at most one category.
+        // SetNull so deleting a category un-categorizes its shift types rather than deleting them.
+        modelBuilder.Entity<ShiftType>()
+            .HasOne(st => st.Category)
+            .WithMany(sc => sc.ShiftTypes)
+            .HasForeignKey(st => st.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ShiftType>()
+            .HasIndex(st => st.CategoryId);
+
+        // UserShiftCategory: many-to-many user ↔ category, unique per pair.
+        modelBuilder.Entity<UserShiftCategory>()
+            .HasIndex(usc => new { usc.UserId, usc.ShiftCategoryId })
+            .IsUnique();
+
+        modelBuilder.Entity<UserShiftCategory>()
+            .HasOne(usc => usc.User)
+            .WithMany(u => u.ShiftCategories)
+            .HasForeignKey(usc => usc.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserShiftCategory>()
+            .HasOne(usc => usc.ShiftCategory)
+            .WithMany(sc => sc.Members)
+            .HasForeignKey(usc => usc.ShiftCategoryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // ========================================
+        // Draft Mode Configurations
+        // DraftSession/DraftCell: NO query filter — molecule-scoped private sandboxes keyed by OwnerUserId.
+        // ========================================
+
+        modelBuilder.Entity<DraftSession>()
+            .HasIndex(d => new { d.OwnerUserId, d.MoleculeId, d.Status });
+
+        modelBuilder.Entity<DraftSession>()
+            .HasOne(d => d.Owner)
+            .WithMany()
+            .HasForeignKey(d => d.OwnerUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DraftCell>()
+            .HasOne(c => c.DraftSession)
+            .WithMany(d => d.Cells)
+            .HasForeignKey(c => c.DraftSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DraftCell>()
+            .HasIndex(c => new { c.DraftSessionId, c.ShiftTypeId, c.WorkDate })
+            .IsUnique();
+
+        // ========================================
         // Grant System Configurations
         // ========================================
 
@@ -1333,16 +1411,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<HomeTypeOverride>()
             .HasIndex(o => new { o.HomeTypeId, o.UserId })
             .IsUnique();
-
-        // AppUser → PrimaryShiftType relationship (cross-tenant FK)
-        // SECURITY-AUDITED: SAFE — PrimaryShiftType may belong to a different company than the user
-        // (e.g., tech shift types belong to hq-shikma CompanyId). Access via IgnoreQueryFilters().
-        modelBuilder.Entity<AppUser>()
-            .HasOne(u => u.PrimaryShiftType)
-            .WithMany()
-            .HasForeignKey(u => u.PrimaryShiftTypeId)
-            .OnDelete(DeleteBehavior.SetNull)
-            .IsRequired(false);
 
         // UserJoinRequest → RoleTemplate relationship
         modelBuilder.Entity<UserJoinRequest>()
