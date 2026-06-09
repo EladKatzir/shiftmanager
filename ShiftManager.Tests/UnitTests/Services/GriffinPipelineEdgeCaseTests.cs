@@ -70,7 +70,8 @@ public sealed class GriffinPipelineEdgeCaseTests : IAsyncLifetime
             new Mock<IAuditLogService>().Object,
             Mock.Of<ILogger<GriffinService>>(),
             _hierarchyMock.Object,
-            _grantMock.Object);
+            _grantMock.Object,
+            new CompanyMembershipService(_db, Mock.Of<ILogger<CompanyMembershipService>>()));
     }
 
     public async Task DisposeAsync()

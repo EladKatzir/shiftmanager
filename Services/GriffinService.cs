@@ -26,6 +26,7 @@ public partial class GriffinService : IGriffinService
     private readonly ILogger<GriffinService> _logger;
     private readonly IHierarchyService _hierarchyService;
     private readonly IGrantService _grantService;
+    private readonly ICompanyMembershipService _companyMembershipService;
 
     public GriffinService(
         IHttpClientFactory httpClientFactory,
@@ -35,7 +36,8 @@ public partial class GriffinService : IGriffinService
         IAuditLogService auditLogService,
         ILogger<GriffinService> logger,
         IHierarchyService hierarchyService,
-        IGrantService grantService)
+        IGrantService grantService,
+        ICompanyMembershipService companyMembershipService)
     {
         _httpClientFactory = httpClientFactory;
         _dbContext = dbContext;
@@ -45,6 +47,7 @@ public partial class GriffinService : IGriffinService
         _logger = logger;
         _hierarchyService = hierarchyService;
         _grantService = grantService;
+        _companyMembershipService = companyMembershipService;
     }
 
     public string BuildAuthenticationUrl(string griffinBaseUrl, string tokenConsumerUrl)
@@ -579,6 +582,15 @@ public partial class GriffinService : IGriffinService
 
             if (hierarchyContext.Path.Department != null)
                 claims.Add(new Claim("DepartmentId", hierarchyContext.Path.Department.Id.ToString()));
+        }
+
+        // Multi-company: expose the user's active membership company-id set so TenantResolver can
+        // validate a member's active-company switch synchronously (no DB call in the resolver).
+        var memberships = await _companyMembershipService.GetMembershipsAsync(user.Id);
+        if (memberships.Count > 1)
+        {
+            claims.Add(new Claim("MemberCompanyIds",
+                string.Join(",", memberships.Select(m => m.CompanyId).Distinct())));
         }
 
             var identity = new ClaimsIdentity(claims, "Griffin");

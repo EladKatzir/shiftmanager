@@ -63,7 +63,8 @@ public class GriffinServiceTests : IDisposable
             _auditLogServiceMock.Object,
             Mock.Of<ILogger<GriffinService>>(),
             _hierarchyServiceMock.Object,
-            _grantServiceMock.Object);
+            _grantServiceMock.Object,
+            new CompanyMembershipService(_db, Mock.Of<ILogger<CompanyMembershipService>>()));
     }
 
     public void Dispose()
@@ -1579,6 +1580,87 @@ public class GriffinServiceTests : IDisposable
 
         found.Should().NotBeNull();
         found!.DisplayName.Should().Be("Elad");
+    }
+
+    // ============================================================================================
+    // Epic 2: MemberCompanyIds claim baked at login
+    // When a user has ≥2 active memberships, BuildPrincipalFromClaimsAsync must produce a
+    // MemberCompanyIds claim (comma-joined). A single-company user must NOT get the claim.
+    // ============================================================================================
+
+    [Fact]
+    public async Task AuthenticateUserAsync_MultiCompany_MemberCompanyIdsClaim_Present()
+    {
+        // Arrange: seed companies + user + 2 memberships
+        // GriffinServiceTests uses a real SQLite db with FK constraints ON, so Company rows
+        // must exist before CompanyMembership rows referencing them can be saved.
+        _db.Set<Company>().Add(new Company { Id = 10, Name = "Company A" });
+        _db.Set<Company>().Add(new Company { Id = 20, Name = "Company B" });
+        _db.Users.Add(new AppUser
+        {
+            Id = 200, CompanyId = 10,
+            Email = "multi@test.local",
+            DisplayName = "Multi User",
+            Role = UserRole.Employee, IsActive = true, RoleTemplateId = null
+        });
+        await _db.SaveChangesAsync();
+        _db.CompanyMemberships.Add(new CompanyMembership { UserId = 200, CompanyId = 10, IsPrimary = true });
+        _db.CompanyMemberships.Add(new CompanyMembership { UserId = 200, CompanyId = 20, IsPrimary = false });
+        await _db.SaveChangesAsync();
+
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(200))
+            .ReturnsAsync((UserHierarchyContext?)null);
+
+        var griffinClaims = new GriffinClaimsDto
+        {
+            EmailAddress = "multi@test.local",
+            UniqueID = "GRIFFIN-200"
+        };
+
+        // Act
+        var result = await _service.BuildPrincipalFromClaimsAsync(griffinClaims, tokenForHash: null, ipAddress: "test");
+
+        // Assert
+        result.Success.Should().BeTrue();
+        var claim = result.Value!.FindFirst("MemberCompanyIds");
+        claim.Should().NotBeNull("multi-company user must have MemberCompanyIds claim");
+        // Value should be comma-joined company ids
+        var parts = claim!.Value.Split(',').Select(int.Parse).ToHashSet();
+        parts.Should().BeEquivalentTo(new[] { 10, 20 });
+    }
+
+    [Fact]
+    public async Task AuthenticateUserAsync_SingleCompany_MemberCompanyIdsClaim_Absent()
+    {
+        // Arrange: seed company + user + 1 membership only
+        _db.Set<Company>().Add(new Company { Id = 30, Name = "Company C" });
+        _db.Users.Add(new AppUser
+        {
+            Id = 201, CompanyId = 30,
+            Email = "single@test.local",
+            DisplayName = "Single User",
+            Role = UserRole.Employee, IsActive = true, RoleTemplateId = null
+        });
+        await _db.SaveChangesAsync();
+        _db.CompanyMemberships.Add(new CompanyMembership { UserId = 201, CompanyId = 30, IsPrimary = true });
+        await _db.SaveChangesAsync();
+
+        _hierarchyServiceMock.Setup(h => h.GetUserHierarchyContextAsync(201))
+            .ReturnsAsync((UserHierarchyContext?)null);
+
+        var griffinClaims = new GriffinClaimsDto
+        {
+            EmailAddress = "single@test.local",
+            UniqueID = "GRIFFIN-201"
+        };
+
+        // Act
+        var result = await _service.BuildPrincipalFromClaimsAsync(griffinClaims, tokenForHash: null, ipAddress: "test");
+
+        // Assert
+        result.Success.Should().BeTrue();
+        result.Value!.FindFirst("MemberCompanyIds").Should().BeNull(
+            "single-company users must NOT have MemberCompanyIds claim");
     }
 
     /// <summary>

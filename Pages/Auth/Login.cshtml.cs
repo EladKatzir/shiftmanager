@@ -31,6 +31,7 @@ public partial class LoginModel : LocalizedPageModel
     private readonly IHierarchyService _hierarchyService;
     private readonly IGrantService _grantService;
     private readonly IRoleService _roleService;
+    private readonly ICompanyMembershipService _companyMembershipService;
 
     public LoginModel(
         AppDbContext db,
@@ -43,7 +44,8 @@ public partial class LoginModel : LocalizedPageModel
         IFeatureFlagService featureFlagService,
         IHierarchyService hierarchyService,
         IGrantService grantService,
-        IRoleService roleService)
+        IRoleService roleService,
+        ICompanyMembershipService companyMembershipService)
         : base(localizer)
     {
         _db = db;
@@ -56,6 +58,7 @@ public partial class LoginModel : LocalizedPageModel
         _hierarchyService = hierarchyService;
         _grantService = grantService;
         _roleService = roleService;
+        _companyMembershipService = companyMembershipService;
     }
 
     [BindProperty] public string Email { get; set; } = string.Empty;
@@ -378,6 +381,15 @@ public partial class LoginModel : LocalizedPageModel
 
                 if (hierarchyContext.Path.Department != null)
                     claims.Add(new Claim("DepartmentId", hierarchyContext.Path.Department.Id.ToString()));
+            }
+
+            // Multi-company: expose the user's active membership company-id set so TenantResolver can
+            // validate a member's active-company switch synchronously (no DB call in the resolver).
+            var memberships = await _companyMembershipService.GetMembershipsAsync(user.Id);
+            if (memberships.Count > 1)
+            {
+                claims.Add(new Claim("MemberCompanyIds",
+                    string.Join(",", memberships.Select(m => m.CompanyId).Distinct())));
             }
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
