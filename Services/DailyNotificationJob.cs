@@ -64,6 +64,22 @@ public class DailyNotificationJob : BackgroundService
         // Wait 1 minute on startup to let the application fully initialize
         await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
 
+        // Establish the app-default culture as the fallback for users whose PreferredLanguage
+        // has never been observed. Per-recipient learned languages override this via CultureScope
+        // inside SendDailyDigestAsync / SendDayBeforeRemindersAsync. CultureInfo is AsyncLocal-backed,
+        // so this flows into the awaited per-user sends without affecting other threads.
+        using (var cultureScope = _serviceProvider.CreateScope())
+        {
+            var locOptions = cultureScope.ServiceProvider
+                .GetService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Builder.RequestLocalizationOptions>>();
+            var defaultCulture = locOptions?.Value.DefaultRequestCulture.Culture;
+            var defaultUiCulture = locOptions?.Value.DefaultRequestCulture.UICulture;
+            if (defaultCulture != null)
+                System.Globalization.CultureInfo.CurrentCulture = defaultCulture;
+            if (defaultUiCulture != null)
+                System.Globalization.CultureInfo.CurrentUICulture = defaultUiCulture;
+        }
+
         while (!stoppingToken.IsCancellationRequested)
         {
             // Re-check feature flag at start of each iteration to allow runtime disabling

@@ -1865,6 +1865,11 @@ app.UseMiddleware<CompanyContextMiddleware>();
 // Authentication must come before API middleware so cookie auth is available
 app.UseAuthentication();
 
+// Passively learn each authenticated user's preferred language from the resolved request
+// culture (runs after auth + localization; persists only on change). Feeds background email
+// composition which has no request culture to inherit.
+app.UseMiddleware<ShiftManager.Middleware.PreferredLanguageLearningMiddleware>();
+
 // CRITICAL: ApiAuthenticationMiddleware MUST run BEFORE UseAuthorization().
 // It reads X-API-Key from incoming /api/v1/* requests and sets HttpContext.User with
 // ApiKey claims. Without this, UseAuthorization() sees [Authorize] on V1 controllers,

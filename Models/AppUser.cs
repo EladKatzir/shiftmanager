@@ -67,6 +67,15 @@ public class AppUser : IBelongsToCompany
     public string? ThemeColor { get; set; }
     public string? ThemeMode { get; set; }
 
+    /// <summary>
+    /// User's preferred UI/email language as a culture name ("he-IL" | "en-US").
+    /// Passively learned: updated from the web request's resolved UI culture whenever it
+    /// changes (see PreferredLanguageLearningMiddleware). Consumed by background email
+    /// composition (daily digest, reminders, unread catch-up) which has no request culture
+    /// to inherit. NULL = never observed → fall back to the company/default culture.
+    /// </summary>
+    public string? PreferredLanguage { get; set; }
+
     // Organizational - workforce users have JobType, tech users have Department
     public int? JobTypeId { get; set; }    // Workforce molecules only
     public int? DepartmentId { get; set; }  // Tech molecules only

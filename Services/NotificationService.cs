@@ -633,6 +633,10 @@ public partial class NotificationService : INotificationService
                 return false;
             }
 
+            // Render this digest under the recipient's learned language (background jobs have no
+            // request culture). Null/unknown preference → inherits the job's default culture.
+            using var _digestCulture = new Helpers.CultureScope(user.PreferredLanguage);
+
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var nextWeek = today.AddDays(7);
 
@@ -942,6 +946,10 @@ public partial class NotificationService : INotificationService
                 LogDayBeforeNotEnabled(_logger, userId);
                 return;
             }
+
+            // Render reminders under the recipient's learned language (background jobs have no
+            // request culture). Null/unknown preference → inherits the job's default culture.
+            using var _reminderCulture = new Helpers.CultureScope(user.PreferredLanguage);
 
             var tomorrow = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
             var reminderParts = new List<string>();
