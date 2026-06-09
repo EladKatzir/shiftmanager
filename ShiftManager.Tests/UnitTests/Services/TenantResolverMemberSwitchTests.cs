@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using ShiftManager.Services;
 using Xunit;
@@ -42,17 +43,27 @@ public sealed class TenantResolverMemberSwitchTests
 
     /// <summary>
     /// Builds a TenantResolver with a fake HTTP context carrying the given user and optional
-    /// member_selected_company cookie.
+    /// member_selected_company cookie. When <paramref name="ownerSelectorStub"/> is supplied it is
+    /// registered in the context's RequestServices so the Owner-selector rung (Priority 2) can
+    /// resolve it — mirroring how TenantResolver pulls IOwnerCompanySelectorService at runtime.
     /// </summary>
     private static TenantResolver MakeResolver(
         ClaimsPrincipal user,
-        string? memberSelectedCookie = null)
+        string? memberSelectedCookie = null,
+        IOwnerCompanySelectorService? ownerSelectorStub = null)
     {
         var ctx = new DefaultHttpContext { User = user };
         if (memberSelectedCookie != null)
         {
             ctx.Request.Headers["Cookie"] =
                 $"{ActiveCompanySelectorService.CookieName}={memberSelectedCookie}";
+        }
+
+        if (ownerSelectorStub != null)
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton(ownerSelectorStub);
+            ctx.RequestServices = services.BuildServiceProvider();
         }
 
         var accessor = new HttpContextAccessorStub(ctx);
@@ -113,20 +124,45 @@ public sealed class TenantResolverMemberSwitchTests
     }
 
     [Fact]
-    public void GetCurrentTenantId_OwnerSelectedStillTakesPrecedence()
+    public void GetCurrentTenantId_MemberCookieIsSubstringOfClaimEntry_FallsThroughToCompanyIdClaim()
     {
-        // Ensure the existing Owner-selected rung (Priority 2) still wins over the new
-        // member-selected rung (Priority 2.5). Build a resolver where the Owner service is
-        // wired via DI RequestServices. Since TenantResolver uses IServiceProvider.GetService
-        // to resolve IOwnerCompanySelectorService, we can verify Priority 2 by testing that
-        // the Owner block runs BEFORE our new rung — but that requires an Owner user.
-        // The simpler correctness assertion here: a non-Owner user with a valid member cookie
-        // gets the member selection (Priority 2.5 acts before Priority 3/CompanyId claim).
-        var user = MakeUser(companyId: 10, memberCompanyIds: "10,20", role: "Employee");
-        var resolver = MakeResolver(user, memberSelectedCookie: "20");
+        // MemberCompanyIds = "20,200"; cookie = "2". A naive substring/Contains(string) check
+        // would match because "2" is a substring of "20" and "200". The whole-token
+        // Split(',').Contains("2") must NOT match, so the resolver falls through to CompanyId=10.
+        var user = MakeUser(companyId: 10, memberCompanyIds: "20,200");
+        var resolver = MakeResolver(user, memberSelectedCookie: "2");
 
-        resolver.GetCurrentTenantId().Should().Be(20,
-            "for a non-Owner user, Priority 2.5 (member-selected) precedes Priority 3 (CompanyId claim)");
+        resolver.GetCurrentTenantId().Should().Be(10,
+            "cookie '2' is only a substring of the claim entries '20'/'200', not a whole token, so it must be ignored");
+    }
+
+    [Fact]
+    public void GetCurrentTenantId_Owner_WithOwnerSelection_ReturnsOwnerSelectedCompany_IgnoringMemberCookie()
+    {
+        // (4a) Owner WITH an owner-selection (99) plus a stale member cookie (20).
+        // The Owner-selected rung (Priority 2) must win — resolver returns 99, never 20.
+        var user = MakeUser(companyId: 10, memberCompanyIds: "10,20", role: "Owner");
+        var ownerStub = new OwnerCompanySelectorStub(selectedCompanyId: 99);
+        var resolver = MakeResolver(user, memberSelectedCookie: "20", ownerSelectorStub: ownerStub);
+
+        resolver.GetCurrentTenantId().Should().Be(99,
+            "an Owner's selected company (Priority 2) takes precedence over any member cookie");
+    }
+
+    [Fact]
+    public void GetCurrentTenantId_Owner_WithoutOwnerSelection_IgnoresMemberCookie_ReturnsCompanyIdClaim()
+    {
+        // (4b) Owner with NO owner-selection (stub returns null) plus a VALID member cookie (20)
+        // whose value IS in MemberCompanyIds="20". This is the exact privilege-bug scenario:
+        // without the Owner-guard on the Priority 2.5 block, the resolver would incorrectly
+        // honor the member cookie and return 20. With the guard, the member rung is skipped for
+        // Owners and the resolver falls through to the CompanyId claim (10).
+        var user = MakeUser(companyId: 10, memberCompanyIds: "20", role: "Owner");
+        var ownerStub = new OwnerCompanySelectorStub(selectedCompanyId: null);
+        var resolver = MakeResolver(user, memberSelectedCookie: "20", ownerSelectorStub: ownerStub);
+
+        resolver.GetCurrentTenantId().Should().Be(10,
+            "an Owner must NOT fall through into the member-selected rung; the stale member cookie is ignored and the CompanyId claim is used");
     }
 
     // ────────────────────────────────────────────────────────────────────────────
@@ -137,5 +173,23 @@ public sealed class TenantResolverMemberSwitchTests
     {
         public HttpContext? HttpContext { get; set; }
         public HttpContextAccessorStub(HttpContext ctx) => HttpContext = ctx;
+    }
+
+    /// <summary>
+    /// Minimal IOwnerCompanySelectorService stub: only GetSelectedCompanyId is exercised by
+    /// TenantResolver's Priority 2 rung; the rest throw to flag unexpected use.
+    /// </summary>
+    private sealed class OwnerCompanySelectorStub : IOwnerCompanySelectorService
+    {
+        private readonly int? _selectedCompanyId;
+        public OwnerCompanySelectorStub(int? selectedCompanyId) => _selectedCompanyId = selectedCompanyId;
+
+        public int? GetSelectedCompanyId() => _selectedCompanyId;
+
+        public bool IsOwner() => true;
+        public Task<bool> SelectCompanyAsync(int companyId) => throw new NotSupportedException();
+        public Task ClearSelectionAsync() => throw new NotSupportedException();
+        public Task<string?> GetSelectedCompanyNameAsync() => throw new NotSupportedException();
+        public int? GetHomeCompanyId() => throw new NotSupportedException();
     }
 }

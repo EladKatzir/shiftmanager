@@ -52,8 +52,19 @@ public class TenantResolver : ITenantResolver
             // Priority 2.5: Multi-company member's selected active company.
             // Validate the cookie against the MemberCompanyIds claim (baked at login) so this
             // stays synchronous — never trust the cookie alone.
+            //
+            // Owners are excluded: their tenant is governed solely by the Owner-selector rung
+            // (Priority 2) above. Without this guard, an Owner with no owner-selection but a
+            // stale member_selected_company cookie would fall through into this block. Same
+            // exclusion pattern as the director molecule selector.
+            //
+            // NOTE: validation is against the MemberCompanyIds claim (a login-time snapshot), NOT a live DB
+            // read — the resolver is synchronous. Same tradeoff as the Owner selector. The authoritative
+            // membership check runs in ActiveCompanySelectorService.SelectCompanyAsync at selection time;
+            // a membership revoked mid-session remains honored until the user re-authenticates (cookie TTL 12h).
             var httpContext = _httpContextAccessor.HttpContext;
-            if (httpContext?.Request.Cookies.TryGetValue(MemberSelectedCookieName, out var memberCookie) == true
+            if (!user.IsInRole(nameof(UserRole.Owner))
+                && httpContext?.Request.Cookies.TryGetValue(MemberSelectedCookieName, out var memberCookie) == true
                 && int.TryParse(memberCookie, out var memberCompanyId))
             {
                 var allowed = user.FindFirst("MemberCompanyIds")?.Value;

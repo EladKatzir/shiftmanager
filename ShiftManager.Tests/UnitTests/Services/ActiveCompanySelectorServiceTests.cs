@@ -157,10 +157,34 @@ public sealed class ActiveCompanySelectorServiceTests : IAsyncLifetime
         // Act
         await sut.ClearSelectionAsync();
 
-        // Assert: DefaultHttpContext tracks deleted cookies in Set-Cookie with an empty/expired value
+        // Assert: Response.Cookies.Delete emits a Set-Cookie directive that EXPIRES the cookie.
+        // ASP.NET Core renders this as the named cookie with an empty value plus an expiry in the
+        // past (Unix epoch) and/or max-age=0. Asserting on the delete directive — not just the
+        // name's presence — proves the cookie is actually being removed, not re-set.
         var setCookie = ctx.Response.Headers["Set-Cookie"].ToString();
         setCookie.Should().Contain(ActiveCompanySelectorService.CookieName,
-            "ClearSelectionAsync must issue a delete directive for the cookie");
+            "the delete directive must target the member_selected_company cookie");
+
+        var lower = setCookie.ToLowerInvariant();
+        (lower.Contains("expires=thu, 01 jan 1970") || lower.Contains("max-age=0"))
+            .Should().BeTrue(
+                $"ClearSelectionAsync must EXPIRE the cookie (past expiry or max-age=0), but Set-Cookie was: {setCookie}");
+    }
+
+    [Fact]
+    public async Task SelectCompanyAsync_NullHttpContext_ReturnsFalseAndNoCookie()
+    {
+        // Arrange: an accessor whose HttpContext is null (e.g. background/non-request context).
+        var accessor = new HttpContextAccessorStub(null);
+        var membershipService = new CompanyMembershipService(
+            _db, NullLogger<CompanyMembershipService>.Instance);
+        var sut = new ActiveCompanySelectorService(accessor, membershipService);
+
+        // Act
+        var result = await sut.SelectCompanyAsync(10);
+
+        // Assert: no context → no user, no cookie write, returns false.
+        result.Should().BeFalse("with no HttpContext the selector cannot resolve a user or write a cookie");
     }
 
     // ────────────────────────────────────────────────────────────────────────────
@@ -170,6 +194,6 @@ public sealed class ActiveCompanySelectorServiceTests : IAsyncLifetime
     private sealed class HttpContextAccessorStub : IHttpContextAccessor
     {
         public HttpContext? HttpContext { get; set; }
-        public HttpContextAccessorStub(HttpContext ctx) => HttpContext = ctx;
+        public HttpContextAccessorStub(HttpContext? ctx) => HttpContext = ctx;
     }
 }
