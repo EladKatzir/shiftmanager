@@ -69,11 +69,17 @@ public class CompanyMembershipService : ICompanyMembershipService
         membership.IsDeleted = true;
         membership.DeletedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        // actingAdminId is reserved for the Epic 4 audit / orphan-cleanup pass (no DeletedBy column yet).
         // Orphan-cleanup (future shifts/requests/grants in this company) lands in Epic 4.
     }
 
     public async Task SetPrimaryAsync(int userId, int companyId)
     {
+        // Scope the whole read/check-then-write sequence inside the transaction to close the
+        // TOCTOU window between the membership-existence check and the primary flip.
+        // The early throw below rolls the (empty) transaction back via `await using`.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
         var memberships = await _db.CompanyMemberships
             .IgnoreQueryFilters()
             .Where(m => m.UserId == userId && !m.IsDeleted)
@@ -83,8 +89,6 @@ public class CompanyMembershipService : ICompanyMembershipService
         if (target == null)
             throw new InvalidOperationException(
                 $"User {userId} has no active membership in company {companyId}.");
-
-        await using var tx = await _db.Database.BeginTransactionAsync();
 
         foreach (var m in memberships)
             m.IsPrimary = m.CompanyId == companyId;

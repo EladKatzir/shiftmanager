@@ -122,4 +122,40 @@ public sealed class CompanyMembershipServiceTests : IAsyncLifetime
         await act.Should().ThrowAsync<InvalidOperationException>(
             "promoting a company the user has no active membership in must be rejected");
     }
+
+    [Fact]
+    public async Task RemoveMembershipAsync_SoftDeletesAndRemovesFromActiveSet()
+    {
+        // Arrange
+        await SeedUserAsync(1, 10);
+        var svc = new CompanyMembershipService(_db);
+        var m = await svc.AddMembershipAsync(1, 20, null, null, null, false, null, 99);
+
+        // Act
+        await svc.RemoveMembershipAsync(m.Id, 99);
+
+        // Assert — active set no longer contains company 20
+        var active = await svc.GetMembershipsAsync(1);
+        active.Should().ContainSingle(x => x.CompanyId == 10, "only the company-10 primary remains active");
+        active.Should().NotContain(x => x.CompanyId == 20, "the removed membership is no longer active");
+        (await svc.IsMemberAsync(1, 20)).Should().BeFalse("removed membership is not an active membership");
+
+        // Assert — the row is soft-deleted, not hard-deleted
+        var removed = _db.CompanyMemberships.IgnoreQueryFilters().First(x => x.Id == m.Id);
+        removed.IsDeleted.Should().BeTrue("removal is a soft-delete");
+        removed.DeletedAt.Should().NotBeNull("soft-delete stamps DeletedAt");
+    }
+
+    [Fact]
+    public async Task RemoveMembershipAsync_PrimaryMembership_Throws()
+    {
+        // Arrange
+        await SeedUserAsync(1, 10);
+        var svc = new CompanyMembershipService(_db);
+        var primaryId = (await svc.GetMembershipsAsync(1)).Single(x => x.IsPrimary).Id;
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => svc.RemoveMembershipAsync(primaryId, 99));
+    }
 }
