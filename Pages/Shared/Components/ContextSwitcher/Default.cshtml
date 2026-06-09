@@ -60,7 +60,7 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
     <div class="context-switcher @(Model.HasManyContexts ? "context-switcher--many" : "")"
          id="contextSwitcher"
          data-total-contexts="@Model.TotalContextCount"
-         data-switch-mode="@(Model.IsMoleculeMode ? "molecule" : "company")">
+         data-switch-mode="@(Model.IsMemberMode ? "member-company" : (Model.IsMoleculeMode ? "molecule" : "company"))">
         <div class="context-switcher__label">
             <span aria-hidden="true"><icon name="pin" /></span>
             @if (Model.IsMoleculeMode)
@@ -316,6 +316,9 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
             if (switchMode === 'molecule') {
                 form.action = '/Api/SelectMolecule';
                 input.name = 'moleculeId';
+            } else if (switchMode === 'member-company') {
+                form.action = '/Api/SelectMemberCompany';
+                input.name = 'companyId';
             } else {
                 form.action = '/Owner/SelectCompany';
                 input.name = 'companyId';

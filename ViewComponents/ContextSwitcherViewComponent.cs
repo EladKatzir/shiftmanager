@@ -15,6 +15,7 @@ public class ContextSwitcherViewComponent : ViewComponent
     private readonly AppDbContext _context;
     private readonly ITenantResolver _tenantResolver;
     private readonly IGrantService _grantService;
+    private readonly ICompanyMembershipService _companyMembershipService;
     private readonly ILogger<ContextSwitcherViewComponent> _logger;
 
     // Threshold for suggesting virtualization (many contexts)
@@ -27,12 +28,14 @@ public class ContextSwitcherViewComponent : ViewComponent
         AppDbContext context,
         ITenantResolver tenantResolver,
         IGrantService grantService,
+        ICompanyMembershipService companyMembershipService,
         ILogger<ContextSwitcherViewComponent> logger)
     {
         _localizer = localizer;
         _context = context;
         _tenantResolver = tenantResolver;
         _grantService = grantService;
+        _companyMembershipService = companyMembershipService;
         _logger = logger;
     }
 
@@ -114,27 +117,65 @@ public class ContextSwitcherViewComponent : ViewComponent
             }
             else
             {
-                // Regular users see their assigned company plus any granted contexts
-                // AppUser.CompanyId is int (non-nullable)
-                var userCompanyId = await _context.Users
-                    .Where(u => u.Id == userId)
-                    .Select(u => u.CompanyId)
-                    .FirstOrDefaultAsync();
+                // Regular users: check multi-company membership first.
+                // If the user belongs to more than one company, list all membership companies
+                // and enable member-mode switching. Single-membership users keep the existing
+                // single-context non-interactive display (no behaviour change for ~99% of users).
+                var memberships = await _companyMembershipService.GetMembershipsAsync(userId);
 
-                if (userCompanyId > 0)
+                if (memberships.Count > 1)
                 {
-                    var company = await _context.Companies
-                        .Include(c => c.Molecule)
-                        .FirstOrDefaultAsync(c => c.Id == userCompanyId);
+                    // Multi-company member — build one option per membership company.
+                    model.IsMemberMode = true;
 
-                    if (company != null)
+                    var memberCompanyIds = memberships.Select(m => m.CompanyId).ToList();
+                    // SECURITY-AUDITED: SAFE — scoped by membership rows for this specific user;
+                    // IgnoreQueryFilters needed because member companies may be in different tenants.
+                    var memberCompanies = await _context.Companies
+                        .IgnoreQueryFilters()
+                        .Where(c => memberCompanyIds.Contains(c.Id))
+                        .Include(c => c.Molecule)
+                        .ToListAsync();
+
+                    // Preserve primary-first ordering from GetMembershipsAsync
+                    foreach (var membership in memberships)
                     {
-                        contexts.Add(CreateContextOption(
-                            company.Id,
-                            company.LocalizedName,
-                            "company",
-                            company.Molecule?.Name ?? "",
-                            company.MoleculeId));
+                        var company = memberCompanies.FirstOrDefault(c => c.Id == membership.CompanyId);
+                        if (company != null)
+                        {
+                            contexts.Add(CreateContextOption(
+                                company.Id,
+                                company.LocalizedName,
+                                "company",
+                                company.Molecule?.Name ?? "",
+                                company.MoleculeId));
+                        }
+                    }
+                }
+                else
+                {
+                    // Single membership (or zero — handled below): use home company from AppUser.
+                    // AppUser.CompanyId is int (non-nullable).
+                    var userCompanyId = await _context.Users
+                        .Where(u => u.Id == userId)
+                        .Select(u => u.CompanyId)
+                        .FirstOrDefaultAsync();
+
+                    if (userCompanyId > 0)
+                    {
+                        var company = await _context.Companies
+                            .Include(c => c.Molecule)
+                            .FirstOrDefaultAsync(c => c.Id == userCompanyId);
+
+                        if (company != null)
+                        {
+                            contexts.Add(CreateContextOption(
+                                company.Id,
+                                company.LocalizedName,
+                                "company",
+                                company.Molecule?.Name ?? "",
+                                company.MoleculeId));
+                        }
                     }
                 }
             }
@@ -160,7 +201,7 @@ public class ContextSwitcherViewComponent : ViewComponent
             model.HasManyContexts = contexts.Count >= MANY_CONTEXTS_THRESHOLD;
             model.TotalContextCount = contexts.Count;
 
-            // Resolve current context — directors use molecule ID, owners use company ID
+            // Resolve current context — directors use molecule ID, owners/members use company ID
             ContextOption? currentContext;
             if (model.IsMoleculeMode)
             {
@@ -177,7 +218,9 @@ public class ContextSwitcherViewComponent : ViewComponent
             }
             else
             {
-                // For owners: match against company ID from tenant resolver
+                // For owners and multi-company members: match against company ID from tenant resolver.
+                // TenantResolver already honors the member_selected_company cookie (Task 3), so
+                // GetCurrentTenantId() returns the member's active company in both cases.
                 var currentCompanyId = _tenantResolver.GetCurrentTenantId();
                 currentContext = contexts.FirstOrDefault(c => c.Id == currentCompanyId)
                     ?? contexts.FirstOrDefault();
@@ -268,6 +311,9 @@ public class ContextSwitcherViewModel
     public string? ErrorMessage { get; set; }
     /// <summary>True when the switcher operates at molecule level (directors) vs company level (owners)</summary>
     public bool IsMoleculeMode { get; set; }
+    /// <summary>True when the switcher lists a multi-company member's membership companies.
+    /// Mutually exclusive with IsMoleculeMode. Single-membership regular users get neither flag.</summary>
+    public bool IsMemberMode { get; set; }
 }
 
 public class ContextGroup
