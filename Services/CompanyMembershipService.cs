@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 
@@ -7,8 +8,13 @@ namespace ShiftManager.Services;
 public class CompanyMembershipService : ICompanyMembershipService
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<CompanyMembershipService> _logger;
 
-    public CompanyMembershipService(AppDbContext db) => _db = db;
+    public CompanyMembershipService(AppDbContext db, ILogger<CompanyMembershipService> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     public async Task<IReadOnlyList<CompanyMembership>> GetMembershipsAsync(int userId)
     {
@@ -51,7 +57,18 @@ public class CompanyMembershipService : ICompanyMembershipService
             GrantedBy = actingAdminId
         };
         _db.CompanyMemberships.Add(membership);
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            // Race backstop: a concurrent add slipped past the IsMemberAsync check and hit the
+            // (UserId, CompanyId) unique filtered index. Translate to the documented contract exception.
+            throw new InvalidOperationException(
+                $"User {userId} already has an active membership in company {companyId}.", ex);
+        }
+        _logger.LogInformation("Added membership: user {UserId} → company {CompanyId} (by {ActorId})", userId, companyId, actingAdminId);
         return membership;
     }
 
@@ -69,6 +86,7 @@ public class CompanyMembershipService : ICompanyMembershipService
         membership.IsDeleted = true;
         membership.DeletedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+        _logger.LogInformation("Soft-deleted membership {MembershipId} (user {UserId}, company {CompanyId}) by {ActorId}", membership.Id, membership.UserId, membership.CompanyId, actingAdminId);
         // actingAdminId is reserved for the Epic 4 audit / orphan-cleanup pass (no DeletedBy column yet).
         // Orphan-cleanup (future shifts/requests/grants in this company) lands in Epic 4.
     }
@@ -99,5 +117,6 @@ public class CompanyMembershipService : ICompanyMembershipService
 
         await _db.SaveChangesAsync();
         await tx.CommitAsync();
+        _logger.LogInformation("Set primary company for user {UserId} → {CompanyId}", userId, companyId);
     }
 }

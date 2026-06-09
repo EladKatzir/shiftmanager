@@ -17,7 +17,8 @@ public interface ICompanyMembershipService
     /// <summary>True if the user has an active membership in the company.</summary>
     Task<bool> IsMemberAsync(int userId, int companyId);
 
-    /// <summary>Add a non-primary membership. Throws if an active membership already exists for (userId, companyId).</summary>
+    /// <summary>Add a non-primary membership. Throws InvalidOperationException if an active membership
+    /// already exists for (userId, companyId) — including the concurrent-add race, caught at the unique index.</summary>
     Task<CompanyMembership> AddMembershipAsync(
         int userId, int companyId, int? roleTemplateId, int? jobTypeId, int? departmentId,
         bool doesShifts, int? homeTypeId, int actingAdminId);

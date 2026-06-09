@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Services;
@@ -47,7 +48,7 @@ public sealed class CompanyMembershipServiceTests : IAsyncLifetime
     {
         // Arrange
         await SeedUserAsync(1, 10);
-        var sut = new CompanyMembershipService(_db);
+        var sut = new CompanyMembershipService(_db, NullLogger<CompanyMembershipService>.Instance);
         await sut.AddMembershipAsync(1, 20, null, null, null, doesShifts: true, null, actingAdminId: 99);
 
         // Act
@@ -57,6 +58,7 @@ public sealed class CompanyMembershipServiceTests : IAsyncLifetime
         result.Should().HaveCount(2, "user has primary in company 10 and an added membership in company 20");
         result.Should().Contain(m => m.CompanyId == 10 && m.IsPrimary);
         result.Should().Contain(m => m.CompanyId == 20 && !m.IsPrimary);
+        result[0].IsPrimary.Should().BeTrue("the documented contract returns the primary membership first");
     }
 
     [Fact]
@@ -64,7 +66,7 @@ public sealed class CompanyMembershipServiceTests : IAsyncLifetime
     {
         // Arrange
         await SeedUserAsync(1, 10);
-        var sut = new CompanyMembershipService(_db);
+        var sut = new CompanyMembershipService(_db, NullLogger<CompanyMembershipService>.Instance);
 
         // Act & Assert
         var act = async () => await sut.AddMembershipAsync(1, 10, null, null, null, doesShifts: false, null, actingAdminId: 99);
@@ -77,7 +79,7 @@ public sealed class CompanyMembershipServiceTests : IAsyncLifetime
     {
         // Arrange
         await SeedUserAsync(1, 10);
-        var sut = new CompanyMembershipService(_db);
+        var sut = new CompanyMembershipService(_db, NullLogger<CompanyMembershipService>.Instance);
 
         // Act & Assert
         (await sut.IsMemberAsync(1, 10)).Should().BeTrue("user has an active primary membership in company 10");
@@ -89,7 +91,7 @@ public sealed class CompanyMembershipServiceTests : IAsyncLifetime
     {
         // Arrange
         await SeedUserAsync(1, 10);
-        var sut = new CompanyMembershipService(_db);
+        var sut = new CompanyMembershipService(_db, NullLogger<CompanyMembershipService>.Instance);
         await sut.AddMembershipAsync(1, 20, null, null, null, doesShifts: false, null, actingAdminId: 99);
 
         // Act
@@ -115,7 +117,7 @@ public sealed class CompanyMembershipServiceTests : IAsyncLifetime
     {
         // Arrange
         await SeedUserAsync(1, 10);
-        var sut = new CompanyMembershipService(_db);
+        var sut = new CompanyMembershipService(_db, NullLogger<CompanyMembershipService>.Instance);
 
         // Act & Assert
         var act = async () => await sut.SetPrimaryAsync(1, 777);
@@ -128,7 +130,7 @@ public sealed class CompanyMembershipServiceTests : IAsyncLifetime
     {
         // Arrange
         await SeedUserAsync(1, 10);
-        var svc = new CompanyMembershipService(_db);
+        var svc = new CompanyMembershipService(_db, NullLogger<CompanyMembershipService>.Instance);
         var m = await svc.AddMembershipAsync(1, 20, null, null, null, false, null, 99);
 
         // Act
@@ -151,11 +153,29 @@ public sealed class CompanyMembershipServiceTests : IAsyncLifetime
     {
         // Arrange
         await SeedUserAsync(1, 10);
-        var svc = new CompanyMembershipService(_db);
+        var svc = new CompanyMembershipService(_db, NullLogger<CompanyMembershipService>.Instance);
         var primaryId = (await svc.GetMembershipsAsync(1)).Single(x => x.IsPrimary).Id;
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => svc.RemoveMembershipAsync(primaryId, 99));
+        var act = async () => await svc.RemoveMembershipAsync(primaryId, 99);
+        await act.Should().ThrowAsync<InvalidOperationException>(
+            "the primary membership cannot be removed; another must be promoted first");
+    }
+
+    [Fact]
+    public async Task AddMembershipAsync_AfterSoftDelete_CanReAddSameCompany()
+    {
+        // Arrange
+        await SeedUserAsync(1, 10);
+        var svc = new CompanyMembershipService(_db, NullLogger<CompanyMembershipService>.Instance);
+        var m = await svc.AddMembershipAsync(1, 20, null, null, null, false, null, 99);
+        await svc.RemoveMembershipAsync(m.Id, 99);
+
+        // Act — re-adding the same company after soft-delete must succeed (IsMemberAsync's !IsDeleted filter)
+        var act = async () => await svc.AddMembershipAsync(1, 20, null, null, null, false, null, 99);
+
+        // Assert
+        await act.Should().NotThrowAsync("the prior membership is soft-deleted, so the company is re-addable");
+        (await svc.IsMemberAsync(1, 20)).Should().BeTrue("the re-added membership is active again");
     }
 }
