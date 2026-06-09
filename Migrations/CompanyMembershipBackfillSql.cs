@@ -1,4 +1,4 @@
-namespace ShiftManager.Data.SeedData;
+namespace ShiftManager.Migrations;
 
 /// <summary>
 /// Backfill SQL shared between the BackfillCompanyMembershipsFromPrimary migration and its
@@ -16,6 +16,7 @@ public static class CompanyMembershipBackfillSql
           SELECT u.Id, u.CompanyId, u.RoleTemplateId, u.JobTypeId, u.DepartmentId, u.DoesShifts, u.HomeTypeId,
                  1, 0, NULL, datetime('now'), 0
           FROM Users u
+          -- Guard is intentionally user-level (not per-company): protects the one-primary-per-user invariant on re-run.
           WHERE NOT EXISTS (
               SELECT 1 FROM CompanyMemberships cm
               WHERE cm.UserId = u.Id AND cm.IsPrimary = 1 AND cm.IsDeleted = 0

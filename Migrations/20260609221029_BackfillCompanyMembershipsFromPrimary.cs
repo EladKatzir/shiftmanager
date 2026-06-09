@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
-using ShiftManager.Data.SeedData;
 
 #nullable disable
 
@@ -22,6 +21,8 @@ namespace ShiftManager.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             // Reverse: remove only the system-created primary backfill rows.
+            // NOTE: GrantedBy = 0 is the exclusive sentinel for system/backfill rows (see CompanyMembership.GrantedBy).
+            // This reversal relies on no other code path creating a primary membership with GrantedBy = 0.
             migrationBuilder.Sql("DELETE FROM CompanyMemberships WHERE GrantedBy = 0 AND IsPrimary = 1;");
         }
     }

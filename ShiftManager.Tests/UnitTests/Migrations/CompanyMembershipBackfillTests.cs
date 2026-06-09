@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
-using ShiftManager.Data.SeedData;
+using ShiftManager.Migrations;
 using ShiftManager.Models;
 using Xunit;
 
@@ -73,6 +73,7 @@ public sealed class CompanyMembershipBackfillTests : IAsyncLifetime
         m1.DoesShifts.Should().BeTrue();
         m1.HomeTypeId.Should().Be(5);
         m1.DepartmentId.Should().BeNull();
+        Assert.Equal(0, m1.GrantedBy);
 
         // User 2 assertions.
         var m2 = memberships.Single(m => m.UserId == 2);
@@ -82,6 +83,7 @@ public sealed class CompanyMembershipBackfillTests : IAsyncLifetime
         m2.RoleTemplateId.Should().BeNull();
         m2.JobTypeId.Should().BeNull();
         m2.HomeTypeId.Should().BeNull();
+        Assert.Equal(0, m2.GrantedBy);
     }
 
     [Fact]
