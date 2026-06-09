@@ -192,10 +192,20 @@ Two independent deliverables:
 - **Subscription feed** — `/calendar/feed/{token}.ics` (per-user revocable token on `AppUser`,
   tenant-safe). User adds the URL once in Outlook; all their shifts/chores/on-call auto-sync.
   **No Felix dependency.**
-- **Per-event invites** — attach `.ics` to the notification email. **Gated on Felix swagger**
-  (needs attachment support). `IMailService.SendMailAsync` + the Felix payload gain an optional
-  `attachments` parameter. If Felix cannot attach, degrade to an "Add to calendar" download link
-  in the email body; the feed remains the primary sync path.
+- **Per-event calendar delivery** — **always feasible**; the same `IcsBuilder` always serves the
+  `.ics` from *our* server. The Felix swagger only decides *quality*, not feasibility:
+  - **5a (Felix supports attachments)** — attach the `.ics` (`method=REQUEST`) directly to the
+    notification email → **native Outlook invite** with auto-appear + Accept/Decline RSVP.
+    `IMailService.SendMailAsync` + the Felix payload gain an optional `attachments` parameter.
+  - **5b (Felix is HTML-only, the wrapper-as-dumb-pipe path)** — embed an **"Add to Calendar"
+    button** in the HTML body linking to a per-event server endpoint
+    (`/calendar/event/{token}.ics`, `Content-Type: text/calendar`). One extra click, then Outlook
+    opens and adds it. Works through Felix exactly as it sends mail today.
+
+  Technical note: a native invite (auto-appear + RSVP) requires the `.ics` as an **attachment**
+  or the message `Content-Type` to be `text/calendar; method=REQUEST`. A `from/to/subject/html`-only
+  body cannot produce that — HTML body alone has no MIME control. Hence 5b is a button/link, not a
+  silent auto-add. Both 5a and 5b reuse `IcsBuilder`; only the *delivery vehicle* differs.
 
 ### 5.9 Language learning
 
@@ -226,16 +236,19 @@ Two independent deliverables:
   dispatcher; wire every gap event (trainee email, feedback email, account actions, approver
   notifications, calendar text entries); add bulk batching.
 - **Phase 4 — ICS subscription feed:** `IcsBuilder` + feed endpoint. (No Felix dependency.)
-- **Phase 5 — ICS per-event invites:** attachments in `MailService`/Felix payload, gated on the
-  swagger.
+- **Phase 5 — ICS per-event delivery:** **always feasible.** Implement 5b (HTML "Add to Calendar"
+  button → `/calendar/event/{token}.ics`) first since it needs nothing from Felix; upgrade to 5a
+  (native attachment invite) if/when the swagger confirms attachment support. Swagger picks
+  quality, not feasibility — nothing is blocked.
 
 ## 8. Constraints & risks
 
 - **Coordinate with concurrent Claude Code sessions.** Per the project's executable-lock policy,
   do not rebuild or kill processes while another session may hold the binary. Watch for merge
   conflicts in `NotificationService.cs`, `MailService.cs`, `IMailService.cs`, and the resx files.
-- **Felix swagger outstanding** — Phase 5 (per-event invites) is blocked until attachment support
-  is confirmed. All other phases proceed independently.
+- **Felix swagger outstanding** — does **not block** any phase. Phase 5b (HTML "Add to Calendar"
+  button → our own `.ics` endpoint) works through Felix as-is; the swagger only enables the 5a
+  upgrade to native attachment invites. All phases proceed independently.
 - **Grant/seed discipline** unaffected (no new grants expected); follow append-only rules for the
   `NotificationType` / `EmailTemplateType` enums (same hazard as the GrantType seed).
 - **Bilingual resx** — every new email needs both `SharedResources.resx` and
@@ -245,7 +258,8 @@ Two independent deliverables:
 
 ## 9. Open items (resolve during planning / before Phase 5)
 
-- Felix attachment capability (swagger).
+- Felix attachment capability (swagger) — only gates the 5a *upgrade* (native invites) over the
+  5b button fallback; not a blocker.
 - Exact "approver(s)" resolution for time-off/swap creation (who is the approver for a given
   requester — confirm against `VacationApprovalService` hierarchy logic).
 - Whether `CalendarNoteChanged` should email anyone (currently: in-app to managers only).
