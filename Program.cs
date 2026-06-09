@@ -275,11 +275,13 @@ builder.Services.AddScoped<IAppConfigCacheService, AppConfigCacheService>();
 builder.Services.AddScoped<ICompanyCacheService, CompanyCacheService>();
 
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ShiftManager.Services.Notifications.INotificationDispatcher, ShiftManager.Services.Notifications.NotificationDispatcher>();
 builder.Services.AddScoped<IDirectorService, DirectorService>();
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<ICompanyFilterService, CompanyFilterService>();
 builder.Services.AddScoped<IViewAsModeService, ViewAsModeService>();
 builder.Services.AddScoped<IOwnerCompanySelectorService, OwnerCompanySelectorService>(); // Owner company selector service
+builder.Services.AddScoped<ICompanyMembershipService, CompanyMembershipService>(); // Multi-company membership
 builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>(); // ✅ PHASE 20: User preference service
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
