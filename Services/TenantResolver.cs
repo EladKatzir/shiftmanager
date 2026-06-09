@@ -49,6 +49,22 @@ public class TenantResolver : ITenantResolver
                 _logger?.LogInformation("TenantResolver: Owner has no selection, using home CompanyId");
             }
 
+            // Priority 2.5: Multi-company member's selected active company.
+            // Validate the cookie against the MemberCompanyIds claim (baked at login) so this
+            // stays synchronous — never trust the cookie alone.
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext?.Request.Cookies.TryGetValue(MemberSelectedCookieName, out var memberCookie) == true
+                && int.TryParse(memberCookie, out var memberCompanyId))
+            {
+                var allowed = user.FindFirst("MemberCompanyIds")?.Value;
+                if (!string.IsNullOrEmpty(allowed)
+                    && allowed.Split(',').Contains(memberCompanyId.ToString()))
+                {
+                    _logger?.LogDebug("TenantResolver: member-selected CompanyId={CompanyId}", memberCompanyId);
+                    return memberCompanyId;
+                }
+            }
+
             // Priority 3: User's CompanyId claim (default for all users)
             var email = user.FindFirst(ClaimTypes.Name)?.Value;
             var companyIdClaim = user.FindFirst("CompanyId");
@@ -87,6 +103,7 @@ public class TenantResolver : ITenantResolver
                _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
     }
 
+    private const string MemberSelectedCookieName = "member_selected_company";
     private const string DirectorMoleculeCookieName = "director_selected_molecule";
 
     public int? GetDirectorSelectedMoleculeId()
