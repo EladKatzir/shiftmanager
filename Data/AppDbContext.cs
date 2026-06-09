@@ -401,7 +401,7 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(cm => cm.CompanyId)
             .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
+            .IsRequired(false);  // Navigation optional, mirroring the other cross-tenant navs
 
         modelBuilder.Entity<CompanyMembership>()
             .HasOne(cm => cm.RoleTemplate)

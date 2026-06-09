@@ -41,6 +41,9 @@ public class CompanyMembership
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>Who created this membership (Owner/admin); 0 = system/backfill.</summary>
+    /// <remarks>Intentionally NOT configured as a foreign key (unlike DirectorCompany.GrantedByUser):
+    /// the backfill migration sets GrantedBy = 0 for system-created primary rows, and a real FK to
+    /// Users would reject 0. Do not add a GrantedBy FK without first changing the backfill sentinel.</remarks>
     public int GrantedBy { get; set; }
 
     // Navigation properties (optional — cross-tenant, like DirectorCompany)
