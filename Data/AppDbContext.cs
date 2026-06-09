@@ -30,6 +30,7 @@ public class AppDbContext : DbContext
     public DbSet<OnDutyRoleSubscription> OnDutyRoleSubscriptions => Set<OnDutyRoleSubscription>();
     public DbSet<AppConfig> Configs => Set<AppConfig>();
     public DbSet<DirectorCompany> DirectorCompanies => Set<DirectorCompany>();
+    public DbSet<CompanyMembership> CompanyMemberships => Set<CompanyMembership>();
     public DbSet<UserJoinRequest> UserJoinRequests => Set<UserJoinRequest>();
     public DbSet<RoleAssignmentAudit> RoleAssignmentAudits => Set<RoleAssignmentAudit>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -372,6 +373,42 @@ public class AppDbContext : DbContext
             .HasForeignKey(dc => dc.GrantedBy)
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);  // Navigation is optional due to query filters
+
+        // Multi-company membership: a user ↔ company join table.
+        // Mirrors DirectorCompany — NOT IBelongsToCompany, so NO tenant query filter
+        // (must be readable before an active tenant is chosen). Queried by UserId with
+        // IgnoreQueryFilters. (UserId, CompanyId) unique among non-deleted rows.
+        modelBuilder.Entity<CompanyMembership>()
+            .HasIndex(cm => new { cm.UserId, cm.CompanyId })
+            .IsUnique()
+            .HasFilter("IsDeleted = 0");
+
+        modelBuilder.Entity<CompanyMembership>()
+            .HasIndex(cm => cm.UserId); // companies of a user
+
+        modelBuilder.Entity<CompanyMembership>()
+            .HasIndex(cm => cm.CompanyId); // members of a company
+
+        modelBuilder.Entity<CompanyMembership>()
+            .HasOne(cm => cm.User)
+            .WithMany()
+            .HasForeignKey(cm => cm.UserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);  // Navigation optional due to AppUser query filter
+
+        modelBuilder.Entity<CompanyMembership>()
+            .HasOne(cm => cm.Company)
+            .WithMany()
+            .HasForeignKey(cm => cm.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<CompanyMembership>()
+            .HasOne(cm => cm.RoleTemplate)
+            .WithMany()
+            .HasForeignKey(cm => cm.RoleTemplateId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         // Configure UserJoinRequest
         modelBuilder.Entity<UserJoinRequest>()
