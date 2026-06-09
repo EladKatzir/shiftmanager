@@ -72,7 +72,7 @@ public class UserCompanyTransferServiceTests : IDisposable
         _db.Companies.AddRange(src, dest); await _db.SaveChangesAsync();
 
         var user = new AppUser { CompanyId = src.Id, Email = "u@x.com", DisplayName = "U",
-            JobTypeId = 5, DepartmentId = 6, PrimaryShiftTypeId = 7, HomeTypeId = 8, RoleTemplateId = null,
+            JobTypeId = 5, DepartmentId = 6, HomeTypeId = 8, RoleTemplateId = null,
             Role = UserRole.Employee, PasswordHash = System.Array.Empty<byte>(), PasswordSalt = System.Array.Empty<byte>() };
         _db.Users.Add(user); await _db.SaveChangesAsync();
 
@@ -261,7 +261,7 @@ public class UserCompanyTransferServiceTests : IDisposable
     [Fact]
     public async Task Move_ResetsScalarFks_AndSetsDestCompany()
     {
-        var (userId, _, dest) = await SeedAsync(); // seeds JobTypeId=5, DepartmentId=6, PrimaryShiftTypeId=7, HomeTypeId=8
+        var (userId, _, dest) = await SeedAsync(); // seeds JobTypeId=5, DepartmentId=6, HomeTypeId=8
 
         var result = await _svc.MoveUserToCompanyAsync(userId, dest, actingAdminId: userId + 999);
         result.Success.Should().BeTrue();
@@ -270,7 +270,6 @@ public class UserCompanyTransferServiceTests : IDisposable
         var after = await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId);
         after.JobTypeId.Should().BeNull();
         after.DepartmentId.Should().BeNull();
-        after.PrimaryShiftTypeId.Should().BeNull();
         after.HomeTypeId.Should().BeNull();
         after.CompanyId.Should().Be(dest);
     }

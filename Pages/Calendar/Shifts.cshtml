@@ -23,7 +23,7 @@
     new BreadcrumbItem { Label = Localizer["ShiftsCalendar"], IsActive = true }
 })
 
-<div class="cal-page" data-ui-version="v2">
+<div class="cal-page @(Model.DraftMode && Model.ActiveDraftId != null ? "cal-page--draft" : "")" data-ui-version="v2">
     @* Toolbar — Row 1: Selectors + Date Nav + Print *@
     <div class="cal-toolbar">
         <div class="cal-toolbar__row">
@@ -172,6 +172,33 @@
                 </a>
             </div>
 
+            @* Draft Mode controls (Epic 4) — assigners can stage roster changes privately, then commit. *@
+            @if (Model.CanEdit && Model.MoleculeId.HasValue)
+            {
+                <span class="cal-toolbar__separator"></span>
+                <div class="cal-toolbar__toggle-group">
+                    @if (!Model.DraftMode || Model.ActiveDraftId == null)
+                    {
+                        <button type="button" class="btn btn-ghost" id="enterDraftBtn"
+                                data-molecule-id="@Model.MoleculeId" data-job-type-id="@(Model.JobTypeId?.ToString() ?? "")"
+                                data-week-start="@Model.StartDate.ToString("yyyy-MM-dd")" data-week-end="@Model.EndDate.ToString("yyyy-MM-dd")">
+                            <span class="btn-icon"><icon name="edit-3" /></span>
+                            @Localizer["Draft_Enter"]
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-primary" id="commitDraftBtn" data-draft-id="@Model.ActiveDraftId">
+                            <span class="btn-icon"><icon name="check" /></span>
+                            @Localizer["Draft_Commit"]
+                        </button>
+                        <button type="button" class="btn btn-ghost" id="discardDraftBtn" data-draft-id="@Model.ActiveDraftId">
+                            @Localizer["Draft_Discard"]
+                        </button>
+                    }
+                </div>
+            }
+
             @* Distribution Lists control — by-user view only. The dropdown (filter) is open to everyone;
                the "+" manage button is gated by CanManageLists. Selection persists via DistributionListIds. *@
             @if (Model.Mode == "user")
@@ -260,6 +287,15 @@
         RequiredGrantNameKeys = Model.CalendarData.RequiredGrantNameKeys
     })" />
 
+    @* Draft Mode sandbox banner (Epic 4) — makes the sandbox state unmistakable. *@
+    @if (Model.DraftMode && Model.ActiveDraftId != null)
+    {
+        <div class="cal-draft-banner" role="status">
+            <span class="cal-draft-banner__icon" aria-hidden="true"><icon name="edit-3" /></span>
+            <span class="cal-draft-banner__text">@Localizer["Draft_BannerText"]</span>
+        </div>
+    }
+
     @* Calendar Table *@
     @if (Model.CalendarData.Rows.Any())
     {
@@ -316,24 +352,34 @@
     </div>
 </div>
 
-@* Filter Modal *@
+@* Filter Modal — triggered by the People/Shifts column header (and the toolbar Filter button). *@
 <div id="filterModal" class="cal-filter-modal" style="display: none;" onclick="if(event.target===this) closeFilterModal()">
     <div class="cal-filter-modal__dialog">
         <div class="cal-filter-modal__header">
             <h3><loc key="Filter" /></h3>
             <button type="button" class="cal-filter-modal__close" onclick="closeFilterModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
         </div>
+        @* Sticky search + Only Me stay pinned while the category list scrolls. *@
+        <div class="cal-filter-modal__sticky">
+            <input type="text" id="filterSearchInput" class="form-control"
+                   placeholder="@Localizer["Filter_SearchPlaceholder"]"
+                   oninput="applyFilter()"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault(); applyFilter();}" />
+            <a id="filterOnlyMeBtn"
+               href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@((!Model.JustMine).ToString().ToLowerInvariant())@dlParam"
+               class="btn btn-sm @(Model.JustMine ? "btn-primary" : "btn-ghost")">
+                <span class="btn-icon"><icon name="user" /></span> @Localizer["JustMine"]
+            </a>
+        </div>
         <div class="cal-filter-modal__body">
-            <div class="form-group">
-                <label for="filterSearchInput"><loc key="Filter_SearchLabel" /></label>
-                <input type="text" id="filterSearchInput" class="form-control"
-                       placeholder="@Localizer["Filter_SearchPlaceholder"]"
-                       onkeydown="if(event.key==='Enter'){event.preventDefault(); applyFilter();}" />
+            <p class="cal-filter-modal__section-label"><loc key="Filter_CategoriesLabel" /></p>
+            <div id="filterCategoryList" class="cal-filter-categories">
+                @* Checkboxes injected by populateCategoryFilters() from the rendered group headers *@
             </div>
         </div>
         <div class="cal-filter-modal__footer">
             <button type="button" class="btn btn-ghost" onclick="clearFilter()"><loc key="Filter_Clear" /></button>
-            <button type="button" class="btn btn-primary" onclick="applyFilter()"><loc key="Filter_Apply" /></button>
+            <button type="button" class="btn btn-primary" onclick="closeFilterModal()"><loc key="Button_Done" /></button>
         </div>
     </div>
 </div>
@@ -545,47 +591,180 @@ else
             window.location.href = window.location.pathname + '?' + params.toString();
         }
 
-        // Filter modal
+        // --- Filter modal: sticky search + per-category visibility toggles + Only Me ---
+        // Group IDs whose accordion is currently hidden via an unchecked category checkbox.
+        var disabledGroups = new Set();
+
         function openFilterModal() {
             var modal = document.getElementById('filterModal');
             modal.style.display = 'flex';
             modal.classList.add('is-open');
+            populateCategoryFilters();
             var input = document.getElementById('filterSearchInput');
-            if (input) { input.value = ''; input.focus(); }
+            if (input) { setTimeout(function () { input.focus(); }, 0); }
         }
+        window.openFilterModal = openFilterModal;
 
         function closeFilterModal() {
             var modal = document.getElementById('filterModal');
             modal.classList.remove('is-open');
             modal.style.display = 'none';
         }
+        window.closeFilterModal = closeFilterModal;
 
+        // Build a checkbox per rendered group (category accordions + company/"Other" groups).
+        function populateCategoryFilters() {
+            var container = document.getElementById('filterCategoryList');
+            if (!container) return;
+            container.innerHTML = '';
+            var headers = document.querySelectorAll('tr.excel-calendar__group-header');
+            if (headers.length === 0) {
+                var empty = document.createElement('p');
+                empty.className = 'cal-filter-empty';
+                empty.textContent = '@Localizer["Filter_NoGroups"].Value.Trim()';
+                container.appendChild(empty);
+                return;
+            }
+            headers.forEach(function (h) {
+                var gid = h.getAttribute('data-group-id') || '';
+                if (!gid) return;
+                var name = (h.querySelector('.excel-calendar__group-name')?.textContent || gid).trim();
+                var label = document.createElement('label');
+                label.className = 'cal-filter-cat-item';
+                var cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = !disabledGroups.has(gid);
+                cb.value = gid;
+                cb.addEventListener('change', function () {
+                    if (this.checked) disabledGroups.delete(gid); else disabledGroups.add(gid);
+                    applyFilter();
+                });
+                var span = document.createElement('span');
+                span.textContent = name;
+                label.appendChild(cb);
+                label.appendChild(span);
+                container.appendChild(label);
+            });
+        }
+
+        // Combined filter: a row shows when it matches the search text AND its group is enabled.
         function applyFilter() {
-            var query = (document.getElementById('filterSearchInput').value || '').trim().toLowerCase();
-            var rows = document.querySelectorAll('[data-row-id]');
-            var hidden = 0;
-            rows.forEach(function(row) {
+            var query = (document.getElementById('filterSearchInput')?.value || '').trim().toLowerCase();
+            document.querySelectorAll('tr[data-row-id]').forEach(function (row) {
                 if (row.classList.contains('excel-calendar__group-header')) return;
+                var groupId = row.getAttribute('data-group-id') || '';
                 var label = (row.querySelector('.excel-calendar__row-label')?.textContent || '').toLowerCase();
                 var names = Array.from(row.querySelectorAll('.excel-calendar__assignment-name'))
-                    .map(function(el) { return el.textContent.toLowerCase(); }).join(' ');
-                var match = !query || label.indexOf(query) !== -1 || names.indexOf(query) !== -1;
-                row.style.display = match ? '' : 'none';
-                if (!match) hidden++;
+                    .map(function (el) { return el.textContent.toLowerCase(); }).join(' ');
+                var matchesSearch = !query || label.indexOf(query) !== -1 || names.indexOf(query) !== -1;
+                var groupEnabled = !disabledGroups.has(groupId);
+                row.style.display = (matchesSearch && groupEnabled) ? '' : 'none';
             });
-            closeFilterModal();
+            // Hide the header of any disabled group entirely.
+            document.querySelectorAll('tr.excel-calendar__group-header').forEach(function (h) {
+                var gid = h.getAttribute('data-group-id') || '';
+                h.style.display = disabledGroups.has(gid) ? 'none' : '';
+            });
             window.updateGroupCounts && window.updateGroupCounts();
         }
+        window.applyFilter = applyFilter;
 
         function clearFilter() {
-            document.querySelectorAll('[data-row-id]').forEach(function(row) {
-                if (!row.classList.contains('excel-calendar__group-header')) {
-                    row.style.display = '';
-                }
-            });
-            closeFilterModal();
-            window.updateGroupCounts && window.updateGroupCounts();
+            disabledGroups.clear();
+            var input = document.getElementById('filterSearchInput');
+            if (input) input.value = '';
+            applyFilter();
+            populateCategoryFilters();
         }
+        window.clearFilter = clearFilter;
+
+        // The People/Shifts column header (the "אנשים ▾" / "משמרות ▾" token) opens the filter modal.
+        // Re-wire after every full-grid refresh since the header element is replaced.
+        function wireFilterHeader() {
+            document.querySelectorAll('.excel-calendar__corner[data-mode]').forEach(function (th) {
+                if (th.dataset.filterWired === '1') return;
+                th.dataset.filterWired = '1';
+                th.style.cursor = 'pointer';
+                th.setAttribute('role', 'button');
+                th.setAttribute('tabindex', '0');
+                th.addEventListener('click', openFilterModal);
+                th.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFilterModal(); }
+                });
+            });
+        }
+        document.addEventListener('DOMContentLoaded', wireFilterHeader);
+        document.addEventListener('calendar:grid-refreshed', function () { wireFilterHeader(); applyFilter(); });
+
+        // --- Draft Mode (Epic 4): the active sandbox id (read by calendar-inline-edit.js to stage assigns) ---
+        window.__draftSessionId = @(Model.DraftMode && Model.ActiveDraftId != null ? Model.ActiveDraftId.Value.ToString() : "null");
+
+        (function () {
+            function draftToken() {
+                var t = document.querySelector('input[name="__RequestVerificationToken"]');
+                return t ? t.value : '';
+            }
+            function draftPost(handler, body) {
+                return fetch('/Calendar/Table?handler=' + handler, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': draftToken() },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(body)
+                });
+            }
+            function exitDraftUrl() {
+                var p = new URLSearchParams(window.location.search);
+                p.delete('DraftMode');
+                return window.location.pathname + '?' + p.toString();
+            }
+            var fail = '@(Localizer["Error_FailedToUpdate"].Value.Trim())';
+
+            var enterBtn = document.getElementById('enterDraftBtn');
+            if (enterBtn) enterBtn.addEventListener('click', async function () {
+                enterBtn.disabled = true;
+                try {
+                    var resp = await draftPost('EnterDraft', {
+                        moleculeId: parseInt(enterBtn.dataset.moleculeId),
+                        jobTypeId: enterBtn.dataset.jobTypeId ? parseInt(enterBtn.dataset.jobTypeId) : null,
+                        weekStart: enterBtn.dataset.weekStart,
+                        weekEnd: enterBtn.dataset.weekEnd
+                    });
+                    var data = await resp.json();
+                    if (data.success) {
+                        var p = new URLSearchParams(window.location.search);
+                        p.set('DraftMode', 'true');
+                        window.location.href = window.location.pathname + '?' + p.toString();
+                    } else { window.FeedbackModal.show('error', fail); enterBtn.disabled = false; }
+                } catch (e) { console.error(e); enterBtn.disabled = false; }
+            });
+
+            var commitBtn = document.getElementById('commitDraftBtn');
+            if (commitBtn) commitBtn.addEventListener('click', async function () {
+                commitBtn.disabled = true;
+                try {
+                    var resp = await draftPost('CommitDraft', { draftSessionId: parseInt(commitBtn.dataset.draftId) });
+                    var data = await resp.json();
+                    if (data.success) { window.location.href = exitDraftUrl(); return; }
+                    if (data.conflicts && data.conflicts.length > 0) {
+                        window.FeedbackModal.show('error', '@(Localizer["Draft_ConflictMessage"].Value.Trim())');
+                    } else {
+                        window.FeedbackModal.show('error', fail);
+                    }
+                    commitBtn.disabled = false;
+                } catch (e) { console.error(e); commitBtn.disabled = false; }
+            });
+
+            var discardBtn = document.getElementById('discardDraftBtn');
+            if (discardBtn) discardBtn.addEventListener('click', async function () {
+                discardBtn.disabled = true;
+                try {
+                    var resp = await draftPost('DiscardDraft', { draftSessionId: parseInt(discardBtn.dataset.draftId) });
+                    var data = await resp.json();
+                    if (data.success) { window.location.href = exitDraftUrl(); return; }
+                    discardBtn.disabled = false;
+                } catch (e) { console.error(e); discardBtn.disabled = false; }
+            });
+        })();
 
         // Keyboard navigation
         document.addEventListener('keydown', function(e) {

@@ -127,6 +127,7 @@
                         <div class="@chipClass"
                              data-assignment-id="@assignment.Id"
                              data-user-id="@assignment.UserId"
+                             data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
                              data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
                              data-trainee-name="@(assignment.TraineeName ?? "")"
                              data-role-color="@roleColor"
@@ -165,11 +166,18 @@
                                     @assignment.TraineeName
                                 </span>
                             }
-                            @if (!isReadOnly && assignment.Id > 0)
+                            @{
+                                // In Draft Mode the × on ANY shift chip (real or staged) routes to draft-clear,
+                                // so render it for the synthetic (negative-id) staged chips too.
+                                var isDraftShiftChip = Model.DraftSessionId != null && assignment.ShiftTypeId.HasValue && assignment.UserId.HasValue;
+                            }
+                            @if (!isReadOnly && (assignment.Id > 0 || isDraftShiftChip))
                             {
                                 <button type="button"
                                         class="excel-calendar__remove-btn"
                                         data-assignment-id="@assignment.Id"
+                                        data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                                        data-user-id="@(assignment.UserId?.ToString() ?? "")"
                                         aria-label="@Localizer["Remove"] @assignment.Name"
                                         title="@Localizer["Remove"]">×</button>
                             }

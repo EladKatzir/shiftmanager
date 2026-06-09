@@ -1604,8 +1604,8 @@ public class GriffinServiceTests : IDisposable
                 e.Ignore(u => u.RoleTemplate);
                 e.Ignore(u => u.JobType);
                 e.Ignore(u => u.Department);
-                e.Ignore(u => u.PrimaryShiftType);
                 e.Ignore(u => u.HomeType);
+                e.Ignore(u => u.ShiftCategories);
             });
         }
     }

@@ -37,6 +37,7 @@ public partial class UsersModel : LocalizedPageModel
     private readonly ITenantResolver _tenantResolver;
     private readonly IHierarchyService _hierarchyService;
     private readonly IUserCompanyTransferService _userCompanyTransferService;
+    private readonly IShiftCategoryService _categoryService;
 
     public UsersModel(
         IStringLocalizer<SharedResources> localizer,
@@ -54,7 +55,8 @@ public partial class UsersModel : LocalizedPageModel
         IConcurrencyService concurrencyService,
         ITenantResolver tenantResolver,
         IHierarchyService hierarchyService,
-        IUserCompanyTransferService userCompanyTransferService)
+        IUserCompanyTransferService userCompanyTransferService,
+        IShiftCategoryService categoryService)
         : base(localizer)
     {
         _db = db;
@@ -72,12 +74,14 @@ public partial class UsersModel : LocalizedPageModel
         _tenantResolver = tenantResolver;
         _hierarchyService = hierarchyService;
         _userCompanyTransferService = userCompanyTransferService;
+        _categoryService = categoryService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, int? PrimaryShiftTypeId, string? PrimaryShiftTypeName, int? MoleculeId);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, bool DoesShifts, string? ShiftCategoryNames, List<int> ShiftCategoryIds, int? MoleculeId);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId, string? AuthMethod);
     public record MoleculeOption(int Id, string Name, string AreaName);
     public record JobTypeOption(int Id, string Name, string AreaName, string? Key);
+    public record CategoryOption(int Id, string Name);
 
     // Batch approval support
     public class BatchApprovalItem
@@ -94,7 +98,8 @@ public partial class UsersModel : LocalizedPageModel
     /// <summary>Tooltip data: director user ID → list of managed company names</summary>
     public Dictionary<int, List<string>> DirectorCompanyNames { get; set; } = new();
     public List<JobTypeOption> AvailableJobTypes { get; set; } = new();
-    public List<ShiftType> AvailableShiftTypes { get; set; } = new();
+    // Shift categories available per molecule (for the per-user category multi-select).
+    public Dictionary<int, List<CategoryOption>> AvailableCategoriesByMolecule { get; set; } = new();
     public Dictionary<int, string> MoleculeNames { get; set; } = new();
 
     /// <summary>Maps companyId → list of valid jobTypeIds, for client-side filtering in the add-user form.</summary>
@@ -401,19 +406,23 @@ public partial class UsersModel : LocalizedPageModel
             }
         }
 
-        // Load available shift types for PrimaryShiftType dropdown
-        // Scoped to molecules the admin manages to prevent cross-molecule assignment
+        // Load shift categories per molecule for the per-user category multi-select.
+        // Scoped to molecules the admin manages to prevent cross-molecule assignment.
         var accessibleMoleculeIds = Companies
             .Where(c => c.MoleculeId.HasValue)
             .Select(c => c.MoleculeId!.Value)
             .Distinct()
             .ToList();
-        AvailableShiftTypes = await _db.ShiftTypes
-            .Where(st => st.MoleculeId != null
-                && accessibleMoleculeIds.Contains(st.MoleculeId.Value)
-                && st.Key != ShiftType.KEY_OFFLINE && st.Key != ShiftType.KEY_HOME)
-            .OrderBy(st => st.MoleculeId).ThenBy(st => st.Start)
-            .ToListAsync();
+        if (accessibleMoleculeIds.Count > 0)
+        {
+            AvailableCategoriesByMolecule = (await _db.ShiftCategories
+                .Where(c => accessibleMoleculeIds.Contains(c.MoleculeId) && c.IsActive)
+                .OrderBy(c => c.SortOrder).ThenBy(c => c.DisplayName)
+                .Select(c => new { c.MoleculeId, c.Id, c.DisplayName })
+                .ToListAsync())
+                .GroupBy(c => c.MoleculeId)
+                .ToDictionary(g => g.Key, g => g.Select(c => new CategoryOption(c.Id, c.DisplayName)).ToList());
+        }
 
         // Load assignable role templates (filtered by CanBeAssignedByDefault and user's grant level)
         AssignableRoleTemplates = await _roleService.GetAssignableRoleTemplatesAsync();
@@ -440,7 +449,6 @@ public partial class UsersModel : LocalizedPageModel
                 .IgnoreQueryFilters()
                 .Include(u => u.JobType)
                 .Include(u => u.Department)
-                .Include(u => u.PrimaryShiftType)
                 .AsNoTracking();
         }
         else
@@ -453,7 +461,6 @@ public partial class UsersModel : LocalizedPageModel
                 .IgnoreQueryFilters()
                 .Include(u => u.JobType)
                 .Include(u => u.Department)
-                .Include(u => u.PrimaryShiftType)
                 .AsNoTracking()
                 .Where(u => accessibleCompanyIds.Contains(u.CompanyId));
         }
@@ -491,6 +498,18 @@ public partial class UsersModel : LocalizedPageModel
             .GroupBy(g => g.UserId)
             .Select(grp => new { UserId = grp.Key, Count = grp.Count() })
             .ToDictionaryAsync(x => x.UserId, x => x.Count);
+
+        // Batch-load shift-category memberships (id list + display names) for the listed users.
+        var userCategoryRows = await _db.UserShiftCategories
+            .Where(m => userIds.Contains(m.UserId))
+            .Select(m => new { m.UserId, m.ShiftCategoryId, m.ShiftCategory.DisplayName })
+            .ToListAsync();
+        var userCategoryMap = userCategoryRows
+            .GroupBy(r => r.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => (Ids: g.Select(r => r.ShiftCategoryId).ToList(),
+                      Names: string.Join(", ", g.OrderBy(r => r.DisplayName).Select(r => r.DisplayName))));
 
         // Load companies for users
         var userCompanyIds = userData.Select(u => u.CompanyId).Distinct().ToList();
@@ -599,8 +618,9 @@ public partial class UsersModel : LocalizedPageModel
                     u.Department?.DisplayName,
                     userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
                     u.RoleTemplateId,
-                    u.PrimaryShiftTypeId,
-                    u.PrimaryShiftType?.NameEn ?? u.PrimaryShiftType?.Name,
+                    u.DoesShifts,
+                    userCategoryMap.TryGetValue(u.Id, out var dirCat) ? dirCat.Names : null,
+                    userCategoryMap.TryGetValue(u.Id, out var dirCat2) ? dirCat2.Ids : new List<int>(),
                     userCompanies.TryGetValue(u.CompanyId, out var dirCompany) ? dirCompany.MoleculeId : null
                 ));
             }
@@ -630,8 +650,9 @@ public partial class UsersModel : LocalizedPageModel
                         u.Department?.DisplayName,
                         userGrantCounts.TryGetValue(u.Id, out var gc) ? gc : 0,
                         u.RoleTemplateId,
-                        u.PrimaryShiftTypeId,
-                        u.PrimaryShiftType?.NameEn ?? u.PrimaryShiftType?.Name,
+                        u.DoesShifts,
+                        userCategoryMap.TryGetValue(u.Id, out var ndCat) ? ndCat.Names : null,
+                        userCategoryMap.TryGetValue(u.Id, out var ndCat2) ? ndCat2.Ids : new List<int>(),
                         company?.MoleculeId
                     ));
                 }
@@ -1321,100 +1342,122 @@ public partial class UsersModel : LocalizedPageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostPrimaryShiftTypeAsync(int id, int? primaryShiftTypeId)
+    /// <summary>
+    /// Shared edit gate for the DoesShifts / category handlers — mirrors the JobType/Toggle handlers:
+    /// loads the (cross-company) user and confirms the caller holds AdminAccess or EditCompanyUsers for
+    /// the user's company. Returns the resolved user + caller id, or a localized error string.
+    /// </summary>
+    private async Task<(bool Ok, AppUser? User, int CurrentUserId, string? Error)> AuthorizeUserEditAsync(int id)
     {
         if (id <= 0)
-        {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"].Value;
-            return RedirectToPage();
-        }
+            return (false, null, 0, _localizer["Error_InvalidUserId"].Value);
 
-        // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed for cross-company user lookup
+        // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed for cross-company user lookup.
         var u = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
         if (u == null)
-        {
-            TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value;
-            return RedirectToPage();
-        }
+            return (false, null, 0, _localizer["Error_UserNotFound"].Value);
 
-        // Grant check: same pattern as JobType handler
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!int.TryParse(userIdClaim, out var currentUserId))
-        {
-            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
-            return RedirectToPage();
-        }
+        if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var currentUserId))
+            return (false, null, 0, _localizer["Error_InvalidUserClaim"].Value);
 
         var isAdmin = await _grantService.HasGrantAsync(currentUserId, "AdminAccess");
-        var hasEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(
-            currentUserId, "EditCompanyUsers", u.CompanyId);
+        var hasEditGrant = isAdmin || await _grantService.HasGrantForCompanyAsync(currentUserId, "EditCompanyUsers", u.CompanyId);
         if (!hasEditGrant)
+            return (false, null, currentUserId, _localizer["Error_NoPermissionForCompany"].Value);
+
+        return (true, u, currentUserId, null);
+    }
+
+    /// <summary>Future-shift impact preview (AJAX) for the "turn off Participates in Shifts" confirm.</summary>
+    public async Task<IActionResult> OnGetDoesShiftsImpactAsync(int id)
+    {
+        var (ok, _, _, error) = await AuthorizeUserEditAsync(id);
+        if (!ok)
+            return new JsonResult(new { ok = false, error });
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var futureShifts = await _db.ShiftAssignments.IgnoreQueryFilters()
+            .CountAsync(sa => sa.UserId == id && sa.ShiftInstance!.WorkDate >= today);
+        return new JsonResult(new { ok = true, futureShifts });
+    }
+
+    /// <summary>
+    /// Master "Participates in Shifts" toggle. When turning OFF, <paramref name="deleteFutureShifts"/>
+    /// controls whether the user's future shift assignments are vacated (UserId nulled) or kept.
+    /// Category memberships are intentionally preserved so toggling back ON restores the prior mapping.
+    /// </summary>
+    public async Task<IActionResult> OnPostDoesShiftsAsync(int id, bool doesShifts, bool deleteFutureShifts = false)
+    {
+        var (ok, u, currentUserId, error) = await AuthorizeUserEditAsync(id);
+        if (!ok) { TempData["ErrorMessage"] = error; return RedirectToPage(); }
+
+        u!.DoesShifts = doesShifts;
+
+        int vacated = 0;
+        if (!doesShifts && deleteFutureShifts)
         {
-            LogPrimaryShiftTypeAttemptedWithoutGrant(_logger, currentUserId, id);
-            TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
-            return RedirectToPage();
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            // SECURITY-AUDITED: SAFE — vacating only the target user's own future assignments.
+            var future = await _db.ShiftAssignments.IgnoreQueryFilters()
+                .Include(sa => sa.ShiftInstance)
+                .Where(sa => sa.UserId == id && sa.ShiftInstance!.WorkDate >= today)
+                .ToListAsync();
+            foreach (var sa in future) { sa.UserId = null; sa.TraineeUserId = null; }
+            vacated = future.Count;
         }
-
-        // Validate shift type exists and belongs to the user's molecule (if provided)
-        string? stName = null;
-        if (primaryShiftTypeId.HasValue)
-        {
-            // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed for cross-tenant ShiftType (may belong to different company)
-            var st = await _db.ShiftTypes.IgnoreQueryFilters()
-                .FirstOrDefaultAsync(s => s.Id == primaryShiftTypeId.Value);
-            if (st == null)
-            {
-                TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
-                return RedirectToPage();
-            }
-
-            // Validate molecule match: PrimaryShiftType must be in the same molecule as the user's company
-            if (st.MoleculeId.HasValue)
-            {
-                var userCompany = await _db.Companies.IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(c => c.Id == u.CompanyId);
-                if (userCompany?.MoleculeId != st.MoleculeId)
-                {
-                    LogRejectedCrossMoleculePrimaryShiftType(_logger, id, userCompany?.MoleculeId, st.Id, st.MoleculeId);
-                    TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
-                    return RedirectToPage();
-                }
-
-                // Validate EligibleCompanyIds: if the shift type restricts which companies can use it,
-                // the user's company must be in the eligible list
-                var eligibleIds = st.GetEligibleCompanyIdList();
-                if (eligibleIds != null && !eligibleIds.Contains(u.CompanyId))
-                {
-                    LogRejectedPrimaryShiftTypeNotInEligibleCompanies(_logger, id, u.CompanyId, st.Id);
-                    TempData["ErrorMessage"] = _localizer["Error_InvalidSelection"].Value;
-                    return RedirectToPage();
-                }
-            }
-
-            stName = st.NameEn ?? st.Name;
-        }
-
-        var oldPstId = u.PrimaryShiftTypeId;
-        u.PrimaryShiftTypeId = primaryShiftTypeId;
 
         var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
             () => _db.SaveChangesAsync(), "AppUser", id);
         if (!saveResult.Success)
         {
-            Error = _localizer["Error_ConcurrencyConflict"];
+            TempData["ErrorMessage"] = _localizer["Error_ConcurrencyConflict"].Value;
             return RedirectToPage();
         }
 
         await _auditLogService.LogUserActionAsync(
             userId: currentUserId,
-            action: "PrimaryShiftTypeChanged",
+            action: "DoesShiftsChanged",
             entityType: "User",
             entityId: u.Id,
-            description: $"Changed primary shift type for {u.DisplayName} from {oldPstId} to {primaryShiftTypeId}"
-        );
+            description: $"Set DoesShifts={doesShifts} for {u.DisplayName}" + (vacated > 0 ? $"; vacated {vacated} future shift(s)" : ""));
 
-        TempData["SuccessMessage"] = $"{u.DisplayName}: {stName ?? "-"}";
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture,
+            (doesShifts ? _localizer["Users_DoesShiftsOn"] : _localizer["Users_DoesShiftsOff"]).Value, u.DisplayName);
         return RedirectToPage();
+    }
+
+    /// <summary>Replaces a user's shift-category memberships (AJAX). Ids are validated against the user's molecule.</summary>
+    public async Task<IActionResult> OnPostUserCategoriesAsync([FromBody] UserCategoriesRequest request)
+    {
+        var (ok, u, currentUserId, error) = await AuthorizeUserEditAsync(request.UserId);
+        if (!ok)
+            return new JsonResult(new { success = false, error }) { StatusCode = 403 };
+
+        // Constrain to categories in the user's molecule (defense against stale/forged ids).
+        var moleculeId = await _db.Companies.IgnoreQueryFilters()
+            .Where(c => c.Id == u!.CompanyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+        var requested = request.CategoryIds ?? new List<int>();
+        var valid = moleculeId == null
+            ? new List<int>()
+            : await _db.ShiftCategories
+                .Where(c => c.MoleculeId == moleculeId && requested.Contains(c.Id))
+                .Select(c => c.Id).ToListAsync();
+
+        await _categoryService.SetUserCategoriesAsync(u!.Id, valid);
+        await _auditLogService.LogUserActionAsync(
+            userId: currentUserId,
+            action: "UserCategoriesChanged",
+            entityType: "User",
+            entityId: u.Id,
+            description: $"Set categories for {u.DisplayName} to [{string.Join(",", valid)}]");
+
+        return new JsonResult(new { success = true, count = valid.Count });
+    }
+
+    public class UserCategoriesRequest
+    {
+        public int UserId { get; set; }
+        public List<int>? CategoryIds { get; set; }
     }
 
     public async Task<IActionResult> OnPostResetPasswordAsync(int id, string newPassword)

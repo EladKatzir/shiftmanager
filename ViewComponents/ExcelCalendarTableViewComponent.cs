@@ -12,6 +12,10 @@ public class ExcelCalendarTableViewModel
     public List<ExcelCalendarRow> Rows { get; set; } = new();
     public List<ExcelCalendarGroup>? Groups { get; set; }
 
+    /// <summary>Active Draft Mode session id (Epic 4). When set, the grid renders the sandbox overlay and
+    /// the remove (×) on shift chips stages a draft-clear instead of a live delete.</summary>
+    public int? DraftSessionId { get; set; }
+
     /// <summary>
     /// Localization NameKeys of the grant(s) that would unlock editing this calendar. Populated only
     /// when <see cref="IsReadOnly"/> is true AND an obtainable grant exists (empty for genuinely
@@ -86,6 +90,9 @@ public class ExcelCalendarAssignment
     public int? UserId { get; set; }
     public int? TraineeUserId { get; set; }
     public string? TraineeName { get; set; }
+    /// <summary>Owning shift type — set ONLY for real shift assignments (not text/chore/overlay chips).
+    /// Drives Draft Mode removal (× → stage-clear by shiftType+date+user) and is null elsewhere.</summary>
+    public int? ShiftTypeId { get; set; }
     public string? AssignmentTooltip { get; set; }  // e.g. "Assigned by X on Y" — set by oncall calendar
 
     // HOME unification (Task 22) — let the renderer compose chips with source-icon prefix.

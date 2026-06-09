@@ -52,7 +52,7 @@ public class UsersModelMoveAuthTests : IDisposable
             Mock.Of<IAuditLogService>(), Mock.Of<IMailService>(), Mock.Of<INotificationService>(),
             _grants.Object, Mock.Of<IRoleService>(), Mock.Of<IJobTypeService>(),
             Mock.Of<IConcurrencyService>(), Mock.Of<ITenantResolver>(), Mock.Of<IHierarchyService>(),
-            _transfer.Object);
+            _transfer.Object, Mock.Of<IShiftCategoryService>());
 
         var httpContext = new DefaultHttpContext
         {
@@ -158,6 +158,30 @@ public class UsersModelMoveAuthTests : IDisposable
         result.Should().BeOfType<RedirectToPageResult>();
         model.TempData["SuccessMessage"].Should().Be("Users_MoveSuccess");
         _transfer.Verify(t => t.MoveUserToCompanyAsync(targetId, companyB, 999), Times.Once);
+    }
+
+    [Fact]
+    public async Task OnPostMoveUser_CrossMolecule_BlockedEvenForAdmin()
+    {
+        var (companyA, _, _) = await SeedCompaniesAsync();
+        var targetId = await SeedUserAsync(companyA, UserRole.Employee);
+
+        // A second molecule with its own company — a cross-molecule destination.
+        var area = await _db.Areas.FirstAsync();
+        var mol2 = new Molecule { AreaId = area.Id, Name = "M2", DisplayName = "M2", Type = MoleculeType.Workforce };
+        _db.Molecules.Add(mol2); await _db.SaveChangesAsync();
+        var companyC = new Company { MoleculeId = mol2.Id, Name = "C", DisplayName = "C" };
+        _db.Companies.Add(companyC); await _db.SaveChangesAsync();
+
+        // Even a super-admin is blocked: the same-molecule rule is data-integrity, not a permission.
+        _grants.Setup(g => g.HasGrantAsync(It.IsAny<int>(), "AdminAccess")).ReturnsAsync(true);
+
+        var model = BuildModel(adminId: 999);
+        var result = await model.OnPostMoveUserAsync(targetId, companyC.Id);
+
+        result.Should().BeOfType<RedirectToPageResult>();
+        model.TempData["ErrorMessage"].Should().Be("Error_MoveCrossMolecule");
+        _transfer.Verify(t => t.MoveUserToCompanyAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
     }
 
     public void Dispose() { _db.Dispose(); _conn.Dispose(); }

@@ -1603,6 +1603,46 @@
   <data name="Selected" xml:space="preserve">
     <value>נבחרו</value>
   </data>
+  <!-- Participates in Shifts / categories (Admin Users) -->
+  <data name="On" xml:space="preserve">
+    <value>פעיל</value>
+  </data>
+  <data name="Off" xml:space="preserve">
+    <value>כבוי</value>
+  </data>
+  <data name="Users_Participates" xml:space="preserve">
+    <value>משמרות</value>
+  </data>
+  <data name="Users_ParticipatesHint" xml:space="preserve">
+    <value>משתתף בשיבוצים</value>
+  </data>
+  <data name="Users_NoCategories" xml:space="preserve">
+    <value>ללא קטגוריות</value>
+  </data>
+  <data name="Users_DoesShiftsOn" xml:space="preserve">
+    <value>{0} משתתף כעת בשיבוצים</value>
+  </data>
+  <data name="Users_DoesShiftsOff" xml:space="preserve">
+    <value>{0} אינו משתתף עוד בשיבוצים</value>
+  </data>
+  <data name="Users_DoesShiftsOffTitle" xml:space="preserve">
+    <value>להפסיק השתתפות בשיבוצים?</value>
+  </data>
+  <data name="Users_DoesShiftsOffPrompt" xml:space="preserve">
+    <value>ל-{0} יש {1} משמרות עתידיות. למחוק אותן או להשאיר?</value>
+  </data>
+  <data name="Users_KeepShifts" xml:space="preserve">
+    <value>השאר משמרות</value>
+  </data>
+  <data name="Users_DeleteShifts" xml:space="preserve">
+    <value>מחק משמרות</value>
+  </data>
+  <data name="Users_CategoriesTitle" xml:space="preserve">
+    <value>עריכת קטגוריות</value>
+  </data>
+  <data name="Users_NoCategoriesAvailable" xml:space="preserve">
+    <value>אין קטגוריות זמינות למולקולה זו.</value>
+  </data>
   <data name="AssignRole" xml:space="preserve">
     <value>הקצאת תפקיד</value>
   </data>
@@ -8703,6 +8743,21 @@
     <value>מצב קיבולת</value>
     <comment>Toggle to show/edit capacity in calendar cells</comment>
   </data>
+  <data name="Draft_Enter" xml:space="preserve">
+    <value>מצב טיוטה</value>
+  </data>
+  <data name="Draft_Commit" xml:space="preserve">
+    <value>שמירת טיוטה</value>
+  </data>
+  <data name="Draft_Discard" xml:space="preserve">
+    <value>ביטול</value>
+  </data>
+  <data name="Draft_BannerText" xml:space="preserve">
+    <value>מצב טיוטה — השינויים שלך פרטיים ואינם פעילים עד לשמירה.</value>
+  </data>
+  <data name="Draft_ConflictMessage" xml:space="preserve">
+    <value>הלוח החי השתנה בזמן עריכת הטיוטה. דבר לא נשמר — רענן כדי לבדוק את ההתנגשויות.</value>
+  </data>
   <data name="JustMine" xml:space="preserve">
     <value>רק שלי</value>
     <comment>Toggle to show only current user's assignments</comment>
@@ -12113,6 +12168,55 @@
   <data name="Blueprints_ConfirmDeleteQuestion" xml:space="preserve">
     <value>האם אתה בטוח שברצונך למחוק סוג משמרת זה?</value>
   </data>
+  <!-- Shift Categories (Blueprints) -->
+  <data name="Blueprints_Category" xml:space="preserve">
+    <value>קטגוריה</value>
+  </data>
+  <data name="Blueprints_NoCategory" xml:space="preserve">
+    <value>(ללא)</value>
+  </data>
+  <data name="Blueprints_Categories" xml:space="preserve">
+    <value>קטגוריות שיבוץ</value>
+  </data>
+  <data name="Blueprints_CategoriesDesc" xml:space="preserve">
+    <value>קיבוץ סוגי משמרות לקטגוריות פונקציונליות (כגון "יקב"). משתמשים המשובצים למשמרות מאורגנים לפי קטגוריות אלו בלוח השנה.</value>
+  </data>
+  <data name="Blueprints_CategoryName" xml:space="preserve">
+    <value>שם קטגוריה</value>
+  </data>
+  <data name="Blueprints_CategoryColor" xml:space="preserve">
+    <value>צבע</value>
+  </data>
+  <data name="Blueprints_AddCategory" xml:space="preserve">
+    <value>הוסף קטגוריה</value>
+  </data>
+  <data name="Blueprints_NoCategories" xml:space="preserve">
+    <value>אין עדיין קטגוריות. צור קטגוריה למעלה כדי להתחיל לקבץ משמרות.</value>
+  </data>
+  <data name="Blueprints_RenameCategory" xml:space="preserve">
+    <value>שינוי שם קטגוריה</value>
+  </data>
+  <data name="Blueprints_DeleteCategory" xml:space="preserve">
+    <value>מחיקת קטגוריה</value>
+  </data>
+  <data name="Blueprints_DeleteCategoryUsageNote" xml:space="preserve">
+    <value>מחיקתה תסיר את שיוך הקטגוריה מאותן משמרות ותסיר את שיוכי המשתמשים.</value>
+  </data>
+  <data name="Blueprints_CategoryAssigned" xml:space="preserve">
+    <value>הקטגוריה עודכנה</value>
+  </data>
+  <data name="Blueprints_CategoryNameRequired" xml:space="preserve">
+    <value>יש להזין שם קטגוריה</value>
+  </data>
+  <data name="Blueprints_CategoryInUsePrefix" xml:space="preserve">
+    <value>בשימוש על ידי</value>
+  </data>
+  <data name="Blueprints_ShiftsWord" xml:space="preserve">
+    <value>משמרות</value>
+  </data>
+  <data name="Blueprints_UsersWord" xml:space="preserve">
+    <value>משתמשים</value>
+  </data>
   <data name="Programs_Title" xml:space="preserve">
     <value>תוכניות</value>
   </data>
@@ -13305,6 +13409,15 @@
     <value>הקלד שם לסינון...</value>
     <comment>Placeholder for filter search input</comment>
   </data>
+  <data name="Filter_CategoriesLabel" xml:space="preserve">
+    <value>קטגוריות</value>
+  </data>
+  <data name="Filter_NoGroups" xml:space="preserve">
+    <value>אין קבוצות לסינון בתצוגה זו.</value>
+  </data>
+  <data name="Button_Done" xml:space="preserve">
+    <value>סיום</value>
+  </data>
   <data name="Filter_Clear" xml:space="preserve">
     <value>נקה סינון</value>
     <comment>Button to clear active filter</comment>
@@ -13600,6 +13713,9 @@
   </data>
   <data name="Calendar_Error_InsufficientPermissions" xml:space="preserve">
     <value>אין הרשאות מספיקות לשיבוץ משמרות</value>
+  </data>
+  <data name="Calendar_Error_DraftInactive" xml:space="preserve">
+    <value>הטיוטה אינה פעילה עוד. רענן ונסה שוב.</value>
   </data>
   <data name="Calendar_Error_AssignEmployeeFailed" xml:space="preserve">
     <value>שיבוץ העובד נכשל</value>
@@ -15562,6 +15678,13 @@
   <data name="Grant_ManageDistributionLists_Desc" xml:space="preserve">
     <value>מאפשר יצירה, עריכה ומחיקה של רשימות תפוצה ברמת המולקולה, המשמשות לארגון לוח השנה לפי משתמש. זמין למפ"צ ומעלה.</value>
   </data>
+  <!-- Shift Categories (קטגוריות שיבוץ) -->
+  <data name="Grant_ManageShiftCategories" xml:space="preserve">
+    <value>ניהול קטגוריות שיבוץ</value>
+  </data>
+  <data name="Grant_ManageShiftCategories_Desc" xml:space="preserve">
+    <value>מאפשר יצירה, עריכה ומחיקה של קטגוריות שיבוץ ברמת המולקולה (קבוצות פונקציונליות כגון "יקב" שמכילות סוגי משמרות), ושיוך סוגי משמרות ומשתמשים אליהן. זמין למשבץ ומעלה.</value>
+  </data>
   <data name="DistributionLists" xml:space="preserve">
     <value>תפוצות</value>
   </data>
@@ -15600,6 +15723,9 @@
   </data>
   <data name="DistributionList_OtherGroup" xml:space="preserve">
     <value>ללא רשימה</value>
+  </data>
+  <data name="Calendar_UncategorizedGroup" xml:space="preserve">
+    <value>ללא קטגוריה</value>
   </data>
   <data name="DistributionList_InAList" xml:space="preserve">
     <value>כבר ברשימה</value>
@@ -15678,6 +15804,9 @@
   </data>
   <data name="Error_MoveDestHq" xml:space="preserve">
     <value>לא ניתן להעביר משתמש לחברת מטה.</value>
+  </data>
+  <data name="Error_MoveCrossMolecule" xml:space="preserve">
+    <value>ניתן להעביר משתמש רק לחברה באותה מולקולה.</value>
   </data>
   <data name="Error_NoPermissionSourceCompany" xml:space="preserve">
     <value>אין לך הרשאה לחברה הנוכחית של המשתמש.</value>

@@ -1039,12 +1039,13 @@ public class AssignerRoleTests : IDisposable
         employeeGrantTypeIds.Should().BeSubsetOf(assignerGrantTypeIds,
             "Assigner should have all Employee grants");
 
-        // Assigner = Employee + AssignChores(17) + ViewAllUsers(34) + ViewJusticeTable(133) + ManageDistributionLists(135)
-        // (4 extras — ViewAllUsers added 2026-04-18 to give molecule-wide AssignChores its user visibility;
+        // Assigner = Employee + AssignChores(17) + ViewAllUsers(34) + ViewJusticeTable(133) + ManageDistributionLists(135) + ManageShiftCategories(136)
+        // (5 extras — ViewAllUsers added 2026-04-18 to give molecule-wide AssignChores its user visibility;
         //  ViewJusticeTable added 2026-05-03 for Justice analytics page access at Assigner's molecule scope;
-        //  ManageDistributionLists added 2026-05-23 — Assigner manages calendar distribution lists at its molecule scope)
-        assignerGrants.Should().HaveCount(employeeGrants.Count + 4,
-            "Assigner = Employee + AssignChores + ViewAllUsers + ViewJusticeTable + ManageDistributionLists");
+        //  ManageDistributionLists added 2026-05-23 — Assigner manages calendar distribution lists at its molecule scope;
+        //  ManageShiftCategories added 2026-06-09 — Assigner manages shift categories at its molecule scope)
+        assignerGrants.Should().HaveCount(employeeGrants.Count + 5,
+            "Assigner = Employee + AssignChores + ViewAllUsers + ViewJusticeTable + ManageDistributionLists + ManageShiftCategories");
 
         // AssignChores (grant ID 17) should be area-scoped (2026-04-25 policy expansion:
         // Assigner reaches across the whole area to assign chores; other Assigner grants stay SAR)
@@ -1091,8 +1092,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 135 grants (added ManageDistributionLists on 2026-05-23)
-        grantTypes.Should().HaveCount(135, "Should have exactly 135 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, store, collaborative on-call editing, per-area palette, Justice analytics, and distribution-list grants");
+        // Assert - 136 grants (added ManageShiftCategories on 2026-06-09)
+        grantTypes.Should().HaveCount(136, "Should have exactly 136 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, store, collaborative on-call editing, per-area palette, Justice analytics, distribution-list, and shift-category grants");
     }
 
     [Fact]

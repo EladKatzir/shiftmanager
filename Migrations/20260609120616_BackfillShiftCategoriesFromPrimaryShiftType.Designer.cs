@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShiftManager.Data;
 
@@ -10,9 +11,11 @@ using ShiftManager.Data;
 namespace ShiftManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260609120616_BackfillShiftCategoriesFromPrimaryShiftType")]
+    partial class BackfillShiftCategoriesFromPrimaryShiftType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -359,6 +362,9 @@ namespace ShiftManager.Migrations
                     b.Property<string>("PreferredName")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PrimaryShiftTypeId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("ProfileLastUpdated")
                         .HasColumnType("TEXT");
 
@@ -393,6 +399,8 @@ namespace ShiftManager.Migrations
                     b.HasIndex("HomeTypeId");
 
                     b.HasIndex("JobTypeId");
+
+                    b.HasIndex("PrimaryShiftTypeId");
 
                     b.HasIndex("RoleTemplateId");
 
@@ -1104,71 +1112,6 @@ namespace ShiftManager.Migrations
                         .IsUnique();
 
                     b.ToTable("DistributionListMembers");
-                });
-
-            modelBuilder.Entity("ShiftManager.Models.DraftCell", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("BaselineUserIds")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("DraftSessionId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ShiftTypeId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("StagedUserIds")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateOnly>("WorkDate")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DraftSessionId", "ShiftTypeId", "WorkDate")
-                        .IsUnique();
-
-                    b.ToTable("DraftCells");
-                });
-
-            modelBuilder.Entity("ShiftManager.Models.DraftSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("JobTypeId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MoleculeId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("OwnerUserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateOnly>("WeekEnd")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateOnly>("WeekStart")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OwnerUserId", "MoleculeId", "Status");
-
-                    b.ToTable("DraftSessions");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.DutyRotation", b =>
@@ -3838,6 +3781,11 @@ namespace ShiftManager.Migrations
                         .HasForeignKey("JobTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ShiftManager.Models.ShiftType", "PrimaryShiftType")
+                        .WithMany()
+                        .HasForeignKey("PrimaryShiftTypeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("ShiftManager.Models.RoleTemplate", "RoleTemplate")
                         .WithMany()
                         .HasForeignKey("RoleTemplateId")
@@ -3848,6 +3796,8 @@ namespace ShiftManager.Migrations
                     b.Navigation("HomeType");
 
                     b.Navigation("JobType");
+
+                    b.Navigation("PrimaryShiftType");
 
                     b.Navigation("RoleTemplate");
                 });
@@ -4176,28 +4126,6 @@ namespace ShiftManager.Migrations
                     b.Navigation("DistributionList");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ShiftManager.Models.DraftCell", b =>
-                {
-                    b.HasOne("ShiftManager.Models.DraftSession", "DraftSession")
-                        .WithMany("Cells")
-                        .HasForeignKey("DraftSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DraftSession");
-                });
-
-            modelBuilder.Entity("ShiftManager.Models.DraftSession", b =>
-                {
-                    b.HasOne("ShiftManager.Models.AppUser", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.DutyRotation", b =>
@@ -5334,11 +5262,6 @@ namespace ShiftManager.Migrations
             modelBuilder.Entity("ShiftManager.Models.DistributionList", b =>
                 {
                     b.Navigation("Members");
-                });
-
-            modelBuilder.Entity("ShiftManager.Models.DraftSession", b =>
-                {
-                    b.Navigation("Cells");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.DutyRotation", b =>

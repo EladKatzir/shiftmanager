@@ -110,22 +110,7 @@ public partial class UsersModel
     private static partial void LogDirectorCompanyMappingPromoted(
         ILogger logger, int userId, int companyId);
 
-    // ── 12040-12049: PrimaryShiftType (OnPostPrimaryShiftTypeAsync) ────────
-
-    [LoggerMessage(EventId = 12040, Level = LogLevel.Warning,
-        Message = "User {CurrentUserId} attempted PrimaryShiftType change on user {TargetUserId} without grant")]
-    private static partial void LogPrimaryShiftTypeAttemptedWithoutGrant(
-        ILogger logger, int currentUserId, int targetUserId);
-
-    [LoggerMessage(EventId = 12041, Level = LogLevel.Warning,
-        Message = "Rejected cross-molecule PrimaryShiftType assignment: User {UserId} (Molecule {UserMolecule}) → ShiftType {StId} (Molecule {StMolecule})")]
-    private static partial void LogRejectedCrossMoleculePrimaryShiftType(
-        ILogger logger, int userId, int? userMolecule, int stId, int? stMolecule);
-
-    [LoggerMessage(EventId = 12042, Level = LogLevel.Warning,
-        Message = "Rejected PrimaryShiftType assignment: User {UserId} (Company {CompanyId}) not in EligibleCompanyIds for ShiftType {StId}")]
-    private static partial void LogRejectedPrimaryShiftTypeNotInEligibleCompanies(
-        ILogger logger, int userId, int companyId, int stId);
+    // ── 12040-12049: (retired — was PrimaryShiftType, replaced by DoesShifts/ShiftCategory) ───
 
     // ── 12050-12059: Unlock account (OnPostUnlockAccountAsync) ─────────────
 

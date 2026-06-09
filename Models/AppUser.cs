@@ -78,11 +78,11 @@ public class AppUser : IBelongsToCompany
     public int? RoleTemplateId { get; set; }
 
     /// <summary>
-    /// Which shift type this user primarily operates (for calendar grouping).
-    /// NULL = user doesn't do shifts → appears in company group.
-    /// Points to a ShiftType which may belong to a different company (cross-tenant FK via IgnoreQueryFilters).
+    /// Whether this user participates in shift scheduling. TRUE → the user is grouped under their
+    /// shift category accordion(s) in the by-user calendar; FALSE → under their company header.
+    /// Replaces the retired PrimaryShiftTypeId overload (see DoesShifts + ShiftCategories).
     /// </summary>
-    public int? PrimaryShiftTypeId { get; set; }
+    public bool DoesShifts { get; set; }
 
     /// <summary>
     /// User's assigned home rotation type. Single source of truth for home type assignment.
@@ -94,10 +94,11 @@ public class AppUser : IBelongsToCompany
     public JobType? JobType { get; set; }
     public Department? Department { get; set; }
     public RoleTemplate? RoleTemplate { get; set; }
-    /// <summary>
-    /// SECURITY-AUDITED: Cross-tenant FK — PrimaryShiftType may belong to a different company.
-    /// Load via IgnoreQueryFilters() when needed.
-    /// </summary>
-    public ShiftType? PrimaryShiftType { get; set; }
     public HomeType? HomeType { get; set; }
+
+    /// <summary>
+    /// Categories this user participates in (many-to-many). Only meaningful when DoesShifts is true.
+    /// A user in several categories renders as a mirrored row under each.
+    /// </summary>
+    public List<UserShiftCategory> ShiftCategories { get; set; } = new();
 }

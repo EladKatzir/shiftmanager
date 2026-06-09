@@ -22,7 +22,6 @@ public record MoveImpact(
     int ApproverRules,
     bool WillResetJobType,
     bool WillResetDepartment,
-    bool WillResetPrimaryShiftType,
     bool WillResetHomeType,
     IReadOnlyList<string> DirectorCompaniesRemoved,
     IReadOnlyList<string> Warnings);

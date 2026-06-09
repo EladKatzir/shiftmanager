@@ -182,6 +182,7 @@
                         <th><loc key="Blueprints_TimeRange" /></th>
                         <th><loc key="Type" /></th>
                         <th><loc key="Blueprints_Scope" /></th>
+                        <th><loc key="Blueprints_Category" /></th>
                         <th><loc key="Actions" /></th>
                     </tr>
                 </thead>
@@ -269,6 +270,32 @@
                                 }
                             </td>
                             <td>
+                                @{
+                                    var resolvedMolId = shiftType.MoleculeId ?? shiftType.Company?.MoleculeId;
+                                    var inSelectedMolecule = resolvedMolId != null && resolvedMolId == Model.SelectedMoleculeId;
+                                    var currentCat = Model.Categories.FirstOrDefault(c => c.Id == shiftType.CategoryId);
+                                }
+                                @if (Model.CanManageCategories && inSelectedMolecule)
+                                {
+                                    <select class="form-control form-control-sm js-shift-category"
+                                            data-shift-id="@shiftType.Id" style="min-width: 130px;">
+                                        <option value="">@Localizer["Blueprints_NoCategory"]</option>
+                                        @foreach (var cat in Model.Categories)
+                                        {
+                                            <option value="@cat.Id" selected="@(shiftType.CategoryId == cat.Id)">@cat.DisplayName</option>
+                                        }
+                                    </select>
+                                }
+                                else if (currentCat != null)
+                                {
+                                    <span>@currentCat.DisplayName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
                                 @if (!string.IsNullOrWhiteSpace(shiftType.NameKey))
                                 {
                                     <button type="button"
@@ -298,6 +325,126 @@
                 </tbody>
             </table>
         }
+    </div>
+
+    @* Shift Categories Section — functional groupings (e.g. "Yekev") that own shift elements *@
+    @if (Model.CanManageCategories && Model.SelectedMoleculeId.HasValue)
+    {
+        <div class="feature-category">
+            <h2><icon name="layers" /> <loc key="Blueprints_Categories">Shift Categories</loc></h2>
+            <p class="page-subtitle"><loc key="Blueprints_CategoriesDesc">Group shift elements into functional categories. Users who do shifts are organized by these categories on the calendar.</loc></p>
+
+            <form method="post" asp-page-handler="CreateCategory"
+                  style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem;">
+                <input type="hidden" name="moleculeId" value="@Model.SelectedMoleculeId" />
+                <div class="form-group" style="margin: 0;">
+                    <label asp-for="NewCategoryName"><loc key="Blueprints_CategoryName">Category Name</loc></label>
+                    <input asp-for="NewCategoryName" class="form-control" maxlength="100" autocomplete="off" />
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label asp-for="NewCategoryColor"><loc key="Blueprints_CategoryColor">Color</loc></label>
+                    <input asp-for="NewCategoryColor" type="color" class="form-control" value="#3B82F6" style="width: 56px; padding: 2px;" />
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <icon name="plus" /> <loc key="Blueprints_AddCategory">Add Category</loc>
+                </button>
+            </form>
+
+            @if (Model.Categories.Any())
+            {
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th><loc key="Blueprints_CategoryName" /></th>
+                            <th><loc key="Actions" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cat in Model.Categories)
+                        {
+                            <tr data-category-id="@cat.Id">
+                                <td>
+                                    <span class="cat-color-dot" aria-hidden="true"
+                                          style="display:inline-block; width:12px; height:12px; border-radius:50%; margin-inline-end:6px; vertical-align:middle; background:@(string.IsNullOrWhiteSpace(cat.Color) ? "#888" : cat.Color);"></span>
+                                    <span class="js-cat-name">@cat.DisplayName</span>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-secondary js-rename-cat"
+                                            data-id="@cat.Id" data-name="@cat.DisplayName" data-color="@cat.Color">
+                                        <icon name="pencil" /> <loc key="Rename">Rename</loc>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger js-delete-cat"
+                                            data-id="@cat.Id" data-name="@cat.DisplayName">
+                                        <icon name="trash-2" /> <loc key="Delete" />
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-info"><loc key="Blueprints_NoCategories">No categories yet. Create one above to start grouping shifts.</loc></div>
+            }
+
+            @* Hidden form used to POST a confirmed category deletion *@
+            <form method="post" asp-page-handler="DeleteCategory" id="deleteCategoryForm" style="display: none;">
+                <input type="hidden" name="categoryId" id="deleteCategoryId" />
+                <input type="hidden" name="confirmed" id="deleteCategoryConfirmed" value="false" />
+            </form>
+        </div>
+    }
+</div>
+
+@* Rename Category Modal *@
+<div id="renameCategoryModal" class="blueprint-modal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><loc key="Blueprints_RenameCategory">Rename Category</loc></h3>
+                <button type="button" class="close-modal" onclick="closeRenameCategoryModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="renameCategoryId" />
+                <div class="form-group">
+                    <label for="renameCategoryName"><loc key="Blueprints_CategoryName">Category Name</loc></label>
+                    <input type="text" id="renameCategoryName" class="form-control" maxlength="100" required />
+                </div>
+                <div class="form-group">
+                    <label for="renameCategoryColor"><loc key="Blueprints_CategoryColor">Color</loc></label>
+                    <input type="color" id="renameCategoryColor" class="form-control" style="width: 56px; padding: 2px;" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeRenameCategoryModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                <button type="button" class="btn btn-primary" onclick="saveCategoryName()"><loc key="Button_Save">Save</loc></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Delete Category Confirmation Modal *@
+<div id="deleteCategoryModal" class="blueprint-modal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><loc key="Blueprints_DeleteCategory">Delete Category</loc></h3>
+                <button type="button" class="close-modal" onclick="closeDeleteCategoryModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong><loc key="Blueprints_Category">Category</loc>:</strong> <span id="deleteCategoryDisplayName"></span></p>
+                <div id="deleteCategoryUsage" style="display:none; background: var(--warning-soft); padding: 12px; margin: 12px 0; border-radius: 5px; border-inline-start: 4px solid var(--warning);" role="alert">
+                    <p id="deleteCategoryUsageText"></p>
+                    <p><loc key="Blueprints_DeleteCategoryUsageNote">Deleting it will un-categorize those shifts and remove the user mappings.</loc></p>
+                </div>
+                <p style="margin-top: 12px;"><strong><loc key="Blueprints_ConfirmDeleteQuestion">Are you sure you want to delete this?</loc></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteCategoryModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                <button type="button" class="btn btn-danger" onclick="proceedDeleteCategory()"><loc key="Button_ConfirmDelete">Confirm Delete</loc></button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -930,6 +1077,142 @@
                 confirmButton.textContent = '@Localizer["ConfirmDelete"].Value.Trim()';
             }
         }
+
+        // ---------------------------------------------------------------------------
+        // Shift Categories: assign-to-shift, rename, delete
+        // ---------------------------------------------------------------------------
+        function blueprintsToken() {
+            const t = document.querySelector('input[name="__RequestVerificationToken"]');
+            return t ? t.value : '';
+        }
+
+        // Assign a shift type to a category (or clear) on dropdown change.
+        document.querySelectorAll('.js-shift-category').forEach(sel => {
+            sel.addEventListener('change', async function () {
+                const shiftTypeId = parseInt(this.dataset.shiftId, 10);
+                const raw = this.value;
+                const categoryId = raw === '' ? null : parseInt(raw, 10);
+                this.disabled = true;
+                try {
+                    const resp = await fetch('/Owner/Blueprints?handler=AssignShiftCategory', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': blueprintsToken() },
+                        body: JSON.stringify({ shiftTypeId, categoryId })
+                    });
+                    let result = null;
+                    try { result = await resp.json(); } catch (e) { /* non-JSON */ }
+                    if (resp.ok && result && result.success) {
+                        window.Toast && window.Toast.success
+                            ? window.Toast.success('@Localizer["Blueprints_CategoryAssigned"].Value.Trim()')
+                            : null;
+                    } else {
+                        window.FeedbackModal.show('error', (result && result.error) || '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+                    }
+                } catch (err) {
+                    console.error('Failed to assign category', err);
+                    window.FeedbackModal.show('error', '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+                } finally {
+                    this.disabled = false;
+                }
+            });
+        });
+
+        // Rename category modal
+        document.querySelectorAll('.js-rename-cat').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.getElementById('renameCategoryId').value = this.dataset.id;
+                document.getElementById('renameCategoryName').value = this.dataset.name || '';
+                document.getElementById('renameCategoryColor').value = this.dataset.color || '#3B82F6';
+                const m = document.getElementById('renameCategoryModal');
+                m.style.display = 'flex';
+                m.classList.add('is-open');
+            });
+        });
+
+        function closeRenameCategoryModal() {
+            const m = document.getElementById('renameCategoryModal');
+            m.classList.remove('is-open');
+            m.style.display = 'none';
+        }
+        window.closeRenameCategoryModal = closeRenameCategoryModal;
+
+        async function saveCategoryName() {
+            const categoryId = parseInt(document.getElementById('renameCategoryId').value, 10);
+            const name = document.getElementById('renameCategoryName').value.trim();
+            const color = document.getElementById('renameCategoryColor').value;
+            if (!name) {
+                window.FeedbackModal.show('warning', '@Localizer["Blueprints_CategoryNameRequired"].Value.Trim()');
+                return;
+            }
+            try {
+                const resp = await fetch('/Owner/Blueprints?handler=RenameCategory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': blueprintsToken() },
+                    body: JSON.stringify({ categoryId, name, color })
+                });
+                let result = null;
+                try { result = await resp.json(); } catch (e) { /* non-JSON */ }
+                if (resp.ok && result && result.success) {
+                    closeRenameCategoryModal();
+                    location.reload();
+                    return;
+                }
+                window.FeedbackModal.show('error', (result && result.error) || '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+            } catch (err) {
+                console.error('Failed to rename category', err);
+                window.FeedbackModal.show('error', '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+            }
+        }
+        window.saveCategoryName = saveCategoryName;
+
+        // Delete category — fetch usage, confirm, then submit the hidden form with confirmed=true.
+        document.querySelectorAll('.js-delete-cat').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const id = this.dataset.id;
+                const name = this.dataset.name || '';
+                document.getElementById('deleteCategoryDisplayName').textContent = name;
+                const usageBox = document.getElementById('deleteCategoryUsage');
+                const usageText = document.getElementById('deleteCategoryUsageText');
+                usageBox.style.display = 'none';
+                usageText.textContent = '';
+                document.getElementById('deleteCategoryId').value = id;
+
+                const m = document.getElementById('deleteCategoryModal');
+                m.style.display = 'flex';
+                m.classList.add('is-open');
+
+                try {
+                    const resp = await fetch(`/Owner/Blueprints?handler=CheckCategoryUsage&categoryId=${id}`);
+                    const result = await resp.json();
+                    if (result && !result.error && (result.shiftTypeCount > 0 || result.memberCount > 0)) {
+                        usageText.textContent =
+                            '@Localizer["Blueprints_CategoryInUsePrefix"].Value.Trim() ' +
+                            result.shiftTypeCount + ' @Localizer["Blueprints_ShiftsWord"].Value.Trim(), ' +
+                            result.memberCount + ' @Localizer["Blueprints_UsersWord"].Value.Trim().';
+                        usageBox.style.display = 'block';
+                    }
+                } catch (e) { console.error('usage check failed', e); }
+            });
+        });
+
+        function closeDeleteCategoryModal() {
+            const m = document.getElementById('deleteCategoryModal');
+            m.classList.remove('is-open');
+            m.style.display = 'none';
+        }
+        window.closeDeleteCategoryModal = closeDeleteCategoryModal;
+
+        function proceedDeleteCategory() {
+            document.getElementById('deleteCategoryConfirmed').value = 'true';
+            document.getElementById('deleteCategoryForm').submit();
+        }
+        window.proceedDeleteCategory = proceedDeleteCategory;
+
+        // Backdrop click closes the category modals
+        ['renameCategoryModal', 'deleteCategoryModal'].forEach(idv => {
+            const m = document.getElementById(idv);
+            if (m) m.addEventListener('click', function (e) { if (e.target === this) { this.classList.remove('is-open'); this.style.display = 'none'; } });
+        });
     </script>
 }
 

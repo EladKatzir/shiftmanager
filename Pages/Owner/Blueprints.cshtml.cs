@@ -28,6 +28,7 @@ public class BlueprintsModel : PageModel
     private readonly IJobTypeService _jobTypeService;
     private readonly IShiftTypeCacheService _shiftTypeCache;
     private readonly IGrantService _grantService;
+    private readonly IShiftCategoryService _categoryService;
 
     public BlueprintsModel(
         AppDbContext db,
@@ -38,7 +39,8 @@ public class BlueprintsModel : PageModel
         IConcurrencyService concurrencyService,
         IJobTypeService jobTypeService,
         IShiftTypeCacheService shiftTypeCache,
-        IGrantService grantService)
+        IGrantService grantService,
+        IShiftCategoryService categoryService)
     {
         _db = db;
         _localizationService = localizationService;
@@ -49,6 +51,7 @@ public class BlueprintsModel : PageModel
         _jobTypeService = jobTypeService;
         _shiftTypeCache = shiftTypeCache;
         _grantService = grantService;
+        _categoryService = categoryService;
     }
 
     public List<ShiftType> ShiftTypes { get; set; } = new();
@@ -77,9 +80,17 @@ public class BlueprintsModel : PageModel
     [BindProperty] public int? NewShiftJobTypeId { get; set; }
     [BindProperty] public int? NewShiftCompanyId { get; set; }
 
+    // Shift categories (functional groupings, e.g. "Yekev") for the selected molecule.
+    public List<ShiftCategory> Categories { get; set; } = new();
+
+    // Create-category form
+    [BindProperty] public string NewCategoryName { get; set; } = string.Empty;
+    [BindProperty] public string? NewCategoryColor { get; set; }
+
     // Permission helpers
     public bool CanCreateAreaScope { get; set; }
     public bool CanCreateMoleculeScope { get; set; }
+    public bool CanManageCategories { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -134,6 +145,14 @@ public class BlueprintsModel : PageModel
         MissingNameKeyShifts = ShiftTypes
             .Where(st => string.IsNullOrWhiteSpace(st.NameKey))
             .ToList();
+
+        // Shift categories for the selected molecule + whether the user may manage them.
+        if (SelectedMoleculeId.HasValue)
+        {
+            Categories = await _categoryService.GetCategoriesForMoleculeAsync(SelectedMoleculeId.Value);
+            CanManageCategories = userId > 0 &&
+                await _grantService.HasGrantWithScopeAsync(userId, "ManageShiftCategories", moleculeId: SelectedMoleculeId);
+        }
 
         // Determine create permissions
         // Area scope requires ETA-level grant (grant.AreaId or grant.ProjectId must be set)
@@ -471,6 +490,144 @@ public class BlueprintsModel : PageModel
         }
     }
 
+    // --- Shift Category handlers (gated by ManageShiftCategories on the target molecule) ---
+
+    public async Task<IActionResult> OnPostCreateCategoryAsync(int moleculeId)
+    {
+        var userId = GetCurrentUserId();
+        if (!await CanManageCategoriesAsync(userId, moleculeId))
+        {
+            TempData["ErrorMessage"] = InsufficientPermissionsMessage();
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        var name = (NewCategoryName ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = IsHebrewUi() ? "יש להזין שם קטגוריה" : "Category name is required";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        var created = await _categoryService.CreateAsync(moleculeId, name, name, NewCategoryColor);
+        if (created == null)
+        {
+            TempData["ErrorMessage"] = IsHebrewUi()
+                ? $"כבר קיימת קטגוריה בשם '{name}' במולקולה זו"
+                : $"A category named '{name}' already exists in this molecule";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        await _auditLogService.LogAsync("ShiftCategoryCreated", "ShiftCategory", created.Id,
+            $"Created shift category '{created.Name}' in molecule {moleculeId}.");
+        _logger.LogInformation("Created ShiftCategory {Id} '{Name}' in molecule {MoleculeId} by User {UserId}",
+            created.Id, created.Name, moleculeId, userId);
+        TempData["SuccessMessage"] = IsHebrewUi() ? $"הקטגוריה '{name}' נוצרה" : $"Category '{name}' created";
+        return RedirectToPage(new { selectedMoleculeId = moleculeId });
+    }
+
+    public async Task<IActionResult> OnPostRenameCategoryAsync([FromBody] RenameCategoryRequest request)
+    {
+        var userId = GetCurrentUserId();
+        var category = await _categoryService.GetCategoryAsync(request.CategoryId);
+        if (category == null)
+            return new JsonResult(new { success = false, error = "Category not found" });
+        if (!await CanManageCategoriesAsync(userId, category.MoleculeId))
+            return new JsonResult(new { success = false, error = InsufficientPermissionsMessage() }) { StatusCode = 403 };
+
+        var name = (request.Name ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return new JsonResult(new { success = false, error = "Category name is required" });
+
+        var ok = await _categoryService.RenameAsync(category.Id, name, name, request.Color);
+        if (!ok)
+            return new JsonResult(new { success = false, error = "Rename failed (duplicate name?)" }) { StatusCode = 409 };
+
+        await _auditLogService.LogAsync("ShiftCategoryRenamed", "ShiftCategory", category.Id,
+            $"Renamed shift category {category.Id} to '{name}'.");
+        return new JsonResult(new { success = true });
+    }
+
+    public async Task<IActionResult> OnGetCheckCategoryUsageAsync(int categoryId)
+    {
+        var category = await _categoryService.GetCategoryAsync(categoryId);
+        if (category == null)
+            return new JsonResult(new { error = "Category not found" });
+
+        var (shiftTypeCount, memberCount) = await _categoryService.GetUsageAsync(categoryId);
+        return new JsonResult(new { categoryName = category.DisplayName, shiftTypeCount, memberCount });
+    }
+
+    public async Task<IActionResult> OnPostDeleteCategoryAsync(int categoryId, bool confirmed = false)
+    {
+        var userId = GetCurrentUserId();
+        var category = await _categoryService.GetCategoryAsync(categoryId);
+        if (category == null)
+        {
+            TempData["ErrorMessage"] = IsHebrewUi() ? "הקטגוריה לא נמצאה" : "Category not found";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage();
+        }
+
+        var moleculeId = category.MoleculeId;
+        if (!await CanManageCategoriesAsync(userId, moleculeId))
+        {
+            TempData["ErrorMessage"] = InsufficientPermissionsMessage();
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        var (shiftTypeCount, memberCount) = await _categoryService.GetUsageAsync(categoryId);
+        if ((shiftTypeCount > 0 || memberCount > 0) && !confirmed)
+        {
+            TempData["ErrorMessage"] = IsHebrewUi()
+                ? $"הקטגוריה '{category.DisplayName}' בשימוש ({shiftTypeCount} משמרות, {memberCount} משתמשים). יש לאשר מחיקה."
+                : $"Category '{category.DisplayName}' is in use ({shiftTypeCount} shifts, {memberCount} users). Please confirm deletion.";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        await _categoryService.DeleteAsync(categoryId);
+        await _auditLogService.LogAsync("ShiftCategoryDeleted", "ShiftCategory", categoryId,
+            $"Deleted shift category '{category.Name}' (unmapped {shiftTypeCount} shifts, {memberCount} members).");
+        _logger.LogInformation("Deleted ShiftCategory {Id} '{Name}' by User {UserId}", categoryId, category.Name, userId);
+        TempData["SuccessMessage"] = IsHebrewUi() ? $"הקטגוריה '{category.DisplayName}' נמחקה" : $"Category '{category.DisplayName}' deleted";
+        return RedirectToPage(new { selectedMoleculeId = moleculeId });
+    }
+
+    public async Task<IActionResult> OnPostAssignShiftCategoryAsync([FromBody] AssignShiftCategoryRequest request)
+    {
+        var userId = GetCurrentUserId();
+        var shiftType = await _db.ShiftTypes.IgnoreQueryFilters() // SECURITY-AUDITED: shift types are not tenant-filtered
+            .FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
+        if (shiftType == null)
+            return new JsonResult(new { success = false, error = "Shift type not found" });
+
+        // The molecule the shift resolves to gates the grant (direct, or via its company).
+        var shiftMoleculeId = shiftType.MoleculeId
+            ?? await _db.Companies.IgnoreQueryFilters()
+                .Where(c => c.Id == shiftType.CompanyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+        if (shiftMoleculeId == null || !await CanManageCategoriesAsync(userId, shiftMoleculeId.Value))
+            return new JsonResult(new { success = false, error = InsufficientPermissionsMessage() }) { StatusCode = 403 };
+
+        var ok = await _categoryService.AssignShiftTypeAsync(request.ShiftTypeId, request.CategoryId);
+        if (!ok)
+            return new JsonResult(new { success = false, error = "Category must belong to the shift's molecule" }) { StatusCode = 400 };
+
+        if (shiftType.MoleculeId.HasValue)
+            _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
+        await _auditLogService.LogAsync("ShiftTypeCategoryAssigned", "ShiftType", request.ShiftTypeId,
+            $"Set ShiftType {request.ShiftTypeId} category to {(request.CategoryId?.ToString() ?? "none")}.");
+        return new JsonResult(new { success = true });
+    }
+
+    private Task<bool> CanManageCategoriesAsync(int userId, int moleculeId)
+        => userId <= 0
+            ? Task.FromResult(false)
+            : _grantService.HasGrantWithScopeAsync(userId, "ManageShiftCategories", moleculeId: moleculeId);
+
     // --- Helpers ---
 
     private int GetCurrentUserId()
@@ -561,5 +718,18 @@ public class BlueprintsModel : PageModel
         public int ShiftTypeId { get; set; }
         public string StartTime { get; set; } = string.Empty;
         public string EndTime { get; set; } = string.Empty;
+    }
+
+    public class RenameCategoryRequest
+    {
+        public int CategoryId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Color { get; set; }
+    }
+
+    public class AssignShiftCategoryRequest
+    {
+        public int ShiftTypeId { get; set; }
+        public int? CategoryId { get; set; }
     }
 }

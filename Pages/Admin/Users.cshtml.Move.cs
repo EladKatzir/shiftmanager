@@ -73,6 +73,14 @@ public partial class UsersModel
         if (dest == null) return "Error_CompanyNotFound";
         if (dest.IsHeadquarters) return "Error_MoveDestHq";
 
+        // Same-molecule guard (Epic 5): a user may only be relocated to a company in their ORIGIN molecule.
+        // Enforced for everyone (data-integrity rule, not just a permission) on both the impact GET and the
+        // move POST, since both route through here — blocks a manipulated POST to a cross-molecule company.
+        // SECURITY-AUDITED: source company loaded by explicit id (cross-tenant admin view).
+        var sourceCompany = await _db.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == target.CompanyId);
+        if (sourceCompany?.MoleculeId == null || dest.MoleculeId == null || sourceCompany.MoleculeId != dest.MoleculeId)
+            return "Error_MoveCrossMolecule";
+
         var isAdmin = await _grantService.HasGrantAsync(adminId, "AdminAccess");
         if (!isAdmin)
         {

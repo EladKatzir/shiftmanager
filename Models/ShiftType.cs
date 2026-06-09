@@ -41,7 +41,8 @@ public class ShiftType
     // v3.0: Organizational hierarchy scope
     public int? MoleculeId { get; set; }
     public int? JobTypeId { get; set; }        // For workforce shifts (Alhut, Text)
-    public int? ShiftGroupingId { get; set; }  // For grouped shifts (Tzafon, Darom)
+    public int? ShiftGroupingId { get; set; }  // For grouped shifts (Tzafon, Darom) — geographic axis
+    public int? CategoryId { get; set; }       // Functional shift category (e.g. Yekev) — see ShiftCategory
     public string? TechShiftType { get; set; } // For tech shifts (Hanava, Delta, Support)
 
     /// <summary>
@@ -185,4 +186,5 @@ public class ShiftType
     public Area? Area { get; set; }
     public JobType? JobType { get; set; }
     public ShiftGrouping? ShiftGrouping { get; set; }
+    public ShiftCategory? Category { get; set; }
 }

@@ -266,6 +266,24 @@
             gap: 0.5rem;
         }
 
+        /* Participates-in-Shifts cell */
+        .does-shifts-cell { min-width: 130px; }
+        .does-shifts-toggle {
+            display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none;
+        }
+        .does-shifts-toggle input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+        .does-shifts-toggle__text { font-size: 0.85rem; color: var(--text-muted); }
+        .does-shifts-cell__categories {
+            display: flex; align-items: center; gap: 0.4rem; margin-top: 0.35rem; flex-wrap: wrap;
+        }
+        .does-shifts-cell__categories .js-cat-names {
+            font-size: 0.8rem; color: var(--text-muted); max-width: 150px; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        .btn-xs {
+            padding: 0.15rem 0.4rem; font-size: 0.75rem; line-height: 1.2;
+        }
+
         .cell-display__value {
             font-weight: 500;
         }
@@ -872,7 +890,7 @@
                 <th>@Localizer["Company"]</th>
                 <th>@Localizer["JobType"]</th>
                 <th>@Localizer["Department"]</th>
-                <th><loc key="PrimaryShiftType" /></th>
+                <th><loc key="Users_Participates" /></th>
                 <th>@Localizer["Role"]</th>
                 <th>@Localizer["Grants"]</th>
                 <th>@Localizer["Status"]</th>
@@ -921,32 +939,29 @@
                     </div>
                 </td>
                 <td>@(u.DepartmentName ?? "-")</td>
-                <td class="editable-cell" data-cell-type="primaryshifttype" data-user-id="@u.Id" data-user-molecule-id="@(u.MoleculeId?.ToString() ?? "")">
-                    <div class="cell-display">
-                        <span class="cell-display__value">@(u.PrimaryShiftTypeName ?? "-")</span>
-                        <button type="button" class="cell-display__edit-btn" onclick="enterPstEditMode(this)" title="@Localizer["Edit"]" aria-label="@Localizer["Edit"]">
-                            <icon name="settings" />
+                <td class="does-shifts-cell" data-user-id="@u.Id" data-user-molecule-id="@(u.MoleculeId?.ToString() ?? "")">
+                    <label class="does-shifts-toggle" title="@Localizer["Users_ParticipatesHint"]">
+                        <input type="checkbox" class="js-does-shifts" data-user-id="@u.Id"
+                               data-user-name="@u.DisplayName" @(u.DoesShifts ? "checked" : "") />
+                        <span class="does-shifts-toggle__text">@Localizer[u.DoesShifts ? "On" : "Off"]</span>
+                    </label>
+                    <div class="does-shifts-cell__categories" style="@(u.DoesShifts ? "" : "display:none;")">
+                        <span class="js-cat-names">@(string.IsNullOrEmpty(u.ShiftCategoryNames) ? Localizer["Users_NoCategories"].Value : u.ShiftCategoryNames)</span>
+                        <button type="button" class="btn btn-xs btn-secondary js-edit-cats"
+                                data-user-id="@u.Id"
+                                data-molecule-id="@(u.MoleculeId?.ToString() ?? "")"
+                                data-user-name="@u.DisplayName"
+                                data-selected="@string.Join(",", u.ShiftCategoryIds)">
+                            <icon name="settings" /> @Localizer["Edit"]
                         </button>
                     </div>
-                    <div class="cell-edit">
-                        <form method="post" asp-page-handler="PrimaryShiftType" style="display:inline; margin: 0;">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@u.Id" />
-                            <select class="form-input cell-edit__select" name="primaryShiftTypeId" data-original-value="@(u.PrimaryShiftTypeId?.ToString() ?? "")">
-                                <option value="">-</option>
-                                @foreach (var st in Model.AvailableShiftTypes)
-                                {
-                                    var molName = st.MoleculeId.HasValue && Model.MoleculeNames.TryGetValue(st.MoleculeId.Value, out var mn) ? mn : "";
-                                    var label = (st.NameEn ?? st.Name) + (Model.MoleculeNames.Count > 1 && !string.IsNullOrEmpty(molName) ? $" ({molName})" : "");
-                                    <option value="@st.Id"
-                                            data-molecule-id="@(st.MoleculeId?.ToString() ?? "")"
-                                            selected="@(u.PrimaryShiftTypeId == st.Id)">@label</option>
-                                }
-                            </select>
-                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]"><icon name="check" /></button>
-                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]"><icon name="x" /></button>
-                        </form>
-                    </div>
+                    @* Hidden form to POST the DoesShifts toggle (driven by JS so OFF can prompt about future shifts). *@
+                    <form method="post" asp-page-handler="DoesShifts" class="js-does-shifts-form" style="display:none;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@u.Id" />
+                        <input type="hidden" name="doesShifts" class="js-does-shifts-value" value="" />
+                        <input type="hidden" name="deleteFutureShifts" class="js-delete-future" value="false" />
+                    </form>
                 </td>
                 <td class="editable-cell" data-cell-type="role" data-user-id="@u.Id">
                     <div class="cell-display">
@@ -1043,6 +1058,7 @@
                         </form>
                         <button type="button" class="btn btn-sm js-move-user"
                                 data-user-id="@u.Id" data-user-name="@u.DisplayName" data-user-company="@u.CompanyName"
+                                data-user-molecule-id="@(u.MoleculeId?.ToString() ?? "")"
                                 title="@Localizer["Users_MoveTitle"]">
                             @Localizer["Users_Move"]
                         </button>
@@ -1141,7 +1157,7 @@
             <option value="">@Localizer["Users_MoveSelectCompany"]</option>
             @foreach (var company in Model.AvailableCompanies)
             {
-                <option value="@company.Id">@company.LocalizedName</option>
+                <option value="@company.Id" data-molecule-id="@(company.MoleculeId?.ToString() ?? "")">@company.LocalizedName</option>
             }
         </select>
 
@@ -1153,6 +1169,35 @@
         </div>
     </form>
 </dialog>
+
+@* DoesShifts OFF confirm: delete future shifts or keep them *@
+<dialog id="doesShiftsConfirmDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:460px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+    <div style="margin:0; padding:1.5rem;">
+        <h2 class="section-title" style="margin-top:0;">@Localizer["Users_DoesShiftsOffTitle"]</h2>
+        <p id="doesShiftsConfirmMsg" style="margin:0.25rem 0 1rem; color:var(--text);"></p>
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end; flex-wrap:wrap;">
+            <button type="button" class="btn" id="doesShiftsCancelBtn">@Localizer["Button_Cancel"]</button>
+            <button type="button" class="btn btn-secondary" id="doesShiftsKeepBtn">@Localizer["Users_KeepShifts"]</button>
+            <button type="button" class="btn btn-danger" id="doesShiftsDeleteBtn">@Localizer["Users_DeleteShifts"]</button>
+        </div>
+    </div>
+</dialog>
+
+@* Per-user shift-category multi-select *@
+<dialog id="userCategoriesDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:440px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+    <div style="margin:0; padding:1.5rem;">
+        <h2 class="section-title" style="margin-top:0;">@Localizer["Users_CategoriesTitle"]</h2>
+        <p id="userCategoriesUserName" style="font-weight:600; margin:0.25rem 0 1rem; color:var(--text);"></p>
+        <div id="userCategoriesList" style="max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:0.125rem; margin-bottom:1rem;"></div>
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button type="button" class="btn" id="userCategoriesCancelBtn">@Localizer["Button_Cancel"]</button>
+            <button type="button" class="btn btn-primary" id="userCategoriesSaveBtn">@Localizer["Button_Save"]</button>
+        </div>
+    </div>
+</dialog>
+
+@* Category options per molecule for the multi-select (keys are molecule IDs as strings). *@
+<script>window.__categoriesByMolecule = @Json.Serialize(Model.AvailableCategoriesByMolecule);</script>
 
 @section Scripts {
     <script>
@@ -1174,6 +1219,12 @@
                     currentUserId = btn.dataset.userId;
                     idField.value = currentUserId;
                     nameLabel.textContent = btn.dataset.userName + (btn.dataset.userCompany ? ' — ' + btn.dataset.userCompany : '');
+                    // Same-molecule guard (Epic 5): only offer destination companies in the user's own molecule.
+                    var molId = btn.dataset.userMoleculeId || '';
+                    Array.from(destSelect.options).forEach(function (opt) {
+                        if (!opt.value) { opt.hidden = false; return; } // keep the placeholder
+                        opt.hidden = (opt.dataset.moleculeId || '') !== molId;
+                    });
                     destSelect.value = '';
                     impactBox.textContent = '';
                     confirmBtn.disabled = true;
@@ -1197,6 +1248,122 @@
                     confirmBtn.disabled = false;
                 } catch (e) {
                     impactBox.textContent = 'Error';
+                }
+            });
+        })();
+
+        // --- Participates-in-Shifts toggle + per-user shift categories ---
+        (function () {
+            var catData = window.__categoriesByMolecule || {};
+            function token() {
+                var t = document.querySelector('input[name="__RequestVerificationToken"]');
+                return t ? t.value : '';
+            }
+
+            function submitDoesShifts(checkbox, value, deleteFuture) {
+                var cell = checkbox.closest('.does-shifts-cell');
+                var form = cell.querySelector('.js-does-shifts-form');
+                form.querySelector('.js-does-shifts-value').value = value ? 'true' : 'false';
+                form.querySelector('.js-delete-future').value = deleteFuture ? 'true' : 'false';
+                form.submit();
+            }
+
+            var pendingToggle = null;
+            var confirmDlg = document.getElementById('doesShiftsConfirmDialog');
+
+            document.querySelectorAll('.js-does-shifts').forEach(function (cb) {
+                cb.addEventListener('change', async function () {
+                    var userId = cb.dataset.userId;
+                    var name = cb.dataset.userName || '';
+                    if (cb.checked) { submitDoesShifts(cb, true, false); return; }
+                    try {
+                        var resp = await fetch('?handler=DoesShiftsImpact&id=' + encodeURIComponent(userId));
+                        var data = await resp.json();
+                        if (data.ok && data.futureShifts > 0) {
+                            pendingToggle = cb;
+                            document.getElementById('doesShiftsConfirmMsg').textContent =
+                                '@(Localizer["Users_DoesShiftsOffPrompt"].Value.Trim())'
+                                    .replace('{0}', name).replace('{1}', data.futureShifts);
+                            confirmDlg.showModal();
+                            return;
+                        }
+                    } catch (e) { console.error('impact check failed', e); }
+                    submitDoesShifts(cb, false, false);
+                });
+            });
+
+            if (confirmDlg) {
+                document.getElementById('doesShiftsCancelBtn').addEventListener('click', function () {
+                    if (pendingToggle) pendingToggle.checked = true; // revert visual
+                    pendingToggle = null; confirmDlg.close();
+                });
+                document.getElementById('doesShiftsKeepBtn').addEventListener('click', function () {
+                    if (pendingToggle) submitDoesShifts(pendingToggle, false, false);
+                    confirmDlg.close();
+                });
+                document.getElementById('doesShiftsDeleteBtn').addEventListener('click', function () {
+                    if (pendingToggle) submitDoesShifts(pendingToggle, false, true);
+                    confirmDlg.close();
+                });
+            }
+
+            // Categories multi-select modal
+            var catDlg = document.getElementById('userCategoriesDialog');
+            var catList = document.getElementById('userCategoriesList');
+            var catUserName = document.getElementById('userCategoriesUserName');
+            var catSaveBtn = document.getElementById('userCategoriesSaveBtn');
+            var catCancelBtn = document.getElementById('userCategoriesCancelBtn');
+            var catCurrentUserId = null;
+
+            document.querySelectorAll('.js-edit-cats').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    catCurrentUserId = btn.dataset.userId;
+                    catUserName.textContent = btn.dataset.userName || '';
+                    var molId = btn.dataset.moleculeId || '';
+                    var selected = (btn.dataset.selected || '').split(',').filter(Boolean).map(Number);
+                    var cats = catData[molId] || [];
+                    catList.innerHTML = '';
+                    if (cats.length === 0) {
+                        var p = document.createElement('p');
+                        p.className = 'cal-filter-empty';
+                        p.textContent = '@(Localizer["Users_NoCategoriesAvailable"].Value.Trim())';
+                        catList.appendChild(p);
+                    } else {
+                        cats.forEach(function (c) {
+                            var id = (c.id != null) ? c.id : c.Id;
+                            var nm = (c.name != null) ? c.name : c.Name;
+                            var label = document.createElement('label');
+                            label.style.cssText = 'display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.5rem; border-radius:6px; cursor:pointer;';
+                            var cb = document.createElement('input');
+                            cb.type = 'checkbox'; cb.value = id; cb.checked = selected.indexOf(id) !== -1;
+                            var span = document.createElement('span'); span.textContent = nm;
+                            label.appendChild(cb); label.appendChild(span);
+                            catList.appendChild(label);
+                        });
+                    }
+                    catDlg.showModal();
+                });
+            });
+
+            if (catCancelBtn) catCancelBtn.addEventListener('click', function () { catDlg.close(); });
+
+            if (catSaveBtn) catSaveBtn.addEventListener('click', async function () {
+                var ids = Array.from(catList.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map(function (cb) { return parseInt(cb.value, 10); });
+                catSaveBtn.disabled = true;
+                try {
+                    var resp = await fetch('?handler=UserCategories', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+                        body: JSON.stringify({ userId: parseInt(catCurrentUserId, 10), categoryIds: ids })
+                    });
+                    var data = await resp.json();
+                    if (resp.ok && data.success) { catDlg.close(); location.reload(); return; }
+                    window.FeedbackModal.show('error', (data && data.error) || '@(Localizer["Error_FailedToUpdate"].Value.Trim())');
+                } catch (e) {
+                    window.FeedbackModal.show('error', '@(Localizer["Error_FailedToUpdate"].Value.Trim())');
+                } finally {
+                    catSaveBtn.disabled = false;
                 }
             });
         })();

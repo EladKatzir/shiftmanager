@@ -37,7 +37,7 @@ public class UserCompanyTransferService : IUserCompanyTransferService
         var user = await _db.Users.IgnoreQueryFilters().AsNoTracking() // SECURITY-AUDITED: preview by explicit id
             .FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
-            return new MoveImpact(0, 0, 0, 0, 0, 0, 0, 0, 0, false, false, false, false,
+            return new MoveImpact(0, 0, 0, 0, 0, 0, 0, 0, 0, false, false, false,
                 Array.Empty<string>(), new[] { "User not found" });
 
         // SECURITY-AUDITED: each count scoped to userId; read-only preview, mirrors the move's predicates.
@@ -68,7 +68,6 @@ public class UserCompanyTransferService : IUserCompanyTransferService
             futureShifts, timeOff, chores, swaps, onDuty, games, ownedCals, apiKeys, approverRules,
             WillResetJobType: user.JobTypeId.HasValue,
             WillResetDepartment: user.DepartmentId.HasValue,
-            WillResetPrimaryShiftType: user.PrimaryShiftTypeId.HasValue,
             WillResetHomeType: user.HomeTypeId.HasValue,
             DirectorCompaniesRemoved: directorCompanies,
             Warnings: Array.Empty<string>());
@@ -167,7 +166,6 @@ public class UserCompanyTransferService : IUserCompanyTransferService
             // Scalar FKs point at old-molecule/area-scoped rows — reset (admin re-assigns in dest).
             user.JobTypeId = null;
             user.DepartmentId = null;
-            user.PrimaryShiftTypeId = null;
             user.HomeTypeId = null;
             // RoleTemplateId is global/cross-tenant — KEEP it.
             user.CompanyId = destCompanyId;

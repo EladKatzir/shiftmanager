@@ -410,7 +410,7 @@ The `UserRole` enum defines 7 roles. These are **NOT directly used for access co
 
 | Value | Role | Purpose |
 |-------|------|---------|
-| 0 | **Owner** | System administrator — all 135 grants at Project scope |
+| 0 | **Owner** | System administrator — all 136 grants at Project scope |
 | 1 | **Manager** | Company-level management (AlhutLead, TextLead, BRDirector, MoleculeAdmin, DepartmentLead) |
 | 2 | **Employee** | Standard user — view + self-service grants |
 | 3 | **Director** | Molecule-level oversight (AlhutDirector, TextDirector) |

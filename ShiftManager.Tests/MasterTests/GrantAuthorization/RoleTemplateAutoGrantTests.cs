@@ -180,18 +180,19 @@ public class RoleTemplateAutoGrantTests : MasterTestBase
 
     [Theory]
     // Counts reflect the 2026-04-17 audit fills + 2026-05-03 Justice analytics additions +
-    // 2026-05-23 ManageDistributionLists (#135) granted to Lead/BRDirector/Director/Assigner/DepartmentLead/MoleculeAdmin/AreaAdmin/Owner.
+    // 2026-05-23 ManageDistributionLists (#135) + 2026-06-09 ManageShiftCategories (#136), both
+    // granted to Lead/BRDirector/Director/Assigner/DepartmentLead/MoleculeAdmin/AreaAdmin/Owner.
     // ViewJusticeTable (#133) granted to Lead/BRDirector/Director/Assigner/MoleculeAdmin/AreaAdmin/Owner;
-    // EditJusticeTargets (#134) granted to AreaAdmin + Owner. Total grants: 135.
-    [InlineData("Tzafona", "Employee", 22)]      // unchanged — no Justice/DistributionList grants
-    [InlineData("Tzafona", "Lead", 57)]          // +1 ManageDistributionLists (#135)
-    [InlineData("Tzafona", "BRDirector", 69)]    // +1 ManageDistributionLists (#135)
-    [InlineData("Tzafona", "Director", 65)]      // +1 ManageDistributionLists (#135)
-    [InlineData("Tzafona", "Assigner", 26)]      // +1 ManageDistributionLists (#135)
-    [InlineData("Hitazmut", "MoleculeAdmin", 107)]// +1 ManageDistributionLists (#135)
-    [InlineData("Yekev", "DepartmentLead", 59)]  // +1 ManageDistributionLists (#135)
-    [InlineData("Tzafona", "AreaAdmin", 124)]    // +1 ManageDistributionLists (#135)
-    [InlineData("SystemAdmins", "Owner", 135)]   // +1 ManageDistributionLists (#135) — Owner gets ALL
+    // EditJusticeTargets (#134) granted to AreaAdmin + Owner. Total grants: 136.
+    [InlineData("Tzafona", "Employee", 22)]      // unchanged — no Justice/DistributionList/Category grants
+    [InlineData("Tzafona", "Lead", 58)]          // +1 ManageShiftCategories (#136)
+    [InlineData("Tzafona", "BRDirector", 70)]    // +1 ManageShiftCategories (#136)
+    [InlineData("Tzafona", "Director", 66)]      // +1 ManageShiftCategories (#136)
+    [InlineData("Tzafona", "Assigner", 27)]      // +1 ManageShiftCategories (#136)
+    [InlineData("Hitazmut", "MoleculeAdmin", 108)]// +1 ManageShiftCategories (#136)
+    [InlineData("Yekev", "DepartmentLead", 60)]  // +1 ManageShiftCategories (#136)
+    [InlineData("Tzafona", "AreaAdmin", 125)]    // +1 ManageShiftCategories (#136)
+    [InlineData("SystemAdmins", "Owner", 136)]   // +1 ManageShiftCategories (#136) — Owner gets ALL
     public async Task User_Has_ExpectedAutoGrantCount(string company, string template, int expectedCount)
     {
         var user = GetTestUser(company, template);

@@ -37,6 +37,8 @@ public class ShiftsModel : PageModel
     private readonly ICalendarTextEntryService _textEntryService;
     private readonly IJusticeService _justiceService;
     private readonly IDistributionListService _distributionListService;
+    private readonly IShiftCategoryService _categoryService;
+    private readonly IDraftModeService _draftService;
 
     public ShiftsModel(
         AppDbContext db,
@@ -52,7 +54,9 @@ public class ShiftsModel : PageModel
         IChoreTypeService choreTypeService,
         ICalendarTextEntryService textEntryService,
         IJusticeService justiceService,
-        IDistributionListService distributionListService)
+        IDistributionListService distributionListService,
+        IShiftCategoryService categoryService,
+        IDraftModeService draftService)
     {
         _db = db;
         _calendarService = calendarService;
@@ -68,6 +72,8 @@ public class ShiftsModel : PageModel
         _textEntryService = textEntryService;
         _justiceService = justiceService;
         _distributionListService = distributionListService;
+        _categoryService = categoryService;
+        _draftService = draftService;
     }
 
     // Query parameters
@@ -91,6 +97,13 @@ public class ShiftsModel : PageModel
 
     [BindProperty(SupportsGet = true)]
     public bool JustMine { get; set; }
+
+    /// <summary>When true, the by-shift/by-user calendar renders the viewer's private draft overlay (Epic 4).</summary>
+    [BindProperty(SupportsGet = true)]
+    public bool DraftMode { get; set; }
+
+    /// <summary>The active draft session id for the current viewer+molecule+week (null when not drafting).</summary>
+    public int? ActiveDraftId { get; set; }
 
     /// <summary>
     /// CSV of selected distribution-list IDs (e.g. "1,2,3"). When non-empty, the by-user view is filtered
@@ -391,6 +404,8 @@ public class ShiftsModel : PageModel
         // Get shift instances and assignments
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);
         var assignments = await _calendarService.GetAssignmentsAsync(moleculeId, jobTypeId, StartDate, EndDate);
+        // Draft Mode: overlay the viewer's private staged changes onto the live assignments for rendering.
+        assignments = await ApplyDraftOverlayAsync(assignments, moleculeId, jobTypeId);
 
         // Get text entries + overview notes for overlay badges in shift-based view (cross-company via IgnoreQueryFilters)
         var assignedUserIds = assignments.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value).Distinct();
@@ -444,7 +459,9 @@ public class ShiftsModel : PageModel
                 Id = $"shift-{shiftType.Id}",
                 Label = FormattableString.Invariant($"{localizedName} ({shiftType.Start:HH:mm}-{shiftType.End:HH:mm})"),
                 Color = shiftType.RowColor,
-                CompanyName = shiftType.CompanyId.HasValue ? companyNames.GetValueOrDefault(shiftType.CompanyId.Value) : null
+                CompanyName = shiftType.CompanyId.HasValue ? companyNames.GetValueOrDefault(shiftType.CompanyId.Value) : null,
+                // Functional category grouping (e.g. "Yekev"); null = uncategorized.
+                GroupId = shiftType.CategoryId.HasValue ? $"category-{shiftType.CategoryId.Value}" : null
             };
 
             // Build cells for each date
@@ -452,6 +469,10 @@ public class ShiftsModel : PageModel
             rows.Add(row);
         }
         LocalizedShiftTypeNames = localizedNames;
+
+        // Group the by-shift view by category — but only when at least one shift type is actually
+        // categorized, so molecules not yet using categories keep the flat layout.
+        var shiftGroups = await BuildShiftCategoryGroupsAsync(moleculeId, rows);
 
         CalendarData = new ExcelCalendarTableViewModel
         {
@@ -461,9 +482,11 @@ public class ShiftsModel : PageModel
             IsReadOnly = !CanEdit,
             CalendarType = "shifts",
             Rows = rows,
+            Groups = shiftGroups,
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
         CalendarData.RowMode = "Shifts";
+        CalendarData.DraftSessionId = ActiveDraftId;
         // +1 for the <thead> column-header row so aria-rowcount matches ARIA 1.2 §6.6.4
         // (rowcount includes ALL <tr> elements, not just <tbody> rows).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
@@ -507,6 +530,8 @@ public class ShiftsModel : PageModel
         // Get shift instances and assignments
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);
         var assignments = await _calendarService.GetAssignmentsAsync(moleculeId, jobTypeId, StartDate, EndDate);
+        // Draft Mode: overlay the viewer's private staged changes onto the live assignments for rendering.
+        assignments = await ApplyDraftOverlayAsync(assignments, moleculeId, jobTypeId);
 
         // Get overlays (vacation, chores, on-duty)
         var overlays = await _calendarService.GetOverlaysAsync(moleculeId, StartDate, EndDate);
@@ -549,37 +574,18 @@ public class ShiftsModel : PageModel
 
         if (SelectedDistributionListIds.Any())
         {
-            // Distribution-list grouping overrides default grouping (tech or flat) for ALL molecule types:
-            // one collapsible section per selected list, filtered to those lists' members (cross-company).
+            // Distribution lists are a SEPARATE, user-driven arrangement tool. When lists are selected they
+            // override category grouping: one collapsible section per selected list (cross-company), + "Other".
             (rows, groups) = await BuildListGroupedRowsAsync(
                 users, SelectedDistributionListIds, moleculeId, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
         }
-        else if (IsTechMolecule)
-        {
-            // SP3: Dynamic grouping for tech molecules — group by PrimaryShiftType or Company
-            (rows, groups) = await BuildTechGroupedRowsAsync(
-                users, instances, assignments, overlays, localizedShiftNames, moleculeId, textEntries, overviewNotes);
-        }
         else
         {
-            // Non-tech: flat user list (existing behavior)
-            foreach (var user in users)
-            {
-                var row = new ExcelCalendarRow
-                {
-                    Id = $"user-{user.Id}",
-                    Label = user.DisplayName
-                };
-                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
-                // Compute weekly hours for this user
-                var userShiftWindows = assignments
-                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
-                    .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
-                    .OrderBy(w => w.start)
-                    .ToList();
-                row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
-                rows.Add(row);
-            }
+            // Default (all molecule types): group by ShiftCategory. Users with DoesShifts=true appear under
+            // EACH of their categories (mirrored rows); everyone else falls under their Company header. This
+            // is the single grouping engine that superseded the old PrimaryShiftType/tech + flat paths.
+            (rows, groups) = await BuildCategoryGroupedRowsAsync(
+                users, moleculeId, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
         }
 
         CalendarData = new ExcelCalendarTableViewModel
@@ -595,6 +601,7 @@ public class ShiftsModel : PageModel
         };
         // BuildUserBasedCalendarAsync only runs when Mode == "user" (see OnGet routing).
         CalendarData.RowMode = "Users";
+        CalendarData.DraftSessionId = ActiveDraftId;
         // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
     }
@@ -729,204 +736,274 @@ public class ShiftsModel : PageModel
     }
 
     /// <summary>
-    /// SP3: Build grouped rows for tech molecule user-mode calendar.
-    /// Groups users by PrimaryShiftType (shift-type sections) or by Company (for non-shift users).
-    /// Within shift-type groups, splits into regulars and trainees (localized via _localizer).
+    /// Builds a single by-user calendar row (cells + weekly hours), shared by every by-user grouping
+    /// strategy. <paramref name="groupId"/> places it under a collapsible section; <paramref name="companyName"/>
+    /// drives the per-row company badge (null to suppress, e.g. inside a company group where it is redundant).
     /// </summary>
-    private async Task<(List<ExcelCalendarRow> rows, List<ExcelCalendarGroup> groups)> BuildTechGroupedRowsAsync(
-        List<AppUser> users,
+    private ExcelCalendarRow BuildUserRow(
+        AppUser user,
+        string? groupId,
+        string? companyName,
+        string? subLabel,
         List<ShiftInstance> instances,
         List<ShiftAssignment> assignments,
         Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
         Dictionary<int, string> localizedShiftNames,
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
+        Dictionary<(int UserId, DateOnly Date), string> overviewNotes)
+    {
+        var row = new ExcelCalendarRow
+        {
+            Id = $"user-{user.Id}",
+            Label = user.DisplayName,
+            SubLabel = subLabel,
+            GroupId = groupId,
+            CompanyName = companyName
+        };
+        row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
+
+        var userShiftWindows = assignments
+            .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
+            .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
+            .OrderBy(w => w.start)
+            .ToList();
+        row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+        return row;
+    }
+
+    /// <summary>
+    /// Default by-user grouping (replaces the legacy PrimaryShiftType/tech + flat paths). Users with
+    /// DoesShifts = true render under EACH ShiftCategory they belong to — the same user appears as a
+    /// MIRRORED row under multiple category accordions (duplicate data-row-id is safe; the calendar
+    /// resolves interactions from the cell's data-row-id attribute, not a DOM id). Everyone else — and
+    /// any participant who is not mapped to a category — falls under their Company header.
+    /// </summary>
+    private async Task<(List<ExcelCalendarRow> rows, List<ExcelCalendarGroup> groups)> BuildCategoryGroupedRowsAsync(
+        List<AppUser> users,
         int moleculeId,
+        List<ShiftInstance> instances,
+        List<ShiftAssignment> assignments,
+        Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
+        Dictionary<int, string> localizedShiftNames,
         Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
         Dictionary<(int UserId, DateOnly Date), string> overviewNotes)
     {
         var rows = new List<ExcelCalendarRow>();
         var groups = new List<ExcelCalendarGroup>();
 
-        // Batch-load PrimaryShiftTypes for all users (1 query)
-        // No query filter on ShiftType — scope-based visibility now
-        var primaryStIds = users.Where(u => u.PrimaryShiftTypeId.HasValue)
-            .Select(u => u.PrimaryShiftTypeId!.Value)
-            .Distinct()
-            .ToList();
-        var primaryShiftTypes = primaryStIds.Count > 0
-            ? await _db.ShiftTypes
-                .Where(st => primaryStIds.Contains(st.Id))
-                .ToDictionaryAsync(st => st.Id)
-            : new Dictionary<int, ShiftType>();
-
-        // Batch-check for trainee assignments in the viewed period (1 query)
-        var userIds = users.Select(u => u.Id).ToList();
-        var traineeUserIds = await _db.ShiftAssignments
-            .IgnoreQueryFilters()
-            .Where(sa => sa.IsTraineeShift
-                && sa.UserId.HasValue
-                && userIds.Contains(sa.UserId.Value)
-                && sa.ShiftInstance.WorkDate >= StartDate
-                && sa.ShiftInstance.WorkDate <= EndDate)
-            .Select(sa => sa.UserId!.Value)
-            .Distinct()
-            .ToListAsync();
-        var traineeUserIdSet = traineeUserIds.ToHashSet();
-
-        // Load company names for company groups
-        // SECURITY-AUDITED: SAFE — scoped by molecule-derived user CompanyIds
+        // Company names (per-row badge for cross-company category members + company-group headers).
+        // SECURITY-AUDITED: SAFE — scoped to the molecule-derived user set's CompanyIds.
         var companyIds = users.Select(u => u.CompanyId).Distinct().ToList();
         var companyLookup = await _db.Companies
             .IgnoreQueryFilters()
             .Where(c => companyIds.Contains(c.Id))
             .ToDictionaryAsync(c => c.Id, c => c.LocalizedName);
 
-        // Batch-load HomeType names for SubLabel display (1 query)
-        var homeTypeIds = users.Where(u => u.HomeTypeId.HasValue)
-            .Select(u => u.HomeTypeId!.Value).Distinct().ToList();
+        // HomeType SubLabels (parity with the prior grouping).
+        var homeTypeIds = users.Where(u => u.HomeTypeId.HasValue).Select(u => u.HomeTypeId!.Value).Distinct().ToList();
         var homeTypeNames = homeTypeIds.Count > 0
-            ? await _db.HomeTypes
-                .IgnoreQueryFilters()
+            ? await _db.HomeTypes.IgnoreQueryFilters()
                 .Where(ht => homeTypeIds.Contains(ht.Id))
                 .ToDictionaryAsync(ht => ht.Id, ht => ht.NameHe ?? ht.Name)
             : new Dictionary<int, string>();
 
+        string? SubLabel(AppUser u) => u.HomeTypeId.HasValue ? homeTypeNames.GetValueOrDefault(u.HomeTypeId.Value) : null;
+
+        // Categories (active, ordered) + memberships restricted to participants in this view.
+        var categories = await _categoryService.GetCategoriesForMoleculeAsync(moleculeId);
+        var participantIds = users.Where(u => u.DoesShifts).Select(u => u.Id).ToHashSet();
+        var byCategory = new Dictionary<int, HashSet<int>>();
+        if (participantIds.Count > 0)
+        {
+            var memberships = await _db.UserShiftCategories
+                .Where(m => participantIds.Contains(m.UserId))
+                .Select(m => new { m.ShiftCategoryId, m.UserId })
+                .ToListAsync();
+            byCategory = memberships
+                .GroupBy(m => m.ShiftCategoryId)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.UserId).ToHashSet());
+        }
+
+        var placedParticipants = new HashSet<int>();
         int sortOrder = 0;
 
-        // Classify users into groups
-        var shiftTypeGroups = new Dictionary<string, List<(AppUser user, bool isTrainee)>>();
-        var companyGroups = new Dictionary<int, List<AppUser>>();
-
-        foreach (var user in users)
+        // Category accordions in service order; the same participant can appear under several (mirrored rows).
+        foreach (var cat in categories)
         {
-            if (user.PrimaryShiftTypeId.HasValue && primaryShiftTypes.TryGetValue(user.PrimaryShiftTypeId.Value, out var pst))
-            {
-                // Group by TechShiftType (e.g., "HANAVA") — not by specific time variant
-                var groupKey = pst.TechShiftType ?? pst.Key;
-                var isTrainee = traineeUserIdSet.Contains(user.Id);
-                if (!shiftTypeGroups.ContainsKey(groupKey))
-                    shiftTypeGroups[groupKey] = new List<(AppUser, bool)>();
-                shiftTypeGroups[groupKey].Add((user, isTrainee));
-            }
-            else
-            {
-                // No PrimaryShiftType → company group
-                if (!companyGroups.ContainsKey(user.CompanyId))
-                    companyGroups[user.CompanyId] = new List<AppUser>();
-                companyGroups[user.CompanyId].Add(user);
-            }
-        }
-
-        // Determine shift-type ordering: broader EligibleCompanyIds scope first
-        var shiftTypeOrder = ShiftTypes
-            .Where(st => st.TechShiftType != null)
-            .GroupBy(st => st.TechShiftType!)
-            .Select(g => new
-            {
-                Key = g.Key,
-                EligibleCount = g.First().GetEligibleCompanyIdList()?.Count ?? int.MaxValue
-            })
-            .OrderByDescending(x => x.EligibleCount == int.MaxValue ? int.MaxValue : x.EligibleCount)
-            .ThenBy(x => x.Key)
-            .Select(x => x.Key)
-            .ToList();
-
-        // Build shift-type groups (regulars then trainees for each type)
-        foreach (var techType in shiftTypeOrder)
-        {
-            if (!shiftTypeGroups.TryGetValue(techType, out var usersInGroup))
+            if (!byCategory.TryGetValue(cat.Id, out var memberIdSet))
+                continue;
+            var members = users.Where(u => memberIdSet.Contains(u.Id)).OrderBy(u => u.DisplayName).ToList();
+            if (members.Count == 0)
                 continue;
 
-            var regulars = usersInGroup.Where(x => !x.isTrainee).Select(x => x.user).ToList();
-            var trainees = usersInGroup.Where(x => x.isTrainee).Select(x => x.user).ToList();
-
-            // Resolve display name from the first ShiftType with this TechShiftType (use localized name)
-            var displaySt = ShiftTypes.FirstOrDefault(st => st.TechShiftType == techType);
-            var displayName = displaySt != null
-                ? localizedShiftNames.GetValueOrDefault(displaySt.Id, displaySt.NameEn ?? techType)
-                : techType;
-
-            if (regulars.Count > 0)
+            var groupId = $"category-{cat.Id}";
+            groups.Add(new ExcelCalendarGroup
             {
-                var groupId = $"st-{techType}-reg";
-                groups.Add(new ExcelCalendarGroup { Id = groupId, Name = $"{_localizer["Regulars"]} {displayName}", SortOrder = sortOrder++, Color = displaySt?.RowColor, MemberCount = regulars.Count });
-                foreach (var user in regulars)
-                {
-                    var row = new ExcelCalendarRow
-                    {
-                        Id = $"user-{user.Id}",
-                        Label = user.DisplayName,
-                        SubLabel = user.HomeTypeId.HasValue ? homeTypeNames.GetValueOrDefault(user.HomeTypeId.Value) : null,
-                        GroupId = groupId,
-                        CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
-                    };
-                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
-                    // Compute weekly hours for this user
-                    var userShiftWindows = assignments
-                        .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
-                        .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
-                        .OrderBy(w => w.start)
-                        .ToList();
-                    row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
-                    rows.Add(row);
-                }
-            }
-
-            if (trainees.Count > 0)
+                Id = groupId,
+                Name = cat.DisplayName,
+                SortOrder = sortOrder++,
+                Color = cat.Color,
+                MemberCount = members.Count
+            });
+            foreach (var user in members)
             {
-                var groupId = $"st-{techType}-trainee";
-                groups.Add(new ExcelCalendarGroup { Id = groupId, Name = $"{_localizer["Trainees"]} {displayName}", SortOrder = sortOrder++, Color = displaySt?.RowColor, MemberCount = trainees.Count });
-                foreach (var user in trainees)
-                {
-                    var row = new ExcelCalendarRow
-                    {
-                        Id = $"user-{user.Id}",
-                        Label = user.DisplayName,
-                        SubLabel = user.HomeTypeId.HasValue ? homeTypeNames.GetValueOrDefault(user.HomeTypeId.Value) : null,
-                        GroupId = groupId,
-                        CompanyName = companyLookup.GetValueOrDefault(user.CompanyId)
-                    };
-                    row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
-                    // Compute weekly hours for this user
-                    var userShiftWindows = assignments
-                        .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
-                        .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
-                        .OrderBy(w => w.start)
-                        .ToList();
-                    row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
-                    rows.Add(row);
-                }
+                placedParticipants.Add(user.Id);
+                rows.Add(BuildUserRow(user, groupId, companyLookup.GetValueOrDefault(user.CompanyId), SubLabel(user),
+                    instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes));
             }
         }
 
-        // Build company groups for users without PrimaryShiftType
-        foreach (var (cid, companyUsers) in companyGroups.OrderBy(kv => companyLookup.GetValueOrDefault(kv.Key, "")))
+        // Company groups: non-participants + any participant not mapped to a category (so nobody is lost).
+        var companyGrouped = users
+            .Where(u => !u.DoesShifts || !placedParticipants.Contains(u.Id))
+            .GroupBy(u => u.CompanyId)
+            .OrderBy(g => companyLookup.GetValueOrDefault(g.Key, ""));
+        foreach (var grp in companyGrouped)
         {
-            var companyName = companyLookup.GetValueOrDefault(cid, $"Company #{cid}");
-            var groupId = $"company-{cid}";
-            groups.Add(new ExcelCalendarGroup { Id = groupId, Name = companyName, SortOrder = sortOrder++, MemberCount = companyUsers.Count });
-
-            foreach (var user in companyUsers)
+            var groupId = $"company-{grp.Key}";
+            var members = grp.OrderBy(u => u.DisplayName).ToList();
+            groups.Add(new ExcelCalendarGroup
             {
-                var row = new ExcelCalendarRow
-                {
-                    Id = $"user-{user.Id}",
-                    Label = user.DisplayName,
-                    SubLabel = user.HomeTypeId.HasValue ? homeTypeNames.GetValueOrDefault(user.HomeTypeId.Value) : null,
-                    GroupId = groupId
-                };
-                row.Cells = BuildCellsForUser(user.Id, instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes);
-                // Compute weekly hours for this user
-                var userShiftWindows = assignments
-                    .Where(a => a.UserId == user.Id && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline)
-                    .Select(a => TimeHelpers.GetShiftWindow(a.ShiftInstance.ShiftType, a.ShiftInstance.WorkDate))
-                    .OrderBy(w => w.start)
-                    .ToList();
-                row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
-                rows.Add(row);
+                Id = groupId,
+                Name = companyLookup.GetValueOrDefault(grp.Key, $"Company #{grp.Key}"),
+                SortOrder = sortOrder++,
+                MemberCount = members.Count
+            });
+            foreach (var user in members)
+            {
+                // Company badge is redundant inside a company group — suppress it.
+                rows.Add(BuildUserRow(user, groupId, null, SubLabel(user),
+                    instances, assignments, overlays, localizedShiftNames, textEntries, overviewNotes));
             }
         }
 
         return (rows, groups);
+    }
+
+    /// <summary>
+    /// Groups the by-shift view rows by their owning ShiftCategory. Returns null (flat layout) when no shift
+    /// type in the molecule is categorized, so molecules not yet using categories are unaffected. Shift rows
+    /// already carry their GroupId ("category-{id}" or null); uncategorized rows collect under an "Other" group.
+    /// </summary>
+    private async Task<List<ExcelCalendarGroup>?> BuildShiftCategoryGroupsAsync(int moleculeId, List<ExcelCalendarRow> rows)
+    {
+        var categories = await _categoryService.GetCategoriesForMoleculeAsync(moleculeId);
+        if (categories.Count == 0 || rows.All(r => string.IsNullOrEmpty(r.GroupId)))
+            return null;
+
+        var groups = new List<ExcelCalendarGroup>();
+        int sortOrder = 0;
+        foreach (var cat in categories)
+        {
+            var groupId = $"category-{cat.Id}";
+            var count = rows.Count(r => r.GroupId == groupId);
+            if (count == 0)
+                continue;
+            groups.Add(new ExcelCalendarGroup
+            {
+                Id = groupId,
+                Name = cat.DisplayName,
+                SortOrder = sortOrder++,
+                Color = cat.Color,
+                MemberCount = count
+            });
+        }
+
+        // Uncategorized shift rows → trailing "Other" group so grouped + ungrouped rows don't render mixed.
+        var uncategorized = rows.Where(r => string.IsNullOrEmpty(r.GroupId)).ToList();
+        if (uncategorized.Count > 0)
+        {
+            const string otherId = "category-other";
+            foreach (var r in uncategorized)
+                r.GroupId = otherId;
+            groups.Add(new ExcelCalendarGroup
+            {
+                Id = otherId,
+                Name = _localizer["Calendar_UncategorizedGroup"],
+                SortOrder = sortOrder++,
+                MemberCount = uncategorized.Count
+            });
+        }
+
+        return groups;
+    }
+
+    /// <summary>
+    /// Draft Mode (Epic 4): overlays the viewer's active draft onto the live assignments for rendering —
+    /// touched cells show their STAGED assignees (synthetic, in-memory <see cref="ShiftAssignment"/>s)
+    /// instead of the live ones. Sets <see cref="ActiveDraftId"/>. Returns the live list unchanged when
+    /// not in draft mode or no active draft exists.
+    /// </summary>
+    private async Task<List<ShiftAssignment>> ApplyDraftOverlayAsync(List<ShiftAssignment> live, int moleculeId, int? jobTypeId)
+    {
+        if (!DraftMode)
+            return live;
+
+        var draft = await _draftService.GetActiveDraftAsync(CurrentUserId, moleculeId, jobTypeId, StartDate);
+        if (draft == null)
+            return live;
+        ActiveDraftId = draft.Id;
+
+        var overlay = await _draftService.GetOverlayAsync(draft.Id);
+        if (overlay.Count == 0)
+            return live;
+
+        var touched = overlay.ToDictionary(o => (o.ShiftTypeId, o.WorkDate), o => o.UserIds);
+        var stById = ShiftTypes.ToDictionary(s => s.Id);
+
+        // A staged cell may reference a shift type not in this view's ShiftTypes set (e.g. company-scoped).
+        // Resolve any such types from the DB so their staged chips still render in the overlay.
+        var missingStIds = touched.Keys.Select(k => k.ShiftTypeId).Where(id => !stById.ContainsKey(id)).Distinct().ToList();
+        if (missingStIds.Count > 0)
+        {
+            // SECURITY-AUDITED: SAFE — shift types are not tenant-filtered; loaded by explicit ids.
+            var extra = await _db.ShiftTypes.IgnoreQueryFilters().Where(s => missingStIds.Contains(s.Id)).ToListAsync();
+            foreach (var s in extra)
+                stById[s.Id] = s;
+        }
+
+        // Keep live assignments for untouched cells; reuse live ShiftInstance objects where present.
+        var result = live.Where(a => !touched.ContainsKey((a.ShiftInstance.ShiftTypeId, a.ShiftInstance.WorkDate))).ToList();
+        var instanceByCell = live
+            .GroupBy(a => (a.ShiftInstance.ShiftTypeId, a.ShiftInstance.WorkDate))
+            .ToDictionary(g => g.Key, g => g.First().ShiftInstance);
+
+        int synthId = -1;
+        foreach (var (key, userIds) in touched)
+        {
+            if (!stById.TryGetValue(key.ShiftTypeId, out var st))
+                continue;
+
+            if (!instanceByCell.TryGetValue(key, out var instance))
+            {
+                instance = new ShiftInstance
+                {
+                    Id = synthId--,
+                    ShiftTypeId = key.ShiftTypeId,
+                    WorkDate = key.WorkDate,
+                    ShiftType = st,
+                    CompanyId = st.CompanyId ?? 0,
+                    StaffingRequired = Math.Max(1, userIds.Count)
+                };
+            }
+            else if (instance.ShiftType == null)
+            {
+                instance.ShiftType = st;
+            }
+
+            foreach (var uid in userIds)
+            {
+                result.Add(new ShiftAssignment
+                {
+                    Id = synthId--,
+                    ShiftInstanceId = instance.Id,
+                    ShiftInstance = instance,
+                    UserId = uid
+                });
+            }
+        }
+
+        return result;
     }
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForShiftType(
@@ -957,6 +1034,7 @@ public class ShiftsModel : PageModel
                         Name = a.User?.DisplayName ?? _localizer["Unassigned"].Value,
                         IsTrainee = false, // Shift-mode rows are primary employees, never trainees
                         UserId = a.UserId,
+                        ShiftTypeId = a.ShiftInstance.ShiftTypeId,
                         TraineeUserId = a.TraineeUserId,
                         TraineeName = a.Trainee?.DisplayName,
                         // HOME unification (Task 22): expose source-of-truth so renderer can pick
@@ -1046,6 +1124,7 @@ public class ShiftsModel : PageModel
                 IsTrainee = a.TraineeUserId == userId,
                 IsTraineeShift = a.IsTraineeShift,
                 UserId = a.UserId,
+                ShiftTypeId = a.ShiftInstance.ShiftTypeId,
                 TraineeUserId = a.TraineeUserId,
                 TraineeName = a.Trainee?.DisplayName,
                 // HOME unification (Task 22): user-mode chips render with source icons

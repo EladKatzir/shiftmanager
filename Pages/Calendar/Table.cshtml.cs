@@ -49,7 +49,8 @@ public partial class TableModel : PageModel
         ICompanyLocalizationService companyLocalizationService,
         ITenantResolver tenantResolver,
         IStringLocalizer<SharedResources> localizer,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IDraftModeService draftService)
     {
         _db = db;
         _companyContext = companyContext;
@@ -66,7 +67,10 @@ public partial class TableModel : PageModel
         _tenantResolver = tenantResolver;
         _localizer = localizer;
         _auditLogService = auditLogService;
+        _draftService = draftService;
     }
+
+    private readonly IDraftModeService _draftService;
 
     /// <summary>
     /// Resolves the localized display name for a shift type using the full fallback chain.
@@ -780,6 +784,17 @@ public partial class TableModel : PageModel
 
                 if (!hasAnyShiftGrant)
                     return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
+            }
+
+            // Draft Mode: stage the assignment into the caller's own sandbox instead of writing live (no SignalR).
+            if (request.DraftSessionId.HasValue)
+            {
+                var ownsDraft = await _db.DraftSessions.AnyAsync(d =>
+                    d.Id == request.DraftSessionId.Value && d.OwnerUserId == currentUserId && d.Status == DraftSessionStatus.Active);
+                if (!ownsDraft)
+                    return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+                await _draftService.StageAssignAsync(request.DraftSessionId.Value, request.ShiftTypeId, request.Date, request.UserId);
+                return new JsonResult(new { success = true, draft = true });
             }
 
             // Get or create shift instance (service expects pre-existing instance)
@@ -1705,12 +1720,85 @@ public partial class TableModel : PageModel
         public string? OverrideToken { get; set; }
     }
 
+    // ===================== Draft Mode (Epic 4) =====================
+
+    private int? CurrentUserIdOrNull()
+        => int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : (int?)null;
+
+    private Task<bool> OwnsActiveDraftAsync(int draftSessionId, int userId)
+        => _db.DraftSessions.AnyAsync(d => d.Id == draftSessionId && d.OwnerUserId == userId && d.Status == DraftSessionStatus.Active);
+
+    public async Task<IActionResult> OnPostEnterDraftAsync([FromBody] EnterDraftRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        var draft = await _draftService.EnterDraftAsync(userId, request.MoleculeId, request.JobTypeId, request.WeekStart, request.WeekEnd);
+        return new JsonResult(new { success = true, draftSessionId = draft.Id });
+    }
+
+    public async Task<IActionResult> OnPostDraftClearAsync([FromBody] DraftClearRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+        await _draftService.StageClearAsync(request.DraftSessionId, request.ShiftTypeId, request.Date, request.UserId);
+        return new JsonResult(new { success = true, draft = true });
+    }
+
+    public async Task<IActionResult> OnPostCommitDraftAsync([FromBody] DraftActionRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+
+        var result = await _draftService.CommitAsync(request.DraftSessionId, userId);
+        return new JsonResult(new
+        {
+            success = result.Committed,
+            appliedCells = result.AppliedCells,
+            conflicts = result.Conflicts.Select(c => new { c.ShiftTypeId, date = c.WorkDate.ToString("yyyy-MM-dd") }),
+            issues = result.ValidationIssues.Select(i => new { i.ShiftTypeId, date = i.WorkDate.ToString("yyyy-MM-dd"), i.UserId, i.Message })
+        });
+    }
+
+    public async Task<IActionResult> OnPostDiscardDraftAsync([FromBody] DraftActionRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        // Allow discarding any of your own sessions (active or stale), not others'.
+        var owns = await _db.DraftSessions.AnyAsync(d => d.Id == request.DraftSessionId && d.OwnerUserId == userId);
+        if (!owns)
+            return new JsonResult(new { success = false }) { StatusCode = 403 };
+        await _draftService.DiscardAsync(request.DraftSessionId);
+        return new JsonResult(new { success = true });
+    }
+
+    public class EnterDraftRequest
+    {
+        public int MoleculeId { get; set; }
+        public int? JobTypeId { get; set; }
+        public DateOnly WeekStart { get; set; }
+        public DateOnly WeekEnd { get; set; }
+    }
+    public class DraftActionRequest { public int DraftSessionId { get; set; } }
+    public class DraftClearRequest
+    {
+        public int DraftSessionId { get; set; }
+        public int ShiftTypeId { get; set; }
+        public DateOnly Date { get; set; }
+        public int UserId { get; set; }
+    }
+
     public class AssignEmployeeRequest
     {
         public int ShiftTypeId { get; set; }
         public DateOnly Date { get; set; }
         public int UserId { get; set; }
         public string? OverrideToken { get; set; }
+        /// <summary>When set, the assignment is STAGED into this draft sandbox instead of written live.</summary>
+        public int? DraftSessionId { get; set; }
     }
 
     public class UnassignEmployeeRequest

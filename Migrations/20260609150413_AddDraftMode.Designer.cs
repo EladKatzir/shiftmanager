@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShiftManager.Data;
 
@@ -10,9 +11,11 @@ using ShiftManager.Data;
 namespace ShiftManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260609150413_AddDraftMode")]
+    partial class AddDraftMode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -359,6 +362,9 @@ namespace ShiftManager.Migrations
                     b.Property<string>("PreferredName")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PrimaryShiftTypeId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("ProfileLastUpdated")
                         .HasColumnType("TEXT");
 
@@ -393,6 +399,8 @@ namespace ShiftManager.Migrations
                     b.HasIndex("HomeTypeId");
 
                     b.HasIndex("JobTypeId");
+
+                    b.HasIndex("PrimaryShiftTypeId");
 
                     b.HasIndex("RoleTemplateId");
 
@@ -3838,6 +3846,11 @@ namespace ShiftManager.Migrations
                         .HasForeignKey("JobTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ShiftManager.Models.ShiftType", "PrimaryShiftType")
+                        .WithMany()
+                        .HasForeignKey("PrimaryShiftTypeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("ShiftManager.Models.RoleTemplate", "RoleTemplate")
                         .WithMany()
                         .HasForeignKey("RoleTemplateId")
@@ -3848,6 +3861,8 @@ namespace ShiftManager.Migrations
                     b.Navigation("HomeType");
 
                     b.Navigation("JobType");
+
+                    b.Navigation("PrimaryShiftType");
 
                     b.Navigation("RoleTemplate");
                 });

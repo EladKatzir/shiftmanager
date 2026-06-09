@@ -37,7 +37,7 @@ ShiftManager V3 introduces a **grant-based authorization system** that replaces 
 | Aspect | V2 (Legacy) | V3 (Current) |
 |--------|-------------|--------------|
 | **Primary mechanism** | UserRole enum (0-6) | Grant-based with scope |
-| **Permission granularity** | 7 fixed roles | 135 grant types |
+| **Permission granularity** | 7 fixed roles | 136 grant types |
 | **Scope** | Company-only | Project/Area/Molecule/Company/Department/JobType |
 | **Delegation** | None | CanGive flag on grants |
 | **Role bundling** | Hardcoded | RoleTemplate with auto-grants |

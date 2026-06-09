@@ -325,6 +325,8 @@ builder.Services.AddScoped<IQuickInfoConfigService, QuickInfoConfigService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IShiftGroupingService, ShiftGroupingService>();
+builder.Services.AddScoped<IShiftCategoryService, ShiftCategoryService>();
+builder.Services.AddScoped<IDraftModeService, DraftModeService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // v3.0 Grant Authorization
@@ -1329,7 +1331,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Seed Owner user's grants - GODMODE: ALL 134 grants at Project level
+    // Seed Owner user's grants - GODMODE: ALL 136 grants at Project level
     var ownerUserForGrants = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Role == UserRole.Owner);
     if (ownerUserForGrants != null)
     {
