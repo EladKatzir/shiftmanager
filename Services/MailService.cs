@@ -129,6 +129,78 @@ public class MailService : IMailService
     }
 
     /// <summary>
+    /// Builds the (targetUrl, payload) for a Felix send. Plain mail goes to the configured
+    /// <paramref name="baseApiUrl"/> (already the /mail/send endpoint); calendar-eligible mail is
+    /// routed to the <c>/calendar</c> or <c>/allDayEvent</c> sub-path with the mail object wrapped
+    /// alongside the event. Pure (no I/O) so the payload shape + routing is unit-testable.
+    /// Times are formatted as supplied — callers MUST pass UTC for timed events (the trailing 'Z'
+    /// asserts UTC); all-day events use date-only.
+    /// </summary>
+    internal static (string url, object payload) BuildSendTarget(
+        string baseApiUrl, string from, string to, string subject, string html,
+        CalendarEventKind kind, DateTime? startUtc, DateTime? endUtc, string? location)
+    {
+        var mail = new { from, to, subject, html };
+        var trimmed = (baseApiUrl ?? string.Empty).TrimEnd('/');
+
+        switch (kind)
+        {
+            case CalendarEventKind.Timed:
+                return ($"{trimmed}/calendar", new
+                {
+                    mail,
+                    calendarEvent = new
+                    {
+                        startTime = startUtc?.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                        endTime = endUtc?.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                        location = location ?? string.Empty
+                    }
+                });
+
+            case CalendarEventKind.AllDay:
+                return ($"{trimmed}/allDayEvent", new
+                {
+                    mail,
+                    calendarAllDayEvent = new
+                    {
+                        startTime = startUtc?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                        endTime = endUtc?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                        location = location ?? string.Empty
+                    }
+                });
+
+            default:
+                return (baseApiUrl ?? string.Empty, mail);
+        }
+    }
+
+    /// <summary>
+    /// Enqueue a calendar-eligible email — delivered through Felix's /calendar (Timed) or
+    /// /allDayEvent (AllDay) endpoint so the recipient's Outlook receives a native calendar event
+    /// ("summon"). Timed events require UTC start/end; all-day events use the date component only.
+    /// </summary>
+    public async Task<OperationResult> SendCalendarMailAsync(string recipient, string subject, string htmlBody,
+        CalendarEventKind kind, DateTime? startUtc, DateTime? endUtc, string? location, int recipientUserId = 0)
+    {
+        if (string.IsNullOrWhiteSpace(recipient) || string.IsNullOrWhiteSpace(subject))
+        {
+            return OperationResult.Fail("Error_MailService_InvalidRecipient", _localizer["Error_MailService_InvalidRecipient"].Value);
+        }
+
+        var companyId = _tenantResolver != null && _tenantResolver.HasTenant()
+            ? _tenantResolver.GetCurrentTenantId()
+            : 0;
+
+        var queued = await _emailQueue.EnqueueAsync(new QueuedEmail(
+            recipient, subject, htmlBody, companyId, RecipientUserId: recipientUserId,
+            CalendarKind: kind, EventStartUtc: startUtc, EventEndUtc: endUtc, EventLocation: location));
+
+        return queued
+            ? OperationResult.Ok()
+            : OperationResult.Fail("Error_MailService_SendFailed", _localizer["Error_MailService_SendFailed"].Value);
+    }
+
+    /// <summary>
     /// Loads email configuration from database (per-company) with fallback to appsettings.json
     /// </summary>
     private async Task<(bool enabled, string? apiKey, string? apiUrl, string? fromAddress, string source)> LoadConfigurationAsync()
@@ -297,7 +369,8 @@ public class MailService : IMailService
     /// Send an email directly via HTTP call. Called by EmailBackgroundProcessor.
     /// Do not call from HTTP request handlers — use SendMailAsync instead.
     /// </summary>
-    public async Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0, int recipientUserId = 0)
+    public async Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0, int recipientUserId = 0,
+        CalendarEventKind calendarKind = CalendarEventKind.None, DateTime? eventStartUtc = null, DateTime? eventEndUtc = null, string? eventLocation = null)
     {
         // Resolve the recipient user (for the opt-out footer token) when not supplied explicitly.
         // The (email, companyId) pair is unique, so this finds the right user for same-tenant sends.
@@ -415,14 +488,11 @@ public class MailService : IMailService
             // Create HTTP client from factory (best practice for performance and connection pooling)
             using var httpClient = _httpClientFactory.CreateClient();
 
-            // Build email payload matching company API format
-            var payload = new
-            {
-                from = fromAddress,
-                to = recipient,
-                subject = subject,
-                html = htmlBody
-            };
+            // Build email payload + target endpoint. Calendar-eligible sends are routed to Felix's
+            // /calendar or /allDayEvent sub-paths with the mail object wrapped alongside the event.
+            var (targetUrl, payload) = BuildSendTarget(apiUrl!, fromAddress!, recipient, subject, htmlBody,
+                calendarKind, eventStartUtc, eventEndUtc, eventLocation);
+            requestUrl = targetUrl;
 
             // Serialize to JSON
             requestBody = JsonSerializer.Serialize(payload, new JsonSerializerOptions
@@ -453,8 +523,8 @@ public class MailService : IMailService
             _logger.LogInformation("Sending email to {Recipient} with subject: {Subject} (config source: {Source})",
                 recipient, subject, source);
 
-            // Send POST request to mail API
-            HttpResponseMessage response = await httpClient.PostAsync(apiUrl, content);
+            // Send POST request to mail API (plain or calendar sub-path)
+            HttpResponseMessage response = await httpClient.PostAsync(targetUrl, content);
 
             // Capture response details
             responseStatusCode = (int)response.StatusCode;

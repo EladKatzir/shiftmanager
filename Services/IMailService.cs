@@ -43,7 +43,16 @@ public interface IMailService
     /// <c>Error_MailService_MissingApiUrl</c>, <c>Error_MailService_MissingApiKey</c>,
     /// <c>Error_MailService_InvalidRecipient</c>, or <c>Error_MailService_SendFailed</c>.
     /// </returns>
-    Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0, int recipientUserId = 0);
+    Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0, int recipientUserId = 0,
+        CalendarEventKind calendarKind = CalendarEventKind.None, DateTime? eventStartUtc = null, DateTime? eventEndUtc = null, string? eventLocation = null);
+
+    /// <summary>
+    /// Enqueue a calendar-eligible email — delivered through Felix's /calendar (timed) or
+    /// /allDayEvent (all-day) endpoint so the recipient's Outlook receives a native calendar invite.
+    /// Timed events require UTC start/end; all-day events use the date component only.
+    /// </summary>
+    Task<OperationResult> SendCalendarMailAsync(string recipient, string subject, string htmlBody,
+        CalendarEventKind kind, DateTime? startUtc, DateTime? endUtc, string? location, int recipientUserId = 0);
 
     /// <summary>
     /// Send shift assignment notification email.

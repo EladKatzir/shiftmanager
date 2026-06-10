@@ -5,7 +5,20 @@ namespace ShiftManager.Services;
 /// <summary>
 /// Queued email item containing all data needed for sending.
 /// </summary>
-public record QueuedEmail(string Recipient, string Subject, string HtmlBody, int CompanyId = 0, int RetryCount = 0, DateTime? FirstAttemptAt = null, int RecipientUserId = 0);
+public record QueuedEmail(string Recipient, string Subject, string HtmlBody, int CompanyId = 0, int RetryCount = 0, DateTime? FirstAttemptAt = null, int RecipientUserId = 0,
+    CalendarEventKind CalendarKind = CalendarEventKind.None, DateTime? EventStartUtc = null, DateTime? EventEndUtc = null, string? EventLocation = null);
+
+/// <summary>
+/// Selects which Felix endpoint an email is delivered through (notifications overhaul Phase 5):
+/// None = plain /mail/send; Timed = /mail/send/calendar (shifts/chores/on-duty/after);
+/// AllDay = /mail/send/allDayEvent (vacation, Day-At-X). Felix builds the native calendar invite.
+/// </summary>
+public enum CalendarEventKind
+{
+    None = 0,
+    Timed = 1,
+    AllDay = 2
+}
 
 /// <summary>
 /// Singleton bounded channel for background email delivery.
