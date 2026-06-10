@@ -90,13 +90,21 @@ public static class BusyServiceMockFactory
 
         IConfiguration cfg = configuration ?? BuildDefaultConfiguration();
 
+        // Construct a real CompanyMembershipService against the same test DB so the
+        // ~15 existing Real() callers do NOT need to change — the membership table will
+        // simply be empty for tests that don't seed it, preserving backward-compatibility.
+        var membershipService = new CompanyMembershipService(
+            db,
+            NullLogger<CompanyMembershipService>.Instance);
+
         return new BusyService(
             db,
             localizerMock.Object,
             NullLogger<BusyService>.Instance,
             hierarchyMock.Object,
             configCacheMock.Object,
-            cfg);
+            cfg,
+            membershipService);
     }
 
     private static IConfiguration BuildDefaultConfiguration()

@@ -21,6 +21,7 @@ public class BusyService : IBusyService
     private readonly ILogger<BusyService> _logger;
     private readonly IHierarchySettingsService _hierarchySettingsService;
     private readonly IAppConfigCacheService _configCache;
+    private readonly ICompanyMembershipService _membershipService;
     private readonly string _hmacSecret;
 
     private const int OverrideTokenExpiryMinutes = 5;
@@ -31,13 +32,15 @@ public class BusyService : IBusyService
         ILogger<BusyService> logger,
         IHierarchySettingsService hierarchySettingsService,
         IAppConfigCacheService configCache,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ICompanyMembershipService membershipService)
     {
         _db = db;
         _localizer = localizer;
         _logger = logger;
         _hierarchySettingsService = hierarchySettingsService;
         _configCache = configCache;
+        _membershipService = membershipService;
         _hmacSecret = configuration["ApiKeyHmacSecret"]
             ?? Middleware.ApiAuthenticationMiddleware.HmacSecret;
     }
@@ -202,7 +205,7 @@ public class BusyService : IBusyService
             return new BusyValidation(false, errors, warnings);
         }
 
-        if (!await IsUserInMoleculeAsync(user.CompanyId, target.MoleculeId))
+        if (!await IsUserInMoleculeAsync(user, target.MoleculeId))
         {
             errors.Add(new ValidationIssue(
                 "USER_NOT_IN_MOLECULE",
@@ -350,7 +353,7 @@ public class BusyService : IBusyService
         // Molecule boundary check
         if (shiftInstance.ShiftType.MoleculeId.HasValue)
         {
-            if (!await IsUserInMoleculeAsync(user.CompanyId, shiftInstance.ShiftType.MoleculeId.Value))
+            if (!await IsUserInMoleculeAsync(user, shiftInstance.ShiftType.MoleculeId.Value))
             {
                 errors.Add(new ValidationIssue(
                     "USER_NOT_IN_MOLECULE",
@@ -868,11 +871,16 @@ public class BusyService : IBusyService
         }
     }
 
-    private async Task<bool> IsUserInMoleculeAsync(int userCompanyId, int moleculeId)
+    // Accept the assignment if ANY company the user belongs to (primary OR an additional
+    // CompanyMembership) is in the target molecule. Always include user.CompanyId so users
+    // without explicit membership rows (pre-backfill / unit tests) keep working.
+    private async Task<bool> IsUserInMoleculeAsync(AppUser user, int moleculeId)
     {
-        var company = await _db.Companies.IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Id == userCompanyId);
-        return company?.MoleculeId == moleculeId;
+        var companyIds = new HashSet<int> { user.CompanyId };
+        foreach (var m in await _membershipService.GetMembershipsAsync(user.Id))
+            companyIds.Add(m.CompanyId);
+        return await _db.Companies.IgnoreQueryFilters()
+            .AnyAsync(c => companyIds.Contains(c.Id) && c.MoleculeId == moleculeId);
     }
 
     private static double MergeAndSumHours(List<(DateTime start, DateTime end)> windows)

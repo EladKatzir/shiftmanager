@@ -48,13 +48,18 @@ public class BusyServiceTests : IDisposable
         var configMock = new Mock<IConfiguration>();
         configMock.Setup(c => c["ApiKeyHmacSecret"]).Returns("test-busyservice-hmac-secret");
 
+        var membershipService = new CompanyMembershipService(
+            _db,
+            NullLogger<CompanyMembershipService>.Instance);
+
         _service = new BusyService(
             _db,
             localizerMock.Object,
             NullLogger<BusyService>.Instance,
             hierarchyMock.Object,
             configCacheMock.Object,
-            configMock.Object);
+            configMock.Object,
+            membershipService);
     }
 
     public void Dispose()
@@ -227,5 +232,112 @@ public class BusyServiceTests : IDisposable
         states[u1.Id].Summary.Highest.Should().Be(BusyLevel.Soft);
         states[u2.Id].Summary.HasShift.Should().BeFalse();
         states[u2.Id].Summary.Highest.Should().Be(BusyLevel.None);
+    }
+
+    [Fact]
+    public async Task ValidateChore_PrimaryCompanyInMolecule_NoMembershipRows_Passes()
+    {
+        // Backward-compatibility: a user whose PRIMARY company is in the target molecule,
+        // with NO CompanyMembership rows at all, must NOT get USER_NOT_IN_MOLECULE.
+        // This covers all pre-backfill users and most existing unit tests.
+        _db.Companies.Add(new Company { Id = 200, MoleculeId = 10, Name = "CompanyPrimary", DisplayName = "Primary Co" });
+        await _db.SaveChangesAsync();
+
+        var user = await SeedUserAsync(id: 80, companyId: 200);
+        var date = new DateOnly(2026, 6, 1);
+
+        var validation = await _service.ValidateAsync(
+            new BusyTarget.Chore(date, MoleculeId: 10, ChoreTypeId: null),
+            userId: user.Id, actorUserId: 999);
+
+        // No USER_NOT_IN_MOLECULE error — the primary company is in molecule 10
+        validation.Errors.Should().NotContain(e => e.Key == "USER_NOT_IN_MOLECULE");
+    }
+
+    [Fact]
+    public async Task ValidateChore_UserReachesTargetMoleculeViaMembership_NotRejected()
+    {
+        // Bug fix: a user whose PRIMARY company is in molecule M1 but has a CompanyMembership
+        // row in a company belonging to molecule M2 should NOT be rejected with USER_NOT_IN_MOLECULE
+        // when the target chore is in M2.
+        // Molecule M1 (user's home molecule)
+        _db.Companies.Add(new Company { Id = 300, MoleculeId = 20, Name = "CompanyHome", DisplayName = "Home Co" });
+        // Molecule M2 (target chore's molecule) — user reaches it only via membership
+        _db.Companies.Add(new Company { Id = 301, MoleculeId = 21, Name = "CompanyMember", DisplayName = "Member Co" });
+        await _db.SaveChangesAsync();
+
+        // User's PRIMARY company is in M1
+        var user = await SeedUserAsync(id: 90, companyId: 300);
+
+        // Add a CompanyMembership row: user also belongs to CompanyId=301 (M2)
+        _db.CompanyMemberships.Add(new CompanyMembership
+        {
+            UserId = user.Id,
+            CompanyId = 301,
+            IsPrimary = false,
+            DoesShifts = true,
+            GrantedBy = 0,
+            JoinedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync();
+
+        var date = new DateOnly(2026, 6, 1);
+
+        var validation = await _service.ValidateAsync(
+            new BusyTarget.Chore(date, MoleculeId: 21, ChoreTypeId: null),
+            userId: user.Id, actorUserId: 999);
+
+        // Should NOT produce USER_NOT_IN_MOLECULE — membership covers molecule 21
+        validation.Errors.Should().NotContain(e => e.Key == "USER_NOT_IN_MOLECULE",
+            "user reaches molecule 21 via a secondary CompanyMembership");
+    }
+
+    [Fact]
+    public async Task ValidateShift_UserReachesTargetMoleculeViaMembership_NotRejected()
+    {
+        // Same cross-membership scenario for the SHIFT validation path.
+        // Molecule M1 (user's home)
+        _db.Companies.Add(new Company { Id = 400, MoleculeId = 30, Name = "CompanyHomeShift", DisplayName = "Home Shift Co" });
+        // Molecule M2 (target shift's molecule) — user reaches it only via membership
+        _db.Companies.Add(new Company { Id = 401, MoleculeId = 31, Name = "CompanyMemberShift", DisplayName = "Member Shift Co" });
+        await _db.SaveChangesAsync();
+
+        // User's PRIMARY company is in M1
+        var user = await SeedUserAsync(id: 91, companyId: 400);
+
+        // Add a CompanyMembership row: user also belongs to CompanyId=401 (M2)
+        _db.CompanyMemberships.Add(new CompanyMembership
+        {
+            UserId = user.Id,
+            CompanyId = 401,
+            IsPrimary = false,
+            DoesShifts = true,
+            GrantedBy = 0,
+            JoinedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync();
+
+        // Seed a shift instance in CompanyId=401 (M2)
+        var shiftType = new ShiftType
+        {
+            Id = 8001, Key = "MORNING_M2", Start = new TimeOnly(8, 0), End = new TimeOnly(16, 0),
+            MoleculeId = 31, CompanyId = 401
+        };
+        _db.ShiftTypes.Add(shiftType);
+        var shiftInstance = new ShiftInstance
+        {
+            CompanyId = 401, ShiftTypeId = shiftType.Id,
+            WorkDate = new DateOnly(2026, 6, 2), StaffingRequired = 1
+        };
+        _db.ShiftInstances.Add(shiftInstance);
+        await _db.SaveChangesAsync();
+
+        var validation = await _service.ValidateAsync(
+            new BusyTarget.Shift(shiftInstance.Id),
+            userId: user.Id, actorUserId: 999);
+
+        // Should NOT produce USER_NOT_IN_MOLECULE
+        validation.Errors.Should().NotContain(e => e.Key == "USER_NOT_IN_MOLECULE",
+            "user reaches molecule 31 via a secondary CompanyMembership");
     }
 }
