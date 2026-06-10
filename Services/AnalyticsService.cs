@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using ShiftManager.Data;
+using ShiftManager.Models;
 using ShiftManager.Models.Analytics;
 using ShiftManager.Models.Support;
 
@@ -559,6 +560,33 @@ public class AnalyticsService : IAnalyticsService
 
     // ==================== Time-Off Analytics ====================
 
+    /// <summary>
+    /// Deduplicates a list of <see cref="TimeOffRequest"/> rows so that a fanned-out leave
+    /// (multiple rows sharing a non-null <see cref="TimeOffRequest.LeaveGroupId"/>) contributes
+    /// ONCE to any aggregate. The canonical representative is the row with the minimum
+    /// <see cref="TimeOffRequest.Id"/> within each group.
+    ///
+    /// Rows with a null <see cref="TimeOffRequest.LeaveGroupId"/> are ordinary single-company
+    /// leaves and each count individually — they pass through unchanged.
+    ///
+    /// The input list is already materialised from the DB (post-<c>ToListAsync</c>), so this
+    /// runs in-memory and does not require any additional EF translation.
+    /// </summary>
+    private static List<TimeOffRequest> DeduplicateByLeaveGroup(List<TimeOffRequest> requests)
+    {
+        // Collect the canonical id (min Id) for every non-null LeaveGroupId group.
+        var canonicalIds = requests
+            .Where(r => r.LeaveGroupId != null)
+            .GroupBy(r => r.LeaveGroupId)
+            .Select(g => g.Min(r => r.Id))
+            .ToHashSet();
+
+        // Keep a row if it has no group (null) OR if it is the canonical representative of its group.
+        return requests
+            .Where(r => r.LeaveGroupId == null || canonicalIds.Contains(r.Id))
+            .ToList();
+    }
+
     public async Task<TimeOffStatsDto> GetTimeOffStatsAsync(DateOnly startDate, DateOnly endDate)
     {
         try
@@ -566,10 +594,13 @@ public class AnalyticsService : IAnalyticsService
             var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
             var endDateTime = endDate.ToDateTime(TimeOnly.MaxValue);
 
-            var requests = await _db.TimeOffRequests
+            var rawRequests = await _db.TimeOffRequests
                 .AsNoTracking()
                 .Where(tor => tor.CreatedAt >= startDateTime && tor.CreatedAt <= endDateTime)
                 .ToListAsync();
+
+            // Dedup: fanned-out leaves (sharing a LeaveGroupId) count once.
+            var requests = DeduplicateByLeaveGroup(rawRequests);
 
             var totalRequests = requests.Count;
             var approvedCount = requests.Count(r => r.Status == RequestStatus.Approved);
@@ -600,10 +631,13 @@ public class AnalyticsService : IAnalyticsService
         {
             var startDate = DateTime.UtcNow.AddDays(-days);
 
-            var approvedRequests = await _db.TimeOffRequests
+            var rawApprovedRequests = await _db.TimeOffRequests
                 .AsNoTracking()
                 .Where(tor => tor.Status == RequestStatus.Approved && tor.CreatedAt >= startDate)
                 .ToListAsync();
+
+            // Dedup: fanned-out leaves (sharing a LeaveGroupId) count once.
+            var approvedRequests = DeduplicateByLeaveGroup(rawApprovedRequests);
 
             if (!approvedRequests.Any())
             {
@@ -633,10 +667,13 @@ public class AnalyticsService : IAnalyticsService
         {
             var startDate = DateTime.UtcNow.AddMonths(-months);
 
-            var approvedRequests = await _db.TimeOffRequests
+            var rawApprovedRequests = await _db.TimeOffRequests
                 .AsNoTracking()
                 .Where(tor => tor.Status == RequestStatus.Approved && tor.CreatedAt >= startDate)
                 .ToListAsync();
+
+            // Dedup: fanned-out leaves (sharing a LeaveGroupId) count once.
+            var approvedRequests = DeduplicateByLeaveGroup(rawApprovedRequests);
 
             var results = new Dictionary<string, int>();
 
