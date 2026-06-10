@@ -16,17 +16,20 @@ public class OnCallWidgetViewComponent : ViewComponent
     private readonly IWidgetService _widgetService;
     private readonly IGrantService _grantService;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IHierarchyService _hierarchyService;
 
     public OnCallWidgetViewComponent(
         IStringLocalizer<SharedResources> localizer,
         IWidgetService widgetService,
         IGrantService grantService,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        IHierarchyService hierarchyService)
     {
         _localizer = localizer;
         _widgetService = widgetService;
         _grantService = grantService;
         _tenantResolver = tenantResolver;
+        _hierarchyService = hierarchyService;
     }
 
     public async Task<IViewComponentResult> InvokeAsync(bool showInSidebar = true)
@@ -46,9 +49,13 @@ public class OnCallWidgetViewComponent : ViewComponent
         // Get current company context for ManagerHomeAccess fallback
         var companyId = _tenantResolver.GetCurrentTenantId();
 
-        // Get moleculeId from user claims
-        var moleculeIdClaim = user.FindFirst("MoleculeId")?.Value;
-        int.TryParse(moleculeIdClaim, out var moleculeId);
+        // Resolve moleculeId from the ACTIVE company rather than the login-baked MoleculeId claim.
+        // The claim holds the HOME molecule and is stale after a company switch — resolving from
+        // the active company ensures switched multi-company members see the correct on-call data.
+        // Single-company users: active company == home company → same molecule as the claim, no regression.
+        // Fallback to 0 mirrors the old int.TryParse default for a company with no resolvable molecule.
+        var activePath = await _hierarchyService.GetHierarchyPathForCompanyAsync(companyId);
+        var moleculeId = activePath?.Molecule?.Id ?? 0;
 
         // Delegate all data retrieval to WidgetService (pass moleculeId for new path)
         var widgetData = await _widgetService.BuildOnCallWidgetAsync(userId, companyId, moleculeId);

@@ -27,32 +27,44 @@ public class SaveQuickInfoConfigModel : PageModel
     private readonly ILogger<SaveQuickInfoConfigModel> _logger;
     private readonly IAuditLogService _auditLogService;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly ITenantResolver _tenantResolver;
+    private readonly IHierarchyService _hierarchyService;
 
     public SaveQuickInfoConfigModel(
         IQuickInfoConfigService configService,
         AppDbContext db,
         ILogger<SaveQuickInfoConfigModel> logger,
         IAuditLogService auditLogService,
-        IStringLocalizer<SharedResources> localizer)
+        IStringLocalizer<SharedResources> localizer,
+        ITenantResolver tenantResolver,
+        IHierarchyService hierarchyService)
     {
         _configService = configService;
         _db = db;
         _logger = logger;
         _auditLogService = auditLogService;
         _localizer = localizer;
+        _tenantResolver = tenantResolver;
+        _hierarchyService = hierarchyService;
     }
 
     public async Task<IActionResult> OnGetAsync(int moleculeId)
     {
         try
         {
-            // IDOR check: verify moleculeId matches user's molecule
-            var moleculeIdClaim = User.FindFirst("MoleculeId")?.Value;
-            if (!int.TryParse(moleculeIdClaim, out var userMoleculeId) || userMoleculeId != moleculeId)
+            // IDOR check: verify moleculeId matches user's ACTIVE company's molecule.
+            // Using the active company (via TenantResolver) rather than the login-baked MoleculeId
+            // claim ensures switched multi-company members are not falsely 403'd when their active
+            // company is in a different molecule than their home company.
+            // Single-company users: active company == home company, so activePath.Molecule.Id ==
+            // the old claim value → identical behaviour, no regression.
+            var activeCompanyId = _tenantResolver.GetCurrentTenantId();
+            var activePath = await _hierarchyService.GetHierarchyPathForCompanyAsync(activeCompanyId);
+            if (activePath?.Molecule?.Id != moleculeId)
             {
                 _logger.LogWarning(
-                    "SECURITY: User attempted to read QuickInfoConfig for molecule {MoleculeId} but their claim is {ClaimMoleculeId}",
-                    moleculeId, moleculeIdClaim ?? "null");
+                    "SECURITY: User attempted QuickInfoConfig for molecule {MoleculeId} but their active company {CompanyId} resolves to molecule {ActiveMoleculeId}",
+                    moleculeId, activeCompanyId, activePath?.Molecule?.Id);
                 return new JsonResult(new { success = false, message = "Unauthorized" }) { StatusCode = 403 };
             }
 
@@ -183,13 +195,16 @@ public class SaveQuickInfoConfigModel : PageModel
                 };
             }
 
-            // IDOR check: verify moleculeId matches user's molecule
-            var moleculeIdClaim = User.FindFirst("MoleculeId")?.Value;
-            if (!int.TryParse(moleculeIdClaim, out var userMoleculeId) || userMoleculeId != request.MoleculeId)
+            // IDOR check: verify moleculeId matches user's ACTIVE company's molecule.
+            // Same rationale as OnGetAsync: resolve from active company so switched multi-company
+            // members are not falsely 403'd.  Single-company users are unaffected (see GET comment).
+            var activeCompanyId = _tenantResolver.GetCurrentTenantId();
+            var activePath = await _hierarchyService.GetHierarchyPathForCompanyAsync(activeCompanyId);
+            if (activePath?.Molecule?.Id != request.MoleculeId)
             {
                 _logger.LogWarning(
-                    "SECURITY: User attempted to save QuickInfoConfig for molecule {MoleculeId} but their claim is {ClaimMoleculeId}",
-                    request.MoleculeId, moleculeIdClaim ?? "null");
+                    "SECURITY: User attempted QuickInfoConfig for molecule {MoleculeId} but their active company {CompanyId} resolves to molecule {ActiveMoleculeId}",
+                    request.MoleculeId, activeCompanyId, activePath?.Molecule?.Id);
                 return new JsonResult(new { success = false, message = "Unauthorized" }) { StatusCode = 403 };
             }
 
