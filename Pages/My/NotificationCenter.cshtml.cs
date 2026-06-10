@@ -8,6 +8,8 @@ using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Pages;
 using ShiftManager.Resources;
+using ShiftManager.Services;
+using ShiftManager.Services.Notifications;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages.My;
@@ -17,15 +19,54 @@ public class NotificationCenterModel : LocalizedPageModel
 {
     private readonly AppDbContext _db;
     private readonly ILogger<NotificationCenterModel> _logger;
+    private readonly INotificationPreferenceService _preferences;
 
-    public NotificationCenterModel(AppDbContext db, ILogger<NotificationCenterModel> logger, IStringLocalizer<SharedResources> localizer) : base(localizer)
+    public NotificationCenterModel(AppDbContext db, ILogger<NotificationCenterModel> logger, IStringLocalizer<SharedResources> localizer, INotificationPreferenceService preferences) : base(localizer)
     {
         _db = db;
         _logger = logger;
+        _preferences = preferences;
     }
 
     public List<NotificationViewModel> Notifications { get; set; } = new();
     public int UnreadCount { get; set; }
+
+    /// <summary>Current per-action email engagement mode.</summary>
+    public EngagementMode EngagementMode { get; set; } = EngagementMode.Engaged;
+
+    /// <summary>User-facing categories the user can mute email for, with current mute state.</summary>
+    public List<CategoryMuteViewModel> Categories { get; set; } = new();
+
+    /// <summary>Categories exposed in the mute UI (security/account/system are intentionally excluded).</summary>
+    private static readonly NotificationCategory[] MutableCategories =
+    {
+        NotificationCategory.ShiftAssignment,
+        NotificationCategory.ShiftChange,
+        NotificationCategory.Chore,
+        NotificationCategory.OnDuty,
+        NotificationCategory.Swap,
+        NotificationCategory.TimeOff,
+        NotificationCategory.Trainee,
+        NotificationCategory.CalendarEntry,
+        NotificationCategory.Social,
+        NotificationCategory.Feedback
+    };
+
+    private async Task LoadPreferencesAsync(int userId)
+    {
+        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+        if (!int.TryParse(companyIdClaim, out var companyId))
+            return;
+
+        EngagementMode = await _preferences.GetEngagementModeAsync(userId, companyId);
+        var muted = await _preferences.GetMutedCategoriesAsync(userId, companyId);
+        Categories = MutableCategories.Select(c => new CategoryMuteViewModel
+        {
+            Category = (int)c,
+            Label = _localizer[$"NotifCat_{c}"].Value,
+            Muted = muted.Contains(c)
+        }).ToList();
+    }
     // Message / Error properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
 
     public async Task OnGetAsync()
@@ -66,6 +107,8 @@ public class NotificationCenterModel : LocalizedPageModel
 
             UnreadCount = notifications.Count(n => !n.IsRead);
             _logger.LogInformation("Loaded {Count} notifications for user {UserId}, {UnreadCount} unread", notifications.Count, userId, UnreadCount);
+
+            await LoadPreferencesAsync(userId);
         }
         catch (Exception ex)
         {
@@ -177,6 +220,58 @@ public class NotificationCenterModel : LocalizedPageModel
         return RedirectToPage();
     }
 
+    public async Task<IActionResult> OnPostSetEngagementAsync(EngagementMode mode)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+        if (!int.TryParse(userIdClaim, out var userId) || !int.TryParse(companyIdClaim, out var companyId))
+        {
+            return BadRequest(_localizer["Error_InvalidUserClaim"].Value);
+        }
+
+        try
+        {
+            await _preferences.SetEngagementModeAsync(userId, companyId, mode);
+            TempData["SuccessMessage"] = _localizer["Notification_PreferencesSaved"].Value;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting engagement mode for user {UserId}", userId);
+            TempData["ErrorMessage"] = _localizer["Notification_Error_UpdateFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
+        }
+
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostToggleMuteAsync(int category, bool muted)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var companyIdClaim = User.FindFirst("CompanyId")?.Value;
+        if (!int.TryParse(userIdClaim, out var userId) || !int.TryParse(companyIdClaim, out var companyId))
+        {
+            return BadRequest(_localizer["Error_InvalidUserClaim"].Value);
+        }
+
+        // Only honor categories we actually expose for muting.
+        if (!MutableCategories.Contains((NotificationCategory)category))
+        {
+            return BadRequest(_localizer["Error_InvalidUserClaim"].Value);
+        }
+
+        try
+        {
+            await _preferences.SetCategoryMuteAsync(userId, companyId, (NotificationCategory)category, muted);
+            TempData["SuccessMessage"] = _localizer["Notification_PreferencesSaved"].Value;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling mute for user {UserId} category {Category}", userId, category);
+            TempData["ErrorMessage"] = _localizer["Notification_Error_UpdateFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
+        }
+
+        return RedirectToPage();
+    }
+
     // Returns a Lucide icon name (see IconTagHelper). The view renders via <icon>
     // with a regex-gated fallback, so legacy stored values still display.
     private static string GetNotificationIcon(NotificationType type) => type switch
@@ -229,5 +324,12 @@ public class NotificationCenterModel : LocalizedPageModel
         public int? RelatedEntityId { get; set; }
         public string? RelatedEntityType { get; set; }
         public string? DeepLink { get; set; }
+    }
+
+    public class CategoryMuteViewModel
+    {
+        public int Category { get; set; }
+        public string Label { get; set; } = "";
+        public bool Muted { get; set; }
     }
 }

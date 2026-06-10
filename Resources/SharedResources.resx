@@ -15972,4 +15972,61 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Email_CatchUpBody" xml:space="preserve">
     <value>You have several unread notifications waiting in Shifty. Log in to catch up on what changed.</value>
   </data>
+  <data name="Notification_PreferencesSaved" xml:space="preserve">
+    <value>Preferences saved.</value>
+  </data>
+  <data name="NotifPrefs_Title" xml:space="preserve">
+    <value>Email preferences</value>
+  </data>
+  <data name="NotifPrefs_EngagementLabel" xml:space="preserve">
+    <value>How many emails do you want?</value>
+  </data>
+  <data name="NotifPrefs_Engaged" xml:space="preserve">
+    <value>All notifications</value>
+  </data>
+  <data name="NotifPrefs_EngagedDesc" xml:space="preserve">
+    <value>Get an email for every update (plus the in-app bell).</value>
+  </data>
+  <data name="NotifPrefs_Quiet" xml:space="preserve">
+    <value>Quiet</value>
+  </data>
+  <data name="NotifPrefs_QuietDesc" xml:space="preserve">
+    <value>Only email me about things that need my action; everything else waits in the app.</value>
+  </data>
+  <data name="NotifPrefs_MuteTitle" xml:space="preserve">
+    <value>Mute specific categories</value>
+  </data>
+  <data name="NotifPrefs_MuteDesc" xml:space="preserve">
+    <value>Turn off email for categories you don't care about. The in-app bell still shows them.</value>
+  </data>
+  <data name="NotifCat_ShiftAssignment" xml:space="preserve">
+    <value>Shift assignments</value>
+  </data>
+  <data name="NotifCat_ShiftChange" xml:space="preserve">
+    <value>Shift changes</value>
+  </data>
+  <data name="NotifCat_Chore" xml:space="preserve">
+    <value>Chores</value>
+  </data>
+  <data name="NotifCat_OnDuty" xml:space="preserve">
+    <value>On-duty</value>
+  </data>
+  <data name="NotifCat_Swap" xml:space="preserve">
+    <value>Shift swaps</value>
+  </data>
+  <data name="NotifCat_TimeOff" xml:space="preserve">
+    <value>Time off</value>
+  </data>
+  <data name="NotifCat_Trainee" xml:space="preserve">
+    <value>Trainees</value>
+  </data>
+  <data name="NotifCat_CalendarEntry" xml:space="preserve">
+    <value>Calendar entries</value>
+  </data>
+  <data name="NotifCat_Social" xml:space="preserve">
+    <value>Friends</value>
+  </data>
+  <data name="NotifCat_Feedback" xml:space="preserve">
+    <value>Feedback</value>
+  </data>
 </root>

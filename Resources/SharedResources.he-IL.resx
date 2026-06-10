@@ -15934,4 +15934,61 @@
   <data name="Email_CatchUpBody" xml:space="preserve">
     <value>יש לך מספר התראות שלא נקראו ב-Shifty. התחבר כדי להתעדכן במה שהשתנה.</value>
   </data>
+  <data name="Notification_PreferencesSaved" xml:space="preserve">
+    <value>ההעדפות נשמרו.</value>
+  </data>
+  <data name="NotifPrefs_Title" xml:space="preserve">
+    <value>העדפות מייל</value>
+  </data>
+  <data name="NotifPrefs_EngagementLabel" xml:space="preserve">
+    <value>כמה מיילים תרצה לקבל?</value>
+  </data>
+  <data name="NotifPrefs_Engaged" xml:space="preserve">
+    <value>כל ההתראות</value>
+  </data>
+  <data name="NotifPrefs_EngagedDesc" xml:space="preserve">
+    <value>קבל מייל על כל עדכון (בנוסף לפעמון באפליקציה).</value>
+  </data>
+  <data name="NotifPrefs_Quiet" xml:space="preserve">
+    <value>שקט</value>
+  </data>
+  <data name="NotifPrefs_QuietDesc" xml:space="preserve">
+    <value>שלח לי מייל רק על דברים שדורשים פעולה; כל השאר יחכה באפליקציה.</value>
+  </data>
+  <data name="NotifPrefs_MuteTitle" xml:space="preserve">
+    <value>השתקת קטגוריות</value>
+  </data>
+  <data name="NotifPrefs_MuteDesc" xml:space="preserve">
+    <value>כבה מייל לקטגוריות שלא מעניינות אותך. הפעמון באפליקציה עדיין יציג אותן.</value>
+  </data>
+  <data name="NotifCat_ShiftAssignment" xml:space="preserve">
+    <value>שיבוצי משמרות</value>
+  </data>
+  <data name="NotifCat_ShiftChange" xml:space="preserve">
+    <value>שינויי משמרות</value>
+  </data>
+  <data name="NotifCat_Chore" xml:space="preserve">
+    <value>מטלות</value>
+  </data>
+  <data name="NotifCat_OnDuty" xml:space="preserve">
+    <value>תורנויות</value>
+  </data>
+  <data name="NotifCat_Swap" xml:space="preserve">
+    <value>החלפות משמרת</value>
+  </data>
+  <data name="NotifCat_TimeOff" xml:space="preserve">
+    <value>חופשות</value>
+  </data>
+  <data name="NotifCat_Trainee" xml:space="preserve">
+    <value>חניכים</value>
+  </data>
+  <data name="NotifCat_CalendarEntry" xml:space="preserve">
+    <value>רישומי יומן</value>
+  </data>
+  <data name="NotifCat_Social" xml:space="preserve">
+    <value>חברים</value>
+  </data>
+  <data name="NotifCat_Feedback" xml:space="preserve">
+    <value>משוב</value>
+  </data>
 </root>
