@@ -385,8 +385,10 @@ public partial class LoginModel : LocalizedPageModel
 
             // Multi-company: expose the user's active membership company-id set so TenantResolver can
             // validate a member's active-company switch synchronously (no DB call in the resolver).
+            // Owners are excluded — they switch companies via IOwnerCompanySelectorService and the
+            // member rung explicitly ignores Owners, so baking a claim we'd only have to ignore is a footgun.
             var memberships = await _companyMembershipService.GetMembershipsAsync(user.Id);
-            if (memberships.Count > 1)
+            if (memberships.Count > 1 && user.Role != UserRole.Owner)
             {
                 claims.Add(new Claim("MemberCompanyIds",
                     string.Join(",", memberships.Select(m => m.CompanyId).Distinct())));
