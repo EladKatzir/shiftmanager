@@ -33,7 +33,17 @@ public partial class UsersModel
                 userId, companyId, roleTemplateId, jobTypeId,
                 departmentId: null, doesShifts, homeTypeId: null, actingAdminId: adminId);
 
-            // Epic 5: apply role-template grants for this membership.
+            // Epic 5: apply role-template grants scoped to the membership's company.
+            // Only when a role template is assigned; a template-free membership confers no auto-grants.
+            if (roleTemplateId.HasValue)
+            {
+                var roleTemplate = await _roleService.GetRoleTemplateAsync(roleTemplateId.Value);
+                if (roleTemplate != null)
+                {
+                    var grantScope = await BuildGrantScopeForTemplateAsync(roleTemplate.Key, companyId, jobTypeId);
+                    await _grantService.AssignRoleTemplateGrantsAsync(userId, roleTemplate.Key, grantScope, adminId);
+                }
+            }
 
             await _auditLogService.LogUserActionAsync(
                 userId: adminId,
