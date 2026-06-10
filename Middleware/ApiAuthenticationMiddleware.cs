@@ -337,6 +337,12 @@ public class ApiAuthenticationMiddleware
             return true;
         }
 
+        // SelectMemberCompany API - used by context switcher for multi-company member company selection
+        if (path.StartsWithSegments("/Api/SelectMemberCompany", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         // Signup API - used by public signup page for cascading dropdowns (molecule → company → job type)
         if (path.StartsWithSegments("/Api/Signup", StringComparison.OrdinalIgnoreCase))
         {

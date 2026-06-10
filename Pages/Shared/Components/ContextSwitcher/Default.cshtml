@@ -309,6 +309,44 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
 
             // Submit via POST (D-03: context switching is POST-only)
             var switchMode = switcher.dataset.switchMode;
+            var returnUrl = window.location.pathname;
+            var tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
+            var csrfToken = tokenEl ? tokenEl.value : '';
+
+            // member-company posts to an /Api/* endpoint, which is guarded by
+            // ApiAuthenticationMiddleware's CSRF check that REQUIRES the
+            // X-Requested-With: XMLHttpRequest header (a native form.submit() cannot
+            // send it). So this branch uses fetch (mirroring calendar-inline-edit.js),
+            // then navigates to the redirect target the endpoint returns.
+            if (switchMode === 'member-company') {
+                var body = new URLSearchParams();
+                body.append('companyId', contextId);
+                body.append('returnUrl', returnUrl);
+                fetch('/Api/SelectMemberCompany', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'RequestVerificationToken': csrfToken
+                    },
+                    body: body.toString()
+                }).then(function(resp) {
+                    // The endpoint returns a 302 to the validated returnUrl; fetch follows
+                    // it transparently, so resp.url is the final page. Navigate there.
+                    window.location.assign(resp.redirected ? resp.url : returnUrl);
+                }).catch(function() {
+                    // Network failure — reload to a consistent state.
+                    window.location.reload();
+                });
+                return;
+            }
+
+            // molecule (/Api/SelectMolecule) and Owner company (/Owner/SelectCompany)
+            // keep the existing native form-submit path. NOTE: /Api/SelectMolecule is
+            // subject to the same X-Requested-With guard and should be migrated to the
+            // fetch path above in a follow-up; /Owner/SelectCompany is a non-/api page
+            // and is not affected by the middleware guard.
             var form = document.createElement('form');
             form.method = 'POST';
             var input = document.createElement('input');
@@ -316,9 +354,6 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
             if (switchMode === 'molecule') {
                 form.action = '/Api/SelectMolecule';
                 input.name = 'moleculeId';
-            } else if (switchMode === 'member-company') {
-                form.action = '/Api/SelectMemberCompany';
-                input.name = 'companyId';
             } else {
                 form.action = '/Owner/SelectCompany';
                 input.name = 'companyId';
@@ -326,10 +361,9 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
             input.value = contextId;
             form.appendChild(input);
             var returnInput = document.createElement('input');
-            returnInput.type = 'hidden'; returnInput.name = 'returnUrl'; returnInput.value = window.location.pathname;
+            returnInput.type = 'hidden'; returnInput.name = 'returnUrl'; returnInput.value = returnUrl;
             form.appendChild(returnInput);
-            var token = document.querySelector('input[name="__RequestVerificationToken"]');
-            if (token) { form.appendChild(token.cloneNode(true)); }
+            if (tokenEl) { form.appendChild(tokenEl.cloneNode(true)); }
             document.body.appendChild(form);
             form.submit();
         }

@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ShiftManager.Pages.Api;
 using ShiftManager.Services;
@@ -23,11 +24,17 @@ public sealed class SelectMemberCompanyTests
 
     /// <summary>
     /// Builds the page model wired with the provided mock selector and an authenticated
-    /// HttpContext so Url.IsLocalUrl works correctly.
+    /// HttpContext so Url.IsLocalUrl works correctly. The audit mock is optional; pass one
+    /// to assert audit-log behavior.
     /// </summary>
-    private static SelectMemberCompanyModel BuildModel(Mock<IActiveCompanySelectorService> selectorMock)
+    private static SelectMemberCompanyModel BuildModel(
+        Mock<IActiveCompanySelectorService> selectorMock,
+        Mock<IAuditLogService>? auditMock = null)
     {
-        var model = new SelectMemberCompanyModel(selectorMock.Object);
+        var model = new SelectMemberCompanyModel(
+            selectorMock.Object,
+            (auditMock ?? new Mock<IAuditLogService>()).Object,
+            NullLogger<SelectMemberCompanyModel>.Instance);
 
         var httpContext = new DefaultHttpContext
         {
@@ -147,5 +154,45 @@ public sealed class SelectMemberCompanyTests
         redirect.Url.Should().Be(returnUrl);
         // SelectCompanyAsync was still called (the handler delegates the gate to the service)
         selector.Verify(s => s.SelectCompanyAsync(companyId), Times.Once);
+    }
+
+    [Fact]
+    public async Task OnPostAsync_SuccessfulSwitch_WritesAuditLog()
+    {
+        const int companyId = 12;
+        var selector = new Mock<IActiveCompanySelectorService>();
+        selector.Setup(s => s.SelectCompanyAsync(companyId)).ReturnsAsync(true);
+        var audit = new Mock<IAuditLogService>();
+
+        var model = BuildModel(selector, audit);
+
+        await model.OnPostAsync(companyId, "/Calendar/Shifts");
+
+        // userId 42 comes from the NameIdentifier claim set in BuildModel.
+        audit.Verify(a => a.LogUserActionAsync(
+            42,
+            "MemberSelectedCompany",
+            "CompanySelection",
+            companyId,
+            It.Is<string>(d => d.Contains(companyId.ToString())),
+            null), Times.Once);
+    }
+
+    [Fact]
+    public async Task OnPostAsync_DeniedSwitch_DoesNotWriteAuditLog()
+    {
+        const int companyId = 999;
+        var selector = new Mock<IActiveCompanySelectorService>();
+        selector.Setup(s => s.SelectCompanyAsync(companyId)).ReturnsAsync(false);
+        var audit = new Mock<IAuditLogService>();
+
+        var model = BuildModel(selector, audit);
+
+        await model.OnPostAsync(companyId, "/Calendar/Shifts");
+
+        // No audit entry on a denied (non-member) switch — only successful switches are logged.
+        audit.Verify(a => a.LogUserActionAsync(
+            It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Never);
     }
 }
