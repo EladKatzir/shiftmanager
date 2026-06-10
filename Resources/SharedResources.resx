@@ -15864,4 +15864,58 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Users_MoveImpact_DirectorRemoval" xml:space="preserve">
     <value>Removes director access over: {0}.</value>
   </data>
+  <data name="Users_Companies" xml:space="preserve">
+    <value>Companies</value>
+  </data>
+  <data name="Users_Membership_Primary" xml:space="preserve">
+    <value>Primary</value>
+  </data>
+  <data name="Users_Membership_MakePrimary" xml:space="preserve">
+    <value>Make primary</value>
+  </data>
+  <data name="Users_Membership_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Users_Membership_Add" xml:space="preserve">
+    <value>Add to company</value>
+  </data>
+  <data name="Users_Membership_AddTitle" xml:space="preserve">
+    <value>Add company membership</value>
+  </data>
+  <data name="Users_Membership_RemoveTitle" xml:space="preserve">
+    <value>Remove company membership</value>
+  </data>
+  <data name="Users_RemoveMembershipImpact_Summary" xml:space="preserve">
+    <value>Will remove: {0} shifts, {1} time-off requests, {2} chores, {3} swap requests, {4} on-duty entries, {5} grants.</value>
+  </data>
+  <data name="Users_Membership_Added" xml:space="preserve">
+    <value>Membership added successfully.</value>
+  </data>
+  <data name="Users_Membership_Removed" xml:space="preserve">
+    <value>Membership removed successfully.</value>
+  </data>
+  <data name="Users_Membership_PrimarySet" xml:space="preserve">
+    <value>Primary company updated.</value>
+  </data>
+  <data name="Users_Membership_Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Users_Membership_Company" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="Users_Membership_SelectCompany" xml:space="preserve">
+    <value>Select a company…</value>
+  </data>
+  <data name="Users_Membership_SelectRole" xml:space="preserve">
+    <value>Select a role (optional)…</value>
+  </data>
+  <data name="Users_Membership_SelectJobType" xml:space="preserve">
+    <value>Select a job type (optional)…</value>
+  </data>
+  <data name="Users_Membership_DoesShifts" xml:space="preserve">
+    <value>Participates in shifts</value>
+  </data>
+  <data name="Users_Membership_RemoveConfirm" xml:space="preserve">
+    <value>Remove membership</value>
+  </data>
 </root>

@@ -913,8 +913,32 @@
                 <td>@u.Email</td>
                 @{
                     var hasDirTooltip = Model.DirectorCompanyNames.TryGetValue(u.Id, out var dirCompanyNames);
+                    var hasMemberships = u.Memberships != null && u.Memberships.Count > 1;
                 }
-                <td title="@(hasDirTooltip ? string.Join(", ", dirCompanyNames!) : "")">@u.CompanyName</td>
+                <td title="@(hasDirTooltip ? string.Join(", ", dirCompanyNames!) : "")">
+                    @if (hasMemberships)
+                    {
+                        @* Multi-company: primary in bold + chip per extra membership + expander toggle *@
+                        <strong>@u.CompanyName</strong>
+                        @foreach (var m in u.Memberships!.Where(m => !m.IsPrimary))
+                        {
+                            <span class="badge badge-secondary" style="margin-inline-start:0.35rem; font-size:0.75rem;">@m.CompanyName</span>
+                        }
+                        <button type="button"
+                                class="btn btn-xs js-memberships-toggle"
+                                style="margin-inline-start:0.35rem; padding:0.1rem 0.3rem;"
+                                data-user-id="@u.Id"
+                                aria-expanded="false"
+                                title="@Localizer["Users_Companies"]">
+                            ▾
+                        </button>
+                    }
+                    else
+                    {
+                        @* Single-company: unchanged *@
+                        @u.CompanyName
+                    }
+                </td>
                 <td class="editable-cell" data-cell-type="jobtype" data-user-id="@u.Id">
                     <div class="cell-display">
                         <span class="cell-display__value">@(u.JobTypeName ?? "-")</span>
@@ -1065,6 +1089,80 @@
                     </div>
                 </td>
             </tr>
+            @* Membership expander row — hidden by default; toggled by the ▾ button above (AuditLog pattern) *@
+            @if (hasMemberships)
+            {
+                var colSpan = 11; @* match the number of <th> columns in the users table header *@
+                <tr id="memberships-@u.Id" class="details-row" style="display:none;">
+                    <td colspan="@colSpan" style="padding:0.75rem 1rem; background:var(--surface-soft);">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+                            <thead>
+                                <tr style="text-align:start; color:var(--text-muted);">
+                                    <th style="padding:0.25rem 0.5rem; font-weight:600;">@Localizer["Users_Membership_Company"]</th>
+                                    <th style="padding:0.25rem 0.5rem; font-weight:600;">@Localizer["Users_Membership_Role"]</th>
+                                    <th style="padding:0.25rem 0.5rem; font-weight:600;">@Localizer["JobType"]</th>
+                                    <th style="padding:0.25rem 0.5rem; font-weight:600;"><loc key="Users_Participates" /></th>
+                                    <th style="padding:0.25rem 0.5rem; font-weight:600;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var m in u.Memberships!)
+                                {
+                                    <tr>
+                                        <td style="padding:0.25rem 0.5rem;">
+                                            @m.CompanyName
+                                            @if (m.IsPrimary)
+                                            {
+                                                <span class="badge badge-primary" style="margin-inline-start:0.35rem; font-size:0.7rem;">@Localizer["Users_Membership_Primary"]</span>
+                                            }
+                                        </td>
+                                        <td style="padding:0.25rem 0.5rem;">@(m.RoleName ?? "-")</td>
+                                        <td style="padding:0.25rem 0.5rem;">@(m.JobTypeName ?? "-")</td>
+                                        <td style="padding:0.25rem 0.5rem;">@Localizer[m.DoesShifts ? "On" : "Off"]</td>
+                                        <td style="padding:0.25rem 0.5rem;">
+                                            <div class="btn-group">
+                                                @if (!m.IsPrimary)
+                                                {
+                                                    @* Make primary *@
+                                                    <form method="post" asp-page-handler="SetPrimaryMembership" style="display:inline; margin:0;">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="userId" value="@u.Id" />
+                                                        <input type="hidden" name="companyId" value="@m.CompanyId" />
+                                                        <button type="submit" class="btn btn-xs btn-secondary"
+                                                                title="@Localizer["Users_Membership_MakePrimary"]">
+                                                            @Localizer["Users_Membership_MakePrimary"]
+                                                        </button>
+                                                    </form>
+                                                    @* Remove membership *@
+                                                    <button type="button"
+                                                            class="btn btn-xs btn-danger js-remove-membership"
+                                                            data-user-id="@u.Id"
+                                                            data-user-name="@u.DisplayName"
+                                                            data-company-id="@m.CompanyId"
+                                                            data-company-name="@m.CompanyName"
+                                                            title="@Localizer["Users_Membership_Remove"]">
+                                                        @Localizer["Users_Membership_Remove"]
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        @* Add membership button *@
+                        <div style="margin-top:0.5rem; text-align:end;">
+                            <button type="button"
+                                    class="btn btn-xs btn-primary js-add-membership"
+                                    data-user-id="@u.Id"
+                                    data-user-name="@u.DisplayName"
+                                    data-current-company-ids="@string.Join(",", u.Memberships!.Select(m => m.CompanyId))">
+                                ➕ @Localizer["Users_Membership_Add"]
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
         }
         </tbody>
     </table>
@@ -1170,6 +1268,71 @@
     </form>
 </dialog>
 
+@* Add membership dialog *@
+<dialog id="addMembershipDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:480px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+    <form method="post" asp-page-handler="AddMembership" id="addMembershipForm" style="margin:0; padding:1.5rem;">
+        @Html.AntiForgeryToken()
+        <h2 class="section-title" style="margin-top:0;">@Localizer["Users_Membership_AddTitle"]</h2>
+        <p id="addMembershipUserName" style="font-weight:600; margin:0.25rem 0 1rem; color:var(--text);"></p>
+        <input type="hidden" name="userId" id="addMembershipUserId" />
+
+        <label for="addMembershipCompany" style="display:block; margin-bottom:0.35rem;">@Localizer["Users_Membership_Company"]</label>
+        <select id="addMembershipCompany" name="companyId" class="form-input" style="width:100%; margin-bottom:1rem;" required>
+            <option value="">@Localizer["Users_Membership_SelectCompany"]</option>
+            @foreach (var company in Model.AvailableCompanies)
+            {
+                <option value="@company.Id">@company.LocalizedName</option>
+            }
+        </select>
+
+        <label for="addMembershipRole" style="display:block; margin-bottom:0.35rem;">@Localizer["Users_Membership_Role"]</label>
+        <select id="addMembershipRole" name="roleTemplateId" class="form-input" style="width:100%; margin-bottom:1rem;">
+            <option value="">@Localizer["Users_Membership_SelectRole"]</option>
+            @foreach (var rt in Model.AssignableRoleTemplates)
+            {
+                <option value="@rt.Id">@RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)</option>
+            }
+        </select>
+
+        <label for="addMembershipJobType" style="display:block; margin-bottom:0.35rem;">@Localizer["JobType"]</label>
+        <select id="addMembershipJobType" name="jobTypeId" class="form-input" style="width:100%; margin-bottom:1rem;">
+            <option value="">@Localizer["Users_Membership_SelectJobType"]</option>
+            @foreach (var jt in Model.AvailableJobTypes)
+            {
+                <option value="@jt.Id">@jt.Name</option>
+            }
+        </select>
+
+        <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; cursor:pointer;">
+            <input type="checkbox" name="doesShifts" value="true" id="addMembershipDoesShifts" />
+            <span>@Localizer["Users_Membership_DoesShifts"]</span>
+        </label>
+
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button type="button" class="btn" id="addMembershipCancelBtn">@Localizer["Button_Cancel"]</button>
+            <button type="submit" class="btn btn-primary">@Localizer["Users_Membership_Add"]</button>
+        </div>
+    </form>
+</dialog>
+
+@* Remove membership dialog — mirrors Move dialog: fetch impact → show summary → confirm POST *@
+<dialog id="removeMembershipDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:480px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+    <form method="post" asp-page-handler="RemoveMembership" id="removeMembershipForm" style="margin:0; padding:1.5rem;">
+        @Html.AntiForgeryToken()
+        <h2 class="section-title" style="margin-top:0;">@Localizer["Users_Membership_RemoveTitle"]</h2>
+        <p id="removeMembershipUserName" style="font-weight:600; margin:0.25rem 0 1rem; color:var(--text);"></p>
+        <input type="hidden" name="userId" id="removeMembershipUserId" />
+        <input type="hidden" name="companyId" id="removeMembershipCompanyId" />
+
+        <div id="removeMembershipImpact" aria-live="polite" style="background:var(--surface-soft); padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem; font-size:0.85rem; min-height:1.5rem; color:var(--text); white-space:pre-line;"></div>
+
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button type="button" class="btn" id="removeMembershipCancelBtn">@Localizer["Button_Cancel"]</button>
+            <button type="submit" class="btn btn-danger" id="removeMembershipConfirmBtn" disabled>@Localizer["Users_Membership_RemoveConfirm"]</button>
+        </div>
+    </form>
+</dialog>
+
 @* DoesShifts OFF confirm: delete future shifts or keep them *@
 <dialog id="doesShiftsConfirmDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:460px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
     <div style="margin:0; padding:1.5rem;">
@@ -1250,6 +1413,88 @@
                     impactBox.textContent = 'Error';
                 }
             });
+        })();
+
+        // --- Membership expander toggle ---
+        (function () {
+            document.querySelectorAll('.js-memberships-toggle').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var userId = btn.dataset.userId;
+                    var row = document.getElementById('memberships-' + userId);
+                    if (!row) return;
+                    var isOpen = row.style.display !== 'none';
+                    row.style.display = isOpen ? 'none' : 'table-row';
+                    btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                    btn.textContent = isOpen ? '▾' : '▴';
+                });
+            });
+        })();
+
+        // --- Add membership dialog ---
+        (function () {
+            var dlg = document.getElementById('addMembershipDialog');
+            if (!dlg) return;
+            var userIdField = document.getElementById('addMembershipUserId');
+            var userNameLabel = document.getElementById('addMembershipUserName');
+            var companySelect = document.getElementById('addMembershipCompany');
+
+            document.querySelectorAll('.js-add-membership').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var userId = btn.dataset.userId;
+                    var userName = btn.dataset.userName;
+                    var currentIds = (btn.dataset.currentCompanyIds || '').split(',').filter(Boolean);
+                    userIdField.value = userId;
+                    userNameLabel.textContent = userName;
+                    // Hide companies the user is already in
+                    Array.from(companySelect.options).forEach(function (opt) {
+                        if (!opt.value) { opt.hidden = false; return; }
+                        opt.hidden = currentIds.indexOf(opt.value) !== -1;
+                    });
+                    companySelect.value = '';
+                    dlg.showModal();
+                });
+            });
+
+            var cancelBtn = document.getElementById('addMembershipCancelBtn');
+            if (cancelBtn) cancelBtn.addEventListener('click', function () { dlg.close(); });
+        })();
+
+        // --- Remove membership dialog (mirrors Move dialog: fetch impact → confirm POST) ---
+        (function () {
+            var dlg = document.getElementById('removeMembershipDialog');
+            if (!dlg) return;
+            var userIdField = document.getElementById('removeMembershipUserId');
+            var companyIdField = document.getElementById('removeMembershipCompanyId');
+            var userNameLabel = document.getElementById('removeMembershipUserName');
+            var impactBox = document.getElementById('removeMembershipImpact');
+            var confirmBtn = document.getElementById('removeMembershipConfirmBtn');
+
+            document.querySelectorAll('.js-remove-membership').forEach(function (btn) {
+                btn.addEventListener('click', async function () {
+                    var userId = btn.dataset.userId;
+                    var companyId = btn.dataset.companyId;
+                    var userName = btn.dataset.userName;
+                    var companyName = btn.dataset.companyName;
+                    userIdField.value = userId;
+                    companyIdField.value = companyId;
+                    userNameLabel.textContent = userName + (companyName ? ' — ' + companyName : '');
+                    impactBox.textContent = '…';
+                    confirmBtn.disabled = true;
+                    dlg.showModal();
+                    try {
+                        var resp = await fetch('?handler=RemoveMembershipImpact&userId=' + encodeURIComponent(userId) + '&companyId=' + encodeURIComponent(companyId));
+                        var data = await resp.json();
+                        if (!data.ok) { impactBox.textContent = data.error || 'Error'; return; }
+                        impactBox.textContent = data.summary || '';
+                        confirmBtn.disabled = false;
+                    } catch (e) {
+                        impactBox.textContent = 'Error';
+                    }
+                });
+            });
+
+            var cancelBtn = document.getElementById('removeMembershipCancelBtn');
+            if (cancelBtn) cancelBtn.addEventListener('click', function () { dlg.close(); });
         })();
 
         // --- Participates-in-Shifts toggle + per-user shift categories ---

@@ -15826,4 +15826,58 @@
   <data name="Users_MoveImpact_DirectorRemoval" xml:space="preserve">
     <value>מסיר גישת מנהל מעל: {0}.</value>
   </data>
+  <data name="Users_Companies" xml:space="preserve">
+    <value>חברות</value>
+  </data>
+  <data name="Users_Membership_Primary" xml:space="preserve">
+    <value>ראשי</value>
+  </data>
+  <data name="Users_Membership_MakePrimary" xml:space="preserve">
+    <value>הגדר כראשי</value>
+  </data>
+  <data name="Users_Membership_Remove" xml:space="preserve">
+    <value>הסר</value>
+  </data>
+  <data name="Users_Membership_Add" xml:space="preserve">
+    <value>הוסף לחברה</value>
+  </data>
+  <data name="Users_Membership_AddTitle" xml:space="preserve">
+    <value>הוספת שייכות לחברה</value>
+  </data>
+  <data name="Users_Membership_RemoveTitle" xml:space="preserve">
+    <value>הסרת שייכות לחברה</value>
+  </data>
+  <data name="Users_RemoveMembershipImpact_Summary" xml:space="preserve">
+    <value>יוסר: {0} משמרות, {1} בקשות חופשה, {2} מטלות, {3} בקשות החלפה, {4} תורנויות, {5} הרשאות.</value>
+  </data>
+  <data name="Users_Membership_Added" xml:space="preserve">
+    <value>השייכות נוספה בהצלחה.</value>
+  </data>
+  <data name="Users_Membership_Removed" xml:space="preserve">
+    <value>השייכות הוסרה בהצלחה.</value>
+  </data>
+  <data name="Users_Membership_PrimarySet" xml:space="preserve">
+    <value>החברה הראשית עודכנה.</value>
+  </data>
+  <data name="Users_Membership_Role" xml:space="preserve">
+    <value>תפקיד</value>
+  </data>
+  <data name="Users_Membership_Company" xml:space="preserve">
+    <value>חברה</value>
+  </data>
+  <data name="Users_Membership_SelectCompany" xml:space="preserve">
+    <value>בחר חברה…</value>
+  </data>
+  <data name="Users_Membership_SelectRole" xml:space="preserve">
+    <value>בחר תפקיד (אופציונלי)…</value>
+  </data>
+  <data name="Users_Membership_SelectJobType" xml:space="preserve">
+    <value>בחר סוג תפקיד (אופציונלי)…</value>
+  </data>
+  <data name="Users_Membership_DoesShifts" xml:space="preserve">
+    <value>משתתף במשמרות</value>
+  </data>
+  <data name="Users_Membership_RemoveConfirm" xml:space="preserve">
+    <value>הסר שייכות</value>
+  </data>
 </root>
