@@ -1114,6 +1114,23 @@ public partial class UsersModel : LocalizedPageModel
                 u.IsActive ? "UserEnabled" : "UserDisabled",
                 "User", u.Id,
                 $"User {u.Email} {(u.IsActive ? "enabled" : "disabled")} by admin");
+
+            // Notify the affected user of the activation change. Deactivation is security-critical
+            // (always emails) so the user learns of lost access even in Quiet/muted mode.
+            if (u.IsActive)
+            {
+                await _notificationService.NotifyAsync(u.Id, NotificationType.AccountReactivated,
+                    ShiftManager.Services.Notifications.NotificationCategory.Account,
+                    _localizer["Notif_AccountReactivatedTitle"].Value, _localizer["Notif_AccountReactivatedMessage"].Value,
+                    personallyActionable: true);
+            }
+            else
+            {
+                await _notificationService.NotifyAsync(u.Id, NotificationType.AccountDeactivated,
+                    ShiftManager.Services.Notifications.NotificationCategory.AccountSecurity,
+                    _localizer["Notif_AccountDeactivatedTitle"].Value, _localizer["Notif_AccountDeactivatedMessage"].Value,
+                    personallyActionable: true, securityCritical: true);
+            }
         }
         return RedirectToPage();
     }
@@ -1340,6 +1357,12 @@ public partial class UsersModel : LocalizedPageModel
                 }
             }
 
+            // Notify the affected user of their role change (impactful account change).
+            await _notificationService.NotifyAsync(u.Id, NotificationType.RoleChanged,
+                ShiftManager.Services.Notifications.NotificationCategory.Account,
+                _localizer["Notif_RoleChangedTitle"].Value, _localizer["Notif_RoleChangedMessage"].Value,
+                personallyActionable: true);
+
             TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_RoleUpdated"], targetRole, u.DisplayName);
         }
         return RedirectToPage();
@@ -1429,6 +1452,12 @@ public partial class UsersModel : LocalizedPageModel
                 description: $"Changed job type for {u.DisplayName} from {oldJobTypeId} to {jobTypeId}"
             );
         }
+
+        // Notify the affected user of their job-type change (impactful account change).
+        await _notificationService.NotifyAsync(u.Id, NotificationType.JobTypeChanged,
+            ShiftManager.Services.Notifications.NotificationCategory.Account,
+            _localizer["Notif_JobTypeChangedTitle"].Value, _localizer["Notif_JobTypeChangedMessage"].Value,
+            personallyActionable: true);
 
         TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JobTypeUpdated"], u.DisplayName, jobTypeName ?? "-");
         return RedirectToPage();
@@ -1627,6 +1656,12 @@ public partial class UsersModel : LocalizedPageModel
                 description: $"Password reset for user {u.DisplayName} ({u.Email})"
             );
 
+            // Notify the affected user (security-critical → always emails, even in Quiet/muted).
+            await _notificationService.NotifyAsync(u.Id, NotificationType.PasswordReset,
+                ShiftManager.Services.Notifications.NotificationCategory.AccountSecurity,
+                _localizer["Notif_PasswordResetTitle"].Value, _localizer["Notif_PasswordResetMessage"].Value,
+                personallyActionable: true, securityCritical: true);
+
             TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_PasswordUpdated"], u.DisplayName);
         }
         return RedirectToPage();
@@ -1690,6 +1725,12 @@ public partial class UsersModel : LocalizedPageModel
         );
 
         LogAccountUnlocked(_logger, currentUserId, targetUser.Id, targetUser.Email);
+
+        // Notify the affected user (security-critical → always emails).
+        await _notificationService.NotifyAsync(targetUser.Id, NotificationType.AccountUnlocked,
+            ShiftManager.Services.Notifications.NotificationCategory.AccountSecurity,
+            _localizer["Notif_AccountUnlockedTitle"].Value, _localizer["Notif_AccountUnlockedMessage"].Value,
+            personallyActionable: true, securityCritical: true);
 
         TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_AccountUnlocked"], targetUser.DisplayName);
         return RedirectToPage();

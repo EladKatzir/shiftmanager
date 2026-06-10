@@ -15991,4 +15991,55 @@
   <data name="NotifCat_Feedback" xml:space="preserve">
     <value>משוב</value>
   </data>
+  <data name="Notif_PasswordResetTitle" xml:space="preserve">
+    <value>הסיסמה שלך אופסה</value>
+  </data>
+  <data name="Notif_PasswordResetMessage" xml:space="preserve">
+    <value>מנהל איפס את הסיסמה שלך. אם לא ציפית לכך, פנה למנהל שלך.</value>
+  </data>
+  <data name="Notif_AccountUnlockedTitle" xml:space="preserve">
+    <value>החשבון שלך שוחרר</value>
+  </data>
+  <data name="Notif_AccountUnlockedMessage" xml:space="preserve">
+    <value>החשבון שלך שוחרר וניתן להתחבר שוב.</value>
+  </data>
+  <data name="Notif_RoleChangedTitle" xml:space="preserve">
+    <value>התפקיד שלך שונה</value>
+  </data>
+  <data name="Notif_RoleChangedMessage" xml:space="preserve">
+    <value>התפקיד שלך עודכן על ידי מנהל.</value>
+  </data>
+  <data name="Notif_AccountDeactivatedTitle" xml:space="preserve">
+    <value>החשבון שלך הושבת</value>
+  </data>
+  <data name="Notif_AccountDeactivatedMessage" xml:space="preserve">
+    <value>החשבון שלך הושבת. פנה למנהל שלך לשאלות.</value>
+  </data>
+  <data name="Notif_AccountReactivatedTitle" xml:space="preserve">
+    <value>החשבון שלך הופעל מחדש</value>
+  </data>
+  <data name="Notif_AccountReactivatedMessage" xml:space="preserve">
+    <value>החשבון שלך הופעל מחדש. ברוך שובך.</value>
+  </data>
+  <data name="Notif_JoinRejectedTitle" xml:space="preserve">
+    <value>בקשת ההצטרפות שלך נדחתה</value>
+  </data>
+  <data name="Notif_JoinRejectedMessage" xml:space="preserve">
+    <value>בקשתך להצטרף לא אושרה.</value>
+  </data>
+  <data name="Notif_JobTypeChangedTitle" xml:space="preserve">
+    <value>סוג התפקיד שלך שונה</value>
+  </data>
+  <data name="Notif_JobTypeChangedMessage" xml:space="preserve">
+    <value>סוג התפקיד שלך עודכן על ידי מנהל.</value>
+  </data>
+  <data name="Notif_RequestSubmittedTitle" xml:space="preserve">
+    <value>בקשה חדשה ממתינה לאישורך</value>
+  </data>
+  <data name="Notif_TimeOffRequestSubmittedMessage" xml:space="preserve">
+    <value>{0} הגיש בקשת חופשה הממתינה לאישורך.</value>
+  </data>
+  <data name="Notif_SwapRequestSubmittedMessage" xml:space="preserve">
+    <value>{0} הגיש בקשת החלפת משמרת הממתינה לאישורך.</value>
+  </data>
 </root>
