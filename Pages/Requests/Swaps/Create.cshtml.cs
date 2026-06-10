@@ -20,8 +20,9 @@ public class CreateModel : LocalizedPageModel
     private readonly IGrantService _grantService;
     private readonly IAuditLogService _auditLogService;
     private readonly IBusyService _busyService;
+    private readonly INotificationService _notificationService;
 
-    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ICompanyContext companyContext, IGrantService grantService, IAuditLogService auditLogService, IBusyService busyService)
+    public CreateModel(IStringLocalizer<SharedResources> localizer, AppDbContext db, ICompanyContext companyContext, IGrantService grantService, IAuditLogService auditLogService, IBusyService busyService, INotificationService notificationService)
         : base(localizer)
     {
         _db = db;
@@ -29,6 +30,7 @@ public class CreateModel : LocalizedPageModel
         _grantService = grantService;
         _auditLogService = auditLogService;
         _busyService = busyService;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -174,6 +176,16 @@ public class CreateModel : LocalizedPageModel
 
         await _auditLogService.LogAsync("SwapRequestCreated", "SwapRequest", swapRequest.Id,
             $"Created swap request for assignment {SelectedAssignmentId.Value} to user {ToUserId.Value} (warnings: {busyValidation.Warnings.Count})");
+
+        // Notify the counterparty that a swap request awaits their response (actionable) — closes
+        // the gap where the other employee was never told. (Approver-pool alert for swaps: future.)
+        var requesterName = await _db.Users.IgnoreQueryFilters()
+            .Where(u => u.Id == userId).Select(u => u.DisplayName).FirstOrDefaultAsync() ?? string.Empty;
+        await _notificationService.NotifyAsync(ToUserId.Value, NotificationType.SwapRequestSubmitted,
+            ShiftManager.Services.Notifications.NotificationCategory.Swap,
+            _localizer["Notif_SwapRequestReceivedTitle"].Value,
+            string.Format(_localizer["Notif_SwapRequestReceivedMessage"].Value, requesterName),
+            personallyActionable: true, relatedEntityId: swapRequest.Id, relatedEntityType: "SwapRequest");
 
         return RedirectToPage("/Requests/Index");
     }

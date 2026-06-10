@@ -16063,4 +16063,10 @@
   <data name="Notif_CalendarEntryAddedMessage" xml:space="preserve">
     <value>נוסף רישום ליומן שלך בתאריך {0}: {1}</value>
   </data>
+  <data name="Notif_SwapRequestReceivedTitle" xml:space="preserve">
+    <value>בקשת החלפת משמרת</value>
+  </data>
+  <data name="Notif_SwapRequestReceivedMessage" xml:space="preserve">
+    <value>{0} ביקש להחליף איתך משמרת.</value>
+  </data>
 </root>
