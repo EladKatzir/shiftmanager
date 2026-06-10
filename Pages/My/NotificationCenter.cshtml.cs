@@ -20,13 +20,18 @@ public class NotificationCenterModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ILogger<NotificationCenterModel> _logger;
     private readonly INotificationPreferenceService _preferences;
+    private readonly ICalendarFeedService _calendarFeed;
 
-    public NotificationCenterModel(AppDbContext db, ILogger<NotificationCenterModel> logger, IStringLocalizer<SharedResources> localizer, INotificationPreferenceService preferences) : base(localizer)
+    public NotificationCenterModel(AppDbContext db, ILogger<NotificationCenterModel> logger, IStringLocalizer<SharedResources> localizer, INotificationPreferenceService preferences, ICalendarFeedService calendarFeed) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _preferences = preferences;
+        _calendarFeed = calendarFeed;
     }
+
+    /// <summary>Absolute URL of the user's personal .ics subscription feed (add once in Outlook).</summary>
+    public string? CalendarFeedUrl { get; set; }
 
     public List<NotificationViewModel> Notifications { get; set; } = new();
     public int UnreadCount { get; set; }
@@ -66,6 +71,10 @@ public class NotificationCenterModel : LocalizedPageModel
             Label = _localizer[$"NotifCat_{c}"].Value,
             Muted = muted.Contains(c)
         }).ToList();
+
+        // Personal calendar subscription feed URL (add once in Outlook → shifts auto-sync).
+        var feedToken = await _calendarFeed.GetOrCreateTokenAsync(userId, companyId);
+        CalendarFeedUrl = $"{Request.Scheme}://{Request.Host}/calendar/feed/{feedToken}.ics";
     }
     // Message / Error properties removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
 

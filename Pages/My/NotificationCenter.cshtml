@@ -72,6 +72,20 @@
                 </form>
             }
         </div>
+
+        @if (!string.IsNullOrEmpty(Model.CalendarFeedUrl))
+        {
+            <h4 style="margin: 1.25rem 0 0.25rem; color: var(--text);">@Localizer["NotifPrefs_FeedTitle"]</h4>
+            <p style="margin: 0 0 0.5rem; color: var(--text); opacity: 0.7; font-size: 0.85rem;">@Localizer["NotifPrefs_FeedDesc"]</p>
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <input type="text" readonly value="@Model.CalendarFeedUrl" id="calFeedUrl"
+                       style="flex: 1; min-width: 260px; padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: 0.4rem; background: var(--surface); color: var(--text);" />
+                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('calFeedUrl').value)"
+                        style="padding: 0.45rem 0.9rem; border: 0; border-radius: 0.4rem; background: var(--primary); color: var(--primary-contrast); cursor: pointer;">
+                    @Localizer["NotifPrefs_FeedCopy"]
+                </button>
+            </div>
+        }
     </div>
 
     @if (Model.Notifications.Any())

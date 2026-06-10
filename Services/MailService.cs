@@ -103,6 +103,29 @@ public class MailService : IMailService
         }
     }
 
+    /// <summary>
+    /// True if the user has fetched their .ics subscription feed within the freshness window (14 days)
+    /// — i.e. they're an active subscriber, so a per-event Felix calendar push would duplicate the
+    /// feed entry. Read-only; failures degrade to false (send the calendar invite).
+    /// </summary>
+    private async Task<bool> IsActiveFeedSubscriberAsync(int recipientUserId)
+    {
+        try
+        {
+            var lastPolled = await _db!.CalendarFeedTokens
+                .IgnoreQueryFilters()
+                .Where(t => t.UserId == recipientUserId)
+                .Select(t => t.LastPolledAt)
+                .FirstOrDefaultAsync();
+            return lastPolled.HasValue && (DateTime.UtcNow - lastPolled.Value) <= TimeSpan.FromDays(14);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Feed-subscription check failed for user {UserId}; sending calendar invite", recipientUserId);
+            return false;
+        }
+    }
+
     private string InjectOptOutFooter(string html, int recipientUserId, int companyId)
     {
         if (_linkTokens == null || recipientUserId <= 0)
@@ -377,6 +400,15 @@ public class MailService : IMailService
         if (recipientUserId <= 0 && companyId > 0 && _db != null && !string.IsNullOrWhiteSpace(recipient))
         {
             recipientUserId = await ResolveRecipientUserIdAsync(recipient, companyId);
+        }
+
+        // Subscription-aware routing: if this is a calendar push AND the recipient actively polls
+        // their .ics feed, the feed already owns their calendar — downgrade to a plain email so they
+        // don't get a duplicate calendar entry. The feed (self-healing) remains the source of truth.
+        if (calendarKind != CalendarEventKind.None && recipientUserId > 0 && _db != null
+            && await IsActiveFeedSubscriberAsync(recipientUserId))
+        {
+            calendarKind = CalendarEventKind.None;
         }
 
         // Inject the one-click opt-out footer (no-op if token service / id unavailable).

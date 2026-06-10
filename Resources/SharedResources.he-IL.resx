@@ -16042,4 +16042,13 @@
   <data name="Notif_SwapRequestSubmittedMessage" xml:space="preserve">
     <value>{0} הגיש בקשת החלפת משמרת הממתינה לאישורך.</value>
   </data>
+  <data name="NotifPrefs_FeedTitle" xml:space="preserve">
+    <value>סנכרון ליומן שלך</value>
+  </data>
+  <data name="NotifPrefs_FeedDesc" xml:space="preserve">
+    <value>הוסף קישור פרטי זה ל-Outlook (הוספת יומן ← מהאינטרנט) והמשמרות, המטלות והתורנויות שלך יסונכרנו אוטומטית.</value>
+  </data>
+  <data name="NotifPrefs_FeedCopy" xml:space="preserve">
+    <value>העתק</value>
+  </data>
 </root>
