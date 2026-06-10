@@ -3,6 +3,19 @@ using ShiftManager.Models;
 namespace ShiftManager.Services;
 
 /// <summary>
+/// Read-only counts of what removing the user's membership in a specific company would clear.
+/// FutureOnDuty is always 0 because OnDuty is globally-scoped (no CompanyId) — it cannot be
+/// attributed to a single company and is therefore not touched by company-scoped removal.
+/// </summary>
+public record MembershipRemovalImpact(
+    int FutureShifts,
+    int PendingOrFutureTimeOff,
+    int FutureChores,
+    int OpenSwapRequests,
+    int FutureOnDuty,
+    int GrantsRemoved);
+
+/// <summary>
 /// Manages a user's company memberships (the user ↔ company N:N). The IsPrimary membership
 /// mirrors AppUser.CompanyId; this service is the single write-path that keeps them in sync,
 /// enforcing the "exactly one primary per user" invariant.
@@ -29,4 +42,21 @@ public interface ICompanyMembershipService
     /// <summary>Promote (userId, companyId) to primary, demote the rest, and sync AppUser.CompanyId.
     /// Throws if the user has no active membership in that company.</summary>
     Task SetPrimaryAsync(int userId, int companyId);
+
+    /// <summary>
+    /// Returns a read-only count of what removing the user's membership in the given company would
+    /// clear. Mirrors <see cref="IUserCompanyTransferService.GetMoveImpactAsync"/> but scoped to
+    /// a single company. Does NOT mutate any data.
+    /// </summary>
+    Task<MembershipRemovalImpact> GetRemovalImpactAsync(int userId, int companyId);
+
+    /// <summary>
+    /// Clears all of the user's records scoped to the given company (future shifts, pending/future
+    /// time-off, future chores, open swap requests, grants), then soft-deletes the membership —
+    /// all inside a single transaction.
+    /// Returns false if the user has no active membership in that company.
+    /// Throws <see cref="InvalidOperationException"/> if the membership is the primary
+    /// (promote another membership to primary first, then remove this one).
+    /// </summary>
+    Task<bool> RemoveMembershipWithCleanupAsync(int userId, int companyId, int actingAdminId);
 }

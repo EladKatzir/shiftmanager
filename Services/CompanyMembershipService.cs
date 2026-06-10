@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
@@ -118,5 +119,154 @@ public class CompanyMembershipService : ICompanyMembershipService
         await _db.SaveChangesAsync();
         await tx.CommitAsync();
         _logger.LogInformation("Set primary company for user {UserId} → {CompanyId}", userId, companyId);
+    }
+
+    /// <inheritdoc/>
+    public async Task<MembershipRemovalImpact> GetRemovalImpactAsync(int userId, int companyId)
+    {
+        // SECURITY-AUDITED: all counts are scoped to BOTH UserId == userId AND CompanyId == companyId.
+        // IgnoreQueryFilters() is required for cross-tenant reads (matches UserCompanyTransferService pattern).
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        // Future shift assignments in this company (joins ShiftInstance for the date predicate).
+        var futureShifts = await _db.ShiftAssignments.IgnoreQueryFilters()
+            .CountAsync(sa => sa.UserId == userId
+                && sa.CompanyId == companyId
+                && sa.ShiftInstance!.WorkDate >= today);
+
+        // Pending or future-approved time-off in this company.
+        var timeOff = await _db.TimeOffRequests.IgnoreQueryFilters()
+            .CountAsync(t => t.UserId == userId
+                && t.CompanyId == companyId
+                && (t.Status == RequestStatus.Pending
+                    || t.Status == RequestStatus.PendingSecondApproval
+                    || (t.Status == RequestStatus.Approved && t.EndDate >= today)));
+
+        // Future active chores in this company.
+        var chores = await _db.Chores.IgnoreQueryFilters()
+            .CountAsync(c => c.UserId == userId
+                && c.CompanyId == companyId
+                && c.Date >= today
+                && c.CanceledAt == null);
+
+        // Open swap requests in this company (user is either side of the swap).
+        var swaps = await _db.SwapRequests.IgnoreQueryFilters()
+            .CountAsync(sr => sr.CompanyId == companyId
+                && (sr.FromUserId == userId || sr.ToUserId == userId)
+                && (sr.Status == RequestStatus.Pending
+                    || sr.Status == RequestStatus.PendingSecondApproval));
+
+        // NOTE: OnDuty has no CompanyId (it is globally-scoped by design).
+        // We cannot attribute an OnDuty record to a specific company, so FutureOnDuty is always 0
+        // in company-scoped impact. Company-wide removal (UserCompanyTransferService) handles it
+        // for full moves. SECURITY-AUDITED: omission is intentional — no data loss occurs because
+        // the user may still be on-duty for other companies after this secondary membership is removed.
+        const int futureOnDuty = 0;
+
+        // Grants scoped to this company.
+        var grants = await _db.Grants.IgnoreQueryFilters()
+            .CountAsync(g => g.UserId == userId && g.CompanyId == companyId);
+
+        return new MembershipRemovalImpact(futureShifts, timeOff, chores, swaps, futureOnDuty, grants);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RemoveMembershipWithCleanupAsync(int userId, int companyId, int actingAdminId)
+    {
+        // SECURITY-AUDITED: all deletes/updates are scoped to BOTH UserId == userId AND
+        // CompanyId == companyId. IgnoreQueryFilters() is required for cross-tenant writes.
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var now = DateTime.UtcNow;
+
+        // Load the membership to validate it exists and is not primary.
+        var membership = await _db.CompanyMemberships
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(m => m.UserId == userId && m.CompanyId == companyId && !m.IsDeleted);
+
+        if (membership == null)
+        {
+            _logger.LogWarning(
+                "RemoveMembershipWithCleanupAsync: no active membership for user {UserId} in company {CompanyId}",
+                userId, companyId);
+            return false;
+        }
+
+        if (membership.IsPrimary)
+            throw new InvalidOperationException(
+                "Cannot remove the primary membership; promote another membership to primary first.");
+
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            // ── BUCKET 1: personal operational data scoped to this company ──────────────────
+
+            // Future shift assignments: delete to free the slot.
+            // SECURITY-AUDITED: UserId == userId AND CompanyId == companyId; future via ShiftInstance.WorkDate.
+            await _db.ShiftAssignments.IgnoreQueryFilters()
+                .Where(sa => sa.UserId == userId
+                    && sa.CompanyId == companyId
+                    && sa.ShiftInstance!.WorkDate >= today)
+                .ExecuteDeleteAsync();
+
+            // Pending / future-approved time-off in this company → Canceled.
+            // SECURITY-AUDITED: UserId == userId AND CompanyId == companyId.
+            await _db.TimeOffRequests.IgnoreQueryFilters()
+                .Where(t => t.UserId == userId
+                    && t.CompanyId == companyId
+                    && (t.Status == RequestStatus.Pending
+                        || t.Status == RequestStatus.PendingSecondApproval
+                        || (t.Status == RequestStatus.Approved && t.EndDate >= today)))
+                .ExecuteUpdateAsync(t => t.SetProperty(x => x.Status, RequestStatus.Canceled));
+
+            // Future chores in this company → soft-cancel.
+            // SECURITY-AUDITED: UserId == userId AND CompanyId == companyId.
+            await _db.Chores.IgnoreQueryFilters()
+                .Where(c => c.UserId == userId
+                    && c.CompanyId == companyId
+                    && c.Date >= today
+                    && c.CanceledAt == null)
+                .ExecuteUpdateAsync(c => c.SetProperty(x => x.CanceledAt, (DateTime?)now));
+
+            // Open swap requests in this company → Canceled.
+            // SECURITY-AUDITED: CompanyId == companyId AND user is either side.
+            await _db.SwapRequests.IgnoreQueryFilters()
+                .Where(sr => sr.CompanyId == companyId
+                    && (sr.FromUserId == userId || sr.ToUserId == userId)
+                    && (sr.Status == RequestStatus.Pending
+                        || sr.Status == RequestStatus.PendingSecondApproval))
+                .ExecuteUpdateAsync(sr => sr.SetProperty(x => x.Status, RequestStatus.Canceled));
+
+            // NOTE: OnDuty has no CompanyId — cannot be company-scoped. Intentionally skipped.
+            // See GetRemovalImpactAsync for full explanation.
+
+            // ── BUCKET 2: grants scoped to this company ───────────────────────────────────
+
+            // Delete grants scoped to this company.
+            // SECURITY-AUDITED: UserId == userId AND CompanyId == companyId.
+            await _db.Grants.IgnoreQueryFilters()
+                .Where(g => g.UserId == userId && g.CompanyId == companyId)
+                .ExecuteDeleteAsync();
+
+            // ── Soft-delete the membership ────────────────────────────────────────────────
+
+            membership.IsDeleted = true;
+            membership.DeletedAt = now;
+            await _db.SaveChangesAsync();
+
+            await tx.CommitAsync();
+
+            _logger.LogInformation(
+                "RemoveMembershipWithCleanupAsync: removed membership for user {UserId} in company {CompanyId} by admin {ActorId}",
+                userId, companyId, actingAdminId);
+            return true;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex,
+                "RemoveMembershipWithCleanupAsync failed: user {UserId}, company {CompanyId}",
+                userId, companyId);
+            try { await tx.RollbackAsync(); } catch { /* tx already done */ }
+            throw;
+        }
     }
 }
