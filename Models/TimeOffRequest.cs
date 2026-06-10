@@ -37,6 +37,14 @@ public class TimeOffRequest : IBelongsToCompany
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
+    /// Groups the fan-out copies of one logical leave across the companies a multi-company user
+    /// does shifts in. NULL for ordinary single-company leaves. Approving/declining any copy
+    /// cascades the decision to all copies sharing this id. Aggregate reads (lists, analytics)
+    /// dedup by this id to count one logical leave.
+    /// </summary>
+    public Guid? LeaveGroupId { get; set; }
+
+    /// <summary>
     /// User who acted as the first-tier approver (Lead, or BRDirector for non-Alhut/Text requesters).
     /// Set the moment the first tier approves. Null until then.
     /// In single-approval flow this is the only approver recorded.
