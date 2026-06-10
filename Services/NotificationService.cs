@@ -47,6 +47,17 @@ public interface INotificationService
     // Ops Console Scheduler: Shift Modification Notifications
     Task CreateShiftModifiedNotificationAsync(List<int> assignedUserIds, string shiftTypeName, DateOnly date, string changeDescription);
 
+    /// <summary>
+    /// Generic notifier for the notifications-overhaul coverage events (Phase 3d). Persists an
+    /// in-app notification (always) and sends a gated, standard-template email — the engagement
+    /// mode / category mute / security-critical rules apply, the catch-up throttle participates,
+    /// and the one-click opt-out footer is auto-injected. Use for previously-silent actions:
+    /// account/role/grant changes, approver alerts on request creation, calendar entries, etc.
+    /// </summary>
+    Task NotifyAsync(int userId, NotificationType type, Notifications.NotificationCategory category,
+        string title, string message, bool personallyActionable = true, bool securityCritical = false,
+        int? relatedEntityId = null, string? relatedEntityType = null);
+
     // ========================================
     // Diagnostic / Admin helpers (additive — return OperationResult so callers can
     // surface structured failure reasons in admin/test UIs).
@@ -160,6 +171,57 @@ public partial class NotificationService : INotificationService
             // A throttle failure must never block the underlying notification.
             _logger.LogWarning(ex, "Catch-up throttle evaluation failed for user {UserId}", userId);
         }
+    }
+
+    public async Task NotifyAsync(int userId, NotificationType type, Notifications.NotificationCategory category,
+        string title, string message, bool personallyActionable = true, bool securityCritical = false,
+        int? relatedEntityId = null, string? relatedEntityType = null)
+    {
+        // In-app (always) — also runs the catch-up throttle.
+        await CreateNotificationAsync(userId, type, title, message, relatedEntityId, relatedEntityType);
+
+        // Email (gated). Security-critical events ignore Quiet/mute (see NotificationGate).
+        try
+        {
+            var user = await GetRecipientAcrossTenantsAsync(userId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, category, personallyActionable, securityCritical))
+            {
+                var html = BuildGenericEmailHtml(user.DisplayName, title, message);
+                await _mailService.SendMailAsync(user.Email, title, html, recipientUserId: userId);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Email failure must never block the in-app notification / business action.
+            _logger.LogWarning(ex, "NotifyAsync email send failed for user {UserId} (type {Type})", userId, type);
+        }
+    }
+
+    /// <summary>
+    /// Standard localized HTML email body for the generic coverage notifications. Direction-aware
+    /// (RTL/LTR) and HTML-encodes user-controlled values. The one-click opt-out footer is injected
+    /// downstream by MailService.
+    /// </summary>
+    private string BuildGenericEmailHtml(string displayName, string title, string message)
+    {
+        var dir = _localizer["Dir"] == "rtl" ? "rtl" : "ltr";
+        return $@"<!DOCTYPE html>
+<html dir='{dir}'>
+<head><meta charset='utf-8'></head>
+<body style='font-family:Arial,sans-serif;line-height:1.6;color:#333;'>
+  <div style='max-width:600px;margin:0 auto;padding:20px;'>
+    <div style='background:#4f46e5;color:#fff;padding:15px;text-align:center;border-radius:6px 6px 0 0;'>
+      <h2 style='margin:0;'>{WebUtility.HtmlEncode(title)}</h2>
+    </div>
+    <div style='padding:20px;background:#f9f9f9;border-radius:0 0 6px 6px;'>
+      <p>{string.Format(CultureInfo.CurrentCulture, _localizer["Email_Hello"], $"<strong>{WebUtility.HtmlEncode(displayName)}</strong>")},</p>
+      <p>{WebUtility.HtmlEncode(message)}</p>
+      <p style='color:#666;font-size:13px;'>{_localizer["Email_AutomatedMessage"]}</p>
+    </div>
+  </div>
+</body>
+</html>";
     }
 
     public async Task<bool> CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null)

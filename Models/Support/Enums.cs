@@ -45,7 +45,21 @@ public enum NotificationType
     TimeOffDeleted = 16,
     FeedbackSubmitted = 17,
     AccessRequestSubmitted = 18,
-    AccessRequestApproved = 19
+    AccessRequestApproved = 19,
+    // Notifications overhaul Phase 3d — coverage of previously-silent actions (append-only).
+    RoleChanged = 20,
+    GrantChanged = 21,
+    JobTypeChanged = 22,
+    AccountDeactivated = 23,
+    AccountReactivated = 24,
+    PasswordReset = 25,
+    AccountUnlocked = 26,
+    JoinRequestRejected = 27,
+    TimeOffRequestSubmitted = 28,
+    SwapRequestSubmitted = 29,
+    CalendarEntryAdded = 30,
+    CalendarEntryRemoved = 31,
+    GenericInfo = 32
 }
 
 /// <summary>

@@ -104,4 +104,29 @@ public class NotificationGateIntegrationTests : IDisposable
             It.IsAny<DateOnly>(), It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>()), Times.Never);
         (await _db.UserNotifications.IgnoreQueryFilters().CountAsync(n => n.UserId == UserId)).Should().Be(1);
     }
+
+    [Fact] // GI-03: NotifyAsync security-critical always emails, even Quiet + muted
+    public async Task NotifyAsync_SecurityCritical_AlwaysEmails()
+    {
+        await _prefs.SetEngagementModeAsync(UserId, CompanyId, EngagementMode.Quiet);
+        await _prefs.SetCategoryMuteAsync(UserId, CompanyId, NotificationCategory.AccountSecurity, muted: true);
+
+        await _service.NotifyAsync(UserId, NotificationType.PasswordReset, NotificationCategory.AccountSecurity,
+            "Password reset", "Your password was reset.", personallyActionable: true, securityCritical: true);
+
+        _mail.Verify(x => x.SendMailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+        (await _db.UserNotifications.IgnoreQueryFilters().CountAsync(n => n.UserId == UserId)).Should().Be(1);
+    }
+
+    [Fact] // GI-04: NotifyAsync muted non-security category suppresses email, keeps in-app
+    public async Task NotifyAsync_Muted_Suppresses()
+    {
+        await _prefs.SetCategoryMuteAsync(UserId, CompanyId, NotificationCategory.Account, muted: true);
+
+        await _service.NotifyAsync(UserId, NotificationType.RoleChanged, NotificationCategory.Account,
+            "Role changed", "Your role changed.", personallyActionable: true, securityCritical: false);
+
+        _mail.Verify(x => x.SendMailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
+        (await _db.UserNotifications.IgnoreQueryFilters().CountAsync(n => n.UserId == UserId)).Should().Be(1);
+    }
 }
