@@ -1179,6 +1179,35 @@ public class VacationApprovalService : IVacationApprovalService
                     _logger.LogError(ex,
                         "Materialiser failed for cascaded-approved sibling {SiblingId}", sibling.Id);
                 }
+
+                // AUDIT the bypass: this sibling was force-approved by a cross-company cascade,
+                // NOT a normal local approval. Critical when the sibling's own company rules
+                // required dual approval — an auditor must be able to tell a single cross-company
+                // force-approve apart from a locally-completed (possibly dual-tier) approval.
+                try
+                {
+                    var actingApproverId = actingRequest.ApproverId
+                        ?? actingRequest.FirstApprovalActorId
+                        ?? actingRequest.SecondApprovalActorId
+                        ?? 0;
+                    await _auditLogService.LogUserActionAsync(
+                        actingApproverId,
+                        "TimeOffCrossCompanyForceApprove",
+                        "TimeOffRequest",
+                        sibling.Id,
+                        $"Cross-company cascade force-approve: request {sibling.Id} (company {sibling.CompanyId}) " +
+                        $"approved via the group decision on source request {actingRequest.Id} " +
+                        $"(company {actingRequest.CompanyId}) by approver {actingApproverId}. " +
+                        $"LeaveGroupId {actingRequest.LeaveGroupId}.",
+                        $"sourceRequestId={actingRequest.Id};sourceCompanyId={actingRequest.CompanyId};" +
+                        $"siblingRequestId={sibling.Id};siblingCompanyId={sibling.CompanyId};" +
+                        $"approverId={actingApproverId};leaveGroupId={actingRequest.LeaveGroupId}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Audit log failed for cross-company force-approve of sibling {SiblingId}", sibling.Id);
+                }
             }
             else // Declined
             {

@@ -332,17 +332,28 @@ public partial class RequestsModel : LocalizedPageModel
                 CreatedAt = DateTime.UtcNow
             };
 
-            _db.TimeOffRequests.Add(request);
-            await _db.SaveChangesAsync();
+            // Epic 6 spec §8: the primary insert and its fan-out clones MUST be atomic. Wrap
+            // primary-add + SaveChangesAsync + FanOutAsync in ONE transaction. Inside a
+            // transaction SaveChangesAsync assigns request.Id without committing, so FanOutAsync
+            // can read it and clone. If any of the primary+fan-out work throws, the transaction
+            // rolls back and no orphan single-company primary is left behind.
+            IReadOnlyList<TimeOffRequest> fanOutClones;
+            await using (var tx = await _db.Database.BeginTransactionAsync())
+            {
+                _db.TimeOffRequests.Add(request);
+                await _db.SaveChangesAsync();
 
-            LogTimeOffSubmitted(_logger, request.Id, userId, request.Type, request.ApproverId);
+                LogTimeOffSubmitted(_logger, request.Id, userId, request.Type, request.ApproverId);
 
-            // Epic 6: fan out to additional shift-companies (no-op for single-company users).
-            var (_, fanOutClones) = await _leaveFanoutService.FanOutAsync(request, userId);
+                // Epic 6: fan out to additional shift-companies (no-op for single-company users).
+                (_, fanOutClones) = await _leaveFanoutService.FanOutAsync(request, userId);
 
-            // Submit for approval if the vacation approval feature flag is enabled.
-            // For multi-company users, submit each company copy independently so each
-            // company's approval chain is seeded correctly.
+                await tx.CommitAsync();
+            }
+
+            // Submit for approval AFTER the commit, so approval routes are set up on durable rows.
+            // For multi-company users, submit each company copy independently so each company's
+            // approval chain is seeded correctly.
             if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.VacationApprovalEnabled))
             {
                 var (success, approvalMessage) = await _vacationApprovalService.SubmitForApprovalAsync(request.Id, userId);

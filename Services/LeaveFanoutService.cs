@@ -47,7 +47,13 @@ public sealed class LeaveFanoutService : ILeaveFanoutService
         // Multi-company: assign a shared group id and create one clone per additional company.
         var groupId = Guid.NewGuid();
 
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        // Transaction-AGNOSTIC: this method does NOT open its own transaction. It stamps the
+        // primary's LeaveGroupId + adds clones + SaveChangesAsync, participating in whatever
+        // ambient transaction the caller has opened (Epic 6 spec §8: fan-out must be atomic with
+        // the primary insert — if a clone fails the primary must NOT persist as a standalone
+        // single-company leave). Called WITHOUT an ambient transaction (e.g. direct unit tests),
+        // SaveChangesAsync still persists in its own implicit transaction, so the method works
+        // standalone too.
 
         // Stamp the primary (already tracked by EF from the caller's SaveChangesAsync).
         primary.LeaveGroupId = groupId;
@@ -78,8 +84,8 @@ public sealed class LeaveFanoutService : ILeaveFanoutService
         }
 
         // One SaveChangesAsync covers: LeaveGroupId update on primary + all clone inserts.
+        // No CommitAsync here — the caller's transaction (if any) owns the commit boundary.
         await _db.SaveChangesAsync();
-        await transaction.CommitAsync();
 
         return (groupId, clones);
     }
