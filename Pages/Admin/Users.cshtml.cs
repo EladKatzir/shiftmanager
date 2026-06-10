@@ -38,6 +38,7 @@ public partial class UsersModel : LocalizedPageModel
     private readonly IHierarchyService _hierarchyService;
     private readonly IUserCompanyTransferService _userCompanyTransferService;
     private readonly IShiftCategoryService _categoryService;
+    private readonly ICompanyMembershipService _companyMembershipService;
 
     public UsersModel(
         IStringLocalizer<SharedResources> localizer,
@@ -56,7 +57,8 @@ public partial class UsersModel : LocalizedPageModel
         ITenantResolver tenantResolver,
         IHierarchyService hierarchyService,
         IUserCompanyTransferService userCompanyTransferService,
-        IShiftCategoryService categoryService)
+        IShiftCategoryService categoryService,
+        ICompanyMembershipService companyMembershipService)
         : base(localizer)
     {
         _db = db;
@@ -75,9 +77,11 @@ public partial class UsersModel : LocalizedPageModel
         _hierarchyService = hierarchyService;
         _userCompanyTransferService = userCompanyTransferService;
         _categoryService = categoryService;
+        _companyMembershipService = companyMembershipService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, bool DoesShifts, string? ShiftCategoryNames, List<int> ShiftCategoryIds, int? MoleculeId);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, bool DoesShifts, string? ShiftCategoryNames, List<int> ShiftCategoryIds, int? MoleculeId, int CompanyId = 0, IReadOnlyList<UserMembershipVM>? Memberships = null);
+    public record UserMembershipVM(int MembershipId, int CompanyId, string CompanyName, bool IsPrimary, string? RoleName, string? JobTypeName, bool DoesShifts);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId, string? AuthMethod);
     public record MoleculeOption(int Id, string Name, string AreaName);
     public record JobTypeOption(int Id, string Name, string AreaName, string? Key);
@@ -576,6 +580,88 @@ public partial class UsersModel : LocalizedPageModel
                 .ToDictionaryAsync(c => c.Id, c => c.Molecule!.Name);
         }
 
+        // Batch-load company memberships for all displayed users (single query).
+        // IgnoreQueryFilters: CompanyMembership is not IBelongsToCompany so there is no tenant filter,
+        // but IgnoreQueryFilters is applied for consistency with other cross-tenant lookups here.
+        var membershipRows = await _db.CompanyMemberships
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(m => userIds.Contains(m.UserId) && !m.IsDeleted)
+            .ToListAsync();
+
+        // Resolve company names for all companies referenced by memberships (beyond userCompanies).
+        var membershipCompanyIds = membershipRows.Select(m => m.CompanyId).Distinct()
+            .Where(id => !userCompanies.ContainsKey(id)).ToList();
+        Dictionary<int, string> extraCompanyNames = new();
+        if (membershipCompanyIds.Any())
+        {
+            extraCompanyNames = await _db.Companies
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(c => membershipCompanyIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id, c => c.LocalizedName);
+        }
+
+        // Resolve job type display names for all job type IDs referenced by memberships.
+        var membershipJobTypeIds = membershipRows
+            .Where(m => m.JobTypeId.HasValue)
+            .Select(m => m.JobTypeId!.Value).Distinct().ToList();
+        Dictionary<int, string> membershipJobTypeNames = new();
+        if (membershipJobTypeIds.Any())
+        {
+            membershipJobTypeNames = await _db.JobTypes
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(jt => membershipJobTypeIds.Contains(jt.Id))
+                .ToDictionaryAsync(jt => jt.Id, jt => jt.DisplayName);
+        }
+
+        // Resolve role template names for all role template IDs referenced by memberships.
+        var membershipRoleTemplateIds = membershipRows
+            .Where(m => m.RoleTemplateId.HasValue)
+            .Select(m => m.RoleTemplateId!.Value).Distinct().ToList();
+        Dictionary<int, string> membershipRoleNames = new();
+        if (membershipRoleTemplateIds.Any())
+        {
+            var roleTemplates = await _db.Set<RoleTemplate>()
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(rt => membershipRoleTemplateIds.Contains(rt.Id))
+                .ToListAsync();
+            foreach (var rt in roleTemplates)
+            {
+                // Prefer DisplayNameEN; fall back to NameKey localization.
+                var displayName = string.IsNullOrEmpty(rt.DisplayNameEN)
+                    ? _localizer[rt.NameKey].Value
+                    : rt.DisplayNameEN;
+                membershipRoleNames[rt.Id] = displayName;
+            }
+        }
+
+        // Helper: resolve company name from the combined lookups.
+        string ResolveMembershipCompanyName(int companyId)
+        {
+            if (userCompanies.TryGetValue(companyId, out var co)) return co.LocalizedName;
+            if (extraCompanyNames.TryGetValue(companyId, out var name)) return name;
+            return $"Company #{companyId}";
+        }
+
+        // Group memberships by userId, building UserMembershipVM list (primary first).
+        var membershipsByUser = membershipRows
+            .GroupBy(m => m.UserId)
+            .ToDictionary(g => g.Key, g =>
+                (IReadOnlyList<UserMembershipVM>)g
+                    .OrderByDescending(m => m.IsPrimary)
+                    .Select(m => new UserMembershipVM(
+                        m.Id,
+                        m.CompanyId,
+                        ResolveMembershipCompanyName(m.CompanyId),
+                        m.IsPrimary,
+                        m.RoleTemplateId.HasValue && membershipRoleNames.TryGetValue(m.RoleTemplateId.Value, out var rn) ? rn : null,
+                        m.JobTypeId.HasValue && membershipJobTypeNames.TryGetValue(m.JobTypeId.Value, out var jtn) ? jtn : null,
+                        m.DoesShifts))
+                    .ToList());
+
         // Build user list — directors get a single row with molecule scope display
         var userList = new List<UserVM>();
 
@@ -621,7 +707,9 @@ public partial class UsersModel : LocalizedPageModel
                     u.DoesShifts,
                     userCategoryMap.TryGetValue(u.Id, out var dirCat) ? dirCat.Names : null,
                     userCategoryMap.TryGetValue(u.Id, out var dirCat2) ? dirCat2.Ids : new List<int>(),
-                    userCompanies.TryGetValue(u.CompanyId, out var dirCompany) ? dirCompany.MoleculeId : null
+                    userCompanies.TryGetValue(u.CompanyId, out var dirCompany) ? dirCompany.MoleculeId : null,
+                    u.CompanyId,
+                    membershipsByUser.TryGetValue(u.Id, out var dirMem) ? dirMem : null
                 ));
             }
             else
@@ -653,7 +741,9 @@ public partial class UsersModel : LocalizedPageModel
                         u.DoesShifts,
                         userCategoryMap.TryGetValue(u.Id, out var ndCat) ? ndCat.Names : null,
                         userCategoryMap.TryGetValue(u.Id, out var ndCat2) ? ndCat2.Ids : new List<int>(),
-                        company?.MoleculeId
+                        company?.MoleculeId,
+                        u.CompanyId,
+                        membershipsByUser.TryGetValue(u.Id, out var ndMem) ? ndMem : null
                     ));
                 }
             }
