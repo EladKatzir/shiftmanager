@@ -20,6 +20,7 @@ public class QuickAddTextEntryModel : PageModel
     private readonly IAuditLogService _auditLogService;
     private readonly IGrantService _grantService;
     private readonly ICalendarNotificationService _notificationService;
+    private readonly INotificationService _persistentNotifications;
     private readonly AppDbContext _db;
     private readonly ILogger<QuickAddTextEntryModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -29,6 +30,7 @@ public class QuickAddTextEntryModel : PageModel
         IAuditLogService auditLogService,
         IGrantService grantService,
         ICalendarNotificationService notificationService,
+        INotificationService persistentNotifications,
         AppDbContext db,
         ILogger<QuickAddTextEntryModel> logger,
         IStringLocalizer<SharedResources> localizer)
@@ -37,6 +39,7 @@ public class QuickAddTextEntryModel : PageModel
         _auditLogService = auditLogService;
         _grantService = grantService;
         _notificationService = notificationService;
+        _persistentNotifications = persistentNotifications;
         _db = db;
         _logger = logger;
         _localizer = localizer;
@@ -127,6 +130,20 @@ public class QuickAddTextEntryModel : PageModel
                 entityType: "CalendarTextEntry",
                 entityId: entry.Id,
                 description: $"Created text entry '{data.Text}' for user {data.UserId} on {entryDate:yyyy-MM-dd} via Quick Entry");
+
+            // Persisted notification (in-app + gated email) to the affected user — they should know
+            // an entry landed on their calendar. Skip self-entries. Informational (not actionable).
+            if (data.UserId != currentUserId)
+            {
+                await _persistentNotifications.NotifyAsync(data.UserId,
+                    ShiftManager.Models.Support.NotificationType.CalendarEntryAdded,
+                    ShiftManager.Services.Notifications.NotificationCategory.CalendarEntry,
+                    _localizer["Notif_CalendarEntryAddedTitle"].Value,
+                    string.Format(_localizer["Notif_CalendarEntryAddedMessage"].Value, entryDate.ToString("yyyy-MM-dd"), data.Text.Trim()),
+                    personallyActionable: false,
+                    relatedEntityId: entry.Id,
+                    relatedEntityType: "CalendarTextEntry");
+            }
 
             try
             {

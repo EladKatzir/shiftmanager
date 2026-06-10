@@ -16057,4 +16057,10 @@
   <data name="Notif_GrantChangedMessage" xml:space="preserve">
     <value>מנהל עדכן את ההרשאות שלך.</value>
   </data>
+  <data name="Notif_CalendarEntryAddedTitle" xml:space="preserve">
+    <value>נוסף רישום ליומן</value>
+  </data>
+  <data name="Notif_CalendarEntryAddedMessage" xml:space="preserve">
+    <value>נוסף רישום ליומן שלך בתאריך {0}: {1}</value>
+  </data>
 </root>
