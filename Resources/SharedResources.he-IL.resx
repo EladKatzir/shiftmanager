@@ -15817,6 +15817,12 @@
   <data name="Error_NoPermissionMoveRole" xml:space="preserve">
     <value>אין לך הרשאה להקצות את תפקיד המשתמש הזה.</value>
   </data>
+  <data name="Error_NoPermissionMembershipRole" xml:space="preserve">
+    <value>אין לך הרשאה לנהל את שיוכי המשתמש הזה (התפקיד שלו מעל סמכותך).</value>
+  </data>
+  <data name="Error_MembershipAlreadyExists" xml:space="preserve">
+    <value>המשתמש כבר חבר בחברה זו.</value>
+  </data>
   <data name="Error_MoveFailed" xml:space="preserve">
     <value>לא ניתן היה להשלים את ההעברה.</value>
   </data>

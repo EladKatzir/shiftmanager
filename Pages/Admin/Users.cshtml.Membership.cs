@@ -44,9 +44,10 @@ public partial class UsersModel
 
             TempData["SuccessMessage"] = _localizer["Users_Membership_Added"].Value;
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            TempData["ErrorMessage"] = ex.Message;
+            // Service throws when an active membership already exists (incl. the concurrent-add race).
+            TempData["ErrorMessage"] = _localizer["Error_MembershipAlreadyExists"].Value;
         }
 
         return RedirectToPage();
@@ -129,7 +130,9 @@ public partial class UsersModel
         if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var adminId))
             return Forbid();
 
-        var authError = await AuthorizeMembershipActionAsync(adminId, userId, companyId);
+        // Two-sided gate: SetPrimary relocates the home pointer, so it requires authority over the
+        // user's current home company in addition to the new primary company.
+        var authError = await AuthorizeSetPrimaryAsync(adminId, userId, companyId);
         if (authError != null)
         {
             TempData["ErrorMessage"] = _localizer[authError].Value;
@@ -159,10 +162,20 @@ public partial class UsersModel
 
     // ── Authorization helper ──────────────────────────────────────────────────
 
+    // Authorization model (deliberate, asymmetric — see Users.cshtml.Move.cs for the destructive Move):
+    //   • Add authorizes on the DESTINATION company only — it is additive and does NOT affect the
+    //     user's other companies (unlike Move, which relocates the user and must gate source+dest).
+    //   • Remove authorizes on the company being cleared.
+    //   • SetPrimary additionally requires authority over the user's CURRENT home company, because it
+    //     relocates the home pointer (AppUser.CompanyId), affecting the old home too — see
+    //     AuthorizeSetPrimaryAsync.
+    //   • ALL actions also require CanAssignRoleAsync(target.Role): a company-admin must not be able to
+    //     manipulate a higher-role (e.g. Director) user's memberships.
+
     /// <summary>
     /// Returns a localization key describing the failure, or null when the membership action is authorized.
-    /// Gate: admin must hold AdminAccess OR EditCompanyUsers on the target company.
-    /// Also checks that the target user exists.
+    /// Gate: admin must hold AdminAccess OR EditCompanyUsers on the target company, AND (when not
+    /// AdminAccess) be permitted to assign the target user's role (blocks manipulating a higher admin).
     /// </summary>
     private async Task<string?> AuthorizeMembershipActionAsync(int adminId, int userId, int companyId)
     {
@@ -182,6 +195,36 @@ public partial class UsersModel
         {
             if (!await _grantService.HasGrantForCompanyAsync(adminId, "EditCompanyUsers", companyId))
                 return "Error_NoPermissionDestCompany";
+
+            // Privilege gate: must be allowed to assign the target's role (mirrors Move + role-change).
+            if (!await _directorService.CanAssignRoleAsync(target.Role))
+                return "Error_NoPermissionMembershipRole";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// SetPrimary-specific authorization. Runs the normal check on the NEW primary company, then —
+    /// because promoting relocates the user's home pointer (AppUser.CompanyId) — ALSO requires authority
+    /// over the user's CURRENT home company (when not AdminAccess). Returns an error key or null.
+    /// </summary>
+    private async Task<string?> AuthorizeSetPrimaryAsync(int adminId, int userId, int companyId)
+    {
+        var baseError = await AuthorizeMembershipActionAsync(adminId, userId, companyId);
+        if (baseError != null) return baseError;
+
+        var isAdmin = await _grantService.HasGrantAsync(adminId, "AdminAccess");
+        if (!isAdmin)
+        {
+            // SECURITY-AUDITED: load target by explicit id for its current home company.
+            var target = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+            if (target == null) return "Error_UserNotFound";
+
+            // The new company is already authorized above; also require authority over the OLD home.
+            if (target.CompanyId != companyId &&
+                !await _grantService.HasGrantForCompanyAsync(adminId, "EditCompanyUsers", target.CompanyId))
+                return "Error_NoPermissionSourceCompany";
         }
 
         return null;
