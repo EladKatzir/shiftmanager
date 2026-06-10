@@ -1,8 +1,10 @@
 using System.Security.Claims;
+using System.Threading;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,6 +16,31 @@ using ShiftManager.Services;
 using Xunit;
 
 namespace ShiftManager.Tests.UnitTests.Security;
+
+/// <summary>
+/// Forces EF Core to rebuild the model for every DbContext instance instead of reusing the
+/// process-wide cached model.
+///
+/// **Why this is required**: EF Core caches the compiled model per context type. The tenant
+/// query filters in <see cref="AppDbContext.OnModelCreating"/> are lambdas that close over the
+/// `_tenantResolver` instance of whichever context built the model FIRST. In the full test suite,
+/// an earlier test builds the AppDbContext model with a different resolver, so these tests' READ
+/// assertions would silently bind to the wrong resolver and fail (while passing in isolation).
+/// A dynamic cache key (unique per context instance) makes EF recompile the model for each test,
+/// binding the filters to THIS test's resolver. The write test is unaffected because
+/// CompanyIdInterceptor calls the resolver directly, bypassing the cached model.
+/// </summary>
+internal sealed class DynamicModelCacheKeyFactory : IModelCacheKeyFactory
+{
+    private static int _counter;
+
+    // EF Core 8/9 signature.
+    public object Create(DbContext context, bool designTime)
+        => (context.GetType(), designTime, Interlocked.Increment(ref _counter));
+
+    // Back-compat overload in case an older EF surface resolves the single-arg signature.
+    public object Create(DbContext context) => Create(context, false);
+}
 
 /// <summary>
 /// End-to-end tenant isolation tests for the multi-company membership feature.
@@ -82,11 +109,15 @@ public sealed class MultiCompanyTenantIsolationTests : IAsyncLifetime
             NullLogger<CompanyIdInterceptor>.Instance);
 
         // Pass the resolver to AppDbContext so OnModelCreating registers query filters.
-        // This MUST be the very first AppDbContext built on these options so the EF model
-        // is compiled with query filters referencing _resolver (not null).
+        // ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory> forces EF to rebuild
+        // the model for THIS context instance rather than reusing a process-wide cached model that
+        // may have been built by an earlier test with a different resolver. Without this, the query
+        // filters' `_tenantResolver` closure binds to the wrong resolver in the full suite and the
+        // READ assertions fail (while passing in isolation).
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
             .AddInterceptors(interceptor)
+            .ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory>()
             .Options;
 
         _db = new AppDbContext(options, _resolver);
