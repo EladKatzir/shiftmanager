@@ -124,8 +124,11 @@ namespace ShiftManager.Pages.Home
                 .OrderBy(sa => sa.ShiftInstance.WorkDate)
                 .FirstOrDefaultAsync();
 
+            // A user owns all their notifications regardless of which company generated them.
+            // Filtering by CompanyId would silently drop notifications from secondary companies
+            // for multi-company members — consistent with bell widget and NotificationCenter.
             var notificationsTask = _context.UserNotifications
-                .Where(n => n.UserId == userId && n.CompanyId == companyId)
+                .Where(n => n.UserId == userId)
                 .OrderByDescending(n => n.CreatedAt)
                 .Take(5)
                 .ToListAsync();
