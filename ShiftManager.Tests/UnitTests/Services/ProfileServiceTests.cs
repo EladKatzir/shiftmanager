@@ -410,4 +410,55 @@ public class ProfileServiceTests : IDisposable
 
         result.Should().HaveCount(5);
     }
+
+    // --- Regression: audit CompanyId must track the TARGET user, not the editor's tenant ---
+
+    [Fact]
+    public async Task UpdateProfileAsync_AuditCompanyId_IsTargetUserCompany_NotEditorTenant()
+    {
+        // Arrange: editor's tenant = CompanyId (1), but the target user belongs to company 2.
+        // Bug: before the fix, CreateAuditEntry used _tenantResolver.GetCurrentTenantId() (= 1).
+        // After fix: audit must carry CompanyId = 2 (the target user's company).
+        const int TargetCompanyId = 2;
+        const int CrossCompanyEditorId = 200;
+        const int CrossCompanyTargetId = 201;
+
+        _db.Users.AddRange(
+            new AppUser
+            {
+                Id = CrossCompanyEditorId, Email = "xeditor@test.com", DisplayName = "Cross Editor",
+                CompanyId = CompanyId, IsActive = true, Role = UserRole.Manager
+            },
+            new AppUser
+            {
+                Id = CrossCompanyTargetId, Email = "xtarget@test.com", DisplayName = "Cross Target",
+                CompanyId = TargetCompanyId, IsActive = true, Role = UserRole.Employee,
+                Phone = "555-0099"
+            }
+        );
+        await _db.SaveChangesAsync();
+
+        // Editor has grant to edit users in the target's company (TargetCompanyId = 2)
+        _grantServiceMock
+            .Setup(g => g.HasGrantForCompanyAsync(CrossCompanyEditorId, "EditCompanyUsers", TargetCompanyId))
+            .ReturnsAsync(true);
+
+        // _tenantResolverMock still returns CompanyId (1) — the editor's active tenant
+        // This is intentionally DIFFERENT from the target's company (2)
+
+        var dto = new ProfileUpdateDto { Phone = "555-XXXX" };
+
+        // Act
+        var (success, error) = await _service.UpdateProfileAsync(CrossCompanyEditorId, CrossCompanyTargetId, dto);
+
+        // Assert: call succeeded
+        success.Should().BeTrue(because: "editor has the grant");
+
+        // Audit row must be filed under the TARGET's company (2), not the editor's tenant (1)
+        var audit = await _db.ProfileChangeAudits
+            .Where(a => a.TargetUserId == CrossCompanyTargetId)
+            .SingleAsync();
+        audit.CompanyId.Should().Be(TargetCompanyId,
+            because: "profile-change audits belong to the company of the edited user, not the editor's active tenant");
+    }
 }

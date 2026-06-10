@@ -121,8 +121,9 @@ public class ProfileService : IProfileService
                 return (false, _localizer["TargetUserNotFound"]);
             }
 
-            // ✅ Grant-based: Check if editor has EditCompanyUsers grant for target's company
-            var companyId = _tenantResolver.GetCurrentTenantId();
+            // Audit must be filed under the EDITED user's company, not the editor's active tenant —
+            // otherwise cross-company/admin edits land in the wrong company's audit ledger.
+            var companyId = targetUser.CompanyId;
             var hasEditGrant = await _grantService.HasGrantForCompanyAsync(editorUserId, "EditCompanyUsers", targetUser.CompanyId);
 
             // Verify editor has permission to edit target's company
