@@ -392,4 +392,162 @@ public class VacationApprovalApproveTests : IDisposable
         // Assert
         canApprove.Should().BeFalse("approver holds the grant in neither of the requester's companies");
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Cascade tests (Task 4 — Epic 6)
+    // VA-A09: Approving one copy cascades the terminal Approved decision to siblings
+    // VA-A10: Declining one copy cascades the terminal Declined decision to siblings
+    // VA-A11: NULL LeaveGroupId — approving a standalone request touches no other row
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Creates a TimeOffRequest in an arbitrary company for the given userId.
+    /// Unlike CreateRequestAsync, does NOT pin to TestCompanyId so cascade tests
+    /// can place the sibling in company 2.
+    /// </summary>
+    private async Task<TimeOffRequest> CreateRequestInCompanyAsync(
+        int companyId, int userId,
+        DateOnly startDate, DateOnly endDate,
+        RequestStatus status = RequestStatus.Pending,
+        Guid? leaveGroupId = null)
+    {
+        var request = new TimeOffRequest
+        {
+            CompanyId = companyId,
+            UserId = userId,
+            StartDate = startDate,
+            EndDate = endDate,
+            Type = TimeOffType.Vacation,
+            Status = status,
+            LeaveGroupId = leaveGroupId
+        };
+        _db.TimeOffRequests.Add(request);
+        await _db.SaveChangesAsync();
+        return request;
+    }
+
+    /// <summary>
+    /// VA-A09: Approve_CascadesToGroup
+    /// Two requests share one LeaveGroupId (company-1 copy + company-2 copy), both Pending.
+    /// Approving the company-1 copy → BOTH copies become Approved;
+    /// the sibling's ApproverId and FirstApprovalActorId are set to the acting approver.
+    /// Short leave (1 day) guarantees single-approval flow.
+    /// </summary>
+    [Fact]
+    public async Task ApproveAsync_CascadesToGroup_BothCopiesApproved()
+    {
+        // Arrange
+        const int company2Id = 2;
+        var groupId = Guid.NewGuid();
+        var start = new DateOnly(2026, 5, 1);
+        var end   = new DateOnly(2026, 5, 1); // 1 day — single-approval guaranteed
+
+        await SeedUsersAsync();
+
+        var company1Copy = await CreateRequestInCompanyAsync(
+            TestCompanyId, EmployeeUserId, start, end, leaveGroupId: groupId);
+        var company2Copy = await CreateRequestInCompanyAsync(
+            company2Id, EmployeeUserId, start, end, leaveGroupId: groupId);
+
+        // Act
+        var (success, message) = await _service.ApproveAsync(company1Copy.Id, ApproverUserId);
+
+        // Assert — acting request succeeded
+        success.Should().BeTrue(message);
+        message.Should().Contain("Approved");
+
+        // Assert — sibling was cascaded to Approved
+        var sibling = await _db.TimeOffRequests.FindAsync(company2Copy.Id);
+        sibling.Should().NotBeNull();
+        sibling!.Status.Should().Be(RequestStatus.Approved,
+            "cascade must propagate the terminal Approved decision to all group siblings");
+        sibling.ApproverId.Should().Be(ApproverUserId,
+            "cascade must copy the ApproverId from the acting request to the sibling");
+        sibling.FirstApprovalActorId.Should().Be(ApproverUserId,
+            "cascade must copy FirstApprovalActorId so the audit trail shows who approved");
+    }
+
+    /// <summary>
+    /// VA-A10: Decline_CascadesToGroup
+    /// Two requests share one LeaveGroupId, both Pending.
+    /// Declining the company-1 copy → BOTH copies become Declined.
+    /// </summary>
+    [Fact]
+    public async Task DeclineAsync_CascadesToGroup_BothCopiesDeclined()
+    {
+        // Arrange
+        const int company2Id = 2;
+        var groupId = Guid.NewGuid();
+        var start = new DateOnly(2026, 5, 2);
+        var end   = new DateOnly(2026, 5, 2);
+
+        await SeedUsersAsync();
+
+        var company1Copy = await CreateRequestInCompanyAsync(
+            TestCompanyId, EmployeeUserId, start, end, leaveGroupId: groupId);
+        var company2Copy = await CreateRequestInCompanyAsync(
+            company2Id, EmployeeUserId, start, end, leaveGroupId: groupId);
+
+        // Act
+        var (success, message) = await _service.DeclineAsync(company1Copy.Id, ApproverUserId);
+
+        // Assert — acting request declined
+        success.Should().BeTrue(message);
+        message.Should().Contain("Declined");
+
+        // Assert — sibling was cascaded to Declined
+        var sibling = await _db.TimeOffRequests.FindAsync(company2Copy.Id);
+        sibling.Should().NotBeNull();
+        sibling!.Status.Should().Be(RequestStatus.Declined,
+            "cascade must propagate the terminal Declined decision to all group siblings");
+    }
+
+    /// <summary>
+    /// VA-A11: Approve_NullLeaveGroupId_DoesNotCascade
+    /// A standalone request (LeaveGroupId == null) is approved; an unrelated pending
+    /// request (different user, different company) must NOT be affected.
+    /// </summary>
+    [Fact]
+    public async Task ApproveAsync_NullLeaveGroupId_DoesNotCascadeToUnrelatedRequest()
+    {
+        // Arrange
+        const int otherUserId   = 30;
+        const int otherCompanyId = 2;
+
+        await SeedUsersAsync();
+        // Seed an unrelated user in company 2
+        _db.Users.Add(new AppUser
+        {
+            Id = otherUserId,
+            Email = "other@test.com",
+            CompanyId = otherCompanyId,
+            Role = UserRole.Employee,
+            DisplayName = "Other Employee",
+            IsActive = true
+        });
+        await _db.SaveChangesAsync();
+
+        // Standalone request with no group id
+        var standalone = await CreateRequestInCompanyAsync(
+            TestCompanyId, EmployeeUserId,
+            new DateOnly(2026, 5, 10), new DateOnly(2026, 5, 10),
+            leaveGroupId: null);
+
+        // Unrelated pending request — different user, different company, no group
+        var unrelated = await CreateRequestInCompanyAsync(
+            otherCompanyId, otherUserId,
+            new DateOnly(2026, 5, 10), new DateOnly(2026, 5, 10),
+            leaveGroupId: null);
+
+        // Act
+        var (success, _) = await _service.ApproveAsync(standalone.Id, ApproverUserId);
+
+        // Assert — standalone approval succeeds
+        success.Should().BeTrue();
+
+        // Assert — unrelated request is completely untouched
+        var untouched = await _db.TimeOffRequests.FindAsync(unrelated.Id);
+        untouched!.Status.Should().Be(RequestStatus.Pending,
+            "a null LeaveGroupId must never cascade to any other request");
+    }
 }

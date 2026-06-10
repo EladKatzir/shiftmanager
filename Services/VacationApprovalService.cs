@@ -438,6 +438,33 @@ public class VacationApprovalService : IVacationApprovalService
             {
                 _logger.LogError(ex, "Materialiser failed for approved request {RequestId}", requestId);
             }
+
+            // Cascade the terminal Approved decision to all sibling copies that share the
+            // same LeaveGroupId. Only fires on the FINAL transition (finalApproved == true) —
+            // an intermediate PendingSecondApproval state is NOT cascaded; each copy must
+            // advance its own dual-approval tiers independently. The first copy that reaches
+            // terminal Approved pulls all remaining non-terminal siblings to Approved.
+            if (request.LeaveGroupId.HasValue)
+            {
+                try
+                {
+                    // Re-read the now-committed acting request so we copy the accurate
+                    // post-commit approval-actor field values to siblings.
+                    var committed = await _context.TimeOffRequests
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(r => r.Id == requestId);
+                    if (committed != null)
+                    {
+                        await CascadeGroupDecisionAsync(committed, RequestStatus.Approved);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Cascade-approve failed for group {LeaveGroupId} (acting request {RequestId}). Siblings may need manual remediation.",
+                        request.LeaveGroupId, requestId);
+                }
+            }
         }
 
         return (true, "VacationApproval_Approved");
@@ -511,6 +538,22 @@ public class VacationApprovalService : IVacationApprovalService
         if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HomeUnification))
         {
             await _materialiser.SyncMaterialisedHomeRowsAsync(requestId);
+        }
+
+        // Cascade the terminal Declined decision to all sibling copies that share the same
+        // LeaveGroupId. Any eligible manager declining one copy terminates the whole group.
+        if (request.LeaveGroupId.HasValue)
+        {
+            try
+            {
+                await CascadeGroupDecisionAsync(request, RequestStatus.Declined);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Cascade-decline failed for group {LeaveGroupId} (acting request {RequestId}). Siblings may need manual remediation.",
+                    request.LeaveGroupId, requestId);
+            }
         }
 
         return (true, "VacationApproval_Declined");
@@ -990,6 +1033,147 @@ public class VacationApprovalService : IVacationApprovalService
         await _notificationService.CreateTimeOffNotificationAsync(
             request.UserId, RequestStatus.Approved,
             request.StartDate, request.EndDate, request.Id);
+    }
+
+    /// <summary>
+    /// Cascades a terminal approval decision (Approved or Declined) to every non-terminal
+    /// sibling in the same LeaveGroup.
+    ///
+    /// Design contract:
+    /// <list type="bullet">
+    ///   <item>Called ONLY after the acting request has already been committed to a TERMINAL
+    ///         state (<see cref="RequestStatus.Approved"/> or <see cref="RequestStatus.Declined"/>).
+    ///         Never called for the intermediate <see cref="RequestStatus.PendingSecondApproval"/>
+    ///         state — each copy advances its own dual-approval tiers independently; this method
+    ///         fires only when the FIRST copy reaches its final outcome and pulls the rest.</item>
+    ///   <item>Sets sibling status DIRECTLY without calling
+    ///         <see cref="ApproveAsync"/> / <see cref="DeclineAsync"/> recursively — guards
+    ///         against infinite loops.</item>
+    ///   <item>For <see cref="RequestStatus.Approved"/> cascades: copies the approval-actor
+    ///         fields from the acting request so the audit trail on every sibling shows
+    ///         the real approver.</item>
+    ///   <item>Each sibling is persisted in its own transaction and its side-effects /
+    ///         materialiser are fired independently, so each company's shifts and
+    ///         notifications are processed correctly.</item>
+    ///   <item>Uses <c>IgnoreQueryFilters()</c> because sibling copies live in different
+    ///         companies — the current tenant filter would hide them.</item>
+    /// </list>
+    /// </summary>
+    private async Task CascadeGroupDecisionAsync(TimeOffRequest actingRequest, RequestStatus terminalStatus)
+    {
+        if (actingRequest.LeaveGroupId is null)
+            return; // nothing to cascade for standalone requests (belt-and-suspenders guard)
+
+        // Load all non-terminal siblings that still need a decision.
+        // SECURITY-AUDITED: IgnoreQueryFilters SAFE — sibling copies of the SAME leave belong
+        // to other companies; scoped by the known LeaveGroupId value.
+        var siblings = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
+            .Where(r => r.LeaveGroupId == actingRequest.LeaveGroupId
+                     && r.Id != actingRequest.Id
+                     && r.Status != RequestStatus.Approved
+                     && r.Status != RequestStatus.Declined
+                     && r.Status != RequestStatus.Canceled)
+            .ToListAsync();
+
+        if (siblings.Count == 0)
+            return;
+
+        var now = DateTime.UtcNow;
+
+        foreach (var sibling in siblings)
+        {
+            using var tx = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Re-fetch inside the sibling's own transaction for concurrency safety.
+                var fresh = await _context.TimeOffRequests
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(r => r.Id == sibling.Id);
+
+                if (fresh == null
+                    || fresh.Status == RequestStatus.Approved
+                    || fresh.Status == RequestStatus.Declined
+                    || fresh.Status == RequestStatus.Canceled)
+                {
+                    // Already resolved by a concurrent action — skip without rolling back.
+                    await tx.RollbackAsync();
+                    continue;
+                }
+
+                fresh.Status = terminalStatus;
+
+                if (terminalStatus == RequestStatus.Approved)
+                {
+                    // Copy audit fields from the acting request so every sibling's audit
+                    // trail reflects the real approver rather than being left null.
+                    fresh.ApproverId             = actingRequest.ApproverId;
+                    fresh.FirstApprovalActorId   = actingRequest.FirstApprovalActorId;
+                    fresh.FirstApprovalActedAt   = actingRequest.FirstApprovalActedAt ?? now;
+                    fresh.SecondApprovalActorId  = actingRequest.SecondApprovalActorId;
+                    fresh.SecondApprovalActedAt  = actingRequest.SecondApprovalActedAt;
+                }
+
+                await _context.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex,
+                    "Cascade transaction failed for sibling request {SiblingId} (group {LeaveGroupId}, status {TerminalStatus})",
+                    sibling.Id, actingRequest.LeaveGroupId, terminalStatus);
+                continue; // attempt remaining siblings
+            }
+
+            // Fire side-effects for this sibling outside its own save-transaction,
+            // mirroring exactly how the acting request fires them in ApproveAsync.
+            if (terminalStatus == RequestStatus.Approved)
+            {
+                try
+                {
+                    await ProcessApprovalSideEffectsAsync(sibling.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Side effects failed for cascaded-approved sibling {SiblingId}. Manual remediation may be needed.",
+                        sibling.Id);
+                }
+
+                try
+                {
+                    if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HomeUnification))
+                    {
+                        await _materialiser.SyncMaterialisedHomeRowsAsync(sibling.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Materialiser failed for cascaded-approved sibling {SiblingId}", sibling.Id);
+                }
+            }
+            else // Declined
+            {
+                try
+                {
+                    if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HomeUnification))
+                    {
+                        await _materialiser.SyncMaterialisedHomeRowsAsync(sibling.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Materialiser failed for cascaded-declined sibling {SiblingId}", sibling.Id);
+                }
+            }
+
+            _logger.LogInformation(
+                "Cascade {TerminalStatus}: sibling request {SiblingId} (group {LeaveGroupId}) resolved by acting request {ActingRequestId}",
+                terminalStatus, sibling.Id, actingRequest.LeaveGroupId, actingRequest.Id);
+        }
     }
 
     /// <summary>
