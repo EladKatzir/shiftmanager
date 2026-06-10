@@ -15924,6 +15924,15 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Users_Membership_RemoveConfirm" xml:space="preserve">
     <value>Remove membership</value>
   </data>
+  <data name="Users_Membership_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Users_Membership_EditTitle" xml:space="preserve">
+    <value>Edit company membership</value>
+  </data>
+  <data name="Users_Membership_Updated" xml:space="preserve">
+    <value>Membership updated successfully.</value>
+  </data>
   <data name="Error_CannotRemovePrimaryMembership" xml:space="preserve">
     <value>Cannot remove the primary membership — promote another membership to primary first.</value>
   </data>

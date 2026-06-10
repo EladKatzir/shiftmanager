@@ -171,6 +171,36 @@ public class CompanyMembershipService : ICompanyMembershipService
     }
 
     /// <inheritdoc/>
+    public async Task<int?> UpdateMembershipAsync(int membershipId, int? roleTemplateId, int? jobTypeId, bool doesShifts, int actingAdminId)
+    {
+        var membership = await _db.CompanyMemberships
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(m => m.Id == membershipId && !m.IsDeleted);
+
+        if (membership == null)
+            throw new InvalidOperationException($"Membership {membershipId} not found or already deleted.");
+
+        if (membership.IsPrimary)
+            throw new InvalidOperationException(
+                "Cannot update the primary membership via UpdateMembershipAsync; primary edits go through the user-row handlers that sync AppUser.");
+
+        var oldRoleTemplateId = membership.RoleTemplateId;
+
+        membership.RoleTemplateId = roleTemplateId;
+        membership.JobTypeId = jobTypeId;
+        membership.DoesShifts = doesShifts;
+
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Updated membership {MembershipId} (user {UserId}, company {CompanyId}): roleTemplate {Old}→{New}, jobType {JobType}, doesShifts {DoesShifts} (by admin {ActorId})",
+            membership.Id, membership.UserId, membership.CompanyId,
+            oldRoleTemplateId, roleTemplateId, jobTypeId, doesShifts, actingAdminId);
+
+        return oldRoleTemplateId;
+    }
+
+    /// <inheritdoc/>
     public async Task<bool> RemoveMembershipWithCleanupAsync(int userId, int companyId, int actingAdminId)
     {
         // SECURITY-AUDITED: all deletes/updates are scoped to BOTH UserId == userId AND

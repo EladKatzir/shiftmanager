@@ -1140,6 +1140,20 @@
                                                             @Localizer["Users_Membership_MakePrimary"]
                                                         </button>
                                                     </form>
+                                                    @* Edit membership *@
+                                                    <button type="button"
+                                                            class="btn btn-xs btn-secondary js-edit-membership"
+                                                            data-membership-id="@m.MembershipId"
+                                                            data-user-id="@u.Id"
+                                                            data-user-name="@u.DisplayName"
+                                                            data-company-id="@m.CompanyId"
+                                                            data-company-name="@m.CompanyName"
+                                                            data-role-template-id="@(m.RoleTemplateId?.ToString() ?? "")"
+                                                            data-job-type-id="@(m.JobTypeId?.ToString() ?? "")"
+                                                            data-does-shifts="@(m.DoesShifts ? "true" : "false")"
+                                                            title="@Localizer["Users_Membership_EditTitle"]">
+                                                        @Localizer["Users_Membership_Edit"]
+                                                    </button>
                                                     @* Remove membership *@
                                                     <button type="button"
                                                             class="btn btn-xs btn-danger js-remove-membership"
@@ -1322,6 +1336,46 @@
     </form>
 </dialog>
 
+@* Edit membership dialog — pre-filled with current role/jobtype/doesShifts; non-destructive *@
+<dialog id="editMembershipDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:480px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+    <form method="post" asp-page-handler="UpdateMembership" id="editMembershipForm" style="margin:0; padding:1.5rem;">
+        @Html.AntiForgeryToken()
+        <h2 class="section-title" style="margin-top:0;">@Localizer["Users_Membership_EditTitle"]</h2>
+        <p id="editMembershipUserName" style="font-weight:600; margin:0.25rem 0 1rem; color:var(--text);"></p>
+        <input type="hidden" name="membershipId" id="editMembershipId" />
+        <input type="hidden" name="userId" id="editMembershipUserId" />
+        <input type="hidden" name="companyId" id="editMembershipCompanyId" />
+
+        <label for="editMembershipRole" style="display:block; margin-bottom:0.35rem;">@Localizer["Users_Membership_Role"]</label>
+        <select id="editMembershipRole" name="roleTemplateId" class="form-input" style="width:100%; margin-bottom:1rem;">
+            <option value="">@Localizer["Users_Membership_SelectRole"]</option>
+            @foreach (var rt in Model.AssignableRoleTemplates)
+            {
+                <option value="@rt.Id">@RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)</option>
+            }
+        </select>
+
+        <label for="editMembershipJobType" style="display:block; margin-bottom:0.35rem;">@Localizer["JobType"]</label>
+        <select id="editMembershipJobType" name="jobTypeId" class="form-input" style="width:100%; margin-bottom:1rem;">
+            <option value="">@Localizer["Users_Membership_SelectJobType"]</option>
+            @foreach (var jt in Model.AvailableJobTypes)
+            {
+                <option value="@jt.Id">@jt.Name</option>
+            }
+        </select>
+
+        <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; cursor:pointer;">
+            <input type="checkbox" name="doesShifts" value="true" id="editMembershipDoesShifts" />
+            <span>@Localizer["Users_Membership_DoesShifts"]</span>
+        </label>
+
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button type="button" class="btn" id="editMembershipCancelBtn">@Localizer["Button_Cancel"]</button>
+            <button type="submit" class="btn btn-primary">@Localizer["Button_Save"]</button>
+        </div>
+    </form>
+</dialog>
+
 @* Remove membership dialog — mirrors Move dialog: fetch impact → show summary → confirm POST *@
 <dialog id="removeMembershipDialog" data-error-text="@Localizer["Error_Generic"].Value" style="border:none; border-radius:0.75rem; padding:0; max-width:480px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
     <form method="post" asp-page-handler="RemoveMembership" id="removeMembershipForm" style="margin:0; padding:1.5rem;">
@@ -1463,6 +1517,36 @@
             });
 
             var cancelBtn = document.getElementById('addMembershipCancelBtn');
+            if (cancelBtn) cancelBtn.addEventListener('click', function () { dlg.close(); });
+        })();
+
+        // --- Edit membership dialog ---
+        (function () {
+            var dlg = document.getElementById('editMembershipDialog');
+            if (!dlg) return;
+            var idField = document.getElementById('editMembershipId');
+            var userIdField = document.getElementById('editMembershipUserId');
+            var companyIdField = document.getElementById('editMembershipCompanyId');
+            var userNameLabel = document.getElementById('editMembershipUserName');
+            var roleSelect = document.getElementById('editMembershipRole');
+            var jobTypeSelect = document.getElementById('editMembershipJobType');
+            var doesShiftsCb = document.getElementById('editMembershipDoesShifts');
+
+            document.querySelectorAll('.js-edit-membership').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    idField.value = btn.dataset.membershipId;
+                    userIdField.value = btn.dataset.userId;
+                    companyIdField.value = btn.dataset.companyId;
+                    userNameLabel.textContent = btn.dataset.userName + (btn.dataset.companyName ? ' — ' + btn.dataset.companyName : '');
+                    // Pre-fill current values
+                    roleSelect.value = btn.dataset.roleTemplateId || '';
+                    jobTypeSelect.value = btn.dataset.jobTypeId || '';
+                    doesShiftsCb.checked = btn.dataset.doesShifts === 'true';
+                    dlg.showModal();
+                });
+            });
+
+            var cancelBtn = document.getElementById('editMembershipCancelBtn');
             if (cancelBtn) cancelBtn.addEventListener('click', function () { dlg.close(); });
         })();
 

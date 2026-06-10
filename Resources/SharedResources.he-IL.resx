@@ -15886,6 +15886,15 @@
   <data name="Users_Membership_RemoveConfirm" xml:space="preserve">
     <value>הסר שייכות</value>
   </data>
+  <data name="Users_Membership_Edit" xml:space="preserve">
+    <value>ערוך</value>
+  </data>
+  <data name="Users_Membership_EditTitle" xml:space="preserve">
+    <value>עריכת שייכות לחברה</value>
+  </data>
+  <data name="Users_Membership_Updated" xml:space="preserve">
+    <value>השייכות עודכנה בהצלחה.</value>
+  </data>
   <data name="Error_CannotRemovePrimaryMembership" xml:space="preserve">
     <value>לא ניתן להסיר את השייכות הראשית — תחילה קבע שייכות אחרת כראשית.</value>
   </data>

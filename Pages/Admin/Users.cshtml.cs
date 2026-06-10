@@ -81,7 +81,7 @@ public partial class UsersModel : LocalizedPageModel
     }
 
     public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, bool DoesShifts, string? ShiftCategoryNames, List<int> ShiftCategoryIds, int? MoleculeId, int CompanyId = 0, IReadOnlyList<UserMembershipVM>? Memberships = null);
-    public record UserMembershipVM(int MembershipId, int CompanyId, string CompanyName, bool IsPrimary, string? RoleName, string? JobTypeName, bool DoesShifts);
+    public record UserMembershipVM(int MembershipId, int CompanyId, string CompanyName, bool IsPrimary, string? RoleName, string? JobTypeName, bool DoesShifts, int? RoleTemplateId = null, int? JobTypeId = null);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId, string? AuthMethod);
     public record MoleculeOption(int Id, string Name, string AreaName);
     public record JobTypeOption(int Id, string Name, string AreaName, string? Key);
@@ -659,7 +659,9 @@ public partial class UsersModel : LocalizedPageModel
                         m.IsPrimary,
                         m.RoleTemplateId.HasValue && membershipRoleNames.TryGetValue(m.RoleTemplateId.Value, out var rn) ? rn : null,
                         m.JobTypeId.HasValue && membershipJobTypeNames.TryGetValue(m.JobTypeId.Value, out var jtn) ? jtn : null,
-                        m.DoesShifts))
+                        m.DoesShifts,
+                        m.RoleTemplateId,
+                        m.JobTypeId))
                     .ToList());
 
         // Build user list — directors get a single row with molecule scope display

@@ -63,6 +63,100 @@ public partial class UsersModel
         return RedirectToPage();
     }
 
+    // ── Update membership (role / job-type / does-shifts) ────────────────────
+
+    /// <summary>
+    /// Non-destructively updates an ADDITIONAL (non-primary) membership's role template, job type,
+    /// and does-shifts flag. Does NOT touch shifts, time-off, chores, or swap requests.
+    /// Grant reconciliation is COMPANY-SCOPED: only grants for the membership's company are touched,
+    /// leaving all other companies' grants intact. Uses direct DB removal (not RemoveAutoGrantsAsync
+    /// which is GLOBAL and would nuke the same grant types in the primary company).
+    /// </summary>
+    public async Task<IActionResult> OnPostUpdateMembershipAsync(
+        int membershipId, int userId, int companyId, int? roleTemplateId, int? jobTypeId, bool doesShifts)
+    {
+        if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var adminId))
+            return Forbid();
+
+        var authError = await AuthorizeMembershipActionAsync(adminId, userId, companyId);
+        if (authError != null)
+        {
+            TempData["ErrorMessage"] = _localizer[authError].Value;
+            return RedirectToPage();
+        }
+
+        try
+        {
+            // UpdateMembershipAsync returns the OLD roleTemplateId so we can reconcile grants.
+            var oldRoleTemplateId = await _companyMembershipService.UpdateMembershipAsync(
+                membershipId, roleTemplateId, jobTypeId, doesShifts, actingAdminId: adminId);
+
+            // ── GRANT RECONCILIATION — COMPANY-SCOPED ──────────────────────────────────────
+            // CRITICAL: RemoveAutoGrantsAsync is GLOBAL (no CompanyId filter) — using it here
+            // would remove the same grant types from the user's primary company and every other
+            // company membership that shares grant types with the old template. We MUST do the
+            // removal ourselves, scoped to companyId only.
+
+            bool roleChanged = oldRoleTemplateId != roleTemplateId;
+            if (roleChanged)
+            {
+                // Remove the old template's AUTO grants scoped to THIS company only.
+                if (oldRoleTemplateId.HasValue)
+                {
+                    var oldTemplate = await _db.RoleTemplates
+                        .IgnoreQueryFilters()
+                        .Include(rt => rt.AutoGrants)
+                        .FirstOrDefaultAsync(rt => rt.Id == oldRoleTemplateId.Value);
+
+                    if (oldTemplate != null)
+                    {
+                        var oldGrantTypeIds = oldTemplate.AutoGrants.Select(ag => ag.GrantTypeId).ToList();
+
+                        // SECURITY-AUDITED: scoped to BOTH userId == userId AND CompanyId == companyId.
+                        // IsAutoGrant == true ensures we only remove template-derived grants, not manually added ones.
+                        var grantsToRemove = await _db.Grants.IgnoreQueryFilters()
+                            .Where(g => g.UserId == userId
+                                && g.CompanyId == companyId
+                                && g.IsAutoGrant
+                                && oldGrantTypeIds.Contains(g.GrantTypeId))
+                            .ToListAsync();
+
+                        _db.Grants.RemoveRange(grantsToRemove);
+                        await _db.SaveChangesAsync();
+                    }
+                }
+
+                // Apply the new template's grants scoped to the membership's company.
+                if (roleTemplateId.HasValue)
+                {
+                    var newTemplate = await _roleService.GetRoleTemplateAsync(roleTemplateId.Value);
+                    if (newTemplate != null)
+                    {
+                        var grantScope = await BuildGrantScopeForTemplateAsync(newTemplate.Key, companyId, jobTypeId);
+                        await _grantService.AssignRoleTemplateGrantsAsync(userId, newTemplate.Key, grantScope, adminId);
+                    }
+                }
+            }
+
+            await _auditLogService.LogUserActionAsync(
+                userId: adminId,
+                action: "MembershipUpdated",
+                entityType: "CompanyMembership",
+                entityId: userId,
+                description: $"Updated membership {membershipId} for user #{userId} in company #{companyId} (roleTemplate {oldRoleTemplateId}→{roleTemplateId}, jobType={jobTypeId}, doesShifts={doesShifts})");
+
+            TempData["SuccessMessage"] = _localizer["Users_Membership_Updated"].Value;
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message.Contains("primary")
+                ? _localizer["Error_CannotRemovePrimaryMembership"].Value
+                : _localizer["Error_MembershipNotFound"].Value;
+        }
+
+        return RedirectToPage();
+    }
+
     // ── Remove membership — impact preview (AJAX GET) ─────────────────────────
 
     /// <summary>

@@ -59,4 +59,13 @@ public interface ICompanyMembershipService
     /// (promote another membership to primary first, then remove this one).
     /// </summary>
     Task<bool> RemoveMembershipWithCleanupAsync(int userId, int companyId, int actingAdminId);
+
+    /// <summary>
+    /// Updates an ADDITIONAL (non-primary) membership's role template, job type, and does-shifts
+    /// flag WITHOUT touching operational records (shifts, time-off, chores, swap requests).
+    /// Grant reconciliation is performed in the handler (which has access to BuildGrantScopeForTemplateAsync).
+    /// Throws <see cref="InvalidOperationException"/> if the membership is the primary or not found.
+    /// Returns the old RoleTemplateId so the handler can do a company-scoped grant reconcile.
+    /// </summary>
+    Task<int?> UpdateMembershipAsync(int membershipId, int? roleTemplateId, int? jobTypeId, bool doesShifts, int actingAdminId);
 }
