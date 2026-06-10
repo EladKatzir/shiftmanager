@@ -52,7 +52,7 @@ public class UsersModelMoveAuthTests : IDisposable
             Mock.Of<IAuditLogService>(), Mock.Of<IMailService>(), Mock.Of<INotificationService>(),
             _grants.Object, Mock.Of<IRoleService>(), Mock.Of<IJobTypeService>(),
             Mock.Of<IConcurrencyService>(), Mock.Of<ITenantResolver>(), Mock.Of<IHierarchyService>(),
-            _transfer.Object, Mock.Of<IShiftCategoryService>());
+            _transfer.Object, Mock.Of<IShiftCategoryService>(), Mock.Of<ICompanyMembershipService>());
 
         var httpContext = new DefaultHttpContext
         {
