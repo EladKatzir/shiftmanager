@@ -136,40 +136,6 @@ public class MailService : IMailService
     /// Times are formatted as supplied — callers MUST pass UTC for timed events (the trailing 'Z'
     /// asserts UTC); all-day events use date-only.
     /// </summary>
-    // Shift/chore/on-duty times are stored as local (Israel) wall-clock. Felix calendar events
-    // require UTC (trailing 'Z'), so convert before sending. Resolved once; IANA id works on
-    // .NET 8 (ICU) across Windows/Linux, with the Windows id + UTC as fallbacks.
-    private static readonly TimeZoneInfo IsraelTimeZone = ResolveIsraelTimeZone();
-
-    private static TimeZoneInfo ResolveIsraelTimeZone()
-    {
-        foreach (var id in new[] { "Asia/Jerusalem", "Israel Standard Time" })
-        {
-            try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
-            catch (TimeZoneNotFoundException) { }
-            catch (InvalidTimeZoneException) { }
-        }
-        return TimeZoneInfo.Utc;
-    }
-
-    /// <summary>Convert a local (Israel) date+time to UTC for a Felix calendar event.</summary>
-    internal static DateTime ToUtc(DateOnly date, TimeOnly time)
-    {
-        var local = date.ToDateTime(time, DateTimeKind.Unspecified);
-        return TimeZoneInfo.ConvertTimeToUtc(local, IsraelTimeZone);
-    }
-
-    /// <summary>
-    /// Compute the UTC start/end for a shift, accounting for overnight shifts (end ≤ start rolls to
-    /// the next day).
-    /// </summary>
-    internal static (DateTime startUtc, DateTime endUtc) ShiftWindowUtc(DateOnly date, TimeOnly start, TimeOnly end)
-    {
-        var startUtc = ToUtc(date, start);
-        var endDate = end > start ? date : date.AddDays(1);
-        return (startUtc, ToUtc(endDate, end));
-    }
-
     internal static (string url, object payload) BuildSendTarget(
         string baseApiUrl, string from, string to, string subject, string html,
         CalendarEventKind kind, DateTime? startUtc, DateTime? endUtc, string? location)
@@ -703,7 +669,7 @@ public class MailService : IMailService
 </html>";
 
         // "Summon" the employee to the shift: deliver as a native Outlook calendar invite via Felix.
-        var (startUtc, endUtc) = ShiftWindowUtc(shiftDate, startTime, endTime);
+        var (startUtc, endUtc) = Helpers.IsraelTime.ShiftWindowUtc(shiftDate, startTime, endTime);
         return await SendCalendarMailAsync(recipientEmail, subject, htmlBody, CalendarEventKind.Timed, startUtc, endUtc, location: null);
     }
 

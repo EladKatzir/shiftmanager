@@ -279,6 +279,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ShiftManager.Services.Notifications.INotificationDispatcher, ShiftManager.Services.Notifications.NotificationDispatcher>();
 builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
 builder.Services.AddSingleton<ShiftManager.Services.Notifications.INotificationLinkTokenService, ShiftManager.Services.Notifications.NotificationLinkTokenService>();
+builder.Services.AddScoped<ShiftManager.Services.Notifications.ICalendarFeedService, ShiftManager.Services.Notifications.CalendarFeedService>();
 builder.Services.AddScoped<IDirectorService, DirectorService>();
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<ICompanyFilterService, CompanyFilterService>();
@@ -2080,6 +2081,19 @@ app.MapHealthChecks("/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.
 {
     Predicate = check => check.Tags.Contains("ready")
 });
+
+// Notifications overhaul Phase 4: anonymous iCalendar subscription feed. The secret token in the
+// URL authenticates the user (no login), so they can add the feed to Outlook once and have their
+// shifts/chores/on-duty auto-sync. Each fetch stamps LastPolledAt (drives subscription-aware routing).
+app.MapGet("/calendar/feed/{token}.ics", async (string token, ShiftManager.Services.Notifications.ICalendarFeedService feed) =>
+{
+    var resolved = await feed.ResolveAndStampAsync(token);
+    if (resolved == null)
+        return Results.NotFound();
+
+    var ics = await feed.BuildFeedAsync(resolved.Value.userId, resolved.Value.companyId, DateTime.UtcNow);
+    return Results.Text(ics, "text/calendar; charset=utf-8");
+}).AllowAnonymous();
 
 // H-02: Version tracking endpoint — returns app version for deployment verification
 app.MapGet("/api/v1/version", () =>
