@@ -347,8 +347,9 @@ public class ProfileModel : LocalizedPageModel
         Skills = string.Join(", ", SkillsList);
         Certifications = string.Join(", ", CertificationsList);
 
-        // Avatar
-        AvatarUrl = _avatarService.GetAvatarUrl(user.Id, user.AvatarFileName, thumbnail: false);
+        // Avatar — supply the user's own CompanyId so the URL is always correct, even if the
+        // active tenant were to differ (e.g. after a future multi-company context switch).
+        AvatarUrl = _avatarService.GetAvatarUrl(user.Id, user.AvatarFileName, thumbnail: false, ownerCompanyId: user.CompanyId);
         InitialsForAvatar = _avatarService.GetDefaultAvatarInitials(user.DisplayName);
     }
 

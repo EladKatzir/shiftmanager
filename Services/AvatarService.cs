@@ -13,7 +13,7 @@ public interface IAvatarService
 {
     Task<(bool Success, string? FileName, string? Error)> UploadAvatarAsync(int userId, IFormFile file);
     Task<bool> DeleteAvatarAsync(int userId);
-    string GetAvatarUrl(int userId, string? avatarFileName, bool thumbnail = false);
+    string GetAvatarUrl(int userId, string? avatarFileName, bool thumbnail = false, int? ownerCompanyId = null);
     string GetDefaultAvatarInitials(string displayName);
 }
 
@@ -196,7 +196,7 @@ public class AvatarService : IAvatarService
         }
     }
 
-    public string GetAvatarUrl(int userId, string? avatarFileName, bool thumbnail = false)
+    public string GetAvatarUrl(int userId, string? avatarFileName, bool thumbnail = false, int? ownerCompanyId = null)
     {
         if (string.IsNullOrWhiteSpace(avatarFileName))
         {
@@ -204,7 +204,10 @@ public class AvatarService : IAvatarService
             return string.Empty;
         }
 
-        var companyId = _tenantResolver.GetCurrentTenantId();
+        // Avatars are stored under the OWNER's company folder (UploadAvatarAsync uses user.CompanyId).
+        // Resolve to the owner's company when provided; fall back to the active tenant only for
+        // same-company callers that don't pass it.
+        var companyId = ownerCompanyId ?? _tenantResolver.GetCurrentTenantId();
         var fileName = thumbnail ? $"{userId}_thumb.jpg" : avatarFileName;
         return $"/avatars/{companyId}/{fileName}";
     }

@@ -619,8 +619,10 @@ public class EditProfileModel : LocalizedPageModel
         Skills = string.Join(", ", skillsList);
         Certifications = string.Join(", ", certificationsList);
 
-        // Avatar
-        AvatarUrl = _avatarService.GetAvatarUrl(user.Id, user.AvatarFileName, thumbnail: false);
+        // Avatar — pass the loaded user's own CompanyId so the URL resolves to the OWNER's
+        // company folder. Without this, a cross-company admin would get the viewer's tenant
+        // folder instead and the image would 404.
+        AvatarUrl = _avatarService.GetAvatarUrl(user.Id, user.AvatarFileName, thumbnail: false, ownerCompanyId: user.CompanyId);
         InitialsForAvatar = _avatarService.GetDefaultAvatarInitials(user.DisplayName);
 
         // Populate rank dropdown options
