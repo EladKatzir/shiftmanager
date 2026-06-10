@@ -293,6 +293,14 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<TimeOffRequest>()
             .HasIndex(t => new { t.CompanyId, t.UserId, t.StartDate });
 
+        // Multi-company leave fan-out: filtered index on LeaveGroupId. The cascade
+        // approve/decline/cancel paths query WHERE LeaveGroupId = ?; this index keeps that
+        // lookup fast while excluding the overwhelming majority of rows (single-company
+        // leaves where LeaveGroupId IS NULL).
+        modelBuilder.Entity<TimeOffRequest>()
+            .HasIndex(t => t.LeaveGroupId)
+            .HasFilter("\"LeaveGroupId\" IS NOT NULL");
+
         // HOME unification: per-molecule approval settings
         modelBuilder.Entity<MoleculeApprovalSettings>(b => {
             b.HasOne(m => m.Molecule)

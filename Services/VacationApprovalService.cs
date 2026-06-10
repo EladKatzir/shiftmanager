@@ -319,11 +319,17 @@ public class VacationApprovalService : IVacationApprovalService
 
             if (willFinalApprove)
             {
+                // Exclude same-group siblings from the overlap check: a fan-out copy shares the
+                // SAME logical leave/dates, so an already-Approved sibling must never count as an
+                // "overlap" against this copy. Without this, a sibling left stuck (e.g. its cascade
+                // failed) could never be approved through the normal path — the acting copy that
+                // is already Approved would always trip the overlap guard.
                 var hasOverlap = await _context.TimeOffRequests
                     .IgnoreQueryFilters()
                     .AnyAsync(r => r.UserId == freshRequest.UserId
                         && r.Id != requestId
                         && r.Status == RequestStatus.Approved
+                        && (freshRequest.LeaveGroupId == null || r.LeaveGroupId != freshRequest.LeaveGroupId)
                         && r.StartDate <= freshRequest.EndDate
                         && r.EndDate >= freshRequest.StartDate);
 
@@ -597,12 +603,14 @@ public class VacationApprovalService : IVacationApprovalService
 
         // Build the union of company ids that the approver grant is checked against:
         // always start with the request's own company, then add each of the requester's
-        // other membership companies so that any eligible manager from any of their companies
-        // can approve. For single-company users (no extra memberships) this is exactly the
-        // previous behavior: only request.CompanyId is checked.
+        // other membership companies WHERE DoesShifts is true. Leave is fanned out (and the
+        // approver pool is built) only across DoesShifts companies, so a manager in a
+        // DoesShifts=false membership company was never routed this leave and must NOT be
+        // able to approve it. request.CompanyId is always seeded first regardless. For
+        // single-company users (no extra memberships) this is exactly the previous behavior.
         var memberships = await _membershipService.GetMembershipsAsync(request.UserId);
         var companyIds = new HashSet<int> { request.CompanyId };
-        foreach (var m in memberships)
+        foreach (var m in memberships.Where(m => m.DoesShifts))
             companyIds.Add(m.CompanyId);
 
         // OR across all companies: approver qualifies if they hold the grant in ANY of them.
@@ -780,6 +788,24 @@ public class VacationApprovalService : IVacationApprovalService
             if (request.Type == TimeOffType.Vacation || request.Type == TimeOffType.DayAt)
             {
                 await _materialiser.RestoreRotationHomeAsync(request.UserId, request.StartDate, request.EndDate);
+            }
+        }
+
+        // Cascade the cancellation to all sibling fan-out copies sharing this LeaveGroupId.
+        // Without this, sibling copies in other companies stay Pending in those companies'
+        // approver queues even though the filer (whose My/Requests only shows the canonical
+        // copy) believes the whole leave is canceled.
+        if (request.LeaveGroupId.HasValue)
+        {
+            try
+            {
+                await CascadeGroupCancellationAsync(request);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Cascade-cancel failed for group {LeaveGroupId} (acting request {RequestId}). Siblings may need manual remediation.",
+                    request.LeaveGroupId, requestId);
             }
         }
 
@@ -1173,6 +1199,110 @@ public class VacationApprovalService : IVacationApprovalService
             _logger.LogInformation(
                 "Cascade {TerminalStatus}: sibling request {SiblingId} (group {LeaveGroupId}) resolved by acting request {ActingRequestId}",
                 terminalStatus, sibling.Id, actingRequest.LeaveGroupId, actingRequest.Id);
+        }
+    }
+
+    /// <summary>
+    /// Cascades a cancellation to every still-active sibling in the same LeaveGroup.
+    ///
+    /// Unlike <see cref="CascadeGroupDecisionAsync"/>, cancellation is NOT an approval decision:
+    /// it must NOT fire <see cref="ProcessApprovalSideEffectsAsync"/> (no shift-removal /
+    /// trainee-cancel / approval-notification). Instead it mirrors <see cref="CancelRequestAsync"/>'s
+    /// own cleanup:
+    /// <list type="bullet">
+    ///   <item>A <see cref="RequestStatus.Pending"/> (or <see cref="RequestStatus.PendingSecondApproval"/>)
+    ///         sibling simply transitions to <see cref="RequestStatus.Canceled"/> — nothing was
+    ///         materialised yet, so <c>SyncMaterialisedHomeRowsAsync</c> is a no-op clear.</item>
+    ///   <item>An already-<see cref="RequestStatus.Approved"/> sibling is also canceled and then
+    ///         properly UN-materialised: <c>SyncMaterialisedHomeRowsAsync</c> removes the HOME rows
+    ///         it created (status is now Canceled) and, for Vacation/DayAt, <c>RestoreRotationHomeAsync</c>
+    ///         puts the rotation HOME shifts back.</item>
+    /// </list>
+    /// Already-<see cref="RequestStatus.Canceled"/> and already-<see cref="RequestStatus.Declined"/>
+    /// siblings are left untouched. Sets status DIRECTLY (no recursive <see cref="CancelRequestAsync"/>
+    /// call) — guards against loops. Uses <c>IgnoreQueryFilters()</c> because siblings live in
+    /// other companies.
+    /// </summary>
+    private async Task CascadeGroupCancellationAsync(TimeOffRequest actingRequest)
+    {
+        if (actingRequest.LeaveGroupId is null)
+            return; // belt-and-suspenders guard
+
+        // Load all siblings that have not already reached Canceled/Declined.
+        // An Approved sibling IS included — canceling it must un-materialise its HOME rows.
+        // SECURITY-AUDITED: IgnoreQueryFilters SAFE — sibling copies of the SAME leave belong
+        // to other companies; scoped by the known LeaveGroupId value.
+        var siblings = await _context.TimeOffRequests
+            .IgnoreQueryFilters()
+            .Where(r => r.LeaveGroupId == actingRequest.LeaveGroupId
+                     && r.Id != actingRequest.Id
+                     && r.Status != RequestStatus.Canceled
+                     && r.Status != RequestStatus.Declined)
+            .ToListAsync();
+
+        if (siblings.Count == 0)
+            return;
+
+        bool homeUnification =
+            await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HomeUnification);
+
+        foreach (var sibling in siblings)
+        {
+            using var tx = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Re-fetch inside the sibling's own transaction for concurrency safety.
+                var fresh = await _context.TimeOffRequests
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(r => r.Id == sibling.Id);
+
+                if (fresh == null
+                    || fresh.Status == RequestStatus.Canceled
+                    || fresh.Status == RequestStatus.Declined)
+                {
+                    // Already resolved by a concurrent action — skip without rolling back.
+                    await tx.RollbackAsync();
+                    continue;
+                }
+
+                fresh.Status = RequestStatus.Canceled;
+                await _context.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex,
+                    "Cascade-cancel transaction failed for sibling request {SiblingId} (group {LeaveGroupId})",
+                    sibling.Id, actingRequest.LeaveGroupId);
+                continue; // attempt remaining siblings
+            }
+
+            // Mirror CancelRequestAsync's cleanup (NOT approval side-effects):
+            // un-materialise any HOME rows this sibling created (status is now Canceled, so the
+            // sync clears them) and restore rotation HOME for Vacation/DayAt.
+            if (homeUnification)
+            {
+                try
+                {
+                    await _materialiser.SyncMaterialisedHomeRowsAsync(sibling.Id);
+
+                    if (sibling.Type == TimeOffType.Vacation || sibling.Type == TimeOffType.DayAt)
+                    {
+                        await _materialiser.RestoreRotationHomeAsync(
+                            sibling.UserId, sibling.StartDate, sibling.EndDate);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Materialiser cleanup failed for cascaded-canceled sibling {SiblingId}", sibling.Id);
+                }
+            }
+
+            _logger.LogInformation(
+                "Cascade Canceled: sibling request {SiblingId} (group {LeaveGroupId}) canceled by acting request {ActingRequestId}",
+                sibling.Id, actingRequest.LeaveGroupId, actingRequest.Id);
         }
     }
 

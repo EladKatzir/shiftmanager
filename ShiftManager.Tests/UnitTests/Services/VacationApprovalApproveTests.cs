@@ -550,4 +550,96 @@ public class VacationApprovalApproveTests : IDisposable
         untouched!.Status.Should().Be(RequestStatus.Pending,
             "a null LeaveGroupId must never cascade to any other request");
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Epic 6 review fixes
+    // VA-A12: DoesShifts=false membership company does NOT grant approval authority
+    // VA-A13: Cancel cascades to sibling fan-out copies
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// VA-A12: Union approver authorization must respect DoesShifts. The requester does shifts
+    /// in company 1 (true) but NOT in company 2 (false). The approver holds the grant ONLY in
+    /// company 2. Leave is never fanned out to / routed through a DoesShifts=false company, so
+    /// the company-2 manager must NOT be able to approve → CanUserApproveAsync returns FALSE.
+    /// (Before the fix the loop added every membership company and this wrongly returned TRUE.)
+    /// </summary>
+    [Fact]
+    public async Task CanUserApproveAsync_UnionAuth_GrantInDoesShiftsFalseCompanyOnly_ReturnsFalse()
+    {
+        // Arrange
+        const int secondCompanyId = 2;
+        await SeedUsersAsync();
+
+        // Request lives in company 1 (the requester's DoesShifts company)
+        var request = await CreateRequestAsync(new DateOnly(2026, 6, 1), new DateOnly(2026, 6, 5));
+
+        // Requester does shifts in company 1 (true) but NOT in company 2 (false)
+        _membershipServiceMock
+            .Setup(m => m.GetMembershipsAsync(EmployeeUserId))
+            .ReturnsAsync(new List<CompanyMembership>
+            {
+                new() { UserId = EmployeeUserId, CompanyId = TestCompanyId,   IsPrimary = true,  DoesShifts = true  },
+                new() { UserId = EmployeeUserId, CompanyId = secondCompanyId,  IsPrimary = false, DoesShifts = false }
+            });
+
+        // Approver holds the grant ONLY in company 2 (the DoesShifts=false company); false elsewhere
+        _grantServiceMock
+            .Setup(g => g.HasGrantWithScopeAsync(
+                ApproverUserId, It.IsAny<string>(),
+                It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>(),
+                It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>()))
+            .ReturnsAsync(false);
+        _grantServiceMock
+            .Setup(g => g.HasGrantWithScopeAsync(
+                ApproverUserId, It.IsAny<string>(),
+                null, null, null, null,
+                secondCompanyId, It.IsAny<int?>(), It.IsAny<int?>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var canApprove = await _service.CanUserApproveAsync(ApproverUserId, request.Id);
+
+        // Assert
+        canApprove.Should().BeFalse(
+            "the grant is held only in a DoesShifts=false company, which the leave was never routed to");
+    }
+
+    /// <summary>
+    /// VA-A13: Cancel_CascadesToGroup. Two Pending copies share one LeaveGroupId
+    /// (company-1 canonical + company-2 sibling). The requester cancels the canonical copy →
+    /// BOTH copies become Canceled (so the sibling does not linger in company 2's approver queue).
+    /// </summary>
+    [Fact]
+    public async Task CancelRequestAsync_CascadesToGroup_BothCopiesCanceled()
+    {
+        // Arrange
+        const int company2Id = 2;
+        var groupId = Guid.NewGuid();
+        var start = new DateOnly(2026, 6, 10);
+        var end   = new DateOnly(2026, 6, 10);
+
+        await SeedUsersAsync();
+
+        var company1Copy = await CreateRequestInCompanyAsync(
+            TestCompanyId, EmployeeUserId, start, end, leaveGroupId: groupId);
+        var company2Copy = await CreateRequestInCompanyAsync(
+            company2Id, EmployeeUserId, start, end, leaveGroupId: groupId);
+
+        // Act — the requester (EmployeeUserId) cancels their own canonical copy
+        var (success, message) = await _service.CancelRequestAsync(company1Copy.Id, EmployeeUserId);
+
+        // Assert — canonical cancel succeeded
+        success.Should().BeTrue(message);
+        message.Should().Contain("Canceled");
+
+        // Assert — both copies are now Canceled
+        var canonical = await _db.TimeOffRequests.FindAsync(company1Copy.Id);
+        canonical!.Status.Should().Be(RequestStatus.Canceled);
+
+        var sibling = await _db.TimeOffRequests.FindAsync(company2Copy.Id);
+        sibling.Should().NotBeNull();
+        sibling!.Status.Should().Be(RequestStatus.Canceled,
+            "canceling the canonical copy must cascade to all sibling fan-out copies");
+    }
 }
