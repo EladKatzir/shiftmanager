@@ -31,6 +31,12 @@ public interface INotificationPreferenceService
     Task<bool> ShouldSendEmailAsync(int userId, int companyId, NotificationEvent evt);
 
     /// <summary>
+    /// Raw-metadata overload of the email gate, for callers (the existing typed notification
+    /// creators) that pass category/flags inline rather than constructing a NotificationEvent.
+    /// </summary>
+    Task<bool> ShouldSendEmailAsync(int userId, int companyId, NotificationCategory category, bool personallyActionable, bool securityCritical);
+
+    /// <summary>
     /// Throttle evaluation, called right after an in-app notification is persisted. Returns true if
     /// the caller should send ONE "catch up" email now (Quiet mode + unread crossed the threshold +
     /// no catch-up already pending). When it returns true it has already set the pending guard +

@@ -103,20 +103,23 @@ public sealed class NotificationPreferenceService : INotificationPreferenceServi
         // else: already in the desired state → no-op
     }
 
-    public async Task<bool> ShouldSendEmailAsync(int userId, int companyId, NotificationEvent evt)
+    public Task<bool> ShouldSendEmailAsync(int userId, int companyId, NotificationEvent evt)
+        => ShouldSendEmailAsync(userId, companyId, evt.Category, evt.PersonallyActionable, evt.SecurityCritical);
+
+    public async Task<bool> ShouldSendEmailAsync(int userId, int companyId, NotificationCategory category, bool personallyActionable, bool securityCritical)
     {
         var mode = await GetEngagementModeAsync(userId, companyId);
 
         var muted = false;
-        if (!evt.SecurityCritical)
+        if (!securityCritical)
         {
-            var categoryValue = (int)evt.Category;
+            var categoryValue = (int)category;
             muted = await _db.NotificationCategoryMutes
                 .IgnoreQueryFilters()
                 .AnyAsync(m => m.UserId == userId && m.CompanyId == companyId && m.Category == categoryValue);
         }
 
-        return NotificationGate.ShouldSendEmail(evt.SecurityCritical, evt.PersonallyActionable, mode, muted);
+        return NotificationGate.ShouldSendEmail(securityCritical, personallyActionable, mode, muted);
     }
 
     public async Task<bool> TryBeginCatchUpAsync(int userId, int companyId, int unreadCount)

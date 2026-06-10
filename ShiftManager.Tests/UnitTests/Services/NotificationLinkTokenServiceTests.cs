@@ -17,11 +17,10 @@ public class NotificationLinkTokenServiceTests
     public void RoundTrips()
     {
         var svc = NewService();
-        var token = svc.CreateQuietToken(42, 3);
+        var token = svc.CreateQuietToken(42);
 
-        svc.TryParse(token, out var userId, out var companyId).Should().BeTrue();
+        svc.TryParse(token, out var userId).Should().BeTrue();
         userId.Should().Be(42);
-        companyId.Should().Be(3);
     }
 
     [Theory] // NLT-02
@@ -31,17 +30,16 @@ public class NotificationLinkTokenServiceTests
     public void Rejects_MissingOrGarbage(string? token)
     {
         var svc = NewService();
-        svc.TryParse(token, out var u, out var c).Should().BeFalse();
+        svc.TryParse(token, out var u).Should().BeFalse();
         u.Should().Be(0);
-        c.Should().Be(0);
     }
 
     [Fact] // NLT-02b
     public void Rejects_Tampered()
     {
         var svc = NewService();
-        var token = svc.CreateQuietToken(42, 3);
-        svc.TryParse(token + "AAAA", out _, out _).Should().BeFalse();
+        var token = svc.CreateQuietToken(42);
+        svc.TryParse(token + "AAAA", out _).Should().BeFalse();
     }
 
     [Fact] // NLT-03
@@ -49,7 +47,7 @@ public class NotificationLinkTokenServiceTests
     {
         var a = NewService();
         var b = NewService(); // different ephemeral key
-        var token = a.CreateQuietToken(42, 3);
-        b.TryParse(token, out _, out _).Should().BeFalse();
+        var token = a.CreateQuietToken(42);
+        b.TryParse(token, out _).Should().BeFalse();
     }
 }

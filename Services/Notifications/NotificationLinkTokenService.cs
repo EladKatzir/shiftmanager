@@ -19,25 +19,19 @@ public sealed class NotificationLinkTokenService : INotificationLinkTokenService
         _protector = provider.CreateProtector("ShiftManager.Notifications.OptOutLink.v1");
     }
 
-    public string CreateQuietToken(int userId, int companyId)
-        => _protector.Protect($"{userId}:{companyId}");
+    public string CreateQuietToken(int userId)
+        => _protector.Protect(userId.ToString());
 
-    public bool TryParse(string? token, out int userId, out int companyId)
+    public bool TryParse(string? token, out int userId)
     {
         userId = 0;
-        companyId = 0;
         if (string.IsNullOrWhiteSpace(token))
             return false;
 
         try
         {
             var raw = _protector.Unprotect(token);
-            var parts = raw.Split(':');
-            return parts.Length == 2
-                && int.TryParse(parts[0], out userId)
-                && int.TryParse(parts[1], out companyId)
-                && userId > 0
-                && companyId > 0;
+            return int.TryParse(raw, out userId) && userId > 0;
         }
         catch (CryptographicException)
         {

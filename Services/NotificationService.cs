@@ -122,8 +122,8 @@ public partial class NotificationService : INotificationService
     /// engagement mode + mutes. When the preference service is unavailable (unit tests), defaults to
     /// true (preserves legacy "always email" behavior).
     /// </summary>
-    private async Task<bool> ShouldEmailAsync(int userId, int companyId, Notifications.NotificationEvent evt)
-        => _preferenceService == null || await _preferenceService.ShouldSendEmailAsync(userId, companyId, evt);
+    private async Task<bool> ShouldEmailAsync(int userId, int companyId, Notifications.NotificationCategory category, bool personallyActionable, bool securityCritical = false)
+        => _preferenceService == null || await _preferenceService.ShouldSendEmailAsync(userId, companyId, category, personallyActionable, securityCritical);
 
     /// <summary>
     /// 20-unread "catch up" throttle. Call after persisting an in-app notification. In Quiet mode,
@@ -230,7 +230,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(userId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.ShiftAssignment, personallyActionable: true))
             {
                 await _mailService.SendShiftAssignedEmailAsync(
                     user.Email,
@@ -263,7 +264,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(userId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.ShiftAssignment, personallyActionable: true))
             {
                 await _mailService.SendShiftDeletedEmailAsync(
                     user.Email,
@@ -303,7 +305,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(userId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.TimeOff, personallyActionable: true))
             {
                 if (status == RequestStatus.Approved)
                 {
@@ -348,7 +351,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(userId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.Swap, personallyActionable: true))
             {
                 if (status == RequestStatus.Approved)
                 {
@@ -386,7 +390,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(userId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.Chore, personallyActionable: true))
             {
                 await _mailService.SendChoreAssignedEmailAsync(
                     user.Email,
@@ -415,7 +420,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(userId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.Chore, personallyActionable: true))
             {
                 await _mailService.SendChoreCanceledEmailAsync(
                     user.Email,
@@ -448,7 +454,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(userId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.OnDuty, personallyActionable: true))
             {
                 await _mailService.SendOnDutyAssignedEmailAsync(
                     user.Email,
@@ -481,7 +488,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(userId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.OnDuty, personallyActionable: true))
             {
                 await _mailService.SendOnDutyCanceledEmailAsync(
                     user.Email,
@@ -511,7 +519,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(userId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.TimeOff, personallyActionable: true))
             {
                 await _mailService.SendTimeOffDeletedEmailAsync(
                     user.Email,
@@ -1169,7 +1178,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(primaryUserId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(primaryUserId, user.CompanyId, Notifications.NotificationCategory.Trainee, personallyActionable: true))
             {
                 await _mailService.SendTraineeAddedEmailAsync(
                     user.Email,
@@ -1234,7 +1244,8 @@ public partial class NotificationService : INotificationService
         try
         {
             var user = await GetRecipientAcrossTenantsAsync(affectedUserId);
-            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                && await ShouldEmailAsync(affectedUserId, user.CompanyId, Notifications.NotificationCategory.ShiftChange, personallyActionable: true))
             {
                 await _mailService.SendSlotRemovedEmailAsync(
                     user.Email,
@@ -1269,7 +1280,8 @@ public partial class NotificationService : INotificationService
             try
             {
                 var user = await GetRecipientAcrossTenantsAsync(userId);
-                if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+                if (user != null && !string.IsNullOrWhiteSpace(user.Email)
+                    && await ShouldEmailAsync(userId, user.CompanyId, Notifications.NotificationCategory.ShiftChange, personallyActionable: true))
                 {
                     await _mailService.SendShiftModifiedEmailAsync(
                         user.Email,

@@ -6,9 +6,11 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using ShiftManager.Data;
 using ShiftManager.Models.Results;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
@@ -35,6 +37,7 @@ public class MailService : IMailService
     private readonly ITenantResolver? _tenantResolver;
     private readonly IFeatureFlagService? _featureFlagService;
     private readonly ShiftManager.Services.Notifications.INotificationLinkTokenService? _linkTokens;
+    private readonly AppDbContext? _db;
 
     /// <summary>
     /// Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
@@ -54,7 +57,8 @@ public class MailService : IMailService
         ILocalizationService localization,
         ITenantResolver? tenantResolver = null,
         IFeatureFlagService? featureFlagService = null,
-        ShiftManager.Services.Notifications.INotificationLinkTokenService? linkTokens = null)
+        ShiftManager.Services.Notifications.INotificationLinkTokenService? linkTokens = null,
+        AppDbContext? db = null)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -68,6 +72,7 @@ public class MailService : IMailService
         _tenantResolver = tenantResolver;
         _featureFlagService = featureFlagService;
         _linkTokens = linkTokens;
+        _db = db;
     }
 
     /// <summary>
@@ -75,14 +80,37 @@ public class MailService : IMailService
     /// &lt;/body&gt; (or appended if absent). No-op when the token service is unavailable or the
     /// recipient/company is unknown. The link is a signed, login-free token handled by /N/Quiet.
     /// </summary>
+    /// <summary>
+    /// Resolve a recipient's userId from (email, companyId) for the opt-out footer token. The pair
+    /// is unique within a tenant. Read-only; failures degrade to 0 (no footer). Uses .ToLower() on
+    /// the column against a client-pre-lowered constant (EF-translatable; see case-folding contract).
+    /// </summary>
+    private async Task<int> ResolveRecipientUserIdAsync(string email, int companyId)
+    {
+        try
+        {
+            var emailLower = email.Trim().ToLowerInvariant();
+            return await _db!.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.Email.ToLower() == emailLower && u.CompanyId == companyId)
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Opt-out footer user resolution failed for recipient in company {CompanyId}", companyId);
+            return 0;
+        }
+    }
+
     private string InjectOptOutFooter(string html, int recipientUserId, int companyId)
     {
-        if (_linkTokens == null || recipientUserId <= 0 || companyId <= 0)
+        if (_linkTokens == null || recipientUserId <= 0)
             return html;
 
         try
         {
-            var token = _linkTokens.CreateQuietToken(recipientUserId, companyId);
+            var token = _linkTokens.CreateQuietToken(recipientUserId);
             var baseUrl = (_configuration["BaseUrl"] ?? string.Empty).TrimEnd('/');
             var url = $"{baseUrl}/N/Quiet?token={Uri.EscapeDataString(token)}";
             var label = WebUtility.HtmlEncode(_localizer["Email_ManagePreferences"].Value);
@@ -271,7 +299,14 @@ public class MailService : IMailService
     /// </summary>
     public async Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0, int recipientUserId = 0)
     {
-        // Inject the one-click opt-out footer (no-op if token service / ids unavailable).
+        // Resolve the recipient user (for the opt-out footer token) when not supplied explicitly.
+        // The (email, companyId) pair is unique, so this finds the right user for same-tenant sends.
+        if (recipientUserId <= 0 && companyId > 0 && _db != null && !string.IsNullOrWhiteSpace(recipient))
+        {
+            recipientUserId = await ResolveRecipientUserIdAsync(recipient, companyId);
+        }
+
+        // Inject the one-click opt-out footer (no-op if token service / id unavailable).
         htmlBody = InjectOptOutFooter(htmlBody, recipientUserId, companyId);
 
         // Start timing for diagnostics
