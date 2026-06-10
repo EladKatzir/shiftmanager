@@ -16107,4 +16107,76 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Notif_SwapRequestReceivedMessage" xml:space="preserve">
     <value>{0} requested to swap a shift with you.</value>
   </data>
+  <data name="Error_TraineeAssignment_ShiftNotFound" xml:space="preserve">
+    <value>Shift assignment not found</value>
+  </data>
+  <data name="Error_TraineeAssignment_CannotAssign" xml:space="preserve">
+    <value>Cannot assign trainee to this shift</value>
+  </data>
+  <data name="Error_TraineeAssignment_AlreadyHasTrainee" xml:space="preserve">
+    <value>This shift already has a trainee assigned</value>
+  </data>
+  <data name="Error_TraineeAssignment_TraineeNotFound" xml:space="preserve">
+    <value>Trainee user not found</value>
+  </data>
+  <data name="Error_TraineeAssignment_NotATrainee" xml:space="preserve">
+    <value>User is not a trainee</value>
+  </data>
+  <data name="Error_TraineeAssignment_DifferentCompany" xml:space="preserve">
+    <value>Trainee must belong to the same company</value>
+  </data>
+  <data name="Error_TraineeAssignment_TimeConflict" xml:space="preserve">
+    <value>Trainee has a conflicting shift at this time</value>
+  </data>
+  <data name="Trainee_ShiftInfo" xml:space="preserve">
+    <value>{0} on {1}</value>
+  </data>
+  <data name="Trainee_Reason_RoleChanged" xml:space="preserve">
+    <value>role change</value>
+  </data>
+  <data name="Trainee_Reason_TimeOff" xml:space="preserve">
+    <value>approved time off</value>
+  </data>
+  <data name="Trainee_ShadowingAddedTitle" xml:space="preserve">
+    <value>Shadowing Assignment</value>
+  </data>
+  <data name="Trainee_ShadowingAddedMessage" xml:space="preserve">
+    <value>You are now shadowing {0} for {1}</value>
+  </data>
+  <data name="Trainee_AssignedTitle" xml:space="preserve">
+    <value>Trainee Assigned</value>
+  </data>
+  <data name="Trainee_AssignedMessage" xml:space="preserve">
+    <value>{0} will shadow your shift: {1}</value>
+  </data>
+  <data name="Trainee_ShadowingRemovedTitle" xml:space="preserve">
+    <value>Shadowing Assignment Removed</value>
+  </data>
+  <data name="Trainee_ShadowingRemovedMessage" xml:space="preserve">
+    <value>Your shadowing assignment for {0} has been removed. Reason: {1}</value>
+  </data>
+  <data name="Trainee_RemovedTitle" xml:space="preserve">
+    <value>Trainee Removed</value>
+  </data>
+  <data name="Trainee_RemovedMessage" xml:space="preserve">
+    <value>{0} is no longer shadowing your shift: {1}</value>
+  </data>
+  <data name="Trainee_RemovedWithReasonMessage" xml:space="preserve">
+    <value>{0} is no longer shadowing your shift: {1} (Reason: {2})</value>
+  </data>
+  <data name="Trainee_AllCanceledTitle" xml:space="preserve">
+    <value>All Shadowing Assignments Canceled</value>
+  </data>
+  <data name="Trainee_AllCanceledMessage" xml:space="preserve">
+    <value>All your shadowing assignments have been canceled. Reason: {0}</value>
+  </data>
+  <data name="Trainee_ShadowingCanceledTimeOffTitle" xml:space="preserve">
+    <value>Shadowing Canceled</value>
+  </data>
+  <data name="Trainee_ShadowingCanceledTimeOffMessage" xml:space="preserve">
+    <value>Your shadowing assignment for {0} was canceled due to approved time off</value>
+  </data>
+  <data name="Trainee_RemovedTimeOffMessage" xml:space="preserve">
+    <value>{0}'s shadowing for {1} was canceled due to approved time off</value>
+  </data>
 </root>

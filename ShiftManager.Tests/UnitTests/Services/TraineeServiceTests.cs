@@ -47,12 +47,21 @@ public class TraineeServiceTests : IDisposable
         _localizationServiceMock.Setup(l => l.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
             .ReturnsAsync((ShiftType st, int _, string _) => st.Name);
 
+        var localizerMock = new Mock<Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources>>();
+        localizerMock.Setup(x => x[It.IsAny<string>()])
+            .Returns<string>(key => new Microsoft.Extensions.Localization.LocalizedString(key, key));
+        var localizationMock = new Mock<ILocalizationService>();
+        localizationMock.Setup(l => l.FormatMediumDate(It.IsAny<DateOnly>()))
+            .Returns<DateOnly>(d => d.ToString("yyyy-MM-dd"));
+
         _service = new TraineeService(
             _db,
             Mock.Of<ILogger<TraineeService>>(),
             _notificationServiceMock.Object,
             _tenantResolverMock.Object,
-            _localizationServiceMock.Object);
+            _localizationServiceMock.Object,
+            localizerMock.Object,
+            localizationMock.Object);
     }
 
     public void Dispose()
@@ -135,7 +144,7 @@ public class TraineeServiceTests : IDisposable
         var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(999, 1);
 
         isValid.Should().BeFalse();
-        error.Should().Contain("Shift assignment not found");
+        error.Should().Contain("Error_TraineeAssignment_ShiftNotFound");
     }
 
     [Fact]
@@ -156,7 +165,7 @@ public class TraineeServiceTests : IDisposable
         var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(assignment.Id, 5);
 
         isValid.Should().BeFalse();
-        error.Should().Contain("Cannot assign trainee to this shift");
+        error.Should().Contain("Error_TraineeAssignment_CannotAssign");
     }
 
     [Fact]
@@ -171,7 +180,7 @@ public class TraineeServiceTests : IDisposable
         var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(assignment.Id, 10);
 
         isValid.Should().BeFalse();
-        error.Should().Contain("Cannot assign trainee to this shift");
+        error.Should().Contain("Error_TraineeAssignment_CannotAssign");
     }
 
     [Fact]
@@ -190,7 +199,7 @@ public class TraineeServiceTests : IDisposable
         var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(assignment.Id, 30);
 
         isValid.Should().BeFalse();
-        error.Should().Contain("already has a trainee assigned");
+        error.Should().Contain("Error_TraineeAssignment_AlreadyHasTrainee");
     }
 
     [Fact]
@@ -205,7 +214,7 @@ public class TraineeServiceTests : IDisposable
         var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(assignment.Id, 999);
 
         isValid.Should().BeFalse();
-        error.Should().Contain("Trainee user not found");
+        error.Should().Contain("Error_TraineeAssignment_TraineeNotFound");
     }
 
     [Fact]
@@ -221,7 +230,7 @@ public class TraineeServiceTests : IDisposable
         var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(assignment.Id, 20);
 
         isValid.Should().BeFalse();
-        error.Should().Contain("User is not a trainee");
+        error.Should().Contain("Error_TraineeAssignment_NotATrainee");
     }
 
     [Fact]
@@ -249,7 +258,7 @@ public class TraineeServiceTests : IDisposable
         var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(assignment.Id, 20);
 
         isValid.Should().BeFalse();
-        error.Should().Contain("same company");
+        error.Should().Contain("Error_TraineeAssignment_DifferentCompany");
     }
 
     [Fact]
@@ -300,7 +309,7 @@ public class TraineeServiceTests : IDisposable
         var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(morningAssignment.Id, 20);
 
         isValid.Should().BeFalse();
-        error.Should().Contain("conflicting shift");
+        error.Should().Contain("Error_TraineeAssignment_TimeConflict");
     }
 
     // --- AssignTraineeToShiftAsync ---

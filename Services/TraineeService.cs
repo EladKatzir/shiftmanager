@@ -1,9 +1,11 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Resources;
 
 namespace ShiftManager.Services;
 
@@ -14,20 +16,38 @@ public class TraineeService : ITraineeService
     private readonly INotificationService _notificationService;
     private readonly ITenantResolver _tenantResolver;
     private readonly ICompanyLocalizationService _localizationService;
+    private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly ILocalizationService _localization;
 
     public TraineeService(
         AppDbContext db,
         ILogger<TraineeService> logger,
         INotificationService notificationService,
         ITenantResolver tenantResolver,
-        ICompanyLocalizationService localizationService)
+        ICompanyLocalizationService localizationService,
+        IStringLocalizer<SharedResources> localizer,
+        ILocalizationService localization)
     {
         _db = db;
         _logger = logger;
         _notificationService = notificationService;
         _tenantResolver = tenantResolver;
         _localizationService = localizationService;
+        _localizer = localizer;
+        _localization = localization;
     }
+
+    /// <summary>Localized "{shiftType} on {date}" fragment used inside trainee notifications.</summary>
+    private string FormatShiftInfo(string shiftTypeName, DateOnly date)
+        => string.Format(_localizer["Trainee_ShiftInfo"].Value, shiftTypeName, _localization.FormatMediumDate(date));
+
+    /// <summary>Localized human phrase for a shadowing-cancellation reason token.</summary>
+    private string LocalizeReason(string reason) => reason switch
+    {
+        "RoleChanged" => _localizer["Trainee_Reason_RoleChanged"].Value,
+        "TimeOff" => _localizer["Trainee_Reason_TimeOff"].Value,
+        _ => reason
+    };
 
     public async Task<bool> AssignTraineeToShiftAsync(int shiftAssignmentId, int traineeUserId, int assignedByUserId)
     {
@@ -69,15 +89,15 @@ public class TraineeService : ITraineeService
 
             // Send notifications
             var shiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(assignment.ShiftInstance.ShiftType, assignment.ShiftInstance.CompanyId, CultureInfo.CurrentUICulture.Name);
-            var shiftInfo = $"{shiftTypeName} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
+            var shiftInfo = FormatShiftInfo(shiftTypeName, assignment.ShiftInstance.WorkDate);
             var primaryUserName = assignment.User?.DisplayName ?? "an employee";
 
             await _notificationService.NotifyAsync(
                 traineeUserId,
                 NotificationType.TraineeShadowingAdded,
                 Notifications.NotificationCategory.Trainee,
-                "Shadowing Assignment",
-                $"You are now shadowing {primaryUserName} for {shiftInfo}",
+                _localizer["Trainee_ShadowingAddedTitle"].Value,
+                string.Format(_localizer["Trainee_ShadowingAddedMessage"].Value, primaryUserName, shiftInfo),
                 personallyActionable: true,
                 relatedEntityId: shiftAssignmentId,
                 relatedEntityType: "ShiftAssignment"
@@ -90,8 +110,8 @@ public class TraineeService : ITraineeService
                     assignment.UserId.Value,
                     NotificationType.EmployeeTraineeAdded,
                     Notifications.NotificationCategory.Trainee,
-                    "Trainee Assigned",
-                    $"{trainee.DisplayName} will shadow your shift: {shiftInfo}",
+                    _localizer["Trainee_AssignedTitle"].Value,
+                    string.Format(_localizer["Trainee_AssignedMessage"].Value, trainee.DisplayName, shiftInfo),
                     personallyActionable: false,
                     relatedEntityId: shiftAssignmentId,
                     relatedEntityType: "ShiftAssignment"
@@ -129,7 +149,7 @@ public class TraineeService : ITraineeService
             var traineeId = assignment.TraineeUserId.Value;
             var traineeName = assignment.Trainee?.DisplayName ?? "Trainee";
             var shiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(assignment.ShiftInstance.ShiftType, assignment.ShiftInstance.CompanyId, CultureInfo.CurrentUICulture.Name);
-            var shiftInfo = $"{shiftTypeName} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
+            var shiftInfo = FormatShiftInfo(shiftTypeName, assignment.ShiftInstance.WorkDate);
 
             assignment.TraineeUserId = null;
             await _db.SaveChangesAsync();
@@ -145,8 +165,8 @@ public class TraineeService : ITraineeService
                 traineeId,
                 notificationType,
                 Notifications.NotificationCategory.Trainee,
-                "Shadowing Assignment Removed",
-                $"Your shadowing assignment for {shiftInfo} has been removed. Reason: {reason}",
+                _localizer["Trainee_ShadowingRemovedTitle"].Value,
+                string.Format(_localizer["Trainee_ShadowingRemovedMessage"].Value, shiftInfo, LocalizeReason(reason)),
                 personallyActionable: true,
                 relatedEntityId: shiftAssignmentId,
                 relatedEntityType: "ShiftAssignment"
@@ -159,8 +179,8 @@ public class TraineeService : ITraineeService
                     assignment.UserId.Value,
                     NotificationType.EmployeeTraineeRemoved,
                     Notifications.NotificationCategory.Trainee,
-                    "Trainee Removed",
-                    $"{traineeName} is no longer shadowing your shift: {shiftInfo}",
+                    _localizer["Trainee_RemovedTitle"].Value,
+                    string.Format(_localizer["Trainee_RemovedMessage"].Value, traineeName, shiftInfo),
                     personallyActionable: false,
                     relatedEntityId: shiftAssignmentId,
                     relatedEntityType: "ShiftAssignment"
@@ -188,17 +208,17 @@ public class TraineeService : ITraineeService
 
         if (assignment == null)
         {
-            return (false, "Shift assignment not found");
+            return (false, _localizer["Error_TraineeAssignment_ShiftNotFound"].Value);
         }
 
         if (!assignment.UserId.HasValue || assignment.UserId.Value == traineeUserId)
         {
-            return (false, "Cannot assign trainee to this shift");
+            return (false, _localizer["Error_TraineeAssignment_CannotAssign"].Value);
         }
 
         if (assignment.TraineeUserId != null)
         {
-            return (false, "This shift already has a trainee assigned");
+            return (false, _localizer["Error_TraineeAssignment_AlreadyHasTrainee"].Value);
         }
 
         // SECURITY-AUDITED: SAFE — bypass tenant filter so the explicit same-company check
@@ -207,17 +227,17 @@ public class TraineeService : ITraineeService
             .FirstOrDefaultAsync(u => u.Id == traineeUserId);
         if (trainee == null)
         {
-            return (false, "Trainee user not found");
+            return (false, _localizer["Error_TraineeAssignment_TraineeNotFound"].Value);
         }
 
         if (trainee.Role != UserRole.Trainee)
         {
-            return (false, "User is not a trainee");
+            return (false, _localizer["Error_TraineeAssignment_NotATrainee"].Value);
         }
 
         if (trainee.CompanyId != assignment.CompanyId)
         {
-            return (false, "Trainee must belong to the same company");
+            return (false, _localizer["Error_TraineeAssignment_DifferentCompany"].Value);
         }
 
         // Check for time conflicts
@@ -237,7 +257,7 @@ public class TraineeService : ITraineeService
 
         if (hasConflict)
         {
-            return (false, "Trainee has a conflicting shift at this time");
+            return (false, _localizer["Error_TraineeAssignment_TimeConflict"].Value);
         }
 
         return (true, null);
@@ -291,7 +311,7 @@ public class TraineeService : ITraineeService
             foreach (var assignment in assignments)
             {
                 var shiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(assignment.ShiftInstance.ShiftType, assignment.ShiftInstance.CompanyId, CultureInfo.CurrentUICulture.Name);
-                var shiftInfo = $"{shiftTypeName} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
+                var shiftInfo = FormatShiftInfo(shiftTypeName, assignment.ShiftInstance.WorkDate);
 
                 assignment.TraineeUserId = null;
 
@@ -303,8 +323,8 @@ public class TraineeService : ITraineeService
                         CompanyId = companyId,
                         UserId = assignment.UserId.Value,
                         Type = NotificationType.EmployeeTraineeRemoved,
-                        Title = "Trainee Removed",
-                        Message = $"{traineeName} is no longer shadowing your shift: {shiftInfo} (Reason: {reason})",
+                        Title = _localizer["Trainee_RemovedTitle"].Value,
+                        Message = string.Format(_localizer["Trainee_RemovedWithReasonMessage"].Value, traineeName, shiftInfo, LocalizeReason(reason)),
                         RelatedEntityId = assignment.Id,
                         RelatedEntityType = "ShiftAssignment",
                         IsRead = false,
@@ -323,8 +343,8 @@ public class TraineeService : ITraineeService
                 CompanyId = companyId,
                 UserId = userId,
                 Type = notificationType,
-                Title = "All Shadowing Assignments Canceled",
-                Message = $"All your shadowing assignments have been canceled. Reason: {reason}",
+                Title = _localizer["Trainee_AllCanceledTitle"].Value,
+                Message = string.Format(_localizer["Trainee_AllCanceledMessage"].Value, LocalizeReason(reason)),
                 RelatedEntityId = null,
                 RelatedEntityType = "ShiftAssignment",
                 IsRead = false,
@@ -382,7 +402,7 @@ public class TraineeService : ITraineeService
             foreach (var assignment in overlappingAssignments)
             {
                 var shiftTypeName = await _localizationService.ResolveShiftTypeNameAsync(assignment.ShiftInstance.ShiftType, assignment.ShiftInstance.CompanyId, CultureInfo.CurrentUICulture.Name);
-                var shiftInfo = $"{shiftTypeName} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
+                var shiftInfo = FormatShiftInfo(shiftTypeName, assignment.ShiftInstance.WorkDate);
 
                 assignment.TraineeUserId = null;
 
@@ -392,8 +412,8 @@ public class TraineeService : ITraineeService
                     CompanyId = companyId,
                     UserId = traineeUserId,
                     Type = NotificationType.TraineeShadowingCanceledTimeOff,
-                    Title = "Shadowing Canceled",
-                    Message = $"Your shadowing assignment for {shiftInfo} was canceled due to approved time off",
+                    Title = _localizer["Trainee_ShadowingCanceledTimeOffTitle"].Value,
+                    Message = string.Format(_localizer["Trainee_ShadowingCanceledTimeOffMessage"].Value, shiftInfo),
                     RelatedEntityId = assignment.Id,
                     RelatedEntityType = "ShiftAssignment",
                     IsRead = false,
@@ -408,8 +428,8 @@ public class TraineeService : ITraineeService
                         CompanyId = companyId,
                         UserId = assignment.UserId.Value,
                         Type = NotificationType.EmployeeTraineeRemoved,
-                        Title = "Trainee Removed",
-                        Message = $"{traineeName}'s shadowing for {shiftInfo} was canceled due to approved time off",
+                        Title = _localizer["Trainee_RemovedTitle"].Value,
+                        Message = string.Format(_localizer["Trainee_RemovedTimeOffMessage"].Value, traineeName, shiftInfo),
                         RelatedEntityId = assignment.Id,
                         RelatedEntityType = "ShiftAssignment",
                         IsRead = false,

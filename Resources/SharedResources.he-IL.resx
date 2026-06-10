@@ -16069,4 +16069,76 @@
   <data name="Notif_SwapRequestReceivedMessage" xml:space="preserve">
     <value>{0} ביקש להחליף איתך משמרת.</value>
   </data>
+  <data name="Error_TraineeAssignment_ShiftNotFound" xml:space="preserve">
+    <value>שיבוץ המשמרת לא נמצא</value>
+  </data>
+  <data name="Error_TraineeAssignment_CannotAssign" xml:space="preserve">
+    <value>לא ניתן לשבץ חניך למשמרת זו</value>
+  </data>
+  <data name="Error_TraineeAssignment_AlreadyHasTrainee" xml:space="preserve">
+    <value>למשמרת זו כבר משובץ חניך</value>
+  </data>
+  <data name="Error_TraineeAssignment_TraineeNotFound" xml:space="preserve">
+    <value>משתמש החניך לא נמצא</value>
+  </data>
+  <data name="Error_TraineeAssignment_NotATrainee" xml:space="preserve">
+    <value>המשתמש אינו חניך</value>
+  </data>
+  <data name="Error_TraineeAssignment_DifferentCompany" xml:space="preserve">
+    <value>החניך חייב להשתייך לאותה חברה</value>
+  </data>
+  <data name="Error_TraineeAssignment_TimeConflict" xml:space="preserve">
+    <value>לחניך יש משמרת חופפת בזמן זה</value>
+  </data>
+  <data name="Trainee_ShiftInfo" xml:space="preserve">
+    <value>{0} בתאריך {1}</value>
+  </data>
+  <data name="Trainee_Reason_RoleChanged" xml:space="preserve">
+    <value>שינוי תפקיד</value>
+  </data>
+  <data name="Trainee_Reason_TimeOff" xml:space="preserve">
+    <value>חופשה מאושרת</value>
+  </data>
+  <data name="Trainee_ShadowingAddedTitle" xml:space="preserve">
+    <value>שיבוץ ליווי</value>
+  </data>
+  <data name="Trainee_ShadowingAddedMessage" xml:space="preserve">
+    <value>אתה כעת מלווה את {0} עבור {1}</value>
+  </data>
+  <data name="Trainee_AssignedTitle" xml:space="preserve">
+    <value>שובץ חניך</value>
+  </data>
+  <data name="Trainee_AssignedMessage" xml:space="preserve">
+    <value>{0} ילווה את המשמרת שלך: {1}</value>
+  </data>
+  <data name="Trainee_ShadowingRemovedTitle" xml:space="preserve">
+    <value>שיבוץ הליווי הוסר</value>
+  </data>
+  <data name="Trainee_ShadowingRemovedMessage" xml:space="preserve">
+    <value>שיבוץ הליווי שלך עבור {0} הוסר. סיבה: {1}</value>
+  </data>
+  <data name="Trainee_RemovedTitle" xml:space="preserve">
+    <value>החניך הוסר</value>
+  </data>
+  <data name="Trainee_RemovedMessage" xml:space="preserve">
+    <value>{0} אינו מלווה עוד את המשמרת שלך: {1}</value>
+  </data>
+  <data name="Trainee_RemovedWithReasonMessage" xml:space="preserve">
+    <value>{0} אינו מלווה עוד את המשמרת שלך: {1} (סיבה: {2})</value>
+  </data>
+  <data name="Trainee_AllCanceledTitle" xml:space="preserve">
+    <value>כל שיבוצי הליווי בוטלו</value>
+  </data>
+  <data name="Trainee_AllCanceledMessage" xml:space="preserve">
+    <value>כל שיבוצי הליווי שלך בוטלו. סיבה: {0}</value>
+  </data>
+  <data name="Trainee_ShadowingCanceledTimeOffTitle" xml:space="preserve">
+    <value>הליווי בוטל</value>
+  </data>
+  <data name="Trainee_ShadowingCanceledTimeOffMessage" xml:space="preserve">
+    <value>שיבוץ הליווי שלך עבור {0} בוטל עקב חופשה מאושרת</value>
+  </data>
+  <data name="Trainee_RemovedTimeOffMessage" xml:space="preserve">
+    <value>הליווי של {0} עבור {1} בוטל עקב חופשה מאושרת</value>
+  </data>
 </root>
