@@ -179,33 +179,59 @@ bulk import, mass-assign). In-app posts individually; emails are **grouped by (r
 category)** and flushed once at end-of-scope, with a **single combined `.ics`** (multiple
 VEVENTs).
 
-### 5.8 Calendar / ICS module
+### 5.8 Calendar / "summon" module (Felix-native + self-healing feed)
 
-`IcsBuilder` emits standards-compliant `VCALENDAR`/`VEVENT`:
-- Stable `UID` per assignment entity + incrementing `SEQUENCE` → Outlook treats create/update/
-  cancel as the same event (no duplicates).
-- `METHOD=REQUEST` (assign/update) / `CANCEL` (remove); `ORGANIZER` = company from-address;
-  `ATTENDEE` = user; `DTSTART/DTEND` with `TZID=Asia/Jerusalem`; localized `SUMMARY`,
-  `LOCATION` = molecule/area, `DESCRIPTION` + deep link to Shifty.
+**Felix mail API (confirmed from swagger).** `ApiUrl` is the full `/mail/send` endpoint; the
+calendar endpoints are sub-paths derived as `{ApiUrl.TrimEnd('/')}/calendar` and `/allDayEvent`.
+The mail object is the same `{from,to,cc,bcc,subject,text,html}` we send today; the calendar
+endpoints **wrap** it:
+- `POST {ApiUrl}/calendar` — `{ "mail": {...}, "calendarEvent": { "startTime": ISO-8601-UTC,
+  "endTime": ISO-8601-UTC, "location": "..." } }` — timed events (shifts, chores, on-duty, after).
+- `POST {ApiUrl}/allDayEvent` — `{ "mail": {...}, "calendarAllDayEvent": { "startTime": "yyyy-MM-dd",
+  "endTime": "yyyy-MM-dd", "location": "..." } }` — vacation, Day-At-X (sent to requester **and**
+  approver(s)).
+- `POST {ApiUrl}/v2` — multipart FormData with file attachments + `cid:` inline images. Not used
+  by this design (see "rejected option" below).
 
-Two independent deliverables:
-- **Subscription feed** — `/calendar/feed/{token}.ics` (per-user revocable token on `AppUser`,
-  tenant-safe). User adds the URL once in Outlook; all their shifts/chores/on-call auto-sync.
-  **No Felix dependency.**
-- **Per-event calendar delivery** — **always feasible**; the same `IcsBuilder` always serves the
-  `.ics` from *our* server. The Felix swagger only decides *quality*, not feasibility:
-  - **5a (Felix supports attachments)** — attach the `.ics` (`method=REQUEST`) directly to the
-    notification email → **native Outlook invite** with auto-appear + Accept/Decline RSVP.
-    `IMailService.SendMailAsync` + the Felix payload gain an optional `attachments` parameter.
-  - **5b (Felix is HTML-only, the wrapper-as-dumb-pipe path)** — embed an **"Add to Calendar"
-    button** in the HTML body linking to a per-event server endpoint
-    (`/calendar/event/{token}.ics`, `Content-Type: text/calendar`). One extra click, then Outlook
-    opens and adds it. Works through Felix exactly as it sends mail today.
+**Felix limitation (confirmed):** `calendarEvent` carries **only** start/end/location — no UID,
+method, or sequence. So a Felix invite is **fire-and-forget**: Felix builds a real native invite,
+but we can never revise or cancel the event it pushed. This single fact drives the architecture.
 
-  Technical note: a native invite (auto-appear + RSVP) requires the `.ics` as an **attachment**
-  or the message `Content-Type` to be `text/calendar; method=REQUEST`. A `from/to/subject/html`-only
-  body cannot produce that — HTML body alone has no MIME control. Hence 5b is a button/link, not a
-  silent auto-add. Both 5a and 5b reuse `IcsBuilder`; only the *delivery vehicle* differs.
+Times must be **converted local (`Asia/Jerusalem`) → UTC** before formatting as `...Z` (shift
+`TimeOnly`s are local; sending them verbatim with a `Z` suffix would be wrong by the TZ offset).
+
+**Two cooperating mechanisms, each used for what it is best at:**
+
+1. **Felix per-event invite = the instant "summon" (primary).** On a *new* assignment we POST to
+   `/calendar` (timed) or `/allDayEvent`. Felix pushes a real calendar event immediately — the
+   headline UX.
+2. **Self-hosted subscription feed = self-healing source of truth (safety net).** Per-user
+   `/calendar/feed/{token}.ics` (revocable token on `AppUser`, tenant-safe), regenerated from the
+   DB on every poll via `IcsBuilder` with **stable per-assignment UIDs**. Always correct, so it
+   silently fixes what Felix cannot: reschedules, cancellations, and any failed Felix send. This is
+   the "support for when the per-event is lacking or suddenly fails" the product owner asked to keep.
+
+**Duplicate avoidance — subscription-aware routing.** `CalendarFeedToken.LastPolledAt` is stamped
+whenever Outlook fetches the feed. At calendar-send time: if the user is **actively subscribed**
+(polled within the freshness window, e.g. 14 days) the feed already owns their calendar → send a
+**plain** `/mail/send` notification and **skip** the Felix calendar push (no second event). If
+**not** subscribed → send the Felix calendar invite. Either path yields exactly **one** calendar
+entry.
+
+**Updates & cancels — honest about the Felix limit.** Subscribed users: the feed auto-corrects;
+we also send a plain heads-up email. Non-subscribed users who received a one-off Felix invite:
+we cannot revise it, so we send a clear plain email ("your shift on X moved to Y / was cancelled —
+please update your calendar") and surface the feed as the hands-off fix. We never claim an update
+that did not happen.
+
+`IcsBuilder` (used by the feed) emits standards-compliant `VCALENDAR`/`VEVENT`: stable `UID` per
+assignment entity, `DTSTART/DTEND` in UTC (or `VALUE=DATE` for all-day), localized `SUMMARY`,
+`LOCATION` = molecule/area, `DESCRIPTION` + deep link to Shifty.
+
+**Rejected option (kept on record):** hand-rolling our own `.ics` with our UID and pushing it via
+`/mail/send/v2` would give update/cancel + feed-dedup for *non-subscribers too*, but trades Felix's
+clean native-invite UX for a file attachment and significant MIME complexity. The feed already
+solves correctness, so this is held as a future enhancement, not the default (YAGNI).
 
 ### 5.9 Language learning
 
@@ -218,8 +244,8 @@ Two independent deliverables:
 
 | Change | Why |
 |---|---|
-| `AppUser.PreferredLanguage` | learned email language |
-| `AppUser.CalendarFeedToken` | subscription feed auth |
+| `AppUser.PreferredLanguage` | learned email language (**DONE, Phase 1**) |
+| `CalendarFeedToken` (per-user token + `LastPolledAt`) | subscription feed auth + subscription-aware routing |
 | `NotificationPreference.EngagementMode` + `LastCatchUpEmailAt` + pending guard | Quiet mode + throttle |
 | `NotificationCategoryMute` (child table) | per-category granular mutes |
 | New `NotificationType` enum values | new events (**append-only — never insert mid-enum**) |
@@ -228,27 +254,32 @@ Two independent deliverables:
 ## 7. Build sequence (each phase shippable + tested)
 
 - **Phase 0 — Dispatcher foundation (Approach C):** event base, catalogue, `NotificationDispatcher`
-  wrapping existing services. No behavior change.
+  wrapping existing services. No behavior change. **DONE (b8b0309).**
 - **Phase 1 — Language learning:** `PreferredLanguage` + request hook + background email culture.
+  **DONE (260a34c).**
 - **Phase 2 — Engagement + throttle + preferences UI:** `EngagementMode`, per-category mutes,
-  signed opt-out link, 20-unread catch-up, NotificationCenter page.
+  signed opt-out link, 20-unread catch-up, NotificationCenter page; dispatcher *consumes* the
+  metadata (owns the in-app-persist + email-decision instead of delegating to the dual-channel
+  methods).
 - **Phase 3 — Coverage migration (Approach A end state):** migrate the 14 existing pairs onto the
   dispatcher; wire every gap event (trainee email, feedback email, account actions, approver
   notifications, calendar text entries); add bulk batching.
-- **Phase 4 — ICS subscription feed:** `IcsBuilder` + feed endpoint. (No Felix dependency.)
-- **Phase 5 — ICS per-event delivery:** **always feasible.** Implement 5b (HTML "Add to Calendar"
-  button → `/calendar/event/{token}.ics`) first since it needs nothing from Felix; upgrade to 5a
-  (native attachment invite) if/when the swagger confirms attachment support. Swagger picks
-  quality, not feasibility — nothing is blocked.
+- **Phase 4 — Subscription feed:** `IcsBuilder` + `/calendar/feed/{token}.ics` + `CalendarFeedToken`
+  (with `LastPolledAt`). Self-hosted, no Felix dependency.
+- **Phase 5 — Felix per-event "summon" + routing:** `IMailService` calendar-aware sends
+  (`/calendar`, `/allDayEvent`), `QueuedEmail` carries the event payload, processor routes to the
+  derived sub-path; subscription-aware routing (skip Felix push for active feed subscribers);
+  plain-email fallback on update/cancel. Local→UTC time conversion.
 
 ## 8. Constraints & risks
 
 - **Coordinate with concurrent Claude Code sessions.** Per the project's executable-lock policy,
   do not rebuild or kill processes while another session may hold the binary. Watch for merge
   conflicts in `NotificationService.cs`, `MailService.cs`, `IMailService.cs`, and the resx files.
-- **Felix swagger outstanding** — does **not block** any phase. Phase 5b (HTML "Add to Calendar"
-  button → our own `.ics` endpoint) works through Felix as-is; the swagger only enables the 5a
-  upgrade to native attachment invites. All phases proceed independently.
+- **Felix swagger received (2026-06-10).** Endpoints: `/mail/send` (basic), `/mail/send/calendar`
+  (timed event), `/mail/send/allDayEvent` (all-day), `/mail/send/v2` (FormData files + `cid:`
+  images). `calendarEvent` exposes only start/end/location (no UID/method) → Felix invites are
+  fire-and-forget; correctness is handled by the self-hosted feed (§5.8).
 - **Grant/seed discipline** unaffected (no new grants expected); follow append-only rules for the
   `NotificationType` / `EmailTemplateType` enums (same hazard as the GrantType seed).
 - **Bilingual resx** — every new email needs both `SharedResources.resx` and
@@ -256,10 +287,10 @@ Two independent deliverables:
 - **Tests** — each phase adds unit + integration tests; use the real-SQLite fixtures
   (`SqliteDbContextFixture`), not `UseInMemoryDatabase`, for any EF-touching tests.
 
-## 9. Open items (resolve during planning / before Phase 5)
+## 9. Open items (resolve during the relevant phase)
 
-- Felix attachment capability (swagger) — only gates the 5a *upgrade* (native invites) over the
-  5b button fallback; not a blocker.
+- ~~Felix swagger~~ — RESOLVED 2026-06-10 (see §5.8 / §8).
 - Exact "approver(s)" resolution for time-off/swap creation (who is the approver for a given
-  requester — confirm against `VacationApprovalService` hierarchy logic).
-- Whether `CalendarNoteChanged` should email anyone (currently: in-app to managers only).
+  requester — confirm against `VacationApprovalService` hierarchy logic). **Phase 3.**
+- Whether `CalendarNoteChanged` should email anyone (currently: in-app to managers only). **Phase 3.**
+- Feed freshness window for subscription-aware routing (default 14 days). **Phase 5.**
