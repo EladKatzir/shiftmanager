@@ -342,22 +342,42 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
                 return;
             }
 
-            // molecule (/Api/SelectMolecule) and Owner company (/Owner/SelectCompany)
-            // keep the existing native form-submit path. NOTE: /Api/SelectMolecule is
-            // subject to the same X-Requested-With guard and should be migrated to the
-            // fetch path above in a follow-up; /Owner/SelectCompany is a non-/api page
-            // and is not affected by the middleware guard.
+            // molecule posts to /Api/SelectMolecule, which is guarded by
+            // ApiAuthenticationMiddleware's CSRF check that REQUIRES the
+            // X-Requested-With: XMLHttpRequest header (a native form.submit() cannot
+            // send it). Use fetch, mirroring the member-company branch above.
+            if (switchMode === 'molecule') {
+                var body = new URLSearchParams();
+                body.append('moleculeId', contextId);
+                body.append('returnUrl', returnUrl);
+                fetch('/Api/SelectMolecule', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'RequestVerificationToken': csrfToken
+                    },
+                    body: body.toString()
+                }).then(function(resp) {
+                    // The endpoint returns a 302 to the validated returnUrl; fetch follows
+                    // it transparently, so resp.url is the final page. Navigate there.
+                    window.location.assign(resp.redirected ? resp.url : returnUrl);
+                }).catch(function() {
+                    // Network failure — reload to a consistent state.
+                    window.location.reload();
+                });
+                return;
+            }
+
+            // Owner company (/Owner/SelectCompany) is a non-/api page and is not
+            // affected by the ApiAuthenticationMiddleware guard — native form-submit is fine.
             var form = document.createElement('form');
             form.method = 'POST';
+            form.action = '/Owner/SelectCompany';
             var input = document.createElement('input');
             input.type = 'hidden';
-            if (switchMode === 'molecule') {
-                form.action = '/Api/SelectMolecule';
-                input.name = 'moleculeId';
-            } else {
-                form.action = '/Owner/SelectCompany';
-                input.name = 'companyId';
-            }
+            input.name = 'companyId';
             input.value = contextId;
             form.appendChild(input);
             var returnInput = document.createElement('input');
