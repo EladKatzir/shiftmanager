@@ -1,0 +1,60 @@
+@page
+@model ShiftManager.Pages.N.QuietModel
+@using System.Globalization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources> L
+@{
+    Layout = null;
+    var isRtl = CultureInfo.CurrentUICulture.Name.StartsWith("he", StringComparison.OrdinalIgnoreCase);
+    var dir = isRtl ? "rtl" : "ltr";
+}
+<!DOCTYPE html>
+<html lang="@CultureInfo.CurrentUICulture.Name" dir="@dir">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@L["OptOut_Title"]</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f3f4f6; color: #1f2937;
+               margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: #fff; max-width: 480px; width: 90%; padding: 32px; border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,.08); text-align: center; }
+        h1 { font-size: 1.4rem; margin: 0 0 12px; color: #111827; }
+        p { line-height: 1.6; color: #4b5563; }
+        .btn { display: inline-block; margin-top: 20px; padding: 10px 20px; border-radius: 8px;
+               border: 0; font-size: 1rem; cursor: pointer; text-decoration: none; }
+        .btn-secondary { background: #e5e7eb; color: #111827; }
+        .btn-primary { background: #4f46e5; color: #fff; }
+        .muted { font-size: .85rem; color: #9ca3af; margin-top: 18px; }
+        .icon { font-size: 2.5rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        @if (Model.State == ShiftManager.Pages.N.QuietModel.ResultState.QuietSet)
+        {
+            <div class="icon">🔕</div>
+            <h1>@L["OptOut_QuietSet"]</h1>
+            <p>@L["OptOut_QuietExplain"]</p>
+            <form method="post" asp-page-handler="Reengage">
+                <input type="hidden" name="token" value="@Model.Token" />
+                <button type="submit" class="btn btn-secondary">@L["OptOut_Reengage"]</button>
+            </form>
+        }
+        else if (Model.State == ShiftManager.Pages.N.QuietModel.ResultState.Reengaged)
+        {
+            <div class="icon">🔔</div>
+            <h1>@L["OptOut_Title"]</h1>
+            <p>@L["OptOut_Reengaged"]</p>
+        }
+        else
+        {
+            <div class="icon">⚠️</div>
+            <h1>@L["OptOut_Title"]</h1>
+            <p>@L["OptOut_Invalid"]</p>
+        }
+        <div class="muted">
+            <a href="/" class="btn btn-primary">@L["OptOut_GoToApp"]</a>
+        </div>
+    </div>
+</body>
+</html>

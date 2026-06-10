@@ -15942,4 +15942,34 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="ContextSwitcher_SelectMemberCompany" xml:space="preserve">
     <value>Select a company</value>
   </data>
+  <data name="OptOut_Title" xml:space="preserve">
+    <value>Email notifications</value>
+  </data>
+  <data name="OptOut_QuietSet" xml:space="preserve">
+    <value>You're now on Quiet mode</value>
+  </data>
+  <data name="OptOut_QuietExplain" xml:space="preserve">
+    <value>You'll only get emails for things that need your action (like a shift assigned to you). Everything else waits for you in the app, and we'll send one reminder email if a lot piles up.</value>
+  </data>
+  <data name="OptOut_Reengage" xml:space="preserve">
+    <value>Switch back to all emails</value>
+  </data>
+  <data name="OptOut_Reengaged" xml:space="preserve">
+    <value>You're back to receiving all email notifications.</value>
+  </data>
+  <data name="OptOut_Invalid" xml:space="preserve">
+    <value>This link is invalid or has expired.</value>
+  </data>
+  <data name="OptOut_GoToApp" xml:space="preserve">
+    <value>Go to Shifty</value>
+  </data>
+  <data name="Email_ManagePreferences" xml:space="preserve">
+    <value>Too many emails? Switch to Quiet mode</value>
+  </data>
+  <data name="Email_CatchUpSubject" xml:space="preserve">
+    <value>A lot has happened on Shifty</value>
+  </data>
+  <data name="Email_CatchUpBody" xml:space="preserve">
+    <value>You have several unread notifications waiting in Shifty. Log in to catch up on what changed.</value>
+  </data>
 </root>

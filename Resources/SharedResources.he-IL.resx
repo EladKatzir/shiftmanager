@@ -15904,4 +15904,34 @@
   <data name="ContextSwitcher_SelectMemberCompany" xml:space="preserve">
     <value>בחר חברה</value>
   </data>
+  <data name="OptOut_Title" xml:space="preserve">
+    <value>התראות במייל</value>
+  </data>
+  <data name="OptOut_QuietSet" xml:space="preserve">
+    <value>עברת למצב שקט</value>
+  </data>
+  <data name="OptOut_QuietExplain" xml:space="preserve">
+    <value>תקבל מיילים רק על דברים שדורשים פעולה ממך (כמו שיבוץ למשמרת). כל השאר יחכה לך באפליקציה, ונשלח לך מייל תזכורת אחד אם מצטברים הרבה עדכונים.</value>
+  </data>
+  <data name="OptOut_Reengage" xml:space="preserve">
+    <value>חזרה לקבלת כל המיילים</value>
+  </data>
+  <data name="OptOut_Reengaged" xml:space="preserve">
+    <value>חזרת לקבלת כל התראות המייל.</value>
+  </data>
+  <data name="OptOut_Invalid" xml:space="preserve">
+    <value>הקישור אינו תקין או שפג תוקפו.</value>
+  </data>
+  <data name="OptOut_GoToApp" xml:space="preserve">
+    <value>מעבר ל-Shifty</value>
+  </data>
+  <data name="Email_ManagePreferences" xml:space="preserve">
+    <value>יותר מדי מיילים? מעבר למצב שקט</value>
+  </data>
+  <data name="Email_CatchUpSubject" xml:space="preserve">
+    <value>קרו הרבה דברים ב-Shifty</value>
+  </data>
+  <data name="Email_CatchUpBody" xml:space="preserve">
+    <value>יש לך מספר התראות שלא נקראו ב-Shifty. התחבר כדי להתעדכן במה שהשתנה.</value>
+  </data>
 </root>
