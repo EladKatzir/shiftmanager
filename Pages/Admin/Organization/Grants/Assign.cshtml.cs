@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
@@ -20,18 +21,21 @@ public class AssignModel : LocalizedPageModel
     private readonly ILogger<AssignModel> _logger;
     private readonly IJobTypeService _jobTypeService;
     private readonly IAuditLogService _auditLogService;
+    private readonly INotificationService _notificationService;
 
     public AssignModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<AssignModel> logger,
         IJobTypeService jobTypeService,
-        IAuditLogService auditLogService) : base(localizer)
+        IAuditLogService auditLogService,
+        INotificationService notificationService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _jobTypeService = jobTypeService;
         _auditLogService = auditLogService;
+        _notificationService = notificationService;
     }
 
     public record UserOption(int Id, string DisplayName, string Email);
@@ -185,6 +189,12 @@ public class AssignModel : LocalizedPageModel
 
         await _auditLogService.LogAsync("GrantAssigned", "Grant", grant.Id,
             $"Assigned grant '{grantType.Key}' to user '{user.DisplayName}' (UserId={SelectedUserId})");
+
+        // Notify the affected user of their new permission grant (impactful account change).
+        await _notificationService.NotifyAsync(SelectedUserId, NotificationType.GrantChanged,
+            ShiftManager.Services.Notifications.NotificationCategory.Account,
+            _localizer["Notif_GrantChangedTitle"].Value, _localizer["Notif_GrantChangedMessage"].Value,
+            personallyActionable: true);
 
         TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_GrantAssigned"],
             _localizer[grantType.NameKey], user.DisplayName);

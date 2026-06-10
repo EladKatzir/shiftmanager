@@ -16051,4 +16051,10 @@
   <data name="NotifPrefs_FeedCopy" xml:space="preserve">
     <value>העתק</value>
   </data>
+  <data name="Notif_GrantChangedTitle" xml:space="preserve">
+    <value>ההרשאות שלך שונו</value>
+  </data>
+  <data name="Notif_GrantChangedMessage" xml:space="preserve">
+    <value>מנהל עדכן את ההרשאות שלך.</value>
+  </data>
 </root>

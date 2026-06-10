@@ -16089,4 +16089,10 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="NotifPrefs_FeedCopy" xml:space="preserve">
     <value>Copy</value>
   </data>
+  <data name="Notif_GrantChangedTitle" xml:space="preserve">
+    <value>Your permissions changed</value>
+  </data>
+  <data name="Notif_GrantChangedMessage" xml:space="preserve">
+    <value>An administrator updated your permissions.</value>
+  </data>
 </root>
