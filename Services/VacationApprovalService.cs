@@ -164,6 +164,32 @@ public class VacationApprovalService : IVacationApprovalService
             return (false, "VacationApproval_Error");
         }
 
+        // Notifications overhaul Phase 3d: alert the approver pool that a request awaits them
+        // (previously the approving manager was never told). In-app + gated email per approver.
+        try
+        {
+            var requesterName = await _context.Users.IgnoreQueryFilters()
+                .Where(u => u.Id == request.UserId)
+                .Select(u => u.DisplayName)
+                .FirstOrDefaultAsync() ?? string.Empty;
+
+            var approvers = await GetApproverPoolAsync(requestId);
+            var title = _localizer["Notif_RequestSubmittedTitle"].Value;
+            var message = string.Format(_localizer["Notif_TimeOffRequestSubmittedMessage"].Value, requesterName);
+
+            foreach (var approver in approvers)
+            {
+                await _notificationService.NotifyAsync(approver.Id, NotificationType.TimeOffRequestSubmitted,
+                    ShiftManager.Services.Notifications.NotificationCategory.TimeOff, title, message,
+                    personallyActionable: true, relatedEntityId: requestId, relatedEntityType: "TimeOffRequest");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Notification failure must never block the submission itself.
+            _logger.LogWarning(ex, "Failed to notify approver pool for request {RequestId}", requestId);
+        }
+
         if (requiresSecondApproval)
         {
             return (true, "VacationApproval_SubmittedForSecondApproval");
