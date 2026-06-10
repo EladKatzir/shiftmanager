@@ -122,9 +122,10 @@ public partial class UsersModel
                 TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value;
             }
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            TempData["ErrorMessage"] = ex.Message;
+            // Service throws when removing the primary membership (promote another first).
+            TempData["ErrorMessage"] = _localizer["Error_CannotRemovePrimaryMembership"].Value;
         }
 
         return RedirectToPage();
@@ -162,9 +163,10 @@ public partial class UsersModel
 
             TempData["SuccessMessage"] = _localizer["Users_Membership_PrimarySet"].Value;
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            TempData["ErrorMessage"] = ex.Message;
+            // Service throws when no active membership is found for this user in this company.
+            TempData["ErrorMessage"] = _localizer["Error_MembershipNotFound"].Value;
         }
 
         return RedirectToPage();

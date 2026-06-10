@@ -15886,4 +15886,13 @@
   <data name="Users_Membership_RemoveConfirm" xml:space="preserve">
     <value>הסר שייכות</value>
   </data>
+  <data name="Error_CannotRemovePrimaryMembership" xml:space="preserve">
+    <value>לא ניתן להסיר את השייכות הראשית — תחילה קבע שייכות אחרת כראשית.</value>
+  </data>
+  <data name="Error_MembershipNotFound" xml:space="preserve">
+    <value>לא נמצאה שייכות פעילה למשתמש זה בחברה זו.</value>
+  </data>
+  <data name="ContextSwitcher_SelectMemberCompany" xml:space="preserve">
+    <value>בחר חברה</value>
+  </data>
 </root>

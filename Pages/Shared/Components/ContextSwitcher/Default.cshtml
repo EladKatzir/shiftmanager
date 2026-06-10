@@ -91,7 +91,7 @@ else if (Model.ShowSwitcher && Model.CurrentContext != null)
                 {
                     <text>title="@Model.CurrentContext.FullName"</text>
                 }
-                loc-aria-label="ContextSwitcher_SelectContext">
+                loc-aria-label="@(Model.IsMemberMode ? "ContextSwitcher_SelectMemberCompany" : "ContextSwitcher_SelectContext")">
             <span class="context-switcher__current">
                 <span class="context-switcher__icon" aria-hidden="true"><icon name="building-2" /></span>
                 <span class="context-switcher__name">@Model.CurrentContext.DisplayName</span>

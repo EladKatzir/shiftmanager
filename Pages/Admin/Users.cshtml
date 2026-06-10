@@ -1316,7 +1316,7 @@
 </dialog>
 
 @* Remove membership dialog — mirrors Move dialog: fetch impact → show summary → confirm POST *@
-<dialog id="removeMembershipDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:480px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+<dialog id="removeMembershipDialog" data-error-text="@Localizer["Error_Generic"].Value" style="border:none; border-radius:0.75rem; padding:0; max-width:480px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
     <form method="post" asp-page-handler="RemoveMembership" id="removeMembershipForm" style="margin:0; padding:1.5rem;">
         @Html.AntiForgeryToken()
         <h2 class="section-title" style="margin-top:0;">@Localizer["Users_Membership_RemoveTitle"]</h2>
@@ -1469,6 +1469,7 @@
             var impactBox = document.getElementById('removeMembershipImpact');
             var confirmBtn = document.getElementById('removeMembershipConfirmBtn');
 
+            var errText = dlg.dataset.errorText || 'Error';
             document.querySelectorAll('.js-remove-membership').forEach(function (btn) {
                 btn.addEventListener('click', async function () {
                     var userId = btn.dataset.userId;
@@ -1484,11 +1485,11 @@
                     try {
                         var resp = await fetch('?handler=RemoveMembershipImpact&userId=' + encodeURIComponent(userId) + '&companyId=' + encodeURIComponent(companyId));
                         var data = await resp.json();
-                        if (!data.ok) { impactBox.textContent = data.error || 'Error'; return; }
+                        if (!data.ok) { impactBox.textContent = data.error || errText; return; }
                         impactBox.textContent = data.summary || '';
                         confirmBtn.disabled = false;
                     } catch (e) {
-                        impactBox.textContent = 'Error';
+                        impactBox.textContent = errText;
                     }
                 });
             });
