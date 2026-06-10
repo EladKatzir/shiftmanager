@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<DailyNotificationPreference> DailyNotificationPreferences => Set<DailyNotificationPreference>();
     public DbSet<NotificationCategoryMute> NotificationCategoryMutes => Set<NotificationCategoryMute>();
+    public DbSet<CalendarFeedToken> CalendarFeedTokens => Set<CalendarFeedToken>();
     public DbSet<OnDutyRoleSubscription> OnDutyRoleSubscriptions => Set<OnDutyRoleSubscription>();
     public DbSet<AppConfig> Configs => Set<AppConfig>();
     public DbSet<DirectorCompany> DirectorCompanies => Set<DirectorCompany>();
@@ -344,6 +345,14 @@ public class AppDbContext : DbContext
         // Notifications overhaul Phase 2: one mute row per (user, category)
         modelBuilder.Entity<NotificationCategoryMute>()
             .HasIndex(m => new { m.CompanyId, m.UserId, m.Category })
+            .IsUnique();
+
+        // Notifications overhaul Phase 4: feed token globally unique; one per user
+        modelBuilder.Entity<CalendarFeedToken>()
+            .HasIndex(t => t.Token)
+            .IsUnique();
+        modelBuilder.Entity<CalendarFeedToken>()
+            .HasIndex(t => new { t.CompanyId, t.UserId })
             .IsUnique();
 
         // OnDutyRoleSubscription - unique subscription per user per role type
@@ -842,6 +851,9 @@ public class AppDbContext : DbContext
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             modelBuilder.Entity<NotificationCategoryMute>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<CalendarFeedToken>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // SECURITY FIX: Add query filters for API key entities (cross-tenant vulnerability)
