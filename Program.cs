@@ -277,6 +277,7 @@ builder.Services.AddScoped<ICompanyCacheService, CompanyCacheService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ShiftManager.Services.Notifications.INotificationDispatcher, ShiftManager.Services.Notifications.NotificationDispatcher>();
 builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
+builder.Services.AddSingleton<ShiftManager.Services.Notifications.INotificationLinkTokenService, ShiftManager.Services.Notifications.NotificationLinkTokenService>();
 builder.Services.AddScoped<IDirectorService, DirectorService>();
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<ICompanyFilterService, CompanyFilterService>();
