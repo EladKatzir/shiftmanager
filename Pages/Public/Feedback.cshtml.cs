@@ -323,13 +323,15 @@ public class FeedbackModel : LocalizedPageModel
             var title = _localizer["Feedback_Notification_Title"].Value;
             var message = _localizer["Feedback_Notification_Message", typeLabel, submitter?.DisplayName ?? _localizer["Common_Unknown"], snippet].Value;
 
-            await _notificationService.CreateNotificationAsync(
+            await _notificationService.NotifyAsync(
                 owner.Id,
                 NotificationType.FeedbackSubmitted,
+                ShiftManager.Services.Notifications.NotificationCategory.Feedback,
                 title,
                 message,
-                feedback.Id,
-                "Feedback");
+                personallyActionable: true,
+                relatedEntityId: feedback.Id,
+                relatedEntityType: "Feedback");
         }
         catch (Exception ex)
         {
