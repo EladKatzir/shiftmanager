@@ -323,14 +323,14 @@ public class TraineeServiceTests : IDisposable
         var updated = await _db.ShiftAssignments.FindAsync(assignment.Id);
         updated!.TraineeUserId.Should().Be(20);
 
-        // Verify notifications sent to trainee and primary user
-        _notificationServiceMock.Verify(n => n.CreateNotificationAsync(
-            20, NotificationType.TraineeShadowingAdded, It.IsAny<string>(),
-            It.IsAny<string>(), assignment.Id, "ShiftAssignment"), Times.Once);
+        // Verify notifications sent to trainee and primary user (now via NotifyAsync = in-app + email)
+        _notificationServiceMock.Verify(n => n.NotifyAsync(
+            20, NotificationType.TraineeShadowingAdded, ShiftManager.Services.Notifications.NotificationCategory.Trainee,
+            It.IsAny<string>(), It.IsAny<string>(), true, false, assignment.Id, "ShiftAssignment"), Times.Once);
 
-        _notificationServiceMock.Verify(n => n.CreateNotificationAsync(
-            10, NotificationType.EmployeeTraineeAdded, It.IsAny<string>(),
-            It.IsAny<string>(), assignment.Id, "ShiftAssignment"), Times.Once);
+        _notificationServiceMock.Verify(n => n.NotifyAsync(
+            10, NotificationType.EmployeeTraineeAdded, ShiftManager.Services.Notifications.NotificationCategory.Trainee,
+            It.IsAny<string>(), It.IsAny<string>(), false, false, assignment.Id, "ShiftAssignment"), Times.Once);
     }
 
     [Fact]
@@ -415,9 +415,9 @@ public class TraineeServiceTests : IDisposable
 
         await _service.RemoveTraineeFromShiftAsync(assignment.Id, "RoleChanged", ManagerUserId);
 
-        _notificationServiceMock.Verify(n => n.CreateNotificationAsync(
-            20, NotificationType.TraineeShadowingCanceledRoleChange,
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string?>()), Times.Once);
+        _notificationServiceMock.Verify(n => n.NotifyAsync(
+            20, NotificationType.TraineeShadowingCanceledRoleChange, ShiftManager.Services.Notifications.NotificationCategory.Trainee,
+            It.IsAny<string>(), It.IsAny<string>(), true, false, It.IsAny<int?>(), It.IsAny<string?>()), Times.Once);
     }
 
     [Fact]
@@ -434,9 +434,9 @@ public class TraineeServiceTests : IDisposable
 
         await _service.RemoveTraineeFromShiftAsync(assignment.Id, "TimeOff", ManagerUserId);
 
-        _notificationServiceMock.Verify(n => n.CreateNotificationAsync(
-            20, NotificationType.TraineeShadowingCanceledTimeOff,
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string?>()), Times.Once);
+        _notificationServiceMock.Verify(n => n.NotifyAsync(
+            20, NotificationType.TraineeShadowingCanceledTimeOff, ShiftManager.Services.Notifications.NotificationCategory.Trainee,
+            It.IsAny<string>(), It.IsAny<string>(), true, false, It.IsAny<int?>(), It.IsAny<string?>()), Times.Once);
     }
 
     // --- GetTraineeShadowedShiftsAsync ---

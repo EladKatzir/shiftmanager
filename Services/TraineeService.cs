@@ -72,25 +72,29 @@ public class TraineeService : ITraineeService
             var shiftInfo = $"{shiftTypeName} on {assignment.ShiftInstance.WorkDate:MMM dd, yyyy}";
             var primaryUserName = assignment.User?.DisplayName ?? "an employee";
 
-            await _notificationService.CreateNotificationAsync(
+            await _notificationService.NotifyAsync(
                 traineeUserId,
                 NotificationType.TraineeShadowingAdded,
+                Notifications.NotificationCategory.Trainee,
                 "Shadowing Assignment",
                 $"You are now shadowing {primaryUserName} for {shiftInfo}",
-                shiftAssignmentId,
-                "ShiftAssignment"
+                personallyActionable: true,
+                relatedEntityId: shiftAssignmentId,
+                relatedEntityType: "ShiftAssignment"
             );
 
-            // Notify primary user if assigned
+            // Notify primary user if assigned (informational → not personally-actionable)
             if (assignment.UserId.HasValue)
             {
-                await _notificationService.CreateNotificationAsync(
+                await _notificationService.NotifyAsync(
                     assignment.UserId.Value,
                     NotificationType.EmployeeTraineeAdded,
+                    Notifications.NotificationCategory.Trainee,
                     "Trainee Assigned",
                     $"{trainee.DisplayName} will shadow your shift: {shiftInfo}",
-                    shiftAssignmentId,
-                    "ShiftAssignment"
+                    personallyActionable: false,
+                    relatedEntityId: shiftAssignmentId,
+                    relatedEntityType: "ShiftAssignment"
                 );
             }
 
@@ -137,25 +141,29 @@ public class TraineeService : ITraineeService
                     ? NotificationType.TraineeShadowingCanceledTimeOff
                     : NotificationType.TraineeShadowingRemoved;
 
-            await _notificationService.CreateNotificationAsync(
+            await _notificationService.NotifyAsync(
                 traineeId,
                 notificationType,
+                Notifications.NotificationCategory.Trainee,
                 "Shadowing Assignment Removed",
                 $"Your shadowing assignment for {shiftInfo} has been removed. Reason: {reason}",
-                shiftAssignmentId,
-                "ShiftAssignment"
+                personallyActionable: true,
+                relatedEntityId: shiftAssignmentId,
+                relatedEntityType: "ShiftAssignment"
             );
 
-            // Notify primary employee if assigned
+            // Notify primary employee if assigned (informational → not personally-actionable)
             if (assignment.UserId.HasValue)
             {
-                await _notificationService.CreateNotificationAsync(
+                await _notificationService.NotifyAsync(
                     assignment.UserId.Value,
                     NotificationType.EmployeeTraineeRemoved,
+                    Notifications.NotificationCategory.Trainee,
                     "Trainee Removed",
                     $"{traineeName} is no longer shadowing your shift: {shiftInfo}",
-                    shiftAssignmentId,
-                    "ShiftAssignment"
+                    personallyActionable: false,
+                    relatedEntityId: shiftAssignmentId,
+                    relatedEntityType: "ShiftAssignment"
                 );
             }
 
