@@ -25,6 +25,8 @@ public partial class RequestsModel : LocalizedPageModel
     private readonly IGrantService _grantService;
     private readonly ICompanyLocalizationService _companyLocalizationService;
     private readonly ITenantResolver _tenantResolver;
+    private readonly ILeaveFanoutService _leaveFanoutService;
+
     public RequestsModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
@@ -33,7 +35,8 @@ public partial class RequestsModel : LocalizedPageModel
         IFeatureFlagService featureFlagService,
         IGrantService grantService,
         ICompanyLocalizationService companyLocalizationService,
-        ITenantResolver tenantResolver) : base(localizer)
+        ITenantResolver tenantResolver,
+        ILeaveFanoutService leaveFanoutService) : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -42,6 +45,7 @@ public partial class RequestsModel : LocalizedPageModel
         _grantService = grantService;
         _companyLocalizationService = companyLocalizationService;
         _tenantResolver = tenantResolver;
+        _leaveFanoutService = leaveFanoutService;
     }
 
     [BindProperty]
@@ -75,7 +79,7 @@ public partial class RequestsModel : LocalizedPageModel
 
             // Load user's time off requests
             LogLoadingTimeOff(_logger, userId);
-            MyTimeOffRequests = await _db.TimeOffRequests
+            var rawTimeOffRequests = await _db.TimeOffRequests
                 .Where(r => r.UserId == userId)
                 .OrderByDescending(r => r.CreatedAt)
                 .Select(r => new MyTimeOffRequest
@@ -85,9 +89,20 @@ public partial class RequestsModel : LocalizedPageModel
                     EndDate = r.EndDate,
                     Reason = r.Reason ?? "",
                     Status = r.Status.ToString(),
-                    CreatedAt = r.CreatedAt
+                    CreatedAt = r.CreatedAt,
+                    LeaveGroupId = r.LeaveGroupId
                 })
                 .ToListAsync();
+
+            // Epic 6 dedup: when a leave was fanned out across multiple companies, the user
+            // should only see ONE row (the canonical copy — lowest Id in the group). Rows
+            // with a null LeaveGroupId are each their own logical leave and pass through unchanged.
+            MyTimeOffRequests = rawTimeOffRequests
+                .GroupBy(r => (object?)r.LeaveGroupId ?? r.Id)
+                .Select(g => g.OrderBy(r => r.Id).First())
+                .OrderByDescending(r => r.CreatedAt)
+                .ToList();
+
             LogLoadedTimeOff(_logger, MyTimeOffRequests.Count, userId);
 
             // Load user's swap requests - simplified query first
@@ -303,11 +318,22 @@ public partial class RequestsModel : LocalizedPageModel
 
             LogTimeOffSubmitted(_logger, request.Id, userId, request.Type, request.ApproverId);
 
-            // Submit for approval if the vacation approval feature flag is enabled
+            // Epic 6: fan out to additional shift-companies (no-op for single-company users).
+            var (_, fanOutClones) = await _leaveFanoutService.FanOutAsync(request, userId);
+
+            // Submit for approval if the vacation approval feature flag is enabled.
+            // For multi-company users, submit each company copy independently so each
+            // company's approval chain is seeded correctly.
             if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.VacationApprovalEnabled))
             {
                 var (success, approvalMessage) = await _vacationApprovalService.SubmitForApprovalAsync(request.Id, userId);
                 LogVacationApprovalResult(_logger, request.Id, success, approvalMessage);
+
+                foreach (var clone in fanOutClones)
+                {
+                    var (cloneSuccess, cloneApprovalMessage) = await _vacationApprovalService.SubmitForApprovalAsync(clone.Id, userId);
+                    LogVacationApprovalResult(_logger, clone.Id, cloneSuccess, cloneApprovalMessage);
+                }
             }
 
             TempData["SuccessMessage"] = _localizer["Success_TimeOffRequestSubmitted"].Value;
@@ -499,6 +525,9 @@ public partial class RequestsModel : LocalizedPageModel
         public string Reason { get; set; } = "";
         public string Status { get; set; } = "";
         public DateTime CreatedAt { get; set; }
+        /// <summary>Used for fan-out dedup: rows sharing a non-null LeaveGroupId represent one
+        /// logical leave and must not appear as separate entries in the filer's list.</summary>
+        public Guid? LeaveGroupId { get; set; }
     }
 
     public class MySwapRequest

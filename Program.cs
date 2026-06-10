@@ -282,6 +282,7 @@ builder.Services.AddScoped<ICompanyFilterService, CompanyFilterService>();
 builder.Services.AddScoped<IViewAsModeService, ViewAsModeService>();
 builder.Services.AddScoped<IOwnerCompanySelectorService, OwnerCompanySelectorService>(); // Owner company selector service
 builder.Services.AddScoped<ICompanyMembershipService, CompanyMembershipService>(); // Multi-company membership
+builder.Services.AddScoped<ILeaveFanoutService, LeaveFanoutService>(); // Epic 6: leave fan-out across shift companies
 builder.Services.AddScoped<IActiveCompanySelectorService, ActiveCompanySelectorService>(); // Multi-company active-company switch
 builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>(); // ✅ PHASE 20: User preference service
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
