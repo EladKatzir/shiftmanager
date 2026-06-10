@@ -65,7 +65,7 @@ public partial class IndexModel : LocalizedPageModel
         _tenantResolver = tenantResolver;
     }
 
-    public record TimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate, string? Reason);
+    public record TimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate, string? Reason, Guid? LeaveGroupId);
     public List<TimeOffVM> TimeOff { get; set; } = new();
 
     public record SwapVM(int Id, string FromUser, string When, string ToUser, IReadOnlyList<string> WarningsAtCreation);
@@ -73,7 +73,7 @@ public partial class IndexModel : LocalizedPageModel
 
     // ✅ Phase 18: Approved Time-Off (consolidated from Admin/TimeOff page)
     public record ApprovedTimeOffVM(int Id, string UserName, DateOnly StartDate, DateOnly EndDate,
-                                   string? Reason, DateTime CreatedAt, DateTime ApprovedAt);
+                                   string? Reason, DateTime CreatedAt, DateTime ApprovedAt, Guid? LeaveGroupId);
     public List<ApprovedTimeOffVM> ApprovedTimeOffs { get; set; } = new();
 
     public string? Message { get; set; }
@@ -116,7 +116,7 @@ public partial class IndexModel : LocalizedPageModel
                 TimeOff = await _db.TimeOffRequests
                     .Where(r => r.UserId == currentUserId && r.Status == RequestStatus.Pending)
                     .OrderBy(r => r.CreatedAt)
-                    .Select(r => new TimeOffVM(r.Id, currentUser.DisplayName, r.StartDate, r.EndDate, r.Reason))
+                    .Select(r => new TimeOffVM(r.Id, currentUser.DisplayName, r.StartDate, r.EndDate, r.Reason, r.LeaveGroupId))
                     .ToListAsync();
 
                 // IgnoreQueryFilters: need to join across tenant boundaries for swap request details
@@ -141,7 +141,7 @@ public partial class IndexModel : LocalizedPageModel
                 ApprovedTimeOffs = await _db.TimeOffRequests
                     .Where(r => r.UserId == currentUserId && r.Status == RequestStatus.Approved)
                     .OrderByDescending(r => r.StartDate)
-                    .Select(r => new ApprovedTimeOffVM(r.Id, currentUser.DisplayName, r.StartDate, r.EndDate, r.Reason, r.CreatedAt, r.CreatedAt))
+                    .Select(r => new ApprovedTimeOffVM(r.Id, currentUser.DisplayName, r.StartDate, r.EndDate, r.Reason, r.CreatedAt, r.CreatedAt, r.LeaveGroupId))
                     .ToListAsync();
 
                 LogLoadedEmployeeSummary(_logger, TimeOff.Count, Swaps.Count, ApprovedTimeOffs.Count);
@@ -176,13 +176,18 @@ public partial class IndexModel : LocalizedPageModel
             // Load pending time-off requests with company filtering and visibility filter
             LogLoadingPendingTimeOff(_logger);
             // IgnoreQueryFilters: accessibleCompanyIds already scoped — tenant filter breaks multi-company views
-            var pendingTO = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
+            var pendingTORaw = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
                                    join u in _db.Users.IgnoreQueryFilters() on r.UserId equals u.Id
                                    where r.Status == RequestStatus.Pending && accessibleCompanyIds.Contains(u.CompanyId)
                                       && (!r.Private || r.ApproverId == currentUserId)
                                    orderby r.CreatedAt
-                                   select new TimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason)).ToListAsync();
-            TimeOff = pendingTO;
+                                   select new TimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason, r.LeaveGroupId)).ToListAsync();
+            // Dedup fan-out copies: keep one representative row per logical leave (shared LeaveGroupId).
+            // Rows without a LeaveGroupId are individual leaves; each is kept as-is.
+            TimeOff = pendingTORaw
+                .GroupBy(v => v.LeaveGroupId.HasValue ? (object)v.LeaveGroupId.Value : (object)v.Id)
+                .Select(g => g.First())
+                .ToList();
             LogLoadedPendingTimeOff(_logger, TimeOff.Count);
 
             // Load pending swap requests with company filtering
@@ -213,11 +218,16 @@ public partial class IndexModel : LocalizedPageModel
             // Load approved time-off requests
             LogLoadingApprovedTimeOff(_logger);
             // IgnoreQueryFilters: same multi-company scope as pending queries above
-            ApprovedTimeOffs = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
+            var approvedTORaw = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
                                      join u in _db.Users.IgnoreQueryFilters() on r.UserId equals u.Id
                                      where r.Status == RequestStatus.Approved && accessibleCompanyIds.Contains(u.CompanyId)
                                      orderby r.StartDate descending
-                                     select new ApprovedTimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason, r.CreatedAt, r.CreatedAt)).ToListAsync();
+                                     select new ApprovedTimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason, r.CreatedAt, r.CreatedAt, r.LeaveGroupId)).ToListAsync();
+            // Dedup fan-out copies: keep one representative row per logical leave (shared LeaveGroupId).
+            ApprovedTimeOffs = approvedTORaw
+                .GroupBy(v => v.LeaveGroupId.HasValue ? (object)v.LeaveGroupId.Value : (object)v.Id)
+                .Select(g => g.First())
+                .ToList();
 
             LogLoadedApprovedTimeOff(_logger, ApprovedTimeOffs.Count);
 
