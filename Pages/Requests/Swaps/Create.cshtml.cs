@@ -177,16 +177,60 @@ public class CreateModel : LocalizedPageModel
         await _auditLogService.LogAsync("SwapRequestCreated", "SwapRequest", swapRequest.Id,
             $"Created swap request for assignment {SelectedAssignmentId.Value} to user {ToUserId.Value} (warnings: {busyValidation.Warnings.Count})");
 
-        // Notify the counterparty that a swap request awaits their response (actionable) — closes
-        // the gap where the other employee was never told. (Approver-pool alert for swaps: future.)
-        var requesterName = await _db.Users.IgnoreQueryFilters()
-            .Where(u => u.Id == userId).Select(u => u.DisplayName).FirstOrDefaultAsync() ?? string.Empty;
+        var requester = await _db.Users.IgnoreQueryFilters()
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.DisplayName, u.CompanyId })
+            .FirstOrDefaultAsync();
+        var requesterName = requester?.DisplayName ?? string.Empty;
+
+        // Notify the counterparty that a swap request awaits their response (actionable) — they
+        // must agree before a manager approves.
         await _notificationService.NotifyAsync(ToUserId.Value, NotificationType.SwapRequestSubmitted,
             ShiftManager.Services.Notifications.NotificationCategory.Swap,
             _localizer["Notif_SwapRequestReceivedTitle"].Value,
             string.Format(_localizer["Notif_SwapRequestReceivedMessage"].Value, requesterName),
             personallyActionable: true, relatedEntityId: swapRequest.Id, relatedEntityType: "SwapRequest");
 
+        // Notify the approver pool (managers in the requester's molecule who can approve swaps).
+        if (requester != null)
+        {
+            var approverIds = await GetSwapApproverIdsAsync(requester.CompanyId, userId, ToUserId.Value);
+            var approverTitle = _localizer["Notif_RequestSubmittedTitle"].Value;
+            var approverMsg = string.Format(_localizer["Notif_SwapRequestSubmittedMessage"].Value, requesterName);
+            foreach (var approverId in approverIds)
+            {
+                await _notificationService.NotifyAsync(approverId, NotificationType.SwapRequestSubmitted,
+                    ShiftManager.Services.Notifications.NotificationCategory.Swap,
+                    approverTitle, approverMsg,
+                    personallyActionable: true, relatedEntityId: swapRequest.Id, relatedEntityType: "SwapRequest");
+            }
+        }
+
         return RedirectToPage("/Requests/Index");
+    }
+
+    /// <summary>
+    /// Managers in the requester's molecule who can approve swaps (manager-tier role templates),
+    /// excluding the two swap participants. Mirrors the time-off approver-pool resolution.
+    /// SECURITY-AUDITED: IgnoreQueryFilters SAFE — a molecule may span companies; scoped by molecule.
+    /// </summary>
+    private async Task<List<int>> GetSwapApproverIdsAsync(int requesterCompanyId, params int[] exclude)
+    {
+        var moleculeId = await _db.Companies.IgnoreQueryFilters()
+            .Where(c => c.Id == requesterCompanyId)
+            .Select(c => (int?)c.MoleculeId)
+            .FirstOrDefaultAsync();
+        if (moleculeId == null) return new List<int>();
+
+        var managerKeys = new[] { "Lead", "Director", "BRDirector", "MoleculeAdmin", "AreaAdmin" };
+        var ids = await _db.Users.IgnoreQueryFilters()
+            .Include(u => u.RoleTemplate)
+            .Join(_db.Companies.IgnoreQueryFilters(), u => u.CompanyId, c => c.Id, (u, c) => new { User = u, c.MoleculeId })
+            .Where(x => x.MoleculeId == moleculeId.Value && x.User.IsActive
+                     && x.User.RoleTemplate != null && managerKeys.Contains(x.User.RoleTemplate.Key))
+            .Select(x => x.User.Id)
+            .ToListAsync();
+
+        return ids.Where(i => !exclude.Contains(i)).Distinct().ToList();
     }
 }
