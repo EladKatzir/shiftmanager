@@ -26,6 +26,7 @@ public partial class RequestsModel : LocalizedPageModel
     private readonly ICompanyLocalizationService _companyLocalizationService;
     private readonly ITenantResolver _tenantResolver;
     private readonly ILeaveFanoutService _leaveFanoutService;
+    private readonly ICompanyMembershipService _membershipService;
 
     public RequestsModel(
         IStringLocalizer<SharedResources> localizer,
@@ -36,7 +37,8 @@ public partial class RequestsModel : LocalizedPageModel
         IGrantService grantService,
         ICompanyLocalizationService companyLocalizationService,
         ITenantResolver tenantResolver,
-        ILeaveFanoutService leaveFanoutService) : base(localizer)
+        ILeaveFanoutService leaveFanoutService,
+        ICompanyMembershipService membershipService) : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -46,6 +48,7 @@ public partial class RequestsModel : LocalizedPageModel
         _companyLocalizationService = companyLocalizationService;
         _tenantResolver = tenantResolver;
         _leaveFanoutService = leaveFanoutService;
+        _membershipService = membershipService;
     }
 
     [BindProperty]
@@ -164,16 +167,32 @@ public partial class RequestsModel : LocalizedPageModel
             LogLoadedAvailableShifts(_logger, AvailableShifts.Count, userId);
 
             // Load available approvers — users who hold ApproveVacations or ApproveExtendedLeave grants
-            // scoped to the current user's company
+            // scoped to ANY of the current user's shift companies (union approver pool for multi-company users).
+            // Single-company users get the identical pool as before (only their primary company is included).
             LogLoadingApprovers(_logger, userId);
             var currentUser = await _db.Users.FindAsync(userId);
             if (currentUser != null)
             {
-                // Phase 2: Query grant table for users with approval grants covering this company
-                // Resolve the company's position in the hierarchy for scope matching
+                // Phase 3: Widen approver pool to the union of all shift-active membership companies.
+                // For a single-company user the set contains only currentUser.CompanyId — same as before.
+                var memberships = await _membershipService.GetMembershipsAsync(userId);
+                var memberCompanyIds = new HashSet<int> { currentUser.CompanyId };
+                foreach (var m in memberships.Where(m => m.DoesShifts))
+                    memberCompanyIds.Add(m.CompanyId);
+
+                // Resolve the molecule ids for all member companies (needed for hierarchy scope-matching).
+                var memberCompanies = await _db.Companies
+                    .Where(c => memberCompanyIds.Contains(c.Id))
+                    .Select(c => new { c.Id, c.MoleculeId })
+                    .ToListAsync();
+                var memberMoleculeIds = memberCompanies
+                    .Where(c => c.MoleculeId.HasValue)
+                    .Select(c => c.MoleculeId!.Value)
+                    .ToHashSet();
+                var memberCompanyIdList = memberCompanyIds.ToList();
+                var memberMoleculeIdList = memberMoleculeIds.ToList();
+
                 var approvalGrantKeys = new[] { "ApproveVacations", "ApproveExtendedLeave" };
-                var company = await _db.Companies.FindAsync(currentUser.CompanyId);
-                int? companyMoleculeId = company?.MoleculeId;
 
                 var approverUserIds = await _db.Grants
                     .Where(g => _db.GrantTypes
@@ -181,21 +200,21 @@ public partial class RequestsModel : LocalizedPageModel
                         .Select(gt => gt.Id)
                         .Contains(g.GrantTypeId))
                     .Where(g => g.CanOwn)
-                    // Match grants whose scope actually covers this user's company hierarchy
-                    .Where(g => g.CompanyId == currentUser.CompanyId
-                             // Molecule-scoped: grant's molecule must contain this company
-                             || (g.MoleculeId != null && g.MoleculeId == companyMoleculeId)
-                             // Area-scoped: grant's area must contain this company's molecule
-                             || (g.AreaId != null && companyMoleculeId != null
-                                 && _db.Molecules.Any(m => m.Id == companyMoleculeId && m.AreaId == g.AreaId))
-                             // Project-scoped: grant's project must contain this company's area
-                             || (g.ProjectId != null && companyMoleculeId != null
-                                 && _db.Molecules.Any(m => m.Id == companyMoleculeId
+                    // Match grants whose scope actually covers any of the user's member companies
+                    .Where(g => memberCompanyIdList.Contains(g.CompanyId ?? -1)
+                             // Molecule-scoped: grant's molecule must be one of the member molecules
+                             || (g.MoleculeId != null && memberMoleculeIdList.Contains(g.MoleculeId.Value))
+                             // Area-scoped: grant's area must contain any of the member molecules
+                             || (g.AreaId != null && memberMoleculeIdList.Any()
+                                 && _db.Molecules.Any(m => memberMoleculeIdList.Contains(m.Id) && m.AreaId == g.AreaId))
+                             // Project-scoped: grant's project must contain any of the member molecules' areas
+                             || (g.ProjectId != null && memberMoleculeIdList.Any()
+                                 && _db.Molecules.Any(m => memberMoleculeIdList.Contains(m.Id)
                                         && _db.Areas.Any(a => a.Id == m.AreaId && a.ProjectId == g.ProjectId)))
-                             // Self-scoped (all nulls): approver must be in the same company
+                             // Self-scoped (all nulls): approver must be in any of the member companies
                              || (!g.CompanyId.HasValue && !g.MoleculeId.HasValue
                                  && !g.AreaId.HasValue && !g.ProjectId.HasValue
-                                 && _db.Users.Any(u => u.Id == g.UserId && u.CompanyId == currentUser.CompanyId)))
+                                 && _db.Users.Any(u => u.Id == g.UserId && memberCompanyIdList.Contains(u.CompanyId))))
                     .Select(g => g.UserId)
                     .Distinct()
                     .ToListAsync();

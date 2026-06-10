@@ -30,6 +30,7 @@ public class VacationApprovalApproveTests : IDisposable
     private readonly AppDbContext _db;
     private readonly Mock<IGrantService> _grantServiceMock;
     private readonly Mock<IHomeMaterialiserService> _materialiserMock;
+    private readonly Mock<ICompanyMembershipService> _membershipServiceMock;
     private readonly VacationApprovalService _service;
 
     private const int TestCompanyId = 1;
@@ -52,6 +53,7 @@ public class VacationApprovalApproveTests : IDisposable
         _materialiserMock = new Mock<IHomeMaterialiserService>();
         var loggerMock = new Mock<ILogger<VacationApprovalService>>();
         var featureFlagServiceMock = new Mock<IFeatureFlagService>();
+        _membershipServiceMock = new Mock<ICompanyMembershipService>();
 
         // Default: approver has the required grant
         _grantServiceMock
@@ -62,6 +64,11 @@ public class VacationApprovalApproveTests : IDisposable
                 It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>(),
                 It.IsAny<int?>()))
             .ReturnsAsync(true);
+
+        // Default: membership service returns empty list → single-company behavior preserved
+        _membershipServiceMock
+            .Setup(m => m.GetMembershipsAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<CompanyMembership>());
 
         // Default: notification service succeeds silently
         notificationServiceMock
@@ -100,7 +107,8 @@ public class VacationApprovalApproveTests : IDisposable
             _materialiserMock.Object,
             auditLogServiceMock.Object,
             localizerMock.Object,
-            featureFlagServiceMock.Object);
+            featureFlagServiceMock.Object,
+            _membershipServiceMock.Object);
     }
 
     public void Dispose()
@@ -292,5 +300,96 @@ public class VacationApprovalApproveTests : IDisposable
         // Assert
         success.Should().BeTrue();
         message.Should().Contain("Approved");
+    }
+
+    /// <summary>
+    /// VA-A07: Union approver authorization — approver holds grant in company 2 only;
+    /// requester is a member of companies 1 AND 2 → CanUserApproveAsync returns TRUE.
+    /// This is the core cross-company union authorization test: the request is in company 1
+    /// but the approver is authorized via their grant in company 2 (another shift company).
+    /// </summary>
+    [Fact]
+    public async Task CanUserApproveAsync_UnionAuth_ApproverHasGrantInSecondCompanyOnly_ReturnsTrue()
+    {
+        // Arrange
+        const int secondCompanyId = 2;
+        await SeedUsersAsync();
+
+        // Requester's request is in company 1 (primary company)
+        var request = await CreateRequestAsync(new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 5));
+
+        // Requester has active memberships in BOTH company 1 (primary) and company 2
+        _membershipServiceMock
+            .Setup(m => m.GetMembershipsAsync(EmployeeUserId))
+            .ReturnsAsync(new List<CompanyMembership>
+            {
+                new() { UserId = EmployeeUserId, CompanyId = TestCompanyId,  IsPrimary = true,  DoesShifts = true },
+                new() { UserId = EmployeeUserId, CompanyId = secondCompanyId, IsPrimary = false, DoesShifts = true }
+            });
+
+        // Approver (user 20) holds the grant ONLY in company 2; company 1 returns false
+        _grantServiceMock
+            .Setup(g => g.HasGrantWithScopeAsync(
+                ApproverUserId,
+                It.IsAny<string>(),
+                It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>(),
+                It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>(),
+                It.IsAny<int?>()))
+            .ReturnsAsync(false); // default: false for all
+
+        _grantServiceMock
+            .Setup(g => g.HasGrantWithScopeAsync(
+                ApproverUserId,
+                It.IsAny<string>(),
+                null, null, null, null,
+                secondCompanyId,          // companyId = 2
+                It.IsAny<int?>(),
+                It.IsAny<int?>()))
+            .ReturnsAsync(true); // only true for company 2
+
+        // Act
+        var canApprove = await _service.CanUserApproveAsync(ApproverUserId, request.Id);
+
+        // Assert
+        canApprove.Should().BeTrue("approver holds the grant in company 2, one of the requester's shift companies");
+    }
+
+    /// <summary>
+    /// VA-A08: Union approver authorization — approver holds the grant in NEITHER of the
+    /// requester's membership companies → CanUserApproveAsync returns FALSE.
+    /// </summary>
+    [Fact]
+    public async Task CanUserApproveAsync_UnionAuth_ApproverHasGrantInNeitherCompany_ReturnsFalse()
+    {
+        // Arrange
+        const int secondCompanyId = 2;
+        await SeedUsersAsync();
+
+        var request = await CreateRequestAsync(new DateOnly(2026, 4, 1), new DateOnly(2026, 4, 5));
+
+        // Requester has memberships in companies 1 and 2
+        _membershipServiceMock
+            .Setup(m => m.GetMembershipsAsync(EmployeeUserId))
+            .ReturnsAsync(new List<CompanyMembership>
+            {
+                new() { UserId = EmployeeUserId, CompanyId = TestCompanyId,  IsPrimary = true,  DoesShifts = true },
+                new() { UserId = EmployeeUserId, CompanyId = secondCompanyId, IsPrimary = false, DoesShifts = true }
+            });
+
+        // Approver holds the grant in NEITHER company
+        _grantServiceMock
+            .Setup(g => g.HasGrantWithScopeAsync(
+                ApproverUserId,
+                It.IsAny<string>(),
+                It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>(),
+                It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>(),
+                It.IsAny<int?>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var canApprove = await _service.CanUserApproveAsync(ApproverUserId, request.Id);
+
+        // Assert
+        canApprove.Should().BeFalse("approver holds the grant in neither of the requester's companies");
     }
 }

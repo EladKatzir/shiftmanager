@@ -61,6 +61,13 @@ public class VacationApprovalServiceTests : IDisposable
             .Setup(s => s.IsEnabledAsync(It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>()))
             .ReturnsAsync(true);
 
+        // Stub membership service: returns empty list → single-company behavior preserved for
+        // all existing tests (only request.CompanyId is checked in CanUserApproveInternalAsync).
+        var membershipServiceStub = new Mock<ICompanyMembershipService>();
+        membershipServiceStub
+            .Setup(m => m.GetMembershipsAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<CompanyMembership>());
+
         _service = new VacationApprovalService(
             _db,
             _grantServiceMock.Object,
@@ -70,7 +77,8 @@ public class VacationApprovalServiceTests : IDisposable
             _materialiserMock.Object,
             auditLogServiceMock.Object,
             localizerMock.Object,
-            featureFlagServiceMock.Object);
+            featureFlagServiceMock.Object,
+            membershipServiceStub.Object);
     }
 
     public void Dispose()

@@ -23,6 +23,7 @@ public class VacationApprovalService : IVacationApprovalService
     private readonly IAuditLogService _auditLogService;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly IFeatureFlagService _featureFlagService;
+    private readonly ICompanyMembershipService _membershipService;
 
     public VacationApprovalService(
         AppDbContext context,
@@ -33,7 +34,8 @@ public class VacationApprovalService : IVacationApprovalService
         IHomeMaterialiserService materialiser,
         IAuditLogService auditLogService,
         IStringLocalizer<SharedResources> localizer,
-        IFeatureFlagService featureFlagService)
+        IFeatureFlagService featureFlagService,
+        ICompanyMembershipService membershipService)
     {
         _context = context;
         _grantService = grantService;
@@ -44,6 +46,7 @@ public class VacationApprovalService : IVacationApprovalService
         _auditLogService = auditLogService;
         _localizer = localizer;
         _featureFlagService = featureFlagService;
+        _membershipService = membershipService;
     }
 
     /// <summary>
@@ -545,21 +548,29 @@ public class VacationApprovalService : IVacationApprovalService
         // Get the approval route
         var (specificApproverId, approverGrantKey, _) = await GetApprovalRouteAsync(request.Id);
 
-        // If a specific approver is set, only that user can approve
-        if (specificApproverId.HasValue)
-        {
-            if (userId == specificApproverId.Value)
-                return true;
+        // If a specific approver is set, the designated user is always authorized (short-circuit first).
+        if (specificApproverId.HasValue && userId == specificApproverId.Value)
+            return true;
 
-            // Also allow if user has the grant (fallback for flexibility)
-            // Pass JobTypeId for targeted grant enforcement
-            return await _grantService.HasGrantWithScopeAsync(
-                userId, approverGrantKey, companyId: request.CompanyId, jobTypeId: requestorJobTypeId);
+        // Build the union of company ids that the approver grant is checked against:
+        // always start with the request's own company, then add each of the requester's
+        // other membership companies so that any eligible manager from any of their companies
+        // can approve. For single-company users (no extra memberships) this is exactly the
+        // previous behavior: only request.CompanyId is checked.
+        var memberships = await _membershipService.GetMembershipsAsync(request.UserId);
+        var companyIds = new HashSet<int> { request.CompanyId };
+        foreach (var m in memberships)
+            companyIds.Add(m.CompanyId);
+
+        // OR across all companies: approver qualifies if they hold the grant in ANY of them.
+        foreach (var cid in companyIds)
+        {
+            if (await _grantService.HasGrantWithScopeAsync(
+                    userId, approverGrantKey, companyId: cid, jobTypeId: requestorJobTypeId))
+                return true;
         }
 
-        // Otherwise, check if user has the required grant for the company + jobtype
-        return await _grantService.HasGrantWithScopeAsync(
-            userId, approverGrantKey, companyId: request.CompanyId, jobTypeId: requestorJobTypeId);
+        return false;
     }
 
     /// <summary>
