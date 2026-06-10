@@ -2202,6 +2202,15 @@ public partial class UsersModel : LocalizedPageModel
 
             LogJoinRequestRejected(_logger, id, currentUserId, joinRequest.Email, joinRequest.CompanyId);
 
+            // Email the applicant directly (they have no account → no in-app/footer). Fire-and-forget.
+            if (!string.IsNullOrWhiteSpace(joinRequest.Email))
+            {
+                var rejectSubject = _localizer["Notif_JoinRejectedTitle"].Value;
+                var rejectBody = System.Net.WebUtility.HtmlEncode(_localizer["Notif_JoinRejectedMessage"].Value);
+                var rejectHtml = $"<!DOCTYPE html><html><body style='font-family:Arial,sans-serif;padding:16px;'><p>{rejectBody}</p></body></html>";
+                _ = _mailService.SendMailAsync(joinRequest.Email, rejectSubject, rejectHtml);
+            }
+
             TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JoinRequestRejected"], joinRequest.DisplayName, joinRequest.Email);
             return RedirectToPage();
         }
