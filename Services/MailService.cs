@@ -34,10 +34,13 @@ public class MailService : IMailService
     private readonly ILocalizationService _localization;
     private readonly ITenantResolver? _tenantResolver;
     private readonly IFeatureFlagService? _featureFlagService;
+    private readonly ShiftManager.Services.Notifications.INotificationLinkTokenService? _linkTokens;
 
     /// <summary>
     /// Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
     /// ITenantResolver and IFeatureFlagService are optional — available during HTTP requests but not in background processor scope.
+    /// INotificationLinkTokenService is optional so existing unit tests can construct MailService without it;
+    /// when present, the one-click opt-out footer is injected into emails that carry a recipientUserId.
     /// </summary>
     public MailService(
         IHttpClientFactory httpClientFactory,
@@ -50,7 +53,8 @@ public class MailService : IMailService
         EmailBackgroundQueue emailQueue,
         ILocalizationService localization,
         ITenantResolver? tenantResolver = null,
-        IFeatureFlagService? featureFlagService = null)
+        IFeatureFlagService? featureFlagService = null,
+        ShiftManager.Services.Notifications.INotificationLinkTokenService? linkTokens = null)
     {
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -63,6 +67,37 @@ public class MailService : IMailService
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _tenantResolver = tenantResolver;
         _featureFlagService = featureFlagService;
+        _linkTokens = linkTokens;
+    }
+
+    /// <summary>
+    /// Injects the one-click "switch to Quiet mode" opt-out footer into an email body, just before
+    /// &lt;/body&gt; (or appended if absent). No-op when the token service is unavailable or the
+    /// recipient/company is unknown. The link is a signed, login-free token handled by /N/Quiet.
+    /// </summary>
+    private string InjectOptOutFooter(string html, int recipientUserId, int companyId)
+    {
+        if (_linkTokens == null || recipientUserId <= 0 || companyId <= 0)
+            return html;
+
+        try
+        {
+            var token = _linkTokens.CreateQuietToken(recipientUserId, companyId);
+            var baseUrl = (_configuration["BaseUrl"] ?? string.Empty).TrimEnd('/');
+            var url = $"{baseUrl}/N/Quiet?token={Uri.EscapeDataString(token)}";
+            var label = WebUtility.HtmlEncode(_localizer["Email_ManagePreferences"].Value);
+            var footer = $"<div style='text-align:center;padding:12px;font-size:11px;color:#9ca3af;'>" +
+                         $"<a href='{url}' style='color:#9ca3af;'>{label}</a></div>";
+
+            return html.Contains("</body>", StringComparison.OrdinalIgnoreCase)
+                ? html.Replace("</body>", footer + "</body>")
+                : html + footer;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to inject opt-out footer; sending email without it");
+            return html;
+        }
     }
 
     /// <summary>
@@ -197,7 +232,7 @@ public class MailService : IMailService
     /// Enqueue an email for background delivery. Returns immediately without blocking the HTTP request.
     /// Uses backpressure-aware EnqueueAsync that waits briefly if the queue is full.
     /// </summary>
-    public async Task<OperationResult> SendMailAsync(string recipient, string subject, string htmlBody)
+    public async Task<OperationResult> SendMailAsync(string recipient, string subject, string htmlBody, int recipientUserId = 0)
     {
         if (string.IsNullOrWhiteSpace(recipient))
         {
@@ -218,7 +253,7 @@ public class MailService : IMailService
             ? _tenantResolver.GetCurrentTenantId()
             : 0;
 
-        var queued = await _emailQueue.EnqueueAsync(new QueuedEmail(recipient, subject, htmlBody, companyId));
+        var queued = await _emailQueue.EnqueueAsync(new QueuedEmail(recipient, subject, htmlBody, companyId, RecipientUserId: recipientUserId));
         if (queued)
         {
             _logger.LogDebug("Email queued for background delivery to {Recipient}", recipient);
@@ -234,8 +269,11 @@ public class MailService : IMailService
     /// Send an email directly via HTTP call. Called by EmailBackgroundProcessor.
     /// Do not call from HTTP request handlers — use SendMailAsync instead.
     /// </summary>
-    public async Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0)
+    public async Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0, int recipientUserId = 0)
     {
+        // Inject the one-click opt-out footer (no-op if token service / ids unavailable).
+        htmlBody = InjectOptOutFooter(htmlBody, recipientUserId, companyId);
+
         // Start timing for diagnostics
         var stopwatch = Stopwatch.StartNew();
 

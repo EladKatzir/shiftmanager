@@ -43,7 +43,7 @@ public class EmailBackgroundProcessor : BackgroundService
             {
                 using var scope = _serviceProvider.CreateScope();
                 var mailService = scope.ServiceProvider.GetRequiredService<IMailService>();
-                var sendResult = await mailService.SendMailDirectAsync(attempt.Recipient, attempt.Subject, attempt.HtmlBody, attempt.CompanyId);
+                var sendResult = await mailService.SendMailDirectAsync(attempt.Recipient, attempt.Subject, attempt.HtmlBody, attempt.CompanyId, attempt.RecipientUserId);
                 sent = sendResult.Success;
                 if (!sent)
                 {

@@ -5,7 +5,7 @@ namespace ShiftManager.Services;
 /// <summary>
 /// Queued email item containing all data needed for sending.
 /// </summary>
-public record QueuedEmail(string Recipient, string Subject, string HtmlBody, int CompanyId = 0, int RetryCount = 0, DateTime? FirstAttemptAt = null);
+public record QueuedEmail(string Recipient, string Subject, string HtmlBody, int CompanyId = 0, int RetryCount = 0, DateTime? FirstAttemptAt = null, int RecipientUserId = 0);
 
 /// <summary>
 /// Singleton bounded channel for background email delivery.

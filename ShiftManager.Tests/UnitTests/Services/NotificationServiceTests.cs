@@ -55,7 +55,7 @@ public class NotificationServiceTests : IDisposable
 
         _loggerMock = new Mock<ILogger<NotificationService>>();
         _mailServiceMock = new Mock<IMailService>();
-        _mailServiceMock.Setup(x => x.SendMailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+        _mailServiceMock.Setup(x => x.SendMailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
             .ReturnsAsync(OperationResult.Ok());
 
         _localizerMock = new Mock<IStringLocalizer<SharedResources>>();

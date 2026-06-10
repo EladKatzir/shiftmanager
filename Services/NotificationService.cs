@@ -92,6 +92,9 @@ public partial class NotificationService : INotificationService
     private readonly IConfiguration _configuration;
     private readonly ILocalizationService _localization;
     private readonly ICompanyLocalizationService _companyLocalizationService;
+    // Optional so existing unit tests can construct NotificationService without it; production DI
+    // always injects it. Drives the email gate (engagement/Quiet/mutes) and the 20-unread throttle.
+    private readonly INotificationPreferenceService? _preferenceService;
 
     /// <summary>
     /// Look up a notification recipient across tenants. The tenant query filter on AppUser would
@@ -101,7 +104,7 @@ public partial class NotificationService : INotificationService
     private Task<AppUser?> GetRecipientAcrossTenantsAsync(int userId)
         => _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
 
-    public NotificationService(AppDbContext db, ILogger<NotificationService> logger, ITenantResolver tenantResolver, IMailService mailService, IStringLocalizer<SharedResources> localizer, IConfiguration configuration, ILocalizationService localization, ICompanyLocalizationService companyLocalizationService)
+    public NotificationService(AppDbContext db, ILogger<NotificationService> logger, ITenantResolver tenantResolver, IMailService mailService, IStringLocalizer<SharedResources> localizer, IConfiguration configuration, ILocalizationService localization, ICompanyLocalizationService companyLocalizationService, INotificationPreferenceService? preferenceService = null)
     {
         _db = db;
         _logger = logger;
@@ -111,6 +114,52 @@ public partial class NotificationService : INotificationService
         _configuration = configuration;
         _localization = localization;
         _companyLocalizationService = companyLocalizationService;
+        _preferenceService = preferenceService;
+    }
+
+    /// <summary>
+    /// Email gate: whether the email channel should fire for this event/recipient given the user's
+    /// engagement mode + mutes. When the preference service is unavailable (unit tests), defaults to
+    /// true (preserves legacy "always email" behavior).
+    /// </summary>
+    private async Task<bool> ShouldEmailAsync(int userId, int companyId, Notifications.NotificationEvent evt)
+        => _preferenceService == null || await _preferenceService.ShouldSendEmailAsync(userId, companyId, evt);
+
+    /// <summary>
+    /// 20-unread "catch up" throttle. Call after persisting an in-app notification. In Quiet mode,
+    /// when the recipient's unread count crosses the threshold, sends one localized catch-up email.
+    /// No-op when the preference service is unavailable.
+    /// </summary>
+    private async Task MaybeSendCatchUpAsync(int userId, int companyId)
+    {
+        if (_preferenceService == null)
+            return;
+
+        try
+        {
+            var unread = await _db.UserNotifications
+                .IgnoreQueryFilters()
+                .CountAsync(n => n.UserId == userId && !n.IsRead);
+
+            if (await _preferenceService.TryBeginCatchUpAsync(userId, companyId, unread))
+            {
+                var subject = _localizer["Email_CatchUpSubject"].Value;
+                var body = WebUtility.HtmlEncode(_localizer["Email_CatchUpBody"].Value);
+                var html = $"<!DOCTYPE html><html><body><div style='font-family:Arial,sans-serif;padding:16px;'>" +
+                           $"<p>{body}</p></div></body></html>";
+
+                var recipient = await GetRecipientAcrossTenantsAsync(userId);
+                if (recipient != null && !string.IsNullOrWhiteSpace(recipient.Email))
+                {
+                    await _mailService.SendMailAsync(recipient.Email, subject, html, recipientUserId: userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // A throttle failure must never block the underlying notification.
+            _logger.LogWarning(ex, "Catch-up throttle evaluation failed for user {UserId}", userId);
+        }
     }
 
     public async Task<bool> CreateNotificationAsync(int userId, NotificationType type, string title, string message, int? relatedEntityId = null, string? relatedEntityType = null)
@@ -147,6 +196,11 @@ public partial class NotificationService : INotificationService
             await _db.SaveChangesAsync();
 
             LogNotificationCreated(_logger, type, userId, title);
+
+            // 20-unread "catch up" throttle (Quiet mode). Centralized here so every in-app
+            // notification participates regardless of which creator produced it.
+            await MaybeSendCatchUpAsync(userId, companyId.Value);
+
             return true;
         }
         catch (DbUpdateException ex)

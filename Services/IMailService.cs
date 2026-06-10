@@ -30,7 +30,7 @@ public interface IMailService
     /// result keyed under <c>Error_MailService_InvalidRecipient</c> (validation) or
     /// <c>Error_MailService_SendFailed</c> (queue full / unavailable).
     /// </returns>
-    Task<OperationResult> SendMailAsync(string recipient, string subject, string htmlBody);
+    Task<OperationResult> SendMailAsync(string recipient, string subject, string htmlBody, int recipientUserId = 0);
 
     /// <summary>
     /// Send an email directly (synchronous HTTP call). Used by the background processor.
@@ -43,7 +43,7 @@ public interface IMailService
     /// <c>Error_MailService_MissingApiUrl</c>, <c>Error_MailService_MissingApiKey</c>,
     /// <c>Error_MailService_InvalidRecipient</c>, or <c>Error_MailService_SendFailed</c>.
     /// </returns>
-    Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0);
+    Task<OperationResult> SendMailDirectAsync(string recipient, string subject, string htmlBody, int companyId = 0, int recipientUserId = 0);
 
     /// <summary>
     /// Send shift assignment notification email.
