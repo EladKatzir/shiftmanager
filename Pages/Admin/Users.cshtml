@@ -1086,6 +1086,13 @@
                                 title="@Localizer["Users_MoveTitle"]">
                             @Localizer["Users_Move"]
                         </button>
+                        <button type="button" class="btn btn-sm js-add-membership"
+                                data-user-id="@u.Id"
+                                data-user-name="@u.DisplayName"
+                                data-current-company-ids="@string.Join(",", (u.Memberships ?? (IReadOnlyList<UsersModel.UserMembershipVM>)new List<UsersModel.UserMembershipVM>()).Select(m => m.CompanyId).DefaultIfEmpty(u.CompanyId))"
+                                title="@Localizer["Users_Membership_AddTitle"]">
+                            ➕ @Localizer["Users_Membership_Add"]
+                        </button>
                     </div>
                 </td>
             </tr>
