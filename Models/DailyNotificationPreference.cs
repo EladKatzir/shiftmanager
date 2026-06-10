@@ -64,6 +64,28 @@ public class DailyNotificationPreference : IBelongsToCompany
     /// </summary>
     public bool RemindBeforeOnDuty { get; set; } = false;
 
+    // ===== Notifications overhaul Phase 2: engagement mode + catch-up throttle =====
+
+    /// <summary>
+    /// Engagement mode for instant (per-action) notifications. Engaged (default) → every
+    /// notifiable action emails; Quiet → email only for personally-actionable events, with a
+    /// single "catch up" email when unread in-app notifications cross the throttle threshold.
+    /// Set to Quiet via the one-click opt-out link in every email or the NotificationCenter page.
+    /// </summary>
+    public EngagementMode EngagementMode { get; set; } = EngagementMode.Engaged;
+
+    /// <summary>
+    /// When the last 20-unread "catch up" email was sent (UTC). Null = never sent.
+    /// </summary>
+    public DateTime? LastCatchUpEmailAt { get; set; }
+
+    /// <summary>
+    /// Throttle guard: true once a catch-up email has been sent for the current accumulation
+    /// cycle; reset to false when the user reads notifications and unread drops below the
+    /// threshold. Ensures the catch-up email fires at most once per accumulation cycle.
+    /// </summary>
+    public bool CatchUpEmailPending { get; set; } = false;
+
     /// <summary>
     /// Soft delete flag
     /// </summary>

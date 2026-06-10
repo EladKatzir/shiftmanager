@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
     public DbSet<SwapRequest> SwapRequests => Set<SwapRequest>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<DailyNotificationPreference> DailyNotificationPreferences => Set<DailyNotificationPreference>();
+    public DbSet<NotificationCategoryMute> NotificationCategoryMutes => Set<NotificationCategoryMute>();
     public DbSet<OnDutyRoleSubscription> OnDutyRoleSubscriptions => Set<OnDutyRoleSubscription>();
     public DbSet<AppConfig> Configs => Set<AppConfig>();
     public DbSet<DirectorCompany> DirectorCompanies => Set<DirectorCompany>();
@@ -339,6 +340,11 @@ public class AppDbContext : DbContext
             .HasIndex(p => new { p.CompanyId, p.UserId })
             .IsUnique()
             .HasFilter("IsActive = 1"); // Unique only for active records
+
+        // Notifications overhaul Phase 2: one mute row per (user, category)
+        modelBuilder.Entity<NotificationCategoryMute>()
+            .HasIndex(m => new { m.CompanyId, m.UserId, m.Category })
+            .IsUnique();
 
         // OnDutyRoleSubscription - unique subscription per user per role type
         modelBuilder.Entity<OnDutyRoleSubscription>()
@@ -833,6 +839,9 @@ public class AppDbContext : DbContext
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             modelBuilder.Entity<DailyNotificationPreference>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
+
+            modelBuilder.Entity<NotificationCategoryMute>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
             // SECURITY FIX: Add query filters for API key entities (cross-tenant vulnerability)

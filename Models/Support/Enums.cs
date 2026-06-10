@@ -48,6 +48,19 @@ public enum NotificationType
     AccessRequestApproved = 19
 }
 
+/// <summary>
+/// Per-user notification engagement mode (notifications overhaul Phase 2).
+/// Engaged (default) → every notifiable action emails. Quiet → email only for
+/// personally-actionable events; non-actionable accumulate in-app and trigger a single
+/// "catch up" email when the unread count crosses the throttle threshold.
+/// Toggled via the one-click opt-out link in every email and the NotificationCenter page.
+/// </summary>
+public enum EngagementMode
+{
+    Engaged = 0,
+    Quiet = 1
+}
+
 public enum JoinRequestStatus
 {
     Pending = 0,
