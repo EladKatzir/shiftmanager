@@ -987,6 +987,18 @@
              unconditionally after a save without branching on "is this self-edit?".
              </summary>
         </member>
+        <member name="T:ShiftManager.Helpers.CultureScope">
+             <summary>
+             Temporarily switches the ambient culture (both <see cref="P:System.Globalization.CultureInfo.CurrentCulture"/> and
+             <see cref="P:System.Globalization.CultureInfo.CurrentUICulture"/>) for the lifetime of the scope, restoring the
+             previous values on dispose. Used by background email composition (which has no request
+             culture) to render each recipient's email under their learned <c>PreferredLanguage</c>.
+            
+             A null/blank/unrecognized culture name is a no-op — the ambient culture is left untouched,
+             so callers can pass a possibly-null preference and fall back to whatever default the caller
+             (e.g. the background job) already established.
+             </summary>
+        </member>
         <member name="T:ShiftManager.Helpers.DateTimeFormatHelper">
             <summary>
             Helper class for formatting dates and times according to the current culture.
@@ -1224,6 +1236,22 @@
         <member name="M:ShiftManager.Helpers.InputSanitizer.ContainsDangerousContent(System.String)">
             <summary>
             Returns true if the input contains patterns commonly associated with XSS or injection attacks.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Helpers.IsraelTime">
+            <summary>
+            Converts ShiftManager's local (Israel) wall-clock shift times to UTC for calendar artifacts
+            (Felix calendar invites and the .ics subscription feed). Shared so the mail layer and the feed
+            layer agree on the conversion. IANA id works on .NET 8 (ICU) across Windows/Linux, with the
+            Windows id + UTC as fallbacks.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Helpers.IsraelTime.ToUtc(System.DateOnly,System.TimeOnly)">
+            <summary>Convert a local (Israel) date+time to UTC.</summary>
+        </member>
+        <member name="M:ShiftManager.Helpers.IsraelTime.ShiftWindowUtc(System.DateOnly,System.TimeOnly,System.TimeOnly)">
+            <summary>
+            UTC start/end for a shift, accounting for overnight shifts (end ≤ start rolls to next day).
             </summary>
         </member>
         <member name="T:ShiftManager.Helpers.PrivacyHelper">
@@ -1599,6 +1627,31 @@
              filter passes through, and the re-thrown exception lands here.
              </para>
              </summary>
+        </member>
+        <member name="T:ShiftManager.Middleware.PreferredLanguageLearningMiddleware">
+             <summary>
+             Passively "learns" each user's preferred language. After the request is handled, for an
+             authenticated cookie user it compares the request's resolved UI culture
+             (<see cref="P:System.Globalization.CultureInfo.CurrentUICulture"/>, set by UseRequestLocalization) against the
+             stored <c>AppUser.PreferredLanguage</c> and persists it when it changed.
+            
+             Why this exists: background email composition (daily digest, day-before reminders, the
+             20-unread catch-up) runs with no HTTP request, so there is no culture to inherit. Learning
+             the user's language here gives those jobs a per-user culture to render under.
+            
+             Design notes:
+              - Registered AFTER UseAuthentication + UseRequestLocalization so both the user and the
+                resolved culture are available; runs AFTER _next so it never adds latency to the response.
+              - Uses ExecuteUpdateAsync filtered on "value differs" → at most one UPDATE, and only when
+                the language actually changed (steady state = zero writes).
+              - Never throws into the pipeline: any failure is swallowed and logged. A language-learning
+                miss must never break a page load.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Middleware.PreferredLanguageLearningMiddleware.LearnAsync(Microsoft.AspNetCore.Http.HttpContext,ShiftManager.Data.AppDbContext,System.Threading.CancellationToken)">
+            <summary>
+            Core decision, separated for testability. Returns true if a row was updated.
+            </summary>
         </member>
         <member name="T:ShiftManager.Middleware.RateLimitingMiddleware">
              <summary>
@@ -2895,6 +2948,98 @@
         <member name="M:ShiftManager.Migrations.DropPrimaryShiftTypeId.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddCompanyMembership">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCompanyMembership.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCompanyMembership.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCompanyMembership.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.BackfillCompanyMembershipsFromPrimary">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillCompanyMembershipsFromPrimary.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillCompanyMembershipsFromPrimary.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillCompanyMembershipsFromPrimary.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddUserPreferredLanguage">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUserPreferredLanguage.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUserPreferredLanguage.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUserPreferredLanguage.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddLeaveGroupIdToTimeOffRequest">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddLeaveGroupIdToTimeOffRequest.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddLeaveGroupIdToTimeOffRequest.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddLeaveGroupIdToTimeOffRequest.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.IndexTimeOffLeaveGroupId">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.IndexTimeOffLeaveGroupId.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.IndexTimeOffLeaveGroupId.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.IndexTimeOffLeaveGroupId.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddEngagementModeAndCategoryMutes">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddEngagementModeAndCategoryMutes.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddEngagementModeAndCategoryMutes.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddEngagementModeAndCategoryMutes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddCalendarFeedToken">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCalendarFeedToken.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCalendarFeedToken.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCalendarFeedToken.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.CompanyMembershipBackfillSql">
+            <summary>
+            Backfill SQL shared between the BackfillCompanyMembershipsFromPrimary migration and its
+            regression test, so both run identical statements (same idiom as ShiftCategoryBackfillSql).
+            Creates exactly one IsPrimary membership per existing user, copying the per-company columns
+            off Users. Idempotent: the NOT EXISTS guard makes a re-run a no-op.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Migrations.ShiftCategoryBackfillSql">
              <summary>
              The raw SQLite statements that migrate legacy <c>AppUser.PrimaryShiftTypeId</c> into the new
@@ -3604,6 +3749,15 @@
             Defaults to Turai (lowest enlisted rank) for backward compatibility.
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.AppUser.PreferredLanguage">
+            <summary>
+            User's preferred UI/email language as a culture name ("he-IL" | "en-US").
+            Passively learned: updated from the web request's resolved UI culture whenever it
+            changes (see PreferredLanguageLearningMiddleware). Consumed by background email
+            composition (daily digest, reminders, unread catch-up) which has no request culture
+            to inherit. NULL = never observed → fall back to the company/default culture.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.AppUser.RoleTemplateId">
             <summary>
             User's primary role template. When set, AppUser.Role is auto-derived from RoleTemplate.DerivedUserRole.
@@ -3717,6 +3871,26 @@
             <summary>
             User agent (browser info) of the user who performed the action
             </summary>
+        </member>
+        <member name="T:ShiftManager.Models.CalendarFeedToken">
+             <summary>
+             Per-user secret token for the self-hosted iCalendar subscription feed
+             (<c>/calendar/feed/{token}.ics</c>) — notifications overhaul Phase 4. The user adds the feed
+             URL to Outlook once and all their shifts/chores/on-duty auto-sync, staying correct over time
+             (the self-healing safety net behind Felix's fire-and-forget per-event invites).
+            
+             <para>
+             <see cref="P:ShiftManager.Models.CalendarFeedToken.LastPolledAt"/> is stamped on every feed fetch and drives subscription-aware routing
+             (Phase 5): when a user is actively polling the feed, the per-event Felix calendar push is
+             suppressed to avoid a duplicate calendar entry.
+             </para>
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.CalendarFeedToken.Token">
+            <summary>Opaque URL-safe secret embedded in the feed URL. Unique; revoked by regenerating.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.CalendarFeedToken.LastPolledAt">
+            <summary>When Outlook (or any client) last fetched this feed. Null = never polled.</summary>
         </member>
         <member name="T:ShiftManager.Models.Chore">
             <summary>
@@ -3902,6 +4076,46 @@
             User who last updated this override
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.CompanyMembership">
+            <summary>
+            One row per (user, company) the user belongs to. A user can hold several.
+            Mirrors the DirectorCompany join-table pattern (soft-delete, (UserId, CompanyId) unique,
+            queried by UserId with IgnoreQueryFilters). NOT IBelongsToCompany — it must be readable
+            before an active tenant is chosen, so it carries CompanyId WITHOUT a tenant query filter.
+            The primary membership (IsPrimary=true) mirrors AppUser.CompanyId and the per-company
+            columns on AppUser; exactly one primary per user is an invariant enforced by the service.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.CompanyMembership.UserId">
+            <summary>The member.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.CompanyMembership.CompanyId">
+            <summary>The company this membership is in.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.CompanyMembership.RoleTemplateId">
+            <summary>Role template in THIS company (drives this company's auto-grants — applied in Epic 5).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.CompanyMembership.JobTypeId">
+            <summary>Org placement in THIS company.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.CompanyMembership.DoesShifts">
+            <summary>Whether the user participates in shifts in THIS company.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.CompanyMembership.HomeTypeId">
+            <summary>Rotation type in THIS company.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.CompanyMembership.IsPrimary">
+            <summary>Exactly one per user. The primary mirrors AppUser.CompanyId + AppUser's per-company columns.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.CompanyMembership.IsDeleted">
+            <summary>Soft-delete flag (DirectorCompany pattern).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.CompanyMembership.GrantedBy">
+            <summary>Who created this membership (Owner/admin); 0 = system/backfill.</summary>
+            <remarks>Intentionally NOT configured as a foreign key (unlike DirectorCompany.GrantedByUser):
+            the backfill migration sets GrantedBy = 0 for system-created primary rows, and a real FK to
+            Users would reject 0. Do not add a GrantedBy FK without first changing the backfill sentinel.</remarks>
+        </member>
         <member name="T:ShiftManager.Models.DailyNotificationPreference">
             <summary>
             Phase 6: Daily notification digest preferences for employees
@@ -3951,6 +4165,26 @@
         <member name="P:ShiftManager.Models.DailyNotificationPreference.RemindBeforeOnDuty">
             <summary>
             Send reminder 1 day before user's own on-duty assignments
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DailyNotificationPreference.EngagementMode">
+            <summary>
+            Engagement mode for instant (per-action) notifications. Engaged (default) → every
+            notifiable action emails; Quiet → email only for personally-actionable events, with a
+            single "catch up" email when unread in-app notifications cross the throttle threshold.
+            Set to Quiet via the one-click opt-out link in every email or the NotificationCenter page.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DailyNotificationPreference.LastCatchUpEmailAt">
+            <summary>
+            When the last 20-unread "catch up" email was sent (UTC). Null = never sent.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DailyNotificationPreference.CatchUpEmailPending">
+            <summary>
+            Throttle guard: true once a catch-up email has been sent for the current accumulation
+            cycle; reset to false when the user reads notifications and unread drops below the
+            threshold. Ensures the catch-up email fires at most once per accumulation cycle.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.DailyNotificationPreference.IsActive">
@@ -4680,6 +4914,25 @@
             After requests are always single-approval regardless of this value.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.NotificationCategoryMute">
+             <summary>
+             Per-user, per-category email mute (notifications overhaul Phase 2). Presence of an active row
+             means the user has muted EMAIL for that notification category; in-app notifications are still
+             always persisted. Security-critical events ignore mutes entirely (see the dispatcher gate).
+            
+             <para>
+             <see cref="P:ShiftManager.Models.NotificationCategoryMute.Category"/> stores the integer value of the <c>NotificationCategory</c> enum
+             (which lives in the Services layer). It is stored as a plain int here so the Models layer
+             carries no dependency on Services; the notification gate maps it back to the enum.
+             </para>
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.NotificationCategoryMute.Category">
+            <summary>
+            Integer value of the muted NotificationCategory (Services-layer enum). Stored as int to
+            keep Models free of a Services dependency.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.OnDuty">
              <summary>
              "Day Shift" assignment (user-facing term: "משמרות יומיות" / "Day Shifts").
@@ -5242,6 +5495,15 @@
             but the complementary tier is still pending. Materialiser does NOT fire on this state.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.Support.EngagementMode">
+            <summary>
+            Per-user notification engagement mode (notifications overhaul Phase 2).
+            Engaged (default) → every notifiable action emails. Quiet → email only for
+            personally-actionable events; non-actionable accumulate in-app and trigger a single
+            "catch up" email when the unread count crosses the throttle threshold.
+            Toggled via the one-click opt-out link in every email and the NotificationCenter page.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.Support.OnDutyType">
              <summary>
              "Day Shift" types (user-facing term: "סוגי משמרות יומיות" / "Day Shift Types").
@@ -5716,6 +5978,14 @@
             <summary>
             When true, this time-off request is visible only to the chosen approver (ApproverId).
             When false (default), it follows standard primary+fallback approver routing.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.TimeOffRequest.LeaveGroupId">
+            <summary>
+            Groups the fan-out copies of one logical leave across the companies a multi-company user
+            does shifts in. NULL for ordinary single-company leaves. Approving/declining any copy
+            cascades the decision to all copies sharing this id. Aggregate reads (lists, analytics)
+            dedup by this id to count one logical leave.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.TimeOffRequest.FirstApprovalActorId">
@@ -6259,6 +6529,51 @@
             First row is treated as header and skipped.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostAddMembershipAsync(System.Int32,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean)">
+            <summary>
+            Adds a non-primary membership for the user in the given company.
+            Epic 5 comment: grant application for the role template is deferred to Epic 5.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostUpdateMembershipAsync(System.Int32,System.Int32,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean)">
+            <summary>
+            Non-destructively updates an ADDITIONAL (non-primary) membership's role template, job type,
+            and does-shifts flag. Does NOT touch shifts, time-off, chores, or swap requests.
+            Grant reconciliation is COMPANY-SCOPED: only grants for the membership's company are touched,
+            leaving all other companies' grants intact. Uses direct DB removal (not RemoveAutoGrantsAsync
+            which is GLOBAL and would nuke the same grant types in the primary company).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnGetRemoveMembershipImpactAsync(System.Int32,System.Int32)">
+            <summary>
+            Returns a JSON impact summary for removing the user's membership in the given company.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostRemoveMembershipAsync(System.Int32,System.Int32)">
+            <summary>
+            Removes the user's membership in the given company, clearing all scoped records.
+            Refuses to remove the primary membership (promote another first).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostSetPrimaryMembershipAsync(System.Int32,System.Int32)">
+            <summary>
+            Promotes the given company to primary for the user (demotes all others).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.AuthorizeMembershipActionAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Returns a localization key describing the failure, or null when the membership action is authorized.
+            Gate: admin must hold AdminAccess OR EditCompanyUsers on the target company, AND (when not
+            AdminAccess) be permitted to assign the target user's role (blocks manipulating a higher admin).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.AuthorizeSetPrimaryAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            SetPrimary-specific authorization. Runs the normal check on the NEW primary company, then —
+            because promoting relocates the user's home pointer (AppUser.CompanyId) — ALSO requires authority
+            over the user's CURRENT home company (when not AdminAccess). Returns an error key or null.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Admin.UsersModel.OnGetMoveImpactAsync(System.Int32,System.Int32)">
             <summary>Read-only impact preview for the move modal (AJAX). Returns JSON.</summary>
         </member>
@@ -6509,6 +6824,27 @@
         <member name="T:ShiftManager.Pages.Api.DepartmentHierarchyDto">
             <summary>
             Department in hierarchy
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.SelectMemberCompanyModel">
+            <summary>
+            Page handler for a multi-company member to select which company is their active tenant.
+            Membership is validated inside <see cref="M:ShiftManager.Services.IActiveCompanySelectorService.SelectCompanyAsync(System.Int32)"/>
+            (async DB check) — no extra authorization beyond <see cref="T:Microsoft.AspNetCore.Authorization.AuthorizeAttribute"/> is needed here.
+            Mirrors <see cref="T:ShiftManager.Pages.Api.SelectMoleculeModel"/> structure: POST-only, anti-forgery (Razor Pages default),
+            returnUrl validated via <see cref="M:Microsoft.AspNetCore.Mvc.IUrlHelper.IsLocalUrl(System.String)"/>, and an audit-log entry on a successful switch.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Api.SelectMemberCompanyModel.OnGet">
+            <summary>
+            GET removed — company selection is POST-only to prevent CSRF via crafted link.
+            Mirrors SelectMolecule.OnGet() redirect behavior.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Api.SelectMemberCompanyModel.OnPostAsync(System.Int32,System.String)">
+            <summary>
+            POST handler — validates membership and writes the active-company cookie, then redirects.
+            Anti-forgery token is validated automatically by Razor Pages.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.SelectMoleculeModel">
@@ -7120,8 +7456,24 @@
             Success message to display to the user (localized).
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.My.NotificationCenterModel.CalendarFeedUrl">
+            <summary>Absolute URL of the user's personal .ics subscription feed (add once in Outlook).</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.My.NotificationCenterModel.EngagementMode">
+            <summary>Current per-action email engagement mode.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.My.NotificationCenterModel.Categories">
+            <summary>User-facing categories the user can mute email for, with current mute state.</summary>
+        </member>
+        <member name="F:ShiftManager.Pages.My.NotificationCenterModel.MutableCategories">
+            <summary>Categories exposed in the mute UI (security/account/system are intentionally excluded).</summary>
+        </member>
         <member name="P:ShiftManager.Pages.My.RequestsModel.TimeOffRequestForm.Label">
             <summary>Free-text location for a "Day at [X]" request (Type == DayAt). Issue 4.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.My.RequestsModel.MyTimeOffRequest.LeaveGroupId">
+            <summary>Used for fan-out dedup: rows sharing a non-null LeaveGroupId represent one
+            logical leave and must not appear as separate entries in the filer's list.</summary>
         </member>
         <member name="T:ShiftManager.Pages.My.SettingsModel">
             <summary>
@@ -7132,6 +7484,19 @@
             <summary>
             Helper class for on-duty type multi-select options
             </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.N.QuietModel">
+            <summary>
+            One-click opt-out landing page linked from the footer of every email. Anonymous + token-driven:
+            the signed token encodes (userId, companyId), so a recipient can switch to Quiet mode straight
+            from their inbox without logging in. Idempotent and reversible (an "undo" re-enables all emails).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.N.QuietModel.Token">
+            <summary>Echoed back so the "undo" form can re-use the same signed token.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.N.QuietModel.ResolveAsync(System.String)">
+            <summary>Resolve the recipient's own company from the signed userId token.</summary>
         </member>
         <member name="T:ShiftManager.Pages.Owner.AreaConfigModel">
             <summary>
@@ -7512,6 +7877,13 @@
             approval queue. Empty list = clean swap, no warnings.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Requests.Swaps.CreateModel.GetSwapApproverIdsAsync(System.Int32,System.Int32[])">
+            <summary>
+            Managers in the requester's molecule who can approve swaps (manager-tier role templates),
+            excluding the two swap participants. Mirrors the time-off approver-pool resolution.
+            SECURITY-AUDITED: IgnoreQueryFilters SAFE — a molecule may span companies; scoped by molecule.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Shared.JusticePanelModel">
              <summary>
              Model for the <c>_JusticePanel.cshtml</c> partial. Used by every calendar page that wants
@@ -7558,6 +7930,20 @@
             <summary>
             Service for generating workforce analytics and reports
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.AnalyticsService.DeduplicateByLeaveGroup(System.Collections.Generic.List{ShiftManager.Models.TimeOffRequest})">
+             <summary>
+             Deduplicates a list of <see cref="T:ShiftManager.Models.TimeOffRequest"/> rows so that a fanned-out leave
+             (multiple rows sharing a non-null <see cref="P:ShiftManager.Models.TimeOffRequest.LeaveGroupId"/>) contributes
+             ONCE to any aggregate. The canonical representative is the row with the minimum
+             <see cref="P:ShiftManager.Models.TimeOffRequest.Id"/> within each group.
+            
+             Rows with a null <see cref="P:ShiftManager.Models.TimeOffRequest.LeaveGroupId"/> are ordinary single-company
+             leaves and each count individually — they pass through unchanged.
+            
+             The input list is already materialised from the DB (post-<c>ToListAsync</c>), so this
+             runs in-memory and does not require any additional EF translation.
+             </summary>
         </member>
         <member name="T:ShiftManager.Services.ApiKeyService">
             <summary>
@@ -8210,6 +8596,15 @@
             Get cache key for a company and culture
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.CompanyMembershipService.GetRemovalImpactAsync(System.Int32,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:ShiftManager.Services.CompanyMembershipService.UpdateMembershipAsync(System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:ShiftManager.Services.CompanyMembershipService.RemoveMembershipWithCleanupAsync(System.Int32,System.Int32,System.Int32)">
+            <inheritdoc/>
+        </member>
         <member name="T:ShiftManager.Services.ConcurrencyService">
             <summary>
             Service for handling optimistic concurrency conflicts (B-018).
@@ -8358,9 +8753,16 @@
             Queued email item containing all data needed for sending.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.QueuedEmail.#ctor(System.String,System.String,System.String,System.Int32,System.Int32,System.Nullable{System.DateTime})">
+        <member name="M:ShiftManager.Services.QueuedEmail.#ctor(System.String,System.String,System.String,System.Int32,System.Int32,System.Nullable{System.DateTime},System.Int32,ShiftManager.Services.CalendarEventKind,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String)">
             <summary>
             Queued email item containing all data needed for sending.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.CalendarEventKind">
+            <summary>
+            Selects which Felix endpoint an email is delivered through (notifications overhaul Phase 5):
+            None = plain /mail/send; Timed = /mail/send/calendar (shifts/chores/on-duty/after);
+            AllDay = /mail/send/allDayEvent (vacation, Day-At-X). Felix builds the native calendar invite.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.EmailBackgroundQueue">
@@ -8686,6 +9088,14 @@
             <summary>
             Generates HOME ShiftAssignments for users based on the HomeType pattern.
             Uses AddRange + single SaveChangesAsync inside a transaction for bulk performance.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IActiveCompanySelectorService">
+            <summary>
+            Lets a multi-company member choose which company is their active tenant. The authoritative
+            membership check happens here (async, DB) before the cookie is written; TenantResolver then
+            validates the cookie synchronously against the MemberCompanyIds claim. Mirrors
+            IOwnerCompanySelectorService but gated by CompanyMembership rather than the Owner role.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IApiKeyService">
@@ -9176,6 +9586,72 @@
             5. .resx for raw Key (e.g., "MORNING" → "בוקר")
             6. NameHe/NameEn (direct bilingual name on ShiftType for molecule/area-scoped shifts)
             7. Computed Name from ShiftType model
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.MembershipRemovalImpact">
+            <summary>
+            Read-only counts of what removing the user's membership in a specific company would clear.
+            FutureOnDuty is always 0 because OnDuty is globally-scoped (no CompanyId) — it cannot be
+            attributed to a single company and is therefore not touched by company-scoped removal.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.MembershipRemovalImpact.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Read-only counts of what removing the user's membership in a specific company would clear.
+            FutureOnDuty is always 0 because OnDuty is globally-scoped (no CompanyId) — it cannot be
+            attributed to a single company and is therefore not touched by company-scoped removal.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.ICompanyMembershipService">
+            <summary>
+            Manages a user's company memberships (the user ↔ company N:N). The IsPrimary membership
+            mirrors AppUser.CompanyId; this service is the single write-path that keeps them in sync,
+            enforcing the "exactly one primary per user" invariant.
+            NOTE (epic boundaries): grant application on add is Epic 5; full orphan-cleanup on remove
+            is Epic 4 (reuses UserCompanyTransferService). RemoveMembershipAsync here is soft-delete only.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICompanyMembershipService.GetMembershipsAsync(System.Int32)">
+            <summary>All active (non-deleted) memberships for the user, primary first.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICompanyMembershipService.IsMemberAsync(System.Int32,System.Int32)">
+            <summary>True if the user has an active membership in the company.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICompanyMembershipService.AddMembershipAsync(System.Int32,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean,System.Nullable{System.Int32},System.Int32)">
+            <summary>Add a non-primary membership. Throws InvalidOperationException if an active membership
+            already exists for (userId, companyId) — including the concurrent-add race, caught at the unique index.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICompanyMembershipService.RemoveMembershipAsync(System.Int32,System.Int32)">
+            <summary>Soft-delete a membership. (Orphan-cleanup wiring lands in Epic 4.)</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICompanyMembershipService.SetPrimaryAsync(System.Int32,System.Int32)">
+            <summary>Promote (userId, companyId) to primary, demote the rest, and sync AppUser.CompanyId.
+            Throws if the user has no active membership in that company.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICompanyMembershipService.GetRemovalImpactAsync(System.Int32,System.Int32)">
+            <summary>
+            Returns a read-only count of what removing the user's membership in the given company would
+            clear. Mirrors <see cref="M:ShiftManager.Services.IUserCompanyTransferService.GetMoveImpactAsync(System.Int32,System.Int32)"/> but scoped to
+            a single company. Does NOT mutate any data.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICompanyMembershipService.RemoveMembershipWithCleanupAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Clears all of the user's records scoped to the given company (future shifts, pending/future
+            time-off, future chores, open swap requests, grants), then soft-deletes the membership —
+            all inside a single transaction.
+            Returns false if the user has no active membership in that company.
+            Throws <see cref="T:System.InvalidOperationException"/> if the membership is the primary
+            (promote another membership to primary first, then remove this one).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICompanyMembershipService.UpdateMembershipAsync(System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean,System.Int32)">
+            <summary>
+            Updates an ADDITIONAL (non-primary) membership's role template, job type, and does-shifts
+            flag WITHOUT touching operational records (shifts, time-off, chores, swap requests).
+            Grant reconciliation is performed in the handler (which has access to BuildGrantScopeForTemplateAsync).
+            Throws <see cref="T:System.InvalidOperationException"/> if the membership is the primary or not found.
+            Returns the old RoleTemplateId so the handler can do a company-scoped grant reconcile.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IConcurrencyService">
@@ -10215,6 +10691,21 @@
             Returns true if valid, false if invalid (with error message).
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.ILeaveFanoutService">
+            <summary>
+            Fan-out service for multi-company leave requests. When a user does shifts in more than one
+            company, a filed time-off request is mirrored (fan-out) to each additional shift company
+            so each company's approval chain is independent; a single cascade decision then propagates
+            back (Epic 6 Task 4). Single-company users are completely unaffected.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ILeaveFanoutService.FanOutAsync(ShiftManager.Models.TimeOffRequest,System.Int32)">
+            <summary>Given a just-saved primary TimeOffRequest, if the user does shifts in MORE THAN ONE
+            company, assign a shared LeaveGroupId and create one clone per additional shift-company
+            (explicit CompanyId, same dates/type/reason/label/status). Returns the group id, or null if
+            no fan-out happened (single shift-company). Returns the list of created clones so the caller
+            can submit each for approval.</summary>
+        </member>
         <member name="T:ShiftManager.Services.IMailService">
              <summary>
              Service interface for sending email notifications via company mail API.
@@ -10231,7 +10722,7 @@
              </para>
              </summary>
         </member>
-        <member name="M:ShiftManager.Services.IMailService.SendMailAsync(System.String,System.String,System.String)">
+        <member name="M:ShiftManager.Services.IMailService.SendMailAsync(System.String,System.String,System.String,System.Int32)">
             <summary>
             Enqueue an email for background delivery. Returns immediately without blocking the HTTP request.
             </summary>
@@ -10244,7 +10735,7 @@
             <c>Error_MailService_SendFailed</c> (queue full / unavailable).
             </returns>
         </member>
-        <member name="M:ShiftManager.Services.IMailService.SendMailDirectAsync(System.String,System.String,System.String,System.Int32)">
+        <member name="M:ShiftManager.Services.IMailService.SendMailDirectAsync(System.String,System.String,System.String,System.Int32,System.Int32,ShiftManager.Services.CalendarEventKind,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String)">
             <summary>
             Send an email directly (synchronous HTTP call). Used by the background processor.
             Do not call from HTTP request handlers — use SendMailAsync instead.
@@ -10256,6 +10747,13 @@
             <c>Error_MailService_MissingApiUrl</c>, <c>Error_MailService_MissingApiKey</c>,
             <c>Error_MailService_InvalidRecipient</c>, or <c>Error_MailService_SendFailed</c>.
             </returns>
+        </member>
+        <member name="M:ShiftManager.Services.IMailService.SendCalendarMailAsync(System.String,System.String,System.String,ShiftManager.Services.CalendarEventKind,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String,System.Int32)">
+            <summary>
+            Enqueue a calendar-eligible email — delivered through Felix's /calendar (timed) or
+            /allDayEvent (all-day) endpoint so the recipient's Outlook receives a native calendar invite.
+            Timed events require UTC start/end; all-day events use the date component only.
+            </summary>
         </member>
         <member name="M:ShiftManager.Services.IMailService.SendShiftAssignedEmailAsync(System.String,System.String,System.String,System.DateOnly,System.TimeOnly,System.TimeOnly)">
             <summary>
@@ -10430,6 +10928,48 @@
         <member name="M:ShiftManager.Services.ImportService.GetCurrentUserId">
             <summary>
             Get current user ID from HTTP context
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.INotificationPreferenceService">
+            <summary>
+            Owns per-user notification engagement preferences (engagement mode + per-category email mutes)
+            and the 20-unread "catch up" throttle state. All methods take explicit userId + companyId and
+            look up across tenants, so they work both inside an HTTP request and from the anonymous,
+            token-authenticated opt-out endpoint (which has no tenant context).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationPreferenceService.GetEngagementModeAsync(System.Int32,System.Int32)">
+            <summary>Current engagement mode (defaults to <see cref="F:ShiftManager.Models.Support.EngagementMode.Engaged"/> when no row exists).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationPreferenceService.SetEngagementModeAsync(System.Int32,System.Int32,ShiftManager.Models.Support.EngagementMode)">
+            <summary>Set engagement mode, creating the preference row if necessary.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationPreferenceService.GetMutedCategoriesAsync(System.Int32,System.Int32)">
+            <summary>The categories for which this user has muted EMAIL.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationPreferenceService.SetCategoryMuteAsync(System.Int32,System.Int32,ShiftManager.Services.Notifications.NotificationCategory,System.Boolean)">
+            <summary>Mute or un-mute email for a single category (idempotent).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationPreferenceService.ShouldSendEmailAsync(System.Int32,System.Int32,ShiftManager.Services.Notifications.NotificationEvent)">
+            <summary>
+            Apply the email precedence chain (engagement mode + mutes + the event's metadata) to decide
+            whether the email channel should fire for this event/recipient. In-app is always persisted
+            regardless of this result.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationPreferenceService.ShouldSendEmailAsync(System.Int32,System.Int32,ShiftManager.Services.Notifications.NotificationCategory,System.Boolean,System.Boolean)">
+            <summary>
+            Raw-metadata overload of the email gate, for callers (the existing typed notification
+            creators) that pass category/flags inline rather than constructing a NotificationEvent.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationPreferenceService.TryBeginCatchUpAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Throttle evaluation, called right after an in-app notification is persisted. Returns true if
+            the caller should send ONE "catch up" email now (Quiet mode + unread crossed the threshold +
+            no catch-up already pending). When it returns true it has already set the pending guard +
+            timestamp. It also self-heals the guard: if the user has read enough to drop below the
+            threshold, the guard is cleared so a future accumulation cycle can fire again.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IOwnerCompanySelectorService">
@@ -11458,6 +11998,18 @@
             Service for managing company language settings.
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.LeaveFanoutService">
+            <summary>
+            Fan-out service for multi-company leave requests.
+            Single-company users (or multi-company users who do shifts in only one company) are
+            completely unaffected — LeaveGroupId stays null, one row, byte-for-byte identical to
+            the pre-Epic-6 path. Fan-out only fires when the filer has ≥2 active memberships with
+            DoesShifts == true.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.LeaveFanoutService.FanOutAsync(ShiftManager.Models.TimeOffRequest,System.Int32)">
+            <inheritdoc/>
+        </member>
         <member name="T:ShiftManager.Services.MailService">
             <summary>
             Service for sending email notifications via company mail API.
@@ -11466,10 +12018,48 @@
             Follows ShiftManager architecture patterns with dependency injection and structured logging.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.MailService.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{ShiftManager.Services.MailService},Microsoft.Extensions.Configuration.IConfiguration,ShiftManager.Services.IEmailConfigService,ShiftManager.Services.IEmailApiLogService,Microsoft.Extensions.Localization.IStringLocalizer{ShiftManager.Resources.SharedResources},ShiftManager.Services.IEmailTemplateService,ShiftManager.Services.EmailBackgroundQueue,ShiftManager.Services.ILocalizationService,ShiftManager.Services.ITenantResolver,ShiftManager.Services.IFeatureFlagService)">
+        <member name="M:ShiftManager.Services.MailService.#ctor(System.Net.Http.IHttpClientFactory,Microsoft.Extensions.Logging.ILogger{ShiftManager.Services.MailService},Microsoft.Extensions.Configuration.IConfiguration,ShiftManager.Services.IEmailConfigService,ShiftManager.Services.IEmailApiLogService,Microsoft.Extensions.Localization.IStringLocalizer{ShiftManager.Resources.SharedResources},ShiftManager.Services.IEmailTemplateService,ShiftManager.Services.EmailBackgroundQueue,ShiftManager.Services.ILocalizationService,ShiftManager.Services.ITenantResolver,ShiftManager.Services.IFeatureFlagService,ShiftManager.Services.Notifications.INotificationLinkTokenService,ShiftManager.Data.AppDbContext)">
             <summary>
             Constructor with dependency injection for HTTP client factory, logging, configuration, and localization.
             ITenantResolver and IFeatureFlagService are optional — available during HTTP requests but not in background processor scope.
+            INotificationLinkTokenService is optional so existing unit tests can construct MailService without it;
+            when present, the one-click opt-out footer is injected into emails that carry a recipientUserId.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.MailService.ResolveRecipientUserIdAsync(System.String,System.Int32)">
+            <summary>
+            Injects the one-click "switch to Quiet mode" opt-out footer into an email body, just before
+            &lt;/body&gt; (or appended if absent). No-op when the token service is unavailable or the
+            recipient/company is unknown. The link is a signed, login-free token handled by /N/Quiet.
+            </summary>
+            <summary>
+            Resolve a recipient's userId from (email, companyId) for the opt-out footer token. The pair
+            is unique within a tenant. Read-only; failures degrade to 0 (no footer). Uses .ToLower() on
+            the column against a client-pre-lowered constant (EF-translatable; see case-folding contract).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.MailService.IsActiveFeedSubscriberAsync(System.Int32)">
+            <summary>
+            True if the user has fetched their .ics subscription feed within the freshness window (14 days)
+            — i.e. they're an active subscriber, so a per-event Felix calendar push would duplicate the
+            feed entry. Read-only; failures degrade to false (send the calendar invite).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.MailService.BuildSendTarget(System.String,System.String,System.String,System.String,System.String,ShiftManager.Services.CalendarEventKind,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String)">
+            <summary>
+            Builds the (targetUrl, payload) for a Felix send. Plain mail goes to the configured
+            <paramref name="baseApiUrl"/> (already the /mail/send endpoint); calendar-eligible mail is
+            routed to the <c>/calendar</c> or <c>/allDayEvent</c> sub-path with the mail object wrapped
+            alongside the event. Pure (no I/O) so the payload shape + routing is unit-testable.
+            Times are formatted as supplied — callers MUST pass UTC for timed events (the trailing 'Z'
+            asserts UTC); all-day events use date-only.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.MailService.SendCalendarMailAsync(System.String,System.String,System.String,ShiftManager.Services.CalendarEventKind,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String,System.Int32)">
+            <summary>
+            Enqueue a calendar-eligible email — delivered through Felix's /calendar (Timed) or
+            /allDayEvent (AllDay) endpoint so the recipient's Outlook receives a native calendar event
+            ("summon"). Timed events require UTC start/end; all-day events use the date component only.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.MailService.LoadConfigurationAsync">
@@ -11487,13 +12077,13 @@
             Returns a user-friendly error message based on HTTP status code.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.MailService.SendMailAsync(System.String,System.String,System.String)">
+        <member name="M:ShiftManager.Services.MailService.SendMailAsync(System.String,System.String,System.String,System.Int32)">
             <summary>
             Enqueue an email for background delivery. Returns immediately without blocking the HTTP request.
             Uses backpressure-aware EnqueueAsync that waits briefly if the queue is full.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.MailService.SendMailDirectAsync(System.String,System.String,System.String,System.Int32)">
+        <member name="M:ShiftManager.Services.MailService.SendMailDirectAsync(System.String,System.String,System.String,System.Int32,System.Int32,ShiftManager.Services.CalendarEventKind,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String)">
             <summary>
             Send an email directly via HTTP call. Called by EmailBackgroundProcessor.
             Do not call from HTTP request handlers — use SendMailAsync instead.
@@ -11580,6 +12170,30 @@
              <see cref="T:Microsoft.Extensions.Localization.IStringLocalizer`1"/> with keys <c>Error_MasterProgramService_*</c>.
              </summary>
         </member>
+        <member name="T:ShiftManager.Services.NotificationPreferenceService">
+             <summary>
+             DB-backed implementation of <see cref="T:ShiftManager.Services.INotificationPreferenceService"/>. Combines the pure
+             <see cref="T:ShiftManager.Services.Notifications.NotificationGate"/> rules with persisted engagement mode, per-category mutes, and
+             throttle state.
+            
+             <para>
+             SECURITY-AUDITED: uses <c>IgnoreQueryFilters()</c> because callers pass an explicit
+             (userId, companyId) pair — both from in-request UI (the user editing their own prefs) and from
+             the anonymous, signed-token opt-out endpoint (no tenant context). The companyId is always known
+             and applied explicitly, so this does not widen tenant exposure: every query is constrained to
+             the exact (userId, companyId) supplied.
+             </para>
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.INotificationService.NotifyAsync(System.Int32,ShiftManager.Models.Support.NotificationType,ShiftManager.Services.Notifications.NotificationCategory,System.String,System.String,System.Boolean,System.Boolean,System.Nullable{System.Int32},System.String)">
+            <summary>
+            Generic notifier for the notifications-overhaul coverage events (Phase 3d). Persists an
+            in-app notification (always) and sends a gated, standard-template email — the engagement
+            mode / category mute / security-critical rules apply, the catch-up throttle participates,
+            and the one-click opt-out footer is auto-injected. Use for previously-silent actions:
+            account/role/grant changes, approver alerts on request creation, calendar entries, etc.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.INotificationService.TryCreateNotificationWithDiagnosticsAsync(System.Int32,System.String,System.String,System.String)">
             <summary>
             Diagnostic variant of <see cref="M:ShiftManager.Services.INotificationService.CreateNotificationAsync(System.Int32,ShiftManager.Models.Support.NotificationType,System.String,System.String,System.Nullable{System.Int32},System.String)"/>
@@ -11601,6 +12215,27 @@
             Look up a notification recipient across tenants. The tenant query filter on AppUser would
             otherwise hide users in other companies from a manager acting on a cross-tenant grant
             (Owner/Director/AreaAdmin), silently dropping notification emails. Read-only by design.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.NotificationService.ShouldEmailAsync(System.Int32,System.Int32,ShiftManager.Services.Notifications.NotificationCategory,System.Boolean,System.Boolean)">
+            <summary>
+            Email gate: whether the email channel should fire for this event/recipient given the user's
+            engagement mode + mutes. When the preference service is unavailable (unit tests), defaults to
+            true (preserves legacy "always email" behavior).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.NotificationService.MaybeSendCatchUpAsync(System.Int32,System.Int32)">
+            <summary>
+            20-unread "catch up" throttle. Call after persisting an in-app notification. In Quiet mode,
+            when the recipient's unread count crosses the threshold, sends one localized catch-up email.
+            No-op when the preference service is unavailable.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.NotificationService.BuildGenericEmailHtml(System.String,System.String,System.String)">
+            <summary>
+            Standard localized HTML email body for the generic coverage notifications. Direction-aware
+            (RTL/LTR) and HTML-encodes user-controlled values. The one-click opt-out footer is injected
+            downstream by MailService.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.NotificationService.NotifyOwnersOfAccessRequestAsync(System.String,System.String,System.String,System.Int32,System.Int32)">
@@ -11634,6 +12269,177 @@
         </member>
         <member name="M:ShiftManager.Services.NotificationService.TrySendTestNotificationAsync(System.Int32)">
             <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.ICalendarFeedService">
+            <summary>
+            Backs the self-hosted iCalendar subscription feed (Phase 4): per-user token management, feed
+            generation from the user's shifts/chores/on-duty, and the "actively subscribed?" check that
+            drives subscription-aware routing of Felix calendar invites (Phase 5).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.ICalendarFeedService.GetOrCreateTokenAsync(System.Int32,System.Int32)">
+            <summary>Get the user's feed token, creating one on first use.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.ICalendarFeedService.ResolveAndStampAsync(System.String)">
+            <summary>Resolve a feed token to its owner and stamp LastPolledAt. Null if unknown/blank.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.ICalendarFeedService.BuildFeedAsync(System.Int32,System.Int32,System.DateTime)">
+            <summary>Build the user's .ics feed (upcoming shifts/chores/on-duty).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.ICalendarFeedService.IsActivelySubscribedAsync(System.Int32,System.Int32,System.TimeSpan)">
+            <summary>True if the user's feed was polled within <paramref name="window"/> (i.e. they're subscribed).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.Events.ShiftAssignedEvent">
+            <summary>
+            Raised when a user is assigned to a shift. Maps to
+            INotificationService.CreateShiftAddedNotificationAsync (in-app + email today).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.Events.ShiftRemovedEvent">
+            <summary>
+            Raised when a user is unassigned from a shift. Maps to
+            INotificationService.CreateShiftRemovedNotificationAsync (in-app + email today).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.IcsEvent">
+            <summary>
+            One event in the subscription feed. <see cref="P:ShiftManager.Services.Notifications.IcsEvent.StartUtc"/>/<see cref="P:ShiftManager.Services.Notifications.IcsEvent.EndUtc"/> are UTC for
+            timed events; for all-day events only the date component is used and the end is treated as
+            inclusive (the builder emits the iCal-exclusive DTEND by adding one day).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.IcsEvent.#ctor(System.String,System.String,System.DateTime,System.DateTime,System.Boolean,System.String,System.String)">
+            <summary>
+            One event in the subscription feed. <see cref="P:ShiftManager.Services.Notifications.IcsEvent.StartUtc"/>/<see cref="P:ShiftManager.Services.Notifications.IcsEvent.EndUtc"/> are UTC for
+            timed events; for all-day events only the date component is used and the end is treated as
+            inclusive (the builder emits the iCal-exclusive DTEND by adding one day).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.IcsBuilder">
+            <summary>
+            Pure RFC-5545 iCalendar generator for the self-hosted subscription feed (Phase 4). Stable per
+            assignment <c>UID</c>s mean updates/cancellations reconcile in the client instead of duplicating.
+            No I/O → fully unit-testable.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.IcsBuilder.Escape(System.String)">
+            <summary>RFC-5545 TEXT escaping: backslash, semicolon, comma, and newlines.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.IcsMethod">
+            <summary>
+            iCalendar METHOD for a calendar-eligible event. Consumed by the ICS builder in Phase 4–5.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.INotificationDispatcher">
+            <summary>
+            Single entry point for raising notification events. Implementations fan an event out
+            to the in-app and email channels (and later calendar). Fire-and-forget by contract:
+            a notification failure must never throw into the calling business action.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.INotificationDispatcher.RaiseAsync(ShiftManager.Services.Notifications.NotificationEvent)">
+            <summary>
+            Raise a notification event. In Phase 0 this delegates to the existing
+            INotificationService creators. Unmapped event types are logged and skipped
+            (never thrown) so a missing mapping cannot break a business action.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.INotificationLinkTokenService">
+            <summary>
+            Creates and validates the signed, stateless token embedded in the one-click opt-out link at the
+            bottom of every email. Backed by ASP.NET Data Protection, so the token is tamper-proof and needs
+            no DB lookup — the link works for anonymous (not-logged-in) recipients clicking from their inbox.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.INotificationLinkTokenService.CreateQuietToken(System.Int32)">
+            <summary>Create an opt-out token encoding the recipient userId. The recipient's company is
+            derived from the user at redemption time, so it is intentionally not part of the token
+            (avoids a cross-tenant companyId mismatch when the footer is built in the background sender).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.INotificationLinkTokenService.TryParse(System.String,System.Int32@)">
+            <summary>
+            Validate and decode a token. Returns false (and zeroed output) for any missing, malformed,
+            or tampered token.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.NotificationCategory">
+            <summary>
+            Grouping used for per-category user mutes (Phase 2) and digest sectioning.
+            Append new values at the end — values may be persisted in NotificationCategoryMute.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.NotificationDispatcher">
+            <summary>
+            Phase 0 dispatcher: delegates each event to the existing INotificationService creator
+            (which already persists in-app + sends email). No metadata is consumed yet — that
+            arrives in Phase 2. Unmapped events are logged and skipped, never thrown.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.NotificationEvent">
+             <summary>
+             Base type for every notifiable domain event. Concrete events carry their payload
+             (recipient(s) + render data) and override the metadata that drives the dispatcher.
+            
+             In Phase 0 the dispatcher only reads the concrete type (delegating to the existing
+             INotificationService creators). The metadata properties below are the stable contract
+             consumed later: PersonallyActionable + SecurityCritical drive Quiet-mode email rules
+             (Phase 2); CalendarEligible + Ics drive .ics generation (Phase 4–5); Batchable drives
+             bulk-op coalescing (Phase 3).
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Services.Notifications.NotificationEvent.Category">
+            <summary>Category for per-user mutes and digest sectioning.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.Notifications.NotificationEvent.PersonallyActionable">
+            <summary>True if this event still emails when the recipient is in Quiet mode.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.Notifications.NotificationEvent.SecurityCritical">
+            <summary>True if this event ALWAYS emails — ignores Quiet mode and category mutes.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.Notifications.NotificationEvent.CalendarEligible">
+            <summary>True if a calendar (.ics) artifact should accompany this event.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.Notifications.NotificationEvent.Ics">
+            <summary>iCalendar METHOD when <see cref="P:ShiftManager.Services.Notifications.NotificationEvent.CalendarEligible"/>; otherwise null.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.Notifications.NotificationEvent.Batchable">
+            <summary>True if this event can be coalesced into one summary email during bulk ops.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.NotificationGate">
+            <summary>
+            Pure decision logic for the notification dispatch layer (no I/O), kept separate so it can be
+            exhaustively unit-tested. Encodes the two rules from the design spec (§5.3, §5.6):
+              1. the email precedence chain, and
+              2. the 20-unread "catch up" throttle.
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Services.Notifications.NotificationGate.CatchUpThreshold">
+            <summary>Unread in-app count at which a Quiet-mode user gets one "catch up" email.</summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:ShiftManager.Services.Notifications.NotificationGate.ShouldSendEmail(System.Boolean,System.Boolean,ShiftManager.Models.Support.EngagementMode,System.Boolean)" -->
+        <member name="M:ShiftManager.Services.Notifications.NotificationGate.ShouldSendCatchUp(ShiftManager.Models.Support.EngagementMode,System.Int32,System.Boolean)">
+            <summary>
+            Throttle rule: a Quiet-mode user gets exactly ONE "catch up" email when their unread
+            in-app count crosses the threshold. <paramref name="catchUpPending"/> is the guard that
+            prevents re-firing within the same accumulation cycle; it is reset (see
+            <see cref="M:ShiftManager.Services.Notifications.NotificationGate.ShouldResetCatchUpGuard(System.Int32,System.Boolean)"/>) once the user reads notifications and drops below
+            the threshold.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Notifications.NotificationGate.ShouldResetCatchUpGuard(System.Int32,System.Boolean)">
+            <summary>
+            True when the catch-up guard should be cleared: the user has read enough that their unread
+            count is back below the threshold, so the next accumulation cycle can fire again.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Notifications.NotificationLinkTokenService">
+            <summary>
+            Data-Protection-backed implementation of <see cref="T:ShiftManager.Services.Notifications.INotificationLinkTokenService"/>.
+            The token is <c>Protect("{userId}:{companyId}")</c>; tampering or a wrong key throws
+            <see cref="T:System.Security.Cryptography.CryptographicException"/> on unprotect, which we translate to a clean validation
+            failure. No expiry is applied: opt-out links in old emails should keep working, and the action
+            is idempotent (set Quiet), so there is no replay risk.
+            </summary>
         </member>
         <member name="T:ShiftManager.Services.IOnDutyService">
              <summary>
@@ -12220,6 +13026,12 @@
             should count as 8hr, not 16hr). Ported from ConflictChecker.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.TraineeService.FormatShiftInfo(System.String,System.DateOnly)">
+            <summary>Localized "{shiftType} on {date}" fragment used inside trainee notifications.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.TraineeService.LocalizeReason(System.String)">
+            <summary>Localized human phrase for a shadowing-cancellation reason token.</summary>
+        </member>
         <member name="T:ShiftManager.Services.UserDataExportService">
             <summary>
             Exports all data related to a specific user in JSON format.
@@ -12338,6 +13150,55 @@
             <summary>
             Processes all post-approval side effects for an approved time-off request.
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.CascadeGroupDecisionAsync(ShiftManager.Models.TimeOffRequest,ShiftManager.Models.Support.RequestStatus)">
+             <summary>
+             Cascades a terminal approval decision (Approved or Declined) to every non-terminal
+             sibling in the same LeaveGroup.
+            
+             Design contract:
+             <list type="bullet">
+               <item>Called ONLY after the acting request has already been committed to a TERMINAL
+                     state (<see cref="F:ShiftManager.Models.Support.RequestStatus.Approved"/> or <see cref="F:ShiftManager.Models.Support.RequestStatus.Declined"/>).
+                     Never called for the intermediate <see cref="F:ShiftManager.Models.Support.RequestStatus.PendingSecondApproval"/>
+                     state — each copy advances its own dual-approval tiers independently; this method
+                     fires only when the FIRST copy reaches its final outcome and pulls the rest.</item>
+               <item>Sets sibling status DIRECTLY without calling
+                     <see cref="M:ShiftManager.Services.VacationApprovalService.ApproveAsync(System.Int32,System.Int32,System.String)"/> / <see cref="M:ShiftManager.Services.VacationApprovalService.DeclineAsync(System.Int32,System.Int32,System.String)"/> recursively — guards
+                     against infinite loops.</item>
+               <item>For <see cref="F:ShiftManager.Models.Support.RequestStatus.Approved"/> cascades: copies the approval-actor
+                     fields from the acting request so the audit trail on every sibling shows
+                     the real approver.</item>
+               <item>Each sibling is persisted in its own transaction and its side-effects /
+                     materialiser are fired independently, so each company's shifts and
+                     notifications are processed correctly.</item>
+               <item>Uses <c>IgnoreQueryFilters()</c> because sibling copies live in different
+                     companies — the current tenant filter would hide them.</item>
+             </list>
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.VacationApprovalService.CascadeGroupCancellationAsync(ShiftManager.Models.TimeOffRequest)">
+             <summary>
+             Cascades a cancellation to every still-active sibling in the same LeaveGroup.
+            
+             Unlike <see cref="M:ShiftManager.Services.VacationApprovalService.CascadeGroupDecisionAsync(ShiftManager.Models.TimeOffRequest,ShiftManager.Models.Support.RequestStatus)"/>, cancellation is NOT an approval decision:
+             it must NOT fire <see cref="M:ShiftManager.Services.VacationApprovalService.ProcessApprovalSideEffectsAsync(System.Int32)"/> (no shift-removal /
+             trainee-cancel / approval-notification). Instead it mirrors <see cref="M:ShiftManager.Services.VacationApprovalService.CancelRequestAsync(System.Int32,System.Int32)"/>'s
+             own cleanup:
+             <list type="bullet">
+               <item>A <see cref="F:ShiftManager.Models.Support.RequestStatus.Pending"/> (or <see cref="F:ShiftManager.Models.Support.RequestStatus.PendingSecondApproval"/>)
+                     sibling simply transitions to <see cref="F:ShiftManager.Models.Support.RequestStatus.Canceled"/> — nothing was
+                     materialised yet, so <c>SyncMaterialisedHomeRowsAsync</c> is a no-op clear.</item>
+               <item>An already-<see cref="F:ShiftManager.Models.Support.RequestStatus.Approved"/> sibling is also canceled and then
+                     properly UN-materialised: <c>SyncMaterialisedHomeRowsAsync</c> removes the HOME rows
+                     it created (status is now Canceled) and, for Vacation/DayAt, <c>RestoreRotationHomeAsync</c>
+                     puts the rotation HOME shifts back.</item>
+             </list>
+             Already-<see cref="F:ShiftManager.Models.Support.RequestStatus.Canceled"/> and already-<see cref="F:ShiftManager.Models.Support.RequestStatus.Declined"/>
+             siblings are left untouched. Sets status DIRECTLY (no recursive <see cref="M:ShiftManager.Services.VacationApprovalService.CancelRequestAsync(System.Int32,System.Int32)"/>
+             call) — guards against loops. Uses <c>IgnoreQueryFilters()</c> because siblings live in
+             other companies.
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.VacationApprovalService.GetMatchingRuleAsync(ShiftManager.Models.TimeOffRequest)">
             <summary>
@@ -12738,6 +13599,10 @@
         </member>
         <member name="P:ShiftManager.ViewComponents.ContextSwitcherViewModel.IsMoleculeMode">
             <summary>True when the switcher operates at molecule level (directors) vs company level (owners)</summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ContextSwitcherViewModel.IsMemberMode">
+            <summary>True when the switcher lists a multi-company member's membership companies.
+            Mutually exclusive with IsMoleculeMode. Single-membership regular users get neither flag.</summary>
         </member>
         <member name="P:ShiftManager.ViewComponents.ContextOption.Name">
             <summary>Original full name of the context</summary>

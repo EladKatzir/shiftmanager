@@ -232,8 +232,8 @@ All dependencies are included. No internet connection required.
 
 Questions? See DEPLOYMENT_GUIDE.txt for comprehensive documentation.
 
-Version: v5.2.0
-Package Date: 2026-06-09
+Version: v5.2.1
+Package Date: 2026-06-11
 Package Size: 168 MB
 Deployment Type: Self-Contained
 
