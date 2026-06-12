@@ -395,6 +395,7 @@ builder.Services.AddScoped<ICalendarTextEntryService, CalendarTextEntryService>(
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ICalendarNotificationService, CalendarNotificationService>();
 builder.Services.AddScoped<ICalendarRowOrderService, CalendarRowOrderService>();
+builder.Services.AddScoped<IWhoIsOnShiftService, WhoIsOnShiftService>();
 
 // API Layer Services
 builder.Services.AddScoped<ShiftManager.Services.Api.UserApiService>();

@@ -166,6 +166,9 @@ public class AppDbContext : DbContext
     // Per-user calendar row/category ordering preferences (NOT tenant-scoped — personal UI preference)
     public DbSet<UserCalendarRowOrder> UserCalendarRowOrders => Set<UserCalendarRowOrder>();
 
+    // Per-user "Who is on Shift" dashboard monitored shift selections (NOT tenant-scoped — personal UI preference)
+    public DbSet<UserMonitoredShift> UserMonitoredShifts => Set<UserMonitoredShift>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var dateConverter = new ValueConverter<DateOnly, string>(
@@ -1103,6 +1106,11 @@ public class AppDbContext : DbContext
             .IsUnique();
         modelBuilder.Entity<UserCalendarRowOrder>()
             .HasIndex(o => new { o.UserId, o.ContextKey });
+
+        // Per-user "Who is on Shift" monitored shift selections. NOT company-scoped — no global query filter.
+        modelBuilder.Entity<UserMonitoredShift>()
+            .HasIndex(m => new { m.UserId, m.ShiftTypeId })
+            .IsUnique();
 
         // ✅ PHASE 19: Configure GameScore entity
         modelBuilder.Entity<GameScore>()
