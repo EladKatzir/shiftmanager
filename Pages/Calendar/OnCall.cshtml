@@ -75,6 +75,7 @@
                     <input type="date"
                            id="datePickerInput"
                            value="@Model.StartDate.ToString("yyyy-MM-dd")"
+                           onclick="if(this.showPicker)this.showPicker()"
                            onchange="navigateToDate(this.value)"
                            class="cal-toolbar__date-picker" />
                     <span class="cal-toolbar__date-label">
