@@ -1070,6 +1070,12 @@ public partial class UsersModel : LocalizedPageModel
                 await _db.DirectorCompanies.IgnoreQueryFilters()
                     .Where(dc => dc.UserId == id)
                     .ExecuteDeleteAsync();
+
+                // Per-user calendar ordering is a personal UI preference — drop it on deactivation.
+                // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by specific userId; entity is not company-scoped.
+                await _db.UserCalendarRowOrders.IgnoreQueryFilters()
+                    .Where(o => o.UserId == id)
+                    .ExecuteDeleteAsync();
             }
 
             var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
