@@ -1,0 +1,94 @@
+@model ShiftManager.ViewComponents.WhoIsOnShiftViewModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@addTagHelper *, ShiftManager
+
+<section class="who-on-shift">
+    <div class="who-on-shift__header">
+        <h3 class="who-on-shift__title"><loc key="Home_WhoOnShift_Title" /></h3>
+
+        @* Configure picker *@
+        <details class="who-on-shift__picker">
+            <summary class="btn btn--outline btn--sm who-on-shift__configure-btn">
+                <loc key="Home_WhoOnShift_Configure" />
+            </summary>
+            <div class="who-on-shift__picker-panel">
+                <form method="post" asp-page="/Home/Index" asp-page-handler="SaveMonitoredShifts">
+                    @Html.AntiForgeryToken()
+                    <div class="who-on-shift__picker-list">
+                        @foreach (var m in Model.Monitorable)
+                        {
+                            <label class="who-on-shift__picker-item">
+                                <input type="checkbox"
+                                       name="shiftTypeIds"
+                                       value="@m.ShiftTypeId"
+                                       @(Model.SelectedIds.Contains(m.ShiftTypeId) ? "checked" : "") />
+                                <span>@m.Name</span>
+                                @if (!string.IsNullOrEmpty(m.Key))
+                                {
+                                    <span class="who-on-shift__picker-key text-caption">(@m.Key)</span>
+                                }
+                            </label>
+                        }
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--sm who-on-shift__save-btn">
+                        <loc key="Save" />
+                    </button>
+                </form>
+            </div>
+        </details>
+    </div>
+
+    @if (!Model.SelectedIds.Any())
+    {
+        <p class="who-on-shift__empty-prompt text-subtle"><loc key="Home_WhoOnShift_NoneSelected" /></p>
+    }
+    else
+    {
+        <div class="who-on-shift__grid">
+            @foreach (var cube in Model.Cubes)
+            {
+                var colorClass = cube.AssignedCount == 0
+                    ? "who-on-shift__cube--empty"
+                    : (cube.AssignedCount >= cube.StaffingRequired
+                        ? "who-on-shift__cube--full"
+                        : "who-on-shift__cube--under");
+
+                <div class="who-on-shift__cube @colorClass">
+                    <div class="who-on-shift__cube-header">
+                        <span class="who-on-shift__cube-title">@cube.ShiftName</span>
+                        @if (cube.IsLiveNow)
+                        {
+                            <span class="who-on-shift__live-badge"><loc key="Home_WhoOnShift_Live" /></span>
+                        }
+                    </div>
+
+                    <div class="who-on-shift__cube-count">
+                        @cube.AssignedCount / @cube.StaffingRequired
+                    </div>
+
+                    <div class="who-on-shift__users">
+                        @if (cube.Users.Count == 0)
+                        {
+                            <span class="who-on-shift__no-one text-caption"><loc key="Home_WhoOnShift_NoOneAssigned" /></span>
+                        }
+                        else
+                        {
+                            @foreach (var u in cube.Users)
+                            {
+                                <div class="who-on-shift__user">
+                                    <span class="who-on-shift__user-name">@u.Name</span>
+                                    @if (u.IsTrainee)
+                                    {
+                                        <span class="who-on-shift__trainee-badge"><loc key="Trainee" /></span>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>

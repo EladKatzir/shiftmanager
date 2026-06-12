@@ -16184,4 +16184,19 @@
   <data name="Requests_RequestTimeOffCard" xml:space="preserve">
     <value>בקש חופשה</value>
   </data>
+  <data name="Home_WhoOnShift_Title" xml:space="preserve">
+    <value>מי בתפקיד</value>
+  </data>
+  <data name="Home_WhoOnShift_Configure" xml:space="preserve">
+    <value>הגדרות</value>
+  </data>
+  <data name="Home_WhoOnShift_NoneSelected" xml:space="preserve">
+    <value>בחר משמרות למעקב.</value>
+  </data>
+  <data name="Home_WhoOnShift_NoOneAssigned" xml:space="preserve">
+    <value>אין משובצים</value>
+  </data>
+  <data name="Home_WhoOnShift_Live" xml:space="preserve">
+    <value>פעיל</value>
+  </data>
 </root>

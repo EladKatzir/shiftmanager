@@ -43,6 +43,11 @@
 
 <div class="home-dashboard">
 
+    @* Who Is On Shift widget — self-gated to EditArea / AdminAccess holders; renders empty for others *@
+    <div class="home-dashboard__who-on-shift">
+        @await Component.InvokeAsync("WhoIsOnShift")
+    </div>
+
     @* Quick Actions *@
     <div style="display: flex; gap: var(--space-3); margin-bottom: var(--space-4);">
         <a href="/Calendar/Shifts" class="btn btn--primary btn--md">

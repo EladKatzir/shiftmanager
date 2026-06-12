@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
@@ -20,13 +21,15 @@ namespace ShiftManager.Pages.Home
         private readonly ICompanyContext _companyContext;
         private readonly IGrantService _grantService;
         private readonly ILogger<IndexModel> _logger;
+        private readonly IWhoIsOnShiftService _whoIsOnShiftService;
 
-        public IndexModel(AppDbContext context, ICompanyContext companyContext, IGrantService grantService, ILogger<IndexModel> logger)
+        public IndexModel(AppDbContext context, ICompanyContext companyContext, IGrantService grantService, ILogger<IndexModel> logger, IWhoIsOnShiftService whoIsOnShiftService)
         {
             _context = context;
             _companyContext = companyContext;
             _grantService = grantService;
             _logger = logger;
+            _whoIsOnShiftService = whoIsOnShiftService;
         }
 
         // Common properties (all users)
@@ -226,6 +229,25 @@ namespace ShiftManager.Pages.Home
                 .Select(si => si.WorkDate)
                 .Distinct()
                 .Count();
+        }
+
+        /// <summary>
+        /// PRG handler: saves the user's monitored shift selection for the Who-Is-On-Shift widget.
+        /// Gated to EditArea or AdminAccess grant holders; silently redirects others.
+        /// </summary>
+        public async Task<IActionResult> OnPostSaveMonitoredShiftsAsync(List<int>? shiftTypeIds)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+                return RedirectToPage();
+
+            var hasEditArea = await _grantService.HasGrantAsync(userId, "EditArea");
+            var hasAdminAccess = await _grantService.HasGrantAsync(userId, "AdminAccess");
+            if (!hasEditArea && !hasAdminAccess)
+                return RedirectToPage();
+
+            await _whoIsOnShiftService.SaveSelectedShiftsAsync(userId, shiftTypeIds ?? new List<int>());
+            return RedirectToPage();
         }
 
         private async Task LoadDirectorDataAsync(int companyId, DateOnly today, int userId)

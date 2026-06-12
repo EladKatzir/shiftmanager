@@ -16222,4 +16222,19 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Requests_RequestTimeOffCard" xml:space="preserve">
     <value>Request time off</value>
   </data>
+  <data name="Home_WhoOnShift_Title" xml:space="preserve">
+    <value>Who is on shift</value>
+  </data>
+  <data name="Home_WhoOnShift_Configure" xml:space="preserve">
+    <value>Configure</value>
+  </data>
+  <data name="Home_WhoOnShift_NoneSelected" xml:space="preserve">
+    <value>Pick shifts to monitor.</value>
+  </data>
+  <data name="Home_WhoOnShift_NoOneAssigned" xml:space="preserve">
+    <value>No one assigned</value>
+  </data>
+  <data name="Home_WhoOnShift_Live" xml:space="preserve">
+    <value>LIVE</value>
+  </data>
 </root>
