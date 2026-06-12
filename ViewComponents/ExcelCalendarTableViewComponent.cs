@@ -45,6 +45,9 @@ public class ExcelCalendarTableViewModel
     /// Defaults to "Calendar_RowMode_Shifts" for unset instances (RowMode initializer = "Shifts").
     /// </summary>
     public string RowModeLabelKey => $"Calendar_RowMode_{RowMode}";
+
+    /// <summary>Per-user reorder context key, e.g. "shifts:9:2:user". Null disables reordering for this render.</summary>
+    public string? RowOrderContextKey { get; set; }
 }
 
 public class ExcelCalendarRow
@@ -124,10 +127,62 @@ public class ExcelCalendarOverlay
     public List<string> TextEntryTexts { get; set; } = new();
 }
 
+public static class CalendarOrderApplier
+{
+    /// <summary>In-place stable reorder of groups (by "" namespace) and rows (by their group namespace).
+    /// Positioned items first in saved SortOrder; un-positioned keep default order after them.</summary>
+    public static void Apply(
+        List<ExcelCalendarRow> rows,
+        List<ExcelCalendarGroup>? groups,
+        Dictionary<(string GroupId, string RowId), int> order)
+    {
+        if (order.Count == 0) return;
+
+        if (groups != null && groups.Count > 0)
+        {
+            var idx = 0;
+            var ordered = groups
+                .Select(g => new { g, i = idx++ })
+                .OrderBy(x => order.TryGetValue(("", x.g.Id), out var so) ? 0 : 1)
+                .ThenBy(x => order.TryGetValue(("", x.g.Id), out var so) ? so : x.g.SortOrder)
+                .Select(x => x.g)
+                .ToList();
+            groups.Clear();
+            groups.AddRange(ordered);
+        }
+
+        var ri = 0;
+        var orderedRows = rows
+            .Select(r => new { r, i = ri++ })
+            .OrderBy(x => order.TryGetValue((x.r.GroupId ?? "", x.r.Id), out _) ? 0 : 1)
+            .ThenBy(x => order.TryGetValue((x.r.GroupId ?? "", x.r.Id), out var so) ? so : x.i)
+            .Select(x => x.r)
+            .ToList();
+        // NOTE: Default.cshtml filters rows by group, so cross-group relative order is irrelevant;
+        // within each group the stable sort above yields positioned-then-default. Group BLOCK order
+        // is driven by `groups` above.
+        rows.Clear();
+        rows.AddRange(orderedRows);
+    }
+}
+
 public class ExcelCalendarTableViewComponent : ViewComponent
 {
-    public IViewComponentResult Invoke(ExcelCalendarTableViewModel model)
+    private readonly ShiftManager.Services.ICalendarRowOrderService _rowOrder;
+    public ExcelCalendarTableViewComponent(ShiftManager.Services.ICalendarRowOrderService rowOrder)
+        => _rowOrder = rowOrder;
+
+    public async Task<IViewComponentResult> InvokeAsync(ExcelCalendarTableViewModel model)
     {
+        if (!string.IsNullOrEmpty(model.RowOrderContextKey))
+        {
+            var idClaim = UserClaimsPrincipal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(idClaim, out var userId))
+            {
+                var map = await _rowOrder.GetOrderMapAsync(userId, model.RowOrderContextKey);
+                CalendarOrderApplier.Apply(model.Rows, model.Groups, map);
+            }
+        }
         return View(model);
     }
 }
