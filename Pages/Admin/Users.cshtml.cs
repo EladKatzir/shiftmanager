@@ -2050,6 +2050,43 @@ public partial class UsersModel : LocalizedPageModel
                 await _db.CompanyLocalizationOverrides.IgnoreQueryFilters()
                     .Where(clo => clo.UpdatedBy == id)
                     .ExecuteUpdateAsync(clo => clo.SetProperty(x => x.UpdatedBy, currentUserId));
+
+                // On-duties the user CREATED for others (CreatedBy non-nullable → reassign; CanceledBy
+                // nullable → null). Note: on-duties where this user is the ASSIGNEE (UserId) were already
+                // deleted above; these are the ones they authored for OTHER people. This was the FK that
+                // blocked force-delete for users who created on-call entries.
+                // SECURITY-AUDITED: scoped by userId
+                await _db.OnDuties.IgnoreQueryFilters()
+                    .Where(o => o.CreatedBy == id)
+                    .ExecuteUpdateAsync(o => o.SetProperty(x => x.CreatedBy, currentUserId));
+                await _db.OnDuties.IgnoreQueryFilters()
+                    .Where(o => o.CanceledBy == id)
+                    .ExecuteUpdateAsync(o => o.SetProperty(x => x.CanceledBy, (int?)null));
+
+                // Distribution lists the user created (CreatedBy non-nullable → reassign).
+                // SECURITY-AUDITED: scoped by userId
+                await _db.DistributionLists.IgnoreQueryFilters()
+                    .Where(dl => dl.CreatedBy == id)
+                    .ExecuteUpdateAsync(dl => dl.SetProperty(x => x.CreatedBy, currentUserId));
+
+                // Feedback status-updater (nullable → null; feedbacks they SUBMITTED were already deleted).
+                // SECURITY-AUDITED: scoped by userId
+                await _db.Feedbacks.IgnoreQueryFilters()
+                    .Where(f => f.StatusUpdatedBy == id)
+                    .ExecuteUpdateAsync(f => f.SetProperty(x => x.StatusUpdatedBy, (int?)null));
+
+                // Molecule approval settings updater (non-nullable → reassign).
+                // SECURITY-AUDITED: scoped by userId
+                await _db.MoleculeApprovalSettings.IgnoreQueryFilters()
+                    .Where(m => m.UpdatedByUserId == id)
+                    .ExecuteUpdateAsync(m => m.SetProperty(x => x.UpdatedByUserId, currentUserId));
+
+                // Grants this user GRANTED to others (GrantedByUserId nullable → null; grants where this
+                // user is the holder/UserId were already cascade/deleted above).
+                // SECURITY-AUDITED: scoped by userId
+                await _db.Grants.IgnoreQueryFilters()
+                    .Where(g => g.GrantedByUserId == id)
+                    .ExecuteUpdateAsync(g => g.SetProperty(x => x.GrantedByUserId, (int?)null));
             }
 
             LogCompletedRelatedRecordsCleanup(_logger, id);
