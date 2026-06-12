@@ -1884,6 +1884,10 @@ public partial class UsersModel : LocalizedPageModel
             await _db.Announcements.IgnoreQueryFilters().Where(a => a.CreatedBy == id).ExecuteDeleteAsync();
             await _db.ApiKeys.IgnoreQueryFilters().Where(a => a.CreatedBy == id).ExecuteDeleteAsync();
             await _db.ApiKeyRequests.IgnoreQueryFilters().Where(a => a.RequestedBy == id).ExecuteDeleteAsync();
+            // Per-user calendar ordering — drop on hard-delete (no FK cascade exists).
+            await _db.UserCalendarRowOrders.IgnoreQueryFilters()
+                .Where(o => o.UserId == id)
+                .ExecuteDeleteAsync();
 
             // 3e. Nullify nullable FK references (preserve records, clear user link)
             await _db.AuditLogs.IgnoreQueryFilters().Where(a => a.UserId == id)
