@@ -394,6 +394,7 @@ builder.Services.AddScoped<ICalendarTextEntryService, CalendarTextEntryService>(
 // SignalR for real-time calendar updates
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ICalendarNotificationService, CalendarNotificationService>();
+builder.Services.AddScoped<ICalendarRowOrderService, CalendarRowOrderService>();
 
 // API Layer Services
 builder.Services.AddScoped<ShiftManager.Services.Api.UserApiService>();
