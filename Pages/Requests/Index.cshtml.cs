@@ -176,10 +176,12 @@ public partial class IndexModel : LocalizedPageModel
             // Load pending time-off requests with company filtering and visibility filter
             LogLoadingPendingTimeOff(_logger);
             // IgnoreQueryFilters: accessibleCompanyIds already scoped — tenant filter breaks multi-company views
+            // Exclude current user's own requests: self-approval is blocked anyway; hiding them removes confusing UI.
             var pendingTORaw = await (from r in _db.TimeOffRequests.IgnoreQueryFilters()
                                    join u in _db.Users.IgnoreQueryFilters() on r.UserId equals u.Id
                                    where r.Status == RequestStatus.Pending && accessibleCompanyIds.Contains(u.CompanyId)
                                       && (!r.Private || r.ApproverId == currentUserId)
+                                      && r.UserId != currentUserId
                                    orderby r.CreatedAt
                                    select new TimeOffVM(r.Id, u.DisplayName, r.StartDate, r.EndDate, r.Reason, r.LeaveGroupId)).ToListAsync();
             // Dedup fan-out copies: keep one representative row per logical leave (shared LeaveGroupId).

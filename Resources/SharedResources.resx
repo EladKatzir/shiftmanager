@@ -16219,4 +16219,7 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Enable" xml:space="preserve">
     <value>Enable</value>
   </data>
+  <data name="Requests_RequestTimeOffCard" xml:space="preserve">
+    <value>Request time off</value>
+  </data>
 </root>

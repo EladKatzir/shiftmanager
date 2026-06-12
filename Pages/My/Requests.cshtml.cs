@@ -241,6 +241,9 @@ public partial class RequestsModel : LocalizedPageModel
         }
     }
 
+    [BindProperty]
+    public string? ReturnUrl { get; set; }
+
     public async Task<IActionResult> OnPostTimeOffAsync()
     {
         try
@@ -367,6 +370,9 @@ public partial class RequestsModel : LocalizedPageModel
             }
 
             TempData["SuccessMessage"] = _localizer["Success_TimeOffRequestSubmitted"].Value;
+            // returnUrl support: if a valid local returnUrl was provided, redirect there after success.
+            if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+                return Redirect(ReturnUrl);
             return RedirectToPage();
         }
         catch (Exception ex)

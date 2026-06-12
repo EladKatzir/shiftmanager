@@ -1,0 +1,97 @@
+@* Shared partial: Time-Off Request Form
+   Posts to /My/Requests handler=TimeOff so it can be embedded on any page.
+   ViewData["TimeOffReturnUrl"] — optional returnUrl passed back after success.
+   ViewData["TimeOffApprovers"]  — IEnumerable<dynamic> with Id/Name/Role properties.
+*@
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+
+@{
+    var returnUrl = ViewData["TimeOffReturnUrl"] as string ?? "";
+    var approvers = ViewData["TimeOffApprovers"] as IEnumerable<ShiftManager.Pages.My.RequestsModel.ManagerUser>
+                    ?? Enumerable.Empty<ShiftManager.Pages.My.RequestsModel.ManagerUser>();
+}
+
+<form method="post" asp-page="/My/Requests" asp-page-handler="TimeOff">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="returnUrl" value="@returnUrl" />
+    <div class="validation-summary" id="timeoff-validation-summary" style="display:none;"></div>
+
+    <div class="form-group">
+        <label class="form-label" for="tof-type"><loc key="VacationType" /></label>
+        <select name="TimeOffRequest.Type" id="tof-type" class="form-select">
+            <option value="0">@Localizer["RegularVacation"]</option>
+            <option value="1">@Localizer["AfterDutyVacation"]</option>
+            <option value="2">@Localizer["DayAtVacation"]</option>
+        </select>
+        <p class="form-hint"><loc key="VacationTypeDescription" /></p>
+    </div>
+
+    <div class="form-group" id="tof-dayat-container" style="display:none;">
+        <label class="form-label" for="tof-dayat-label"><loc key="DayAt_LabelField" /></label>
+        <input type="text" name="TimeOffRequest.Label" id="tof-dayat-label" class="form-input" maxlength="50" placeholder="@Localizer["DayAt_LabelPlaceholder"]" />
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label class="form-label" for="tof-start"><loc key="StartDate" /></label>
+            <input type="date" name="TimeOffRequest.StartDate" id="tof-start" class="form-input" value="@DateOnly.FromDateTime(DateTime.Today.AddDays(1)).ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="form-group" id="tof-end-container">
+            <label class="form-label" for="tof-end"><loc key="EndDate" /></label>
+            <input type="date" name="TimeOffRequest.EndDate" id="tof-end" class="form-input" value="@DateOnly.FromDateTime(DateTime.Today.AddDays(1)).ToString("yyyy-MM-dd")" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="tof-approver"><loc key="SpecificApprover" /> (@Localizer["Optional"])</label>
+        <select name="TimeOffRequest.ApproverId" id="tof-approver" class="form-select">
+            <option value="">@Localizer["AnyManager"]</option>
+            @foreach (var approver in approvers)
+            {
+                <option value="@approver.Id">@approver.Name (@Localizer[approver.Role])</option>
+            }
+        </select>
+        <p class="form-hint"><loc key="ApproverDescription" /></p>
+    </div>
+
+    <div class="form-group form-group--checkbox">
+        <label class="checkbox-label">
+            <input type="checkbox" name="TimeOffRequest.Private" value="true" />
+            <input type="hidden" name="TimeOffRequest.Private" value="false" />
+            <span><loc key="TimeOffRequest_Private" /></span>
+        </label>
+        <small class="form-help"><loc key="TimeOffRequest_Private_Help" /></small>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="tof-reason"><loc key="Reason" /></label>
+        <textarea name="TimeOffRequest.Reason" id="tof-reason" rows="3" class="form-textarea" placeholder="@Localizer["TimeOffReasonPlaceholder"]"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block">
+        <span><icon name="edit" /></span>
+        <span><loc key="SubmitTimeOffRequest" /></span>
+    </button>
+</form>
+
+<script>
+(function () {
+    var type = document.getElementById('tof-type');
+    var endContainer = document.getElementById('tof-end-container');
+    var dayAtContainer = document.getElementById('tof-dayat-container');
+
+    function toggleFields() {
+        if (!type) return;
+        var v = type.value;
+        if (endContainer) endContainer.style.display = (v === '1' || v === '2') ? 'none' : '';
+        if (dayAtContainer) dayAtContainer.style.display = (v === '2') ? '' : 'none';
+    }
+
+    if (type) {
+        type.addEventListener('change', toggleFields);
+        toggleFields();
+    }
+})();
+</script>

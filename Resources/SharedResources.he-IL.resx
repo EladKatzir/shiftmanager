@@ -16180,4 +16180,8 @@
   </data>
   <data name="Enable" xml:space="preserve">
     <value>הפעל</value>
-  </data></root>
+  </data>
+  <data name="Requests_RequestTimeOffCard" xml:space="preserve">
+    <value>בקש חופשה</value>
+  </data>
+</root>

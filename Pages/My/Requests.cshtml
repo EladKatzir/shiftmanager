@@ -36,75 +36,11 @@
                     <h3 class="card-title"><icon name="calendar" /> <loc key="RequestTimeOff" /></h3>
                 </div>
                 <div class="card-body">
-                    <form method="post" asp-page-handler="TimeOff">
-                        @Html.AntiForgeryToken()
-                        <div asp-validation-summary="All" class="validation-summary"></div>
-
-                        <div class="form-group">
-                            <label asp-for="TimeOffRequest.Type" class="form-label"><loc key="VacationType" /></label>
-                            <select asp-for="TimeOffRequest.Type" id="vacationType" class="form-select">
-                                <option value="0">@Localizer["RegularVacation"]</option>
-                                <option value="1">@Localizer["AfterDutyVacation"]</option>
-                                <option value="2">@Localizer["DayAtVacation"]</option>
-                            </select>
-                            <span asp-validation-for="TimeOffRequest.Type" class="validation-error"></span>
-                            <p class="form-hint"><loc key="VacationTypeDescription" /></p>
-                        </div>
-
-                        @* "Day at [X]" free-text location — shown only when DayAt is selected (Issue 4) *@
-                        <div class="form-group" id="dayAtLabelContainer" style="display:none;">
-                            <label asp-for="TimeOffRequest.Label" class="form-label"><loc key="DayAt_LabelField" /></label>
-                            <input asp-for="TimeOffRequest.Label" id="dayAtLabel" type="text" class="form-input" maxlength="50" placeholder="@Localizer["DayAt_LabelPlaceholder"]" />
-                            <span asp-validation-for="TimeOffRequest.Label" class="validation-error"></span>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label asp-for="TimeOffRequest.StartDate" class="form-label"><loc key="StartDate" /></label>
-                                <input asp-for="TimeOffRequest.StartDate" id="startDate" type="date" class="form-input" />
-                                <span asp-validation-for="TimeOffRequest.StartDate" class="validation-error"></span>
-                            </div>
-
-                            <div class="form-group" id="endDateContainer">
-                                <label asp-for="TimeOffRequest.EndDate" class="form-label"><loc key="EndDate" /></label>
-                                <input asp-for="TimeOffRequest.EndDate" id="endDate" type="date" class="form-input" />
-                                <span asp-validation-for="TimeOffRequest.EndDate" class="validation-error"></span>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label asp-for="TimeOffRequest.ApproverId" class="form-label"><loc key="SpecificApprover" /> (@Localizer["Optional"])</label>
-                            <select asp-for="TimeOffRequest.ApproverId" class="form-select">
-                                <option value="">@Localizer["AnyManager"]</option>
-                                @foreach (var approver in Model.AvailableApprovers)
-                                {
-                                    <option value="@approver.Id">@approver.Name (@Localizer[approver.Role])</option>
-                                }
-                            </select>
-                            <span asp-validation-for="TimeOffRequest.ApproverId" class="validation-error"></span>
-                            <p class="form-hint"><loc key="ApproverDescription" /></p>
-                        </div>
-
-                        <div class="form-group form-group--checkbox">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="TimeOffRequest.Private" value="true" />
-                                <input type="hidden" name="TimeOffRequest.Private" value="false" />
-                                <span><loc key="TimeOffRequest_Private" /></span>
-                            </label>
-                            <small class="form-help"><loc key="TimeOffRequest_Private_Help" /></small>
-                        </div>
-
-                        <div class="form-group">
-                            <label asp-for="TimeOffRequest.Reason" class="form-label"><loc key="Reason" /></label>
-                            <textarea asp-for="TimeOffRequest.Reason" rows="3" class="form-textarea" placeholder="@Localizer["TimeOffReasonPlaceholder"]"></textarea>
-                            <span asp-validation-for="TimeOffRequest.Reason" class="validation-error"></span>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <span><icon name="edit" /></span>
-                            <span><loc key="SubmitTimeOffRequest" /></span>
-                        </button>
-                    </form>
+                    @{
+                        ViewData["TimeOffReturnUrl"] = "";
+                        ViewData["TimeOffApprovers"] = Model.AvailableApprovers;
+                    }
+                    @await Html.PartialAsync("_TimeOffRequestForm")
                 </div>
             </div>
 
@@ -656,28 +592,4 @@
     </style>
 }
 
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const vacationType = document.getElementById('vacationType');
-            const endDateContainer = document.getElementById('endDateContainer');
-            const dayAtLabelContainer = document.getElementById('dayAtLabelContainer');
-
-            if (vacationType) {
-                // After ('1') and Day-at ('2') are single-day → hide end date; Day-at also shows the free-text location.
-                function toggleFields() {
-                    const v = vacationType.value;
-                    if (endDateContainer) {
-                        endDateContainer.style.display = (v === '1' || v === '2') ? 'none' : 'block';
-                    }
-                    if (dayAtLabelContainer) {
-                        dayAtLabelContainer.style.display = (v === '2') ? 'block' : 'none';
-                    }
-                }
-
-                vacationType.addEventListener('change', toggleFields);
-                toggleFields(); // Initialize on page load
-            }
-        });
-    </script>
-}
+@* Scripts for the TimeOff form toggle are now inlined in _TimeOffRequestForm.cshtml *@
