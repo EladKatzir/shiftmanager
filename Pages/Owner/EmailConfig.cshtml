@@ -344,6 +344,23 @@
                 </form>
             </div>
         </div>
+
+        @* Test Summon Section *@
+        <div class="config-card">
+            <div class="card-header">
+                <h2><icon name="calendar" /> <loc key="Owner_EmailConfig_TestSummon" /></h2>
+            </div>
+            <div class="card-body">
+                <p><loc key="Owner_EmailConfig_TestSummon_Desc" /></p>
+                <form method="post" asp-page-handler="SendTestSummon">
+                    <div class="form-group">
+                        <label for="testSummonEmail"><loc key="Owner_EmailConfig_RecipientEmail" /></label>
+                        <input type="email" name="testEmail" class="form-control" loc-placeholder="Placeholder_TestEmail" required />
+                    </div>
+                    <button type="submit" class="btn btn-secondary"><icon name="calendar" /> <loc key="Owner_EmailConfig_SendTestSummon" /></button>
+                </form>
+            </div>
+        </div>
     }
 
     @* Test Diagnostics *@

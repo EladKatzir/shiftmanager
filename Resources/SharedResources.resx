@@ -4567,6 +4567,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_FailedToSendTestEmail" xml:space="preserve">
     <value>Failed to send test email: {0}</value>
   </data>
+  <data name="Success_TestSummonSent" xml:space="preserve">
+    <value>Test summon sent successfully to {0}. Check the calendar invite in your inbox.</value>
+  </data>
+  <data name="Error_TestSummonFailed" xml:space="preserve">
+    <value>Test summon failed: {0}. Check diagnostics below.</value>
+  </data>
   <data name="Error_FeatureFlagService_NotFound" xml:space="preserve">
     <value>The feature flag was not found.</value>
   </data>
@@ -6151,6 +6157,15 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Owner_EmailConfig_SendTestEmail" xml:space="preserve">
     <value>Send Test Email</value>
+  </data>
+  <data name="Owner_EmailConfig_TestSummon" xml:space="preserve">
+    <value>Test Summon</value>
+  </data>
+  <data name="Owner_EmailConfig_TestSummon_Desc" xml:space="preserve">
+    <value>Send a test calendar invite to verify summon delivery.</value>
+  </data>
+  <data name="Owner_EmailConfig_SendTestSummon" xml:space="preserve">
+    <value>Send Test Summon</value>
   </data>
   <data name="Owner_EmailConfig_RecentLogs" xml:space="preserve">
     <value>Recent Logs</value>

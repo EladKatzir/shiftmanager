@@ -317,6 +317,103 @@ public class EmailConfigModel : LocalizedPageModel
         }
     }
 
+    public async Task<IActionResult> OnPostSendTestSummonAsync(string testEmail)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(testEmail))
+            {
+                TempData["ErrorMessage"] = _localizer["Error_ProvideValidEmail"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                await OnGetAsync();
+                return Page();
+            }
+
+            var currentUserId = GetCurrentUserId();
+
+            var testSubject = $"Test Summon from ShiftManager - {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+            var testBody = BuildTestSummonHtml();
+
+            _logger.LogInformation("Sending test summon (calendar invite) to {Email}", testEmail);
+
+            var companyId = int.TryParse(User.FindFirst("CompanyId")?.Value, out var cid) ? cid : 0;
+            var startUtc = DateTime.UtcNow.AddHours(2);
+            var endUtc = DateTime.UtcNow.AddHours(3);
+            var sendResult = await _mailService.SendMailDirectAsync(
+                testEmail, testSubject, testBody, companyId,
+                recipientUserId: 0,
+                calendarKind: CalendarEventKind.Timed,
+                eventStartUtc: startUtc, eventEndUtc: endUtc, eventLocation: null);
+
+            // Fetch most recent log — now available immediately because SendMailDirectAsync is synchronous
+            var recentLogs = await _emailApiLogService.GetRecentLogsAsync(1);
+            LastTestResult = recentLogs.FirstOrDefault();
+
+            if (sendResult.Success && LastTestResult != null)
+            {
+                TestDiagnostics = FormatDiagnostics(LastTestResult);
+                TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_TestSummonSent"].Value, testEmail);
+            }
+            else if (!sendResult.Success)
+            {
+                if (LastTestResult != null)
+                {
+                    TestDiagnostics = FormatDiagnostics(LastTestResult);
+                }
+                var diagnosticDetail = sendResult.ErrorMessage
+                    ?? LastTestResult?.ErrorMessage
+                    ?? _localizer["Error_TestEmailFailedNoDiagnostics"].Value;
+                TempData["ErrorMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Error_TestSummonFailed"].Value, diagnosticDetail);
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            }
+            else
+            {
+                TempData["ErrorMessage"] = _localizer["Error_TestEmailFailedNoDiagnostics"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            }
+
+            // Log audit
+            await _auditLogService.LogUserActionAsync(
+                currentUserId,
+                "TestSummonSent",
+                "EmailConfig",
+                null,
+                $"Test summon sent to {testEmail}",
+                $"Success: {sendResult.Success}; Reason: {sendResult.ErrorKey ?? "none"}");
+
+            await OnGetAsync();
+            return Page();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending test summon");
+            TempData["ErrorMessage"] = "Failed to send test summon. Please check your configuration and try again."; TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            await OnGetAsync();
+            return Page();
+        }
+    }
+
+    private string BuildTestSummonHtml()
+    {
+        return @"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-banner { background: #4CAF50; color: white; padding: 15px; border-radius: 8px; }
+        .test-info { background: #f5f5f5; padding: 15px; margin-top: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class='test-banner'><h2>Test Calendar Invite Successful</h2></div>
+    <div class='test-info'>
+        <p><strong>This is a test calendar invite (summon) from ShiftManager.</strong></p>
+        <p>If you're seeing this message, your summon/calendar configuration is working correctly!</p>
+        <p><strong>Sent:</strong> " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + @" UTC</p>
+    </div>
+</body>
+</html>";
+    }
+
     private string BuildTestEmailHtml()
     {
         return @"

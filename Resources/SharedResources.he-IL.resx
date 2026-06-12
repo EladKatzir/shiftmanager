@@ -4392,6 +4392,12 @@
   <data name="Error_FailedToSendTestEmail" xml:space="preserve">
     <value>נכשל לשלוח אימייל בדיקה: {0}</value>
   </data>
+  <data name="Success_TestSummonSent" xml:space="preserve">
+    <value>זימון בדיקה נשלח בהצלחה אל {0}. בדוק את הזמנת הלוח שנה בתיבת הדואר שלך.</value>
+  </data>
+  <data name="Error_TestSummonFailed" xml:space="preserve">
+    <value>זימון בדיקה נכשל: {0}. בדוק את האבחון למטה.</value>
+  </data>
   <data name="Error_FeatureFlagService_NotFound" xml:space="preserve">
     <value>דגל התכונה לא נמצא.</value>
   </data>
@@ -5651,6 +5657,15 @@
   </data>
   <data name="Owner_EmailConfig_SendTestEmail" xml:space="preserve">
     <value>שלח דוא"ל בדיקה</value>
+  </data>
+  <data name="Owner_EmailConfig_TestSummon" xml:space="preserve">
+    <value>זימון בדיקה</value>
+  </data>
+  <data name="Owner_EmailConfig_TestSummon_Desc" xml:space="preserve">
+    <value>שלח הזמנת לוח שנה לבדיקה לאימות מסירת הזימון.</value>
+  </data>
+  <data name="Owner_EmailConfig_SendTestSummon" xml:space="preserve">
+    <value>שלח זימון בדיקה</value>
   </data>
   <data name="Owner_EmailConfig_RecentLogs" xml:space="preserve">
     <value>לוגים אחרונים</value>
