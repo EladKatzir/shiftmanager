@@ -3553,6 +3553,40 @@ namespace ShiftManager.Migrations
                     b.ToTable("TimeOffRequests");
                 });
 
+            modelBuilder.Entity("ShiftManager.Models.UserCalendarRowOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ContextKey")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GroupId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RowId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ContextKey");
+
+                    b.HasIndex("UserId", "ContextKey", "GroupId", "RowId")
+                        .IsUnique();
+
+                    b.ToTable("UserCalendarRowOrders");
+                });
+
             modelBuilder.Entity("ShiftManager.Models.UserDayNote", b =>
                 {
                     b.Property<int>("Id")
