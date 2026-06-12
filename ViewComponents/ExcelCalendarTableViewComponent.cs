@@ -147,6 +147,10 @@ public static class CalendarOrderApplier
                 .ThenBy(x => order.TryGetValue(("", x.g.Id), out var so) ? so : x.g.SortOrder)
                 .Select(x => x.g)
                 .ToList();
+            // Default.cshtml renders groups via `Model.Groups.OrderBy(g => g.SortOrder)`, so reordering
+            // the list alone is ignored — we must REWRITE SortOrder to the computed position. (Reassigning
+            // for every group keeps the relative order stable for un-positioned groups too.)
+            for (var k = 0; k < ordered.Count; k++) ordered[k].SortOrder = k;
             groups.Clear();
             groups.AddRange(ordered);
         }

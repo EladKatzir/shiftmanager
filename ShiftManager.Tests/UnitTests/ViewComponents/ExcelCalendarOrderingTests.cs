@@ -37,5 +37,11 @@ public class ExcelCalendarOrderingTests
             { ("", "category-7"), 0 }, { ("", "category-5"), 1 } }; // category-6 un-positioned
         CalendarOrderApplier.Apply(rows, groups, map);
         Assert.Equal(new[] { "category-7", "category-5", "category-6" }, groups.ConvertAll(g => g.Id));
+
+        // CRITICAL: Default.cshtml renders groups via `Model.Groups.OrderBy(g => g.SortOrder)`,
+        // so the applier MUST rewrite SortOrder — reordering the list alone is silently ignored.
+        // Assert SortOrder reflects the new positions (this is what actually drives rendering).
+        var renderedOrder = groups.OrderBy(g => g.SortOrder).Select(g => g.Id).ToArray();
+        Assert.Equal(new[] { "category-7", "category-5", "category-6" }, renderedOrder);
     }
 }
