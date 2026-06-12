@@ -7210,3 +7210,43 @@ code {
 .data-table--sticky-col thead th:first-child {
   z-index: 5;
 }
+
+/* ============================================================
+   Phase 3.3: Hebrew typography
+   Titles use 'Segoe UI Semibold', regular text uses 'Segoe UI'.
+   Tables are deliberately left on the original base font stack.
+   Scoped to html.hebrew so English/LTR is unaffected.
+   ============================================================ */
+html.hebrew body {
+  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+}
+
+html.hebrew h1,
+html.hebrew h2,
+html.hebrew h3,
+html.hebrew h4,
+html.hebrew h5,
+html.hebrew h6,
+html.hebrew .page-title,
+html.hebrew .section-title,
+html.hebrew .card-title,
+html.hebrew .modal-title,
+html.hebrew .modal__title,
+html.hebrew .auth-hero__title,
+html.hebrew .auth-alert__title,
+html.hebrew .cal-empty__title {
+  font-family: 'Segoe UI Semibold', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Leave table fonts EXACTLY as they are — re-assert the original base stack so the
+   html.hebrew body override above does not cascade into any table/grid surface. */
+html.hebrew table,
+html.hebrew table *,
+html.hebrew .data-table,
+html.hebrew .data-table *,
+html.hebrew .excel-calendar,
+html.hebrew .excel-calendar * {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+}
