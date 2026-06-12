@@ -442,6 +442,7 @@ public class OnCallModel : PageModel
         CalendarData.RowMode = "Duty";
         // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
+        CalendarData.RowOrderContextKey = AreaId.HasValue ? $"oncall:{AreaId.Value}" : "oncall:all";
     }
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForDutyType(

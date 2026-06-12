@@ -256,6 +256,7 @@ public class OverviewModel : PageModel
         CalendarData.RowMode = "Shifts";
         // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
+        CalendarData.RowOrderContextKey = $"overview:{CompanyId}";
     }
 
     private async Task<Dictionary<(int UserId, DateOnly Date), (bool HasVacation, string? DayAtLabel)>> LoadVacationsAsync()

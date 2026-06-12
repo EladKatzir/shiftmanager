@@ -490,6 +490,7 @@ public class ShiftsModel : PageModel
         // +1 for the <thead> column-header row so aria-rowcount matches ARIA 1.2 §6.6.4
         // (rowcount includes ALL <tr> elements, not just <tbody> rows).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
+        CalendarData.RowOrderContextKey = $"shifts:{moleculeId}:{jobTypeId}:shift";
     }
 
     private async Task BuildUserBasedCalendarAsync(int moleculeId, int? jobTypeId)
@@ -604,6 +605,7 @@ public class ShiftsModel : PageModel
         CalendarData.DraftSessionId = ActiveDraftId;
         // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
+        CalendarData.RowOrderContextKey = $"shifts:{moleculeId}:{jobTypeId}:user";
     }
 
     /// <summary>

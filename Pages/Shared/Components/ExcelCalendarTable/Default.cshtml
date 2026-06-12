@@ -20,7 +20,8 @@
      data-calendar-type="@Model.CalendarType"
      data-start-date="@Model.StartDate.ToString("yyyy-MM-dd")"
      data-end-date="@Model.EndDate.ToString("yyyy-MM-dd")"
-     data-readonly="@Model.IsReadOnly.ToString().ToLower()">
+     data-readonly="@Model.IsReadOnly.ToString().ToLower()"
+     data-reorder-context="@(Model.RowOrderContextKey ?? "")">
 
     <table class="excel-calendar__table" role="grid" aria-rowcount="@Model.TotalRows">
         <thead class="excel-calendar__header">
