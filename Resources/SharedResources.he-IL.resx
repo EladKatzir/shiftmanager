@@ -15724,6 +15724,7 @@
   <data name="DistributionList_OtherGroup" xml:space="preserve">
     <value>ללא רשימה</value>
   </data>
+  <data name="Calendar_DragRow" xml:space="preserve"><value>גרור לסידור מחדש</value></data>
   <data name="Calendar_UncategorizedGroup" xml:space="preserve">
     <value>ללא קטגוריה</value>
   </data>

@@ -4375,3 +4375,17 @@ body.bottom-sheet-open {
   /* Keep the × visible on the home palette */
   color: var(--shift-home-text) !important;
 }
+
+/* ================================================================
+   Calendar Row Reorder — grip handles + drop-line styles
+   ================================================================ */
+.excel-calendar__row-grip {
+    cursor: grab; opacity: 0; margin-inline-end: 4px; user-select: none;
+    color: var(--text-muted); font-size: 0.8rem; transition: opacity .12s;
+}
+tr[data-row-id]:hover .excel-calendar__row-grip,
+.excel-calendar__row-grip:focus { opacity: .7; }
+.excel-calendar__group-grip { cursor: grab; }
+.excel-calendar__group-grip:focus,
+.excel-calendar__row-grip:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { .excel-calendar__row-grip { transition: none; } }
