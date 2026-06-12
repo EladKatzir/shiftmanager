@@ -35,6 +35,7 @@
                 <label for="viewModeSelect">@Localizer["ViewMode"]</label>
                 <select id="viewModeSelect" class="form-select" onchange="updateCalendarFilters()">
                     <option value="week" selected="@(Model.ViewMode == "week")">@Localizer["Week"]</option>
+                    <option value="next7" selected="@(Model.ViewMode == "next7")">@Localizer["Next7Days"]</option>
                     <option value="2weeks" selected="@(Model.ViewMode == "2weeks")">@Localizer["TwoWeeks"]</option>
                     <option value="month" selected="@(Model.ViewMode == "month")">@Localizer["Month"]</option>
                 </select>

@@ -180,6 +180,17 @@ public class OnCallModel : PageModel
     {
         // Parse start date or default to start of current week
         var today = DateOnly.FromDateTime(DateTime.Today);
+
+        // "Next 7 days" is anchored to TODAY (today..today+6), ignoring Start; nav is inert.
+        if (ViewMode == "next7")
+        {
+            StartDate = today;
+            EndDate = today.AddDays(6);
+            PreviousStart = today.ToString("yyyy-MM-dd");
+            NextStart = today.ToString("yyyy-MM-dd");
+            return;
+        }
+
         if (!string.IsNullOrEmpty(Start) && DateOnly.TryParse(Start, out var parsedDate))
         {
             StartDate = parsedDate;
