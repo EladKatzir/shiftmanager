@@ -728,12 +728,20 @@
                 e.preventDefault();
                 if (choreTypeForTitle) {
                     commitChoreTitle();
-                } else if (selectedIndex >= 0 && filteredItems[selectedIndex]) {
-                    var item = filteredItems[selectedIndex];
-                    if (item.type === '_command') {
-                        selectSlashCommand(item);
-                    } else {
-                        selectItem(item);
+                } else {
+                    // Excel-like confirm: if the user typed but never arrowed to a specific
+                    // row, commit the TOP match (index 0) instead of doing nothing. This lets
+                    // the user type a name and press Enter to assign, without clicking the row.
+                    // filteredItems only ever holds selectable rows (the "no matches"
+                    // placeholder is never pushed), so a non-empty list = a valid target.
+                    var enterIdx = selectedIndex >= 0 ? selectedIndex : 0;
+                    var item = filteredItems[enterIdx];
+                    if (item) {
+                        if (item.type === '_command') {
+                            selectSlashCommand(item);
+                        } else {
+                            selectItem(item);
+                        }
                     }
                 }
                 break;
@@ -1183,18 +1191,39 @@
 
     function attachListeners() {
         calendarTable = document.querySelector('.excel-calendar');
-        if (calendarTable) {
-            calendarTable.addEventListener('click', handleCellClick);
-        }
+        // Delegate the cell-click on `document`, NOT on the .excel-calendar node.
+        // triggerCalendarRefresh() (calendar-inline-edit.js) swaps the entire grid via
+        // grid.replaceWith(fresh) after every assignment/note save. A listener bound to the
+        // old node would be orphaned, leaving the UI "locked" (no input opens) until a full
+        // page reload — the Phase 1 lockup bug. handleCellClick already gates on isActive +
+        // closest('.excel-calendar__cell'), so document-level delegation is safe and immune
+        // to grid swaps. (The bottom-sheet cell handler only binds on touch devices, so there
+        // is no desktop conflict; on touch it runs in capture phase and still takes priority.)
+        document.addEventListener('click', handleCellClick);
+        // Re-point the SignalR DOM observer after each in-place grid refresh.
+        document.addEventListener('calendar:grid-refreshed', handleGridRefreshed);
         setupDomObserver();
     }
 
     function detachListeners() {
-        if (calendarTable) {
-            calendarTable.removeEventListener('click', handleCellClick);
-            calendarTable = null;
+        document.removeEventListener('click', handleCellClick);
+        document.removeEventListener('calendar:grid-refreshed', handleGridRefreshed);
+        calendarTable = null;
+        teardownDomObserver();
+    }
+
+    // After an in-place grid refresh, the previous .excel-calendar node — and the
+    // MutationObserver bound to it — are detached. Close any input whose cell no longer
+    // exists, then re-bind the observer to the fresh grid so live SignalR updates keep
+    // restoring in-progress typing. (The click handler lives on document, so it survives
+    // the swap untouched.)
+    function handleGridRefreshed() {
+        if (!isActive) return;
+        if (activeCell && !document.body.contains(activeCell)) {
+            closeInput();
         }
         teardownDomObserver();
+        setupDomObserver();
     }
 
     // --- Toggle ---
