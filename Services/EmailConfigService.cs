@@ -4,6 +4,18 @@ using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
+/// <summary>Row in the owner email-override dashboard table.</summary>
+public record CompanyOverrideRow
+{
+    public int CompanyId { get; init; }
+    public string CompanyName { get; init; } = string.Empty;
+    public bool Enabled { get; init; }
+    public bool OverrideEnabled { get; init; }
+    public string? FromAddress { get; init; }
+    public DateTime LastUpdated { get; init; }
+    public string? LastUpdatedBy { get; init; }
+}
+
 /// <summary>
 /// Service for managing email configuration settings with encryption support
 /// </summary>
@@ -35,7 +47,7 @@ public class EmailConfigService : IEmailConfigService
         // Try company-specific config first (query filter already includes both global + tenant)
         var companyConfig = await _context.EmailConfigs
             .FirstOrDefaultAsync(ec => ec.CompanyId == companyId);
-        if (companyConfig != null) return companyConfig;
+        if (companyConfig != null && companyConfig.OverrideEnabled) return companyConfig;
 
         // Fall back to global config (CompanyId = null)
         // SECURITY-AUDITED: SAFE — global config is intentionally shared, no tenant scoping
@@ -175,6 +187,53 @@ public class EmailConfigService : IEmailConfigService
 
         await _context.SaveChangesAsync();
         return config;
+    }
+
+    public async Task<List<CompanyOverrideRow>> GetAllCompanyOverridesWithNamesAsync()
+    {
+        // SECURITY-AUDITED: IgnoreQueryFilters() is SAFE — owner-only dashboard, intentional cross-tenant read
+        var overrides = await _context.EmailConfigs
+            .IgnoreQueryFilters()
+            .Where(ec => ec.CompanyId != null)
+            .OrderBy(ec => ec.CompanyId)
+            .ToListAsync();
+
+        if (overrides.Count == 0)
+            return new List<CompanyOverrideRow>();
+
+        var companyIds = overrides.Select(ec => ec.CompanyId!.Value).ToList();
+        // SECURITY-AUDITED: IgnoreQueryFilters() is SAFE — fetching company names for owner dashboard
+        var companyNames = await _context.Companies
+            .IgnoreQueryFilters()
+            .Where(c => companyIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.Name })
+            .ToDictionaryAsync(c => c.Id, c => c.Name);
+
+        return overrides.Select(ec => new CompanyOverrideRow
+        {
+            CompanyId = ec.CompanyId!.Value,
+            CompanyName = companyNames.TryGetValue(ec.CompanyId.Value, out var name) ? name : $"Company #{ec.CompanyId}",
+            Enabled = ec.Enabled,
+            OverrideEnabled = ec.OverrideEnabled,
+            FromAddress = ec.FromAddress,
+            LastUpdated = ec.LastUpdated,
+            LastUpdatedBy = ec.LastUpdatedBy
+        }).ToList();
+    }
+
+    public async Task<bool> SetOverrideEnabledAsync(int companyId, bool enabled)
+    {
+        // SECURITY-AUDITED: IgnoreQueryFilters() is SAFE — scoped by specific companyId, owner-only operation
+        var config = await _context.EmailConfigs
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(ec => ec.CompanyId == companyId);
+
+        if (config == null) return false;
+
+        config.OverrideEnabled = enabled;
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Set OverrideEnabled={Enabled} for company {CompanyId} email config", enabled, companyId);
+        return true;
     }
 
     public async Task<string?> GetDecryptedApiKeyAsync()

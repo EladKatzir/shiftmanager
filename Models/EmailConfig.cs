@@ -47,4 +47,8 @@ public class EmailConfig
     /// User who last updated this configuration
     /// </summary>
     public string? LastUpdatedBy { get; set; }
+
+    /// <summary>When false, this per-company override is ignored and the global config is used instead
+    /// (a reversible "disable override"). Default true. Distinct from Enabled (email on/off).</summary>
+    public bool OverrideEnabled { get; set; } = true;
 }

@@ -57,6 +57,9 @@ public class EmailConfigModel : LocalizedPageModel
 
     public bool HasExistingKey { get; set; }
 
+    // All company overrides (Owner-only dashboard)
+    public List<CompanyOverrideRow> AllOverrides { get; set; } = new();
+
     // Statistics
     public int TotalEmailsSent { get; set; }
     public int EmailsToday { get; set; }
@@ -105,6 +108,12 @@ public class EmailConfigModel : LocalizedPageModel
             EmailApiUrl = emailConfig?.ApiUrl ?? string.Empty;
             EmailFromAddress = emailConfig?.FromAddress ?? string.Empty;
             HasExistingKey = !string.IsNullOrWhiteSpace(emailConfig?.EncryptedApiKey);
+
+            // Owner: load all company overrides for dashboard table
+            if (IsOwner)
+            {
+                AllOverrides = await _emailConfigService.GetAllCompanyOverridesWithNamesAsync();
+            }
 
             // Load recent logs and failures for diagnostics
             RecentLogs = await _emailApiLogService.GetRecentLogsAsync(10);
@@ -238,6 +247,42 @@ public class EmailConfigModel : LocalizedPageModel
             TempData["ErrorMessage"] = _localizer["Error_SavingEmailConfigFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
             await OnGetAsync();
             return Page();
+        }
+    }
+
+    public async Task<IActionResult> OnPostToggleOverrideAsync(int companyId, bool enabled)
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+
+            // SECURITY: affects cross-company config — require Owner (AdminAccess) grant
+            var grantService = HttpContext.RequestServices.GetRequiredService<IGrantService>();
+            if (!await grantService.HasGrantAsync(currentUserId, "AdminAccess"))
+            {
+                _logger.LogWarning("User {UserId} attempted to toggle email override for company {CompanyId} without AdminAccess grant", currentUserId, companyId);
+                return Forbid();
+            }
+
+            var found = await _emailConfigService.SetOverrideEnabledAsync(companyId, enabled);
+            if (found)
+            {
+                await _auditLogService.LogUserActionAsync(
+                    currentUserId, "EmailOverrideToggled", "EmailConfig", null,
+                    $"Email override for company {companyId} set to OverrideEnabled={enabled}",
+                    $"CompanyId={companyId}, OverrideEnabled={enabled}");
+
+                TempData["SuccessMessage"] = _localizer["Owner_EmailConfig_ToggleSuccess"].Value;
+            }
+
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling email override for company {CompanyId}", companyId);
+            TempData["ErrorMessage"] = _localizer["Error_SavingEmailConfigFailed"].Value;
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage();
         }
     }
 

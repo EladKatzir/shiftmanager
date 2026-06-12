@@ -47,4 +47,17 @@ public interface IEmailConfigService
     /// Gets the decrypted API key for the effective config (company-specific or global).
     /// </summary>
     Task<string?> GetDecryptedApiKeyAsync();
+
+    /// <summary>
+    /// Returns all per-company email overrides (CompanyId != null) with company names resolved.
+    /// SECURITY: requires owner-level access (AdminAccess grant) — caller is responsible for authorization.
+    /// </summary>
+    Task<List<CompanyOverrideRow>> GetAllCompanyOverridesWithNamesAsync();
+
+    /// <summary>
+    /// Sets OverrideEnabled on the specified company's email config override.
+    /// When false, the global config is used instead (reversible disable).
+    /// Returns false if no override exists for the company.
+    /// </summary>
+    Task<bool> SetOverrideEnabledAsync(int companyId, bool enabled);
 }

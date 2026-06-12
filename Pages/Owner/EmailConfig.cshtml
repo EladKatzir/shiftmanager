@@ -124,6 +124,86 @@
         </div>
     }
 
+    @* All Company Email Overrides — Owner only *@
+    @if (Model.IsOwner)
+    {
+        <div class="config-card" style="border-inline-start: 4px solid var(--info, #0ea5e9); margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <h2><icon name="list" /> <loc key="Owner_EmailConfig_AllOverrides">Company Email Overrides</loc></h2>
+                <span class="badge badge-primary" style="font-size: 0.75rem;">@Model.AllOverrides.Count</span>
+            </div>
+            <div class="card-body">
+                @if (!Model.AllOverrides.Any())
+                {
+                    <p class="empty-state"><loc key="Owner_EmailConfig_NoOverrides">No company overrides configured.</loc></p>
+                }
+                else
+                {
+                    <table class="logs-table">
+                        <thead>
+                            <tr>
+                                <th><loc key="Company" /></th>
+                                <th><loc key="Owner_EmailConfig_EmailEnabled">Email Enabled</loc></th>
+                                <th><loc key="Owner_EmailConfig_OverrideActive">Override Active</loc></th>
+                                <th><loc key="Owner_EmailConfig_FromAddress" /></th>
+                                <th><loc key="LastUpdated" /></th>
+                                <th><loc key="Actions" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.AllOverrides)
+                            {
+                                <tr>
+                                    <td>@row.CompanyName</td>
+                                    <td>
+                                        @if (row.Enabled)
+                                        {
+                                            <span class="badge badge-success"><loc key="Enabled" /></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary"><loc key="Disabled" /></span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (row.OverrideEnabled)
+                                        {
+                                            <span class="badge badge-warning"><loc key="Owner_EmailConfig_OverrideActive" /></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary"><loc key="Disabled" /></span>
+                                        }
+                                    </td>
+                                    <td>@(string.IsNullOrEmpty(row.FromAddress) ? "—" : row.FromAddress)</td>
+                                    <td>@row.LastUpdated.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <form method="post" asp-page-handler="ToggleOverride" style="display: inline;">
+                                            <input type="hidden" name="companyId" value="@row.CompanyId" />
+                                            <input type="hidden" name="enabled" value="@((!row.OverrideEnabled).ToString().ToLowerInvariant())" />
+                                            @if (row.OverrideEnabled)
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-ghost" style="color: var(--danger);">
+                                                    <loc key="Disable" />
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-primary">
+                                                    <loc key="Enable" />
+                                                </button>
+                                            }
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    }
+
     @* Effective Configuration — read-only summary *@
     <div class="config-card" style="border-inline-start: 4px solid var(--success); margin-bottom: 1.5rem;">
         <div class="card-header">

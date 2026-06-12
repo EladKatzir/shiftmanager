@@ -16201,4 +16201,22 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Trainee_RemovedTimeOffMessage" xml:space="preserve">
     <value>{0}'s shadowing for {1} was canceled due to approved time off</value>
   </data>
+  <data name="Owner_EmailConfig_AllOverrides" xml:space="preserve">
+    <value>Company Email Overrides</value>
+  </data>
+  <data name="Owner_EmailConfig_NoOverrides" xml:space="preserve">
+    <value>No company overrides configured.</value>
+  </data>
+  <data name="Owner_EmailConfig_ToggleSuccess" xml:space="preserve">
+    <value>Email override status updated successfully.</value>
+  </data>
+  <data name="Owner_EmailConfig_EmailEnabled" xml:space="preserve">
+    <value>Email Enabled</value>
+  </data>
+  <data name="Disable" xml:space="preserve">
+    <value>Disable</value>
+  </data>
+  <data name="Enable" xml:space="preserve">
+    <value>Enable</value>
+  </data>
 </root>

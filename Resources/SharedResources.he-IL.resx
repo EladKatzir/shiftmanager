@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+﻿<?xml version='1.0' encoding='utf-8'?>
 <root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:schema id="root">
     <xs:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -16163,4 +16163,21 @@
   <data name="Trainee_RemovedTimeOffMessage" xml:space="preserve">
     <value>הליווי של {0} עבור {1} בוטל עקב חופשה מאושרת</value>
   </data>
-</root>
+  <data name="Owner_EmailConfig_AllOverrides" xml:space="preserve">
+    <value>דריסות אימייל לפי דסק</value>
+  </data>
+  <data name="Owner_EmailConfig_NoOverrides" xml:space="preserve">
+    <value>לא הוגדרו דריסות ייחודיות לדסקים.</value>
+  </data>
+  <data name="Owner_EmailConfig_ToggleSuccess" xml:space="preserve">
+    <value>סטטוס דריסת האימייל עודכן בהצלחה.</value>
+  </data>
+  <data name="Owner_EmailConfig_EmailEnabled" xml:space="preserve">
+    <value>אימייל מופעל</value>
+  </data>
+  <data name="Disable" xml:space="preserve">
+    <value>בטל</value>
+  </data>
+  <data name="Enable" xml:space="preserve">
+    <value>הפעל</value>
+  </data></root>
