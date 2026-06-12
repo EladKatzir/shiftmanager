@@ -1087,6 +1087,24 @@ using (var scope = app.Services.CreateScope())
     }
 
     // ============================================================
+    // CATCH-UP: Ensure Techno job type exists on Shikma molecule
+    // (added after some DBs were already seeded with only ProjectManager)
+    // ============================================================
+    {
+        var area = await db.Areas.FirstOrDefaultAsync(a => a.Name == "190");
+        if (area != null)
+        {
+            var shikma = await db.Molecules.FirstOrDefaultAsync(m => m.Name == "Shikma" && m.AreaId == area.Id);
+            if (shikma != null && !await db.JobTypes.AnyAsync(j => j.Name == "Techno" && j.MoleculeId == shikma.Id))
+            {
+                db.JobTypes.Add(new JobType { AreaId = area.Id, MoleculeId = shikma.Id, Name = "Techno", DisplayName = "טכנו", SortOrder = 11 });
+                await db.SaveChangesAsync();
+                logger.LogInformation("[CatchUp] Added Techno job type to Shikma molecule");
+            }
+        }
+    }
+
+    // ============================================================
     // SEED ADDITIONAL MOLECULES/COMPANIES FROM appsettings.json
     // ============================================================
 
