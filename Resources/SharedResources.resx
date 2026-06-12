@@ -11402,6 +11402,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Admin_UserDeleteBlockedByDependencies" xml:space="preserve">
     <value>Cannot delete this user because they have records that could not be automatically cleaned up. Please contact a system administrator for assistance.</value>
   </data>
+  <data name="Admin_ForceDeleteUser" xml:space="preserve">
+    <value>Force delete anyway</value>
+  </data>
+  <data name="Admin_ForceDeleteUserConfirm" xml:space="preserve">
+    <value>This will permanently delete the user and reassign or remove all records they authored. This cannot be undone. Continue?</value>
+  </data>
   <data name="Error_DepartmentNameRequired" xml:space="preserve">
     <value>Department name is required</value>
   </data>

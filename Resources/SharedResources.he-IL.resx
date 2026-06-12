@@ -11368,6 +11368,12 @@
   <data name="Admin_UserDeleteBlockedByDependencies" xml:space="preserve">
     <value>לא ניתן למחוק משתמש זה מכיוון שיש לו רשומות שלא ניתן לנקות אוטומטית. אנא פנה למנהל מערכת לסיוע.</value>
   </data>
+  <data name="Admin_ForceDeleteUser" xml:space="preserve">
+    <value>מחק בכל זאת</value>
+  </data>
+  <data name="Admin_ForceDeleteUserConfirm" xml:space="preserve">
+    <value>פעולה זו תמחק את המשתמש לצמיתות ותשייך מחדש או תסיר את כל הרשומות שהוא יצר. לא ניתן לבטל פעולה זו. להמשיך?</value>
+  </data>
   <data name="Error_DepartmentNameRequired" xml:space="preserve">
     <value>שם מחלקה הוא שדה חובה</value>
   </data>

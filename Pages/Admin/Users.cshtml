@@ -734,6 +734,23 @@
                 <span><icon name="x" /></span>
                 <span>@Model.Error</span>
             </div>
+            @if (Model.BlockedDeleteUserId.HasValue)
+            {
+                <form method="post" asp-page-handler="DeleteUser" style="display:inline; margin: 0;"
+                      data-confirm-modal
+                      data-confirm-title="@Localizer["Admin_ForceDeleteUser"]"
+                      data-confirm-message="@Localizer["Admin_ForceDeleteUserConfirm"]"
+                      data-confirm-action="@Localizer["Admin_ForceDeleteUser"]"
+                      data-confirm-level="danger">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.BlockedDeleteUserId" />
+                    <input type="hidden" name="forceDelete" value="true" />
+                    <button type="submit" class="btn btn-danger" style="margin-top: 0.5rem;">
+                        <icon name="trash" />
+                        @Localizer["Admin_ForceDeleteUser"] (@Model.BlockedDeleteUserName)
+                    </button>
+                </form>
+            }
         }
         <form method="post" asp-page-handler="Add">
             <div class="filters-grid">

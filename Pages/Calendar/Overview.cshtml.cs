@@ -97,22 +97,25 @@ public class OverviewModel : PageModel
         }
         CurrentUserId = currentUserId;
 
-        // Get user's company (this calendar is company-scoped, not cross-company)
-        var companyId = _companyContext.CompanyId;
-        if (!companyId.HasValue)
+        // Honor the active-company switcher (member_selected_company cookie) for multi-company
+        // users — the same source the Shifts calendar uses via _tenantResolver. _companyContext.CompanyId
+        // only reads the login-time claim, which pinned Overview to the user's primary company and made
+        // the context switcher appear to do nothing here.
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        if (companyId <= 0)
         {
             _logger.LogWarning("User {UserId} has no company context", currentUserId);
             return RedirectToPage("/Error");
         }
-        CompanyId = companyId.Value;
+        CompanyId = companyId;
 
         // Load company details
         var company = await _db.Companies
-            .FirstOrDefaultAsync(c => c.Id == companyId.Value);
+            .FirstOrDefaultAsync(c => c.Id == companyId);
 
         if (company == null)
         {
-            _logger.LogWarning("Company {CompanyId} not found", companyId.Value);
+            _logger.LogWarning("Company {CompanyId} not found", companyId);
             return RedirectToPage("/Error");
         }
         CompanyName = company.LocalizedName;
@@ -549,8 +552,10 @@ public class OverviewModel : PageModel
             return new JsonResult(new { success = false, error = "Forbidden" }) { StatusCode = 403 };
         }
 
-        // Validate company context
-        var companyId = _companyContext.CompanyId;
+        // Validate company context against the ACTIVE company (switcher-aware), so a note writes
+        // to the company the user is currently viewing on Overview — not their login-time claim.
+        var resolvedCompanyId = _tenantResolver.GetCurrentTenantId();
+        int? companyId = resolvedCompanyId > 0 ? resolvedCompanyId : (int?)null;
         if (!companyId.HasValue)
         {
             return new JsonResult(new { success = false, error = "No company context" }) { StatusCode = 400 };

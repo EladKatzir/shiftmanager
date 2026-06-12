@@ -172,6 +172,13 @@ public partial class UsersModel : LocalizedPageModel
 
     public bool IsOwner { get; set; }
 
+    /// <summary>
+    /// Set when a normal delete was blocked by FK constraints (error code 19).
+    /// The view uses this to render the "Force delete anyway" option.
+    /// </summary>
+    public int? BlockedDeleteUserId { get; set; }
+    public string? BlockedDeleteUserName { get; set; }
+
     // Batch approval properties
     [BindProperty]
     public List<int> SelectedRequests { get; set; } = new();
@@ -1742,7 +1749,7 @@ public partial class UsersModel : LocalizedPageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostDeleteUserAsync(int id)
+    public async Task<IActionResult> OnPostDeleteUserAsync(int id, bool forceDelete = false)
     {
         using var transaction = await _db.Database.BeginTransactionAsync();
 
@@ -1792,10 +1799,10 @@ public partial class UsersModel : LocalizedPageModel
             // Audit log BEFORE deletion so we have a record even if the delete fails
             await _auditLogService.LogUserActionAsync(
                 userId: currentUserId,
-                action: "UserDeleted",
+                action: forceDelete ? "UserForceDeleted" : "UserDeleted",
                 entityType: "User",
                 entityId: user.Id,
-                description: $"Permanently deleted user {user.DisplayName} (Email: {user.Email}, UserId: {user.Id}, CompanyId: {user.CompanyId})"
+                description: $"Permanently deleted user {user.DisplayName} (Email: {user.Email}, UserId: {user.Id}, CompanyId: {user.CompanyId}){(forceDelete ? " [FORCE DELETE — authored content reassigned/removed]" : "")}"
             );
 
             // IgnoreQueryFilters: target user's related data may be in a different company
@@ -1927,6 +1934,124 @@ public partial class UsersModel : LocalizedPageModel
             await _db.RoleAssignmentAudits.IgnoreQueryFilters()
                 .Where(r => r.TargetUserId == id || r.ChangedBy == id).ExecuteDeleteAsync();
 
+            // 3h. Delete CompanyMembership rows (Restrict FK — blocks every delete)
+            // SECURITY-AUDITED: scoped by userId
+            await _db.CompanyMemberships.IgnoreQueryFilters()
+                .Where(cm => cm.UserId == id).ExecuteDeleteAsync();
+
+            // 3i. Delete DistributionListMember rows (Restrict FK on UserId)
+            // SECURITY-AUDITED: scoped by userId
+            await _db.DistributionListMembers.IgnoreQueryFilters()
+                .Where(dlm => dlm.UserId == id).ExecuteDeleteAsync();
+
+            // 3j. Delete UserShiftCategory rows (Cascade FK, but explicit for safety)
+            // SECURITY-AUDITED: scoped by userId
+            await _db.UserShiftCategories.IgnoreQueryFilters()
+                .Where(usc => usc.UserId == id).ExecuteDeleteAsync();
+
+            // 3k. Delete SetupTask rows referencing this user in any capacity (all Restrict FKs)
+            // SECURITY-AUDITED: scoped by userId
+            await _db.SetupTasks.IgnoreQueryFilters()
+                .Where(st => st.AssignedToUserId == id || st.SuggestedUserId == id || st.CompletedByUserId == id)
+                .ExecuteDeleteAsync();
+
+            // 3l. Delete UserDayNote rows FOR this user; reassign notes this user created for others
+            // SECURITY-AUDITED: scoped by userId
+            await _db.UserDayNotes.IgnoreQueryFilters()
+                .Where(n => n.UserId == id).ExecuteDeleteAsync();
+            await _db.UserDayNotes.IgnoreQueryFilters()
+                .Where(n => n.CreatedByUserId == id && n.UserId != id)
+                .ExecuteUpdateAsync(n => n.SetProperty(x => x.CreatedByUserId, currentUserId));
+
+            // 3m. Force-delete path: reassign/null authored content that normal delete leaves alone.
+            // Only reached when admin explicitly confirms force-delete.
+            if (forceDelete)
+            {
+                // Reassign Chore authorship (CreatedBy is non-nullable → reassign; CanceledBy is nullable → null)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.Chores.IgnoreQueryFilters()
+                    .Where(c => c.CreatedBy == id && c.UserId != id)
+                    .ExecuteUpdateAsync(c => c.SetProperty(x => x.CreatedBy, currentUserId));
+                await _db.Chores.IgnoreQueryFilters()
+                    .Where(c => c.CanceledBy == id)
+                    .ExecuteUpdateAsync(c => c.SetProperty(x => x.CanceledBy, (int?)null));
+
+                // Reassign UserRoleAssignment.AssignedByUserId (non-nullable → reassign)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.UserRoleAssignments.IgnoreQueryFilters()
+                    .Where(ura => ura.AssignedByUserId == id)
+                    .ExecuteUpdateAsync(ura => ura.SetProperty(x => x.AssignedByUserId, currentUserId));
+
+                // Null out UserJoinRequest references (both nullable)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.UserJoinRequests.IgnoreQueryFilters()
+                    .Where(jr => jr.ReviewedBy == id)
+                    .ExecuteUpdateAsync(jr => jr.SetProperty(x => x.ReviewedBy, (int?)null));
+                await _db.UserJoinRequests.IgnoreQueryFilters()
+                    .Where(jr => jr.CreatedUserId == id)
+                    .ExecuteUpdateAsync(jr => jr.SetProperty(x => x.CreatedUserId, (int?)null));
+
+                // Null settings UpdatedByUserId (all nullable)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.AreaSettings.IgnoreQueryFilters()
+                    .Where(a => a.UpdatedByUserId == id)
+                    .ExecuteUpdateAsync(a => a.SetProperty(x => x.UpdatedByUserId, (int?)null));
+                await _db.MoleculeSettings.IgnoreQueryFilters()
+                    .Where(m => m.UpdatedByUserId == id)
+                    .ExecuteUpdateAsync(m => m.SetProperty(x => x.UpdatedByUserId, (int?)null));
+                await _db.CompanySettings.IgnoreQueryFilters()
+                    .Where(cs => cs.UpdatedByUserId == id)
+                    .ExecuteUpdateAsync(cs => cs.SetProperty(x => x.UpdatedByUserId, (int?)null));
+
+                // Null GrantType.CreatedByUserId (nullable)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.GrantTypes.IgnoreQueryFilters()
+                    .Where(gt => gt.CreatedByUserId == id)
+                    .ExecuteUpdateAsync(gt => gt.SetProperty(x => x.CreatedByUserId, (int?)null));
+
+                // Null JusticeTarget.CreatedByUserId (nullable)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.JusticeTargets.IgnoreQueryFilters()
+                    .Where(jt => jt.CreatedByUserId == id)
+                    .ExecuteUpdateAsync(jt => jt.SetProperty(x => x.CreatedByUserId, (int?)null));
+
+                // Reassign HomeType.CreatedBy (non-nullable)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.HomeTypes.IgnoreQueryFilters()
+                    .Where(h => h.CreatedBy == id)
+                    .ExecuteUpdateAsync(h => h.SetProperty(x => x.CreatedBy, currentUserId));
+
+                // Reassign HomeTypeOverride.CreatedBy (non-nullable; UserId rows already deleted above via Cascade)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.HomeTypeOverrides.IgnoreQueryFilters()
+                    .Where(o => o.CreatedBy == id)
+                    .ExecuteUpdateAsync(o => o.SetProperty(x => x.CreatedBy, currentUserId));
+
+                // Reassign OnDutyTypeConfig.CreatedBy (non-nullable, global table)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.OnDutyTypeConfigs
+                    .Where(o => o.CreatedBy == id)
+                    .ExecuteUpdateAsync(o => o.SetProperty(x => x.CreatedBy, currentUserId));
+
+                // Reassign CompanyLanguageSettings CreatedBy/UpdatedBy (both non-nullable)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.CompanyLanguageSettings.IgnoreQueryFilters()
+                    .Where(cls => cls.CreatedBy == id)
+                    .ExecuteUpdateAsync(cls => cls.SetProperty(x => x.CreatedBy, currentUserId));
+                await _db.CompanyLanguageSettings.IgnoreQueryFilters()
+                    .Where(cls => cls.UpdatedBy == id)
+                    .ExecuteUpdateAsync(cls => cls.SetProperty(x => x.UpdatedBy, currentUserId));
+
+                // Reassign CompanyLocalizationOverride CreatedBy/UpdatedBy (both non-nullable)
+                // SECURITY-AUDITED: scoped by userId
+                await _db.CompanyLocalizationOverrides.IgnoreQueryFilters()
+                    .Where(clo => clo.CreatedBy == id)
+                    .ExecuteUpdateAsync(clo => clo.SetProperty(x => x.CreatedBy, currentUserId));
+                await _db.CompanyLocalizationOverrides.IgnoreQueryFilters()
+                    .Where(clo => clo.UpdatedBy == id)
+                    .ExecuteUpdateAsync(clo => clo.SetProperty(x => x.UpdatedBy, currentUserId));
+            }
+
             LogCompletedRelatedRecordsCleanup(_logger, id);
 
             // 4. Hard-delete the user from the database
@@ -1949,6 +2074,10 @@ public partial class UsersModel : LocalizedPageModel
             await transaction.RollbackAsync();
             LogFkConstraintPreventedDeletion(_logger, dbEx, id);
             Error = _localizer["Admin_UserDeleteBlockedByDependencies"];
+            // Preserve the blocked user's id so the view can render the force-delete option
+            var blockedUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
+            BlockedDeleteUserId = id;
+            BlockedDeleteUserName = blockedUser?.DisplayName ?? id.ToString();
             await OnGetAsync();
             return Page();
         }
