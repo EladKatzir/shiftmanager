@@ -163,6 +163,9 @@ public class AppDbContext : DbContext
     public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
     public DbSet<DistributionListMember> DistributionListMembers => Set<DistributionListMember>();
 
+    // Per-user calendar row/category ordering preferences (NOT tenant-scoped — personal UI preference)
+    public DbSet<UserCalendarRowOrder> UserCalendarRowOrders => Set<UserCalendarRowOrder>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var dateConverter = new ValueConverter<DateOnly, string>(
@@ -1093,6 +1096,13 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(dlm => dlm.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Per-user calendar ordering (categories + rows). NOT company-scoped — no global query filter.
+        modelBuilder.Entity<UserCalendarRowOrder>()
+            .HasIndex(o => new { o.UserId, o.ContextKey, o.GroupId, o.RowId })
+            .IsUnique();
+        modelBuilder.Entity<UserCalendarRowOrder>()
+            .HasIndex(o => new { o.UserId, o.ContextKey });
 
         // ✅ PHASE 19: Configure GameScore entity
         modelBuilder.Entity<GameScore>()
