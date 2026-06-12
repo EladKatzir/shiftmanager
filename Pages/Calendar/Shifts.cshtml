@@ -56,6 +56,7 @@
                 <label for="viewModeSelect">@Localizer["ViewMode"]</label>
                 <select id="viewModeSelect" class="form-select" onchange="updateCalendarFilters()">
                     <option value="week" selected="@(Model.ViewMode == "week")">@Localizer["Week"]</option>
+                    <option value="next7" selected="@(Model.ViewMode == "next7")">@Localizer["Next7Days"]</option>
                     <option value="2weeks" selected="@(Model.ViewMode == "2weeks")">@Localizer["TwoWeeks"]</option>
                     <option value="month" selected="@(Model.ViewMode == "month")">@Localizer["Month"]</option>
                 </select>
@@ -201,8 +202,10 @@
             }
 
             @* Distribution Lists control — by-user view only. The dropdown (filter) is open to everyone;
-               the "+" manage button is gated by CanManageLists. Selection persists via DistributionListIds. *@
-            @if (Model.Mode == "user")
+               the "+" manage button is gated by CanManageLists. Selection persists via DistributionListIds.
+               Phase 3.1: the תפוצות button is hidden because the feature is currently inactive.
+               To re-enable, change the condition below back to: @@(Model.Mode == "user"). *@
+            @if (false)
             {
                 <span class="cal-toolbar__separator"></span>
                 <div class="cal-toolbar__toggle-group dl-control" id="dlControl" data-molecule-id="@Model.MoleculeId">

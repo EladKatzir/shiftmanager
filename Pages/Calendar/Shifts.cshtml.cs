@@ -307,6 +307,19 @@ public class ShiftsModel : PageModel
     {
         // Parse start date or default to start of current week
         var today = DateOnly.FromDateTime(DateTime.Today);
+
+        // "Next 7 days" is anchored to TODAY (today .. today+6), ignoring the Start param so it
+        // always shows the coming week regardless of prior navigation. Nav arrows are inert here
+        // (Prev/Next both point at today) since it is a fixed "from today" window.
+        if (ViewMode == "next7")
+        {
+            StartDate = today;
+            EndDate = today.AddDays(6);
+            PreviousStart = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            NextStart = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            return;
+        }
+
         if (!string.IsNullOrEmpty(Start) && DateOnly.TryParse(Start, out var parsedDate))
         {
             StartDate = parsedDate;

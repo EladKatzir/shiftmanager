@@ -5014,6 +5014,9 @@
   <data name="TwoWeeks" xml:space="preserve">
     <value>שבועיים</value>
   </data>
+  <data name="Next7Days" xml:space="preserve">
+    <value>7 הימים הקרובים</value>
+  </data>
 
   <!-- Users Page -->
   <data name="Users_Title" xml:space="preserve">
