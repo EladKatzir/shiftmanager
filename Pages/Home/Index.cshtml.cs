@@ -242,8 +242,9 @@ namespace ShiftManager.Pages.Home
                 return RedirectToPage();
 
             var hasEditArea = await _grantService.HasGrantAsync(userId, "EditArea");
+            var hasEditMolecule = await _grantService.HasGrantAsync(userId, "EditMolecule");
             var hasAdminAccess = await _grantService.HasGrantAsync(userId, "AdminAccess");
-            if (!hasEditArea && !hasAdminAccess)
+            if (!hasEditArea && !hasEditMolecule && !hasAdminAccess)
                 return RedirectToPage();
 
             await _whoIsOnShiftService.SaveSelectedShiftsAsync(userId, shiftTypeIds ?? new List<int>());

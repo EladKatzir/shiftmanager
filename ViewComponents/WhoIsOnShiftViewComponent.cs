@@ -6,7 +6,8 @@ namespace ShiftManager.ViewComponents;
 
 /// <summary>
 /// "Who is on Shift" home dashboard widget for Area Admins (מפק"מ).
-/// Self-gates: renders empty for users without EditArea or AdminAccess grants.
+/// Self-gates: renders empty unless the user is an Area Admin (EditArea), a CO/מפק"מ = MoleculeAdmin
+/// (EditMolecule), or an Owner (AdminAccess).
 /// </summary>
 public class WhoIsOnShiftViewComponent : ViewComponent
 {
@@ -25,10 +26,11 @@ public class WhoIsOnShiftViewComponent : ViewComponent
         if (!int.TryParse(userIdClaim, out var userId))
             return Content(string.Empty);
 
-        // Gate: only Area Admins (EditArea) or system Owners (AdminAccess) may see this widget
+        // Gate: Area Admins (EditArea), COs / מפק"מ = MoleculeAdmin (EditMolecule), or Owners (AdminAccess).
         var hasEditArea = await _grantService.HasGrantAsync(userId, "EditArea");
+        var hasEditMolecule = await _grantService.HasGrantAsync(userId, "EditMolecule");
         var hasAdminAccess = await _grantService.HasGrantAsync(userId, "AdminAccess");
-        if (!hasEditArea && !hasAdminAccess)
+        if (!hasEditArea && !hasEditMolecule && !hasAdminAccess)
             return Content(string.Empty);
 
         var cubes = await _whoIsOnShiftService.BuildWhoIsOnShiftAsync(userId);
