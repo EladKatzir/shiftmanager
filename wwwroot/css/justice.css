@@ -692,10 +692,10 @@ svg { display: block; flex-shrink: 0; }
 }
 .donut-center-val {
   font-size: 1.9rem; font-weight: 800; letter-spacing: -0.04em;
-  color: var(--text); line-height: 1; font-variant-numeric: tabular-nums;
+  color: var(--primary-contrast); line-height: 1; font-variant-numeric: tabular-nums;
 }
 .donut-center-label {
-  font-size: 0.64rem; color: var(--text-muted); font-weight: 600;
+  font-size: 0.64rem; color: var(--primary-contrast); opacity: 0.8; font-weight: 600;
   letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px;
 }
 
