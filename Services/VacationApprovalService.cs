@@ -854,6 +854,14 @@ public class VacationApprovalService : IVacationApprovalService
         if (req == null)
             return (false, _localizer["VacationApproval_RequestNotFound"]);
 
+        // F6 SECURITY: only the request's OWNER or an authorized approver may re-date it.
+        // Mirrors CancelRequestAsync's ownership gate; CanUserApproveAsync is JobType-aware and
+        // honors the approval route + DoesShifts membership (so molecule/area-scoped managers
+        // qualify for any company within their grant's scope). Without this, [Authorize]-only
+        // access let any authenticated user shorten anyone's approved leave cross-tenant.
+        if (req.UserId != actorUserId && !await CanUserApproveAsync(actorUserId, req.Id))
+            return (false, _localizer["VacationApproval_NotYourRequest"]);
+
         if (req.Status != RequestStatus.Approved)
             return (false, _localizer["VacationApproval_OnlyApprovedShortenable"]);
 
@@ -1440,5 +1448,75 @@ public class VacationApprovalService : IVacationApprovalService
         return moleculeUsers
             .Where(u => u.RoleTemplate?.Key == "MoleculeAdmin")
             .ToList();
+    }
+
+    public async Task<List<ApproverOption>> GetGrantBasedApproverOptionsAsync(int requesterUserId)
+    {
+        // SECURITY-AUDITED: IgnoreQueryFilters SAFE — the pool is explicitly scoped below to the
+        // requester's own member companies; multi-company users may have approvers in another tenant.
+        var requester = await _context.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == requesterUserId);
+        if (requester == null) return new List<ApproverOption>();
+
+        // Widen the approver pool to the union of all shift-active membership companies.
+        // For a single-company user the set contains only requester.CompanyId — same as before.
+        var memberships = await _membershipService.GetMembershipsAsync(requesterUserId);
+        var memberCompanyIds = new HashSet<int> { requester.CompanyId };
+        foreach (var m in memberships.Where(m => m.DoesShifts))
+            memberCompanyIds.Add(m.CompanyId);
+
+        // Resolve the molecule ids for all member companies (needed for hierarchy scope-matching).
+        var memberCompanies = await _context.Companies.IgnoreQueryFilters()
+            .Where(c => memberCompanyIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.MoleculeId })
+            .ToListAsync();
+        var memberMoleculeIds = memberCompanies
+            .Where(c => c.MoleculeId.HasValue)
+            .Select(c => c.MoleculeId!.Value)
+            .ToHashSet();
+        var memberCompanyIdList = memberCompanyIds.ToList();
+        var memberMoleculeIdList = memberMoleculeIds.ToList();
+
+        var approvalGrantKeys = new[] { "ApproveVacations", "ApproveExtendedLeave" };
+
+        var approverUserIds = await _context.Grants.IgnoreQueryFilters()
+            .Where(g => _context.GrantTypes
+                .Where(gt => approvalGrantKeys.Contains(gt.Key))
+                .Select(gt => gt.Id)
+                .Contains(g.GrantTypeId))
+            .Where(g => g.CanOwn)
+            // Match grants whose scope actually covers any of the requester's member companies
+            .Where(g => memberCompanyIdList.Contains(g.CompanyId ?? -1)
+                     // Molecule-scoped: grant's molecule must be one of the member molecules
+                     || (g.MoleculeId != null && memberMoleculeIdList.Contains(g.MoleculeId.Value))
+                     // Area-scoped: grant's area must contain any of the member molecules
+                     || (g.AreaId != null && memberMoleculeIdList.Any()
+                         && _context.Molecules.Any(m => memberMoleculeIdList.Contains(m.Id) && m.AreaId == g.AreaId))
+                     // Project-scoped: grant's project must contain any of the member molecules' areas
+                     || (g.ProjectId != null && memberMoleculeIdList.Any()
+                         && _context.Molecules.Any(m => memberMoleculeIdList.Contains(m.Id)
+                                && _context.Areas.Any(a => a.Id == m.AreaId && a.ProjectId == g.ProjectId)))
+                     // Self-scoped (all nulls): approver must be in any of the member companies
+                     || (!g.CompanyId.HasValue && !g.MoleculeId.HasValue
+                         && !g.AreaId.HasValue && !g.ProjectId.HasValue
+                         && _context.Users.Any(u => u.Id == g.UserId && memberCompanyIdList.Contains(u.CompanyId))))
+            .Select(g => g.UserId)
+            .Distinct()
+            .ToListAsync();
+
+        return await _context.Users.IgnoreQueryFilters()
+            .Where(u => approverUserIds.Contains(u.Id) && u.IsActive
+                        && u.AccountType == AccountType.Standard)
+            .OrderBy(u => u.DisplayName)
+            .Select(u => new ApproverOption(u.Id, u.DisplayName, u.Role.ToString()))
+            .ToListAsync();
+    }
+
+    public async Task<bool> IsEligibleApproverAsync(int requesterUserId, int approverUserId)
+    {
+        // Reuse the dropdown pool as the single source of truth: an approver is accepted on
+        // submit IFF they were offered in the form's dropdown. Guarantees the two never drift.
+        var pool = await GetGrantBasedApproverOptionsAsync(requesterUserId);
+        return pool.Any(o => o.Id == approverUserId);
     }
 }
