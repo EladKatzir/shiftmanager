@@ -542,6 +542,10 @@ else
           <circle cx="100" cy="100" r="94"
                   fill="none" stroke="var(--border)" stroke-width="1"
                   stroke-dasharray="2 7" opacity="0.3" />
+          @* Hole-fill disc: sits inside the ring (inner edge ~69px) so the center text
+             always rests on var(--surface) and var(--text) always contrasts correctly
+             in both light and dark themes. r=68 keeps it inside the ring gap. *@
+          <circle cx="100" cy="100" r="68" fill="var(--surface)" />
         </svg>
 
         <div class="donut-center" aria-hidden="true">
