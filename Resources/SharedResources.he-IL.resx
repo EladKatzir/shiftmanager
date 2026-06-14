@@ -16202,4 +16202,10 @@
   <data name="Requests_Locked_AccountType" xml:space="preserve">
     <value>סוג חשבון זה אינו יכול להשתמש בעמוד הבקשות.</value>
   </data>
+  <data name="Error_GroupUserCannotBeAssigned" xml:space="preserve">
+    <value>לא ניתן לשבץ חשבונות קיבוציים למשמרות.</value>
+  </data>
+  <data name="Error_AccountCannotDoChores" xml:space="preserve">
+    <value>לא ניתן לשבץ סוג חשבון זה למטלות.</value>
+  </data>
 </root>

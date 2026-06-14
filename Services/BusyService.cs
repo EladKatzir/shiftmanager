@@ -205,6 +205,16 @@ public class BusyService : IBusyService
             return new BusyValidation(false, errors, warnings);
         }
 
+        if (!user.CanDoChores())
+        {
+            errors.Add(new ValidationIssue(
+                "ACCOUNT_CANNOT_DO_CHORES",
+                _localizer["Error_AccountCannotDoChores"],
+                ValidationSeverity.Error,
+                ValidationCategory.JobType));
+            return new BusyValidation(false, errors, warnings);
+        }
+
         if (!await IsUserInMoleculeAsync(user, target.MoleculeId))
         {
             errors.Add(new ValidationIssue(
@@ -327,6 +337,16 @@ public class BusyService : IBusyService
             errors.Add(new ValidationIssue(
                 "USER_INACTIVE",
                 _localizer["Error_UserInactive"],
+                ValidationSeverity.Error,
+                ValidationCategory.JobType));
+            return new BusyValidation(false, errors, warnings);
+        }
+
+        if (!user.CanBeAssignedShift())
+        {
+            errors.Add(new ValidationIssue(
+                "GROUPUSER_CANNOT_BE_ASSIGNED",
+                _localizer["Error_GroupUserCannotBeAssigned"],
                 ValidationSeverity.Error,
                 ValidationCategory.JobType));
             return new BusyValidation(false, errors, warnings);
