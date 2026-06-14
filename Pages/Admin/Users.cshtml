@@ -906,6 +906,7 @@
                 <th>@Localizer["Email"]</th>
                 <th>@Localizer["Company"]</th>
                 <th>@Localizer["JobType"]</th>
+                <th>@Localizer["Users_AccountType"]</th>
                 <th>@Localizer["Department"]</th>
                 <th><loc key="Users_Participates" /></th>
                 <th>@Localizer["Role"]</th>
@@ -921,6 +922,14 @@
             <tr>
                 <td>
                     @u.DisplayName
+                    @if (u.AccountType != ShiftManager.Models.Support.AccountType.Standard)
+                    {
+                        // Mil = amber badge (dark text); GroupUser = indigo badge (white text)
+                        var atStyle = u.AccountType == ShiftManager.Models.Support.AccountType.Mil
+                            ? "background: #b45309 !important; color: #fff !important;"
+                            : "background: #4f46e5 !important; color: #fff !important;";
+                        <span class="badge" style="margin-inline-start: 0.35rem; font-size: 0.7rem; @atStyle">@Localizer[$"AccountType_{u.AccountType}"]</span>
+                    }
                     @if (u.IsLocked)
                     {
                         var lockoutTime = u.LockoutEnd.HasValue ? Localization.FormatTime(u.LockoutEnd.Value.ToLocalTime()) : "";
@@ -972,6 +981,28 @@
                                 @foreach (var jt in Model.AvailableJobTypes)
                                 {
                                     <option value="@jt.Id" selected="@(u.JobTypeId == jt.Id)">@jt.Name</option>
+                                }
+                            </select>
+                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]"><icon name="check" /></button>
+                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]"><icon name="x" /></button>
+                        </form>
+                    </div>
+                </td>
+                <td class="editable-cell" data-cell-type="accounttype" data-user-id="@u.Id">
+                    <div class="cell-display">
+                        <span class="cell-display__value">@Localizer[$"AccountType_{u.AccountType}"]</span>
+                        <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["Users_AccountType"]" aria-label="@Localizer["Users_AccountType"]">
+                            <icon name="settings" />
+                        </button>
+                    </div>
+                    <div class="cell-edit">
+                        <form method="post" asp-page-handler="AccountType" style="display:inline; margin: 0;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <select class="form-input cell-edit__select" name="accountType" data-original-value="@((int)u.AccountType)" aria-label="@Localizer["Users_AccountType"]">
+                                @foreach (var at in Model.AvailableAccountTypes)
+                                {
+                                    <option value="@at.Value" selected="@((int)u.AccountType == at.Value)">@at.Label</option>
                                 }
                             </select>
                             <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]"><icon name="check" /></button>

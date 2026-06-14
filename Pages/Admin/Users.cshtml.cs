@@ -80,12 +80,13 @@ public partial class UsersModel : LocalizedPageModel
         _companyMembershipService = companyMembershipService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, bool DoesShifts, string? ShiftCategoryNames, List<int> ShiftCategoryIds, int? MoleculeId, int CompanyId = 0, IReadOnlyList<UserMembershipVM>? Memberships = null);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, bool DoesShifts, string? ShiftCategoryNames, List<int> ShiftCategoryIds, int? MoleculeId, int CompanyId = 0, IReadOnlyList<UserMembershipVM>? Memberships = null, AccountType AccountType = AccountType.Standard);
     public record UserMembershipVM(int MembershipId, int CompanyId, string CompanyName, bool IsPrimary, string? RoleName, string? JobTypeName, bool DoesShifts, int? RoleTemplateId = null, int? JobTypeId = null);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId, string? AuthMethod);
     public record MoleculeOption(int Id, string Name, string AreaName);
     public record JobTypeOption(int Id, string Name, string AreaName, string? Key);
     public record CategoryOption(int Id, string Name);
+    public record AccountTypeOption(int Value, string Label);
 
     // Batch approval support
     public class BatchApprovalItem
@@ -102,6 +103,7 @@ public partial class UsersModel : LocalizedPageModel
     /// <summary>Tooltip data: director user ID → list of managed company names</summary>
     public Dictionary<int, List<string>> DirectorCompanyNames { get; set; } = new();
     public List<JobTypeOption> AvailableJobTypes { get; set; } = new();
+    public List<AccountTypeOption> AvailableAccountTypes { get; set; } = new();
     // Shift categories available per molecule (for the per-user category multi-select).
     public Dictionary<int, List<CategoryOption>> AvailableCategoriesByMolecule { get; set; } = new();
     public Dictionary<int, string> MoleculeNames { get; set; } = new();
@@ -381,6 +383,14 @@ public partial class UsersModel : LocalizedPageModel
             .OrderBy(jt => jt.Area?.Name).ThenBy(jt => jt.Name)
             .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName, jt.Area?.DisplayName ?? "", jt.Name))
             .ToList();
+
+        // Populate account type options with localized labels
+        AvailableAccountTypes = new List<AccountTypeOption>
+        {
+            new((int)AccountType.Standard, _localizer["AccountType_Standard"].Value),
+            new((int)AccountType.Mil,      _localizer["AccountType_Mil"].Value),
+            new((int)AccountType.GroupUser, _localizer["AccountType_GroupUser"].Value),
+        };
 
         // Build companyId→validJobTypeIds mapping for add-user form dynamic filtering.
         // Uses same logic as JobTypeService.GetJobTypesForMoleculeAsync but computed in bulk.
@@ -718,7 +728,8 @@ public partial class UsersModel : LocalizedPageModel
                     userCategoryMap.TryGetValue(u.Id, out var dirCat2) ? dirCat2.Ids : new List<int>(),
                     userCompanies.TryGetValue(u.CompanyId, out var dirCompany) ? dirCompany.MoleculeId : null,
                     u.CompanyId,
-                    membershipsByUser.TryGetValue(u.Id, out var dirMem) ? dirMem : null
+                    membershipsByUser.TryGetValue(u.Id, out var dirMem) ? dirMem : null,
+                    u.AccountType
                 ));
             }
             else
@@ -752,7 +763,8 @@ public partial class UsersModel : LocalizedPageModel
                         userCategoryMap.TryGetValue(u.Id, out var ndCat2) ? ndCat2.Ids : new List<int>(),
                         company?.MoleculeId,
                         u.CompanyId,
-                        membershipsByUser.TryGetValue(u.Id, out var ndMem) ? ndMem : null
+                        membershipsByUser.TryGetValue(u.Id, out var ndMem) ? ndMem : null,
+                        u.AccountType
                     ));
                 }
             }
@@ -1473,6 +1485,79 @@ public partial class UsersModel : LocalizedPageModel
             personallyActionable: true);
 
         TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Success_JobTypeUpdated"], u.DisplayName, jobTypeName ?? "-");
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostAccountTypeAsync(int id, int accountType)
+    {
+        // Input validation
+        if (id <= 0)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserId"].Value;
+            return RedirectToPage();
+        }
+
+        // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed for cross-company user lookup.
+        var u = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
+        if (u == null)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_UserNotFound"].Value;
+            return RedirectToPage();
+        }
+
+        // Grant-based company scope check — mirrors OnPostJobTypeAsync exactly
+        var accountTypeUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(accountTypeUserIdClaim, out var accountTypeCurrentUserId))
+        {
+            LogInvalidNameIdClaim(_logger);
+            TempData["ErrorMessage"] = _localizer["Error_InvalidUserClaim"].Value;
+            return RedirectToPage();
+        }
+
+        var isAccountTypeAdmin = await _grantService.HasGrantAsync(accountTypeCurrentUserId, "AdminAccess");
+        var hasAccountTypeGrant = isAccountTypeAdmin || await _grantService.HasGrantForCompanyAsync(accountTypeCurrentUserId, "EditCompanyUsers", u.CompanyId);
+        if (!hasAccountTypeGrant)
+        {
+            LogUnauthorizedUserActionWithGrant(_logger, accountTypeCurrentUserId, "account type change on", id, u.CompanyId);
+            TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
+            return RedirectToPage();
+        }
+
+        // Validate the enum value
+        if (!Enum.IsDefined(typeof(AccountType), accountType))
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidJobTypeSelected"].Value;
+            return RedirectToPage();
+        }
+
+        var oldAccountType = u.AccountType;
+        u.AccountType = (AccountType)accountType;
+        {
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "AppUser", id);
+            if (!saveResult.Success)
+            {
+                Error = _localizer["Error_ConcurrencyConflict"];
+                return RedirectToPage();
+            }
+        }
+
+        // Audit logging — mirrors OnPostJobTypeAsync argument shape
+        var auditUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(auditUserIdClaim, out var auditCurrentUserId))
+        {
+            await _auditLogService.LogUserActionAsync(
+                userId: auditCurrentUserId,
+                action: "AccountTypeChanged",
+                entityType: "User",
+                entityId: u.Id,
+                description: $"Changed account type for {u.DisplayName} from {oldAccountType} to {(AccountType)accountType}"
+            );
+        }
+
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture,
+            _localizer["Success_JobTypeUpdated"], u.DisplayName,
+            _localizer[$"AccountType_{(AccountType)accountType}"].Value);
         return RedirectToPage();
     }
 

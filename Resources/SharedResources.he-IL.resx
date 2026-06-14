@@ -16208,4 +16208,16 @@
   <data name="Error_AccountCannotDoChores" xml:space="preserve">
     <value>לא ניתן לשבץ סוג חשבון זה למטלות.</value>
   </data>
+  <data name="Users_AccountType" xml:space="preserve">
+    <value>סוג חשבון</value>
+  </data>
+  <data name="AccountType_Standard" xml:space="preserve">
+    <value>רגיל</value>
+  </data>
+  <data name="AccountType_Mil" xml:space="preserve">
+    <value>מילואים</value>
+  </data>
+  <data name="AccountType_GroupUser" xml:space="preserve">
+    <value>יוזר קיבוצי</value>
+  </data>
 </root>
