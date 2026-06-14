@@ -190,7 +190,7 @@ public class OverviewModel : PageModel
         return date.AddDays(-daysFromSunday);
     }
 
-    private async Task LoadUsersAsync()
+    internal async Task LoadUsersAsync()
     {
         var query = _db.Users
             .IgnoreQueryFilters()

@@ -1,22 +1,31 @@
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Pages.Calendar;
+using ShiftManager.Resources;
+using ShiftManager.Services;
+using System.Security.Claims;
 using Xunit;
 
 namespace ShiftManager.Tests.UnitTests.Pages;
 
 /// <summary>
-/// Verifies that the Chores roster query (GetUsersForMoleculeAsync predicate) only
-/// returns Standard-account users, excluding both Mil and GroupUser accounts.
+/// Verifies that the Chores roster (GetUsersForMoleculeAsync) only returns Standard-account
+/// users, excluding Mil and GroupUser accounts.
 ///
-/// <see cref="ShiftManager.Pages.Calendar.ChoresModel"/> calls the private
-/// GetUsersForMoleculeAsync method — not directly callable from tests. This test
-/// replicates the exact query predicate against a real SQLite context so SQL translation
-/// is exercised (not UseInMemoryDatabase). Task-16 browser sweep provides end-to-end
-/// coverage on the live page.
+/// Approach: GetUsersForMoleculeAsync is changed to <c>internal</c> (InternalsVisibleTo
+/// already configured in ShiftManager.csproj). The test instantiates the real ChoresModel
+/// with a real SQLite (:memory:) DbContext, seeds the molecule/company hierarchy plus
+/// Standard + Mil + GroupUser users, and calls GetUsersForMoleculeAsync() directly — so any
+/// future removal of the AccountType predicate in production code will immediately fail.
 /// </summary>
 public sealed class ChoresRosterAccountTypeTests : IAsyncLifetime
 {
@@ -39,13 +48,15 @@ public sealed class ChoresRosterAccountTypeTests : IAsyncLifetime
         await _connection.DisposeAsync();
     }
 
-    private async Task<List<int>> SeedAsync()
+    private const int MolId = 1;
+
+    private async Task SeedAsync()
     {
         var area = new Area { Id = 1, ProjectId = 1, Name = "Area", DisplayName = "Area" };
         _db.Areas.Add(area);
-        var molecule = new Molecule { Id = 1, AreaId = 1, Name = "Mol", Type = MoleculeType.Workforce };
+        var molecule = new Molecule { Id = MolId, AreaId = 1, Name = "Mol", Type = MoleculeType.Workforce };
         _db.Molecules.Add(molecule);
-        var company = new Company { Id = 1, MoleculeId = 1, Name = "Co", DisplayName = "Co" };
+        var company = new Company { Id = 1, MoleculeId = MolId, Name = "Co", DisplayName = "Co" };
         _db.Companies.Add(company);
         await _db.SaveChangesAsync();
 
@@ -69,50 +80,80 @@ public sealed class ChoresRosterAccountTypeTests : IAsyncLifetime
                 Role = UserRole.Employee
             });
         await _db.SaveChangesAsync();
+    }
 
-        // Return the list of company IDs for this molecule (mirrors what GetUsersForMoleculeAsync does)
-        return await _db.Companies
-            .Where(c => c.MoleculeId == 1)
-            .Select(c => c.Id)
-            .ToListAsync();
+    /// <summary>Builds a ChoresModel with real SQLite Db. All services unused by GetUsersForMoleculeAsync are mocked with no-op stubs.</summary>
+    private ChoresModel BuildModel()
+    {
+        var localizer = new Mock<IStringLocalizer<SharedResources>>();
+        localizer.Setup(l => l[It.IsAny<string>()]).Returns<string>(k => new LocalizedString(k, k));
+
+        var model = new ChoresModel(
+            db: _db,
+            choreService: Mock.Of<IChoreService>(),
+            choreTypeService: Mock.Of<IChoreTypeService>(),
+            grantService: Mock.Of<IGrantService>(),
+            companyContext: Mock.Of<ICompanyContext>(),
+            localizer: localizer.Object,
+            logger: NullLogger<ChoresModel>.Instance,
+            textEntryService: Mock.Of<ICalendarTextEntryService>(),
+            calendarService: Mock.Of<IShiftCalendarService>(),
+            justiceService: Mock.Of<IJusticeService>());
+
+        // Wire up a minimal HttpContext (PageModel requires a non-null PageContext).
+        var httpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, "99") }, "test"))
+        };
+        model.PageContext = new PageContext { HttpContext = httpContext };
+
+        return model;
     }
 
     /// <summary>
-    /// The Chores GetUsersForMoleculeAsync query applies:
-    ///   .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive
-    ///            && u.AccountType == AccountType.Standard)
-    /// This test exercises the same predicate shape via real SQLite.
+    /// GetUsersForMoleculeAsync (the real production method) must exclude Mil and GroupUser
+    /// accounts and return only Standard users. If the AccountType predicate is removed from
+    /// production code, this test fails because result would have 3 entries instead of 1.
     /// </summary>
     [Fact]
-    public async Task ChoresRosterQuery_OnlyReturnsStandardAccounts()
+    public async Task GetUsersForMoleculeAsync_OnlyReturnsStandardAccounts()
     {
-        var companyIds = await SeedAsync();
+        await SeedAsync();
 
-        // Replicate the exact predicate from Chores.cshtml.cs GetUsersForMoleculeAsync
-        var result = await _db.Users
-            .IgnoreQueryFilters()
-            .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive
-                     && u.AccountType == AccountType.Standard)
-            .OrderBy(u => u.DisplayName)
-            .ToListAsync();
+        var model = BuildModel();
 
-        result.Should().ContainSingle();
-        result[0].DisplayName.Should().Be("Standard");
-        result[0].AccountType.Should().Be(AccountType.Standard);
+        // Call the real production method (internal visibility).
+        var users = await model.GetUsersForMoleculeAsync(MolId);
+
+        // ContainSingle proves Mil and GroupUser were excluded; DisplayName confirms the right user survived.
+        // AccountType is not projected in the select (performance optimisation), so we assert identity
+        // via DisplayName rather than the enum value.
+        users.Should().ContainSingle("only the Standard user should pass the AccountType filter");
+        users[0].DisplayName.Should().Be("Standard");
     }
 
+    /// <summary>
+    /// Baseline: without the AccountType filter all three active users would be returned.
+    /// This proves the filter is doing meaningful work (not filtering an already-empty set).
+    /// </summary>
     [Fact]
-    public async Task ChoresRosterQuery_WithoutAccountTypeFilter_ReturnsAllThree()
+    public async Task GetUsersForMoleculeAsync_WithoutAccountTypeFilter_BaselineVerification_AllThreeUsersExist()
     {
-        var companyIds = await SeedAsync();
+        await SeedAsync();
 
-        // Confirm the base query (without the new predicate) returns all 3,
-        // proving the filter is actually doing work.
-        var result = await _db.Users
+        // Raw query — no AccountType predicate — must return all three seeded users.
+        var companyIds = await _db.Companies
+            .Where(c => c.MoleculeId == MolId)
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        var allUsers = await _db.Users
             .IgnoreQueryFilters()
             .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive)
             .ToListAsync();
 
-        result.Should().HaveCount(3);
+        allUsers.Should().HaveCount(3,
+            "all three seeded account types (Standard, Mil, GroupUser) are active in the molecule");
     }
 }

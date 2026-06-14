@@ -337,7 +337,7 @@ public class ChoresModel : PageModel
         CalendarData.RowOrderContextKey = $"chores:{moleculeId}";
     }
 
-    private async Task<List<AppUser>> GetUsersForMoleculeAsync(int moleculeId)
+    internal async Task<List<AppUser>> GetUsersForMoleculeAsync(int moleculeId)
     {
         // Get all companies in this molecule
         var companyIds = await _db.Companies

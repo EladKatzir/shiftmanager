@@ -1,22 +1,32 @@
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using ShiftManager.Data;
+using ShiftManager.Hubs;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
+using ShiftManager.Pages.Calendar;
+using ShiftManager.Resources;
+using ShiftManager.Services;
+using System.Security.Claims;
 using Xunit;
 
 namespace ShiftManager.Tests.UnitTests.Pages;
 
 /// <summary>
-/// Verifies that the Overview roster query (LoadUsersAsync predicate) only returns
-/// Standard-account users, excluding Mil and GroupUser accounts.
+/// Verifies that the Overview roster (LoadUsersAsync) only returns Standard-account users,
+/// excluding Mil and GroupUser accounts.
 ///
-/// <see cref="ShiftManager.Pages.Calendar.OverviewModel"/> calls LoadUsersAsync which
-/// is a private PageModel method — not directly callable from tests. The test
-/// replicates the exact query predicate applied in that method against a real SQLite
-/// context, so SQL translation is exercised (unlike UseInMemoryDatabase).
-/// Task-16 browser sweep provides end-to-end coverage on the live page.
+/// Approach: LoadUsersAsync is changed to <c>internal</c> (InternalsVisibleTo already
+/// configured in ShiftManager.csproj). The test instantiates the real OverviewModel with
+/// a real SQLite (:memory:) DbContext, seeds Standard + Mil + GroupUser users, sets the
+/// PageModel's CompanyId, and calls LoadUsersAsync() directly — so any future removal of
+/// the AccountType predicate in production code will immediately fail this test.
 /// </summary>
 public sealed class OverviewRosterAccountTypeTests : IAsyncLifetime
 {
@@ -66,46 +76,76 @@ public sealed class OverviewRosterAccountTypeTests : IAsyncLifetime
         await _db.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// The Overview LoadUsersAsync query applies:
-    ///   .Where(u => u.CompanyId == CompanyId)
-    ///   .Where(u => u.AccountType == AccountType.Standard)
-    ///   .Where(u => u.IsActive)
-    /// This test exercises the same predicate shape via real SQLite.
-    /// </summary>
-    [Fact]
-    public async Task OverviewRosterQuery_OnlyReturnsStandardAccounts()
+    /// <summary>Builds an OverviewModel with real SQLite Db. All services unused by LoadUsersAsync are mocked with no-op stubs.</summary>
+    private OverviewModel BuildModel()
     {
-        await SeedUsersAsync();
-        const int CompanyId = 1;
+        var localizer = new Mock<IStringLocalizer<SharedResources>>();
+        localizer.Setup(l => l[It.IsAny<string>()]).Returns<string>(k => new LocalizedString(k, k));
 
-        // Replicate the predicate from Overview.cshtml.cs LoadUsersAsync
-        var result = await _db.Users
-            .IgnoreQueryFilters()
-            .Where(u => u.CompanyId == CompanyId
-                     && u.AccountType == AccountType.Standard
-                     && u.IsActive)
-            .OrderBy(u => u.DisplayName)
-            .ToListAsync();
+        var model = new OverviewModel(
+            db: _db,
+            textEntryService: Mock.Of<ICalendarTextEntryService>(),
+            grantService: Mock.Of<IGrantService>(),
+            companyContext: Mock.Of<ICompanyContext>(),
+            localizer: localizer.Object,
+            companyLocalizationService: Mock.Of<ICompanyLocalizationService>(),
+            tenantResolver: Mock.Of<ITenantResolver>(),
+            auditLogService: Mock.Of<IAuditLogService>(),
+            notificationService: Mock.Of<ICalendarNotificationService>(),
+            logger: NullLogger<OverviewModel>.Instance);
 
-        result.Should().ContainSingle();
-        result[0].DisplayName.Should().Be("Standard User");
-        result[0].AccountType.Should().Be(AccountType.Standard);
+        // Wire up a minimal HttpContext with a dummy user (not used by LoadUsersAsync,
+        // but PageContext must be non-null because PageModel checks it).
+        var httpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, "99") }, "test"))
+        };
+        model.PageContext = new PageContext { HttpContext = httpContext };
+
+        return model;
     }
 
+    /// <summary>
+    /// LoadUsersAsync (the real production method) must exclude Mil and GroupUser accounts
+    /// and include only Standard users. If the AccountType predicate is removed from
+    /// production code, this test fails because result would have 3 entries instead of 1.
+    /// </summary>
     [Fact]
-    public async Task OverviewRosterQuery_WithoutAccountTypeFilter_ReturnsAllThree()
+    public async Task LoadUsersAsync_OnlyReturnsStandardAccounts()
+    {
+        await SeedUsersAsync();
+
+        var model = BuildModel();
+        // Directly set the properties that LoadUsersAsync reads.
+        model.CompanyId = 1;
+        model.UsersFilter = "active"; // default: active users only
+
+        // Call the real production method (internal visibility).
+        await model.LoadUsersAsync();
+
+        model.Users.Should().ContainSingle("only the Standard user should pass the AccountType filter");
+        model.Users[0].DisplayName.Should().Be("Standard User");
+        model.Users[0].AccountType.Should().Be(AccountType.Standard);
+    }
+
+    /// <summary>
+    /// Baseline: without the AccountType filter all three active users would be returned.
+    /// This proves that the filter is doing meaningful work (not filtering an already-empty set).
+    /// </summary>
+    [Fact]
+    public async Task LoadUsersAsync_WithoutAccountTypeFilter_BaselineVerification_AllThreeUsersExist()
     {
         await SeedUsersAsync();
         const int CompanyId = 1;
 
-        // Confirm the base query (without the new predicate) returns all 3,
-        // proving the filter is actually doing work.
-        var result = await _db.Users
+        // Raw query — no AccountType predicate — must return all three seeded users.
+        var allUsers = await _db.Users
             .IgnoreQueryFilters()
             .Where(u => u.CompanyId == CompanyId && u.IsActive)
             .ToListAsync();
 
-        result.Should().HaveCount(3);
+        allUsers.Should().HaveCount(3,
+            "all three seeded account types (Standard, Mil, GroupUser) are active in company 1");
     }
 }
