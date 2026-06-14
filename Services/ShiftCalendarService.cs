@@ -33,6 +33,7 @@ public class ShiftCalendarService : IShiftCalendarService
         var query = _db.Users
             .IgnoreQueryFilters()
             .Where(u => u.IsActive
+                && u.AccountType != AccountType.GroupUser
                 && _db.Companies.Any(c => c.Id == u.CompanyId && c.MoleculeId == moleculeId));
 
         if (jobTypeId.HasValue)
