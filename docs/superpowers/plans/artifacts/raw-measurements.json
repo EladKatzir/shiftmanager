@@ -1,0 +1,552 @@
+{
+  "users": {
+    "light-ltr": {
+      "viewportWidth": 820,
+      "scrollWidthOverflows": false,
+      "ancestorChain": [
+        {
+          "tag": "TABLE",
+          "cls": "data-table data-table--sticky-header data-table--sticky-col",
+          "id": "usersTable",
+          "scrollWidth": 1779,
+          "clientWidth": 1779,
+          "offsetWidth": 1779,
+          "overflowX": "visible",
+          "minWidth": "900px",
+          "display": "table",
+          "width": "1779.27px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "id": null,
+          "scrollWidth": 1779,
+          "clientWidth": 454,
+          "offsetWidth": 454,
+          "overflowX": "clip",
+          "minWidth": "0px",
+          "display": "block",
+          "width": "454px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "section-card",
+          "id": null,
+          "scrollWidth": 510,
+          "clientWidth": 510,
+          "offsetWidth": 512,
+          "overflowX": "visible",
+          "minWidth": "auto",
+          "display": "block",
+          "width": "512px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "MAIN",
+          "cls": "app-content",
+          "id": "main-content",
+          "scrollWidth": 560,
+          "clientWidth": 560,
+          "offsetWidth": 560,
+          "overflowX": "auto",
+          "minWidth": "auto",
+          "display": "flex",
+          "width": "560px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "app-main",
+          "id": null,
+          "scrollWidth": 560,
+          "clientWidth": 560,
+          "offsetWidth": 560,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "flex",
+          "width": "560px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "app-shell",
+          "id": null,
+          "scrollWidth": 820,
+          "clientWidth": 820,
+          "offsetWidth": 820,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "flex",
+          "width": "820px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "id": null,
+          "scrollWidth": 820,
+          "clientWidth": 820,
+          "offsetWidth": 820,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "block",
+          "width": "820px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "HTML",
+          "cls": "english",
+          "id": null,
+          "scrollWidth": 820,
+          "clientWidth": 820,
+          "offsetWidth": 820,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "block",
+          "width": "820px",
+          "maxWidth": "none"
+        }
+      ]
+    },
+    "dark-ltr": {
+      "viewportWidth": 820,
+      "scrollWidthOverflows": false,
+      "ancestorChain": [
+        {
+          "tag": "TABLE",
+          "cls": "data-table data-table--sticky-header data-table--sticky-col",
+          "id": "usersTable",
+          "scrollWidth": 1779,
+          "clientWidth": 1779,
+          "offsetWidth": 1779,
+          "overflowX": "visible",
+          "minWidth": "900px",
+          "display": "table",
+          "width": "1779.27px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "id": null,
+          "scrollWidth": 1779,
+          "clientWidth": 454,
+          "offsetWidth": 454,
+          "overflowX": "clip",
+          "minWidth": "0px",
+          "display": "block",
+          "width": "454px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "section-card",
+          "id": null,
+          "scrollWidth": 510,
+          "clientWidth": 510,
+          "offsetWidth": 512,
+          "overflowX": "visible",
+          "minWidth": "auto",
+          "display": "block",
+          "width": "512px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "MAIN",
+          "cls": "app-content",
+          "id": "main-content",
+          "scrollWidth": 560,
+          "clientWidth": 560,
+          "offsetWidth": 560,
+          "overflowX": "auto",
+          "minWidth": "auto",
+          "display": "flex",
+          "width": "560px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "app-main",
+          "id": null,
+          "scrollWidth": 560,
+          "clientWidth": 560,
+          "offsetWidth": 560,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "flex",
+          "width": "560px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "app-shell",
+          "id": null,
+          "scrollWidth": 820,
+          "clientWidth": 820,
+          "offsetWidth": 820,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "flex",
+          "width": "820px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "id": null,
+          "scrollWidth": 820,
+          "clientWidth": 820,
+          "offsetWidth": 820,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "block",
+          "width": "820px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "HTML",
+          "cls": "english",
+          "id": null,
+          "scrollWidth": 820,
+          "clientWidth": 820,
+          "offsetWidth": 820,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "block",
+          "width": "820px",
+          "maxWidth": "none"
+        }
+      ]
+    },
+    "hebrew-rtl": {
+      "viewportWidth": 820,
+      "scrollWidthOverflows": false,
+      "ancestorChain": [
+        {
+          "tag": "TABLE",
+          "cls": "data-table data-table--sticky-header data-table--sticky-col",
+          "id": "usersTable",
+          "scrollWidth": 1779,
+          "clientWidth": 1779,
+          "offsetWidth": 1779,
+          "overflowX": "visible",
+          "minWidth": "900px",
+          "display": "table",
+          "width": "1779.27px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "id": null,
+          "scrollWidth": 1779,
+          "clientWidth": 454,
+          "offsetWidth": 454,
+          "overflowX": "clip",
+          "minWidth": "0px",
+          "display": "block",
+          "width": "454px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "section-card",
+          "id": null,
+          "scrollWidth": 510,
+          "clientWidth": 510,
+          "offsetWidth": 512,
+          "overflowX": "visible",
+          "minWidth": "auto",
+          "display": "block",
+          "width": "512px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "MAIN",
+          "cls": "app-content",
+          "id": "main-content",
+          "scrollWidth": 560,
+          "clientWidth": 560,
+          "offsetWidth": 560,
+          "overflowX": "auto",
+          "minWidth": "auto",
+          "display": "flex",
+          "width": "560px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "app-main",
+          "id": null,
+          "scrollWidth": 560,
+          "clientWidth": 560,
+          "offsetWidth": 560,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "flex",
+          "width": "560px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "DIV",
+          "cls": "app-shell",
+          "id": null,
+          "scrollWidth": 820,
+          "clientWidth": 820,
+          "offsetWidth": 820,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "flex",
+          "width": "820px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "BODY",
+          "cls": "",
+          "id": null,
+          "scrollWidth": 820,
+          "clientWidth": 820,
+          "offsetWidth": 820,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "block",
+          "width": "820px",
+          "maxWidth": "none"
+        },
+        {
+          "tag": "HTML",
+          "cls": "english",
+          "id": null,
+          "scrollWidth": 820,
+          "clientWidth": 820,
+          "offsetWidth": 820,
+          "overflowX": "visible",
+          "minWidth": "0px",
+          "display": "block",
+          "width": "820px",
+          "maxWidth": "none"
+        }
+      ]
+    }
+  },
+  "donut": {
+    "light-ltr": {
+      "wrap": {
+        "top": 491,
+        "left": 1038,
+        "width": 200,
+        "height": 200
+      },
+      "svg": {
+        "top": 491,
+        "left": 1038,
+        "width": 200,
+        "height": 200
+      },
+      "inner": {
+        "top": 435,
+        "left": 289,
+        "width": 546,
+        "height": 454
+      },
+      "wrapComputedWidth": "200px",
+      "wrapComputedHeight": "200px",
+      "innerDisplay": "flex",
+      "innerFlex": "column",
+      "innerAlignItems": "center",
+      "innerJustifyContent": "flex-start",
+      "valColor": "rgb(26, 31, 43)",
+      "valFontSize": "28.5px",
+      "valBg": "rgba(0, 0, 0, 0)",
+      "labColor": "rgb(100, 116, 139)",
+      "labFontSize": "9.6px",
+      "bodyBg": "rgb(248, 249, 251)",
+      "docElementBg": "rgba(0, 0, 0, 0)",
+      "donutWrapExists": true,
+      "svgExists": true,
+      "innerExists": true,
+      "valExists": true,
+      "labExists": true,
+      "svgClippedBy": {
+        "tag": "DIV",
+        "cls": "hero-chart-shell anim-fade-up anim-d300",
+        "id": "",
+        "overflow": "hidden",
+        "overflowX": "hidden",
+        "overflowY": "hidden",
+        "rect": {
+          "top": 429,
+          "left": 859,
+          "width": 558,
+          "height": 466
+        }
+      },
+      "wrapClippedBy": {
+        "tag": "DIV",
+        "cls": "hero-chart-shell anim-fade-up anim-d300",
+        "id": "",
+        "overflow": "hidden",
+        "overflowX": "hidden",
+        "overflowY": "hidden",
+        "rect": {
+          "top": 429,
+          "left": 859,
+          "width": 558,
+          "height": 466
+        }
+      },
+      "donutSvgViewBox": "0 0 200 200",
+      "donutSvgWidth": "200",
+      "donutSvgHeight": "200",
+      "canvasExists": false,
+      "chartJsExists": false,
+      "wrapInnerHTML": "\n        <svg class=\"donut-svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\" style=\"transform:rotate(-90deg);overflow:visible;\">\n          <circle cx=\"100\" cy=\"100\" r=\"80\" fill=\"none\" stroke=\"var(--surface-soft)\" stroke-width=\"22\"></circle>\n            <circle cx=\"100\" cy=\"100\" r=\"80\" fill=\"none\" stroke-width=\"22\" stroke-linecap=\"butt\" class=\"donut-seg dev-band-under\" stroke-dasharray=\"165.4 502.65\" stroke-dashoffset=\"-0.0\" style=\"opacity:.88;\" aria-label=\"Hitazmut \"></circle>\n            <cir"
+    },
+    "dark-ltr": {
+      "wrap": {
+        "top": 491,
+        "left": 1038,
+        "width": 200,
+        "height": 200
+      },
+      "svg": {
+        "top": 491,
+        "left": 1038,
+        "width": 200,
+        "height": 200
+      },
+      "inner": {
+        "top": 435,
+        "left": 289,
+        "width": 546,
+        "height": 454
+      },
+      "wrapComputedWidth": "200px",
+      "wrapComputedHeight": "200px",
+      "innerDisplay": "flex",
+      "innerFlex": "column",
+      "innerAlignItems": "center",
+      "innerJustifyContent": "flex-start",
+      "valColor": "rgb(232, 237, 245)",
+      "valFontSize": "28.5px",
+      "valBg": "rgba(0, 0, 0, 0)",
+      "labColor": "rgb(148, 163, 184)",
+      "labFontSize": "9.6px",
+      "bodyBg": "rgb(15, 20, 25)",
+      "docElementBg": "rgba(0, 0, 0, 0)",
+      "donutWrapExists": true,
+      "svgExists": true,
+      "innerExists": true,
+      "valExists": true,
+      "labExists": true,
+      "svgClippedBy": {
+        "tag": "DIV",
+        "cls": "hero-chart-shell anim-fade-up anim-d300",
+        "id": "",
+        "overflow": "hidden",
+        "overflowX": "hidden",
+        "overflowY": "hidden",
+        "rect": {
+          "top": 429,
+          "left": 859,
+          "width": 558,
+          "height": 466
+        }
+      },
+      "wrapClippedBy": {
+        "tag": "DIV",
+        "cls": "hero-chart-shell anim-fade-up anim-d300",
+        "id": "",
+        "overflow": "hidden",
+        "overflowX": "hidden",
+        "overflowY": "hidden",
+        "rect": {
+          "top": 429,
+          "left": 859,
+          "width": 558,
+          "height": 466
+        }
+      },
+      "donutSvgViewBox": "0 0 200 200",
+      "donutSvgWidth": "200",
+      "donutSvgHeight": "200",
+      "canvasExists": false,
+      "chartJsExists": false,
+      "wrapInnerHTML": "\n        <svg class=\"donut-svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\" style=\"transform:rotate(-90deg);overflow:visible;\">\n          <circle cx=\"100\" cy=\"100\" r=\"80\" fill=\"none\" stroke=\"var(--surface-soft)\" stroke-width=\"22\"></circle>\n            <circle cx=\"100\" cy=\"100\" r=\"80\" fill=\"none\" stroke-width=\"22\" stroke-linecap=\"butt\" class=\"donut-seg dev-band-under\" stroke-dasharray=\"165.4 502.65\" stroke-dashoffset=\"-0.0\" style=\"opacity:.88;\" aria-label=\"Hitazmut \"></circle>\n            <cir"
+    },
+    "hebrew-rtl": {
+      "wrap": {
+        "top": 491,
+        "left": 1038,
+        "width": 200,
+        "height": 200
+      },
+      "svg": {
+        "top": 491,
+        "left": 1038,
+        "width": 200,
+        "height": 200
+      },
+      "inner": {
+        "top": 435,
+        "left": 289,
+        "width": 546,
+        "height": 454
+      },
+      "wrapComputedWidth": "200px",
+      "wrapComputedHeight": "200px",
+      "innerDisplay": "flex",
+      "innerFlex": "column",
+      "innerAlignItems": "center",
+      "innerJustifyContent": "flex-start",
+      "valColor": "rgb(26, 31, 43)",
+      "valFontSize": "28.5px",
+      "valBg": "rgba(0, 0, 0, 0)",
+      "labColor": "rgb(100, 116, 139)",
+      "labFontSize": "9.6px",
+      "bodyBg": "rgb(248, 249, 251)",
+      "docElementBg": "rgba(0, 0, 0, 0)",
+      "donutWrapExists": true,
+      "svgExists": true,
+      "innerExists": true,
+      "valExists": true,
+      "labExists": true,
+      "svgClippedBy": {
+        "tag": "DIV",
+        "cls": "hero-chart-shell anim-fade-up anim-d300",
+        "id": "",
+        "overflow": "hidden",
+        "overflowX": "hidden",
+        "overflowY": "hidden",
+        "rect": {
+          "top": 429,
+          "left": 859,
+          "width": 558,
+          "height": 466
+        }
+      },
+      "wrapClippedBy": {
+        "tag": "DIV",
+        "cls": "hero-chart-shell anim-fade-up anim-d300",
+        "id": "",
+        "overflow": "hidden",
+        "overflowX": "hidden",
+        "overflowY": "hidden",
+        "rect": {
+          "top": 429,
+          "left": 859,
+          "width": 558,
+          "height": 466
+        }
+      },
+      "donutSvgViewBox": "0 0 200 200",
+      "donutSvgWidth": "200",
+      "donutSvgHeight": "200",
+      "canvasExists": false,
+      "chartJsExists": false,
+      "wrapInnerHTML": "\n        <svg class=\"donut-svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\" style=\"transform:rotate(-90deg);overflow:visible;\">\n          <circle cx=\"100\" cy=\"100\" r=\"80\" fill=\"none\" stroke=\"var(--surface-soft)\" stroke-width=\"22\"></circle>\n            <circle cx=\"100\" cy=\"100\" r=\"80\" fill=\"none\" stroke-width=\"22\" stroke-linecap=\"butt\" class=\"donut-seg dev-band-under\" stroke-dasharray=\"165.4 502.65\" stroke-dashoffset=\"-0.0\" style=\"opacity:.88;\" aria-label=\"Hitazmut \"></circle>\n            <cir"
+    }
+  }
+}
