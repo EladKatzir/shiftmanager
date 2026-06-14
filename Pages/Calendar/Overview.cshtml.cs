@@ -196,6 +196,9 @@ public class OverviewModel : PageModel
             .IgnoreQueryFilters()
             .Where(u => u.CompanyId == CompanyId);
 
+        // Exclude Mil + GroupUser — only Standard accounts are visible on Overview
+        query = query.Where(u => u.AccountType == AccountType.Standard);
+
         // Apply user filter
         query = UsersFilter switch
         {
