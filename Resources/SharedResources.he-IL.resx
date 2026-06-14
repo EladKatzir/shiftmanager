@@ -16202,7 +16202,7 @@
     <value>פעיל</value>
   </data>
   <data name="Requests_Locked_AccountType" xml:space="preserve">
-    <value>סוג חשבון זה אינו יכול להשתמש בעמוד הבקשות.</value>
+    <value>חשבונות משותפים (מילואים / יוזר קיבוצי) אינם יכולים להגיש או לאשר בקשות חופשה — הבקשות מנוהלות לכל אדם בנפרד, לא לפי חשבון משותף.</value>
   </data>
   <data name="Error_GroupUserCannotBeAssigned" xml:space="preserve">
     <value>לא ניתן לשבץ חשבונות קיבוציים למשמרות.</value>
