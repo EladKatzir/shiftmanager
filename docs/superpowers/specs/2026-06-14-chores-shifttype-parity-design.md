@@ -133,7 +133,7 @@ Chore validation order: `USER_NOT_FOUND → USER_INACTIVE → ACCOUNT_CANNOT_DO_
 
 ## 7. UI / UX Design
 
-> Full blueprint with Razor sketches, handler names, and loc tables lives in the design-agent output captured in this spec's companion notes. Summary of decisions:
+> Decisions below are the binding summary. Razor sketches, exact handler names, and the full bilingual loc-key tables are produced during implementation (Phase 3/5) by cloning the cited existing files; the loc keys are enumerated in the implementation plan, not duplicated here.
 
 - **§7.1 ChoreType + Category admin** — **extend** `Pages/Admin/Organization/ChoreTypes/Index` (gated by `Grant:EditChoreTypes`): a top "Chore Categories" section-card (inline CRUD, color dot, sort, bilingual names) + the "Chore Types" section reorganized as a **category accordion**. The type editor gains a **Category dropdown**, a **DefaultWeight** dual input (hours+minutes → minutes), and an **Eligibility** fieldset (gender radio none/male/female + officer-rank toggle, persisted as `EligibilityRule` rows via replace-semantics). Eligibility shows as **reason chips** in the table.
 - **§7.2 Exemptions** — managed on the **ChoreType editor** (type-centric mental model), an AJAX user-picker + optional reason list. Audit logs **never** include the reason text (sensitive).
