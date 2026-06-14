@@ -206,8 +206,9 @@ public static class RoleTemplateSeed
         const GrantScopeMode ETP = GrantScopeMode.ExpandToProject;
 
         // ============================================
-        // EMPLOYEE (Template 1) — 21 grants
+        // EMPLOYEE (Template 1) — 20 grants
         // All SAR (company-scoped). Base for all workforce roles.
+        // F2 SECURITY: ViewGrants (35) removed — base users must not see the permission map.
         // ============================================
         grants.Add(G(1, 1, SAR));    // ViewShifts
         grants.Add(G(1, 16, SAR));   // ViewChores
@@ -217,8 +218,7 @@ public static class RoleTemplateSeed
         grants.Add(G(1, 25, SAR));   // RequestSwap (NOT 26 — old seed was off-by-one!)
         grants.Add(G(1, 115, SAR));  // ViewCompanyCalendar
         grants.Add(G(1, 117, SAR));  // ViewCompanyUsers
-        grants.Add(G(1, 35, SAR));   // ViewGrants
-        grants.Add(G(1, 39, SAR));   // ViewHierarchy
+        grants.Add(G(1, 39, SAR));   // ViewHierarchy (org tree — kept; benign structure view)
         grants.Add(G(1, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(1, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(1, 62, SAR));   // ViewTextShiftCalendar
@@ -230,8 +230,9 @@ public static class RoleTemplateSeed
         grants.Add(G(1, 68, SAR, useOwnJobType: true));   // CanBeAssignedHakamShifts (OWN)
 
         // ============================================
-        // TRAINEE (Template 12) — 20 grants
+        // TRAINEE (Template 12) — 19 grants
         // Same as Employee minus RequestSwap
+        // F2 SECURITY: ViewGrants (35) removed — base users must not see the permission map.
         // ============================================
         grants.Add(G(12, 1, SAR));    // ViewShifts
         grants.Add(G(12, 16, SAR));   // ViewChores
@@ -241,8 +242,7 @@ public static class RoleTemplateSeed
         // NO RequestSwap for Trainee
         grants.Add(G(12, 115, SAR));  // ViewCompanyCalendar
         grants.Add(G(12, 117, SAR));  // ViewCompanyUsers
-        grants.Add(G(12, 35, SAR));   // ViewGrants
-        grants.Add(G(12, 39, SAR));   // ViewHierarchy
+        grants.Add(G(12, 39, SAR));   // ViewHierarchy (org tree — kept; benign structure view)
         grants.Add(G(12, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(12, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(12, 62, SAR));   // ViewTextShiftCalendar
@@ -254,8 +254,9 @@ public static class RoleTemplateSeed
         grants.Add(G(12, 68, SAR, useOwnJobType: true));   // CanBeAssignedHakamShifts (OWN)
 
         // ============================================
-        // ASSIGNER (Template 8) — 22 grants
+        // ASSIGNER (Template 8) — 21 grants
         // All Employee grants at SAR + AssignChores at ETM
+        // F2 SECURITY: ViewGrants (35) removed — Assigner has no RevokeGrants and must not see the permission map.
         // ============================================
         grants.Add(G(8, 1, SAR));    // ViewShifts
         grants.Add(G(8, 16, SAR));   // ViewChores
@@ -265,8 +266,7 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 25, SAR));   // RequestSwap
         grants.Add(G(8, 115, SAR));  // ViewCompanyCalendar
         grants.Add(G(8, 117, SAR));  // ViewCompanyUsers
-        grants.Add(G(8, 35, SAR));   // ViewGrants
-        grants.Add(G(8, 39, SAR));   // ViewHierarchy
+        grants.Add(G(8, 39, SAR));   // ViewHierarchy (org tree — kept; benign structure view)
         grants.Add(G(8, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(8, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(8, 62, SAR));   // ViewTextShiftCalendar
@@ -1020,7 +1020,6 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 133, ETM));   // Lead — molecule (per 2026-04-25 scope expansion)
         grants.Add(G(5, 133, ETM));   // Director — molecule
         grants.Add(G(7, 133, ETM));   // MoleculeAdmin
-        grants.Add(G(8, 133, SAR));   // Assigner — molecule (their RoleTemplate scope is Molecule)
         grants.Add(G(10, 133, ETA));  // AreaAdmin
         grants.Add(G(11, 133, ETP, canGive: true));  // Owner
 

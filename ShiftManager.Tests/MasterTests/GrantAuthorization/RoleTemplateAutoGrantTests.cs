@@ -97,7 +97,7 @@ public class RoleTemplateAutoGrantTests : MasterTestBase
     // ================================================================
 
     // Note: No Trainee user is seeded in the fixture. This test documents the expected
-    // difference: Trainee has 20 grants (Employee's 21 minus RequestSwap).
+    // difference: Trainee has 19 grants (Employee's 20 minus RequestSwap). (F2: ViewGrants removed from both.)
     // The denial is tested indirectly through the DeniedGrantCombinations in AuthorizationDenialTests.
 
     // ================================================================
@@ -182,13 +182,13 @@ public class RoleTemplateAutoGrantTests : MasterTestBase
     // Counts reflect the 2026-04-17 audit fills + 2026-05-03 Justice analytics additions +
     // 2026-05-23 ManageDistributionLists (#135) + 2026-06-09 ManageShiftCategories (#136), both
     // granted to Lead/BRDirector/Director/Assigner/DepartmentLead/MoleculeAdmin/AreaAdmin/Owner.
-    // ViewJusticeTable (#133) granted to Lead/BRDirector/Director/Assigner/MoleculeAdmin/AreaAdmin/Owner;
+    // ViewJusticeTable (#133) granted to Lead/BRDirector/Director/MoleculeAdmin/AreaAdmin/Owner (not Assigner);
     // EditJusticeTargets (#134) granted to AreaAdmin + Owner. Total grants: 136.
-    [InlineData("Tzafona", "Employee", 22)]      // unchanged — no Justice/DistributionList/Category grants
+    [InlineData("Tzafona", "Employee", 21)]      // F2: -1 ViewGrants removed from base template
     [InlineData("Tzafona", "Lead", 58)]          // +1 ManageShiftCategories (#136)
     [InlineData("Tzafona", "BRDirector", 70)]    // +1 ManageShiftCategories (#136)
     [InlineData("Tzafona", "Director", 66)]      // +1 ManageShiftCategories (#136)
-    [InlineData("Tzafona", "Assigner", 27)]      // +1 ManageShiftCategories (#136)
+    [InlineData("Tzafona", "Assigner", 25)]      // 2026-06-14: -1 ViewJusticeTable removed (lead-and-above only)
     [InlineData("Hitazmut", "MoleculeAdmin", 108)]// +1 ManageShiftCategories (#136)
     [InlineData("Yekev", "DepartmentLead", 60)]  // +1 ManageShiftCategories (#136)
     [InlineData("Tzafona", "AreaAdmin", 125)]    // +1 ManageShiftCategories (#136)
