@@ -84,6 +84,12 @@ public partial class IndexModel : LocalizedPageModel
     /// </summary>
     public bool IsManager { get; set; }
 
+    /// <summary>
+    /// Eligible "specific approver" options for the manager's own time-off request card.
+    /// Populated only on the manager path; empty for employees (who don't see the card here).
+    /// </summary>
+    public List<ApproverOption> AvailableApprovers { get; set; } = new();
+
     public async Task OnGetAsync()
     {
         try
@@ -102,6 +108,15 @@ public partial class IndexModel : LocalizedPageModel
             if (currentUser == null)
             {
                 Error = _localizer["Error_UserNotFound"];
+                return;
+            }
+
+            // ACCOUNT TYPE GATE: Only Standard accounts may access the Requests surface.
+            if (!currentUser.CanAccessRequests())
+            {
+                TempData["ErrorMessage"] = _localizer["Requests_Locked_AccountType"].Value;
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                Response.Redirect("/Index");
                 return;
             }
 
@@ -147,6 +162,10 @@ public partial class IndexModel : LocalizedPageModel
                 LogLoadedEmployeeSummary(_logger, TimeOff.Count, Swaps.Count, ApprovedTimeOffs.Count);
                 return;
             }
+
+            // Manager requests time-off for THEMSELVES via the embedded card — load the approver
+            // pool scoped to the manager's own member companies (same query as /My/Requests).
+            AvailableApprovers = await _vacationApprovalService.GetGrantBasedApproverOptionsAsync(currentUser.Id);
 
             // Manager/Director/Admin path: determine accessible company IDs based on grants
             List<int> accessibleCompanyIds;

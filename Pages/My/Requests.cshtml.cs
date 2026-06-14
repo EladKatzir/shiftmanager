@@ -22,11 +22,9 @@ public partial class RequestsModel : LocalizedPageModel
     private readonly ILogger<RequestsModel> _logger;
     private readonly IVacationApprovalService _vacationApprovalService;
     private readonly IFeatureFlagService _featureFlagService;
-    private readonly IGrantService _grantService;
     private readonly ICompanyLocalizationService _companyLocalizationService;
     private readonly ITenantResolver _tenantResolver;
     private readonly ILeaveFanoutService _leaveFanoutService;
-    private readonly ICompanyMembershipService _membershipService;
 
     public RequestsModel(
         IStringLocalizer<SharedResources> localizer,
@@ -34,21 +32,17 @@ public partial class RequestsModel : LocalizedPageModel
         ILogger<RequestsModel> logger,
         IVacationApprovalService vacationApprovalService,
         IFeatureFlagService featureFlagService,
-        IGrantService grantService,
         ICompanyLocalizationService companyLocalizationService,
         ITenantResolver tenantResolver,
-        ILeaveFanoutService leaveFanoutService,
-        ICompanyMembershipService membershipService) : base(localizer)
+        ILeaveFanoutService leaveFanoutService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _vacationApprovalService = vacationApprovalService;
         _featureFlagService = featureFlagService;
-        _grantService = grantService;
         _companyLocalizationService = companyLocalizationService;
         _tenantResolver = tenantResolver;
         _leaveFanoutService = leaveFanoutService;
-        _membershipService = membershipService;
     }
 
     [BindProperty]
@@ -60,7 +54,7 @@ public partial class RequestsModel : LocalizedPageModel
     public List<MyTimeOffRequest> MyTimeOffRequests { get; set; } = new();
     public List<MySwapRequest> MySwapRequests { get; set; } = new();
     public List<AvailableShift> AvailableShifts { get; set; } = new();
-    public List<ManagerUser> AvailableApprovers { get; set; } = new();
+    public List<ApproverOption> AvailableApprovers { get; set; } = new();
 
     // Message property removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
     // Error property is inherited from LocalizedPageModel; we no longer assign to it.
@@ -79,6 +73,16 @@ public partial class RequestsModel : LocalizedPageModel
                 return;
             }
             LogUserId(_logger, userId);
+
+            // ACCOUNT TYPE GATE: Only Standard accounts may access the Requests surface.
+            var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+            if (currentUser == null || !currentUser.CanAccessRequests())
+            {
+                TempData["ErrorMessage"] = _localizer["Requests_Locked_AccountType"].Value;
+                TempData["ErrorId"] = HttpContext.TraceIdentifier;
+                Response.Redirect("/Index");
+                return;
+            }
 
             // Load user's time off requests
             LogLoadingTimeOff(_logger, userId);
@@ -167,70 +171,11 @@ public partial class RequestsModel : LocalizedPageModel
             LogLoadedAvailableShifts(_logger, AvailableShifts.Count, userId);
 
             // Load available approvers — users who hold ApproveVacations or ApproveExtendedLeave grants
-            // scoped to ANY of the current user's shift companies (union approver pool for multi-company users).
-            // Single-company users get the identical pool as before (only their primary company is included).
+            // scoped to ANY of the current user's shift companies. Extracted to the service so the
+            // /Requests/Index manager card can reuse the identical query (see GetGrantBasedApproverOptionsAsync).
             LogLoadingApprovers(_logger, userId);
-            var currentUser = await _db.Users.FindAsync(userId);
-            if (currentUser != null)
-            {
-                // Phase 3: Widen approver pool to the union of all shift-active membership companies.
-                // For a single-company user the set contains only currentUser.CompanyId — same as before.
-                var memberships = await _membershipService.GetMembershipsAsync(userId);
-                var memberCompanyIds = new HashSet<int> { currentUser.CompanyId };
-                foreach (var m in memberships.Where(m => m.DoesShifts))
-                    memberCompanyIds.Add(m.CompanyId);
-
-                // Resolve the molecule ids for all member companies (needed for hierarchy scope-matching).
-                var memberCompanies = await _db.Companies
-                    .Where(c => memberCompanyIds.Contains(c.Id))
-                    .Select(c => new { c.Id, c.MoleculeId })
-                    .ToListAsync();
-                var memberMoleculeIds = memberCompanies
-                    .Where(c => c.MoleculeId.HasValue)
-                    .Select(c => c.MoleculeId!.Value)
-                    .ToHashSet();
-                var memberCompanyIdList = memberCompanyIds.ToList();
-                var memberMoleculeIdList = memberMoleculeIds.ToList();
-
-                var approvalGrantKeys = new[] { "ApproveVacations", "ApproveExtendedLeave" };
-
-                var approverUserIds = await _db.Grants
-                    .Where(g => _db.GrantTypes
-                        .Where(gt => approvalGrantKeys.Contains(gt.Key))
-                        .Select(gt => gt.Id)
-                        .Contains(g.GrantTypeId))
-                    .Where(g => g.CanOwn)
-                    // Match grants whose scope actually covers any of the user's member companies
-                    .Where(g => memberCompanyIdList.Contains(g.CompanyId ?? -1)
-                             // Molecule-scoped: grant's molecule must be one of the member molecules
-                             || (g.MoleculeId != null && memberMoleculeIdList.Contains(g.MoleculeId.Value))
-                             // Area-scoped: grant's area must contain any of the member molecules
-                             || (g.AreaId != null && memberMoleculeIdList.Any()
-                                 && _db.Molecules.Any(m => memberMoleculeIdList.Contains(m.Id) && m.AreaId == g.AreaId))
-                             // Project-scoped: grant's project must contain any of the member molecules' areas
-                             || (g.ProjectId != null && memberMoleculeIdList.Any()
-                                 && _db.Molecules.Any(m => memberMoleculeIdList.Contains(m.Id)
-                                        && _db.Areas.Any(a => a.Id == m.AreaId && a.ProjectId == g.ProjectId)))
-                             // Self-scoped (all nulls): approver must be in any of the member companies
-                             || (!g.CompanyId.HasValue && !g.MoleculeId.HasValue
-                                 && !g.AreaId.HasValue && !g.ProjectId.HasValue
-                                 && _db.Users.Any(u => u.Id == g.UserId && memberCompanyIdList.Contains(u.CompanyId))))
-                    .Select(g => g.UserId)
-                    .Distinct()
-                    .ToListAsync();
-
-                AvailableApprovers = await _db.Users
-                    .Where(u => approverUserIds.Contains(u.Id) && u.IsActive)
-                    .OrderBy(u => u.DisplayName)
-                    .Select(u => new ManagerUser
-                    {
-                        Id = u.Id,
-                        Name = u.DisplayName,
-                        Role = u.Role.ToString()
-                    })
-                    .ToListAsync();
-                LogLoadedApprovers(_logger, AvailableApprovers.Count, userId);
-            }
+            AvailableApprovers = await _vacationApprovalService.GetGrantBasedApproverOptionsAsync(userId);
+            LogLoadedApprovers(_logger, AvailableApprovers.Count, userId);
 
             LogOnGetCompleted(_logger, userId);
         }
@@ -294,26 +239,26 @@ public partial class RequestsModel : LocalizedPageModel
             }
             LogTimeOffSubmitContext(_logger, userId, TimeOffRequest.StartDate, TimeOffRequest.EndDate);
 
+            // ACCOUNT TYPE GATE: Only Standard accounts may submit requests.
+            var requestingUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+            if (requestingUser == null || !requestingUser.CanAccessRequests())
+                return Forbid();
+
             // Validate approver if specified — must hold ApproveVacations or ApproveExtendedLeave grant
             if (TimeOffRequest.ApproverId.HasValue && TimeOffRequest.ApproverId.Value > 0)
             {
-                var approver = await _db.Users.FindAsync(TimeOffRequest.ApproverId.Value);
-                if (approver == null || !approver.IsActive)
-                {
-                    TempData["ErrorMessage"] = _localizer["Error_InvalidApproverSelected"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
-                    await OnGetAsync();
-                    return Page();
-                }
-
-                // Phase 2: Verify approver holds an approval grant scoped to THIS user's company+jobtype
-                var requestingUser = await _db.Users.FindAsync(userId);
-                bool hasApproveVacations = await _grantService.HasGrantWithScopeAsync(
-                    TimeOffRequest.ApproverId.Value, "ApproveVacations",
-                    companyId: requestingUser?.CompanyId, jobTypeId: requestingUser?.JobTypeId);
-                bool hasApproveExtendedLeave = await _grantService.HasGrantWithScopeAsync(
-                    TimeOffRequest.ApproverId.Value, "ApproveExtendedLeave",
-                    companyId: requestingUser?.CompanyId, jobTypeId: requestingUser?.JobTypeId);
-                if (!hasApproveVacations && !hasApproveExtendedLeave)
+                // Verify the chosen approver is in the requester's eligible pool. This reuses the
+                // SAME source of truth as the form dropdown (GetGrantBasedApproverOptionsAsync via
+                // IsEligibleApproverAsync), so what is OFFERED is always ACCEPTED — including approvers
+                // scoped to a multi-company requester's SECONDARY company (the previous primary-company-
+                // only check rejected those even though the dropdown offered them).
+                //
+                // NOTE: do NOT re-check existence via _db.Users.FindAsync here — that DbSet is
+                // tenant-filtered, so a valid CROSS-COMPANY approver (one whose grant covers the
+                // requester's molecule/area but who lives in another company) returns null and is
+                // wrongly rejected. IsEligibleApproverAsync already subsumes existence + IsActive +
+                // valid-grant (pool membership implies all three) and is tenant-independent.
+                if (!await _vacationApprovalService.IsEligibleApproverAsync(userId, TimeOffRequest.ApproverId.Value))
                 {
                     TempData["ErrorMessage"] = _localizer["Error_InvalidApproverSelected"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                     await OnGetAsync();
@@ -417,6 +362,11 @@ public partial class RequestsModel : LocalizedPageModel
             }
             LogSwapSubmitContext(_logger, userId, SwapRequest.ShiftId);
 
+            // ACCOUNT TYPE GATE: Only Standard accounts may submit swap requests.
+            var swapRequestingUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+            if (swapRequestingUser == null || !swapRequestingUser.CanAccessRequests())
+                return Forbid();
+
             // Verify the assignment belongs to the user
             var assignment = await _db.ShiftAssignments
                 .FirstOrDefaultAsync(sa => sa.Id == SwapRequest.ShiftId && sa.UserId == userId);
@@ -479,6 +429,11 @@ public partial class RequestsModel : LocalizedPageModel
                 TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
                 return RedirectToPage();
             }
+
+            // ACCOUNT TYPE GATE: Only Standard accounts may cancel requests.
+            var cancelUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+            if (cancelUser == null || !cancelUser.CanAccessRequests())
+                return Forbid();
 
             // Verify request belongs to current user and is still Pending
             var request = await _db.TimeOffRequests
@@ -585,10 +540,4 @@ public partial class RequestsModel : LocalizedPageModel
         public TimeOnly EndTime { get; set; }
     }
 
-    public class ManagerUser
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public string Role { get; set; } = "";
-    }
 }

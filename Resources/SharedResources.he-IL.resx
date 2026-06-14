@@ -16199,4 +16199,7 @@
   <data name="Home_WhoOnShift_Live" xml:space="preserve">
     <value>פעיל</value>
   </data>
+  <data name="Requests_Locked_AccountType" xml:space="preserve">
+    <value>סוג חשבון זה אינו יכול להשתמש בעמוד הבקשות.</value>
+  </data>
 </root>

@@ -16237,4 +16237,7 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Home_WhoOnShift_Live" xml:space="preserve">
     <value>LIVE</value>
   </data>
+  <data name="Requests_Locked_AccountType" xml:space="preserve">
+    <value>This account type cannot use the Requests page.</value>
+  </data>
 </root>
