@@ -373,15 +373,21 @@ else
         // Circumference at r=80: 502.7. We rotate SVG -90deg so 12-o'clock is the start.
         const double gCirc = 502.7;
         double gOver = 0, gSoftOver = 0, gBalanced = 0, gSoftUnder = 0, gUnder = 0;
+        int gCntOver = 0, gCntSoftOver = 0, gCntBalanced = 0, gCntSoftUnder = 0, gCntUnder = 0;
         int totalRows = v.Rows.Count;
         if (totalRows > 0)
         {
             var activeBandFn = (JusticeRow r) => Model.Basis == FairnessBasis.EqualShare ? r.BandEqual : r.Band;
-            gOver      = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.Over)      / totalRows * gCirc;
-            gSoftOver  = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.SoftOver)  / totalRows * gCirc;
-            gBalanced  = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.Balanced)  / totalRows * gCirc;
-            gSoftUnder = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.SoftUnder) / totalRows * gCirc;
-            gUnder     = (double)v.Rows.Count(r => activeBandFn(r) == DeviationBand.Under)     / totalRows * gCirc;
+            gCntOver      = v.Rows.Count(r => activeBandFn(r) == DeviationBand.Over);
+            gCntSoftOver  = v.Rows.Count(r => activeBandFn(r) == DeviationBand.SoftOver);
+            gCntBalanced  = v.Rows.Count(r => activeBandFn(r) == DeviationBand.Balanced);
+            gCntSoftUnder = v.Rows.Count(r => activeBandFn(r) == DeviationBand.SoftUnder);
+            gCntUnder     = v.Rows.Count(r => activeBandFn(r) == DeviationBand.Under);
+            gOver      = (double)gCntOver      / totalRows * gCirc;
+            gSoftOver  = (double)gCntSoftOver  / totalRows * gCirc;
+            gBalanced  = (double)gCntBalanced  / totalRows * gCirc;
+            gSoftUnder = (double)gCntSoftUnder / totalRows * gCirc;
+            gUnder     = (double)gCntUnder     / totalRows * gCirc;
         }
         // Cumulative offsets (negated for stroke-dashoffset)
         double gOff0 = 0;
@@ -409,7 +415,9 @@ else
           <circle class="gauge-seg gauge-seg--over gauge-seg-anim" cx="100" cy="100" r="80"
                   stroke-dasharray="@GF(gOver) @GF(gCirc)"
                   stroke-dashoffset="@GF(gOff0)"
-                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff0);" />
+                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff0);">
+            <title>@Localizer["Justice_Band_Over"]: @gCntOver / @totalRows</title>
+          </circle>
           }
           @* Soft Over *@
           @if (gSoftOver > 0.01)
@@ -417,7 +425,9 @@ else
           <circle class="gauge-seg gauge-seg--softover gauge-seg-anim" cx="100" cy="100" r="80"
                   stroke-dasharray="@GF(gSoftOver) @GF(gCirc)"
                   stroke-dashoffset="@GF(gOff1)"
-                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff1);" />
+                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff1);">
+            <title>@Localizer["Justice_Band_SoftOver"]: @gCntSoftOver / @totalRows</title>
+          </circle>
           }
           @* Balanced *@
           @if (gBalanced > 0.01)
@@ -426,7 +436,9 @@ else
                   stroke-dasharray="@GF(gBalanced) @GF(gCirc)"
                   stroke-dashoffset="@GF(gOff2)"
                   style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff2);"
-                  filter="url(#gauge-glow)" />
+                  filter="url(#gauge-glow)">
+            <title>@Localizer["Justice_Band_Balanced"]: @gCntBalanced / @totalRows</title>
+          </circle>
           }
           @* Soft Under *@
           @if (gSoftUnder > 0.01)
@@ -434,7 +446,9 @@ else
           <circle class="gauge-seg gauge-seg--softunder gauge-seg-anim" cx="100" cy="100" r="80"
                   stroke-dasharray="@GF(gSoftUnder) @GF(gCirc)"
                   stroke-dashoffset="@GF(gOff3)"
-                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff3);" />
+                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff3);">
+            <title>@Localizer["Justice_Band_SoftUnder"]: @gCntSoftUnder / @totalRows</title>
+          </circle>
           }
           @* Under *@
           @if (gUnder > 0.01)
@@ -442,7 +456,9 @@ else
           <circle class="gauge-seg gauge-seg--under gauge-seg-anim" cx="100" cy="100" r="80"
                   stroke-dasharray="@GF(gUnder) @GF(gCirc)"
                   stroke-dashoffset="@GF(gOff4)"
-                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff4);" />
+                  style="--dash-total:@GF(gCirc);--dash-offset:@GF(gOff4);">
+            <title>@Localizer["Justice_Band_Under"]: @gCntUnder / @totalRows</title>
+          </circle>
           }
           @* Outer decorative dash ring *@
           <circle cx="100" cy="100" r="92"
@@ -452,7 +468,10 @@ else
 
         <div class="gauge-center">
           <div class="spread-number" dir="ltr">@v.SpreadIndex.ToString("F2")</div>
-          <div class="spread-sublabel"><loc key="Justice_SpreadIndex" /></div>
+          <div class="spread-sublabel">
+            <loc key="Justice_SpreadIndex" />
+            <span class="help-dot" title="@Localizer["Justice_Help_SpreadIndex"]" aria-label="@Localizer["Justice_Help_SpreadIndex"]">?</span>
+          </div>
           <div class="severity-dots" aria-label="@Localizer["Justice_SeverityAria", v.SpreadSeverity]" role="img">
             @for (int si = 0; si < 4; si++)
             {
@@ -467,6 +486,9 @@ else
       <div class="verdict-badge sev-@(v.SpreadSeverity)" role="status" aria-live="polite">
         @Localizer[v.SpreadLabelKey]
       </div>
+
+      @* Gauge caption *@
+      <p class="chart-caption"><loc key="Justice_Caption_Gauge" /></p>
 
       @* Band legend *@
       <div class="gauge-legend" role="list" aria-label="@Localizer["Justice_BandLegend_Aria"]">
@@ -572,7 +594,9 @@ else
                     stroke-dasharray="@arcLen.ToString("F1", CultureInfo.InvariantCulture) @dCirc.ToString("F2", CultureInfo.InvariantCulture)"
                     stroke-dashoffset="@((-arcOff).ToString("F1", CultureInfo.InvariantCulture))"
                     style="opacity:.88;"
-                    aria-label="@dr2.Name @shareStr" />
+                    aria-label="@dr2.Name @shareStr">
+              <title>@dr2.Name — @shareStr (@((int)dr2.Actual))</title>
+            </circle>
           }
           @* Outer decorative tick ring *@
           <circle cx="100" cy="100" r="94"
@@ -623,6 +647,9 @@ else
         <span class="band-key-pill bkp-softunder" role="listitem">▼ <loc key="Justice_Band_SoftUnder" /></span>
         <span class="band-key-pill bkp-under"     role="listitem">▼▼ <loc key="Justice_Band_Under" /></span>
       </div>
+
+      @* Donut caption *@
+      <p class="chart-caption"><loc key="Justice_Caption_Donut" /></p>
 
     </div>
   </div><!-- /share donut -->

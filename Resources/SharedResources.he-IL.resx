@@ -16222,4 +16222,7 @@
   <data name="AccountType_GroupUser" xml:space="preserve">
     <value>יוזר קיבוצי</value>
   </data>
+  <data name="Justice_Caption_Gauge" xml:space="preserve"><value>עד כמה העבודה מחולקת באופן שווה — נמוך יותר הוגן יותר.</value></data>
+  <data name="Justice_Caption_Donut" xml:space="preserve"><value>כל מקטע מייצג את חלקו של שורה אחת מסך העבודה.</value></data>
+  <data name="Justice_Help_SpreadIndex" xml:space="preserve"><value>0 = חלוקה מושלמת; גבוה יותר = יותר חוסר איזון.</value></data>
 </root>
