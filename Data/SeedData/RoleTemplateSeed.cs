@@ -1020,6 +1020,7 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 133, ETM));   // Lead — molecule (per 2026-04-25 scope expansion)
         grants.Add(G(5, 133, ETM));   // Director — molecule
         grants.Add(G(7, 133, ETM));   // MoleculeAdmin
+        grants.Add(G(8, 133, SAR));   // Assigner — molecule (role scope IS Molecule; retains Analytics access per 2026-06-15 product decision)
         grants.Add(G(10, 133, ETA));  // AreaAdmin
         grants.Add(G(11, 133, ETP, canGive: true));  // Owner
 
