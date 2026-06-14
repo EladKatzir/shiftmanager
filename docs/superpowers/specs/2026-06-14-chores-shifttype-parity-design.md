@@ -2,7 +2,7 @@
 
 - **Date:** 2026-06-14
 - **Branch:** `dev`
-- **Status:** Design approved-by-delegation (user delegated final design decisions to architect + design agents). Awaiting async user review of the open product decisions in §13.
+- **Status:** Design approved-by-delegation; the §13 product/privacy decisions were **resolved by the user on 2026-06-14** (see §13). This header section's decision record (D3/D4/D5/D7) has been updated to match; the resolved decisions are authoritative where any deeper section still reflects an agent default.
 - **Authors:** Brainstormed with user; data-model/service decisions by `code-architect` (Opus); UI/UX by `shiftmanager-ui-designer`. Synthesized by the main session.
 
 ---
@@ -43,11 +43,11 @@ Today a **chore** is a structurally flat unit: `Chore` = one user, one date, a f
 
 - **D1 — Membership granularity:** category-level `UserChoreCategory` + `AppUser.DoesChores`, mirroring `UserShiftCategory`/`DoesShifts`. Per-type allow-listing is intentionally *not* a positive membership; finer restriction is handled by rules (gender/rank) and exemptions (negative).
 - **D2 — `EligibilityRule` modeling:** one shared table, **polymorphic `(SubjectKind, SubjectId)` from day one** (`SubjectKind ∈ {ChoreType, ShiftType}`), but **only `ChoreType` is wired now**. `ShiftType.RequiresOfficerRank` and `ValidateShiftAsync` are **untouched** this cycle (no unrelated refactoring). The evaluator is a **pure, stateless domain service**.
-- **D3 — Gender field:** new `AppUser.Gender` enum `{Unspecified=0, Male=1, Female=2}`, default `Unspecified`. Sensitive PII. **Fail-closed:** a gendered chore hard-blocks anyone whose `Gender != required`, **including `Unspecified`**. Edited only via a new restricted grant; **not self-editable**; audited.
-- **D4 — Weight model:** `Chore.WeightMinutes` (int), **frozen at create time** (not recomputed at read), resolved as: explicit `StartTime/EndTime` → `ChoreType.DefaultWeightMinutes` → global fallback `DEFAULT_CHORE_WEIGHT_MINUTES = 240`. Free-text (null type) chores get the fallback. Frozen so editing a type's default never rewrites historical fairness.
-- **D5 — Fairness:** **extend the existing Justice engine** — swap the chore `g.Count()` for `g.Sum(c => c.WeightMinutes)` in the two chore branches; add an optional `JusticeQuery.ChoreCategoryId` (null = today's behavior); reuse `ViewJusticeTable` #133 / `EditJusticeTargets` #134 (no new grant). Targets stay in **chore-equivalents**, scaled by 240 in code (no target data migration).
+- **D3 — Gender field (UPDATED 2026-06-14):** new `AppUser.Gender` enum `{Unspecified=0, Male=1, Female=2}`, default `Unspecified`. Sensitive PII. **Gender mismatch is an overrideable WARNING, not a hard error** — for both a definite mismatch (e.g. Female on a male-only chore) and the `Unspecified` case, the manager may override via the existing HMAC-token warning path (alongside vacation/shift conflicts). Gender is **viewable and editable by any existing user-editor** (rides current user-edit authz); **no dedicated grant**; the value change is audited. (Officer-rank and waiver/exemption remain HARD, non-overrideable.)
+- **D4 — Weight model (UPDATED 2026-06-14):** `Chore.WeightMinutes` (int), **frozen at create time** (not recomputed at read), resolved as: explicit `StartTime/EndTime` → `ChoreType.DefaultWeightMinutes` → global fallback `DEFAULT_CHORE_WEIGHT_MINUTES = 480` (8 hours, fixed constant). Free-text (null type) chores get the fallback. Frozen so editing a type's default never rewrites historical fairness.
+- **D5 — Fairness:** **extend the existing Justice engine** — swap the chore `g.Count()` for `g.Sum(c => c.WeightMinutes)` in the two chore branches; add an optional `JusticeQuery.ChoreCategoryId` (null = today's behavior); reuse `ViewJusticeTable` #133 / `EditJusticeTargets` #134 (no new grant). Targets stay in **chore-equivalents**, scaled by 480 in code (no target data migration).
 - **D6 — Migration/back-compat:** seed a per-molecule **"General"/"כללי"** `ChoreCategory` for molecules with existing types; backfill `ChoreType.ChoreCategoryId` (nullable → backfill → `NOT NULL`); free-text chores keep `null ChoreTypeId`; backfill `WeightMinutes` from times where present (else 240); backfill `DoesChores = true` for existing active Standard users (preserves roster). Unique chore index **unchanged**.
-- **D7 — Grants:** **reuse** `EditChoreTypes`/`CreateChoreTypes` for category/type/rule/exemption/template admin; add **one** new grant `EditUserGender` (#137, `UserManagement`/`Company`). `DoesChores`/category/exemption handlers ride existing user-edit authz.
+- **D7 — Grants (UPDATED 2026-06-14): NO new grants.** Reuse `EditChoreTypes`/`CreateChoreTypes` for category/type/rule/exemption/template admin, `AssignChores` for assignment + stamping, `ViewJusticeTable`/`EditJusticeTargets` for fairness. Gender view+edit and `DoesChores`/category/exemption handlers all ride existing user-edit authz. The previously-proposed `EditUserGender` grant #137 is **dropped** — this feature touches the grant seed **zero** times.
 - **D8 — Convention fix:** extract the inline `IChoreService` (`ChoreService.cs:9-40`) into `Services/IChoreService.cs`.
 - **D9 — Roster filter:** new predicate `AccountType == Standard && IsActive && (DoesChores || ChoreCategories.Any())`. Display-only; the BusyService hard-gate remains the authorization boundary.
 - **D10 — Templates:** new molecule-scoped `ChoreTemplate` definition; "stamp" loops `CreateChoreAsync` per (date, assignee); each validates independently; hard-error days skipped + reported. No schedule persisted, no background job.
@@ -108,13 +108,18 @@ EligibilityResult Evaluate(
 // EligibilityResult(bool IsEligible, string? FailKey)  FailKey ∈ {ELIG_GENDER, ELIG_OFFICER_RANK, ELIG_EXEMPT}
 ```
 
-Logic: for each rule — `RequiresGender` → `user.Gender != rule.GenderValue` fails (Unspecified fails, fail-closed); `RequiresOfficerRank` → `!user.Rank.IsOfficer()` fails (reuses `MilitaryRankExtensions.IsOfficer`, `>= 9`). Then exemption → fail. Else eligible.
+Logic: for each rule — `RequiresGender` → `user.Gender != rule.GenderValue` violates; `RequiresOfficerRank` → `!user.Rank.IsOfficer()` violates (reuses `MilitaryRankExtensions.IsOfficer`, `>= 9`). Then exemption → violates. The evaluator returns the violated kind so the caller can assign **severity by kind** (below). Else eligible.
 
-**Where gates apply** — `BusyService.ValidateChoreAsync` (`Services/BusyService.cs:178-307`), as **HARD ERRORS**, inserted **after** `USER_NOT_IN_MOLECULE` and **before** the overrideable warnings:
+**Severity by kind (UPDATED 2026-06-14):**
+- `RequiresGender` violation (definite mismatch OR `Unspecified`) → **overrideable WARNING** (HMAC token), folded in with the existing vacation/shift/chore warnings.
+- `RequiresOfficerRank` violation → **HARD ERROR** (not overrideable).
+- Exemption (waiver) → **HARD ERROR** (not overrideable — you don't override a disability accommodation).
+
+**Where gates apply** — `BusyService.ValidateChoreAsync` (`Services/BusyService.cs:178-307`). The two HARD gates (officer, exemption) insert **after** `USER_NOT_IN_MOLECULE` and **before** the warnings; the gender check joins the **warning** block:
 1. Only when `target.ChoreTypeId.HasValue` (free-text → no rules → eligible). Batch-load the subject's `EligibilityRule` rows + exemption existence (two cheap queries in the already-`IgnoreQueryFilters()` method).
-2. Call the evaluator; on failure add a `ValidationIssue(failKey, …, Error, JobType)` and return `BusyValidation(false, …)` — **not overrideable** (deliberate asymmetry vs. vacation/shift/chore *warnings*, which stay HMAC-overrideable).
+2. Officer/exemption violation → `ValidationIssue(failKey, …, Error, JobType)` + `BusyValidation(false, …)`. Gender violation → `ValidationIssue(ELIG_GENDER, …, Warning, JobType)` added to warnings (clears with a valid override token).
 
-Chore validation order: `USER_NOT_FOUND → USER_INACTIVE → ACCOUNT_CANNOT_DO_CHORES → USER_NOT_IN_MOLECULE → [NEW gender/officer/exempt hard] → vacation/shift/chore/on-duty warnings`. Membership (`DoesChores`/category) is a **roster-display** filter, not a validation gate.
+Chore validation order: `USER_NOT_FOUND → USER_INACTIVE → ACCOUNT_CANNOT_DO_CHORES → USER_NOT_IN_MOLECULE → [officer/exempt HARD] → vacation/shift/chore/on-duty/**gender** WARNINGS`. Membership (`DoesChores`/category) is a **roster-display** filter, not a validation gate.
 
 **New resx (errors):** `Error_ChoreRequiresGenderMale`, `Error_ChoreRequiresGenderFemale`, `Error_ChoreRequiresOfficerRank`, `Error_ChoreUserExempt`, `Error_ChoreGenderUnspecified` (he + en).
 
@@ -137,7 +142,7 @@ Chore validation order: `USER_NOT_FOUND → USER_INACTIVE → ACCOUNT_CANNOT_DO_
 
 - **§7.1 ChoreType + Category admin** — **extend** `Pages/Admin/Organization/ChoreTypes/Index` (gated by `Grant:EditChoreTypes`): a top "Chore Categories" section-card (inline CRUD, color dot, sort, bilingual names) + the "Chore Types" section reorganized as a **category accordion**. The type editor gains a **Category dropdown**, a **DefaultWeight** dual input (hours+minutes → minutes), and an **Eligibility** fieldset (gender radio none/male/female + officer-rank toggle, persisted as `EligibilityRule` rows via replace-semantics). Eligibility shows as **reason chips** in the table.
 - **§7.2 Exemptions** — managed on the **ChoreType editor** (type-centric mental model), an AJAX user-picker + optional reason list. Audit logs **never** include the reason text (sensitive).
-- **§7.3 `Admin/Users` additions** — clone the `does-shifts-cell`: a **DoesChores** toggle + **chore-category multiselect** (clone `OnPostUserCategoriesAsync`), and a **Gender** cell = read-only badge + Edit button rendered only for `EditUserGender` holders, **not** on self. Gender dialog is 3-state, double-gated (`AuthorizeUserEditAsync` **and** `EditUserGender`), rejects self-edit, audited.
+- **§7.3 `Admin/Users` additions** — clone the `does-shifts-cell`: a **DoesChores** toggle + **chore-category multiselect** (clone `OnPostUserCategoriesAsync`), and a **Gender** cell = badge + Edit button visible to **any user-editor** (UPDATED 2026-06-14 — no `EditUserGender` grant). Gender dialog is 3-state, gated by the existing `AuthorizeUserEditAsync`, audited.
 - **§7.4 `ChoreTemplate` admin + Stamp** — **new page** `Pages/Admin/Organization/ChoreTemplates/Index` (clone the ChoreTypes skeleton, `Grant:EditChoreTypes`). The **Stamp modal**: pick date range (+ weekday chips) + assignee(s), submit → `OnPostStampAsync` loops `CreateChoreAsync`, then swaps to a **result view**: `{created} created / {skipped} skipped` with a per-(date,user) skip list showing the localized eligibility reason.
 - **§7.5 Chores calendar** — roster becomes **category-accordion grouped** with **mirrored rows** (clone `BuildCategoryGroupedRowsAsync`); `data-row-group-id="chorecategory-{id}"`. The assignment picker surfaces blocked candidates **greyed + reason chip** (reuse the Justice drawer's existing `hardBlockReason`/`warnings` JSON via a shared `renderEligibleCandidate(c)` helper used by both the drawer and the bottom sheet).
 - **§7.6 Fairness UI** — add a **ChoreCategory selector** to the drawer + `/Admin/Analytics`; absolute actual/expected render as **hours** (`DurationFormat.FormatHours`); deviation/spread/banding/sparkline are deviation-driven → unchanged. A `Justice_TargetUnitNote` clarifies "targets in chore-equivalents, load in weighted hours."
@@ -148,35 +153,35 @@ Chore validation order: `USER_NOT_FOUND → USER_INACTIVE → ACCOUNT_CANNOT_DO_
 ## 8. Migration & Back-Compat (ordered)
 
 1. **Code:** extract `IChoreService`; add model files/enums; add new props to `AppUser`/`ChoreType`/`Chore` (`ChoreCategoryId` **nullable** first).
-2. **Migration #1 (additive):** create `ChoreCategory`, `UserChoreCategory`, `EligibilityRule`, `UserChoreExemption`, `ChoreTemplate`; add `AppUser.Gender`(0)/`DoesChores`(0), `ChoreType.ChoreCategoryId`(null)/`DefaultWeightMinutes`(null), `Chore.WeightMinutes`(240). Verify the `Chore` unique index is byte-identical.
+2. **Migration #1 (additive):** create `ChoreCategory`, `UserChoreCategory`, `EligibilityRule`, `UserChoreExemption`, `ChoreTemplate`; add `AppUser.Gender`(0)/`DoesChores`(0), `ChoreType.ChoreCategoryId`(null)/`DefaultWeightMinutes`(null), `Chore.WeightMinutes`(**480**). Verify the `Chore` unique index is byte-identical. (Planning note: `ChoreCategoryId` stays nullable + `SetNull` — Migration #2 dropped; see the Phase 1 plan.)
 3. **Backfill (idempotent):** (a) per molecule with ≥1 type → insert "General"/"כללי" category; (b) `ChoreTypes.ChoreCategoryId = General`; (c) `Chores.WeightMinutes` from `StartTime/EndTime` where both present; (d) `AppUsers.DoesChores = 1 WHERE IsActive AND AccountType = 0`.
 4. **Migration #2 (tighten):** `ChoreType.ChoreCategoryId → NOT NULL` (FK Restrict).
-5. **Grants:** append `EditUserGender` #137 (seed `id++`, end only); `RoleTemplateSeed` LATE ADDITIONS; bump `RoleTemplateAutoGrantTests` counts; resx; policy registration; docs/MEMORY. **Do not edit `FinalProductPublish/`.**
-6. **Targets:** no `JusticeTarget` data migration (chore-equivalent scaling is in code).
+5. **Grants:** **none** (decided 2026-06-14 — `EditUserGender` dropped). No `GrantTypeSeed`/`RoleTemplateSeed`/`RoleTemplateAutoGrantTests` changes.
+6. **Targets:** no `JusticeTarget` data migration (chore-equivalent scaling is in code, ×480).
 
 Invariants: categories before type-backfill; nullable→backfill→NOT NULL; never reorder the grant append.
 
 ---
 
-## 9. Grant Changes (per `grant_change_checklist.md`)
+## 9. Grant Changes — NONE (decided 2026-06-14)
 
-**Reused (no change):** `EditChoreTypes` #18, `CreateChoreTypes` #19 (now also gate categories/rules/exemptions/templates — re-verify `MoleculeId` for IDOR); `AssignChores` #17 (assignment + stamping); `ViewJusticeTable` #133 / `EditJusticeTargets` #134 (weighted fairness); user-edit authz for DoesChores/category/exemption.
+This feature adds **no grants** and touches `GrantTypeSeed`/`RoleTemplateSeed`/`RoleTemplateAutoGrantTests` **zero** times. The grant-change checklist does not apply.
 
-**New: `EditUserGender` #137** — `Category=UserManagement`, `DefaultScope=Company`, `IsSystem=true`, **appended after #136 with `id++`**. `RoleTemplateSeed` LATE ADDITIONS: assign to the EditCompanyUsers-class templates only (Director/MoleculeAdmin/AreaAdmin/Owner, + BRDirector iff it holds EditCompanyUsers — match that set exactly); **not** Lead/Assigner/Employee/Trainee. Bump `RoleTemplateAutoGrantTests` InlineData per receiving template + total 136→137. Add `Grant_EditUserGender`/`_Desc` resx (he+en). Register `Grant:EditUserGender` policy; gate the gender handler in `Admin/Users.cshtml.cs`. Update grant-count note in MEMORY.
+**Reused (no change):** `EditChoreTypes` #18, `CreateChoreTypes` #19 (now also gate ChoreCategory/EligibilityRule/exemption/template admin — re-verify `MoleculeId` for IDOR on every handler); `AssignChores` #17 (assignment + stamping); `ViewJusticeTable` #133 / `EditJusticeTargets` #134 (weighted fairness). **Gender view+edit** and the `DoesChores`/category-membership/exemption handlers all ride the **existing** user-edit authorization (`AuthorizeUserEditAsync` — AdminAccess / EditCompanyUsers). The gender value change is audited like any other `AppUser` mutation.
 
 ---
 
 ## 10. Test Surface
 
-1. `EligibilityEvaluatorTests` (pure): gender male/female × {match pass, mismatch block, Unspecified block-fail-closed}; officer × {officer pass, enlisted block}; exemption blocks; multi-rule AND; no rules → eligible.
-2. `BusyServiceChoreEligibilityTests` (real SQLite): hard-error ordering; free-text bypasses eligibility; eligibility errors **not** clearable by override token.
-3. `ChoreWeightTests`: resolution order (times→type default→240); free-text→240; frozen at create.
+1. `EligibilityEvaluatorTests` (pure): gender male/female × {match → eligible; mismatch → violation(RequiresGender); Unspecified → violation(RequiresGender)}; officer × {officer pass; enlisted → violation}; exemption → violation; multi-rule; no rules → eligible. (Severity mapping lives in BusyService, not here.)
+2. `BusyServiceChoreEligibilityTests` (real SQLite): ordering; free-text bypasses eligibility; **officer/exemption = hard errors, NOT clearable** by override token; **gender = warning, IS clearable** by a valid override token (definite mismatch and Unspecified alike).
+3. `ChoreWeightTests`: resolution order (times→type default→480); free-text→480; frozen at create.
 4. `JusticeChoreWeightingTests`: equal counts/unequal duration → unequal weighted Actual; sparkline sums minutes; category filter narrows; target scaling matches.
 5. `ChoreRosterTests`: D9 predicate includes DoesChores/category Standard, excludes Standard-with-neither + Mil/GroupUser; backfill makes existing Standard appear.
 6. `ChoreCategoryServiceTests`: CRUD, `(MoleculeId,Name)` unique, cross-molecule reject, `SetUserCategoriesAsync`, type→category `Restrict`.
 7. `ChoreTemplateStampTests`: one chore/day/assignee; hard-error day skipped+reported; one-per-day index respected; weight resolved.
-8. `RoleTemplateAutoGrantTests`: updated #137 counts.
-9. `UserGenderEditAuthzTests`: only `EditUserGender` writes; not self-editable; audited; never in claims/public DTOs.
+8. *(removed — no new grant, so no `RoleTemplateAutoGrantTests` change.)*
+9. `UserGenderEditAuthzTests`: gender editable by any user-editor (rides `AuthorizeUserEditAsync`); audited; never in claims/public DTOs. Gender mismatch is a warning, overridable.
 10. Migration/backfill test: General per molecule-with-types; types reassigned; weights backfilled; Standard→DoesChores; unique index intact.
 
 Run full suite **sequentially** (`-- xUnit.ParallelizeTestCollections=false`) per the project's :memory: SQLite-contention note.
@@ -191,7 +196,7 @@ Run full suite **sequentially** (`-- xUnit.ParallelizeTestCollections=false`) pe
 - **Phase 3 — Admin UI:** extend `ChoreTypes/Index` (categories, weight, rules, exemptions); `Admin/Users` (DoesChores + category multiselect + gender); `ChoreTemplates/Index` + stamp.
 - **Phase 4 — Calendar:** roster predicate + category-grouped mirrored rows; eligibility block reasons in the picker.
 - **Phase 5 — Fairness:** `JusticeService` weighted sums + `ChoreCategoryId`; drawer + `/Admin/Analytics` category selector + hours display.
-- **Phase 6 — Grants + tests + docs:** `EditUserGender` #137 end-to-end; all test suites; full sequential run; MEMORY/docs.
+- **Phase 6 — Tests + docs:** **no grant changes**; all test suites; full sequential run; MEMORY/docs.
 
 ---
 
@@ -205,24 +210,24 @@ Run full suite **sequentially** (`-- xUnit.ParallelizeTestCollections=false`) pe
 
 ---
 
-## 13. Open Decisions for Human Review
+## 13. Resolved Decisions (user, 2026-06-14)
 
-The architect/designer chose sensible defaults; these are the points a human may want to confirm or override:
+All previously-open product/privacy decisions are now settled:
 
-1. **Stamp multi-assignee meaning** *(product)* — default = **all selected people get the chore on every selected day**. Alternative = round-robin one-per-day. Affects the stamp result UX. **Most material open question.**
-2. **DoesChores OFF semantics** *(product)* — chores have no empty-slot analogue. Default mirrors the DoesShifts confirm-dialog; confirm whether turning it off **cancels** future chores vs. leaves them.
-3. **Gender visibility** *(privacy)* — default (stricter, recommended): only `EditUserGender` holders see the actual value; others see nothing in that cell. Confirm.
-4. **Gender fail-closed** *(product)* — default = hard error (Unspecified can't take gendered chores). Could be softened to a warn-and-override; recommended to keep hard.
-5. **Fallback weight = 240 min (4h)** *(config)* — confirm, or make it a per-molecule `AppConfig` value.
-6. **Gender value at-rest encryption + audit logging** *(privacy)* — default = plaintext + audit the value (the value, not the medical reason). Confirm.
-7. **Hebrew strings** — first-draft translations need a `localization-qa` / native pass (military terms; gender fail-closed phrasing).
+1. **Stamp multi-assignee** → **manager chooses per stamp** (a toggle in the stamp dialog: *rotate one-per-day* vs *everyone-every-day*). Stamping is **additive** — the existing one-at-a-time manual assignment stays unchanged; stamping is an optional bulk shortcut over it.
+2. **DoesChores OFF** → **prompt keep-or-cancel** (mirror the existing DoesShifts confirm-dialog, showing the future-chore count).
+3. **Gender mismatch** → **overrideable WARNING everywhere** (both a definite mismatch and the `Unspecified` case). No fail-closed hard block for gender. Officer-rank + waiver remain hard.
+4. **Gender visibility** → **visible to any user-editor** (no separate view gate).
+5. **Gender editing** → **rides existing user-edit authz, no new grant**. `EditUserGender` #137 is dropped; the feature adds **zero** grants.
+6. **Fallback weight** → **fixed 480 min (8 hours)** constant (`DEFAULT_CHORE_WEIGHT_MINUTES = 480`); not per-molecule configurable.
+7. **Gender at-rest** → **plaintext** (consistent with `DateOfBirth`/`Phone`); no field-level encryption this cycle. Value change is audited.
+8. **Hebrew strings** → route the new resx keys through a `localization-qa` pass during implementation (not a design blocker).
 
 ---
 
 ## 14. Deferred Items
 
-- **Shift adoption of `EligibilityRule`** — deliberately deferred; table is shaped for it, wiring is a future spec.
-- **Field-level encryption of Gender / exemption Reason** — deferred pending decision #6.
-- **Midnight-crossing chore duration** — out of scope; flagged for a wrap rule if such chores exist.
+- **Shift adoption of `EligibilityRule`** — deliberately deferred; the table is shaped (polymorphic `SubjectKind`) for it, but wiring shifts is a future spec; `ShiftType.RequiresOfficerRank` stays as-is this cycle.
+- **Midnight-crossing chore duration** — out of scope; a chore with `EndTime < StartTime` keeps the fallback weight; flagged for a wrap rule if such chores ever exist.
 
-No other items deferred.
+Resolved (no longer deferred): gender at-rest encryption → **plaintext, decided** (§13.7); all §13 product/privacy questions → **decided**.

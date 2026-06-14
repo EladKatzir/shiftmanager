@@ -381,7 +381,7 @@ git commit -m "feat(chores): add ChoreTemplate (reusable stamp definition)"
 ```csharp
     // Parity additions
     public int? ChoreCategoryId { get; set; }       // nullable: types may be uncategorized (mirrors ShiftType.CategoryId)
-    public int? DefaultWeightMinutes { get; set; }  // null → global fallback (240) at chore-create time
+    public int? DefaultWeightMinutes { get; set; }  // null → global fallback (480 = 8h) at chore-create time
 
     public ChoreCategory? ChoreCategory { get; set; }
 ```
@@ -389,7 +389,7 @@ git commit -m "feat(chores): add ChoreTemplate (reusable stamp definition)"
 - [ ] **Step 3: `Models/Chore.cs`** — add after `Notes` (line 55):
 
 ```csharp
-    /// <summary>Fairness weight in minutes, frozen at create time (times → ChoreType.DefaultWeightMinutes → 240).</summary>
+    /// <summary>Fairness weight in minutes, frozen at create time (times → ChoreType.DefaultWeightMinutes → 480).</summary>
     public int WeightMinutes { get; set; }
 ```
 
@@ -511,7 +511,7 @@ Expected: "Done." Three files touched (migration, designer, `AppDbContextModelSn
 
 - [ ] **Step 2: Inspect the generated `Up()`** — verify it ONLY: creates tables `ChoreCategories`, `UserChoreCategories`, `EligibilityRules`, `UserChoreExemptions`, `ChoreTemplates`; adds columns `Users.Gender`(int, default 0), `Users.DoesChores`(int/bool, default 0), `ChoreTypes.ChoreCategoryId`(int, **nullable**), `ChoreTypes.DefaultWeightMinutes`(int, nullable), `Chores.WeightMinutes`(int). **Confirm it does NOT touch the existing `Chores` unique index** (`IX_Chores_CompanyId_UserId_Date_CanceledAt`) or any `ShiftType`/`ShiftCategory` table.
 
-- [ ] **Step 3: Set the `Chores.WeightMinutes` default to 240.** In the generated `Up()`, find the `AddColumn<int>(name: "WeightMinutes", table: "Chores", ...)` and ensure `defaultValue: 240` is present (add it if EF emitted `defaultValue: 0`):
+- [ ] **Step 3: Set the `Chores.WeightMinutes` default to 480 (8h, per decision §13.6).** In the generated `Up()`, find the `AddColumn<int>(name: "WeightMinutes", table: "Chores", ...)` and ensure `defaultValue: 480` is present (add it if EF emitted `defaultValue: 0`):
 
 ```csharp
 migrationBuilder.AddColumn<int>(
@@ -519,7 +519,7 @@ migrationBuilder.AddColumn<int>(
     table: "Chores",
     type: "INTEGER",
     nullable: false,
-    defaultValue: 240);
+    defaultValue: 480);
 ```
 
 - [ ] **Step 4: Apply + build to verify the schema is valid**
@@ -572,7 +572,7 @@ public static class ChoreFoundationBackfillSql
             WHERE cc.MoleculeId = ChoreTypes.MoleculeId AND cc.Name = 'General')
         WHERE ChoreCategoryId IS NULL;";
 
-    /// <summary>3) Freeze WeightMinutes from explicit times where both present (else keep the 240 default).
+    /// <summary>3) Freeze WeightMinutes from explicit times where both present (else keep the 480 default).
     /// Guards EndTime > StartTime so midnight-crossing chores (out of scope) keep the default.</summary>
     public const string BackfillChoreWeights = @"
         UPDATE Chores
@@ -626,7 +626,7 @@ namespace ShiftManager.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("UPDATE Users SET DoesChores = 0;");
-            migrationBuilder.Sql("UPDATE Chores SET WeightMinutes = 240;");
+            migrationBuilder.Sql("UPDATE Chores SET WeightMinutes = 480;");
             migrationBuilder.Sql("UPDATE ChoreTypes SET ChoreCategoryId = NULL;");
             migrationBuilder.Sql("DELETE FROM ChoreCategories WHERE Name = 'General';");
         }
@@ -665,7 +665,7 @@ namespace ShiftManager.Tests.UnitTests.Migrations;
 /// Regression guard for the BackfillChoreFoundation migration — runs the EXACT SQL it ships
 /// (ChoreFoundationBackfillSql.Forward) against real SQLite over a seed that exercises:
 ///   * a molecule WITH chore types (gets a General category) and one WITHOUT (none created),
-///   * a timed chore (weight from times), a differently-timed chore, an untimed chore (keeps 240),
+///   * a timed chore (weight from times), a differently-timed chore, an untimed chore (keeps 480),
 ///   * active Standard / active Mil / active GroupUser / inactive Standard users.
 /// </summary>
 public sealed class ChoreFoundationBackfillTests : IAsyncLifetime
@@ -701,16 +701,16 @@ public sealed class ChoreFoundationBackfillTests : IAsyncLifetime
             new AppUser { Id = 4, CompanyId = 1, Email = "i@x.mil",  DisplayName = "StdOff", IsActive = false, AccountType = AccountType.Standard });
         await _db.SaveChangesAsync();
 
-        // Chores: timed 10:00-14:00 (=240), timed 08:00-12:30 (=270), untimed (keeps default 240).
+        // Chores: timed 10:00-14:00 (=240), timed 08:00-12:30 (=270), untimed (keeps default 480).
         _db.Chores.AddRange(
             new Chore { Id = 500, CompanyId = 1, MoleculeId = 1, UserId = 1, Date = new DateOnly(2026, 6, 20),
                         Title = "T1", StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(14, 0),
-                        CreatedBy = 1, CreatedAt = DateTime.UtcNow, WeightMinutes = 240 },
+                        CreatedBy = 1, CreatedAt = DateTime.UtcNow, WeightMinutes = 480 },
             new Chore { Id = 501, CompanyId = 1, MoleculeId = 1, UserId = 1, Date = new DateOnly(2026, 6, 21),
                         Title = "T2", StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(12, 30),
-                        CreatedBy = 1, CreatedAt = DateTime.UtcNow, WeightMinutes = 240 },
+                        CreatedBy = 1, CreatedAt = DateTime.UtcNow, WeightMinutes = 480 },
             new Chore { Id = 502, CompanyId = 1, MoleculeId = 1, UserId = 1, Date = new DateOnly(2026, 6, 22),
-                        Title = "T3", CreatedBy = 1, CreatedAt = DateTime.UtcNow, WeightMinutes = 240 });
+                        Title = "T3", CreatedBy = 1, CreatedAt = DateTime.UtcNow, WeightMinutes = 480 });
         await _db.SaveChangesAsync();
 
         foreach (var sql in ChoreFoundationBackfillSql.Forward)
@@ -749,7 +749,7 @@ public sealed class ChoreFoundationBackfillTests : IAsyncLifetime
         var chores = await _db.Chores.IgnoreQueryFilters().ToDictionaryAsync(c => c.Id);
         chores[500].WeightMinutes.Should().Be(240, "10:00-14:00 = 240m");
         chores[501].WeightMinutes.Should().Be(270, "08:00-12:30 = 270m");
-        chores[502].WeightMinutes.Should().Be(240, "untimed keeps the column default");
+        chores[502].WeightMinutes.Should().Be(480, "untimed keeps the 480 default");
     }
 
     [Fact]
@@ -962,6 +962,6 @@ git status   # expect clean except intentional doc/test files already committed
 
 **Placeholder scan:** none — every code step shows complete code; every command shows expected output.
 
-**Type consistency:** `ChoreCategoryId` is `int?` everywhere (Task 7 model, Task 8 SetNull config, Task 9 nullable migration, Task 11 backfill, Task 12 SetNull test). `WeightMinutes` is non-null `int` default 240 (Task 7, Task 9 step 3, Task 11). `Forward[]` constant name matches between `ChoreFoundationBackfillSql` (Task 10) and both its consumers (migration Task 10, test Task 11). Enum values (`AccountType.Standard == 0`) used consistently in SQL (`AccountType = 0`) and tests.
+**Type consistency:** `ChoreCategoryId` is `int?` everywhere (Task 7 model, Task 8 SetNull config, Task 9 nullable migration, Task 11 backfill, Task 12 SetNull test). `WeightMinutes` is non-null `int` default **480** (Task 7, Task 9 step 3, Task 11); timed test chores seed 480 and recompute (500→240, 501→270), untimed stays 480. `Forward[]` constant name matches between `ChoreFoundationBackfillSql` (Task 10) and both its consumers (migration Task 10, test Task 11). Enum values (`AccountType.Standard == 0`) used consistently in SQL (`AccountType = 0`) and tests.
 
 **Known dependency for later phases (flagged):** Phases 3-5 task code depends on the spec §13 open product decisions (stamp all-vs-round-robin, DoesChores-OFF semantics, gender visibility/fail-closed). Resolve those before writing the Phase 2-6 plans.
