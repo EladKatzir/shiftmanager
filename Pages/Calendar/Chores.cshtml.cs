@@ -345,10 +345,11 @@ public class ChoresModel : PageModel
             .Select(c => c.Id)
             .ToListAsync();
 
-        // Get active users in those companies
+        // Get active Standard-account users in those companies (Mil + GroupUser excluded from Chores)
         return await _db.Users
             .IgnoreQueryFilters()
-            .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive)
+            .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive
+                     && u.AccountType == ShiftManager.Models.Support.AccountType.Standard)
             .OrderBy(u => u.DisplayName)
             .Select(u => new AppUser
             {
