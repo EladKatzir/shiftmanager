@@ -234,6 +234,10 @@ public static class QaTestUserSeed
         AddUser(defs, "deactivated@test", "Deactivated User", UserRole.Employee, "Tzafona", "Alhut", "Employee", companies, templates, alhut, br, text, hakam);
         AddUser(defs, "concurrent1@test", "Concurrent User", UserRole.Employee, "Tzafona", "Alhut", "Employee", companies, templates, alhut, br, text, hakam);
 
+        // --- AccountType QA accounts ---
+        AddUser(defs, "mil.tz@test", "Mil TZ", UserRole.Manager, "Tzafona", "Alhut", "BRDirector", companies, templates, alhut, br, text, hakam);
+        AddUser(defs, "groupuser.tz@test", "groupusertzafona", UserRole.Manager, "Tzafona", "Alhut", "BRDirector", companies, templates, alhut, br, text, hakam);
+
         return defs;
     }
 
@@ -408,11 +412,37 @@ public static class QaTestUserSeed
             deactivated.IsActive = false;
         }
 
-        // nogrants@test — ensure NO RoleTemplate (no grants)
+        // mil.tz@test — Mil account type (מילואים): does shifts, no chores/requests, hidden from Overview
+        var milTz = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == "mil.tz@test");
+        if (milTz != null)
+        {
+            milTz.AccountType = AccountType.Mil;
+            milTz.DoesShifts = true;
+        }
+
+        // groupuser.tz@test — GroupUser account type (יוזר קיבוצי): no shifts/chores/assignment
+        var groupUserTz = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == "groupuser.tz@test");
+        if (groupUserTz != null)
+        {
+            groupUserTz.AccountType = AccountType.GroupUser;
+        }
+
+        // nogrants@test — ensure NO RoleTemplate AND NO grant rows (true zero-grant fixture).
+        // F3: previously only the template was nulled, but existing Grant rows (applied when the
+        // user briefly held a template in an earlier seed run) survived, so the "no grants" fixture
+        // actually held 22 grants. Strip the rows too so the negative-test baseline is valid.
         var nogrants = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == "nogrants@test");
         if (nogrants != null)
         {
             nogrants.RoleTemplateId = null;
+            var surplus = await db.Grants.IgnoreQueryFilters()
+                .Where(g => g.UserId == nogrants.Id)
+                .ToListAsync();
+            if (surplus.Count > 0)
+            {
+                db.Grants.RemoveRange(surplus);
+                logger.LogInformation("[QaTestUserSeed] Stripped {Count} grant rows from nogrants@test", surplus.Count);
+            }
         }
     }
 
