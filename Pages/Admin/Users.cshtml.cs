@@ -1544,15 +1544,102 @@ public partial class UsersModel : LocalizedPageModel
 
         // Audit logging — mirrors OnPostJobTypeAsync argument shape
         var auditUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (int.TryParse(auditUserIdClaim, out var auditCurrentUserId))
+        if (!int.TryParse(auditUserIdClaim, out var auditCurrentUserId))
         {
-            await _auditLogService.LogUserActionAsync(
-                userId: auditCurrentUserId,
-                action: "AccountTypeChanged",
-                entityType: "User",
-                entityId: u.Id,
-                description: $"Changed account type for {u.DisplayName} from {oldAccountType} to {(AccountType)accountType}"
-            );
+            auditCurrentUserId = 0; // Fallback: record exists but without actor attribution
+        }
+
+        await _auditLogService.LogUserActionAsync(
+            userId: auditCurrentUserId,
+            action: "AccountTypeChanged",
+            entityType: "User",
+            entityId: u.Id,
+            description: $"Changed account type for {u.DisplayName} from {oldAccountType} to {(AccountType)accountType}"
+        );
+
+        // ── Capability-enforcement cleanup ────────────────────────────────────
+        // When the new type restricts what assignments the user may legally hold,
+        // remove FUTURE assignments (dated >= today) that are no longer permitted.
+        // Past/historical assignments are never touched (operational history).
+        //
+        // Capability matrix:
+        //   Mil       → no chores  (does shifts, does on-call)
+        //   GroupUser → no shifts, no chores, no on-call
+        //   Standard  → no restriction — nothing to clean up
+        //
+        // Shift removal mirrors OnPostDoesShiftsAsync: vacate by setting UserId = null
+        //   (the slot row is kept for calendar display; the same pattern as DoesShifts toggle).
+        // Chore/OnDuty removal mirrors ChoreService/OnDutyService: soft-delete via CanceledAt
+        //   (consistent with how these entities are "deleted" everywhere except hard user-delete).
+        // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by specific userId
+        var newType = (AccountType)accountType;
+        bool cleanChores = newType is AccountType.Mil or AccountType.GroupUser;
+        bool cleanShifts = newType is AccountType.GroupUser;
+        bool cleanOnCall = newType is AccountType.GroupUser;
+
+        if (cleanChores || cleanShifts || cleanOnCall)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var now = DateTime.UtcNow;
+            int vacatedShifts = 0;
+            int canceledChores = 0;
+            int canceledOnCall = 0;
+
+            if (cleanShifts)
+            {
+                // Vacate future shift assignments — mirrors DoesShiftsAsync pattern exactly.
+                var futureShifts = await _db.ShiftAssignments.IgnoreQueryFilters()
+                    .Include(sa => sa.ShiftInstance)
+                    .Where(sa => sa.UserId == id && sa.ShiftInstance!.WorkDate >= today)
+                    .ToListAsync();
+                foreach (var sa in futureShifts) { sa.UserId = null; sa.TraineeUserId = null; }
+                vacatedShifts = futureShifts.Count;
+            }
+
+            if (cleanChores)
+            {
+                // Soft-cancel future chores — mirrors ChoreService.CancelChoreAsync pattern.
+                var futureChores = await _db.Chores.IgnoreQueryFilters()
+                    .Where(c => c.UserId == id && c.Date >= today && c.CanceledAt == null)
+                    .ToListAsync();
+                foreach (var c in futureChores) { c.CanceledAt = now; c.CanceledBy = auditCurrentUserId; }
+                canceledChores = futureChores.Count;
+            }
+
+            if (cleanOnCall)
+            {
+                // Soft-cancel future on-call (OnDuty) assignments — mirrors OnDutyService.CancelAsync pattern.
+                var futureOnDuties = await _db.OnDuties.IgnoreQueryFilters()
+                    .Where(o => o.UserId == id && o.Date >= today && o.CanceledAt == null)
+                    .ToListAsync();
+                foreach (var o in futureOnDuties) { o.CanceledAt = now; o.CanceledBy = auditCurrentUserId; }
+                canceledOnCall = futureOnDuties.Count;
+            }
+
+            if (vacatedShifts > 0 || canceledChores > 0 || canceledOnCall > 0)
+            {
+                // Single save for all cleanup mutations.
+                var cleanupSaveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                    () => _db.SaveChangesAsync(), "AppUser", id);
+                if (!cleanupSaveResult.Success)
+                {
+                    // Non-fatal: account type was already persisted; log and continue.
+                    _logger.LogWarning("Concurrency conflict during account-type cleanup save for user {UserId}; some future assignments may not have been removed.", id);
+                }
+
+                var cleanupDetails = new System.Text.StringBuilder();
+                if (vacatedShifts > 0) cleanupDetails.Append($"; vacated {vacatedShifts} future shift(s)");
+                if (canceledChores > 0) cleanupDetails.Append($"; canceled {canceledChores} future chore(s)");
+                if (canceledOnCall > 0) cleanupDetails.Append($"; canceled {canceledOnCall} future on-call(s)");
+
+                await _auditLogService.LogUserActionAsync(
+                    userId: auditCurrentUserId,
+                    action: "AccountTypeCleanup",
+                    entityType: "User",
+                    entityId: u.Id,
+                    description: $"Removed disallowed future assignments for {u.DisplayName} after account-type change to {newType}{cleanupDetails}"
+                );
+            }
         }
 
         TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture,
