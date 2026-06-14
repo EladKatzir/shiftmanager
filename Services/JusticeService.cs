@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
+using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
@@ -195,9 +196,19 @@ public class JusticeService : IJusticeService
         // whose tenant differs from the requested scope (e.g., Owner / AreaAdmin viewing another company).
         // The scope itself is gated by IGrantService.GetAccessibleCompanyIdsForGrantAsync at the page
         // model level — by the time we reach here, the caller is authorized to read that company.
-        var users = await _db.Users
+        //
+        // AccountType exclusions:
+        //   GroupUser is hidden from ALL analytics rows (any WorkType).
+        //   DoesShifts=false is excluded ONLY for Shift/All work types — they skew shift fairness
+        //   but are still visible for Chore/OnDuty metrics.
+        var userQuery = _db.Users
             .IgnoreQueryFilters()
-            .Where(u => u.CompanyId == companyId && u.IsActive)
+            .Where(u => u.CompanyId == companyId && u.IsActive
+                        && u.AccountType != AccountType.GroupUser);
+        if (q.WorkType is JusticeWorkType.Shift or JusticeWorkType.All)
+            userQuery = userQuery.Where(u => u.DoesShifts);
+
+        var users = await userQuery
             .Select(u => new { u.Id, u.DisplayName, u.AvatarFileName })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -303,9 +314,16 @@ public class JusticeService : IJusticeService
         var actualByCompany = await CountActualPerCompanyAsync(q, companyIds, ct);
 
         // Per-company headcount, for the per-user-default rollup path.
+        // Exclude GroupUser from headcount so the per-user expected rolls up over the same
+        // population that the UsersInCompany drill-down would show.
+        // DoesShifts is NOT applied here because the company-aggregate expected is capacity-based
+        // for Shift (uses SumShiftCapacityPerCompanyAsync, not headcount-division), so the
+        // headcount is only used for Chore/OnDuty per-user-default rollup — and DoesShifts=false
+        // users ARE included for Chore/OnDuty.
         var headcountByCompany = await _db.Users
             .IgnoreQueryFilters()
-            .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive)
+            .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive
+                        && u.AccountType != AccountType.GroupUser)
             .GroupBy(u => u.CompanyId)
             .Select(g => new { CompanyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.CompanyId, x => x.Count, ct);
@@ -372,10 +390,15 @@ public class JusticeService : IJusticeService
             .ToDictionary(g => g.Key, g => g.Select(x => x.Id).ToArray());
 
         // Per-molecule headcount
+        // Exclude GroupUser from headcount (same population as molecule-level drill-down rows).
+        // DoesShifts is NOT applied here — same rationale as BuildCompaniesInMoleculeAsync:
+        // shift expected uses capacity (not headcount); chore/onduty expected uses headcount,
+        // and DoesShifts=false users ARE included for those work types.
         var allCompanyIds = companiesByMolecule.Select(x => x.Id).ToArray();
         var headcountByCompany = await _db.Users
             .IgnoreQueryFilters()
-            .Where(u => allCompanyIds.Contains(u.CompanyId) && u.IsActive)
+            .Where(u => allCompanyIds.Contains(u.CompanyId) && u.IsActive
+                        && u.AccountType != AccountType.GroupUser)
             .GroupBy(u => u.CompanyId)
             .Select(g => new { CompanyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.CompanyId, x => x.Count, ct);
@@ -437,9 +460,20 @@ public class JusticeService : IJusticeService
 
         // Load all ACTIVE users across all companies in ONE query.
         // SECURITY: IgnoreQueryFilters required — cross-company molecule-level pool.
-        var users = await _db.Users
+        //
+        // AccountType exclusions (mirrors BuildUsersInCompanyAsync):
+        //   GroupUser → excluded for ALL work types.
+        //   DoesShifts=false → excluded only for Shift/All work types.
+        // headcountByCompany is derived in-memory from this list, so the same population
+        // covers both the row list (numerator) and headcount (denominator).
+        var usersQuery = _db.Users
             .IgnoreQueryFilters()
-            .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive)
+            .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive
+                        && u.AccountType != AccountType.GroupUser);
+        if (q.WorkType is JusticeWorkType.Shift or JusticeWorkType.All)
+            usersQuery = usersQuery.Where(u => u.DoesShifts);
+
+        var users = await usersQuery
             .Select(u => new { u.Id, u.DisplayName, u.AvatarFileName, u.CompanyId })
             .AsNoTracking()
             .ToListAsync(ct);

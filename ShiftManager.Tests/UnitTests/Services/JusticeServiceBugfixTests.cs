@@ -220,11 +220,15 @@ public class JusticeServiceBugfixTests : IDisposable
     [Fact]
     public async Task GetJusticeView_UsersInCompany_ExcludeExemptShifts_HomePmShiftIsExcluded()
     {
-        // Seed User1 in Company1
+        // Seed User1 in Company1.
+        // DoesShifts=true is required because the new analytics filter excludes DoesShifts=false
+        // users from Shift-type queries.  This user is assigned to shift instances, so the
+        // flag must reflect reality.
         _db.Users.Add(new AppUser
         {
             Id = User1Id, Email = "u1@c1.com", DisplayName = "U1",
-            CompanyId = Company1Id, IsActive = true, Role = UserRole.Employee
+            CompanyId = Company1Id, IsActive = true, Role = UserRole.Employee,
+            DoesShifts = true
         });
 
         // Seed ShiftTypes: a normal shift and a HOME_PM shift.
