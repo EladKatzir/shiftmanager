@@ -15185,6 +15185,8 @@
   <data name="Justice_WorkType_Shift" xml:space="preserve"><value>משמרות</value></data>
   <data name="Justice_WorkType_Chore" xml:space="preserve"><value>מטלות</value></data>
   <data name="Justice_WorkType_OnDuty" xml:space="preserve"><value>כוננויות</value></data>
+  <data name="Justice_Filter_Category" xml:space="preserve"><value>קטגוריית משמרת</value></data>
+  <data name="Justice_Filter_AllCategories" xml:space="preserve"><value>כל הקטגוריות</value></data>
   <data name="Justice_ExcludeExempt" xml:space="preserve"><value>אל תכלול משמרות בית / לא מחובר</value></data>
   <data name="Justice_Apply" xml:space="preserve"><value>החל</value></data>
   <data name="Justice_Verdict_Heading" xml:space="preserve"><value>פסק דין</value></data>

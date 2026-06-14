@@ -15219,6 +15219,8 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Justice_WorkType_Shift" xml:space="preserve"><value>Shifts</value></data>
   <data name="Justice_WorkType_Chore" xml:space="preserve"><value>Chores</value></data>
   <data name="Justice_WorkType_OnDuty" xml:space="preserve"><value>On-Duty</value></data>
+  <data name="Justice_Filter_Category" xml:space="preserve"><value>Shift category</value></data>
+  <data name="Justice_Filter_AllCategories" xml:space="preserve"><value>All categories</value></data>
   <data name="Justice_ExcludeExempt" xml:space="preserve"><value>Exclude HOME / OFFLINE shifts</value></data>
   <data name="Justice_Apply" xml:space="preserve"><value>Apply</value></data>
   <data name="Justice_Verdict_Heading" xml:space="preserve"><value>Verdict</value></data>

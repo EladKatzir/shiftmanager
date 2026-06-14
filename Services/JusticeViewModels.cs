@@ -15,7 +15,8 @@ public sealed record JusticeQuery(
     JusticeWorkType WorkType,
     bool ExcludeExemptShifts,
     JusticeLevel Level,
-    FairnessBasis Basis = FairnessBasis.BySize);
+    FairnessBasis Basis = FairnessBasis.BySize,
+    int? ShiftCategoryId = null);
 
 /// <summary>
 /// Top-level result for the Justice page.

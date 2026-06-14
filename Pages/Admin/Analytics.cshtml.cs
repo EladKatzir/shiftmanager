@@ -62,6 +62,13 @@ public class AnalyticsModel : LocalizedPageModel
     [BindProperty(SupportsGet = true, Name = "basis")] public FairnessBasis Basis { get; set; } = FairnessBasis.BySize;
 
     /// <summary>
+    /// Optional ShiftCategory filter. When set, only users who belong to this category
+    /// (via UserShiftCategory) are shown, and only shifts of that category are counted.
+    /// Only meaningful for WorkType=Shift or All at user levels.
+    /// </summary>
+    [BindProperty(SupportsGet = true, Name = "shiftCategoryId")] public int? ShiftCategoryId { get; set; }
+
+    /// <summary>
     /// A/B comparison: start of the compare period (period B). When both CompareFrom and
     /// CompareTo are provided the service computes per-row deltas between the primary and compare periods.
     /// </summary>
@@ -102,6 +109,13 @@ public class AnalyticsModel : LocalizedPageModel
 
     public DateOnly EffectivePeriodStart { get; private set; }
     public DateOnly EffectivePeriodEnd { get; private set; }
+
+    /// <summary>
+    /// Shift categories available for filtering. Populated when a molecule scope is resolved
+    /// (either directly for UsersInMolecule, or via company → molecule for UsersInCompany).
+    /// Empty when no molecule can be determined (e.g. CompaniesInMolecule, MoleculesInArea levels).
+    /// </summary>
+    public List<ScopeOption> CategoryOptions { get; private set; } = new();
 
     public sealed record ScopeOption(int Id, string Name);
 
@@ -160,6 +174,10 @@ public class AnalyticsModel : LocalizedPageModel
         // IsDrillable=false so the front-end disables their drill affordance.
         var drillableChildIds = await ComputeDrillableChildIdsAsync(userId, Scope, ScopeId.Value, Level, ct);
 
+        // Populate ShiftCategory options — only meaningful at user-level views where a molecule
+        // can be determined. Guard: skip if ScopeId is null (already handled above).
+        await PopulateCategoryOptionsAsync(ct);
+
         var query = new JusticeQuery(
             Scope: Scope,
             ScopeId: ScopeId,
@@ -168,7 +186,8 @@ public class AnalyticsModel : LocalizedPageModel
             WorkType: WorkType,
             ExcludeExemptShifts: ExcludeExemptShifts,
             Level: Level,
-            Basis: Basis);
+            Basis: Basis,
+            ShiftCategoryId: ShiftCategoryId);
 
         try
         {
@@ -328,6 +347,44 @@ public class AnalyticsModel : LocalizedPageModel
                     .ToListAsync(ct);
             }
         }
+    }
+
+    /// <summary>
+    /// Populates <see cref="CategoryOptions"/> from the active molecule's ShiftCategories.
+    /// Resolves the molecule ID from the current Level/ScopeId:
+    ///   • UsersInMolecule  → ScopeId IS the molecule ID.
+    ///   • UsersInCompany   → look up Company.MoleculeId for the current ScopeId.
+    ///   • Other levels     → leave empty (category filter not applicable).
+    /// Must be called AFTER NormalizeScopeAndLevelDefaults so ScopeId is resolved.
+    /// </summary>
+    private async Task PopulateCategoryOptionsAsync(CancellationToken ct)
+    {
+        if (ScopeId is null) return;
+
+        int? moleculeId = null;
+        if (Level == JusticeLevel.UsersInMolecule)
+        {
+            moleculeId = ScopeId;
+        }
+        else if (Level == JusticeLevel.UsersInCompany)
+        {
+            // SECURITY: IgnoreQueryFilters required — the Justice viewer may be an owner or
+            // area admin whose tenant differs from the requested company.
+            moleculeId = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => c.Id == ScopeId.Value)
+                .Select(c => c.MoleculeId)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        if (moleculeId is null) return;
+
+        // SECURITY: ShiftCategory is not tenant-filtered (no IBelongsToCompany); molecule-scoped.
+        CategoryOptions = await _db.ShiftCategories
+            .Where(sc => sc.MoleculeId == moleculeId.Value && sc.IsActive)
+            .OrderBy(sc => sc.SortOrder)
+            .Select(sc => new ScopeOption(sc.Id, sc.DisplayName))
+            .ToListAsync(ct);
     }
 
     private void NormalizeScopeAndLevelDefaults()

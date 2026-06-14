@@ -126,6 +126,38 @@
 
         <div class="ctrl-divider" aria-hidden="true"></div>
 
+        @* ShiftCategory filter — only visible when category options exist (user-level views with a molecule) *@
+        @if (Model.CategoryOptions.Count > 0)
+        {
+            <div class="filter-field" style="flex:0 0 auto;">
+                <label class="filter-label" for="cat-select"><loc key="Justice_Filter_Category" /></label>
+                <select id="cat-select" class="form-select" style="min-width:8rem;"
+                        onchange="(function(sel){ var url = new URL(window.location.href); url.searchParams.set('shiftCategoryId', sel.value || ''); if (!sel.value) url.searchParams.delete('shiftCategoryId'); window.location.href = url.toString(); })(this)">
+                    @if (Model.ShiftCategoryId == null)
+                    {
+                        <option value="" selected>@Localizer["Justice_Filter_AllCategories"]</option>
+                    }
+                    else
+                    {
+                        <option value="">@Localizer["Justice_Filter_AllCategories"]</option>
+                    }
+                    @foreach (var cat in Model.CategoryOptions)
+                    {
+                        if (Model.ShiftCategoryId == cat.Id)
+                        {
+                            <option value="@cat.Id" selected>@cat.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="ctrl-divider" aria-hidden="true"></div>
+        }
+
         @* Fairness basis toggle *@
         <div class="filter-field" style="flex:0 0 auto;">
             <span class="filter-label" id="basis-label"><loc key="Justice_FairnessBasis" /></span>
@@ -183,6 +215,10 @@
             <input type="hidden" name="basis"        value="@Model.Basis" />
             <input type="hidden" name="cmpFrom"      value="@Model.CompareFrom?.ToString("yyyy-MM-dd")" />
             <input type="hidden" name="cmpTo"        value="@Model.CompareTo?.ToString("yyyy-MM-dd")" />
+            @if (Model.ShiftCategoryId.HasValue)
+            {
+                <input type="hidden" name="shiftCategoryId" value="@Model.ShiftCategoryId" />
+            }
             <span><loc key="Justice_From" /></span>
             <input type="date" name="from" class="period-input" value="@Model.EffectivePeriodStart.ToString("yyyy-MM-dd")" aria-label="@Localizer["Justice_PeriodStart"]" />
             <span><loc key="Justice_To" /></span>

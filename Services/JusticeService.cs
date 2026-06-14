@@ -207,6 +207,11 @@ public class JusticeService : IJusticeService
                         && u.AccountType != AccountType.GroupUser);
         if (q.WorkType is JusticeWorkType.Shift or JusticeWorkType.All)
             userQuery = userQuery.Where(u => u.DoesShifts);
+        if (q.ShiftCategoryId is int catId)
+        {
+            userQuery = userQuery.Where(u => u.DoesShifts
+                && _db.UserShiftCategories.Any(m => m.UserId == u.Id && m.ShiftCategoryId == catId));
+        }
 
         var users = await userQuery
             .Select(u => new { u.Id, u.DisplayName, u.AvatarFileName })
@@ -472,6 +477,11 @@ public class JusticeService : IJusticeService
                         && u.AccountType != AccountType.GroupUser);
         if (q.WorkType is JusticeWorkType.Shift or JusticeWorkType.All)
             usersQuery = usersQuery.Where(u => u.DoesShifts);
+        if (q.ShiftCategoryId is int catId)
+        {
+            usersQuery = usersQuery.Where(u => u.DoesShifts
+                && _db.UserShiftCategories.Any(m => m.UserId == u.Id && m.ShiftCategoryId == catId));
+        }
 
         var users = await usersQuery
             .Select(u => new { u.Id, u.DisplayName, u.AvatarFileName, u.CompanyId })
@@ -559,6 +569,10 @@ public class JusticeService : IJusticeService
                                          && a.ShiftInstance.ShiftType.Key != ShiftType.KEY_HOME_PM
                                          && a.ShiftInstance.ShiftType.Key != ShiftType.KEY_OFFLINE);
             }
+            if (q.ShiftCategoryId is int catId)
+            {
+                shiftQ = shiftQ.Where(a => a.ShiftInstance.ShiftType.CategoryId == catId);
+            }
             var shiftRows = await shiftQ
                 .GroupBy(a => a.UserId!.Value)
                 .Select(g => new { UserId = g.Key, Count = g.Count() })
@@ -640,6 +654,10 @@ public class JusticeService : IJusticeService
                                     && si.ShiftType.Key != ShiftType.KEY_HOME_AM
                                     && si.ShiftType.Key != ShiftType.KEY_HOME_PM
                                     && si.ShiftType.Key != ShiftType.KEY_OFFLINE);
+        }
+        if (q.ShiftCategoryId is int catId)
+        {
+            query = query.Where(si => si.ShiftType.CategoryId == catId);
         }
         var rows = await query
             .GroupBy(si => si.CompanyId)
