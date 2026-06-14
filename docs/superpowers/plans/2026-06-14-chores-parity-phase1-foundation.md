@@ -122,7 +122,8 @@ namespace ShiftManager.Models.Support;
 /// <summary>
 /// Sensitive personal attribute used ONLY for gender-segregated chore eligibility
 /// (male-only / female-only chores). Unspecified is the backfill default and means
-/// "not recorded" — it FAILS gender-restricted chores (fail-closed).
+/// "not recorded". A gender-restricted chore produces an OVERRIDEABLE WARNING for any
+/// non-matching user (including Unspecified) — the manager may override (decided 2026-06-14).
 /// </summary>
 public enum Gender
 {
@@ -363,7 +364,7 @@ git commit -m "feat(chores): add ChoreTemplate (reusable stamp definition)"
 - [ ] **Step 1: `Models/AppUser.cs`** — add after the `ShiftCategories` nav (line 118). `using ShiftManager.Models.Support;` is already present (line 1).
 
 ```csharp
-    /// <summary>Sensitive: gender-segregated chore eligibility only. Default Unspecified (fail-closed).</summary>
+    /// <summary>Sensitive: gender-segregated chore eligibility only. Default Unspecified. Editable by any user-editor (no dedicated grant).</summary>
     public Gender Gender { get; set; } = Gender.Unspecified;
 
     /// <summary>Whether this user participates in chore scheduling. Mirrors <see cref="DoesShifts"/>.</summary>
@@ -964,4 +965,4 @@ git status   # expect clean except intentional doc/test files already committed
 
 **Type consistency:** `ChoreCategoryId` is `int?` everywhere (Task 7 model, Task 8 SetNull config, Task 9 nullable migration, Task 11 backfill, Task 12 SetNull test). `WeightMinutes` is non-null `int` default **480** (Task 7, Task 9 step 3, Task 11); timed test chores seed 480 and recompute (500→240, 501→270), untimed stays 480. `Forward[]` constant name matches between `ChoreFoundationBackfillSql` (Task 10) and both its consumers (migration Task 10, test Task 11). Enum values (`AccountType.Standard == 0`) used consistently in SQL (`AccountType = 0`) and tests.
 
-**Known dependency for later phases (flagged):** Phases 3-5 task code depends on the spec §13 open product decisions (stamp all-vs-round-robin, DoesChores-OFF semantics, gender visibility/fail-closed). Resolve those before writing the Phase 2-6 plans.
+**Known dependency for later phases (RESOLVED 2026-06-14):** the spec §13 decisions that gated Phases 2-6 are now settled — per-stamp rotate toggle, DoesChores-OFF = prompt keep/cancel, gender = overrideable warning + editable by any user-editor (no new grant), 480-min fallback weight. All Phase 2-6 plans authored.
