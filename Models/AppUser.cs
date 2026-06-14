@@ -94,6 +94,12 @@ public class AppUser : IBelongsToCompany
     public bool DoesShifts { get; set; }
 
     /// <summary>
+    /// Account archetype (Standard/Mil/GroupUser). Orthogonal to JobType + Role.
+    /// Drives capability/visibility via UserCapabilities. Defaults to Standard.
+    /// </summary>
+    public AccountType AccountType { get; set; } = AccountType.Standard;
+
+    /// <summary>
     /// User's assigned home rotation type. Single source of truth for home type assignment.
     /// NULL = no rotation assigned.
     /// </summary>
