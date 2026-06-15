@@ -16332,4 +16332,8 @@
   <data name="Error_ChoreRequiresGenderMale" xml:space="preserve"><value>תורנות זו מוגבלת לגברים בלבד.</value></data>
   <data name="Error_ChoreRequiresGenderFemale" xml:space="preserve"><value>תורנות זו מוגבלת לנשים בלבד.</value></data>
   <data name="Error_ChoreGenderUnspecified" xml:space="preserve"><value>תורנות זו מגבילה לפי מגדר ומגדר המשתמש אינו מתועד.</value></data>
+  <data name="Elig_RequiresGender" xml:space="preserve"><value>מוגבל מגדר</value></data>
+  <data name="Elig_RequiresOfficerRank" xml:space="preserve"><value>קצינים בלבד</value></data>
+  <data name="Elig_Exempt" xml:space="preserve"><value>פטור</value></data>
+  <data name="Elig_Blocked" xml:space="preserve"><value>חסום</value></data>
 </root>

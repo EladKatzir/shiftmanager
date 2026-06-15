@@ -3952,6 +3952,19 @@
     margin-bottom: 12px;
 }
 
+/* Eligibility reason-chip container under the chore-type dropdown (chores parity Phase 4).
+   Chip styling itself lives in components.css (.elig-chip); this only spaces it from the select. */
+.bottom-sheet__elig-hint {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    empty-cells: hide;
+}
+.bottom-sheet__elig-hint:empty {
+    margin-top: 0;
+}
+
 .bottom-sheet__field-label {
     display: block;
     font-size: 0.85rem;

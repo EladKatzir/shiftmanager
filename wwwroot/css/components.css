@@ -3929,3 +3929,35 @@ picture img {
     padding-bottom: 120px;
   }
 }
+
+/* ===========================================================================
+   Chore eligibility reason chips (eligibility-chip.js — chores parity Phase 4)
+   Consumed by the chore bottom-sheet picker + the justice drawer. Sensitive ≠
+   alarming: muted, bordered. Each variant pairs a soft tinted background with the
+   STRONG semantic color for the text (mirrors .badge--danger / .badge--warning),
+   which is contrast-safe in BOTH light and dark themes — so no dark-mode color
+   override is needed (avoids the --warning-text dark-on-dark trap). Color is set
+   with !important per the project's text-contrast rule. RTL uses logical margin.
+   =========================================================================== */
+.elig-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.45rem;
+  margin-inline-end: 0.25rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.elig-chip--block {
+  background: var(--danger-soft);
+  color: var(--danger) !important;   /* strong red — readable on danger-soft in both themes */
+  border-color: var(--danger);
+}
+.elig-chip--warn {
+  background: var(--warning-soft);
+  color: var(--warning) !important;  /* strong amber — readable on warning-soft in both themes */
+  border-color: var(--warning);
+}

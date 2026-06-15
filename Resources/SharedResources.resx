@@ -16370,4 +16370,8 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_ChoreRequiresGenderMale" xml:space="preserve"><value>This chore is restricted to male personnel.</value></data>
   <data name="Error_ChoreRequiresGenderFemale" xml:space="preserve"><value>This chore is restricted to female personnel.</value></data>
   <data name="Error_ChoreGenderUnspecified" xml:space="preserve"><value>This chore is gender-restricted and this user's gender is not recorded.</value></data>
+  <data name="Elig_RequiresGender" xml:space="preserve"><value>Gender restricted</value></data>
+  <data name="Elig_RequiresOfficerRank" xml:space="preserve"><value>Officers only</value></data>
+  <data name="Elig_Exempt" xml:space="preserve"><value>Exempt</value></data>
+  <data name="Elig_Blocked" xml:space="preserve"><value>Blocked</value></data>
 </root>
