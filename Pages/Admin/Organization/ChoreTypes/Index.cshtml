@@ -63,7 +63,7 @@
         .data-table tbody tr { border-bottom: 1px solid var(--border); transition: background-color 0.15s ease; }
         .data-table tbody tr:hover { background: var(--surface-soft); }
         .data-table td { padding: 1rem 0.875rem; font-size: 0.9375rem; color: var(--text); }
-        .table-actions { display: flex; gap: 0.5rem; white-space: nowrap; }
+        .table-actions { display: flex; gap: 0.5rem; white-space: nowrap; flex-wrap: wrap; }
 
         .badge {
             display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px;
@@ -76,6 +76,20 @@
             display: inline-block; width: 20px; height: 20px; border-radius: 4px;
             border: 1px solid var(--border); vertical-align: middle; margin-right: 0.5rem;
         }
+        .color-dot {
+            display: inline-block; width: 14px; height: 14px; border-radius: 9999px;
+            border: 1px solid var(--border); vertical-align: middle;
+        }
+
+        /* Eligibility reason chips — sensitive≠alarming: muted, bordered; pair bg + explicit text + !important. */
+        .elig-chip {
+            display: inline-flex; align-items: center; padding: 0.15rem 0.5rem; margin: 0 0.2rem 0.2rem 0;
+            border-radius: 9999px; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border);
+        }
+        .elig-chip--gender { background: var(--info-soft); color: var(--info) !important; }
+        .elig-chip--officer { background: var(--warning-soft); color: var(--warning-text) !important; }
+        :root[data-theme="dark"] .elig-chip--gender { color: var(--info) !important; }
+        :root[data-theme="dark"] .elig-chip--officer { color: var(--warning-text) !important; }
 
         .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-muted); }
 
@@ -85,6 +99,14 @@
         .edit-form-grid { display: flex; gap: 0.75rem; align-items: end; flex-wrap: wrap; }
         .edit-form-grid .form-group { margin-bottom: 0; min-width: 140px; }
         .edit-form-grid .form-input { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+
+        /* Exemptions dialog */
+        dialog.exemptions-dialog { border: none; border-radius: 0.75rem; padding: 0; max-width: 560px; width: 92%;
+            background: var(--surface); color: var(--text); box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+        dialog.exemptions-dialog::backdrop { background: rgba(0,0,0,0.45); }
+        .ex-list { margin: 0.75rem 0; }
+        .ex-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+            padding: 0.5rem 0.25rem; border-bottom: 1px solid var(--border); }
 
         @@media (max-width: 768px) {
             .page-title { font-size: 1.75rem; }
@@ -132,6 +154,121 @@
 @if (Model.MoleculeId.HasValue)
 {
     <div class="section-card">
+        <h3 class="section-header"><loc key="ChoreCategories" /> (@Model.Categories.Count)</h3>
+        <div class="info-box"><loc key="ChoreCategoriesInfo" /></div>
+
+        <form method="post" asp-page-handler="CreateCategory">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label"><loc key="Name" /> <span class="form-label-required">*</span></label>
+                    <input class="form-input" asp-for="CategoryName" required maxlength="100" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@Localizer["DisplayName"] <span class="form-label-required">*</span></label>
+                    <input class="form-input" asp-for="CategoryDisplayName" required maxlength="100" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@Localizer["NameEnglish"]</label>
+                    <input class="form-input" asp-for="CategoryNameEn" maxlength="100" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@Localizer["NameHebrew"]</label>
+                    <input class="form-input" asp-for="CategoryNameHe" maxlength="100" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@Localizer["Color"]</label>
+                    <input class="form-input" type="color" asp-for="CategoryColor" value="#3b82f6" />
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit"><loc key="CreateChoreCategory" /></button>
+        </form>
+
+        @if (Model.Categories.Any())
+        {
+            <div style="overflow-x:auto; margin-top:1.25rem;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="DisplayName" /></th>
+                            <th>@Localizer["NameEnglish"]</th>
+                            <th>@Localizer["NameHebrew"]</th>
+                            <th><loc key="Color" /></th>
+                            <th><loc key="ChoreTypes" /></th>
+                            <th><loc key="Members" /></th>
+                            <th style="width:1%"><loc key="Actions" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <tr id="cat-row-@c.Id">
+                            <td><strong>@c.DisplayName</strong></td>
+                            <td><small>@(c.NameEn ?? "-")</small></td>
+                            <td><small>@(c.NameHe ?? "-")</small></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(c.Color))
+                                {
+                                    <span class="color-dot" style="background-color: @c.Color;"></span>
+                                }
+                                else { <span style="color: var(--text-muted);">-</span> }
+                            </td>
+                            <td>@c.ChoreTypeCount</td>
+                            <td>@c.MemberCount</td>
+                            <td>
+                                <div class="table-actions">
+                                    <button type="button" class="btn btn-ghost js-edit-toggle" data-target="cat-edit-@c.Id">@Localizer["Edit"]</button>
+                                    <form method="post" asp-page-handler="DeleteCategory" style="display:inline"
+                                          onsubmit="return confirm('@Localizer["ChoreCategoryDeleteConfirm"]');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@c.Id" />
+                                        <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+                                        <button type="submit" class="btn btn-danger">@Localizer["Delete"]</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="edit-row" id="cat-edit-@c.Id">
+                            <td colspan="7">
+                                <form method="post" asp-page-handler="UpdateCategory">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="CategoryEditId" value="@c.Id" />
+                                    <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+                                    <div class="edit-form-grid">
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["DisplayName"]</label>
+                                            <input class="form-input" name="CategoryEditDisplayName" value="@c.DisplayName" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["NameEnglish"]</label>
+                                            <input class="form-input" name="CategoryEditNameEn" value="@(c.NameEn ?? "")" maxlength="100" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["NameHebrew"]</label>
+                                            <input class="form-input" name="CategoryEditNameHe" value="@(c.NameHe ?? "")" maxlength="100" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["Color"]</label>
+                                            <input class="form-input" type="color" name="CategoryEditColor" value="@(c.Color ?? "#3b82f6")" />
+                                        </div>
+                                        <div class="form-group" style="align-self:end;">
+                                            <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
+                                            <button type="button" class="btn btn-ghost js-edit-cancel" data-target="cat-edit-@c.Id">@Localizer["Cancel"]</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else { <p class="empty-state"><loc key="NoChoreCategoriesYet" /></p> }
+    </div>
+
+    <div class="section-card">
         <h3 class="section-header"><loc key="CreateNewChoreType" /></h3>
 
         <form method="post" asp-page-handler="Create">
@@ -157,6 +294,26 @@
                     <label class="form-label">@Localizer["Color"]</label>
                     <input class="form-input" type="color" asp-for="ChoreTypeColor" value="#3b82f6" />
                 </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="ChoreCategory" /></label>
+                    <select class="form-select" asp-for="ChoreTypeCategoryId">
+                        <option value=""><loc key="Uncategorized" /></option>
+                        @foreach (var c in Model.CategoryOptions)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="DefaultWeight" /></label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <input class="form-input" type="number" asp-for="CreateWeightHours" min="0" max="24" style="width:5rem;" />
+                        <span><loc key="Hours_Short" /></span>
+                        <input class="form-input" type="number" asp-for="CreateWeightMinutes" min="0" max="59" style="width:5rem;" />
+                        <span><loc key="Minutes_Short" /></span>
+                    </div>
+                    <small style="color:var(--text-muted);"><loc key="DefaultWeightHint" /></small>
+                </div>
             </div>
             <button class="btn btn-primary" type="submit"><loc key="CreateChoreType" /></button>
         </form>
@@ -173,9 +330,9 @@
                             <th><loc key="DisplayName" /></th>
                             <th>@Localizer["NameEnglish"]</th>
                             <th>@Localizer["NameHebrew"]</th>
-                            <th><loc key="Name" /></th>
                             <th><loc key="Color" /></th>
-                            <th><loc key="SortOrder" /></th>
+                            <th><loc key="DefaultWeight" /></th>
+                            <th><loc key="Eligibility" /></th>
                             <th><loc key="Chores" /></th>
                             <th><loc key="Status" /></th>
                             <th style="width:1%"><loc key="Actions" /></th>
@@ -184,23 +341,42 @@
                     <tbody>
                     @foreach (var ct in Model.ChoreTypes)
                     {
+                        var h = (ct.DefaultWeightMinutes ?? 0) / 60;
+                        var min = (ct.DefaultWeightMinutes ?? 0) % 60;
                         <tr id="row-@ct.Id">
-                            <td><strong>@(ct.DisplayName)</strong></td>
+                            <td>
+                                <strong>@(ct.DisplayName)</strong>
+                                <div><small style="color: var(--text-muted);">@(ct.Name)</small></div>
+                            </td>
                             <td><small>@(ct.NameEn ?? "-")</small></td>
                             <td><small>@(ct.NameHe ?? "-")</small></td>
-                            <td><small style="color: var(--text-muted);">@(ct.Name)</small></td>
                             <td>
                                 @if (!string.IsNullOrEmpty(ct.Color))
                                 {
-                                    <span class="color-swatch" style="background-color: @ct.Color;"></span>
-                                    <code>@ct.Color</code>
+                                    <span class="color-dot" style="background-color: @ct.Color;"></span>
                                 }
                                 else
                                 {
                                     <span style="color: var(--text-muted);">-</span>
                                 }
                             </td>
-                            <td>@ct.SortOrder</td>
+                            <td>
+                                @if (ct.DefaultWeightMinutes.HasValue)
+                                {
+                                    <span>@h<loc key="Hours_Short" /> @min<loc key="Minutes_Short" /></span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-muted);">-</span>
+                                }
+                            </td>
+                            <td>
+                                @foreach (var key in ct.EligibilityChipKeys)
+                                {
+                                    <span class="elig-chip elig-chip--@(key.Contains("Officer") ? "officer" : "gender")">@Localizer[key]</span>
+                                }
+                                @if (!ct.EligibilityChipKeys.Any()) { <span style="color:var(--text-muted);">-</span> }
+                            </td>
                             <td>@ct.ChoreCount</td>
                             <td>
                                 @if (ct.IsActive)
@@ -217,6 +393,7 @@
                                     <button type="button" class="btn btn-ghost js-edit-toggle" data-target="edit-@ct.Id">
                                         @Localizer["Edit"]
                                     </button>
+                                    <button type="button" class="btn btn-ghost js-exemptions" data-chore-type-id="@ct.Id" data-type-name="@ct.DisplayName">@Localizer["Exemptions"]</button>
                                     @if (ct.IsActive)
                                     {
                                         <form method="post" asp-page-handler="Deactivate" style="display:inline">
@@ -262,6 +439,42 @@
                                             <label class="form-label">@Localizer["SortOrder"]</label>
                                             <input class="form-input" type="number" name="EditSortOrder" value="@ct.SortOrder" min="0" />
                                         </div>
+                                        <div class="form-group">
+                                            <label class="form-label"><loc key="ChoreCategory" /></label>
+                                            <select class="form-select" name="EditCategoryId">
+                                                <option value=""><loc key="Uncategorized" /></option>
+                                                @foreach (var c in Model.CategoryOptions)
+                                                {
+                                                    <option value="@c.Id" selected="@(ct.ChoreCategoryId == c.Id)">@c.Name</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label"><loc key="DefaultWeight" /></label>
+                                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                                                <input class="form-input" type="number" name="EditWeightHours" value="@h" min="0" max="24" style="width:4.5rem;" />
+                                                <span><loc key="Hours_Short" /></span>
+                                                <input class="form-input" type="number" name="EditWeightMinutes" value="@min" min="0" max="59" style="width:4.5rem;" />
+                                                <span><loc key="Minutes_Short" /></span>
+                                            </div>
+                                        </div>
+                                        <fieldset class="form-group" style="border:1px solid var(--border); border-radius:8px; padding:0.75rem; min-width:240px;">
+                                            <legend style="font-size:0.8125rem; color:var(--text-muted);"><loc key="Eligibility" /></legend>
+                                            <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+                                                <label style="display:inline-flex; gap:0.35rem; align-items:center;">
+                                                    <input type="radio" name="EditRequiredGender" value="0" checked="@(!ct.EligibilityChipKeys.Contains("Elig_GenderMale") && !ct.EligibilityChipKeys.Contains("Elig_GenderFemale"))" /> <loc key="Elig_GenderAny" />
+                                                </label>
+                                                <label style="display:inline-flex; gap:0.35rem; align-items:center;">
+                                                    <input type="radio" name="EditRequiredGender" value="1" checked="@(ct.EligibilityChipKeys.Contains("Elig_GenderMale"))" /> <loc key="Elig_GenderMale" />
+                                                </label>
+                                                <label style="display:inline-flex; gap:0.35rem; align-items:center;">
+                                                    <input type="radio" name="EditRequiredGender" value="2" checked="@(ct.EligibilityChipKeys.Contains("Elig_GenderFemale"))" /> <loc key="Elig_GenderFemale" />
+                                                </label>
+                                                <label style="display:inline-flex; gap:0.35rem; align-items:center;">
+                                                    <input type="checkbox" name="EditRequiresOfficer" value="true" checked="@(ct.EligibilityChipKeys.Contains("Elig_Officer"))" /> <loc key="Elig_RequiresOfficer" />
+                                                </label>
+                                            </div>
+                                        </fieldset>
                                         <div class="form-group" style="align-self: end;">
                                             <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
                                             <button type="button" class="btn btn-ghost js-edit-cancel" data-target="edit-@ct.Id">@Localizer["Cancel"]</button>
@@ -280,6 +493,30 @@
             <p class="empty-state"><loc key="NoChoreTypesYet" /></p>
         }
     </div>
+
+    <dialog id="exemptionsDialog" class="exemptions-dialog">
+        <div style="padding:1.5rem;">
+            <h2 class="section-header" style="margin-top:0;"><loc key="Exemptions" />: <span id="exDialogTypeName"></span></h2>
+            <div id="exList" class="ex-list"></div>
+            <div style="border-top:1px solid var(--border); padding-top:1rem;">
+                <div class="form-group">
+                    <label class="form-label"><loc key="ExemptionUser" /></label>
+                    <select class="form-select" id="exUserPicker"></select>
+                </div>
+                <div class="form-group" style="margin-top:0.75rem;">
+                    <label class="form-label"><loc key="ExemptionReason" /></label>
+                    <input class="form-input" id="exReason" maxlength="200" />
+                    <small style="color:var(--text-muted);"><loc key="ExemptionReasonHint" /></small>
+                </div>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                    <button type="button" class="btn btn-ghost" id="exCloseBtn"><loc key="Button_Cancel" /></button>
+                    <button type="button" class="btn btn-primary" id="exAddBtn"><loc key="ExemptionAdd" /></button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    @* Ensures token() always finds an antiforgery field even when no other form is rendered. *@
+    @Html.AntiForgeryToken()
 }
 
 @section Scripts {
@@ -305,6 +542,114 @@
                 }
                 return;
             }
+        });
+    })();
+
+    // Exemptions manager (separate IIFE — no cross-IIFE function references).
+    (function() {
+        var dialog = document.getElementById('exemptionsDialog');
+        if (!dialog) return;
+        var typeNameEl = document.getElementById('exDialogTypeName');
+        var listEl = document.getElementById('exList');
+        var pickerEl = document.getElementById('exUserPicker');
+        var reasonEl = document.getElementById('exReason');
+        var addBtn = document.getElementById('exAddBtn');
+        var closeBtn = document.getElementById('exCloseBtn');
+        var currentTypeId = null;
+        var L = {
+            none: @Html.Raw(Json.Serialize(Localizer["ExemptionNone"].Value)),
+            remove: @Html.Raw(Json.Serialize(Localizer["Delete"].Value)),
+            failed: @Html.Raw(Json.Serialize(Localizer["Error_FailedToUpdate"].Value))
+        };
+
+        function token() {
+            var el = document.querySelector('input[name="__RequestVerificationToken"]');
+            return el ? el.value : '';
+        }
+
+        function showError(msg) {
+            if (window.FeedbackModal && window.FeedbackModal.show) { window.FeedbackModal.show('error', msg); }
+        }
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function(ch) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+            });
+        }
+
+        function render(data) {
+            // Exemption list
+            if (!data.exemptions || data.exemptions.length === 0) {
+                listEl.innerHTML = '<p style="color:var(--text-muted);">' + escapeHtml(L.none) + '</p>';
+            } else {
+                var html = '';
+                data.exemptions.forEach(function(ex) {
+                    html += '<div class="ex-row"><span>' + escapeHtml(ex.name) +
+                        (ex.reason ? ' <small style="color:var(--text-muted);">(' + escapeHtml(ex.reason) + ')</small>' : '') +
+                        '</span><button type="button" class="btn btn-danger js-ex-remove" data-user-id="' + ex.userId + '">' + escapeHtml(L.remove) + '</button></div>';
+                });
+                listEl.innerHTML = html;
+            }
+            // Candidate picker
+            pickerEl.innerHTML = '';
+            (data.candidates || []).forEach(function(cand) {
+                var opt = document.createElement('option');
+                opt.value = cand.id;
+                opt.textContent = cand.name;
+                pickerEl.appendChild(opt);
+            });
+        }
+
+        function load(typeId) {
+            fetch('?handler=Exemptions&choreTypeId=' + encodeURIComponent(typeId), { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.ok) { showError(L.failed); return; }
+                    render(data);
+                })
+                .catch(function() { showError(L.failed); });
+        }
+
+        document.addEventListener('click', function(e) {
+            var openBtn = e.target.closest('.js-exemptions');
+            if (openBtn) {
+                currentTypeId = parseInt(openBtn.getAttribute('data-chore-type-id'), 10);
+                typeNameEl.textContent = openBtn.getAttribute('data-type-name') || '';
+                reasonEl.value = '';
+                load(currentTypeId);
+                if (typeof dialog.showModal === 'function') { dialog.showModal(); } else { dialog.setAttribute('open', ''); }
+                return;
+            }
+            var removeBtn = e.target.closest('.js-ex-remove');
+            if (removeBtn && currentTypeId != null) {
+                var userId = parseInt(removeBtn.getAttribute('data-user-id'), 10);
+                fetch('?handler=RemoveExemption', {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+                    body: JSON.stringify({ ChoreTypeId: currentTypeId, UserId: userId })
+                }).then(function(r) { return r.json(); })
+                  .then(function(res) { if (res.success) { load(currentTypeId); } else { showError(L.failed); } })
+                  .catch(function() { showError(L.failed); });
+                return;
+            }
+        });
+
+        addBtn.addEventListener('click', function() {
+            if (currentTypeId == null || !pickerEl.value) return;
+            fetch('?handler=AddExemption', {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+                body: JSON.stringify({ ChoreTypeId: currentTypeId, UserId: parseInt(pickerEl.value, 10), Reason: reasonEl.value || null })
+            }).then(function(r) { return r.json(); })
+              .then(function(res) {
+                  if (res.success) { reasonEl.value = ''; load(currentTypeId); }
+                  else { showError(res.error || L.failed); }
+              })
+              .catch(function() { showError(L.failed); });
+        });
+
+        closeBtn.addEventListener('click', function() {
+            if (typeof dialog.close === 'function') { dialog.close(); } else { dialog.removeAttribute('open'); }
         });
     })();
     </script>
