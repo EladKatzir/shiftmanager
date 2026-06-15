@@ -501,6 +501,19 @@
         var devBefore = formatDeviation(data.candidateDeviationBefore);
         var devAfter = formatDeviation(data.candidateDeviationAfter);
 
+        // Phase 5 follow-up: for the CHORE work-type the actual is weighted MINUTES, so the server's
+        // +1 "after" is meaningless. Show the prospective chore weight added instead (480 = the
+        // documented per-chore default; there's no per-candidate type at preview time), and render
+        // both numbers as hours. Shift/on-duty keep the raw server before→after (count of items).
+        var actualBeforeLabel = actualBefore;
+        var actualAfterLabel = actualAfter;
+        if (holeContext && holeContext.kind === 'chore' && typeof formatHoursFromMinutes === 'function') {
+            var DEFAULT_CHORE_WEIGHT_MINUTES = 480;
+            var prospectiveAfter = actualBefore + DEFAULT_CHORE_WEIGHT_MINUTES;
+            actualBeforeLabel = formatHoursFromMinutes(actualBefore);
+            actualAfterLabel = formatHoursFromMinutes(prospectiveAfter);
+        }
+
         // Phase 2d: chore CTA is disabled until the title input has a non-empty value.
         // Shifts/onduty have no such gate (they don't need a user-supplied title).
         var choreBlocked = holeContext && holeContext.kind === 'chore' && !choreTitle.trim();
@@ -517,7 +530,7 @@
                 '</div>' +
                 '<div class="justice-preview__row">' +
                     '<span class="justice-preview__label">' + escape(loc('Justice_Panel_Actual', 'Actual')) + '</span>' +
-                    '<span class="justice-preview__value" dir="ltr">' + actualBefore + ' → ' + actualAfter +
+                    '<span class="justice-preview__value" dir="ltr">' + escape(String(actualBeforeLabel)) + ' → ' + escape(String(actualAfterLabel)) +
                     ' <span class="justice-preview__pill" dir="ltr">' + devBefore + ' → ' + devAfter + '</span></span>' +
                 '</div>' +
                 '<div class="justice-preview__cta">' +
