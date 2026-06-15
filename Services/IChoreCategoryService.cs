@@ -16,9 +16,9 @@ public interface IChoreCategoryService
 
     // ---- Category CRUD ----
     /// <summary>Creates a category. Returns null if the (molecule, name) pair already exists.</summary>
-    Task<ChoreCategory?> CreateAsync(int moleculeId, string name, string displayName, string? color = null);
+    Task<ChoreCategory?> CreateAsync(int moleculeId, string name, string displayName, string? color = null, string? nameEn = null, string? nameHe = null);
     /// <summary>Renames/recolors a category. Returns false on not-found or a (molecule, name) collision.</summary>
-    Task<bool> RenameAsync(int categoryId, string name, string displayName, string? color);
+    Task<bool> RenameAsync(int categoryId, string name, string displayName, string? color, string? nameEn = null, string? nameHe = null);
     /// <summary>Hard-deletes a category: cascades its memberships and nulls its chore types' ChoreCategoryId (FK SetNull).</summary>
     Task<bool> DeleteAsync(int categoryId);
 

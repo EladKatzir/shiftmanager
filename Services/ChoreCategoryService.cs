@@ -24,7 +24,7 @@ public class ChoreCategoryService : IChoreCategoryService
     public Task<ChoreCategory?> GetCategoryAsync(int categoryId)
         => _db.ChoreCategories.FirstOrDefaultAsync(c => c.Id == categoryId);
 
-    public async Task<ChoreCategory?> CreateAsync(int moleculeId, string name, string displayName, string? color = null)
+    public async Task<ChoreCategory?> CreateAsync(int moleculeId, string name, string displayName, string? color = null, string? nameEn = null, string? nameHe = null)
     {
         name = name.Trim();
         displayName = string.IsNullOrWhiteSpace(displayName) ? name : displayName.Trim();
@@ -43,6 +43,8 @@ public class ChoreCategoryService : IChoreCategoryService
             MoleculeId = moleculeId,
             Name = name,
             DisplayName = displayName,
+            NameEn = string.IsNullOrWhiteSpace(nameEn) ? null : nameEn.Trim(),
+            NameHe = string.IsNullOrWhiteSpace(nameHe) ? null : nameHe.Trim(),
             Color = string.IsNullOrWhiteSpace(color) ? null : color.Trim(),
             SortOrder = nextSort + 1,
             IsActive = true
@@ -52,7 +54,7 @@ public class ChoreCategoryService : IChoreCategoryService
         return category;
     }
 
-    public async Task<bool> RenameAsync(int categoryId, string name, string displayName, string? color)
+    public async Task<bool> RenameAsync(int categoryId, string name, string displayName, string? color, string? nameEn = null, string? nameHe = null)
     {
         var category = await _db.ChoreCategories.FirstOrDefaultAsync(c => c.Id == categoryId);
         if (category == null)
@@ -73,6 +75,8 @@ public class ChoreCategoryService : IChoreCategoryService
         category.Name = name;
         category.DisplayName = string.IsNullOrWhiteSpace(displayName) ? name : displayName.Trim();
         category.Color = string.IsNullOrWhiteSpace(color) ? null : color.Trim();
+        category.NameEn = string.IsNullOrWhiteSpace(nameEn) ? null : nameEn.Trim();
+        category.NameHe = string.IsNullOrWhiteSpace(nameHe) ? null : nameHe.Trim();
         await _db.SaveChangesAsync();
         return true;
     }
