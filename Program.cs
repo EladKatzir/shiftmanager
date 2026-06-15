@@ -860,6 +860,11 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
+        // AssignShifts collapse (review #3): mirror F2 — heal the de-seeded Assign*Shifts grants
+        // (deprecate the 8 old types, drop their stale template mappings, migrate user grant rows to
+        // the unified AssignShifts) BEFORE the per-user RepairUserGrants passes below re-provision.
+        await ShiftManager.Data.SeedData.AssignShiftsCollapse.HealAsync(db, logger);
+
         // Reconcile mutable fields on existing role-template-grant mappings.
         // Insertion above only adds NEW rows; it never updates rows whose identity keys
         // (RoleTemplateId, GrantTypeId, TargetJobTypeId) already exist but whose ScopeMode /
