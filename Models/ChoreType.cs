@@ -14,7 +14,12 @@ public class ChoreType
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int CreatedByUserId { get; set; }
 
+    // Parity additions
+    public int? ChoreCategoryId { get; set; }       // nullable: types may be uncategorized (mirrors ShiftType.CategoryId)
+    public int? DefaultWeightMinutes { get; set; }  // null → global fallback (480 = 8h) at chore-create time
+
     // Navigation
+    public ChoreCategory? ChoreCategory { get; set; }
     public Molecule Molecule { get; set; } = null!;
     public AppUser CreatedByUser { get; set; } = null!;
     public List<Chore> Chores { get; set; } = new();

@@ -54,6 +54,9 @@ public class Chore : IBelongsToCompany
     /// </summary>
     public string? Notes { get; set; }
 
+    /// <summary>Fairness weight in minutes, frozen at create time (times → ChoreType.DefaultWeightMinutes → 480).</summary>
+    public int WeightMinutes { get; set; }
+
     /// <summary>
     /// User who created/assigned this chore
     /// </summary>

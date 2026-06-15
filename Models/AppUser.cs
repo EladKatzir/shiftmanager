@@ -116,4 +116,16 @@ public class AppUser : IBelongsToCompany
     /// A user in several categories renders as a mirrored row under each.
     /// </summary>
     public List<UserShiftCategory> ShiftCategories { get; set; } = new();
+
+    /// <summary>Sensitive: gender-segregated chore eligibility only. Default Unspecified. Editable by any user-editor (no dedicated grant).</summary>
+    public Gender Gender { get; set; } = Gender.Unspecified;
+
+    /// <summary>Whether this user participates in chore scheduling. Mirrors <see cref="DoesShifts"/>.</summary>
+    public bool DoesChores { get; set; }
+
+    /// <summary>Chore categories this user participates in (N:N). Meaningful only when DoesChores is true.</summary>
+    public List<UserChoreCategory> ChoreCategories { get; set; } = new();
+
+    /// <summary>Per-type chore exemptions (waivers) for this user.</summary>
+    public List<UserChoreExemption> ChoreExemptions { get; set; } = new();
 }

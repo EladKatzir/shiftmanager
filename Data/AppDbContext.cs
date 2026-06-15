@@ -39,6 +39,11 @@ public class AppDbContext : DbContext
     public DbSet<ProfileChangeAudit> ProfileChangeAudits => Set<ProfileChangeAudit>();
     public DbSet<Chore> Chores => Set<Chore>();
     public DbSet<ChoreType> ChoreTypes => Set<ChoreType>();
+    public DbSet<ChoreCategory> ChoreCategories => Set<ChoreCategory>();
+    public DbSet<UserChoreCategory> UserChoreCategories => Set<UserChoreCategory>();
+    public DbSet<EligibilityRule> EligibilityRules => Set<EligibilityRule>();
+    public DbSet<UserChoreExemption> UserChoreExemptions => Set<UserChoreExemption>();
+    public DbSet<ChoreTemplate> ChoreTemplates => Set<ChoreTemplate>();
     public DbSet<ShiftCapacityOverride> ShiftCapacityOverrides => Set<ShiftCapacityOverride>();
     public DbSet<UserDayNote> UserDayNotes => Set<UserDayNote>();
     public DbSet<CalendarTextEntry> CalendarTextEntries => Set<CalendarTextEntry>();
@@ -605,6 +610,77 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.CreatedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(e => new { e.MoleculeId, e.Name }).IsUnique();
+        });
+
+        // ===== Chore↔ShiftType parity (Phase 1 foundation) =====
+        // ChoreCategory: molecule-scoped, NOT tenant-filtered (mirrors ShiftCategory).
+        modelBuilder.Entity<ChoreCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Molecule)
+                .WithMany()
+                .HasForeignKey(e => e.MoleculeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.MoleculeId, e.Name }).IsUnique();
+        });
+
+        // ChoreType → ChoreCategory: nullable (uncategorized allowed), SetNull on category delete
+        // (mirrors ShiftType.CategoryId). WithMany(cc => cc.ChoreTypes) prevents a shadow FK.
+        modelBuilder.Entity<ChoreType>()
+            .HasOne(ct => ct.ChoreCategory)
+            .WithMany(cc => cc.ChoreTypes)
+            .HasForeignKey(ct => ct.ChoreCategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ChoreType>()
+            .HasIndex(ct => ct.ChoreCategoryId);
+
+        // UserChoreCategory: N:N user↔category, unique per pair (mirrors UserShiftCategory).
+        modelBuilder.Entity<UserChoreCategory>()
+            .HasIndex(ucc => new { ucc.UserId, ucc.ChoreCategoryId }).IsUnique();
+        modelBuilder.Entity<UserChoreCategory>()
+            .HasOne(ucc => ucc.User).WithMany(u => u.ChoreCategories)
+            .HasForeignKey(ucc => ucc.UserId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserChoreCategory>()
+            .HasOne(ucc => ucc.ChoreCategory).WithMany(cc => cc.Members)
+            .HasForeignKey(ucc => ucc.ChoreCategoryId).OnDelete(DeleteBehavior.Cascade);
+
+        // EligibilityRule: chore-scoped (per ChoreType), no tenant filter; several rules per type.
+        modelBuilder.Entity<EligibilityRule>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.ChoreTypeId);
+            entity.HasOne(e => e.ChoreType).WithMany()
+                .HasForeignKey(e => e.ChoreTypeId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Creator).WithMany()
+                .HasForeignKey(e => e.CreatedBy).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // UserChoreExemption: per-person waiver, unique per (user, type).
+        modelBuilder.Entity<UserChoreExemption>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.UserId, e.ChoreTypeId }).IsUnique();
+            entity.HasOne(e => e.User).WithMany(u => u.ChoreExemptions)
+                .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ChoreType).WithMany()
+                .HasForeignKey(e => e.ChoreTypeId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Creator).WithMany()
+                .HasForeignKey(e => e.CreatedBy).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ChoreTemplate: molecule-scoped reusable definition; TimeOnly props need the converter.
+        modelBuilder.Entity<ChoreTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.MoleculeId, e.IsActive });
+            entity.Property(e => e.StartTime).HasConversion(timeConverter);
+            entity.Property(e => e.EndTime).HasConversion(timeConverter);
+            entity.HasOne(e => e.Molecule).WithMany()
+                .HasForeignKey(e => e.MoleculeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ChoreType).WithMany()
+                .HasForeignKey(e => e.ChoreTypeId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Creator).WithMany()
+                .HasForeignKey(e => e.CreatedBy).OnDelete(DeleteBehavior.Restrict);
         });
 
         // Configure ShiftCapacityOverride (Excel Calendars feature)
