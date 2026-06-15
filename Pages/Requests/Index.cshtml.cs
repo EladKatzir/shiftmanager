@@ -90,7 +90,7 @@ public partial class IndexModel : LocalizedPageModel
     /// </summary>
     public List<ApproverOption> AvailableApprovers { get; set; } = new();
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
         try
         {
@@ -101,14 +101,14 @@ public partial class IndexModel : LocalizedPageModel
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var currentUserId))
             {
                 Error = _localizer["Error_UserNotAuthenticated"];
-                return;
+                return Page();
             }
 
             var currentUser = await _db.Users.FindAsync(currentUserId);
             if (currentUser == null)
             {
                 Error = _localizer["Error_UserNotFound"];
-                return;
+                return Page();
             }
 
             // ACCOUNT TYPE GATE: Only Standard accounts may access the Requests surface.
@@ -116,8 +116,7 @@ public partial class IndexModel : LocalizedPageModel
             {
                 TempData["ErrorMessage"] = _localizer["Requests_Locked_AccountType"].Value;
                 TempData["ErrorId"] = HttpContext.TraceIdentifier;
-                Response.Redirect("/Index");
-                return;
+                return RedirectToPage("/Index");
             }
 
             // Check if user has manager-level access (can approve/decline requests)
@@ -160,7 +159,7 @@ public partial class IndexModel : LocalizedPageModel
                     .ToListAsync();
 
                 LogLoadedEmployeeSummary(_logger, TimeOff.Count, Swaps.Count, ApprovedTimeOffs.Count);
-                return;
+                return Page();
             }
 
             // Manager requests time-off for THEMSELVES via the embedded card — load the approver
@@ -259,6 +258,8 @@ public partial class IndexModel : LocalizedPageModel
             LogErrorLoadingAdminPage(_logger, ex);
             Error = _localizer["Error_LoadingRequests"];
         }
+
+        return Page();
     }
 
     /// <summary>

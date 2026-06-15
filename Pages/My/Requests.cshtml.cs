@@ -59,7 +59,7 @@ public partial class RequestsModel : LocalizedPageModel
     // Message property removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
     // Error property is inherited from LocalizedPageModel; we no longer assign to it.
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
         try
         {
@@ -70,7 +70,7 @@ public partial class RequestsModel : LocalizedPageModel
             {
                 LogInvalidNameIdentifierClaim(_logger);
                 TempData["ErrorMessage"] = _localizer["Error_AuthenticationError"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
-                return;
+                return Page();
             }
             LogUserId(_logger, userId);
 
@@ -80,8 +80,7 @@ public partial class RequestsModel : LocalizedPageModel
             {
                 TempData["ErrorMessage"] = _localizer["Requests_Locked_AccountType"].Value;
                 TempData["ErrorId"] = HttpContext.TraceIdentifier;
-                Response.Redirect("/Index");
-                return;
+                return RedirectToPage("/Index");
             }
 
             // Load user's time off requests
@@ -184,6 +183,8 @@ public partial class RequestsModel : LocalizedPageModel
             LogErrorOnGet(_logger, ex);
             TempData["ErrorMessage"] = _localizer["Error_LoadingRequestsFailed"].Value; TempData["ErrorId"] = HttpContext.TraceIdentifier;
         }
+
+        return Page();
     }
 
     [BindProperty]
