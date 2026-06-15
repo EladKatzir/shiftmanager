@@ -405,6 +405,16 @@
                 ? '<span class="justice-candidate__status justice-candidate__status--warn" title="' + escape((c.warnings || []).join(', ')) + '">⚠</span>'
                 : '<span class="justice-candidate__status justice-candidate__status--ok">✓</span>');
 
+        // Visible reason chips (chore parity Phase 4) — additive to the existing status glyph + title.
+        // Delegated to the shared EligibilityChip helper for DRY with the chore bottom-sheet; guarded so the
+        // drawer still renders if the helper failed to load.
+        var eligChips = (window.EligibilityChip)
+            ? window.EligibilityChip.renderChips({
+                hardReasons: c.hardBlockReason ? [c.hardBlockReason] : [],
+                warnings: c.warnings || []
+              })
+            : '';
+
         return '<li class="justice-candidate ' + (isBlocked ? 'justice-candidate--blocked' : '') + '" ' +
                'data-justice-candidate-user="' + escape(String(c.userId)) + '" ' +
                'data-justice-candidate-blocked="' + (isBlocked ? '1' : '0') + '">' +
@@ -416,6 +426,7 @@
                     '<span class="justice-candidate__meta">' +
                         '<span class="justice-candidate__pill dev-band-' + escape(band) + '" dir="ltr">' + dev + '</span>' +
                         statusGlyph +
+                        eligChips +
                     '</span>' +
                 '</span>' +
             '</button>' +

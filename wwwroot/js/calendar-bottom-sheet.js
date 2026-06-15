@@ -364,6 +364,10 @@
             // Chore-specific fields: title input + chore type dropdown
             var choreTitleInput = null;
             var choreTypeDropdown = null;
+            // Eligibility hint element + refresh fn (chore parity Phase 4). Declared at function scope so
+            // the seed call placed after assignBtn can reach refreshElig; assigned inside the chores block.
+            var eligHint = null;
+            var refreshElig = null;
             if (calendarType === 'chores') {
                 // Chore title input
                 var titleFieldGroup = document.createElement('div');
@@ -404,7 +408,39 @@
                         choreTypeDropdown.appendChild(ctOpt);
                     }
                     ctFieldGroup.appendChild(choreTypeDropdown);
+
+                    // Eligibility hint (chore parity Phase 4): when both a chore type and a user are chosen,
+                    // fetch the (user × type) eligibility and render reason chips. Hard block (officer/exempt)
+                    // disables Assign; a gender warning shows a chip but stays selectable (manager overrides
+                    // at assign time). DISPLAY hint only — BusyService.ValidateChoreAsync is the real gate.
+                    eligHint = document.createElement('div');
+                    eligHint.className = 'bottom-sheet__elig-hint';
+                    eligHint.id = 'bottom-sheet-elig-hint';
+                    ctFieldGroup.appendChild(eligHint);
+
                     addSection.appendChild(ctFieldGroup);
+
+                    // refreshElig references userSelect + assignBtn (declared lower in this function scope).
+                    // It is only INVOKED after those vars execute (via change events / the seed call placed
+                    // after assignBtn exists), so the closure resolves them correctly (CLAUDE.md §1 gate).
+                    refreshElig = function () {
+                        var cfg = window.CalendarPageConfig;
+                        var typeId = choreTypeDropdown ? parseInt(choreTypeDropdown.value, 10) : NaN;
+                        var uId = (typeof userSelect !== 'undefined' && userSelect) ? parseInt(userSelect.value, 10) : NaN;
+                        if (eligHint) eligHint.innerHTML = '';
+                        if (typeof assignBtn !== 'undefined' && assignBtn) assignBtn.disabled = false;
+                        if (!cfg || !(cfg.moleculeId > 0) || isNaN(typeId) || typeId <= 0 || isNaN(uId) || uId <= 0) return;
+                        fetch('/Api/Calendar/GetChoreEligibilityForCandidate?moleculeId=' + cfg.moleculeId +
+                              '&userId=' + uId + '&choreTypeId=' + typeId, { credentials: 'same-origin' })
+                            .then(function (r) { return r.ok ? r.json() : null; })
+                            .then(function (data) {
+                                if (!data || !data.success || !window.EligibilityChip) return;
+                                if (eligHint) eligHint.innerHTML = window.EligibilityChip.renderChips(data);
+                                if (typeof assignBtn !== 'undefined' && assignBtn && data.isHardBlocked) assignBtn.disabled = true;
+                            })
+                            .catch(function (err) { console.warn('Eligibility hint failed:', err); });
+                    };
+                    choreTypeDropdown.addEventListener('change', refreshElig);
                 }
             }
 
@@ -499,6 +535,13 @@
                 }
             });
             actionsEl.appendChild(assignBtn);
+
+            // Wire the chore eligibility hint now that userSelect + assignBtn both exist (closure-safe).
+            // The user dropdown changes the assignee; the chore-type dropdown change is wired above.
+            if (calendarType === 'chores' && refreshElig) {
+                userSelect.addEventListener('change', refreshElig);
+                refreshElig(); // seed the hint for the row's default user + selected type
+            }
         }
 
         // Cancel button

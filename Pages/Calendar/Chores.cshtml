@@ -256,9 +256,18 @@
 </div>
 
 @section Scripts {
+    <script>
+        // Shared calendar config consumed by calendar-bottom-sheet.js (busy + eligibility decoration).
+        // Chores are molecule-scoped and never "Tech" (a shift concept), so isTechMolecule is always false.
+        window.CalendarPageConfig = {
+            isTechMolecule: false,
+            moleculeId: @(Model.MoleculeId ?? 0)
+        };
+    </script>
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-sticky-shadows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
+    <script src="~/js/eligibility-chip.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
     <script src="~/js/calendar-keyboard-nav.js" asp-append-version="true"></script>
     <script src="~/js/calendar-tools-overflow.js" asp-append-version="true"></script>

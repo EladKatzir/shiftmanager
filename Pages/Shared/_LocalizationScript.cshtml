@@ -313,6 +313,13 @@
         "Justice_Panel_CandidatesLoadFailed": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Justice_Panel_CandidatesLoadFailed"].Value)),
         "Justice_Panel_MissingDutyType": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Justice_Panel_MissingDutyType"].Value)),
         "Justice_Panel_ChoreTypeLabel": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Justice_Panel_ChoreTypeLabel"].Value)),
-        "Justice_Panel_ChoreTitlePlaceholder": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Justice_Panel_ChoreTitlePlaceholder"].Value))
+        "Justice_Panel_ChoreTitlePlaceholder": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Justice_Panel_ChoreTitlePlaceholder"].Value)),
+
+        // Chore eligibility chips (eligibility-chip.js / calendar-bottom-sheet.js) — Phase 4.
+        // Endpoint returns these pre-localized; the keys here back the JS loc() fallback.
+        "Elig_RequiresGender": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Elig_RequiresGender"].Value)),
+        "Elig_RequiresOfficerRank": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Elig_RequiresOfficerRank"].Value)),
+        "Elig_Exempt": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Elig_Exempt"].Value)),
+        "Elig_Blocked": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Elig_Blocked"].Value))
     };
 </script>
