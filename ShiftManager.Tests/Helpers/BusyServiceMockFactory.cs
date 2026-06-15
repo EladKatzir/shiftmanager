@@ -104,7 +104,8 @@ public static class BusyServiceMockFactory
             hierarchyMock.Object,
             configCacheMock.Object,
             cfg,
-            membershipService);
+            membershipService,
+            new EligibilityEvaluator());
     }
 
     private static IConfiguration BuildDefaultConfiguration()

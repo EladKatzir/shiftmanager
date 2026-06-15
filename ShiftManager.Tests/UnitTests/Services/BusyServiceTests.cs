@@ -59,7 +59,8 @@ public class BusyServiceTests : IDisposable
             hierarchyMock.Object,
             configCacheMock.Object,
             configMock.Object,
-            membershipService);
+            membershipService,
+            new EligibilityEvaluator());
     }
 
     public void Dispose()

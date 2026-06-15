@@ -69,7 +69,8 @@ public class BusyServiceAccountTypeTests : IDisposable
             hierarchyMock.Object,
             configCacheMock.Object,
             configMock.Object,
-            membershipService);
+            membershipService,
+            new EligibilityEvaluator());
 
         // Seed a company in the shared molecule once for all tests.
         _db.Companies.Add(new Company { Id = CompanyId, MoleculeId = MoleculeId, Name = "TestCo", DisplayName = "Test Co" });

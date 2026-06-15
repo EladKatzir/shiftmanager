@@ -13460,6 +13460,21 @@
   <data name="Warning_ChoreConflict" xml:space="preserve">
     <value>לעובד יש מטלה משובצת בתאריך זה</value>
   </data>
+  <data name="Error_ChoreRequiresOfficerRank" xml:space="preserve">
+    <value>מטלה זו דורשת דרגת קצונה.</value>
+  </data>
+  <data name="Error_ChoreUserExempt" xml:space="preserve">
+    <value>משתמש זה פטור מסוג מטלה זה.</value>
+  </data>
+  <data name="Warning_ChoreRequiresGenderMale" xml:space="preserve">
+    <value>מטלה זו מיועדת לגברים.</value>
+  </data>
+  <data name="Warning_ChoreRequiresGenderFemale" xml:space="preserve">
+    <value>מטלה זו מיועדת לנשים.</value>
+  </data>
+  <data name="Warning_ChoreGenderUnspecified" xml:space="preserve">
+    <value>מטלה זו מוגבלת לפי מין והמין של משתמש זה אינו רשום.</value>
+  </data>
   <data name="Warning_OnDutyConflict" xml:space="preserve">
     <value>לעובד יש כוננות משובצת בתאריך זה</value>
   </data>

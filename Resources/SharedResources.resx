@@ -13494,6 +13494,21 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Warning_ChoreConflict" xml:space="preserve">
     <value>Employee has a chore assigned on this date</value>
   </data>
+  <data name="Error_ChoreRequiresOfficerRank" xml:space="preserve">
+    <value>This chore requires officer rank.</value>
+  </data>
+  <data name="Error_ChoreUserExempt" xml:space="preserve">
+    <value>This user is exempt from this chore type.</value>
+  </data>
+  <data name="Warning_ChoreRequiresGenderMale" xml:space="preserve">
+    <value>This chore is designated for male personnel.</value>
+  </data>
+  <data name="Warning_ChoreRequiresGenderFemale" xml:space="preserve">
+    <value>This chore is designated for female personnel.</value>
+  </data>
+  <data name="Warning_ChoreGenderUnspecified" xml:space="preserve">
+    <value>This chore is gender-restricted and this user's gender is not recorded.</value>
+  </data>
   <data name="Warning_OnDutyConflict" xml:space="preserve">
     <value>Employee has an on-duty assignment on this date</value>
   </data>

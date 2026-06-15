@@ -22,6 +22,7 @@ public class BusyService : IBusyService
     private readonly IHierarchySettingsService _hierarchySettingsService;
     private readonly IAppConfigCacheService _configCache;
     private readonly ICompanyMembershipService _membershipService;
+    private readonly IEligibilityEvaluator _eligibilityEvaluator;
     private readonly string _hmacSecret;
 
     private const int OverrideTokenExpiryMinutes = 5;
@@ -33,7 +34,8 @@ public class BusyService : IBusyService
         IHierarchySettingsService hierarchySettingsService,
         IAppConfigCacheService configCache,
         IConfiguration configuration,
-        ICompanyMembershipService membershipService)
+        ICompanyMembershipService membershipService,
+        IEligibilityEvaluator eligibilityEvaluator)
     {
         _db = db;
         _localizer = localizer;
@@ -41,6 +43,7 @@ public class BusyService : IBusyService
         _hierarchySettingsService = hierarchySettingsService;
         _configCache = configCache;
         _membershipService = membershipService;
+        _eligibilityEvaluator = eligibilityEvaluator;
         _hmacSecret = configuration["ApiKeyHmacSecret"]
             ?? Middleware.ApiAuthenticationMiddleware.HmacSecret;
     }
@@ -223,6 +226,58 @@ public class BusyService : IBusyService
                 ValidationSeverity.Error,
                 ValidationCategory.JobType));
             return new BusyValidation(false, errors, warnings);
+        }
+
+        // ===== Chore eligibility (Phase 2) — only when targeting a real chore type =====
+        // Free-text chores (null ChoreTypeId) carry no rules and are always eligible.
+        if (target.ChoreTypeId.HasValue)
+        {
+            var choreTypeId = target.ChoreTypeId.Value;
+
+            // Two cheap reads inside the already-IgnoreQueryFilters method (rules + exemptions are
+            // global config, not tenant-filtered). Severity is assigned HERE, not in the evaluator.
+            var rules = await _db.EligibilityRules.IgnoreQueryFilters()
+                .Where(r => r.ChoreTypeId == choreTypeId)
+                .ToListAsync();
+            var hasExemption = await _db.UserChoreExemptions.IgnoreQueryFilters()
+                .AnyAsync(e => e.UserId == userId && e.ChoreTypeId == choreTypeId);
+
+            var eligibility = _eligibilityEvaluator.Evaluate(user, rules, hasExemption);
+            foreach (var violation in eligibility.Violations)
+            {
+                switch (violation)
+                {
+                    case EligibilityViolation.RequiresOfficerRank:
+                        errors.Add(new ValidationIssue(
+                            "ELIG_OFFICER_RANK", _localizer["Error_ChoreRequiresOfficerRank"],
+                            ValidationSeverity.Error, ValidationCategory.JobType));
+                        break;
+
+                    case EligibilityViolation.Exempt:
+                        errors.Add(new ValidationIssue(
+                            "ELIG_EXEMPT", _localizer["Error_ChoreUserExempt"],
+                            ValidationSeverity.Error, ValidationCategory.JobType));
+                        break;
+
+                    case EligibilityViolation.RequiresGender:
+                        // Overrideable warning. Message depends on the required gender (or Unspecified user).
+                        var genderRule = rules.FirstOrDefault(r => r.RuleKind == EligibilityRuleKind.RequiresGender);
+                        var messageKey = user.Gender == Gender.Unspecified
+                            ? "Warning_ChoreGenderUnspecified"
+                            : (genderRule?.GenderValue == Gender.Female
+                                ? "Warning_ChoreRequiresGenderFemale"
+                                : "Warning_ChoreRequiresGenderMale");
+                        warnings.Add(new ValidationIssue(
+                            "ELIG_GENDER", _localizer[messageKey],
+                            ValidationSeverity.Warning, ValidationCategory.JobType));
+                        break;
+                }
+            }
+
+            // Hard eligibility errors short-circuit (like the USER_* gates above): no point loading
+            // vacation/shift conflicts for an assignment that can never proceed.
+            if (errors.Count > 0)
+                return new BusyValidation(false, errors, warnings);
         }
 
         // Vacation conflict (warning — overrideable)
