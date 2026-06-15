@@ -1,6 +1,6 @@
 # Category-Based Shift Eligibility (candidate-list redesign) — Scope & Design Intent
 
-**Date:** 2026-06-14 · **Branch:** `dev` · **Status:** **SCOPE CAPTURED — design NOT finalized.** Needs its own brainstorm to resolve the open questions in §6 before a plan. Tracked here so it is not lost.
+**Date:** 2026-06-14 (design finalized 2026-06-15) · **Branch:** `dev` · **Status:** **DESIGN FINALIZED** via architect + UI-designer consults; pending implementation plan. The open questions (§6) are now resolved decisions (§6R).
 
 **Paired sub-project (BOTH required — "we need both done"):** [Shift-assignment grant collapse](2026-06-14-shift-assign-grant-collapse-design.md) (3a). 3a = authorization; this (3b) = candidate filtering. Do 3a first; 3b depends on nothing in 3a but must follow.
 
@@ -51,13 +51,39 @@ The data model is **in place and backfilled** (`AppUser.DoesShifts` + `CompanyMe
 - Sequenced **after 3a** (no code dependency, but avoids two concurrent grant/calendar changes colliding).
 - Coordinates with the in-progress **Category & Roster Redesign** (phases B–G). This sub-project effectively completes that redesign's **eligibility layer**.
 
-## 6. Open design questions (resolve in 3b's brainstorm BEFORE planning)
+## 6R. Resolved design decisions (architect + UI-designer consult, 2026-06-15)
 
-1. **Shared-shift fallback:** how do HOME / OFFLINE / null-`CategoryId` shared shifts resolve candidates (everyone with `DoesShifts` in molecule? a default category? keep job-type for these)?
-2. **`CategoryId` backfill strategy:** automatic mapping (from job type? from existing user-category memberships?) vs. an admin pass vs. hybrid. What happens to shift types an admin never categorizes?
-3. **`DoesShifts` source:** per-company `CompanyMembership.DoesShifts` vs. the mirrored `AppUser.DoesShifts` — which governs eligibility for cross-company / multi-membership users?
-4. **ShiftGrouping interaction:** does the geographic `ShiftGrouping` filter still apply on top of category membership, or is it subsumed?
-5. **Behavior-change rollout:** dropdown/bottom-sheet candidate sets will change for real users — staged behind a flag, or direct with QA?
+**Eligibility rule (canonical, copy from `JusticeService`):** `u.IsActive && u.AccountType != GroupUser && DoesShifts && (shiftType.CategoryId == null ? true : UserShiftCategories.Any(m => m.UserId == u.Id && m.ShiftCategoryId == shiftType.CategoryId))`, composed **inside** the grouping-derived company set, with officer-rank preserved for tech.
+
+1. **Shared-shift fallback (arch D1):** `CategoryId == null` (HOME/OFFLINE/shared null-jobType) → **all `DoesShifts` users in the molecule** (company set). Do NOT reintroduce the jobType filter; do NOT force a catch-all category.
+2. **`ShiftType.CategoryId` backfill (arch D2):** new idempotent migration `BackfillShiftTypeCategoryId` (mirror `ShiftCategoryBackfillSql` in a shared constants class). Derive `CategoryId` by matching `ShiftCategory.Name` (which the original backfill stamped as `"<DisplayName> [<sourceShiftTypeId>]"`) back to the exact shift type — deterministic, same edge the user-mapping used. Genuinely-shared types (HOME/OFFLINE) and never-primary types stay null and resolve via the D1 fallback. Do NOT derive from JobType (ambiguous); do NOT synthesize new categories.
+3. **`DoesShifts` source (arch D3):** read **`CompanyMembership.DoesShifts` per (user, candidate-company)**; fall back to the mirrored `AppUser.DoesShifts` only when the user has no membership row in the candidate companies. Materialize `participantUserIds` once and `Contains(...)` rather than a per-row correlated `.Any()`. (A user `DoesShifts=false` on primary but `true` on a secondary molecule membership IS assignable — intended behavior change, call out in rollout.)
+4. **`ShiftGrouping` (arch D4):** KEEP — orthogonal axis. Resolve candidate **companies** from the grouping first (existing `ShiftAssignmentService` 84–106 logic), then apply DoesShifts + category **within** that set. `EligibleUserDto.IsInShiftGrouping` stays.
+5. **Endpoint (arch D5):** generalize `Pages/Api/Calendar/GetEligibleUsersForShift.cshtml.cs` into the single per-shift endpoint all 3 UIs call; dispatch to the **two preserved service methods** (workforce `ShiftAssignmentService`, tech `ShiftCalendarService` — add the category gate to both, keep officer-rank on tech). Keep its molecule-scope authz (`ValidateScopeAccessAsync` + shiftType-belongs-to-molecule). **Behavior-preserving first**, switch via the flag below.
+6. **Rollout (design D1):** feature flag **`CategoryBasedShiftEligibility`**, resolved at **company** level (`IsEnabledAsync(flag, userId:null, companyId:current)`), default **off**. Flag read inside the service router (off→legacy jobType branch, on→category rule) so the 3 UIs need no mode branching. Sequence: ship behavior-preserving → run backfill → per-company verify+enable → later (out of 3b) collapse to global + retire legacy branch.
+7. **Zero/empty UX (design D2):** distinguish **structural zero** (category empty / no category) from **filter zero** (text matches nobody). Three non-`role=option` rows driven by an endpoint `reason` field (`"category"|"sharedFallback"|"noCategory"`). Fallback (sharedFallback) is the designed path — render normally, no warning. `aria-live` announces the structural-zero cause, not "0".
+8. **Disambiguation line (design D3):** show **company name** + **busy-on-date glyph** (reuse `GetBusyStates` vocabulary 🏠📴⏱🧹🛡🌴). **Omit category name** (redundant once filtered by it). Carry `hasHardError` → exclude from Enter auto-commit.
+9. **Cross-UI consistency (design D4):** one projection `{ id, name, companyName, reason }`; busy stays a SEPARATE `GetBusyStates` call (never cached). Empty-query order = `DisplayName` for all 3. **Drop the desktop dropdown's job-type label** (no longer the filter). Native `<select>` gets company as ` — {company}` suffix; only quick-entry gets the two-line treatment.
+10. **Admin affordance (design D5):** IN SCOPE — a `.badge-warning` "No category" on shift-type management for assignable types with null `CategoryId` (+ the endpoint `reason:"noCategory"` powers the end-user row). OUT of 3b: bulk-categorize tool + save-time validation (→ Category & Roster admin phase).
+
+### New loc keys (EN + HE, `QuickEntry_*` convention; `Admin_ShiftType_*` for the badge)
+| Key | EN | HE |
+|---|---|---|
+| `QuickEntry_Loading` | Loading eligible users… | טוען עובדים זמינים… |
+| `QuickEntry_NoEligibleUsers` | No eligible users for this shift | אין עובדים זמינים למשמרת זו |
+| `QuickEntry_NoEligibleUsersHint` | No one is a member of this shift's category | אף עובד אינו משויך לקטגוריית המשמרת |
+| `QuickEntry_NoCategorySet` | This shift has no category set | למשמרת זו לא הוגדרה קטגוריה |
+| `QuickEntry_NoCategorySetHint` | Ask an admin to assign a category | פנו למנהל להגדרת קטגוריה |
+| `QuickEntry_NoTextMatch` (`{0}` in `<bdi>`) | No eligible users match "{0}" | אין עובדים זמינים התואמים ל-"{0}" |
+| `QuickEntry_LoadFailedFallback` | Couldn't load eligible users — try again | טעינת העובדים נכשלה — נסו שוב |
+| `QuickEntry_ResultsAvailable` (`{0}`=count, aria-live) | {0} eligible users | {0} עובדים זמינים |
+| `Admin_ShiftType_NoCategory_Badge` | No category | ללא קטגוריה |
+| `Admin_ShiftType_NoCategory_Tooltip` | Users can't be assigned to this shift until it has a category | לא ניתן לשבץ עובדים למשמרת זו עד שתוגדר לה קטגוריה |
+
+> Keep existing `QuickEntry_NoMatches` for the non-eligibility groups (chores/duty/slash); only the user/shift-assignment group adopts the richer triad.
+
+### Ordering (load-bearing)
+The `CategoryId` backfill migration MUST run + be verified before the `CategoryBasedShiftEligibility` flag is enabled for a company — else categorized-but-unbackfilled shifts return zero candidates. The default-off flag protects against an accidental early flip.
 
 ## 7. Definition of done (so 3b is not "half done")
 
