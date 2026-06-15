@@ -39,6 +39,7 @@ public partial class UsersModel : LocalizedPageModel
     private readonly IUserCompanyTransferService _userCompanyTransferService;
     private readonly IShiftCategoryService _categoryService;
     private readonly ICompanyMembershipService _companyMembershipService;
+    private readonly IChoreCategoryService _choreCategoryService;
 
     public UsersModel(
         IStringLocalizer<SharedResources> localizer,
@@ -58,7 +59,8 @@ public partial class UsersModel : LocalizedPageModel
         IHierarchyService hierarchyService,
         IUserCompanyTransferService userCompanyTransferService,
         IShiftCategoryService categoryService,
-        ICompanyMembershipService companyMembershipService)
+        ICompanyMembershipService companyMembershipService,
+        IChoreCategoryService choreCategoryService)
         : base(localizer)
     {
         _db = db;
@@ -78,9 +80,10 @@ public partial class UsersModel : LocalizedPageModel
         _userCompanyTransferService = userCompanyTransferService;
         _categoryService = categoryService;
         _companyMembershipService = companyMembershipService;
+        _choreCategoryService = choreCategoryService;
     }
 
-    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, bool DoesShifts, string? ShiftCategoryNames, List<int> ShiftCategoryIds, int? MoleculeId, int CompanyId = 0, IReadOnlyList<UserMembershipVM>? Memberships = null, AccountType AccountType = AccountType.Standard);
+    public record UserVM(int Id, string DisplayName, string Email, string CompanyName, string Role, bool IsActive, bool IsLocked, DateTime? LockoutEnd, int? JobTypeId, string? JobTypeName, string? JobTypeKey, string? DepartmentName, int GrantsCount, int? RoleTemplateId, bool DoesShifts, string? ShiftCategoryNames, List<int> ShiftCategoryIds, int? MoleculeId, int CompanyId = 0, IReadOnlyList<UserMembershipVM>? Memberships = null, AccountType AccountType = AccountType.Standard, bool DoesChores = false, string? ChoreCategoryNames = null, List<int>? ChoreCategoryIds = null, Gender Gender = Gender.Unspecified);
     public record UserMembershipVM(int MembershipId, int CompanyId, string CompanyName, bool IsPrimary, string? RoleName, string? JobTypeName, bool DoesShifts, int? RoleTemplateId = null, int? JobTypeId = null);
     public record JoinRequestVM(int Id, string Email, string DisplayName, string CompanyName, string RequestedRole, string? JobTypeName, string? JobTypeKey, DateTime CreatedAt, JoinRequestStatus Status, int? RequestedRoleTemplateId, string? AuthMethod);
     public record MoleculeOption(int Id, string Name, string AreaName);
@@ -106,6 +109,11 @@ public partial class UsersModel : LocalizedPageModel
     public List<AccountTypeOption> AvailableAccountTypes { get; set; } = new();
     // Shift categories available per molecule (for the per-user category multi-select).
     public Dictionary<int, List<CategoryOption>> AvailableCategoriesByMolecule { get; set; } = new();
+    // Chore categories available per molecule (for the per-user chore-category multi-select).
+    public Dictionary<int, List<CategoryOption>> AvailableChoreCategoriesByMolecule { get; set; } = new();
+    // 3-state gender options for the gender editable cell.
+    public record GenderOption(int Value, string Label);
+    public List<GenderOption> AvailableGenders { get; set; } = new();
     public Dictionary<int, string> MoleculeNames { get; set; } = new();
 
     /// <summary>Maps companyId → list of valid jobTypeIds, for client-side filtering in the add-user form.</summary>
@@ -392,6 +400,14 @@ public partial class UsersModel : LocalizedPageModel
             new((int)AccountType.GroupUser, _localizer["AccountType_GroupUser"].Value),
         };
 
+        // Gender options (3-state) for the gender editable cell.
+        AvailableGenders = new List<GenderOption>
+        {
+            new((int)Gender.Unspecified, _localizer["Gender_Unspecified"].Value),
+            new((int)Gender.Male,        _localizer["Gender_Male"].Value),
+            new((int)Gender.Female,      _localizer["Gender_Female"].Value),
+        };
+
         // Build companyId→validJobTypeIds mapping for add-user form dynamic filtering.
         // Uses same logic as JobTypeService.GetJobTypesForMoleculeAsync but computed in bulk.
         if (Companies.Any())
@@ -437,6 +453,15 @@ public partial class UsersModel : LocalizedPageModel
         if (accessibleMoleculeIds.Count > 0)
         {
             AvailableCategoriesByMolecule = (await _db.ShiftCategories
+                .Where(c => accessibleMoleculeIds.Contains(c.MoleculeId) && c.IsActive)
+                .OrderBy(c => c.SortOrder).ThenBy(c => c.DisplayName)
+                .Select(c => new { c.MoleculeId, c.Id, c.DisplayName })
+                .ToListAsync())
+                .GroupBy(c => c.MoleculeId)
+                .ToDictionary(g => g.Key, g => g.Select(c => new CategoryOption(c.Id, c.DisplayName)).ToList());
+
+            // Chore categories per molecule for the per-user chore-category multi-select (mirrors shift categories).
+            AvailableChoreCategoriesByMolecule = (await _db.ChoreCategories
                 .Where(c => accessibleMoleculeIds.Contains(c.MoleculeId) && c.IsActive)
                 .OrderBy(c => c.SortOrder).ThenBy(c => c.DisplayName)
                 .Select(c => new { c.MoleculeId, c.Id, c.DisplayName })
@@ -530,6 +555,18 @@ public partial class UsersModel : LocalizedPageModel
             .ToDictionary(
                 g => g.Key,
                 g => (Ids: g.Select(r => r.ShiftCategoryId).ToList(),
+                      Names: string.Join(", ", g.OrderBy(r => r.DisplayName).Select(r => r.DisplayName))));
+
+        // Batch-load chore-category memberships (id list + display names) for the listed users.
+        var userChoreCategoryRows = await _db.UserChoreCategories
+            .Where(m => userIds.Contains(m.UserId))
+            .Select(m => new { m.UserId, m.ChoreCategoryId, m.ChoreCategory.DisplayName })
+            .ToListAsync();
+        var userChoreCategoryMap = userChoreCategoryRows
+            .GroupBy(r => r.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => (Ids: g.Select(r => r.ChoreCategoryId).ToList(),
                       Names: string.Join(", ", g.OrderBy(r => r.DisplayName).Select(r => r.DisplayName))));
 
         // Load companies for users
@@ -729,7 +766,11 @@ public partial class UsersModel : LocalizedPageModel
                     userCompanies.TryGetValue(u.CompanyId, out var dirCompany) ? dirCompany.MoleculeId : null,
                     u.CompanyId,
                     membershipsByUser.TryGetValue(u.Id, out var dirMem) ? dirMem : null,
-                    u.AccountType
+                    u.AccountType,
+                    u.DoesChores,
+                    userChoreCategoryMap.TryGetValue(u.Id, out var dirChore) ? dirChore.Names : null,
+                    userChoreCategoryMap.TryGetValue(u.Id, out var dirChore2) ? dirChore2.Ids : new List<int>(),
+                    u.Gender
                 ));
             }
             else
@@ -764,7 +805,11 @@ public partial class UsersModel : LocalizedPageModel
                         company?.MoleculeId,
                         u.CompanyId,
                         membershipsByUser.TryGetValue(u.Id, out var ndMem) ? ndMem : null,
-                        u.AccountType
+                        u.AccountType,
+                        u.DoesChores,
+                        userChoreCategoryMap.TryGetValue(u.Id, out var ndChore) ? ndChore.Names : null,
+                        userChoreCategoryMap.TryGetValue(u.Id, out var ndChore2) ? ndChore2.Ids : new List<int>(),
+                        u.Gender
                     ));
                 }
             }
@@ -1764,6 +1809,132 @@ public partial class UsersModel : LocalizedPageModel
     {
         public int UserId { get; set; }
         public List<int>? CategoryIds { get; set; }
+    }
+
+    /// <summary>Future-chore impact preview (AJAX) for the "turn off Participates in Chores" confirm.</summary>
+    public async Task<IActionResult> OnGetDoesChoresImpactAsync(int id)
+    {
+        var (ok, _, _, error) = await AuthorizeUserEditAsync(id);
+        if (!ok)
+            return new JsonResult(new { ok = false, error });
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // SECURITY-AUDITED: SAFE — counts only the target user's own future, non-canceled chores.
+        var futureChores = await _db.Chores.IgnoreQueryFilters()
+            .CountAsync(c => c.UserId == id && c.Date >= today && c.CanceledAt == null);
+        return new JsonResult(new { ok = true, futureChores });
+    }
+
+    /// <summary>
+    /// Master "Participates in Chores" toggle. When turning OFF, <paramref name="deleteFutureChores"/>
+    /// controls whether the user's future chores are soft-canceled (CanceledAt set) or kept.
+    /// Category memberships are intentionally preserved so toggling back ON restores the prior mapping.
+    /// </summary>
+    public async Task<IActionResult> OnPostDoesChoresAsync(int id, bool doesChores, bool deleteFutureChores = false)
+    {
+        var (ok, u, currentUserId, error) = await AuthorizeUserEditAsync(id);
+        if (!ok) { TempData["ErrorMessage"] = error; return RedirectToPage(); }
+
+        u!.DoesChores = doesChores;
+
+        int canceled = 0;
+        if (!doesChores && deleteFutureChores)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var now = DateTime.UtcNow;
+            // SECURITY-AUDITED: SAFE — soft-canceling only the target user's own future chores.
+            var future = await _db.Chores.IgnoreQueryFilters()
+                .Where(c => c.UserId == id && c.Date >= today && c.CanceledAt == null)
+                .ToListAsync();
+            foreach (var c in future) { c.CanceledAt = now; c.CanceledBy = currentUserId; }
+            canceled = future.Count;
+        }
+
+        var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+            () => _db.SaveChangesAsync(), "AppUser", id);
+        if (!saveResult.Success)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_ConcurrencyConflict"].Value;
+            return RedirectToPage();
+        }
+
+        await _auditLogService.LogUserActionAsync(
+            userId: currentUserId,
+            action: "DoesChoresChanged",
+            entityType: "User",
+            entityId: u.Id,
+            description: $"Set DoesChores={doesChores} for {u.DisplayName}" + (canceled > 0 ? $"; canceled {canceled} future chore(s)" : ""));
+
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture,
+            (doesChores ? _localizer["Users_DoesChoresOn"] : _localizer["Users_DoesChoresOff"]).Value, u.DisplayName);
+        return RedirectToPage();
+    }
+
+    /// <summary>Replaces a user's chore-category memberships (AJAX). Ids are validated against the user's molecule.</summary>
+    public async Task<IActionResult> OnPostUserChoreCategoriesAsync([FromBody] UserChoreCategoriesRequest request)
+    {
+        var (ok, u, currentUserId, error) = await AuthorizeUserEditAsync(request.UserId);
+        if (!ok)
+            return new JsonResult(new { success = false, error }) { StatusCode = 403 };
+
+        // Constrain to categories in the user's molecule (defense against stale/forged ids).
+        var moleculeId = await _db.Companies.IgnoreQueryFilters()
+            .Where(c => c.Id == u!.CompanyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+        var requested = request.CategoryIds ?? new List<int>();
+        var valid = moleculeId == null
+            ? new List<int>()
+            : await _db.ChoreCategories
+                .Where(c => c.MoleculeId == moleculeId && requested.Contains(c.Id))
+                .Select(c => c.Id).ToListAsync();
+
+        await _choreCategoryService.SetUserCategoriesAsync(u!.Id, valid);
+        await _auditLogService.LogUserActionAsync(
+            userId: currentUserId,
+            action: "UserChoreCategoriesChanged",
+            entityType: "User",
+            entityId: u.Id,
+            description: $"Set chore categories for {u.DisplayName} to [{string.Join(",", valid)}]");
+
+        return new JsonResult(new { success = true, count = valid.Count });
+    }
+
+    public class UserChoreCategoriesRequest
+    {
+        public int UserId { get; set; }
+        public List<int>? CategoryIds { get; set; }
+    }
+
+    /// <summary>
+    /// Sets a user's <see cref="AppUser.Gender"/> (3-state). Rides the existing user-edit authz
+    /// (<see cref="AuthorizeUserEditAsync"/>) — NO dedicated grant (decided 2026-06-14). Value change is audited.
+    /// </summary>
+    public async Task<IActionResult> OnPostGenderAsync(int id, int gender)
+    {
+        var (ok, u, currentUserId, error) = await AuthorizeUserEditAsync(id);
+        if (!ok) { TempData["ErrorMessage"] = error; return RedirectToPage(); }
+        if (!Enum.IsDefined(typeof(Gender), gender))
+        { TempData["ErrorMessage"] = _localizer["Error_InvalidValue"].Value; return RedirectToPage(); }
+
+        var oldGender = u!.Gender;
+        u.Gender = (Gender)gender;
+        var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+            () => _db.SaveChangesAsync(), "AppUser", id);
+        if (!saveResult.Success)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_ConcurrencyConflict"].Value;
+            return RedirectToPage();
+        }
+
+        // Sensitive: log the value change (consistent with DateOfBirth/Phone mutations).
+        await _auditLogService.LogUserActionAsync(
+            userId: currentUserId,
+            action: "GenderChanged",
+            entityType: "User",
+            entityId: u.Id,
+            description: $"Changed gender for {u.DisplayName} from {oldGender} to {(Gender)gender}");
+
+        TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Users_GenderUpdated"].Value, u.DisplayName);
+        return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostResetPasswordAsync(int id, string newPassword)

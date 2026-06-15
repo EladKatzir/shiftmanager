@@ -266,20 +266,31 @@
             gap: 0.5rem;
         }
 
-        /* Participates-in-Shifts cell */
-        .does-shifts-cell { min-width: 130px; }
+        /* Participates-in-Shifts / Participates-in-Chores cells (chores mirror shifts) */
+        .does-shifts-cell, .does-chores-cell { min-width: 130px; }
         .does-shifts-toggle {
             display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none;
         }
         .does-shifts-toggle input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
         .does-shifts-toggle__text { font-size: 0.85rem; color: var(--text-muted); }
-        .does-shifts-cell__categories {
+        .does-shifts-cell__categories, .does-chores-cell__categories {
             display: flex; align-items: center; gap: 0.4rem; margin-top: 0.35rem; flex-wrap: wrap;
         }
-        .does-shifts-cell__categories .js-cat-names {
+        .does-shifts-cell__categories .js-cat-names, .does-chores-cell__categories .js-chore-cat-names {
             font-size: 0.8rem; color: var(--text-muted); max-width: 150px; overflow: hidden;
             text-overflow: ellipsis; white-space: nowrap;
         }
+
+        /* Gender badge — sensitive≠alarming: muted bg + explicit text + !important; dark redeclares only color. */
+        .gender-badge {
+            display: inline-flex; align-items: center; padding: 0.1rem 0.5rem; border-radius: 9999px;
+            font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border);
+        }
+        .gender-badge--unspecified { background: var(--surface-soft); color: var(--text-muted) !important; }
+        .gender-badge--male   { background: var(--info-soft);    color: var(--info) !important; }
+        .gender-badge--female { background: var(--primary-soft); color: var(--primary) !important; }
+        :root[data-theme="dark"] .gender-badge--male   { color: var(--info) !important; }
+        :root[data-theme="dark"] .gender-badge--female { color: var(--primary) !important; }
         .btn-xs {
             padding: 0.15rem 0.4rem; font-size: 0.75rem; line-height: 1.2;
         }
@@ -907,8 +918,10 @@
                 <th>@Localizer["Company"]</th>
                 <th>@Localizer["JobType"]</th>
                 <th>@Localizer["Users_AccountType"]</th>
+                <th>@Localizer["Users_Gender"]</th>
                 <th>@Localizer["Department"]</th>
                 <th><loc key="Users_Participates" /></th>
+                <th>@Localizer["Users_DoesChores"]</th>
                 <th>@Localizer["Role"]</th>
                 <th>@Localizer["Grants"]</th>
                 <th>@Localizer["Status"]</th>
@@ -1010,6 +1023,26 @@
                         </form>
                     </div>
                 </td>
+                <td class="editable-cell" data-cell-type="gender" data-user-id="@u.Id">
+                    <div class="cell-display">
+                        <span class="cell-display__value gender-badge gender-badge--@(u.Gender.ToString().ToLowerInvariant())">@Localizer[$"Gender_{u.Gender}"]</span>
+                        <button type="button" class="cell-display__edit-btn" onclick="enterEditMode(this)" title="@Localizer["Users_Gender"]" aria-label="@Localizer["Users_Gender"]"><icon name="settings" /></button>
+                    </div>
+                    <div class="cell-edit">
+                        <form method="post" asp-page-handler="Gender" style="display:inline; margin:0;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <select class="form-input cell-edit__select" name="gender" data-original-value="@((int)u.Gender)" aria-label="@Localizer["Users_Gender"]">
+                                @foreach (var g in Model.AvailableGenders)
+                                {
+                                    <option value="@g.Value" selected="@((int)u.Gender == g.Value)">@g.Label</option>
+                                }
+                            </select>
+                            <button type="submit" class="cell-edit__btn cell-edit__btn--save" title="@Localizer["Save"]" aria-label="@Localizer["Save"]"><icon name="check" /></button>
+                            <button type="button" class="cell-edit__btn cell-edit__btn--cancel" onclick="exitEditMode(this)" title="@Localizer["Cancel"]" aria-label="@Localizer["Cancel"]"><icon name="x" /></button>
+                        </form>
+                    </div>
+                </td>
                 <td>@(u.DepartmentName ?? "-")</td>
                 <td class="does-shifts-cell" data-user-id="@u.Id" data-user-molecule-id="@(u.MoleculeId?.ToString() ?? "")">
                     <label class="does-shifts-toggle" title="@Localizer["Users_ParticipatesHint"]">
@@ -1033,6 +1066,30 @@
                         <input type="hidden" name="id" value="@u.Id" />
                         <input type="hidden" name="doesShifts" class="js-does-shifts-value" value="" />
                         <input type="hidden" name="deleteFutureShifts" class="js-delete-future" value="false" />
+                    </form>
+                </td>
+                <td class="does-chores-cell" data-user-id="@u.Id" data-user-molecule-id="@(u.MoleculeId?.ToString() ?? "")">
+                    <label class="does-shifts-toggle" title="@Localizer["Users_ParticipatesChoresHint"]">
+                        <input type="checkbox" class="js-does-chores" data-user-id="@u.Id"
+                               data-user-name="@u.DisplayName" @(u.DoesChores ? "checked" : "") />
+                        <span class="does-shifts-toggle__text">@Localizer[u.DoesChores ? "On" : "Off"]</span>
+                    </label>
+                    <div class="does-chores-cell__categories" style="@(u.DoesChores ? "" : "display:none;")">
+                        <span class="js-chore-cat-names">@(string.IsNullOrEmpty(u.ChoreCategoryNames) ? Localizer["Users_NoChoreCategories"].Value : u.ChoreCategoryNames)</span>
+                        <button type="button" class="btn btn-xs btn-secondary js-edit-chore-cats"
+                                data-user-id="@u.Id"
+                                data-molecule-id="@(u.MoleculeId?.ToString() ?? "")"
+                                data-user-name="@u.DisplayName"
+                                data-selected="@string.Join(",", u.ChoreCategoryIds ?? new List<int>())">
+                            <icon name="settings" /> @Localizer["Edit"]
+                        </button>
+                    </div>
+                    @* Hidden form to POST the DoesChores toggle (driven by JS so OFF can prompt about future chores). *@
+                    <form method="post" asp-page-handler="DoesChores" class="js-does-chores-form" style="display:none;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@u.Id" />
+                        <input type="hidden" name="doesChores" class="js-does-chores-value" value="" />
+                        <input type="hidden" name="deleteFutureChores" class="js-delete-future-chores" value="false" />
                     </form>
                 </td>
                 <td class="editable-cell" data-cell-type="role" data-user-id="@u.Id">
@@ -1471,6 +1528,35 @@
 @* Category options per molecule for the multi-select (keys are molecule IDs as strings). *@
 <script>window.__categoriesByMolecule = @Json.Serialize(Model.AvailableCategoriesByMolecule);</script>
 
+@* Participates-in-Chores OFF confirm (mirrors doesShiftsConfirmDialog). *@
+<dialog id="doesChoresConfirmDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:460px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+    <div style="margin:0; padding:1.5rem;">
+        <h2 class="section-title" style="margin-top:0;">@Localizer["Users_DoesChoresOffTitle"]</h2>
+        <p id="doesChoresConfirmMsg" style="margin:0.25rem 0 1rem; color:var(--text);"></p>
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end; flex-wrap:wrap;">
+            <button type="button" class="btn" id="doesChoresCancelBtn">@Localizer["Button_Cancel"]</button>
+            <button type="button" class="btn btn-secondary" id="doesChoresKeepBtn">@Localizer["Users_KeepChores"]</button>
+            <button type="button" class="btn btn-danger" id="doesChoresDeleteBtn">@Localizer["Users_DeleteChores"]</button>
+        </div>
+    </div>
+</dialog>
+
+@* Per-user chore-category multi-select (mirrors userCategoriesDialog). *@
+<dialog id="choreCategoriesDialog" style="border:none; border-radius:0.75rem; padding:0; max-width:440px; width:90%; background:var(--surface); color:var(--text); box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+    <div style="margin:0; padding:1.5rem;">
+        <h2 class="section-title" style="margin-top:0;">@Localizer["Users_ChoreCategoriesTitle"]</h2>
+        <p id="choreCategoriesUserName" style="font-weight:600; margin:0.25rem 0 1rem; color:var(--text);"></p>
+        <div id="choreCategoriesList" style="max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:0.125rem; margin-bottom:1rem;"></div>
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button type="button" class="btn" id="choreCategoriesCancelBtn">@Localizer["Button_Cancel"]</button>
+            <button type="button" class="btn btn-primary" id="choreCategoriesSaveBtn">@Localizer["Button_Save"]</button>
+        </div>
+    </div>
+</dialog>
+
+@* Chore-category options per molecule for the multi-select (keys are molecule IDs as strings). *@
+<script>window.__choreCategoriesByMolecule = @Json.Serialize(Model.AvailableChoreCategoriesByMolecule);</script>
+
 @section Scripts {
     <script>
         const selectedText = '@(Localizer["Selected"].Value.Trim())';
@@ -1749,6 +1835,122 @@
                     window.FeedbackModal.show('error', '@(Localizer["Error_FailedToUpdate"].Value.Trim())');
                 } finally {
                     catSaveBtn.disabled = false;
+                }
+            });
+        })();
+
+        // --- Participates-in-Chores toggle + per-user chore categories (separate IIFE — no cross-IIFE refs) ---
+        (function () {
+            var choreCatData = window.__choreCategoriesByMolecule || {};
+            function token() {
+                var t = document.querySelector('input[name="__RequestVerificationToken"]');
+                return t ? t.value : '';
+            }
+
+            function submitDoesChores(checkbox, value, deleteFuture) {
+                var cell = checkbox.closest('.does-chores-cell');
+                var form = cell.querySelector('.js-does-chores-form');
+                form.querySelector('.js-does-chores-value').value = value ? 'true' : 'false';
+                form.querySelector('.js-delete-future-chores').value = deleteFuture ? 'true' : 'false';
+                form.submit();
+            }
+
+            var pendingChoreToggle = null;
+            var choreConfirmDlg = document.getElementById('doesChoresConfirmDialog');
+
+            document.querySelectorAll('.js-does-chores').forEach(function (cb) {
+                cb.addEventListener('change', async function () {
+                    var userId = cb.dataset.userId;
+                    var name = cb.dataset.userName || '';
+                    if (cb.checked) { submitDoesChores(cb, true, false); return; }
+                    try {
+                        var resp = await fetch('?handler=DoesChoresImpact&id=' + encodeURIComponent(userId));
+                        var data = await resp.json();
+                        if (data.ok && data.futureChores > 0) {
+                            pendingChoreToggle = cb;
+                            document.getElementById('doesChoresConfirmMsg').textContent =
+                                '@(Localizer["Users_DoesChoresOffPrompt"].Value.Trim())'
+                                    .replace('{0}', name).replace('{1}', data.futureChores);
+                            choreConfirmDlg.showModal();
+                            return;
+                        }
+                    } catch (e) { console.error('chore impact check failed', e); }
+                    submitDoesChores(cb, false, false);
+                });
+            });
+
+            if (choreConfirmDlg) {
+                document.getElementById('doesChoresCancelBtn').addEventListener('click', function () {
+                    if (pendingChoreToggle) pendingChoreToggle.checked = true; // revert visual
+                    pendingChoreToggle = null; choreConfirmDlg.close();
+                });
+                document.getElementById('doesChoresKeepBtn').addEventListener('click', function () {
+                    if (pendingChoreToggle) submitDoesChores(pendingChoreToggle, false, false);
+                    choreConfirmDlg.close();
+                });
+                document.getElementById('doesChoresDeleteBtn').addEventListener('click', function () {
+                    if (pendingChoreToggle) submitDoesChores(pendingChoreToggle, false, true);
+                    choreConfirmDlg.close();
+                });
+            }
+
+            // Chore-categories multi-select modal
+            var choreCatDlg = document.getElementById('choreCategoriesDialog');
+            var choreCatList = document.getElementById('choreCategoriesList');
+            var choreCatUserName = document.getElementById('choreCategoriesUserName');
+            var choreCatSaveBtn = document.getElementById('choreCategoriesSaveBtn');
+            var choreCatCancelBtn = document.getElementById('choreCategoriesCancelBtn');
+            var choreCatCurrentUserId = null;
+
+            document.querySelectorAll('.js-edit-chore-cats').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    choreCatCurrentUserId = btn.dataset.userId;
+                    choreCatUserName.textContent = btn.dataset.userName || '';
+                    var molId = btn.dataset.moleculeId || '';
+                    var selected = (btn.dataset.selected || '').split(',').filter(Boolean).map(Number);
+                    var cats = choreCatData[molId] || [];
+                    choreCatList.innerHTML = '';
+                    if (cats.length === 0) {
+                        var p = document.createElement('p');
+                        p.className = 'cal-filter-empty';
+                        p.textContent = '@(Localizer["Users_NoChoreCategories"].Value.Trim())';
+                        choreCatList.appendChild(p);
+                    } else {
+                        cats.forEach(function (c) {
+                            var id = (c.id != null) ? c.id : c.Id;
+                            var nm = (c.name != null) ? c.name : c.Name;
+                            var label = document.createElement('label');
+                            label.style.cssText = 'display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.5rem; border-radius:6px; cursor:pointer;';
+                            var cb = document.createElement('input');
+                            cb.type = 'checkbox'; cb.value = id; cb.checked = selected.indexOf(id) !== -1;
+                            var span = document.createElement('span'); span.textContent = nm;
+                            label.appendChild(cb); label.appendChild(span);
+                            choreCatList.appendChild(label);
+                        });
+                    }
+                    choreCatDlg.showModal();
+                });
+            });
+
+            if (choreCatCancelBtn) choreCatCancelBtn.addEventListener('click', function () { choreCatDlg.close(); });
+
+            if (choreCatSaveBtn) choreCatSaveBtn.addEventListener('click', async function () {
+                var ids = Array.from(choreCatList.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map(function (cb) { return parseInt(cb.value, 10); });
+                choreCatSaveBtn.disabled = true;
+                try {
+                    var resp = await fetch('?handler=UserChoreCategories', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+                        body: JSON.stringify({ userId: parseInt(choreCatCurrentUserId, 10), categoryIds: ids })
+                    });
+                    var data = await resp.json();
+                    if (resp.ok && data.success) { choreCatDlg.close(); location.reload(); return; }
+                    window.FeedbackModal.show('error', (data && data.error) || '@(Localizer["Error_FailedToUpdate"].Value.Trim())');
+                } catch (e) {
+                    window.FeedbackModal.show('error', '@(Localizer["Error_FailedToUpdate"].Value.Trim())');
+                } finally {
+                    choreCatSaveBtn.disabled = false;
                 }
             });
         })();

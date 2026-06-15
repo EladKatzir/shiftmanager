@@ -76,7 +76,7 @@ public class UsersAccountTypeCleanupTests : IDisposable
             _grants.Object, Mock.Of<IRoleService>(), Mock.Of<IJobTypeService>(),
             _concurrency.Object, Mock.Of<ITenantResolver>(), Mock.Of<IHierarchyService>(),
             Mock.Of<IUserCompanyTransferService>(), Mock.Of<IShiftCategoryService>(),
-            Mock.Of<ICompanyMembershipService>());
+            Mock.Of<ICompanyMembershipService>(), new ChoreCategoryService(_db));
 
         var httpContext = new DefaultHttpContext
         {

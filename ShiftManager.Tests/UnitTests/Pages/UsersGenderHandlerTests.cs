@@ -19,10 +19,11 @@ using Xunit;
 namespace ShiftManager.Tests.UnitTests.Pages;
 
 /// <summary>
-/// Covers OnPostAccountTypeAsync: grant-authorized change persists; unauthorized caller is rejected and no change persists.
-/// Uses real SQLite (not UseInMemoryDatabase) so EF query filters and string functions behave as in production.
+/// Covers OnPostGenderAsync: an authorized user-editor persists Gender + writes an audit row; an
+/// unauthorized caller is rejected and no change persists; an out-of-range value is rejected.
+/// Rides AuthorizeUserEditAsync — NO dedicated grant. Real SQLite.
 /// </summary>
-public class UsersAccountTypeHandlerTests : IDisposable
+public class UsersGenderHandlerTests : IDisposable
 {
     private readonly SqliteConnection _conn;
     private readonly AppDbContext _db;
@@ -30,7 +31,7 @@ public class UsersAccountTypeHandlerTests : IDisposable
     private readonly Mock<IAuditLogService> _audit = new();
     private readonly Mock<IConcurrencyService> _concurrency = new();
 
-    public UsersAccountTypeHandlerTests()
+    public UsersGenderHandlerTests()
     {
         _conn = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
         _conn.Open();
@@ -38,15 +39,9 @@ public class UsersAccountTypeHandlerTests : IDisposable
         _db = new AppDbContext(options);
         _db.Database.EnsureCreated();
 
-        // Localizer returns the key as its value so TempData assertions are stable.
-        // Concurrency service returns success by default.
         _concurrency
             .Setup(c => c.SaveWithConcurrencyHandlingAsync(It.IsAny<Func<Task<int>>>(), It.IsAny<string>(), It.IsAny<int>()))
-            .Returns<Func<Task<int>>, string, int>(async (save, _, __) =>
-            {
-                await save();
-                return new ConcurrencySaveResult(Success: true);
-            });
+            .Returns<Func<Task<int>>, string, int>(async (save, _, __) => { await save(); return new ConcurrencySaveResult(Success: true); });
     }
 
     private Mock<IStringLocalizer<SharedResources>> BuildLocalizer()
@@ -57,10 +52,10 @@ public class UsersAccountTypeHandlerTests : IDisposable
         return loc;
     }
 
-    private UsersModel BuildModel(int callerId, Mock<IStringLocalizer<SharedResources>> loc)
+    private UsersModel BuildModel(int callerId)
     {
         var model = new UsersModel(
-            loc.Object, _db, NullLogger<UsersModel>.Instance,
+            BuildLocalizer().Object, _db, NullLogger<UsersModel>.Instance,
             Mock.Of<ICompanyContext>(), Mock.Of<IDirectorService>(), Mock.Of<ITraineeService>(),
             _audit.Object, Mock.Of<IMailService>(), Mock.Of<INotificationService>(),
             _grants.Object, Mock.Of<IRoleService>(), Mock.Of<IJobTypeService>(),
@@ -70,8 +65,7 @@ public class UsersAccountTypeHandlerTests : IDisposable
 
         var httpContext = new DefaultHttpContext
         {
-            User = new ClaimsPrincipal(new ClaimsIdentity(
-                new[] { new Claim(ClaimTypes.NameIdentifier, callerId.ToString()) }, "test"))
+            User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, callerId.ToString()) }, "test"))
         };
         model.PageContext = new Microsoft.AspNetCore.Mvc.RazorPages.PageContext { HttpContext = httpContext };
         model.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
@@ -88,82 +82,62 @@ public class UsersAccountTypeHandlerTests : IDisposable
         _db.Molecules.Add(mol); await _db.SaveChangesAsync();
         var company = new Company { MoleculeId = mol.Id, Name = "C", DisplayName = "C" };
         _db.Companies.Add(company); await _db.SaveChangesAsync();
-
         var user = new AppUser
         {
-            CompanyId = company.Id,
-            Email = "target@test.com",
-            DisplayName = "Target",
-            Role = UserRole.Employee,
-            AccountType = AccountType.Standard,
-            PasswordHash = Array.Empty<byte>(),
-            PasswordSalt = Array.Empty<byte>()
+            CompanyId = company.Id, Email = "t@test.com", DisplayName = "Target", Role = UserRole.Employee,
+            AccountType = AccountType.Standard, PasswordHash = Array.Empty<byte>(), PasswordSalt = Array.Empty<byte>()
         };
         _db.Users.Add(user); await _db.SaveChangesAsync();
         return (company.Id, user.Id);
     }
 
     [Fact]
-    public async Task OnPostAccountTypeAsync_AuthorizedAdmin_PersistsAccountTypeMil()
+    public async Task OnPostGender_Authorized_Persists_And_Audits()
     {
         var (companyId, userId) = await SeedAsync();
-        const int callerId = 999;
+        const int caller = 999;
+        _grants.Setup(g => g.HasGrantAsync(caller, "AdminAccess")).ReturnsAsync(false);
+        _grants.Setup(g => g.HasGrantForCompanyAsync(caller, "EditCompanyUsers", companyId)).ReturnsAsync(true);
 
-        _grants.Setup(g => g.HasGrantAsync(callerId, "AdminAccess")).ReturnsAsync(false);
-        _grants.Setup(g => g.HasGrantForCompanyAsync(callerId, "EditCompanyUsers", companyId)).ReturnsAsync(true);
+        string? auditAction = null;
+        _audit.Setup(a => a.LogUserActionAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string?>()))
+            .Callback<int, string, string, int?, string, string?>((_, action, _, _, _, _) => auditAction = action)
+            .Returns(Task.CompletedTask);
 
-        var loc = BuildLocalizer();
-        var model = BuildModel(callerId, loc);
+        var model = BuildModel(caller);
+        await model.OnPostGenderAsync(userId, (int)Gender.Female);
 
-        var result = await model.OnPostAccountTypeAsync(userId, (int)AccountType.Mil);
-
-        result.Should().BeOfType<RedirectToPageResult>();
-        model.TempData.ContainsKey("ErrorMessage").Should().BeFalse("no error should be set on success");
-
-        var persisted = await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId);
-        persisted.AccountType.Should().Be(AccountType.Mil);
+        (await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId)).Gender.Should().Be(Gender.Female);
+        auditAction.Should().Be("GenderChanged");
     }
 
     [Fact]
-    public async Task OnPostAccountTypeAsync_UnauthorizedCaller_IsRejectedAndNoChangePersists()
+    public async Task OnPostGender_Unauthorized_Is_Rejected_NoChange()
     {
         var (companyId, userId) = await SeedAsync();
-        const int callerId = 777;
+        const int caller = 777;
+        _grants.Setup(g => g.HasGrantAsync(caller, "AdminAccess")).ReturnsAsync(false);
+        _grants.Setup(g => g.HasGrantForCompanyAsync(caller, "EditCompanyUsers", companyId)).ReturnsAsync(false);
 
-        _grants.Setup(g => g.HasGrantAsync(callerId, "AdminAccess")).ReturnsAsync(false);
-        _grants.Setup(g => g.HasGrantForCompanyAsync(callerId, "EditCompanyUsers", companyId)).ReturnsAsync(false);
+        var model = BuildModel(caller);
+        await model.OnPostGenderAsync(userId, (int)Gender.Male);
 
-        var loc = BuildLocalizer();
-        var model = BuildModel(callerId, loc);
-
-        var result = await model.OnPostAccountTypeAsync(userId, (int)AccountType.Mil);
-
-        result.Should().BeOfType<RedirectToPageResult>();
         model.TempData["ErrorMessage"].Should().Be("Error_NoPermissionForCompany");
-
-        var persisted = await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId);
-        persisted.AccountType.Should().Be(AccountType.Standard, "no change should persist when caller is unauthorized");
+        (await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId)).Gender.Should().Be(Gender.Unspecified);
     }
 
     [Fact]
-    public async Task OnPostAccountTypeAsync_InvalidEnumValue_ReturnsErrorAndNoSave()
+    public async Task OnPostGender_OutOfRange_Is_Rejected()
     {
         var (companyId, userId) = await SeedAsync();
-        const int callerId = 999;
+        const int caller = 999;
+        _grants.Setup(g => g.HasGrantAsync(caller, "AdminAccess")).ReturnsAsync(true);
 
-        _grants.Setup(g => g.HasGrantAsync(callerId, "AdminAccess")).ReturnsAsync(true);
+        var model = BuildModel(caller);
+        await model.OnPostGenderAsync(userId, 99);
 
-        var loc = BuildLocalizer();
-        var model = BuildModel(callerId, loc);
-
-        // 99 is not a valid AccountType value
-        var result = await model.OnPostAccountTypeAsync(userId, 99);
-
-        result.Should().BeOfType<RedirectToPageResult>();
-        model.TempData["ErrorMessage"].Should().NotBeNull();
-
-        var persisted = await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId);
-        persisted.AccountType.Should().Be(AccountType.Standard);
+        model.TempData["ErrorMessage"].Should().Be("Error_InvalidValue");
+        (await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId)).Gender.Should().Be(Gender.Unspecified);
     }
 
     public void Dispose()
