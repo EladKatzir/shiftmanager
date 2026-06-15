@@ -51,12 +51,24 @@ public class JusticeServiceUsersInMoleculeTests : IDisposable
     private const string CompanyAName = "Alpha";
     private const string CompanyBName = "Beta";
 
-    // Chore actuals per user
-    private const decimal ActualA1 = 4m;
-    private const decimal ActualA2 = 2m;
-    private const decimal ActualB1 = 5m;
-    private const decimal ActualB2 = 3m;
-    private const decimal ActualB3 = 1m;
+    // Phase 5: chore fairness is duration-weighted. Each seeded chore carries the default per-chore
+    // weight (480 min = 8h) so the weighted Actual equals (chore count) × 480 — preserving the
+    // original count-based fairness ratios while expressing them in the new weighted-minute units.
+    private const int ChoreWeight = ShiftManager.Services.ChoreService.DEFAULT_CHORE_WEIGHT_MINUTES;
+
+    // Chore counts per user (weighted Actual = count × ChoreWeight).
+    private const int CountA1 = 4;
+    private const int CountA2 = 2;
+    private const int CountB1 = 5;
+    private const int CountB2 = 3;
+    private const int CountB3 = 1;
+
+    // Weighted chore actuals per user (Phase 5).
+    private const decimal ActualA1 = CountA1 * ChoreWeight;
+    private const decimal ActualA2 = CountA2 * ChoreWeight;
+    private const decimal ActualB1 = CountB1 * ChoreWeight;
+    private const decimal ActualB2 = CountB2 * ChoreWeight;
+    private const decimal ActualB3 = CountB3 * ChoreWeight;
 
     // Global target: 1 chore / month / user
     // PeriodMultiplier for May 2026 (31 days): 31 / 30.4375 ≈ 1.01848...
@@ -165,14 +177,14 @@ public class JusticeServiceUsersInMoleculeTests : IDisposable
         void AddChores(int userId, int companyId, int count)
         {
             for (int i = 0; i < count; i++)
-                _db.Chores.Add(new Chore { Id = choreId++, CompanyId = companyId, UserId = userId, Date = workDate, CanceledAt = null });
+                _db.Chores.Add(new Chore { Id = choreId++, CompanyId = companyId, UserId = userId, Date = workDate, CanceledAt = null, WeightMinutes = ChoreWeight });
         }
 
-        AddChores(UserA1, CompanyAId, (int)ActualA1);
-        AddChores(UserA2, CompanyAId, (int)ActualA2);
-        AddChores(UserB1, CompanyBId, (int)ActualB1);
-        AddChores(UserB2, CompanyBId, (int)ActualB2);
-        AddChores(UserB3, CompanyBId, (int)ActualB3);
+        AddChores(UserA1, CompanyAId, CountA1);
+        AddChores(UserA2, CompanyAId, CountA2);
+        AddChores(UserB1, CompanyBId, CountB1);
+        AddChores(UserB2, CompanyBId, CountB2);
+        AddChores(UserB3, CompanyBId, CountB3);
 
         _db.SaveChanges();
     }
@@ -261,11 +273,12 @@ public class JusticeServiceUsersInMoleculeTests : IDisposable
         var coaExpected = rowById[UserA1].ExpectedBySize;
         var cobExpected = rowById[UserB1].ExpectedBySize;
 
-        // CoA: global 1/month * ~1 month ≈ 1.018  (small, close to 1)
-        coaExpected.Should().BeApproximately(1.018m, 0.01m, "CoA uses global 1/month target");
+        // Phase 5: chore Expected is scaled by ChoreWeight (480) so it compares against weighted-minute Actual.
+        // CoA: global 1/month * ~1 month * 480 ≈ 1.018 * 480 ≈ 488.9
+        coaExpected.Should().BeApproximately(1.018m * ChoreWeight, 0.01m * ChoreWeight, "CoA uses global 1/month target, scaled to weighted minutes");
 
-        // CoB: override 15/month / 3 users * ~1 month ≈ 5.09  (much higher)
-        cobExpected.Should().BeApproximately(5.09m, 0.05m, "CoB uses company override 15/month / 3 users");
+        // CoB: override 15/month / 3 users * ~1 month * 480 ≈ 5.09 * 480 ≈ 2443.6  (much higher)
+        cobExpected.Should().BeApproximately(5.09m * ChoreWeight, 0.05m * ChoreWeight, "CoB uses company override 15/month / 3 users, scaled to weighted minutes");
 
         // They must be materially different (proves per-company context, not a pooled value).
         cobExpected.Should().BeGreaterThan(coaExpected * 3m,

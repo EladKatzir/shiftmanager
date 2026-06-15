@@ -48,6 +48,10 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
     private const int UserId1     = 101; // in CompanyA — has 2+5+3 chores across 3 months
     private const int UserId2     = 201; // in CompanyB — 0 chores (all-zeros test)
 
+    // Phase 5: chore fairness is duration-weighted. Each seeded chore carries the default per-chore
+    // weight (480 min = 8h), so sparkline buckets and comparison deltas are (chore count) × 480.
+    private const int ChoreWeight = ShiftManager.Services.ChoreService.DEFAULT_CHORE_WEIGHT_MINUTES;
+
     // Period: 6-month window ending 2026-05-31
     private static readonly DateOnly PeriodEnd   = new DateOnly(2026, 5, 31);
     private static readonly DateOnly PeriodStart = new DateOnly(2025, 12, 1);
@@ -133,15 +137,15 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
         // UserId1 chores: 2 in March, 5 in April, 3 in May 2026
         // March 2026
         for (int i = 1; i <= 2; i++)
-            _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 3, i), CanceledAt = null, Title = "t" });
+            _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 3, i), CanceledAt = null, Title = "t", WeightMinutes = ChoreWeight });
 
         // April 2026
         for (int i = 1; i <= 5; i++)
-            _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 4, i), CanceledAt = null, Title = "t" });
+            _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 4, i), CanceledAt = null, Title = "t", WeightMinutes = ChoreWeight });
 
         // May 2026
         for (int i = 1; i <= 3; i++)
-            _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 5, i), CanceledAt = null, Title = "t" });
+            _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 5, i), CanceledAt = null, Title = "t", WeightMinutes = ChoreWeight });
 
         // UserId2 has no chores (all-zeros verification)
 
@@ -203,12 +207,13 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
         sparkline[1].Should().Be(0m, "Jan 2026: no chores");
         sparkline[2].Should().Be(0m, "Feb 2026: no chores");
 
+        // Phase 5: buckets sum weighted minutes (chore count × 480), not raw counts.
         // Mar 2026 → 2 chores
-        sparkline[3].Should().Be(2m, "Mar 2026: 2 chores");
+        sparkline[3].Should().Be(2m * ChoreWeight, "Mar 2026: 2 chores × 480");
         // Apr 2026 → 5 chores
-        sparkline[4].Should().Be(5m, "Apr 2026: 5 chores");
+        sparkline[4].Should().Be(5m * ChoreWeight, "Apr 2026: 5 chores × 480");
         // May 2026 → 3 chores
-        sparkline[5].Should().Be(3m, "May 2026: 3 chores");
+        sparkline[5].Should().Be(3m * ChoreWeight, "May 2026: 3 chores × 480");
     }
 
     /// <summary>
@@ -248,9 +253,10 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
         coASparkline[0].Should().Be(0m);
         coASparkline[1].Should().Be(0m);
         coASparkline[2].Should().Be(0m);
-        coASparkline[3].Should().Be(2m, "Mar 2026 aggregated to CompanyA");
-        coASparkline[4].Should().Be(5m, "Apr 2026 aggregated to CompanyA");
-        coASparkline[5].Should().Be(3m, "May 2026 aggregated to CompanyA");
+        // Phase 5: buckets sum weighted minutes (chore count × 480).
+        coASparkline[3].Should().Be(2m * ChoreWeight, "Mar 2026 aggregated to CompanyA × 480");
+        coASparkline[4].Should().Be(5m * ChoreWeight, "Apr 2026 aggregated to CompanyA × 480");
+        coASparkline[5].Should().Be(3m * ChoreWeight, "May 2026 aggregated to CompanyA × 480");
 
         var coBSparkline = result[CompanyBId];
         coBSparkline.Should().HaveCount(6);
@@ -309,9 +315,10 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
 
         var user1Row = vm.Rows.Single(r => r.Id == UserId1);
         user1Row.Sparkline.Should().NotBeNull();
-        user1Row.Sparkline![3].Should().Be(2m, "Mar 2026 bucket");
-        user1Row.Sparkline![4].Should().Be(5m, "Apr 2026 bucket");
-        user1Row.Sparkline![5].Should().Be(3m, "May 2026 bucket");
+        // Phase 5: buckets sum weighted minutes (chore count × 480).
+        user1Row.Sparkline![3].Should().Be(2m * ChoreWeight, "Mar 2026 bucket × 480");
+        user1Row.Sparkline![4].Should().Be(5m * ChoreWeight, "Apr 2026 bucket × 480");
+        user1Row.Sparkline![5].Should().Be(3m * ChoreWeight, "May 2026 bucket × 480");
     }
 
     // ===============================================================
@@ -376,10 +383,11 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
 
         var result = await _service.GetComparisonViewAsync(mayQ, aprilQ, drillableChildIds: null, CancellationToken.None);
 
+        // Phase 5: actuals are weighted minutes (chore count × 480), so deltas scale by 480.
         // Delta dict
         result.ActualDeltaByRowId.Should().ContainKey(CompanyAId);
-        result.ActualDeltaByRowId[CompanyAId].Should().Be(-2m,
-            "CompanyA: May(3) - April(5) = -2");
+        result.ActualDeltaByRowId[CompanyAId].Should().Be(-2m * ChoreWeight,
+            "CompanyA: May(3) - April(5) = -2 chores = -2 × 480 weighted minutes");
 
         result.ActualDeltaByRowId.Should().ContainKey(CompanyBId);
         result.ActualDeltaByRowId[CompanyBId].Should().Be(0m,
@@ -387,7 +395,7 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
 
         // Primary row DeltaVsCompare propagated
         var primaryRowA = result.Primary.Rows.Single(r => r.Id == CompanyAId);
-        primaryRowA.DeltaVsCompare.Should().Be(-2m,
+        primaryRowA.DeltaVsCompare.Should().Be(-2m * ChoreWeight,
             "Primary row DeltaVsCompare must equal ActualDeltaByRowId value");
 
         var primaryRowB = result.Primary.Rows.Single(r => r.Id == CompanyBId);
@@ -481,11 +489,11 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
         // 10 chores in May 2026
         int cid2 = 1;
         for (int i = 1; i <= 10; i++)
-            db.Chores.Add(new Chore { Id = cid2++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 5, i), CanceledAt = null, Title = "t" });
+            db.Chores.Add(new Chore { Id = cid2++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 5, i), CanceledAt = null, Title = "t", WeightMinutes = ChoreWeight });
 
         // 6 chores in April 2026
         for (int i = 1; i <= 6; i++)
-            db.Chores.Add(new Chore { Id = cid2++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 4, i), CanceledAt = null, Title = "t" });
+            db.Chores.Add(new Chore { Id = cid2++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 4, i), CanceledAt = null, Title = "t", WeightMinutes = ChoreWeight });
 
         db.SaveChanges();
 
@@ -529,14 +537,15 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
 
         var result = await svc.GetComparisonViewAsync(mayQ, aprilQ, drillableChildIds: null, CancellationToken.None);
 
-        // Task spec: CompanyA (via UserId1 row) has 10 in May, 6 in April → delta == 4
+        // Task spec: CompanyA (via UserId1 row) has 10 in May, 6 in April → delta == 4 chores.
+        // Phase 5: actuals are weighted minutes (chore count × 480), so the delta scales by 480.
         result.ActualDeltaByRowId.Should().ContainKey(UserId1);
-        result.ActualDeltaByRowId[UserId1].Should().Be(4m,
-            "UserId1: May(10) - April(6) = 4 (task spec example)");
+        result.ActualDeltaByRowId[UserId1].Should().Be(4m * ChoreWeight,
+            "UserId1: May(10) - April(6) = 4 chores = 4 × 480 weighted minutes (task spec example)");
 
         var primaryRow = result.Primary.Rows.Single(r => r.Id == UserId1);
-        primaryRow.DeltaVsCompare.Should().Be(4m,
-            "Primary row DeltaVsCompare for UserId1 must equal 4");
+        primaryRow.DeltaVsCompare.Should().Be(4m * ChoreWeight,
+            "Primary row DeltaVsCompare for UserId1 must equal 4 × 480");
     }
 
     /// <summary>
@@ -584,13 +593,13 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
         int cid3 = 1;
         // UserId1: 3 chores in May, 2 chores in April
         for (int i = 1; i <= 3; i++)
-            db.Chores.Add(new Chore { Id = cid3++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 5, i), CanceledAt = null, Title = "t" });
+            db.Chores.Add(new Chore { Id = cid3++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 5, i), CanceledAt = null, Title = "t", WeightMinutes = ChoreWeight });
         for (int i = 1; i <= 2; i++)
-            db.Chores.Add(new Chore { Id = cid3++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 4, i), CanceledAt = null, Title = "t" });
+            db.Chores.Add(new Chore { Id = cid3++, CompanyId = CompanyAId, UserId = UserId1, Date = new DateOnly(2026, 4, i), CanceledAt = null, Title = "t", WeightMinutes = ChoreWeight });
 
         // UserId2: 5 chores in May only, zero in April
         for (int i = 1; i <= 5; i++)
-            db.Chores.Add(new Chore { Id = cid3++, CompanyId = CompanyAId, UserId = UserId2, Date = new DateOnly(2026, 5, i), CanceledAt = null, Title = "t" });
+            db.Chores.Add(new Chore { Id = cid3++, CompanyId = CompanyAId, UserId = UserId2, Date = new DateOnly(2026, 5, i), CanceledAt = null, Title = "t", WeightMinutes = ChoreWeight });
 
         db.SaveChanges();
 
@@ -634,17 +643,18 @@ public class JusticeServiceSparklineComparisonTests : IDisposable
 
         var result = await svc.GetComparisonViewAsync(mayQ, aprilQ, drillableChildIds: null, CancellationToken.None);
 
-        // UserId2 has 5 in May, 0 in April → delta = 5 - 0 = 5
+        // Phase 5: actuals are weighted minutes (chore count × 480), so deltas scale by 480.
+        // UserId2 has 5 in May, 0 in April → delta = 5 - 0 = 5 chores
         result.ActualDeltaByRowId.Should().ContainKey(UserId2);
-        result.ActualDeltaByRowId[UserId2].Should().Be(5m,
-            "UserId2 only appears in primary (May=5, April=0) → delta = 5");
+        result.ActualDeltaByRowId[UserId2].Should().Be(5m * ChoreWeight,
+            "UserId2 only appears in primary (May=5, April=0) → delta = 5 × 480");
 
         var primaryRow2 = result.Primary.Rows.Single(r => r.Id == UserId2);
-        primaryRow2.DeltaVsCompare.Should().Be(5m,
-            "Primary row for UserId2 must have DeltaVsCompare = 5");
+        primaryRow2.DeltaVsCompare.Should().Be(5m * ChoreWeight,
+            "Primary row for UserId2 must have DeltaVsCompare = 5 × 480");
 
-        // UserId1 delta = 3 - 2 = 1
-        result.ActualDeltaByRowId[UserId1].Should().Be(1m,
-            "UserId1: May(3) - April(2) = 1");
+        // UserId1 delta = 3 - 2 = 1 chore
+        result.ActualDeltaByRowId[UserId1].Should().Be(1m * ChoreWeight,
+            "UserId1: May(3) - April(2) = 1 × 480");
     }
 }

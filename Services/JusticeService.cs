@@ -36,6 +36,11 @@ public class JusticeService : IJusticeService
     private const decimal DaysPerMonth = 30.4375m;
     private const decimal DaysPerQuarter = 91.3125m;
 
+    // Phase 5: chore targets are stored in CHORE-EQUIVALENTS; chore Actual is in WEIGHTED MINUTES.
+    // Scale a chore target by this fixed per-chore weight (8h) so the two compare in the same units.
+    // Single source of truth: references the Phase-1 fallback weight so the two cannot drift.
+    private const decimal ChoreWeightMinutesPerEquivalent = ChoreService.DEFAULT_CHORE_WEIGHT_MINUTES;
+
     // Phase 2: how many holes to surface in the in-context drawer's "Where to focus" list.
     private const int WhereToFocusTopN = 5;
 
@@ -283,20 +288,23 @@ public class JusticeService : IJusticeService
 
     private decimal ResolvePerUserChoreOrOnDuty(JusticeQuery q, JusticeWorkType wt, int companyId, int headcount, List<JusticeTarget> targets)
     {
+        // Phase 5: chore targets (chore-equivalents) are scaled to weighted minutes; on-duty is not.
+        decimal scale = wt == JusticeWorkType.Chore ? ChoreWeightMinutesPerEquivalent : 1m;
+
         // Company-scope override wins.
         var compOverride = targets.FirstOrDefault(t =>
             t.WorkType == wt && t.ScopeKind == JusticeScope.Company && t.ScopeId == companyId);
         if (compOverride != null && headcount > 0)
         {
             var totalForCompany = compOverride.ExpectedCount * PeriodMultiplier(q, compOverride.PeriodKind);
-            return totalForCompany / headcount;
+            return totalForCompany / headcount * scale;
         }
 
         // Else: per-user global default applied directly (already a per-user number).
         var globalTarget = targets.FirstOrDefault(t =>
             t.WorkType == wt && t.ScopeKind == JusticeScope.Global);
         if (globalTarget == null) return 0m;
-        return globalTarget.ExpectedCount * PeriodMultiplier(q, globalTarget.PeriodKind);
+        return globalTarget.ExpectedCount * PeriodMultiplier(q, globalTarget.PeriodKind) * scale;
     }
 
     private async Task<List<JusticeRow>> BuildCompaniesInMoleculeAsync(JusticeQuery q, List<JusticeTarget> targets, IReadOnlyCollection<int>? drillableChildIds, CancellationToken ct)
@@ -584,17 +592,25 @@ public class JusticeService : IJusticeService
         if (q.WorkType is JusticeWorkType.Chore or JusticeWorkType.All)
         {
             // SECURITY: IgnoreQueryFilters required for cross-company analytics views.
-            var choreRows = await _db.Chores
+            // Phase 5: chore fairness is DURATION-WEIGHTED — Actual = Σ WeightMinutes, not a count.
+            var choreQ = _db.Chores
                 .IgnoreQueryFilters()
                 .Where(c => companyIds.Contains(c.CompanyId)
                             && c.CanceledAt == null
                             && c.Date >= q.PeriodStart
-                            && c.Date <= endCap)
+                            && c.Date <= endCap);
+            // Phase 5: optional ChoreCategory narrowing. Restricts to chores whose type belongs to the
+            // category. Free-text (null ChoreTypeId) chores are excluded by a category filter by design.
+            if (q.ChoreCategoryId is int choreCatId)
+            {
+                choreQ = choreQ.Where(c => c.ChoreType != null && c.ChoreType.ChoreCategoryId == choreCatId);
+            }
+            var choreRows = await choreQ
                 .GroupBy(c => c.UserId)
-                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .Select(g => new { UserId = g.Key, Minutes = g.Sum(c => c.WeightMinutes) })
                 .ToListAsync(ct);
             foreach (var r in choreRows)
-                byUser[r.UserId] = byUser.GetValueOrDefault(r.UserId, 0m) + r.Count;
+                byUser[r.UserId] = byUser.GetValueOrDefault(r.UserId, 0m) + r.Minutes;
         }
 
         if (q.WorkType is JusticeWorkType.OnDuty or JusticeWorkType.All)
@@ -848,13 +864,20 @@ public class JusticeService : IJusticeService
         if (baseQuery.WorkType is JusticeWorkType.Chore or JusticeWorkType.All)
         {
             // SECURITY: IgnoreQueryFilters required for cross-company analytics; scope-gated upstream.
-            var choreRows = await _db.Chores
+            // Phase 5: sparkline buckets accumulate Σ WeightMinutes (duration-weighted), not chore counts.
+            var choreQ = _db.Chores
                 .IgnoreQueryFilters()
                 .Where(c => companyIds.Contains(c.CompanyId)
                             && c.CanceledAt == null
                             && c.Date >= firstBucketStart
-                            && c.Date <= spanEnd)
-                .Select(c => new { c.UserId, c.Date })
+                            && c.Date <= spanEnd);
+            // Phase 5: same optional ChoreCategory narrowing as CountActualPerUserAsync.
+            if (baseQuery.ChoreCategoryId is int choreCatId)
+            {
+                choreQ = choreQ.Where(c => c.ChoreType != null && c.ChoreType.ChoreCategoryId == choreCatId);
+            }
+            var choreRows = await choreQ
+                .Select(c => new { c.UserId, c.Date, c.WeightMinutes })
                 .ToListAsync(ct);
 
             foreach (var r in choreRows)
@@ -862,7 +885,7 @@ public class JusticeService : IJusticeService
                 if (!userToRowKey.TryGetValue(r.UserId, out var rk)) continue;
                 if (!accum.TryGetValue(rk, out var arr)) continue;
                 int bi = BucketIndex(r.Date);
-                if (bi >= 0) arr[bi]++;
+                if (bi >= 0) arr[bi] += r.WeightMinutes;
             }
         }
 
@@ -927,12 +950,15 @@ public class JusticeService : IJusticeService
             return shiftCapacity;
         }
 
+        // Phase 5: chore targets (chore-equivalents) scale to weighted minutes; on-duty is not scaled.
+        decimal scale = workType == JusticeWorkType.Chore ? ChoreWeightMinutesPerEquivalent : 1m;
+
         // Look for explicit override at this scope.
         var explicitTarget = targets.FirstOrDefault(t =>
             t.WorkType == workType && t.ScopeKind == scopeKind && t.ScopeId == scopeId);
         if (explicitTarget != null)
         {
-            return explicitTarget.ExpectedCount * PeriodMultiplier(q, explicitTarget.PeriodKind);
+            return explicitTarget.ExpectedCount * PeriodMultiplier(q, explicitTarget.PeriodKind) * scale;
         }
 
         // Fall through to global per-user default.
@@ -940,7 +966,7 @@ public class JusticeService : IJusticeService
             t.WorkType == workType && t.ScopeKind == JusticeScope.Global);
         if (globalTarget == null) return 0m;
 
-        return globalTarget.ExpectedCount * headcount * PeriodMultiplier(q, globalTarget.PeriodKind);
+        return globalTarget.ExpectedCount * headcount * PeriodMultiplier(q, globalTarget.PeriodKind) * scale;
     }
 
     // -----------------------------------------------------------------------------------

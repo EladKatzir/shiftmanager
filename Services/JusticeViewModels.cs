@@ -16,7 +16,13 @@ public sealed record JusticeQuery(
     bool ExcludeExemptShifts,
     JusticeLevel Level,
     FairnessBasis Basis = FairnessBasis.BySize,
-    int? ShiftCategoryId = null);
+    int? ShiftCategoryId = null,
+    /// <summary>
+    /// Optional ChoreCategory filter for Chore work-type queries. When set, chore actuals and the
+    /// chore sparkline series are restricted to chores whose ChoreType.ChoreCategoryId matches.
+    /// Null = all chore categories = pre-Phase-5 behavior. Ignored for Shift/OnDuty work types.
+    /// </summary>
+    int? ChoreCategoryId = null);
 
 /// <summary>
 /// Top-level result for the Justice page.

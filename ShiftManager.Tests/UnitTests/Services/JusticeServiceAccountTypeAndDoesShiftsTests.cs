@@ -58,6 +58,9 @@ public class JusticeServiceAccountTypeAndDoesShiftsTests : IDisposable
     private static readonly DateOnly PeriodEnd   = new(2026, 3, 31);
     private static readonly DateOnly WorkDate     = new(2026, 3, 15);
 
+    // Phase 5: chore fairness is duration-weighted; the default per-chore weight (480 = 8h).
+    private const int ChoreWeight = ShiftManager.Services.ChoreService.DEFAULT_CHORE_WEIGHT_MINUTES;
+
     // ------------------------------------------------------------------
     // Infrastructure
     // ------------------------------------------------------------------
@@ -161,12 +164,14 @@ public class JusticeServiceAccountTypeAndDoesShiftsTests : IDisposable
             new ShiftAssignment { Id = 3, CompanyId = CompanyId, ShiftInstanceId = ShiftInstanceAId, UserId = UserB },
             new ShiftAssignment { Id = 4, CompanyId = CompanyId, ShiftInstanceId = ShiftInstanceBId, UserId = UserB });
 
-        // Chores: A, B, D each get 1 chore; C gets none
+        // Chores: A, B, D each get 1 chore; C gets none.
+        // Phase 5: chore fairness is duration-weighted; seed the default per-chore weight (480 = 8h)
+        // so each user's weighted Actual = 1 × 480.
         int choreId = 1;
         _db.Chores.AddRange(
-            new Chore { Id = choreId++, CompanyId = CompanyId, UserId = UserA, Date = WorkDate, CanceledAt = null },
-            new Chore { Id = choreId++, CompanyId = CompanyId, UserId = UserB, Date = WorkDate, CanceledAt = null },
-            new Chore { Id = choreId++, CompanyId = CompanyId, UserId = UserD, Date = WorkDate, CanceledAt = null });
+            new Chore { Id = choreId++, CompanyId = CompanyId, UserId = UserA, Date = WorkDate, CanceledAt = null, WeightMinutes = ChoreWeight },
+            new Chore { Id = choreId++, CompanyId = CompanyId, UserId = UserB, Date = WorkDate, CanceledAt = null, WeightMinutes = ChoreWeight },
+            new Chore { Id = choreId++, CompanyId = CompanyId, UserId = UserD, Date = WorkDate, CanceledAt = null, WeightMinutes = ChoreWeight });
 
         // Shift capacity target (to make Expected non-zero for shift queries)
         _db.JusticeTargets.Add(new JusticeTarget
@@ -324,9 +329,10 @@ public class JusticeServiceAccountTypeAndDoesShiftsTests : IDisposable
         var rowB = vm.Rows.Single(r => r.Id == UserB);
         var rowD = vm.Rows.Single(r => r.Id == UserD);
 
-        rowA.Actual.Should().Be(1m, "UserA has 1 chore in the period");
-        rowB.Actual.Should().Be(1m, "UserB has 1 chore in the period");
-        rowD.Actual.Should().Be(1m, "UserD has 1 chore in the period");
+        // Phase 5: chore Actual is weighted minutes (1 chore × 480), not a raw count.
+        rowA.Actual.Should().Be(1m * ChoreWeight, "UserA has 1 chore × 480 weighted minutes");
+        rowB.Actual.Should().Be(1m * ChoreWeight, "UserB has 1 chore × 480 weighted minutes");
+        rowD.Actual.Should().Be(1m * ChoreWeight, "UserD has 1 chore × 480 weighted minutes");
     }
 
     // ==================================================================

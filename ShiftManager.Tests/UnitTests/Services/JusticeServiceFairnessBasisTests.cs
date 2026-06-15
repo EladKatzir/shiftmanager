@@ -40,8 +40,13 @@ public class JusticeServiceFairnessBasisTests : IDisposable
     private static readonly int[] UsersB = { 201, 202, 203, 204 };
     private static readonly int[] UsersC = { 301, 302, 303, 304, 305, 306 };
 
-    // Total actual chores: 12 + 6 + 6 = 24.  Equal share per company = 24 / 3 = 8.
-    private const decimal TotalActual = 24m;
+    // Phase 5: chore fairness is duration-weighted. Each seeded chore carries the default per-chore
+    // weight (480 min = 8h); the weighted Actual = (chore count) × 480. BySize is capacity-weighted
+    // and EqualShare is Σ Actual / N, so uniform scaling preserves every relative assertion.
+    private const int ChoreWeight = ShiftManager.Services.ChoreService.DEFAULT_CHORE_WEIGHT_MINUTES;
+
+    // Total actual chores: 12 + 6 + 6 = 24, weighted = 24 × 480.  Equal share per company = total / 3.
+    private const decimal TotalActual = 24m * ChoreWeight;
     private const decimal EqualSharePerCompany = TotalActual / 3m;
 
     // ------------------------------------------------------------------
@@ -135,7 +140,7 @@ public class JusticeServiceFairnessBasisTests : IDisposable
         {
             for (int i = 0; i < 6; i++)
             {
-                _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyAId, UserId = uid, Date = workDate, CanceledAt = null });
+                _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyAId, UserId = uid, Date = workDate, CanceledAt = null, WeightMinutes = ChoreWeight });
             }
         }
 
@@ -146,14 +151,14 @@ public class JusticeServiceFairnessBasisTests : IDisposable
             int count = i < 2 ? 2 : 1;
             for (int j = 0; j < count; j++)
             {
-                _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyBId, UserId = UsersB[i], Date = workDate, CanceledAt = null });
+                _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyBId, UserId = UsersB[i], Date = workDate, CanceledAt = null, WeightMinutes = ChoreWeight });
             }
         }
 
         // CoC: 6 chores spread across 6 users (1 each)
         foreach (var uid in UsersC)
         {
-            _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyCId, UserId = uid, Date = workDate, CanceledAt = null });
+            _db.Chores.Add(new Chore { Id = choreId++, CompanyId = CompanyCId, UserId = uid, Date = workDate, CanceledAt = null, WeightMinutes = ChoreWeight });
         }
 
         _db.SaveChanges();
