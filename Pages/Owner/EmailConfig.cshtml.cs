@@ -24,6 +24,7 @@ public class EmailConfigModel : LocalizedPageModel
     private readonly ILogger<EmailConfigModel> _logger;
     private readonly IMailService _mailService;
     private readonly IEmailApiLogService _emailApiLogService;
+    private readonly IGrantService _grantService;
 
     public EmailConfigModel(
         IStringLocalizer<SharedResources> localizer,
@@ -31,13 +32,15 @@ public class EmailConfigModel : LocalizedPageModel
         IAuditLogService auditLogService,
         ILogger<EmailConfigModel> logger,
         IMailService mailService,
-        IEmailApiLogService emailApiLogService) : base(localizer)
+        IEmailApiLogService emailApiLogService,
+        IGrantService grantService) : base(localizer)
     {
         _emailConfigService = emailConfigService;
         _auditLogService = auditLogService;
         _logger = logger;
         _mailService = mailService;
         _emailApiLogService = emailApiLogService;
+        _grantService = grantService;
     }
 
     [BindProperty] public bool EmailEnabled { get; set; }
@@ -85,8 +88,7 @@ public class EmailConfigModel : LocalizedPageModel
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (int.TryParse(userIdClaim, out var uid))
             {
-                var grantService = HttpContext.RequestServices.GetService<IGrantService>();
-                IsOwner = grantService != null && await grantService.HasGrantAsync(uid, "AdminAccess");
+                IsOwner = await _grantService.HasGrantAsync(uid, "AdminAccess");
             }
 
             // Load global config
@@ -189,8 +191,7 @@ public class EmailConfigModel : LocalizedPageModel
             var currentUserId = GetCurrentUserId();
 
             // SECURITY: Global config affects ALL companies — require Owner (AdminAccess) grant
-            var grantService = HttpContext.RequestServices.GetRequiredService<IGrantService>();
-            if (!await grantService.HasGrantAsync(currentUserId, "AdminAccess"))
+            if (!await _grantService.HasGrantAsync(currentUserId, "AdminAccess"))
             {
                 _logger.LogWarning("User {UserId} attempted to save global email config without AdminAccess grant", currentUserId);
                 return Forbid();
@@ -257,8 +258,7 @@ public class EmailConfigModel : LocalizedPageModel
             var currentUserId = GetCurrentUserId();
 
             // SECURITY: affects cross-company config — require Owner (AdminAccess) grant
-            var grantService = HttpContext.RequestServices.GetRequiredService<IGrantService>();
-            if (!await grantService.HasGrantAsync(currentUserId, "AdminAccess"))
+            if (!await _grantService.HasGrantAsync(currentUserId, "AdminAccess"))
             {
                 _logger.LogWarning("User {UserId} attempted to toggle email override for company {CompanyId} without AdminAccess grant", currentUserId, companyId);
                 return Forbid();
