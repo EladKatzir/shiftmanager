@@ -1,0 +1,524 @@
+@page
+@model ShiftManager.Pages.Admin.Organization.ChoreTemplates.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["ChoreTemplates"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["ChoreTemplates"], IsActive = true }
+})
+
+@section Styles {
+    <style>
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem 0; }
+        .page-subtitle { font-size: 1rem; color: var(--text-muted); margin: 0; }
+
+        .section-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem;
+        }
+        .section-header { font-size: 1.125rem; font-weight: 600; color: var(--text);
+            margin: 0 0 1.25rem 0; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+
+        .info-box { padding: 1rem; background: var(--surface-soft); border-left: 4px solid var(--primary);
+            border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-muted); }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 0; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .form-label-required { color: var(--danger); }
+        .form-input, .form-select {
+            width: 100%; padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--text);
+            background-color: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; transition: all 0.15s ease;
+        }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.625rem 1.25rem; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-danger { background: var(--danger); color: var(--danger-text); border-color: var(--danger); font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .btn-ghost { background: transparent; color: var(--text); border-color: transparent; font-size: 0.8125rem; padding: 0.5rem 1rem; }
+        .btn-ghost:hover { background: var(--surface-soft); border-color: var(--border); }
+
+        .molecule-selector { margin-bottom: 2rem; }
+        .molecule-selector .form-group { max-width: 400px; }
+
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table thead tr { border-bottom: 2px solid var(--border); }
+        .data-table th { padding: 0.875rem; text-align: start; font-size: 0.8125rem; font-weight: 600;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.025em; }
+        .data-table tbody tr { border-bottom: 1px solid var(--border); transition: background-color 0.15s ease; }
+        .data-table tbody tr:hover { background: var(--surface-soft); }
+        .data-table td { padding: 1rem 0.875rem; font-size: 0.9375rem; color: var(--text); }
+        .table-actions { display: flex; gap: 0.5rem; white-space: nowrap; flex-wrap: wrap; }
+
+        .badge {
+            display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px;
+            font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.025em;
+        }
+        .badge-inactive { background: var(--surface-soft); color: var(--text-muted) !important; }
+        .badge-active { background: var(--success-soft); color: var(--success) !important; }
+
+        .empty-state { text-align: center; padding: 3rem 2rem; color: var(--text-muted); }
+
+        .edit-row { display: none; }
+        .edit-row.active { display: table-row; }
+        .edit-row td { background: var(--surface-soft); }
+        .edit-form-grid { display: flex; gap: 0.75rem; align-items: end; flex-wrap: wrap; }
+        .edit-form-grid .form-group { margin-bottom: 0; min-width: 140px; }
+        .edit-form-grid .form-input { padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+
+        dialog.stamp-dialog { border: none; border-radius: 0.75rem; padding: 0; max-width: 560px; width: 92%;
+            background: var(--surface); color: var(--text); box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+        dialog.stamp-dialog::backdrop { background: rgba(0,0,0,0.45); }
+        .stamp-weekday-chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.6rem;
+            border: 1px solid var(--border); border-radius: 9999px; cursor: pointer; user-select: none; font-size: 0.85rem; }
+        .stamp-result-row { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.35rem 0.25rem;
+            border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .stamp-result-row--skipped { color: var(--text-muted); }
+
+        @@media (max-width: 768px) {
+            .page-title { font-size: 1.75rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .table-actions { flex-direction: column; }
+            .edit-form-grid { flex-direction: column; }
+        }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="ManageChoreTemplates" /></h1>
+    <p class="page-subtitle"><loc key="ManageChoreTemplatesSubtitle" /></p>
+</div>
+
+<div class="section-card molecule-selector">
+    <div class="info-box"><loc key="ChoreTemplatesAreMoleculeScoped" /></div>
+
+    @if (Model.AvailableMolecules.Any())
+    {
+        <form method="get">
+            <div class="form-group">
+                <label class="form-label">@Localizer["SelectMolecule"] <span class="form-label-required">*</span></label>
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <select class="form-select" name="MoleculeId" id="moleculeSelector" style="max-width: 350px;">
+                        @foreach (var m in Model.AvailableMolecules)
+                        {
+                            <option value="@m.Id" selected="@(Model.MoleculeId == m.Id)">@m.Name</option>
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-primary">@Localizer["Select"]</button>
+                </div>
+            </div>
+        </form>
+    }
+    else
+    {
+        <p class="empty-state"><loc key="NoMoleculesAvailable" /></p>
+    }
+</div>
+
+@if (Model.MoleculeId.HasValue)
+{
+    <div class="section-card">
+        <h3 class="section-header"><loc key="CreateNewChoreTemplate" /></h3>
+        <form method="post" asp-page-handler="Create">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label"><loc key="TemplateName" /> <span class="form-label-required">*</span></label>
+                    <input class="form-input" asp-for="TemplateName" required maxlength="100" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="TemplateDefaultTitle" /> <span class="form-label-required">*</span></label>
+                    <input class="form-input" asp-for="TemplateDefaultTitle" required maxlength="200" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="TemplateChoreType" /></label>
+                    <select class="form-select" asp-for="TemplateChoreTypeId">
+                        <option value=""><loc key="Uncategorized" /></option>
+                        @foreach (var t in Model.ChoreTypeOptions)
+                        {
+                            <option value="@t.Id">@t.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="TemplateStartTime" /></label>
+                    <input class="form-input" type="time" asp-for="TemplateStartTime" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="TemplateEndTime" /></label>
+                    <input class="form-input" type="time" asp-for="TemplateEndTime" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="WeightOverride" /></label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <input class="form-input" type="number" asp-for="TemplateWeightHours" min="0" max="24" style="width:5rem;" />
+                        <span><loc key="Hours_Short" /></span>
+                        <input class="form-input" type="number" asp-for="TemplateWeightMinutes" min="0" max="59" style="width:5rem;" />
+                        <span><loc key="Minutes_Short" /></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@Localizer["Notes"]</label>
+                    <input class="form-input" asp-for="TemplateNotes" maxlength="500" />
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit"><loc key="CreateChoreTemplate" /></button>
+        </form>
+    </div>
+
+    <div class="section-card">
+        <h3 class="section-header"><loc key="AllChoreTemplates" /> (@Model.Templates.Count)</h3>
+        @if (Model.Templates.Any())
+        {
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th><loc key="TemplateName" /></th>
+                            <th><loc key="TemplateDefaultTitle" /></th>
+                            <th><loc key="ChoreType" /></th>
+                            <th><loc key="TemplateStartTime" /></th>
+                            <th><loc key="TemplateEndTime" /></th>
+                            <th><loc key="Status" /></th>
+                            <th style="width:1%"><loc key="Actions" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var t in Model.Templates)
+                    {
+                        var wh = (t.WeightMinutesOverride ?? 0) / 60;
+                        var wm = (t.WeightMinutesOverride ?? 0) % 60;
+                        <tr id="row-@t.Id">
+                            <td><strong>@t.Name</strong></td>
+                            <td>@t.DefaultTitle</td>
+                            <td>@(t.ChoreTypeName ?? "-")</td>
+                            <td>@(t.StartTime?.ToString("HH:mm") ?? "-")</td>
+                            <td>@(t.EndTime?.ToString("HH:mm") ?? "-")</td>
+                            <td>
+                                @if (t.IsActive)
+                                {
+                                    <span class="badge badge-active"><loc key="Active" /></span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-inactive"><loc key="Inactive" /></span>
+                                }
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <button type="button" class="btn btn-primary js-stamp" data-template-id="@t.Id" data-template-name="@t.Name"><loc key="Stamp" /></button>
+                                    <button type="button" class="btn btn-ghost js-edit-toggle" data-target="edit-@t.Id">@Localizer["Edit"]</button>
+                                    @if (t.IsActive)
+                                    {
+                                        <form method="post" asp-page-handler="Deactivate" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@t.Id" />
+                                            <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+                                            <button type="submit" class="btn btn-ghost">@Localizer["Deactivate"]</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="Activate" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@t.Id" />
+                                            <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+                                            <button type="submit" class="btn btn-ghost">@Localizer["Activate"]</button>
+                                        </form>
+                                    }
+                                    <form method="post" asp-page-handler="Delete" style="display:inline"
+                                          onsubmit="return confirm('@Localizer["ChoreTemplateDeleteConfirm"]');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@t.Id" />
+                                        <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+                                        <button type="submit" class="btn btn-danger">@Localizer["Delete"]</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="edit-row" id="edit-@t.Id">
+                            <td colspan="7">
+                                <form method="post" asp-page-handler="Update">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="EditId" value="@t.Id" />
+                                    <input type="hidden" name="MoleculeId" value="@Model.MoleculeId" />
+                                    <div class="edit-form-grid">
+                                        <div class="form-group">
+                                            <label class="form-label"><loc key="TemplateName" /></label>
+                                            <input class="form-input" name="EditName" value="@t.Name" required maxlength="100" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label"><loc key="TemplateDefaultTitle" /></label>
+                                            <input class="form-input" name="EditDefaultTitle" value="@t.DefaultTitle" required maxlength="200" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label"><loc key="TemplateChoreType" /></label>
+                                            <select class="form-select" name="EditChoreTypeId">
+                                                <option value=""><loc key="Uncategorized" /></option>
+                                                @foreach (var ct in Model.ChoreTypeOptions)
+                                                {
+                                                    <option value="@ct.Id" selected="@(t.ChoreTypeId == ct.Id)">@ct.Name</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label"><loc key="TemplateStartTime" /></label>
+                                            <input class="form-input" type="time" name="EditStartTime" value="@(t.StartTime?.ToString("HH:mm"))" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label"><loc key="TemplateEndTime" /></label>
+                                            <input class="form-input" type="time" name="EditEndTime" value="@(t.EndTime?.ToString("HH:mm"))" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label"><loc key="WeightOverride" /></label>
+                                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                                                <input class="form-input" type="number" name="EditWeightHours" value="@wh" min="0" max="24" style="width:4.5rem;" />
+                                                <span><loc key="Hours_Short" /></span>
+                                                <input class="form-input" type="number" name="EditWeightMinutes" value="@wm" min="0" max="59" style="width:4.5rem;" />
+                                                <span><loc key="Minutes_Short" /></span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">@Localizer["Notes"]</label>
+                                            <input class="form-input" name="EditNotes" value="@(t.Notes ?? "")" maxlength="500" />
+                                        </div>
+                                        <div class="form-group" style="align-self: end;">
+                                            <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
+                                            <button type="button" class="btn btn-ghost js-edit-cancel" data-target="edit-@t.Id">@Localizer["Cancel"]</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="empty-state"><loc key="NoChoreTemplatesYet" /></p>
+        }
+    </div>
+
+    <dialog id="stampDialog" class="stamp-dialog">
+        <div style="padding:1.5rem;">
+            <h2 class="section-header" style="margin-top:0;"><loc key="StampTemplate" />: <span id="stampTemplateName"></span></h2>
+            <div id="stampForm">
+                <div class="form-grid">
+                    <div class="form-group"><label class="form-label"><loc key="StampFrom" /></label><input class="form-input" type="date" id="stampFrom" /></div>
+                    <div class="form-group"><label class="form-label"><loc key="StampTo" /></label><input class="form-input" type="date" id="stampTo" /></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="StampWeekdays" /></label>
+                    <div id="stampWeekdays" style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+                        <label class="stamp-weekday-chip"><input type="checkbox" class="stamp-weekday" value="0" /> <loc key="Weekday_Sun" /></label>
+                        <label class="stamp-weekday-chip"><input type="checkbox" class="stamp-weekday" value="1" /> <loc key="Weekday_Mon" /></label>
+                        <label class="stamp-weekday-chip"><input type="checkbox" class="stamp-weekday" value="2" /> <loc key="Weekday_Tue" /></label>
+                        <label class="stamp-weekday-chip"><input type="checkbox" class="stamp-weekday" value="3" /> <loc key="Weekday_Wed" /></label>
+                        <label class="stamp-weekday-chip"><input type="checkbox" class="stamp-weekday" value="4" /> <loc key="Weekday_Thu" /></label>
+                        <label class="stamp-weekday-chip"><input type="checkbox" class="stamp-weekday" value="5" /> <loc key="Weekday_Fri" /></label>
+                        <label class="stamp-weekday-chip"><input type="checkbox" class="stamp-weekday" value="6" /> <loc key="Weekday_Sat" /></label>
+                    </div>
+                    <small style="color:var(--text-muted);"><loc key="StampWeekdaysHint" /></small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><loc key="StampAssignees" /></label>
+                    <div id="stampAssignees" style="max-height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:0.5rem;">
+                        @foreach (var a in Model.AssigneeOptions)
+                        {
+                            <label style="display:flex; gap:0.5rem; align-items:center; padding:0.25rem;"><input type="checkbox" class="stamp-assignee" value="@a.Id" /> <span>@a.Name</span></label>
+                        }
+                    </div>
+                </div>
+                <label style="display:flex; gap:0.5rem; align-items:center; margin:0.75rem 0 0.25rem;">
+                    <input type="checkbox" id="stampRotate" />
+                    <span><loc key="StampRotate" /></span>
+                </label>
+                <small style="color:var(--text-muted);"><loc key="StampRotateHint" /></small>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                    <button type="button" class="btn" id="stampCancelBtn"><loc key="Button_Cancel" /></button>
+                    <button type="button" class="btn btn-primary" id="stampSubmitBtn"><loc key="StampSubmit" /></button>
+                </div>
+            </div>
+            <div id="stampResult" style="display:none;">
+                <h3 class="section-header" style="font-size:1rem;"><loc key="StampResultHeader" /></h3>
+                <p id="stampResultSummary" style="font-weight:600;"></p>
+                <div id="stampResultTable" style="max-height:280px; overflow:auto;"></div>
+                <div style="display:flex; justify-content:flex-end; margin-top:1rem;">
+                    <button type="button" class="btn btn-primary" id="stampDoneBtn"><loc key="Button_Done" /></button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+    @Html.AntiForgeryToken()
+    <script>
+        window.__stampReasonKeys = {
+            'STAMP_TOO_LARGE': @Html.Raw(Json.Serialize(Localizer["Stamp_TooLarge"].Value)),
+            'USER_NOT_IN_MOLECULE': @Html.Raw(Json.Serialize(Localizer["Stamp_SkippedGeneric"].Value)),
+            'BUSY_OVERRIDE_REQUIRED': @Html.Raw(Json.Serialize(Localizer["Stamp_SkippedGeneric"].Value)),
+            'Error_ChoreRequiresGenderMale': @Html.Raw(Json.Serialize(Localizer["Error_ChoreRequiresGenderMale"].Value)),
+            'Error_ChoreRequiresGenderFemale': @Html.Raw(Json.Serialize(Localizer["Error_ChoreRequiresGenderFemale"].Value)),
+            'Error_ChoreRequiresOfficerRank': @Html.Raw(Json.Serialize(Localizer["Error_ChoreRequiresOfficerRank"].Value)),
+            'Error_ChoreUserExempt': @Html.Raw(Json.Serialize(Localizer["Error_ChoreUserExempt"].Value)),
+            'Error_ChoreGenderUnspecified': @Html.Raw(Json.Serialize(Localizer["Error_ChoreGenderUnspecified"].Value))
+        };
+        window.__stampGeneric = @Html.Raw(Json.Serialize(Localizer["Stamp_SkippedGeneric"].Value));
+        window.__stampCreatedFmt = @Html.Raw(Json.Serialize(Localizer["Stamp_Created"].Value));
+        window.__stampSkippedFmt = @Html.Raw(Json.Serialize(Localizer["Stamp_Skipped"].Value));
+        window.__stampError = @Html.Raw(Json.Serialize(Localizer["Error_StampFailed"].Value));
+    </script>
+}
+
+@section Scripts {
+    <script>
+    // Inline edit-row toggle.
+    (function() {
+        document.addEventListener('click', function(e) {
+            var toggleBtn = e.target.closest('.js-edit-toggle');
+            if (toggleBtn) {
+                var r = document.getElementById(toggleBtn.getAttribute('data-target'));
+                if (r) r.classList.toggle('active');
+                return;
+            }
+            var cancelBtn = e.target.closest('.js-edit-cancel');
+            if (cancelBtn) {
+                var r2 = document.getElementById(cancelBtn.getAttribute('data-target'));
+                if (r2) r2.classList.remove('active');
+                return;
+            }
+        });
+    })();
+
+    // Stamp modal (separate IIFE).
+    (function() {
+        var dialog = document.getElementById('stampDialog');
+        if (!dialog) return;
+        var nameEl = document.getElementById('stampTemplateName');
+        var formView = document.getElementById('stampForm');
+        var resultView = document.getElementById('stampResult');
+        var summaryEl = document.getElementById('stampResultSummary');
+        var tableEl = document.getElementById('stampResultTable');
+        var fromEl = document.getElementById('stampFrom');
+        var toEl = document.getElementById('stampTo');
+        var rotateEl = document.getElementById('stampRotate');
+        var submitBtn = document.getElementById('stampSubmitBtn');
+        var cancelBtn = document.getElementById('stampCancelBtn');
+        var doneBtn = document.getElementById('stampDoneBtn');
+        var currentTemplateId = null;
+
+        var MAX_SPAN_DAYS = 92;
+        var MAX_CHORES = 500;
+
+        function token() {
+            var el = document.querySelector('input[name="__RequestVerificationToken"]');
+            return el ? el.value : '';
+        }
+        function showError(msg) {
+            if (window.FeedbackModal && window.FeedbackModal.show) { window.FeedbackModal.show('error', msg); }
+        }
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function(ch) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+            });
+        }
+        function fmt(tmpl, n) { return String(tmpl).replace('{0}', n); }
+        function reasonText(key) { return (window.__stampReasonKeys && window.__stampReasonKeys[key]) || window.__stampGeneric; }
+
+        function selectedWeekdays() {
+            return Array.from(document.querySelectorAll('.stamp-weekday:checked')).map(function(cb){ return parseInt(cb.value,10); });
+        }
+        function selectedAssignees() {
+            return Array.from(document.querySelectorAll('.stamp-assignee:checked')).map(function(cb){ return parseInt(cb.value,10); });
+        }
+
+        // Client-side cap mirror (server enforces the authoritative cap).
+        function withinCap(from, to, weekdays, assigneeCount, rotate) {
+            var f = new Date(from + 'T00:00:00');
+            var t = new Date(to + 'T00:00:00');
+            var spanDays = Math.floor((t - f) / 86400000) + 1;
+            if (spanDays > MAX_SPAN_DAYS) return false;
+            var matching = 0;
+            for (var d = new Date(f); d <= t; d.setDate(d.getDate() + 1)) {
+                if (weekdays.length === 0 || weekdays.indexOf(d.getDay()) !== -1) matching++;
+            }
+            var prospective = rotate ? matching : matching * assigneeCount;
+            return prospective <= MAX_CHORES;
+        }
+
+        function openDialog(templateId, templateName) {
+            currentTemplateId = templateId;
+            nameEl.textContent = templateName || '';
+            formView.style.display = '';
+            resultView.style.display = 'none';
+            document.querySelectorAll('.stamp-weekday, .stamp-assignee').forEach(function(cb){ cb.checked = false; });
+            rotateEl.checked = false;
+            fromEl.value = ''; toEl.value = '';
+            if (typeof dialog.showModal === 'function') { dialog.showModal(); } else { dialog.setAttribute('open',''); }
+        }
+        function closeDialog() {
+            if (typeof dialog.close === 'function') { dialog.close(); } else { dialog.removeAttribute('open'); }
+        }
+
+        document.addEventListener('click', function(e) {
+            var openBtn = e.target.closest('.js-stamp');
+            if (openBtn) {
+                openDialog(parseInt(openBtn.getAttribute('data-template-id'), 10), openBtn.getAttribute('data-template-name'));
+            }
+        });
+
+        submitBtn.addEventListener('click', function() {
+            var from = fromEl.value, to = toEl.value;
+            var weekdays = selectedWeekdays();
+            var assignees = selectedAssignees();
+            var rotate = rotateEl.checked;
+            if (!from || !to || from > to || assignees.length === 0) { showError(window.__stampError); return; }
+            if (!withinCap(from, to, weekdays, assignees.length, rotate)) {
+                showError((window.__stampReasonKeys && window.__stampReasonKeys['STAMP_TOO_LARGE']) || window.__stampError);
+                return;
+            }
+            submitBtn.disabled = true;
+            fetch('?handler=Stamp', {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+                body: JSON.stringify({ TemplateId: currentTemplateId, From: from, To: to, Weekdays: weekdays, AssigneeIds: assignees, Rotate: rotate })
+            }).then(function(r){ return r.json(); })
+              .then(function(res) {
+                  if (!res.success) { showError(res.error || window.__stampError); return; }
+                  summaryEl.textContent = fmt(window.__stampCreatedFmt, res.created) + ' / ' + fmt(window.__stampSkippedFmt, res.skipped);
+                  var html = '';
+                  (res.createdRows || []).forEach(function(row) {
+                      html += '<div class="stamp-result-row"><span>' + escapeHtml(row.date) + '</span><span>' + escapeHtml(row.user) + '</span></div>';
+                  });
+                  (res.skippedRows || []).forEach(function(row) {
+                      html += '<div class="stamp-result-row stamp-result-row--skipped"><span>' + escapeHtml(row.date) + '</span><span>' + escapeHtml(row.user) + '</span><span>' + escapeHtml(reasonText(row.reasonKey)) + '</span></div>';
+                  });
+                  tableEl.innerHTML = html;
+                  formView.style.display = 'none';
+                  resultView.style.display = '';
+              })
+              .catch(function() { showError(window.__stampError); })
+              .finally(function() { submitBtn.disabled = false; });
+        });
+
+        cancelBtn.addEventListener('click', closeDialog);
+        doneBtn.addEventListener('click', function() { closeDialog(); location.reload(); });
+    })();
+    </script>
+}
