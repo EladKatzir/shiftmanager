@@ -98,16 +98,41 @@
 
             @* Justice — in-context drawer (Phase 2) *@
             @{
+                // Phase 5: thread the active chore-category filter into the drawer's fetch endpoint so
+                // the drawer narrows consistently with the page-level category selector below.
+                var justiceEndpoint = $"/Calendar/Chores?handler=Justice&MoleculeId={Model.MoleculeId}&Start={Model.StartDate:yyyy-MM-dd}";
+                if (Model.ChoreCategoryFilter.HasValue)
+                {
+                    justiceEndpoint += $"&ChoreCategoryFilter={Model.ChoreCategoryFilter.Value}";
+                }
                 var justicePanelModel = new ShiftManager.Pages.Shared.JusticePanelModel
                 {
                     CalendarKind = "chores",
-                    DataEndpoint = $"/Calendar/Chores?handler=Justice&MoleculeId={Model.MoleculeId}&Start={Model.StartDate:yyyy-MM-dd}",
+                    DataEndpoint = justiceEndpoint,
                     ButtonTitle = Localizer["Justice_Panel_Button"].Value,
                     RibbonAria = Localizer["Justice_EquityRibbon_Aria"].Value,
                     CloseLabel = Localizer["Justice_Panel_Close"].Value
                 };
             }
             <partial name="_JusticePanel" model="justicePanelModel" />
+
+            @* Phase 5: chore-category selector for the Justice drawer (narrows weighted-minute fairness). *@
+            @if (Model.ChoreCategories.Count > 0)
+            {
+                <require-grant key="ViewJusticeTable">
+                    <div class="cal-toolbar__selector">
+                        <label for="chore-cat-select"><loc key="Justice_Filter_ChoreCategory" /></label>
+                        <select id="chore-cat-select" class="form-select"
+                                onchange="(function(sel){ var url = new URL(window.location.href); if (sel.value) { url.searchParams.set('ChoreCategoryFilter', sel.value); } else { url.searchParams.delete('ChoreCategoryFilter'); } window.location.href = url.toString(); })(this)">
+                            <option value="" selected="@(Model.ChoreCategoryFilter == null)">@Localizer["Justice_Filter_AllChoreCategories"]</option>
+                            @foreach (var cat in Model.ChoreCategories)
+                            {
+                                <option value="@cat.Id" selected="@(Model.ChoreCategoryFilter == cat.Id)">@cat.DisplayName</option>
+                            }
+                        </select>
+                    </div>
+                </require-grant>
+            }
 
             @* Mobile-only Tools overflow trigger — surfaces controls hidden at <768px. *@
             <button type="button"

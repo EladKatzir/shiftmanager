@@ -15202,6 +15202,9 @@
   <data name="Justice_WorkType_OnDuty" xml:space="preserve"><value>כוננויות</value></data>
   <data name="Justice_Filter_Category" xml:space="preserve"><value>קטגוריית משמרת</value></data>
   <data name="Justice_Filter_AllCategories" xml:space="preserve"><value>כל הקטגוריות</value></data>
+  <data name="Justice_Filter_ChoreCategory" xml:space="preserve"><value>קטגוריית מטלה</value></data>
+  <data name="Justice_Filter_AllChoreCategories" xml:space="preserve"><value>כל הקטגוריות</value></data>
+  <data name="Justice_TargetUnitNote" xml:space="preserve"><value>יעדים נקבעים ביחידות מטלה; העומס מוצג בשעות משוקללות.</value></data>
   <data name="Justice_ExcludeExempt" xml:space="preserve"><value>אל תכלול משמרות בית / לא מחובר</value></data>
   <data name="Justice_Apply" xml:space="preserve"><value>החל</value></data>
   <data name="Justice_Verdict_Heading" xml:space="preserve"><value>פסק דין</value></data>

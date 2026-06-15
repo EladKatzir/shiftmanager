@@ -73,6 +73,10 @@ public class ChoresModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int? ChoreTypeFilter { get; set; }
 
+    // Phase 5: optional ChoreCategory narrowing for the in-context Justice drawer (null = all categories).
+    [BindProperty(SupportsGet = true)]
+    public int? ChoreCategoryFilter { get; set; }
+
     [BindProperty(SupportsGet = true)]
     public bool JustMine { get; set; }
 
@@ -86,6 +90,8 @@ public class ChoresModel : PageModel
     public List<Molecule> AvailableMolecules { get; set; } = new();
     public Molecule? SelectedMolecule { get; set; }
     public List<ChoreType> ChoreTypes { get; set; } = new();
+    // Phase 5: active chore categories for the Justice-drawer category selector (empty when none).
+    public List<ChoreCategory> ChoreCategories { get; set; } = new();
     public int CurrentUserId { get; set; }
     public List<AppUser> Users { get; set; } = new();
 
@@ -145,6 +151,8 @@ public class ChoresModel : PageModel
         if (MoleculeId.HasValue)
         {
             ChoreTypes = await _choreTypeService.GetChoreTypesForMoleculeAsync(MoleculeId.Value);
+            // Phase 5: active chore categories drive the Justice-drawer category selector.
+            ChoreCategories = await _choreCategoryService.GetCategoriesForMoleculeAsync(MoleculeId.Value);
         }
 
         // Calculate date range
@@ -661,7 +669,8 @@ public class ChoresModel : PageModel
             PeriodEnd: periodEnd,
             WorkType: JusticeWorkType.Chore,
             ExcludeExemptShifts: false,                  // chores have no exempt analogue
-            Level: JusticeLevel.CompaniesInMolecule);
+            Level: JusticeLevel.CompaniesInMolecule,
+            ChoreCategoryId: ChoreCategoryFilter);       // Phase 5: optional chore-category narrowing
 
         var view = await _justiceService.GetInContextViewAsync(query, ct);
         return new JsonResult(BuildJusticeJson(view));
@@ -677,6 +686,7 @@ public class ChoresModel : PageModel
                 scopeId = view.Query.ScopeId,
                 level = view.Query.Level.ToString(),
                 workType = view.Query.WorkType.ToString(),
+                choreCategoryId = view.Query.ChoreCategoryId,
                 periodStart = view.Query.PeriodStart.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 periodEnd = view.Query.PeriodEnd.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
             },

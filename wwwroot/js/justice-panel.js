@@ -213,10 +213,13 @@
         var rows = data.rows || [];
         if (rows.length === 0) { el.innerHTML = ''; return; }
         var max = Number(data.maxRibbonValue || 1);
+        var isChore = isChoreWorkType(data);
         var html = rows.map(function (r) {
             var weight = Math.max(1, Number(r.actual) || 0);
             var band = (r.band || 'NoTarget').toLowerCase().replace(/_/g, '');
-            var name = (r.name || '') + ' ' + (r.actual || 0);
+            // Phase 5: chore absolute load is weighted minutes — show it as hours in the hover title.
+            var actualLabel = isChore ? formatHoursFromMinutes(r.actual) : (r.actual || 0);
+            var name = (r.name || '') + ' ' + actualLabel;
             return '<span class="equity-segment dev-band-' + escape(band) +
                    '" style="flex: ' + weight + '" title="' + escape(name) + '"></span>';
         }).join('');
@@ -700,6 +703,23 @@
         if (!isFinite(n)) return '—';
         var sign = n > 0 ? '+' : '';
         return sign + Math.round(n) + '%';
+    }
+
+    /** Phase 5: chore work-type queries; absolute load is weighted minutes shown as hours. */
+    function isChoreWorkType(data) {
+        return !!(data && data.query && data.query.workType === 'Chore');
+    }
+
+    /**
+     * Phase 5: format weighted minutes as hours for chore work-type rows. e.g. 960 → "16h".
+     * Numeric mirror of the server-side ShiftManager.Services.DurationFormat.FormatHours (minutes/60,
+     * 1 decimal, trailing ".0" trimmed). Kept locale-neutral ('h') in the drawer.
+     */
+    function formatHoursFromMinutes(minutes) {
+        var m = Number(minutes) || 0;
+        var h = m / 60;
+        var s = (Math.round(h * 10) / 10).toString();
+        return s + 'h';
     }
 
     function initialsOf(name) {
