@@ -1485,6 +1485,11 @@ public class VacationApprovalService : IVacationApprovalService
                 .Select(gt => gt.Id)
                 .Contains(g.GrantTypeId))
             .Where(g => g.CanOwn)
+            // #4: align the offered pool with the job-type-aware approval gate (CanUserApproveAsync).
+            // Exclude a grant pinned to a job type that does not cover the requester's — mirrors
+            // HasGrantWithScopeAsync's jobTypeMismatch (both sides non-null and differing => excluded),
+            // so an approver who is OFFERED is never rejected at approval time for a job-type reason.
+            .Where(g => g.JobTypeId == null || requester.JobTypeId == null || g.JobTypeId == requester.JobTypeId)
             // Match grants whose scope actually covers any of the requester's member companies
             .Where(g => memberCompanyIdList.Contains(g.CompanyId ?? -1)
                      // Molecule-scoped: grant's molecule must be one of the member molecules

@@ -202,6 +202,55 @@ public class VacationApproverOptionsTests : IDisposable
         options.Should().ContainSingle(o => o.Id == 2 && o.Name == "Second-Company Approver");
     }
 
+    [Fact]
+    public async Task GetGrantBasedApproverOptions_ExcludesApproverWhoseGrantIsPinnedToDifferentJobType()
+    {
+        // #4: the offered pool must agree with the job-type-aware approval gate (CanUserApproveAsync).
+        // An approver whose ApproveVacations grant is pinned to a DIFFERENT job type than the requester
+        // would be rejected at approval time, so it must NOT be offered in the dropdown.
+        AddCompany(1, moleculeId: 10);
+        var requester = AddUser(1, companyId: 1, "Requester");
+        requester.JobTypeId = 7; // e.g. Alhut
+        AddUser(2, companyId: 1, "BR-Pinned Approver");
+        _db.Grants.Add(new Grant
+        {
+            UserId = 2,
+            GrantTypeId = ApproveVacationsGrantTypeId,
+            CompanyId = 1,
+            JobTypeId = 8, // pinned to a different job type (e.g. BR)
+            CanOwn = true
+        });
+        await _db.SaveChangesAsync();
+
+        var options = await _service.GetGrantBasedApproverOptionsAsync(requesterUserId: 1);
+
+        options.Should().NotContain(o => o.Id == 2);
+    }
+
+    [Fact]
+    public async Task GetGrantBasedApproverOptions_IncludesApproverWhoseGrantIsPinnedToRequesterJobType()
+    {
+        // Positive companion: a grant pinned to the requester's OWN job type is still offered
+        // (and a null-jobType grant remains offered — covered by AO-01).
+        AddCompany(1, moleculeId: 10);
+        var requester = AddUser(1, companyId: 1, "Requester");
+        requester.JobTypeId = 7;
+        AddUser(2, companyId: 1, "Matching Approver");
+        _db.Grants.Add(new Grant
+        {
+            UserId = 2,
+            GrantTypeId = ApproveVacationsGrantTypeId,
+            CompanyId = 1,
+            JobTypeId = 7, // same job type as the requester
+            CanOwn = true
+        });
+        await _db.SaveChangesAsync();
+
+        var options = await _service.GetGrantBasedApproverOptionsAsync(requesterUserId: 1);
+
+        options.Should().ContainSingle(o => o.Id == 2 && o.Name == "Matching Approver");
+    }
+
     // ── IsEligibleApproverAsync — submit-time validation must agree with the dropdown ──
 
     [Fact]
