@@ -75,8 +75,7 @@ public static class TestUserMatrix
     public static IEnumerable<object[]> DeniedGrantCombinations()
     {
         // Employee should NOT have assignment or admin grants
-        yield return new object[] { "Tzafona", "Employee", "AssignAlhutShifts" };
-        yield return new object[] { "Tzafona", "Employee", "AssignBRShifts" };
+        yield return new object[] { "Tzafona", "Employee", "AssignShifts" };
         yield return new object[] { "Tzafona", "Employee", "ApproveVacations" };
         yield return new object[] { "Tzafona", "Employee", "EditUsers" };
         yield return new object[] { "Tzafona", "Employee", "AdminAccess" };
@@ -88,8 +87,7 @@ public static class TestUserMatrix
         yield return new object[] { "Hitazmut", "Employee", "SystemConfiguration" };
 
         // Assigner should NOT have shift assignment grants
-        yield return new object[] { "Tzafona", "Assigner", "AssignAlhutShifts" };
-        yield return new object[] { "Tzafona", "Assigner", "AssignBRShifts" };
+        yield return new object[] { "Tzafona", "Assigner", "AssignShifts" };
         yield return new object[] { "Tzafona", "Assigner", "ApproveVacations" };
         yield return new object[] { "Tzafona", "Assigner", "AdminAccess" };
 
@@ -121,8 +119,8 @@ public static class TestUserMatrix
         yield return new object[] { "Tzafona", "Lead", "ApproveVacations" };
         yield return new object[] { "Tzafona", "Lead", "ViewAllShifts" };
 
-        // BRDirector has BR assignment
-        yield return new object[] { "Tzafona", "BRDirector", "AssignBRShifts" };
+        // BRDirector has shift assignment (unified AssignShifts since 2026-06-16)
+        yield return new object[] { "Tzafona", "BRDirector", "AssignShifts" };
         yield return new object[] { "Tzafona", "BRDirector", "ApproveSwaps" };
 
         // MoleculeAdmin has broad grants

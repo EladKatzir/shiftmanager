@@ -129,15 +129,16 @@ public class RoleTemplateAutoGrantTests : MasterTestBase
     }
 
     [Fact]
-    public async Task BRDirector_Has_AssignBRShifts()
+    public async Task BRDirector_Has_AssignShifts()
     {
+        // 2026-06-16: the 8 Assign*Shifts grants collapsed into the unified AssignShifts (137).
         var brDirector = GetTestUser("Tzafona", "BRDirector");
-        var grantType = Fixture.GrantTypeByKey["AssignBRShifts"];
+        var grantType = Fixture.GrantTypeByKey["AssignShifts"];
 
         var hasGrant = await Db.Grants
             .AnyAsync(g => g.UserId == brDirector.Id && g.GrantTypeId == grantType.Id && g.CanOwn);
 
-        hasGrant.Should().BeTrue("BRDirector should have AssignBRShifts");
+        hasGrant.Should().BeTrue("BRDirector should have AssignShifts");
     }
 
     [Fact]
@@ -184,15 +185,17 @@ public class RoleTemplateAutoGrantTests : MasterTestBase
     // granted to Lead/BRDirector/Director/Assigner/DepartmentLead/MoleculeAdmin/AreaAdmin/Owner.
     // ViewJusticeTable (#133) granted to Lead/BRDirector/Director/Assigner/MoleculeAdmin/AreaAdmin/Owner;
     // EditJusticeTargets (#134) granted to AreaAdmin + Owner. Total grants: 136.
+    // 2026-06-16: AssignShifts collapse (8 Assign*Shifts → 1 AssignShifts) reduces each affected
+    // template by (K-1) where K = the number of Assign*Shifts grants it held.
     [InlineData("Tzafona", "Employee", 21)]      // F2: -1 ViewGrants removed from base template
-    [InlineData("Tzafona", "Lead", 58)]          // +1 ManageShiftCategories (#136)
-    [InlineData("Tzafona", "BRDirector", 70)]    // +1 ManageShiftCategories (#136)
-    [InlineData("Tzafona", "Director", 66)]      // +1 ManageShiftCategories (#136)
+    [InlineData("Tzafona", "Lead", 57)]          // -1 AssignShifts collapse (K=2)
+    [InlineData("Tzafona", "BRDirector", 70)]    // unchanged (K=1: AssignBRShifts → AssignShifts)
+    [InlineData("Tzafona", "Director", 65)]      // -1 AssignShifts collapse (K=2)
     [InlineData("Tzafona", "Assigner", 26)]      // ViewJusticeTable retained — Assigner keeps Analytics access (2026-06-15 product decision)
-    [InlineData("Hitazmut", "MoleculeAdmin", 108)]// +1 ManageShiftCategories (#136)
-    [InlineData("Yekev", "DepartmentLead", 60)]  // +1 ManageShiftCategories (#136)
-    [InlineData("Tzafona", "AreaAdmin", 125)]    // +1 ManageShiftCategories (#136)
-    [InlineData("SystemAdmins", "Owner", 136)]   // +1 ManageShiftCategories (#136) — Owner gets ALL
+    [InlineData("Hitazmut", "MoleculeAdmin", 101)]// -7 AssignShifts collapse (K=8)
+    [InlineData("Yekev", "DepartmentLead", 56)]  // -4 AssignShifts collapse (K=5)
+    [InlineData("Tzafona", "AreaAdmin", 118)]    // -7 AssignShifts collapse (K=8)
+    [InlineData("SystemAdmins", "Owner", 129)]   // -7 AssignShifts collapse (K=8)
     public async Task User_Has_ExpectedAutoGrantCount(string company, string template, int expectedCount)
     {
         var user = GetTestUser(company, template);

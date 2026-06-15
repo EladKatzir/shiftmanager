@@ -203,36 +203,38 @@ public class GrantScopeResolutionTests : MasterTestBase
     // ================================================================
 
     [Fact]
-    public async Task LeadAssignAlhutShifts_Matches_OwnMoleculeAndJobType()
+    public async Task LeadAssignShifts_Matches_OwnMoleculeAndJobType()
     {
-        // Lead at Tzafona (Alhut jobtype) has AssignAlhutShifts with ETM + OwnJobType
+        // 2026-06-16: Lead at Tzafona has the unified AssignShifts at ETM (job-type-agnostic).
+        // A molecule-scoped match still succeeds; passing a jobTypeId is harmless because the grant
+        // carries no JobType pin (jobTypeMismatch needs BOTH sides non-null).
         var lead = GetTestUser("Tzafona", "Lead");
         var orenMolecule = Fixture.MoleculeByName["Oren"];
         var alhutJobType = Fixture.JobTypeByName["Alhut"];
         var grantService = CreateGrantServiceWithHierarchy();
 
         var result = await grantService.HasGrantWithScopeAsync(
-            lead.Id, "AssignAlhutShifts",
+            lead.Id, "AssignShifts",
             moleculeId: orenMolecule.Id,
             jobTypeId: alhutJobType.Id);
 
         result.Should().BeTrue(
-            "Lead's AssignAlhutShifts (ETM+OwnJobType) should match own molecule and Alhut jobtype");
+            "Lead's AssignShifts (ETM) should match own molecule for any job type");
     }
 
     [Fact]
-    public async Task BRDirector_AssignBRShifts_MatchesAcrossMolecule()
+    public async Task BRDirector_AssignShifts_MatchesAcrossMolecule()
     {
-        // BRDirector at Tzafona has AssignBRShifts (ETM, ALL jobtypes, CanGive)
+        // 2026-06-16: BRDirector at Tzafona has the unified AssignShifts (ETM, CanGive).
         var brDirector = GetTestUser("Tzafona", "BRDirector");
         var orenMolecule = Fixture.MoleculeByName["Oren"];
         var grantService = CreateGrantServiceWithHierarchy();
 
         var result = await grantService.HasGrantWithScopeAsync(
-            brDirector.Id, "AssignBRShifts",
+            brDirector.Id, "AssignShifts",
             moleculeId: orenMolecule.Id);
 
         result.Should().BeTrue(
-            "BRDirector's AssignBRShifts should match across own molecule");
+            "BRDirector's AssignShifts should match across own molecule");
     }
 }
