@@ -33,10 +33,10 @@
 **Create:**
 - `Services/IChoreService.cs` — the extracted `IChoreService` interface (convention fix; currently inline in `ChoreService.cs:9-40`).
 - `Models/Support/Gender.cs` — `Gender` enum.
-- `Models/Support/EligibilityEnums.cs` — `EligibilitySubjectKind`, `EligibilityRuleKind`.
+- `Models/Support/EligibilityEnums.cs` — `EligibilityRuleKind` (`Gender` lives in `Gender.cs`).
 - `Models/ChoreCategory.cs` — molecule-scoped category (mirrors `ShiftCategory`).
 - `Models/UserChoreCategory.cs` — user↔category N:N (mirrors `UserShiftCategory`).
-- `Models/EligibilityRule.cs` — polymorphic, type-agnostic rule (chore-wired only).
+- `Models/EligibilityRule.cs` — chore-scoped (per ChoreType) rule; shifts do NOT use it.
 - `Models/UserChoreExemption.cs` — per-person waiver.
 - `Models/ChoreTemplate.cs` — reusable stamp-out definition.
 - `Migrations/ChoreFoundationBackfillSql.cs` — backfill SQL constants (`Forward[]`).
@@ -137,14 +137,6 @@ public enum Gender
 
 ```csharp
 namespace ShiftManager.Models.Support;
-
-/// <summary>Which entity an EligibilityRule attaches to. Only ChoreType is wired this cycle;
-/// ShiftType is shaped-for but intentionally not validated against yet.</summary>
-public enum EligibilitySubjectKind
-{
-    ChoreType = 0,
-    ShiftType = 1
-}
 
 /// <summary>The kind of hard requirement an EligibilityRule expresses.</summary>
 public enum EligibilityRuleKind
@@ -248,21 +240,21 @@ using ShiftManager.Models.Support;
 namespace ShiftManager.Models;
 
 /// <summary>
-/// A type-agnostic, polymorphic eligibility requirement attached to a subject (ChoreType now;
-/// ShiftType shaped-for-later, NOT wired this cycle). A subject may carry several rules (e.g.
-/// female-only AND officer-only). Global config table — no tenant filter. Evaluated by
-/// IEligibilityEvaluator as a HARD block at assignment time (Phase 2).
+/// A chore-scoped eligibility requirement attached to one ChoreType (gender or officer-rank).
+/// A chore type may carry several rules. Global config table — no tenant filter. Evaluated by
+/// IEligibilityEvaluator as gates at assignment time (gender → overrideable warning; officer → hard).
+/// Chore-specific by design — shifts do NOT use this table.
 /// </summary>
 public class EligibilityRule
 {
     public int Id { get; set; }
-    public EligibilitySubjectKind SubjectKind { get; set; }   // ChoreType this cycle
-    public int SubjectId { get; set; }                        // the ChoreType.Id
-    public EligibilityRuleKind RuleKind { get; set; }
-    public Gender? GenderValue { get; set; }                  // set iff RuleKind == RequiresGender
+    public int ChoreTypeId { get; set; }
+    public EligibilityRuleKind RuleKind { get; set; }   // RequiresGender | RequiresOfficerRank
+    public Gender? GenderValue { get; set; }            // set iff RuleKind == RequiresGender
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int CreatedBy { get; set; }
 
+    public ChoreType ChoreType { get; set; } = null!;
     public AppUser? Creator { get; set; }
 }
 ```
@@ -272,7 +264,7 @@ public class EligibilityRule
 
 ```bash
 git add Models/EligibilityRule.cs
-git commit -m "feat(chores): add EligibilityRule entity (polymorphic, chore-wired)"
+git commit -m "feat(chores): add EligibilityRule entity (chore-scoped, per ChoreType)"
 ```
 
 ### Task 5: `UserChoreExemption` entity
@@ -452,11 +444,13 @@ git commit -m "feat(chores): add Gender/DoesChores/chore navs, ChoreType categor
             .HasOne(ucc => ucc.ChoreCategory).WithMany(cc => cc.Members)
             .HasForeignKey(ucc => ucc.ChoreCategoryId).OnDelete(DeleteBehavior.Cascade);
 
-        // EligibilityRule: global config, no tenant filter; multiple rules per subject.
+        // EligibilityRule: global config, no tenant filter; multiple rules per ChoreType.
         modelBuilder.Entity<EligibilityRule>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.SubjectKind, e.SubjectId });
+            entity.HasIndex(e => e.ChoreTypeId);
+            entity.HasOne(e => e.ChoreType).WithMany()
+                .HasForeignKey(e => e.ChoreTypeId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Creator).WithMany()
                 .HasForeignKey(e => e.CreatedBy).OnDelete(DeleteBehavior.Restrict);
         });
@@ -901,7 +895,7 @@ public sealed class ChoreFoundationSchemaTests : IAsyncLifetime
 
         _db.EligibilityRules.Add(new EligibilityRule
         {
-            SubjectKind = EligibilitySubjectKind.ChoreType, SubjectId = type.Id,
+            ChoreTypeId = type.Id,
             RuleKind = EligibilityRuleKind.RequiresGender, GenderValue = Gender.Female, CreatedBy = 1
         });
         _db.ChoreTemplates.Add(new ChoreTemplate

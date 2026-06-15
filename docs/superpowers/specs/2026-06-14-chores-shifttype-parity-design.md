@@ -30,7 +30,7 @@ Today a **chore** is a structurally flat unit: `Chore` = one user, one date, a f
 | P1 | Assignment stays **manual**; system **enforces eligibility + reports fairness**. No auto-assign. |
 | P2 | "Recurrence" = **reusable stamp-out templates**, a convenience over `CreateChoreAsync`. No scheduler. |
 | P3 | Structure mirrors the **shift spine** (Approach A), chore-local entities. |
-| P4 | Rank + gender constraints use a **shared, type-agnostic `EligibilityRule` primitive** (Approach C), shaped so `ShiftType` can adopt it later. |
+| P4 | Rank + gender constraints use a **chore-scoped `EligibilityRule` (per ChoreType)**; shifts do NOT use it. |
 | P5 | **Waivers stay chore-specific** (`UserChoreExemption`), NOT part of the generic rule. |
 | P6 | **Full arc** designed in one spec: foundation + eligibility + gender + fairness. |
 | P7 | Membership at **category level**; weight in **duration-minutes**; the **one-active-chore-per-user-per-day** unique index is preserved. |
@@ -42,15 +42,15 @@ Today a **chore** is a structurally flat unit: `Chore` = one user, one date, a f
 > Each decision is grounded in real source; `code-architect` read the load-bearing files and the `shiftmanager-ui-designer` read the UI patterns. The earlier-reported "AssignChores = grant #52" was a line-number/ID confusion; verified IDs: `AssignChores` #17, `EditChoreTypes` #18, `CreateChoreTypes` #19 (seed uses `id++`; current max grant = #136 `ManageShiftCategories`).
 
 - **D1 — Membership granularity:** category-level `UserChoreCategory` + `AppUser.DoesChores`, mirroring `UserShiftCategory`/`DoesShifts`. Per-type allow-listing is intentionally *not* a positive membership; finer restriction is handled by rules (gender/rank) and exemptions (negative).
-- **D2 — `EligibilityRule` modeling:** one shared table, **polymorphic `(SubjectKind, SubjectId)` from day one** (`SubjectKind ∈ {ChoreType, ShiftType}`), but **only `ChoreType` is wired now**. `ShiftType.RequiresOfficerRank` and `ValidateShiftAsync` are **untouched** this cycle (no unrelated refactoring). The evaluator is a **pure, stateless domain service**.
+- **D2 — `EligibilityRule` modeling:** one **chore-scoped table (per `ChoreType` via a direct `ChoreTypeId` FK)**. **Chore-specific by design — shifts do NOT use it.** `ShiftType.RequiresOfficerRank` and `ValidateShiftAsync` are **untouched** this cycle (no unrelated refactoring); shifts keep their own officer-rank flag. The evaluator is a **pure, stateless domain service**.
 - **D3 — Gender field (UPDATED 2026-06-14):** new `AppUser.Gender` enum `{Unspecified=0, Male=1, Female=2}`, default `Unspecified`. Sensitive PII. **Gender mismatch is an overrideable WARNING, not a hard error** — for both a definite mismatch (e.g. Female on a male-only chore) and the `Unspecified` case, the manager may override via the existing HMAC-token warning path (alongside vacation/shift conflicts). Gender is **viewable and editable by any existing user-editor** (rides current user-edit authz); **no dedicated grant**; the value change is audited. (Officer-rank and waiver/exemption remain HARD, non-overrideable.)
-- **D4 — Weight model (UPDATED 2026-06-14):** `Chore.WeightMinutes` (int), **frozen at create time** (not recomputed at read), resolved as: explicit `StartTime/EndTime` → `ChoreType.DefaultWeightMinutes` → global fallback `DEFAULT_CHORE_WEIGHT_MINUTES = 480` (8 hours, fixed constant). Free-text (null type) chores get the fallback. Frozen so editing a type's default never rewrites historical fairness.
+- **D4 — Weight model (UPDATED 2026-06-14):** `Chore.WeightMinutes` (int), **frozen at create time** (not recomputed at read), resolved as: explicit `StartTime/EndTime` → `ChoreType.DefaultWeightMinutes` → global fallback `DEFAULT_CHORE_WEIGHT_MINUTES = 480` (8 hours, fixed constant). Free-text (null type) chores get the fallback. Frozen so editing a type's default never rewrites historical fairness. **Architect note (2026-06-15):** an untimed/typeless chore counting as 8h is heavy — duration-weighting only *differentiates* people when chore types set `DefaultWeightMinutes` or chores carry explicit times; otherwise fairness degenerates to count×8h. The Phase 3 type editor should encourage setting `DefaultWeightMinutes`.
 - **D5 — Fairness:** **extend the existing Justice engine** — swap the chore `g.Count()` for `g.Sum(c => c.WeightMinutes)` in the two chore branches; add an optional `JusticeQuery.ChoreCategoryId` (null = today's behavior); reuse `ViewJusticeTable` #133 / `EditJusticeTargets` #134 (no new grant). Targets stay in **chore-equivalents**, scaled by 480 in code (no target data migration).
-- **D6 — Migration/back-compat:** seed a per-molecule **"General"/"כללי"** `ChoreCategory` for molecules with existing types; backfill `ChoreType.ChoreCategoryId` (nullable → backfill → `NOT NULL`); free-text chores keep `null ChoreTypeId`; backfill `WeightMinutes` from times where present (else 240); backfill `DoesChores = true` for existing active Standard users (preserves roster). Unique chore index **unchanged**.
+- **D6 — Migration/back-compat:** seed a per-molecule **"General"/"כללי"** `ChoreCategory` for molecules with existing types; backfill `ChoreType.ChoreCategoryId` then leave it **nullable + `SetNull`** (the Phase 1 plan dropped the NOT-NULL tighten — matches `ShiftType.CategoryId` + the "Uncategorized" UI); free-text chores keep `null ChoreTypeId`; backfill `WeightMinutes` from times where present (else the **480** default); backfill `DoesChores = true` for existing active Standard users (preserves roster). Unique chore index **unchanged**.
 - **D7 — Grants (UPDATED 2026-06-14): NO new grants.** Reuse `EditChoreTypes`/`CreateChoreTypes` for category/type/rule/exemption/template admin, `AssignChores` for assignment + stamping, `ViewJusticeTable`/`EditJusticeTargets` for fairness. Gender view+edit and `DoesChores`/category/exemption handlers all ride existing user-edit authz. The previously-proposed `EditUserGender` grant #137 is **dropped** — this feature touches the grant seed **zero** times.
 - **D8 — Convention fix:** extract the inline `IChoreService` (`ChoreService.cs:9-40`) into `Services/IChoreService.cs`.
 - **D9 — Roster filter:** new predicate `AccountType == Standard && IsActive && (DoesChores || ChoreCategories.Any())`. Display-only; the BusyService hard-gate remains the authorization boundary.
-- **D10 — Templates:** new molecule-scoped `ChoreTemplate` definition; "stamp" loops `CreateChoreAsync` per (date, assignee); each validates independently; hard-error days skipped + reported. No schedule persisted, no background job.
+- **D10 — Templates:** new molecule-scoped `ChoreTemplate` definition; "stamp" loops `CreateChoreAsync` per (date, assignee); each validates independently; hard-error days skipped + reported. No schedule persisted, no background job. **Architect requirement (2026-06-15): `StampTemplateAsync` MUST bound the operation** — reject if the date span exceeds **92 days** or the total prospective chores (`dates × assignees`, or `dates` in rotate mode) exceeds **500** — because each (date,user) is its own transaction + busy-validation, and an unbounded stamp would risk a request timeout. The Phase 3 stamp modal enforces the same limit client-side. Return a clear "stamp too large" error key, not a partial run.
 
 ---
 
@@ -60,7 +60,6 @@ All new **config** entities are molecule-scoped (no `IBelongsToCompany`, no tena
 
 ### New enums
 - `Models/Support/Gender.cs`: `{ Unspecified=0, Male=1, Female=2 }`
-- `EligibilitySubjectKind { ChoreType=0, ShiftType=1 }`
 - `EligibilityRuleKind { RequiresGender=0, RequiresOfficerRank=1 }`
 
 ### `AppUser` (modified)
@@ -70,7 +69,7 @@ All new **config** entities are molecule-scoped (no `IBelongsToCompany`, no tena
 - `List<UserChoreExemption> ChoreExemptions`
 
 ### `ChoreCategory` (new — molecule-scoped, mirrors `ShiftCategory`)
-`Id, MoleculeId(FK Restrict), Name, DisplayName, NameEn?, NameHe?, Color?, SortOrder, IsActive, CreatedAt, CreatedByUserId`
+`Id, MoleculeId(FK Restrict), Name, DisplayName, NameEn?, NameHe?, Color?, SortOrder, IsActive, CreatedAt` (no `CreatedByUserId` — mirrors `ShiftCategory`; the Phase 1 plan dropped it to avoid a backfill sentinel)
 Nav: `Molecule`, `List<ChoreType> ChoreTypes`, `List<UserChoreCategory> Members`. Unique `(MoleculeId, Name)`.
 
 ### `ChoreType` (modified)
@@ -79,8 +78,8 @@ Add: `int ChoreCategoryId` (FK **Restrict**, NOT NULL after backfill), `int? Def
 ### `UserChoreCategory` (new — mirrors `UserShiftCategory`)
 `Id, UserId(FK Cascade), ChoreCategoryId(FK Cascade)`. Unique `(UserId, ChoreCategoryId)`.
 
-### `EligibilityRule` (new — global config, polymorphic, type-agnostic)
-`Id, SubjectKind(enum), SubjectId(int), RuleKind(enum), GenderValue(Gender?), CreatedAt, CreatedBy(FK Restrict)`. Index `(SubjectKind, SubjectId)` non-unique (a type may carry several rules). No tenant filter. **Only `ChoreType` rows created this cycle.**
+### `EligibilityRule` (new — global config, chore-scoped per `ChoreType`)
+`Id, ChoreTypeId(FK Cascade), RuleKind(enum), GenderValue(Gender?), CreatedAt, CreatedBy(FK Restrict)`. Index `(ChoreTypeId)` non-unique (a type may carry several rules). No tenant filter. **Chore-specific by design — shifts do NOT use this table.**
 
 ### `UserChoreExemption` (new — per-person waiver)
 `Id, UserId(FK Cascade), ChoreTypeId(FK Cascade), Reason?(≤200, sensitive), CreatedAt, CreatedBy(FK Restrict)`. Unique `(UserId, ChoreTypeId)`.
@@ -102,7 +101,6 @@ Add: `int WeightMinutes` (migration default 240, frozen at create). All existing
 ```csharp
 EligibilityResult Evaluate(
     AppUser user,
-    EligibilitySubject subject,                 // (SubjectKind, SubjectId)
     IReadOnlyList<EligibilityRule> rulesForSubject,
     bool userHasExemptionForSubject);
 // EligibilityResult(bool IsEligible, string? FailKey)  FailKey ∈ {ELIG_GENDER, ELIG_OFFICER_RANK, ELIG_EXEMPT}
@@ -202,7 +200,7 @@ Run full suite **sequentially** (`-- xUnit.ParallelizeTestCollections=false`) pe
 
 ## 12. Risks / Shifts-Touching
 
-- `EligibilityRule.SubjectKind` includes `ShiftType` but is **not wired** to shift validation this cycle. `ShiftType.RequiresOfficerRank` + `ValidateShiftAsync` untouched. Future shift adoption is a data migration, not a reshape.
+- `EligibilityRule` is **chore-scoped (per `ChoreType`) by design** — shifts do NOT use it. `ShiftType.RequiresOfficerRank` + `ValidateShiftAsync` untouched; shifts keep their own officer-rank flag (no future-shift shaping).
 - `JusticeService` is shared shift/chore code; the only edits are confined to the **chore branches** + a **nullable** `JusticeQuery.ChoreCategoryId` (null = current behavior). Verify existing `JusticeService*Tests` stay green.
 - Roster-grouping reuses shift **patterns** in the chores page only; no shift page edits.
 - Gender + exemption `Reason` are the most sensitive PII the app holds; stored plaintext (consistent with `DateOfBirth`/`Phone`; the app is air-gapped on-prem). Field-level encryption is a separate cross-cutting effort, out of scope unless requested.
@@ -227,7 +225,7 @@ All previously-open product/privacy decisions are now settled:
 
 ## 14. Deferred Items
 
-- **Shift adoption of `EligibilityRule`** — deliberately deferred; the table is shaped (polymorphic `SubjectKind`) for it, but wiring shifts is a future spec; `ShiftType.RequiresOfficerRank` stays as-is this cycle.
+- `EligibilityRule` is chore-scoped by design; shifts keep `ShiftType.RequiresOfficerRank` and do NOT use this table (no future-shift shaping).
 - **Midnight-crossing chore duration** — out of scope; a chore with `EndTime < StartTime` keeps the fallback weight; flagged for a wrap rule if such chores ever exist.
 
 Resolved (no longer deferred): gender at-rest encryption → **plaintext, decided** (§13.7); all §13 product/privacy questions → **decided**.

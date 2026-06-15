@@ -75,13 +75,13 @@ public class EligibilityEvaluatorTests
 
     private static EligibilityRule GenderRule(Gender g) => new()
     {
-        SubjectKind = EligibilitySubjectKind.ChoreType, SubjectId = 1,
+        ChoreTypeId = 1,
         RuleKind = EligibilityRuleKind.RequiresGender, GenderValue = g
     };
 
     private static EligibilityRule OfficerRule() => new()
     {
-        SubjectKind = EligibilitySubjectKind.ChoreType, SubjectId = 1,
+        ChoreTypeId = 1,
         RuleKind = EligibilityRuleKind.RequiresOfficerRank
     };
 
@@ -167,7 +167,7 @@ public class EligibilityEvaluatorTests
         // Defensive: a RequiresGender rule with no GenderValue is malformed config — never blocks.
         var rule = new EligibilityRule
         {
-            SubjectKind = EligibilitySubjectKind.ChoreType, SubjectId = 1,
+            ChoreTypeId = 1,
             RuleKind = EligibilityRuleKind.RequiresGender, GenderValue = null
         };
         var r = Sut.Evaluate(User(g: Gender.Unspecified), new[] { rule }, false);
@@ -436,9 +436,9 @@ public sealed class BusyServiceChoreEligibilityTests : IAsyncLifetime
         await _db.SaveChangesAsync();
 
         _db.EligibilityRules.AddRange(
-            new EligibilityRule { SubjectKind = EligibilitySubjectKind.ChoreType, SubjectId = OfficerChoreType,
+            new EligibilityRule { ChoreTypeId = OfficerChoreType,
                                   RuleKind = EligibilityRuleKind.RequiresOfficerRank, CreatedBy = 10 },
-            new EligibilityRule { SubjectKind = EligibilitySubjectKind.ChoreType, SubjectId = FemaleChoreType,
+            new EligibilityRule { ChoreTypeId = FemaleChoreType,
                                   RuleKind = EligibilityRuleKind.RequiresGender, GenderValue = Gender.Female, CreatedBy = 10 });
         // User 11 (enlisted male) is exempt from the Heavy chore type.
         _db.UserChoreExemptions.Add(new UserChoreExemption { UserId = 11, ChoreTypeId = ExemptChoreType, CreatedBy = 10 });
@@ -597,7 +597,7 @@ Add the ctor param (append to the parameter list after `ICompanyMembershipServic
             // Two cheap reads inside the already-IgnoreQueryFilters method (rules + exemptions are
             // global config, not tenant-filtered). Severity is assigned HERE, not in the evaluator.
             var rules = await _db.EligibilityRules.IgnoreQueryFilters()
-                .Where(r => r.SubjectKind == EligibilitySubjectKind.ChoreType && r.SubjectId == choreTypeId)
+                .Where(r => r.ChoreTypeId == choreTypeId)
                 .ToListAsync();
             var hasExemption = await _db.UserChoreExemptions.IgnoreQueryFilters()
                 .AnyAsync(e => e.UserId == userId && e.ChoreTypeId == choreTypeId);
@@ -641,7 +641,7 @@ Add the ctor param (append to the parameter list after `ICompanyMembershipServic
         }
 ```
 
-> The required `using ShiftManager.Models.Validation;` is already present (the file uses `ValidationIssue`/`ValidationSeverity`/`ValidationCategory` throughout via `ShiftManager.Models.Support` + the `Validation` namespace — confirm `using ShiftManager.Models.Validation;` is in the using block; `ValidationIssue` lives there). `EligibilitySubjectKind`/`EligibilityRuleKind`/`Gender` live in `ShiftManager.Models.Support`, already imported (line 8). `EligibilityViolation` lives in `ShiftManager.Services` (same namespace as `BusyService`) — no import needed.
+> The required `using ShiftManager.Models.Validation;` is already present (the file uses `ValidationIssue`/`ValidationSeverity`/`ValidationCategory` throughout via `ShiftManager.Models.Support` + the `Validation` namespace — confirm `using ShiftManager.Models.Validation;` is in the using block; `ValidationIssue` lives there). `EligibilityRuleKind`/`Gender` live in `ShiftManager.Models.Support`, already imported (line 8). `EligibilityViolation` lives in `ShiftManager.Services` (same namespace as `BusyService`) — no import needed.
 
 - [ ] **Step 6: Run it to verify it PASSES**
 
@@ -1062,7 +1062,7 @@ namespace ShiftManager.Services;
 /// Admin operations over chore eligibility: the <see cref="EligibilityRule"/> set attached to a
 /// chore type (replace semantics) and per-user <see cref="UserChoreExemption"/> waivers.
 /// Gated at the PAGE layer by the existing <c>EditChoreTypes</c> grant — this service performs no
-/// authorization. Only <see cref="EligibilitySubjectKind.ChoreType"/> subjects are written this cycle.
+/// authorization. Rules are chore-scoped (keyed by <see cref="EligibilityRule.ChoreTypeId"/>); shifts do NOT use this table.
 /// </summary>
 public interface IChoreEligibilityAdminService
 {
@@ -1112,7 +1112,7 @@ public class ChoreEligibilityAdminService : IChoreEligibilityAdminService
 
     public async Task<List<EligibilityRule>> GetRulesForChoreTypeAsync(int choreTypeId)
         => await _db.EligibilityRules.IgnoreQueryFilters()
-            .Where(r => r.SubjectKind == EligibilitySubjectKind.ChoreType && r.SubjectId == choreTypeId)
+            .Where(r => r.ChoreTypeId == choreTypeId)
             .ToListAsync();
 
     public async Task<bool> SetRulesForChoreTypeAsync(int choreTypeId, Gender? requiredGender, bool requiresOfficerRank, int createdBy)
@@ -1121,9 +1121,9 @@ public class ChoreEligibilityAdminService : IChoreEligibilityAdminService
         if (!typeExists)
             return false;
 
-        // Replace semantics: drop the existing rule set for this subject, then insert the desired one.
+        // Replace semantics: drop the existing rule set for this chore type, then insert the desired one.
         var existing = await _db.EligibilityRules.IgnoreQueryFilters()
-            .Where(r => r.SubjectKind == EligibilitySubjectKind.ChoreType && r.SubjectId == choreTypeId)
+            .Where(r => r.ChoreTypeId == choreTypeId)
             .ToListAsync();
         if (existing.Count > 0)
             _db.EligibilityRules.RemoveRange(existing);
@@ -1132,8 +1132,7 @@ public class ChoreEligibilityAdminService : IChoreEligibilityAdminService
         {
             _db.EligibilityRules.Add(new EligibilityRule
             {
-                SubjectKind = EligibilitySubjectKind.ChoreType,
-                SubjectId = choreTypeId,
+                ChoreTypeId = choreTypeId,
                 RuleKind = EligibilityRuleKind.RequiresGender,
                 GenderValue = requiredGender.Value,
                 CreatedBy = createdBy
@@ -1144,8 +1143,7 @@ public class ChoreEligibilityAdminService : IChoreEligibilityAdminService
         {
             _db.EligibilityRules.Add(new EligibilityRule
             {
-                SubjectKind = EligibilitySubjectKind.ChoreType,
-                SubjectId = choreTypeId,
+                ChoreTypeId = choreTypeId,
                 RuleKind = EligibilityRuleKind.RequiresOfficerRank,
                 GenderValue = null,
                 CreatedBy = createdBy
@@ -1548,7 +1546,7 @@ public sealed record StampResult(
             return EligibilityResult.Eligible; // no user → nothing to block on (picker won't list them anyway)
 
         var rules = await _db.EligibilityRules.IgnoreQueryFilters()
-            .Where(r => r.SubjectKind == EligibilitySubjectKind.ChoreType && r.SubjectId == choreTypeId)
+            .Where(r => r.ChoreTypeId == choreTypeId)
             .ToListAsync();
         var hasExemption = await _db.UserChoreExemptions.IgnoreQueryFilters()
             .AnyAsync(e => e.UserId == userId && e.ChoreTypeId == choreTypeId);
@@ -1557,7 +1555,7 @@ public sealed record StampResult(
     }
 ```
 
-> **Inject the evaluator into `ChoreService`** so `GetEligibilityForCandidateAsync` can call it. Add field `private readonly IEligibilityEvaluator _eligibilityEvaluator;`, add ctor param `IEligibilityEvaluator eligibilityEvaluator` (append to the parameter list), and assign `_eligibilityEvaluator = eligibilityEvaluator;`. Add `using ShiftManager.Models.Support;` — already present (line 4). `EligibilitySubjectKind` is in `ShiftManager.Models.Support` (imported).
+> **Inject the evaluator into `ChoreService`** so `GetEligibilityForCandidateAsync` can call it. Add field `private readonly IEligibilityEvaluator _eligibilityEvaluator;`, add ctor param `IEligibilityEvaluator eligibilityEvaluator` (append to the parameter list), and assign `_eligibilityEvaluator = eligibilityEvaluator;`. Add `using ShiftManager.Models.Support;` — already present (line 4). `EligibilityRuleKind`/`Gender` are in `ShiftManager.Models.Support` (imported).
 >
 > **Weight-resolution caveat (template times):** the snippet above passes `template.MoleculeId`/`ChoreTypeId` to `CreateChoreAsync`, which resolves weight from the **type default / 480** (it does not see the template's `StartTime`/`EndTime`/`WeightMinutesOverride`). That matches the manual flow exactly (manual chores are untimed). Honoring per-template times in the frozen weight is **deferred** (see Deferred Items) — flag this to the user; the stamped chore still gets a correct type-default/480 weight, just not the template's explicit window. If the user wants template times to drive weight now, `CreateChoreAsync` needs `startTime`/`endTime` params (a signature change touching all callers) — out of this task's scope.
 
@@ -1639,7 +1637,7 @@ public sealed class ChoreWeightAndStampTests : IAsyncLifetime
 
         _db.EligibilityRules.Add(new EligibilityRule
         {
-            SubjectKind = EligibilitySubjectKind.ChoreType, SubjectId = OfficerChoreType,
+            ChoreTypeId = OfficerChoreType,
             RuleKind = EligibilityRuleKind.RequiresOfficerRank, CreatedBy = 10
         });
         _db.ChoreTemplates.AddRange(

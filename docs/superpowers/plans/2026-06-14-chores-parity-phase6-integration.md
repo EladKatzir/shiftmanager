@@ -60,7 +60,7 @@ Expected: **all green.** Baseline before this feature was ~1595/1595 (project me
 
 **Files:** `C:\Users\katzi\.claude\projects\C--Users-katzi-Downloads-ShiftManager\memory\` (new memory file + MEMORY.md pointer).
 
-- [ ] **Step 1: Write a memory file** `chores_shifttype_parity.md` capturing the non-obvious facts: chores now mirror the shift spine (`ChoreCategory`→promoted `ChoreType`→`Chore`); `DoesChores` + `UserChoreCategory`; `EligibilityRule` (polymorphic, **chore-wired only** — shifts NOT adopted); gender = **overrideable warning** + editable by any user-editor (**no new grant — count stays 136**); `Chore.WeightMinutes` frozen at create, fallback `DEFAULT_CHORE_WEIGHT_MINUTES = 480`; Justice chore actual is now `Sum(WeightMinutes)`; `ChoreType.ChoreCategoryId` is **nullable + SetNull** (uncategorized allowed); stamping is additive (per-stamp rotate toggle). Link the spec + the 6 phase plans.
+- [ ] **Step 1: Write a memory file** `chores_shifttype_parity.md` capturing the non-obvious facts: chores now mirror the shift spine (`ChoreCategory`→promoted `ChoreType`→`Chore`); `DoesChores` + `UserChoreCategory`; `EligibilityRule` (**chore-scoped per `ChoreType` via a direct `ChoreTypeId` FK** — shifts do NOT use it); gender = **overrideable warning** + editable by any user-editor (**no new grant — count stays 136**); `Chore.WeightMinutes` frozen at create, fallback `DEFAULT_CHORE_WEIGHT_MINUTES = 480`; Justice chore actual is now `Sum(WeightMinutes)`; `ChoreType.ChoreCategoryId` is **nullable + SetNull** (uncategorized allowed); stamping is additive (per-stamp rotate toggle). Link the spec + the 6 phase plans.
 - [ ] **Step 2: Add the one-line pointer** to `MEMORY.md` under Active Work.
 - [ ] **Step 3:** Confirm the grant-count note in MEMORY.md is **unchanged** (still 136 — this feature added none). Do NOT edit `FinalProductPublish/` (generated).
 
@@ -78,4 +78,4 @@ Expected: **all green.** Baseline before this feature was ~1595/1595 (project me
 - **What-if preview "+1" semantics** (Phase 5): the in-drawer candidate preview still adds a count-flavored +1 for chores rather than the prospective weight; fairness columns are correct.
 - **Analytics basis-toggle re-formatting** (Phase 5): after a client-side basis toggle, the chore Expected cell shows raw minutes until reload (server-rendered initial value is correct hours).
 - **Eligibility fieldset on edit-row only** (Phase 3): not on the type create form (set rules after creating the type).
-- **Shift adoption of `EligibilityRule`** (spec): deliberately deferred; the table is shaped for it but shifts keep `RequiresOfficerRank`.
+- **`EligibilityRule` is chore-scoped by design** (spec): shifts keep `ShiftType.RequiresOfficerRank` and do NOT use this table (no future-shift shaping).
