@@ -69,6 +69,12 @@ public class AnalyticsModel : LocalizedPageModel
     [BindProperty(SupportsGet = true, Name = "shiftCategoryId")] public int? ShiftCategoryId { get; set; }
 
     /// <summary>
+    /// Optional ChoreCategory filter. Meaningful only for WorkType=Chore. When set, chore actuals
+    /// and the chore sparkline are restricted to chores whose type belongs to this category.
+    /// </summary>
+    [BindProperty(SupportsGet = true, Name = "choreCategoryId")] public int? ChoreCategoryId { get; set; }
+
+    /// <summary>
     /// A/B comparison: start of the compare period (period B). When both CompareFrom and
     /// CompareTo are provided the service computes per-row deltas between the primary and compare periods.
     /// </summary>
@@ -116,6 +122,12 @@ public class AnalyticsModel : LocalizedPageModel
     /// Empty when no molecule can be determined (e.g. CompaniesInMolecule, MoleculesInArea levels).
     /// </summary>
     public List<ScopeOption> CategoryOptions { get; private set; } = new();
+
+    /// <summary>
+    /// Chore categories available for filtering when WorkType=Chore. Populated from the active
+    /// molecule's ChoreCategories. Empty when no molecule can be determined or WorkType != Chore.
+    /// </summary>
+    public List<ScopeOption> ChoreCategoryOptions { get; private set; } = new();
 
     public sealed record ScopeOption(int Id, string Name);
 
@@ -177,6 +189,7 @@ public class AnalyticsModel : LocalizedPageModel
         // Populate ShiftCategory options — only meaningful at user-level views where a molecule
         // can be determined. Guard: skip if ScopeId is null (already handled above).
         await PopulateCategoryOptionsAsync(ct);
+        await PopulateChoreCategoryOptionsAsync(ct);
 
         var query = new JusticeQuery(
             Scope: Scope,
@@ -187,7 +200,8 @@ public class AnalyticsModel : LocalizedPageModel
             ExcludeExemptShifts: ExcludeExemptShifts,
             Level: Level,
             Basis: Basis,
-            ShiftCategoryId: ShiftCategoryId);
+            ShiftCategoryId: ShiftCategoryId,
+            ChoreCategoryId: ChoreCategoryId);
 
         try
         {
@@ -247,7 +261,8 @@ public class AnalyticsModel : LocalizedPageModel
         }
 
         // Include Basis in the export query so the Expected / share columns match the active basis.
-        var query = new JusticeQuery(Scope, ScopeId, start, end, WorkType, ExcludeExemptShifts, Level, Basis);
+        // Phase 5: carry the chore-category filter too so the CSV matches the on-screen narrowing.
+        var query = new JusticeQuery(Scope, ScopeId, start, end, WorkType, ExcludeExemptShifts, Level, Basis, ShiftCategoryId, ChoreCategoryId);
         var view = await _justiceService.GetJusticeViewAsync(query, ct);
 
         // Helper: pick the Expected and ExpectedShare values that match the active Basis so
@@ -384,6 +399,42 @@ public class AnalyticsModel : LocalizedPageModel
             .Where(sc => sc.MoleculeId == moleculeId.Value && sc.IsActive)
             .OrderBy(sc => sc.SortOrder)
             .Select(sc => new ScopeOption(sc.Id, sc.DisplayName))
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Phase 5: populate the chore-category filter options. Mirrors PopulateCategoryOptionsAsync
+    /// but reads ChoreCategories and is gated on WorkType=Chore (the selector is chore-only).
+    /// Molecule resolution: UsersInMolecule/CompaniesInMolecule → ScopeId IS the molecule;
+    /// UsersInCompany → Company.MoleculeId. Other levels leave the list empty.
+    /// Must be called AFTER NormalizeScopeAndLevelDefaults so ScopeId is resolved.
+    /// </summary>
+    private async Task PopulateChoreCategoryOptionsAsync(CancellationToken ct)
+    {
+        if (ScopeId is null || WorkType != JusticeWorkType.Chore) return;
+
+        int? moleculeId = null;
+        if (Level == JusticeLevel.UsersInMolecule || Level == JusticeLevel.CompaniesInMolecule)
+        {
+            moleculeId = ScopeId;
+        }
+        else if (Level == JusticeLevel.UsersInCompany)
+        {
+            // SECURITY: IgnoreQueryFilters required — Justice viewer may span tenants.
+            moleculeId = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => c.Id == ScopeId.Value)
+                .Select(c => c.MoleculeId)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        if (moleculeId is null) return;
+
+        // SECURITY: ChoreCategory is molecule-scoped (no IBelongsToCompany); no tenant filter to bypass.
+        ChoreCategoryOptions = await _db.ChoreCategories
+            .Where(cc => cc.MoleculeId == moleculeId.Value && cc.IsActive)
+            .OrderBy(cc => cc.SortOrder)
+            .Select(cc => new ScopeOption(cc.Id, cc.DisplayName))
             .ToListAsync(ct);
     }
 

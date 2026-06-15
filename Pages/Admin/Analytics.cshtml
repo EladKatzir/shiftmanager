@@ -158,6 +158,24 @@
             <div class="ctrl-divider" aria-hidden="true"></div>
         }
 
+        @* Phase 5: ChoreCategory filter — only visible for WorkType=Chore when options exist. *@
+        @if (Model.WorkType == JusticeWorkType.Chore && Model.ChoreCategoryOptions.Count > 0)
+        {
+            <div class="filter-field" style="flex:0 0 auto;">
+                <label class="filter-label" for="chore-cat-select"><loc key="Justice_Filter_ChoreCategory" /></label>
+                <select id="chore-cat-select" class="form-select" style="min-width:8rem;"
+                        onchange="(function(sel){ var url = new URL(window.location.href); if (sel.value) { url.searchParams.set('choreCategoryId', sel.value); } else { url.searchParams.delete('choreCategoryId'); } window.location.href = url.toString(); })(this)">
+                    <option value="" selected="@(Model.ChoreCategoryId == null)">@Localizer["Justice_Filter_AllChoreCategories"]</option>
+                    @foreach (var cat in Model.ChoreCategoryOptions)
+                    {
+                        <option value="@cat.Id" selected="@(Model.ChoreCategoryId == cat.Id)">@cat.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="ctrl-divider" aria-hidden="true"></div>
+        }
+
         @* Fairness basis toggle *@
         <div class="filter-field" style="flex:0 0 auto;">
             <span class="filter-label" id="basis-label"><loc key="Justice_FairnessBasis" /></span>
@@ -218,6 +236,10 @@
             @if (Model.ShiftCategoryId.HasValue)
             {
                 <input type="hidden" name="shiftCategoryId" value="@Model.ShiftCategoryId" />
+            }
+            @if (Model.ChoreCategoryId.HasValue)
+            {
+                <input type="hidden" name="choreCategoryId" value="@Model.ChoreCategoryId" />
             }
             <span><loc key="Justice_From" /></span>
             <input type="date" name="from" class="period-input" value="@Model.EffectivePeriodStart.ToString("yyyy-MM-dd")" aria-label="@Localizer["Justice_PeriodStart"]" />
@@ -690,6 +712,11 @@ else
       string basisTagTitle = Model.Basis == FairnessBasis.EqualShare
           ? "Justice_BasisTag_Equal_Title"
           : "Justice_BasisTag_BySize_Title";
+      @* Phase 5: clarify that chore targets are entered in chore-equivalents while load shows in hours. *@
+      @if (Model.WorkType == JusticeWorkType.Chore)
+      {
+        <p class="text-subtle" style="margin:.25rem 0;"><loc key="Justice_TargetUnitNote" /></p>
+      }
       <div class="table-wrap">
         <table class="jt" aria-label="@Localizer["Justice_Table_Aria"]">
           <thead>
@@ -784,8 +811,8 @@ else
                     </div>
                   </div>
                 </td>
-                @* Actual *@
-                <td class="num" dir="ltr">@row.Actual.ToString("F0")</td>
+                @* Actual (Phase 5: hours for chore work-type) *@
+                <td class="num" dir="ltr">@FormatChoreOrRaw(row.Actual, Model.WorkType)</td>
                 @* % of total with mini share bar *@
                 <td class="num" dir="ltr">
                   <div class="share-bar-wrap">
@@ -802,7 +829,12 @@ else
                     data-exp-bysize="@row.ExpectedBySize.ToString("F1", CultureInfo.InvariantCulture)"
                     data-exp-equal="@row.ExpectedEqual.ToString("F1", CultureInfo.InvariantCulture)">
                   <span class="expected-cell">
-                    @activeExp.ToString("F1", CultureInfo.InvariantCulture)
+                    @* Phase 5: hours for chore work-type; raw F1 otherwise. The data-exp-* attrs above
+                       stay numeric to drive the JS basis toggle (post-toggle swap shows minutes for
+                       chores — accepted deferred item). *@
+                    @(Model.WorkType == JusticeWorkType.Chore
+                        ? ShiftManager.Services.DurationFormat.FormatHours((int)System.Math.Round(activeExp))
+                        : activeExp.ToString("F1", CultureInfo.InvariantCulture))
                     <span class="basis-tag" title="@Localizer[basisTagTitle]">@basisTagText</span>
                   </span>
                 </td>
@@ -985,6 +1017,13 @@ else
         var sign = pct.Value > 0 ? "+" : "";
         return $"{sign}{pct.Value:F0}%";
     }
+
+    // Phase 5: chore Actual/Expected are weighted minutes — render as hours via the shared helper.
+    // Non-chore work types keep their raw numeric display.
+    string FormatChoreOrRaw(decimal value, JusticeWorkType wt)
+        => wt == JusticeWorkType.Chore
+            ? ShiftManager.Services.DurationFormat.FormatHours((int)System.Math.Round(value))
+            : value.ToString("F0", System.Globalization.CultureInfo.InvariantCulture);
 
     string GetInitials(string? name)
     {
