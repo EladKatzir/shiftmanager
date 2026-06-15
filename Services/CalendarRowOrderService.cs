@@ -20,7 +20,12 @@ public class CalendarRowOrderService : ICalendarRowOrderService
 
     public async Task SaveOrderAsync(int userId, string contextKey, string groupId, IReadOnlyList<string> itemIds)
     {
-        // Whole-namespace replace = simplest correct semantics.
+        // Whole-namespace replace. ExecuteDeleteAsync commits immediately on its own, so without a
+        // transaction a failed insert would leave the user's order WIPED (#6). Wrap delete+insert in a
+        // transaction so they are atomic; participate in an ambient transaction if the caller opened one.
+        var ownsTransaction = _db.Database.CurrentTransaction == null;
+        await using var tx = ownsTransaction ? await _db.Database.BeginTransactionAsync() : null;
+
         await _db.UserCalendarRowOrders
             .Where(o => o.UserId == userId && o.ContextKey == contextKey && o.GroupId == groupId)
             .ExecuteDeleteAsync();
@@ -37,5 +42,6 @@ public class CalendarRowOrderService : ICalendarRowOrderService
             });
         }
         await _db.SaveChangesAsync();
+        if (ownsTransaction) await tx!.CommitAsync();
     }
 }

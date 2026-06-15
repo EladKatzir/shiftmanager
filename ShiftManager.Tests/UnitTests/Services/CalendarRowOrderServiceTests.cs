@@ -62,4 +62,22 @@ public class CalendarRowOrderServiceTests
         var other = await svc.GetOrderMapAsync(2, "ctx");
         Assert.Empty(other);
     }
+
+    [Fact]
+    public async Task SaveOrder_WhenInsertFails_PreservesExistingOrder()
+    {
+        // #6: SaveOrderAsync did ExecuteDeleteAsync (commits immediately) then insert+SaveChanges with no
+        // transaction, so a failed insert left the user's order WIPED. A save whose items contain a
+        // duplicate RowId violates the unique (UserId,ContextKey,GroupId,RowId) index on insert; the prior
+        // order must survive (atomic replace = delete rolls back with the failed insert).
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        var svc = NewSvc(f.Db);
+        await svc.SaveOrderAsync(1, "ctx", "g", new[] { "a", "b", "c" });
+
+        await Assert.ThrowsAnyAsync<DbUpdateException>(() =>
+            svc.SaveOrderAsync(1, "ctx", "g", new[] { "x", "x" }));
+
+        var map = await svc.GetOrderMapAsync(1, "ctx");
+        Assert.Equal(3, map.Count); // a, b, c preserved
+    }
 }

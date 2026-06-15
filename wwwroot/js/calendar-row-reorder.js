@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var dragState = null; // { kind:'row'|'category', id, groupId }
+    var dragState = null; // { kind:'row'|'category', id, groupId, prevOrder }
 
     function getGrid() { return document.querySelector('.excel-calendar[data-reorder-context]'); }
     function ctxKey() { var g = getGrid(); return g ? g.getAttribute('data-reorder-context') : null; }
@@ -11,18 +11,24 @@
         return t ? t.value : '';
     }
 
-    function postOrder(groupId, itemIds) {
+    function postOrder(groupId, itemIds, revert) {
         var key = ctxKey();
         if (!key) return;
+        function fail() {
+            // #7: the DOM was moved optimistically; on a failed save, revert it so the UI never shows an
+            // order the server rejected (previously it silently snapped back only on a full page reload).
+            if (typeof revert === 'function') { try { revert(); } catch (e) { /* best-effort revert */ } }
+            if (window.showToast) window.showToast('Could not save order', 'error');
+        }
         fetch('/Api/Calendar/SaveRowOrder', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'RequestVerificationToken': csrf() },
             credentials: 'same-origin',
             body: JSON.stringify({ contextKey: key, groupId: groupId, itemIds: itemIds })
         }).then(function (r) {
-            if (!r.ok && window.showToast) window.showToast('Could not save order', 'error');
+            if (!r.ok) fail();
         }).catch(function () {
-            if (window.showToast) window.showToast('Could not save order', 'error');
+            fail();
         });
     }
 
@@ -53,6 +59,29 @@
         return nodes;
     }
 
+    // --- revert helpers (#7): re-apply a known id order to the live DOM ---
+    function reorderRows(groupId, ids) {
+        var g = getGrid(); if (!g || !ids) return;
+        var esc = (window.CSS && CSS.escape) ? CSS.escape(groupId) : groupId;
+        var sel = groupId ? 'tr[data-row-id][data-group-id="' + esc + '"]' : 'tr[data-row-id]';
+        var nodes = Array.prototype.slice.call(g.querySelectorAll(sel));
+        if (!nodes.length) return;
+        var byId = {}; nodes.forEach(function (n) { byId[n.getAttribute('data-row-id')] = n; });
+        var anchor = nodes[nodes.length - 1].nextSibling; // fixed slot after the group's rows
+        ids.forEach(function (id) { var n = byId[id]; if (n) n.parentNode.insertBefore(n, anchor); });
+    }
+    function reorderCategories(ids) {
+        var g = getGrid(); if (!g || !ids) return;
+        var heads = Array.prototype.slice.call(g.querySelectorAll('tr.excel-calendar__group-header[data-group-id]'));
+        if (!heads.length) return;
+        var lastBlock = categoryBlock(heads[heads.length - 1].getAttribute('data-group-id'));
+        var anchor = lastBlock.length ? lastBlock[lastBlock.length - 1].nextSibling : null;
+        var parent = heads[0].parentNode;
+        ids.forEach(function (id) {
+            categoryBlock(id).forEach(function (n) { parent.insertBefore(n, anchor); });
+        });
+    }
+
     // --- enable on a grid (idempotent) ---
     function enable() {
         var grid = getGrid();
@@ -70,6 +99,8 @@
                 var hr = catGrip.closest('tr.excel-calendar__group-header');
                 dragState = { kind: 'category', id: hr.getAttribute('data-group-id'), groupId: '' };
             } else { return; }
+            // #7: snapshot the pre-drag order so a failed save can be reverted.
+            dragState.prevOrder = dragState.kind === 'row' ? rowIdsInGroup(dragState.groupId) : groupIdsInOrder();
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', dragState.id);
         });
@@ -92,14 +123,16 @@
             if (!dragState) return;
             e.preventDefault();
             if (dragState.kind === 'row') {
-                postOrder(dragState.groupId, rowIdsInGroup(dragState.groupId));
+                var gid = dragState.groupId, prevRows = dragState.prevOrder;
+                postOrder(gid, rowIdsInGroup(gid), function () { reorderRows(gid, prevRows); });
             } else {
                 var overHeader = e.target.closest('tr.excel-calendar__group-header');
                 if (overHeader && overHeader.getAttribute('data-group-id') !== dragState.id) {
                     var block = categoryBlock(dragState.id);
                     block.forEach(function (node) { overHeader.parentNode.insertBefore(node, overHeader); });
                 }
-                postOrder('', groupIdsInOrder());
+                var prevCats = dragState.prevOrder;
+                postOrder('', groupIdsInOrder(), function () { reorderCategories(prevCats); });
             }
             dragState = null;
         });
@@ -150,14 +183,16 @@
         if (rowGrip) {
             var tr = rowGrip.closest('tr[data-row-id]');
             var gid = tr.getAttribute('data-group-id') || '';
+            var prevRows = rowIdsInGroup(gid); // #7: snapshot before the move
             var sibs = Array.prototype.slice.call(getGrid().querySelectorAll('tr[data-row-id][data-group-id="' + ((window.CSS&&CSS.escape)?CSS.escape(gid):gid) + '"]'));
             var i = sibs.indexOf(tr), j = i + dir;
             if (j < 0 || j >= sibs.length) return;
             tr.parentNode.insertBefore(dir < 0 ? tr : sibs[j], dir < 0 ? sibs[j] : tr);
             rowGrip.focus();
-            postOrder(gid, rowIdsInGroup(gid));
+            postOrder(gid, rowIdsInGroup(gid), function () { reorderRows(gid, prevRows); });
         } else {
             var hr = catGrip.closest('tr.excel-calendar__group-header');
+            var prevCats = groupIdsInOrder(); // #7: snapshot before the move
             var heads = Array.prototype.slice.call(getGrid().querySelectorAll('tr.excel-calendar__group-header'));
             var ci = heads.indexOf(hr), cj = ci + dir;
             if (cj < 0 || cj >= heads.length) return;
@@ -166,7 +201,7 @@
             if (dir < 0) block.forEach(function (n) { anchor.parentNode.insertBefore(n, anchor); });
             else { var afterBlock = categoryBlock(anchor.getAttribute('data-group-id')); var ref = afterBlock[afterBlock.length-1].nextSibling; block.forEach(function (n) { anchor.parentNode.insertBefore(n, ref); }); }
             catGrip.focus();
-            postOrder('', groupIdsInOrder());
+            postOrder('', groupIdsInOrder(), function () { reorderCategories(prevCats); });
         }
     });
 
