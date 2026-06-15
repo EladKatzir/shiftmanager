@@ -24,6 +24,7 @@ public class MasterProgramsModel : PageModel
     private readonly ILogger<MasterProgramsModel> _logger;
     private readonly ITenantResolver _tenantResolver;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IGrantService _grantService;
 
     public MasterProgramsModel(
         IMasterProgramService masterProgramService,
@@ -31,7 +32,8 @@ public class MasterProgramsModel : PageModel
         IAuditLogService auditLogService,
         ILogger<MasterProgramsModel> logger,
         ITenantResolver tenantResolver,
-        IStringLocalizer<SharedResources> localizer)
+        IStringLocalizer<SharedResources> localizer,
+        IGrantService grantService)
     {
         _masterProgramService = masterProgramService;
         _programService = programService;
@@ -39,7 +41,13 @@ public class MasterProgramsModel : PageModel
         _logger = logger;
         _tenantResolver = tenantResolver;
         _localizer = localizer;
+        _grantService = grantService;
     }
+
+    // F8 SECURITY: master programs manage the same domain as Programs; enforce the dedicated
+    // program grants per-handler (the class gate ManagerHomeAccess is too broad).
+    private async Task<bool> HasProgramGrantAsync(int userId, int companyId, string grantKey)
+        => userId > 0 && await _grantService.HasGrantWithScopeAsync(userId, grantKey, companyId: companyId);
 
     public List<MasterProgram> MasterPrograms { get; set; } = new();
     public List<ShiftProgram> AvailablePrograms { get; set; } = new();
@@ -72,6 +80,8 @@ public class MasterProgramsModel : PageModel
         var companyId = _tenantResolver.GetCurrentTenantId();
         var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
+        if (!await HasProgramGrantAsync(userId, companyId, "CreateShiftPrograms")) return Forbid();
+
         var result = await _masterProgramService.CreateMasterProgramAsync(
             companyId,
             MasterProgramName,
@@ -101,6 +111,8 @@ public class MasterProgramsModel : PageModel
         var companyId = _tenantResolver.GetCurrentTenantId();
         var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
+        if (!await HasProgramGrantAsync(userId, companyId, "EditShiftPrograms")) return Forbid();
+
         var result = await _masterProgramService.UpdateMasterProgramAsync(
             EditMasterProgramId.Value,
             MasterProgramName,
@@ -124,6 +136,8 @@ public class MasterProgramsModel : PageModel
     {
         var companyId = _tenantResolver.GetCurrentTenantId();
         var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
+
+        if (!await HasProgramGrantAsync(userId, companyId, "DeleteShiftPrograms")) return Forbid();
 
         var masterProgram = await _masterProgramService.GetMasterProgramAsync(masterProgramId);
 
@@ -150,6 +164,8 @@ public class MasterProgramsModel : PageModel
     {
         var companyId = _tenantResolver.GetCurrentTenantId();
         var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
+
+        if (!await HasProgramGrantAsync(userId, companyId, "EditShiftPrograms")) return Forbid();
 
         if (GenerateEndDate < GenerateStartDate)
         {

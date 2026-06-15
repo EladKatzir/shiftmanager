@@ -18,17 +18,24 @@ public class IndexModel : PageModel
     private readonly IHierarchyService _hierarchyService;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<IndexModel> _logger;
+    private readonly IGrantService _grantService;
 
     public IndexModel(AppDbContext db, IAreaPaletteService paletteService,
         IHierarchyService hierarchyService, IStringLocalizer<SharedResources> localizer,
-        ILogger<IndexModel> logger)
+        ILogger<IndexModel> logger, IGrantService grantService)
     {
         _db = db;
         _paletteService = paletteService;
         _hierarchyService = hierarchyService;
         _localizer = localizer;
         _logger = logger;
+        _grantService = grantService;
     }
+
+    // F10c SECURITY: the class gate grants EditAreaCalendarPalette but does not bind it to a specific
+    // area. Verify the actor holds the grant scoped to the TARGET area (cascades from area/project scope).
+    private async Task<bool> CanEditAreaPaletteAsync(int actorId, int areaId)
+        => actorId > 0 && await _grantService.HasGrantWithScopeAsync(actorId, "EditAreaCalendarPalette", areaId: areaId);
 
     public List<Models.Area> Areas { get; set; } = new();
     public int? SelectedAreaId { get; set; }
@@ -83,6 +90,8 @@ public class IndexModel : PageModel
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
         int.TryParse(userIdClaim?.Value, out var actorId);
 
+        if (!await CanEditAreaPaletteAsync(actorId, AreaId)) return Forbid();
+
         // Sanitize every hex slot. Invalid values are rejected (stored as null, not the bad input).
         var values = new AreaCalendarPalette
         {
@@ -105,6 +114,10 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostResetAsync()
     {
         if (AreaId <= 0) return RedirectToPage();
+
+        var resetUserClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        int.TryParse(resetUserClaim?.Value, out var resetActorId);
+        if (!await CanEditAreaPaletteAsync(resetActorId, AreaId)) return Forbid();
 
         var existing = await _db.AreaCalendarPalettes.FirstOrDefaultAsync(p => p.AreaId == AreaId);
         if (existing != null)

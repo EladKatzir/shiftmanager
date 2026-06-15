@@ -539,6 +539,21 @@ public class EditProfileModel : LocalizedPageModel
             return BadRequest(_localizer["Error_InvalidUserId"].Value);
         }
 
+        // F9 SECURITY: avatar deletion is a per-user mutation. The class gate (ManagerHomeAccess)
+        // is too broad — match every sibling handler by requiring EditCompanyUsers scoped to the
+        // target's company. Without this, any manager could delete any user's avatar cross-tenant.
+        var editorIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var target = await _db.Users.FirstOrDefaultAsync(u => u.Id == UserId);
+        if (target == null)
+        {
+            return NotFound();
+        }
+        if (!int.TryParse(editorIdClaim, out var editorId)
+            || !await CanEditTargetAsync(editorId, target.Id, target.CompanyId))
+        {
+            return Forbid();
+        }
+
         var success = await _avatarService.DeleteAvatarAsync(UserId);
 
         if (success)

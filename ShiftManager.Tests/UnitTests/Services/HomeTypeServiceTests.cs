@@ -59,6 +59,53 @@ public class HomeTypeServiceTests : IDisposable
         };
     }
 
+    // --- Transaction participation (regression: incomplete F5 fix / nested transaction) ---
+
+    [Fact]
+    public async Task GenerateHomeShiftsAsync_WhenCallerAlreadyOpenedTransaction_ParticipatesInsteadOfThrowing()
+    {
+        // Regression for the incomplete F5 fix. VacationApprovalService.UpdateRequestDatesAsync opens a
+        // transaction, then for rotation/HomeType users reaches RestoreRotationHomeAsync -> this method.
+        // Previously GenerateHomeShiftsAsync opened an UNCONDITIONAL nested BeginTransactionAsync on the
+        // same scoped DbContext, throwing "connection is already in a transaction" and breaking
+        // shorten-vacation for rotation users. The fix makes generation transaction-aware: participate in
+        // the caller's transaction, and own one only when called standalone.
+        _db.HomeTypes.Add(CreateTestHomeType()); // id = 1
+        _db.HomeTypeOverrides.Add(new HomeTypeOverride
+        {
+            Id = 1,
+            HomeTypeId = 1,
+            UserId = 10,
+            CompanyId = TestCompanyId,
+            // One HOME date inside the range — drives generation deterministically (no base pattern needed).
+            OverridePatternJson = "[\"2026-03-02\"]",
+            CreatedBy = 1
+        });
+        await _db.SaveChangesAsync();
+
+        var start = new DateOnly(2026, 3, 1);
+        var end = new DateOnly(2026, 3, 31);
+
+        // Simulate the caller (UpdateRequestDatesAsync) already holding a transaction on the same context.
+        await using var outerTx = await _db.Database.BeginTransactionAsync();
+
+        // RED before the fix: throws InvalidOperationException ("...already in a transaction...").
+        var result = await _service.GenerateHomeShiftsAsync(
+            1, start, end, new List<int> { 10 }, createdByUserId: 0, mode: RegenerationMode.KeepManualChanges);
+
+        result.Created.Should().Be(1);
+
+        // The generated rows must commit with the caller's transaction (proves real participation).
+        await outerTx.CommitAsync();
+
+        var homeInstances = await _db.ShiftInstances.IgnoreQueryFilters()
+            .CountAsync(si => si.WorkDate == new DateOnly(2026, 3, 2));
+        homeInstances.Should().Be(1);
+        var homeAssignments = await _db.ShiftAssignments.IgnoreQueryFilters()
+            .CountAsync(sa => sa.UserId == 10);
+        homeAssignments.Should().Be(1);
+    }
+
     // --- CRUD ---
 
     [Fact]

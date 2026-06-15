@@ -23,20 +23,29 @@ public class ProgramsModel : PageModel
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<ProgramsModel> _logger;
     private readonly ITenantResolver _tenantResolver;
+    private readonly IGrantService _grantService;
 
     public ProgramsModel(
         AppDbContext db,
         IShiftProgramService programService,
         IAuditLogService auditLogService,
         ILogger<ProgramsModel> logger,
-        ITenantResolver tenantResolver)
+        ITenantResolver tenantResolver,
+        IGrantService grantService)
     {
         _db = db;
         _programService = programService;
         _auditLogService = auditLogService;
         _logger = logger;
         _tenantResolver = tenantResolver;
+        _grantService = grantService;
     }
+
+    // F8 SECURITY: the class gate (ManagerHomeAccess) is broad. Program mutations have dedicated
+    // grants (CreateShiftPrograms/EditShiftPrograms/DeleteShiftPrograms) scoped to the company —
+    // which cascades to molecule/area when the manager's grant is scoped higher. Enforce per-handler.
+    private async Task<bool> HasProgramGrantAsync(int userId, int companyId, string grantKey)
+        => userId > 0 && await _grantService.HasGrantWithScopeAsync(userId, grantKey, companyId: companyId);
 
     public List<ShiftProgram> Programs { get; set; } = new();
     public List<ShiftType> ShiftTypes { get; set; } = new();
@@ -85,6 +94,8 @@ public class ProgramsModel : PageModel
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
             var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
+
+            if (!await HasProgramGrantAsync(userId, companyId, "CreateShiftPrograms")) return Forbid();
 
             // Validate
             if (string.IsNullOrWhiteSpace(ProgramName))
@@ -169,6 +180,8 @@ public class ProgramsModel : PageModel
             var companyId = _tenantResolver.GetCurrentTenantId();
             var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
+            if (!await HasProgramGrantAsync(userId, companyId, "EditShiftPrograms")) return Forbid();
+
             // Validate
             if (string.IsNullOrWhiteSpace(ProgramName))
             {
@@ -235,6 +248,8 @@ public class ProgramsModel : PageModel
             var companyId = _tenantResolver.GetCurrentTenantId();
             var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
 
+            if (!await HasProgramGrantAsync(userId, companyId, "DeleteShiftPrograms")) return Forbid();
+
             var program = await _programService.GetProgramAsync(programId);
 
             if (program == null)
@@ -268,6 +283,8 @@ public class ProgramsModel : PageModel
         {
             var companyId = _tenantResolver.GetCurrentTenantId();
             var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
+
+            if (!await HasProgramGrantAsync(userId, companyId, "EditShiftPrograms")) return Forbid();
 
             // Validate date range
             if (GenerateEndDate < GenerateStartDate)

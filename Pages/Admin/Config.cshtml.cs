@@ -21,18 +21,21 @@ public class ConfigModel : LocalizedPageModel
     private readonly ICompanyContext _companyContext;
     private readonly IAuditLogService _auditLogService;
     private readonly IEmailConfigService _emailConfigService;
+    private readonly IGrantService _grantService;
 
     public ConfigModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ICompanyContext companyContext,
         IAuditLogService auditLogService,
-        IEmailConfigService emailConfigService) : base(localizer)
+        IEmailConfigService emailConfigService,
+        IGrantService grantService) : base(localizer)
     {
         _db = db;
         _companyContext = companyContext;
         _auditLogService = auditLogService;
         _emailConfigService = emailConfigService;
+        _grantService = grantService;
     }
 
     // Company Settings
@@ -109,6 +112,10 @@ public class ConfigModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostAddOnDutyTypeAsync()
     {
+        // F10b SECURITY: OnDutyTypeConfig is GLOBAL config. The class gate (ManagerHomeAccess) is too
+        // broad — require the dedicated ManageOnDutyTypes grant (same grant the proper DutyTypes page uses).
+        if (!await _grantService.HasGrantAsync(GetCurrentUserId(), "ManageOnDutyTypes")) return Forbid();
+
         // Validation
         if (string.IsNullOrWhiteSpace(NameEn) || string.IsNullOrWhiteSpace(NameHe))
         {
@@ -159,6 +166,9 @@ public class ConfigModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostDeleteOnDutyTypeAsync(int typeId)
     {
+        // F10b SECURITY: global config mutation — require the dedicated ManageOnDutyTypes grant.
+        if (!await _grantService.HasGrantAsync(GetCurrentUserId(), "ManageOnDutyTypes")) return Forbid();
+
         var type = await _db.OnDutyTypeConfigs.FindAsync(typeId);
         if (type == null)
         {

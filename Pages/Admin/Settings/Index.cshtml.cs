@@ -19,18 +19,21 @@ public class IndexModel : LocalizedPageModel
     private readonly IHierarchySettingsService _settingsService;
     private readonly ILogger<IndexModel> _logger;
     private readonly IAuditLogService _auditLogService;
+    private readonly IGrantService _grantService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         IHierarchySettingsService settingsService,
         ILogger<IndexModel> logger,
-        IAuditLogService auditLogService) : base(localizer)
+        IAuditLogService auditLogService,
+        IGrantService grantService) : base(localizer)
     {
         _db = db;
         _settingsService = settingsService;
         _logger = logger;
         _auditLogService = auditLogService;
+        _grantService = grantService;
     }
 
     public record AreaOption(int Id, string Name);
@@ -89,6 +92,22 @@ public class IndexModel : LocalizedPageModel
         {
             TempData["ErrorMessage"] = _localizer["Error_NoEntitySelected"].Value;
             return RedirectToPage(new { Level });
+        }
+
+        // F10a SECURITY: the class gate (ViewSettings) is view-only. Mutating work-hour/rest-hour
+        // limits requires the dedicated edit grant, scoped to the selected entity. These edit grants
+        // are co-distributed with ViewSettings, so legitimate editors retain access.
+        bool canEdit = Level switch
+        {
+            "company" => await _grantService.HasGrantWithScopeAsync(userId, "EditCompanySettings", companyId: SelectedId.Value),
+            "molecule" => await _grantService.HasGrantWithScopeAsync(userId, "EditMoleculeSettings", moleculeId: SelectedId.Value),
+            "area" => await _grantService.HasGrantWithScopeAsync(userId, "EditMoleculeSettings", areaId: SelectedId.Value),
+            _ => false
+        };
+        if (!canEdit)
+        {
+            _logger.LogWarning("Unauthorized settings edit attempt by user {UserId} at level {Level} id {SelectedId}", userId, Level, SelectedId);
+            return Forbid();
         }
 
         bool result = false;

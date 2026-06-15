@@ -464,7 +464,7 @@
     @if (Model.IsManager)
     {
         ViewData["TimeOffReturnUrl"] = "/Requests/Index#timeoff";
-        ViewData["TimeOffApprovers"] = Enumerable.Empty<ShiftManager.Pages.My.RequestsModel.ManagerUser>();
+        ViewData["TimeOffApprovers"] = Model.AvailableApprovers;
         <details class="request-own-timeoff-card" style="margin-bottom: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm);">
             <summary style="padding: 1rem 1.5rem; font-size: 1rem; font-weight: 600; color: var(--text); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.5rem; border-radius: 12px;">
                 <icon name="plus-circle" />

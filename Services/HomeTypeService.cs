@@ -337,7 +337,13 @@ public class HomeTypeService : IHomeTypeService
         var newAssignments = new List<ShiftAssignment>();
         int created = 0, skipped = 0;
 
-        using var transaction = await _db.Database.BeginTransactionAsync();
+        // Transaction-aware: if the caller already opened a transaction (e.g.
+        // VacationApprovalService.UpdateRequestDatesAsync -> HomeMaterialiserService.RestoreRotationHomeAsync),
+        // participate in it rather than opening a nested one — SQLite/EF throws "connection is already in a
+        // transaction" on a nested BeginTransaction. We commit/rollback only the transaction we own; when the
+        // caller owns it, our SaveChanges enlist in their transaction and they commit/rollback.
+        var ownsTransaction = _db.Database.CurrentTransaction == null;
+        await using var transaction = ownsTransaction ? await _db.Database.BeginTransactionAsync() : null;
         try
         {
             foreach (var userId in userIds)
@@ -395,11 +401,11 @@ public class HomeTypeService : IHomeTypeService
                 await _db.SaveChangesAsync();
             }
 
-            await transaction.CommitAsync();
+            if (ownsTransaction) await transaction!.CommitAsync();
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            if (ownsTransaction) await transaction!.RollbackAsync();
             _logger.LogError(ex, "Failed to generate HOME shifts for HomeType {HomeTypeId}", homeTypeId);
             throw;
         }

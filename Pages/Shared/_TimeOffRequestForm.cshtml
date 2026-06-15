@@ -1,7 +1,7 @@
 @* Shared partial: Time-Off Request Form
    Posts to /My/Requests handler=TimeOff so it can be embedded on any page.
    ViewData["TimeOffReturnUrl"] — optional returnUrl passed back after success.
-   ViewData["TimeOffApprovers"]  — IEnumerable<dynamic> with Id/Name/Role properties.
+   ViewData["TimeOffApprovers"]  — IEnumerable<ShiftManager.Services.ApproverOption> (Id/Name/Role).
 *@
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
@@ -9,8 +9,8 @@
 
 @{
     var returnUrl = ViewData["TimeOffReturnUrl"] as string ?? "";
-    var approvers = ViewData["TimeOffApprovers"] as IEnumerable<ShiftManager.Pages.My.RequestsModel.ManagerUser>
-                    ?? Enumerable.Empty<ShiftManager.Pages.My.RequestsModel.ManagerUser>();
+    var approvers = ViewData["TimeOffApprovers"] as IEnumerable<ShiftManager.Services.ApproverOption>
+                    ?? Enumerable.Empty<ShiftManager.Services.ApproverOption>();
 }
 
 <form method="post" asp-page="/My/Requests" asp-page-handler="TimeOff">

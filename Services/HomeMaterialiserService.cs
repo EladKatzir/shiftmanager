@@ -39,7 +39,12 @@ public class HomeMaterialiserService : IHomeMaterialiserService
             .Include(sa => sa.ShiftInstance).ThenInclude(si => si.ShiftType)
             .ToListAsync();
 
-        using var tx = await _db.Database.BeginTransactionAsync();
+        // Transaction-aware: if the caller already opened a transaction (e.g.
+        // VacationApprovalService.UpdateRequestDatesAsync), participate in it rather than
+        // opening a nested one — SQLite/EF throws "The connection is already in a transaction"
+        // on a nested BeginTransaction. We only commit/rollback the transaction we own.
+        var ownsTransaction = _db.Database.CurrentTransaction == null;
+        await using var tx = ownsTransaction ? await _db.Database.BeginTransactionAsync() : null;
 
         // Delete: existing rows whose (workDate, key) are not in desired
         var desiredKeys = desired.Select(d => (d.WorkDate, d.ShiftTypeKey)).ToHashSet();
@@ -99,7 +104,7 @@ public class HomeMaterialiserService : IHomeMaterialiserService
         }
 
         await _db.SaveChangesAsync();
-        await tx.CommitAsync();
+        if (ownsTransaction) await tx!.CommitAsync();
 
         _logger.LogInformation("Materialised TimeOffRequest {Id}: {DesiredCount} desired rows", timeOffRequestId, desired.Count);
 

@@ -5,6 +5,9 @@ namespace ShiftManager.Services;
 
 public record OrphanedApprovalRuleInfo(int RuleId, string ApproverGrantKey, int? JobTypeId, string Reason);
 
+/// <summary>One selectable entry in the optional "specific approver" dropdown on the time-off form.</summary>
+public record ApproverOption(int Id, string Name, string Role);
+
 public record ApprovalPipelineStatus(
     int RequestId,
     RequestStatus Status,
@@ -55,4 +58,25 @@ public interface IVacationApprovalService
     /// Self-exclusion: requester is never in their own pool.
     /// </summary>
     Task<List<AppUser>> GetApproverPoolAsync(int requestId);
+
+    /// <summary>
+    /// Grant-based pool backing the optional "specific approver" dropdown on the time-off
+    /// request form: active users holding ApproveVacations or ApproveExtendedLeave (CanOwn)
+    /// scoped to ANY of the requester's shift-active companies (multi-company union — a
+    /// single-company requester gets only approvers scoped to their own company).
+    /// Distinct from <see cref="GetApproverPoolAsync"/> (job-type-vertical routing for an
+    /// existing request). The requester is NOT self-excluded here; self-approval is blocked
+    /// separately at approval time.
+    /// </summary>
+    Task<List<ApproverOption>> GetGrantBasedApproverOptionsAsync(int requesterUserId);
+
+    /// <summary>
+    /// True if <paramref name="approverUserId"/> is an eligible "specific approver" for
+    /// <paramref name="requesterUserId"/> — i.e. is present in
+    /// <see cref="GetGrantBasedApproverOptionsAsync"/> for that requester. This is the
+    /// single source of truth shared with the request-form dropdown, so an approver that
+    /// is OFFERED in the dropdown is always ACCEPTED on submit (and vice-versa). Multi-company
+    /// requesters: an approver scoped to ANY of their member companies is eligible.
+    /// </summary>
+    Task<bool> IsEligibleApproverAsync(int requesterUserId, int approverUserId);
 }

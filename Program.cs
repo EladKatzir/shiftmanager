@@ -817,6 +817,45 @@ using (var scope = app.Services.CreateScope())
             LogGrantMappingsSeeded(logger, newMappings.Count);
         }
 
+        // F2 SECURITY (idempotent self-heal): ViewGrants was removed from the base templates
+        // (Employee/Assigner/Trainee) so base users can no longer view the permission map. The
+        // seeding above only ADDS/reconciles mappings — it never removes a de-seeded grant — so on
+        // existing deployments the stale template→ViewGrants mappings persist and RepairUserGrants
+        // (below) would re-apply ViewGrants to base users. Remove the stale mappings AND the surplus
+        // user grant rows here, BEFORE the per-user repair runs. Runs only while stale rows exist.
+        {
+            var viewGrantsType = await db.GrantTypes.FirstOrDefaultAsync(g => g.Key == "ViewGrants");
+            if (viewGrantsType != null)
+            {
+                var baseTemplateKeys = new[] { "Employee", "Assigner", "Trainee" };
+                var baseTemplateIds = await db.RoleTemplates
+                    .Where(r => baseTemplateKeys.Contains(r.Key))
+                    .Select(r => r.Id)
+                    .ToListAsync();
+
+                var staleMappings = await db.RoleTemplateGrants
+                    .Where(m => m.GrantTypeId == viewGrantsType.Id && baseTemplateIds.Contains(m.RoleTemplateId))
+                    .ToListAsync();
+                if (staleMappings.Count > 0)
+                {
+                    db.RoleTemplateGrants.RemoveRange(staleMappings);
+
+                    var surplusUserGrants = await db.Grants.IgnoreQueryFilters()
+                        .Where(g => g.GrantTypeId == viewGrantsType.Id
+                                 && db.Users.Any(u => u.Id == g.UserId
+                                                   && u.RoleTemplateId != null
+                                                   && baseTemplateIds.Contains(u.RoleTemplateId.Value)))
+                        .ToListAsync();
+                    db.Grants.RemoveRange(surplusUserGrants);
+
+                    await db.SaveChangesAsync();
+                    logger.LogInformation(
+                        "F2 self-heal: removed {Mappings} stale ViewGrants template mappings and {UserGrants} surplus user grants from base roles",
+                        staleMappings.Count, surplusUserGrants.Count);
+                }
+            }
+        }
+
         // Reconcile mutable fields on existing role-template-grant mappings.
         // Insertion above only adds NEW rows; it never updates rows whose identity keys
         // (RoleTemplateId, GrantTypeId, TargetJobTypeId) already exist but whose ScopeMode /

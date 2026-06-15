@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,16 +19,19 @@ public class IndexModel : LocalizedPageModel
     private readonly AppDbContext _db;
     private readonly ILogger<IndexModel> _logger;
     private readonly IAuditLogService _auditLogService;
+    private readonly IGrantService _grantService;
 
     public IndexModel(
         IStringLocalizer<SharedResources> localizer,
         AppDbContext db,
         ILogger<IndexModel> logger,
-        IAuditLogService auditLogService) : base(localizer)
+        IAuditLogService auditLogService,
+        IGrantService grantService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _auditLogService = auditLogService;
+        _grantService = grantService;
     }
 
     public record GrantVM(
@@ -134,6 +138,17 @@ public class IndexModel : LocalizedPageModel
 
     public async Task<IActionResult> OnPostRevokeAsync(int id)
     {
+        // F1 SECURITY: the page class gate is ViewGrants (view-only, broadly held). Revoking a grant
+        // requires the dedicated RevokeGrants grant. Fast gate FIRST (before any lookup) so a caller
+        // without RevokeGrants at all is rejected and cannot probe grant-id existence.
+        var actorIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(actorIdClaim, out var actorId)
+            || !await _grantService.HasGrantAsync(actorId, "RevokeGrants"))
+        {
+            _logger.LogWarning("Unauthorized grant-revoke attempt (no RevokeGrants): actor {ActorId} on grant {GrantId}", actorIdClaim, id);
+            return Forbid();
+        }
+
         var grant = await _db.Grants
             .IgnoreQueryFilters()
             .Include(g => g.User)
@@ -144,6 +159,15 @@ public class IndexModel : LocalizedPageModel
         {
             TempData["ErrorMessage"] = _localizer["Error_GrantNotFound"].Value;
             return RedirectToPage(new { ViewMode = "grants" });
+        }
+
+        // Scoped check: the actor must hold RevokeGrants for the TARGET user's company (cascades to
+        // molecule/area if their grant is scoped higher) — prevents cross-tenant grant revocation.
+        if (!await _grantService.HasGrantForCompanyAsync(actorId, "RevokeGrants", grant.User.CompanyId))
+        {
+            _logger.LogWarning("Unauthorized cross-scope grant-revoke: actor {ActorId} on grant {GrantId} (owner {OwnerId}, company {CompanyId})",
+                actorId, id, grant.UserId, grant.User.CompanyId);
+            return Forbid();
         }
 
         _db.Grants.Remove(grant);

@@ -425,6 +425,21 @@ public partial class TableModel : PageModel
             if (request.StaffingRequired < 1 || request.StaffingRequired > 30)
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_StaffingRange"].Value });
 
+            // F7 FIX: resolve the target ShiftType (and thus its company + job type) up front so the
+            // authorization check applies to BOTH the create-new and adjust-existing branches.
+            // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+            var ensureShiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
+            if (ensureShiftType == null)
+            {
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value });
+            }
+
+            // F7 FIX: per-handler shift-assign authorization (class gate is not sufficient)
+            if (CurrentUserIdOrNull() is not int ensureUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(ensureUserId, ensureShiftType.GetEffectiveCompanyId(companyId), ensureShiftType.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
+
             // Get or create instance (idempotent)
             // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
             var instance = await _db.ShiftInstances
@@ -436,12 +451,7 @@ public partial class TableModel : PageModel
 
             if (instance == null)
             {
-                // SECURITY-AUDITED: SAFE — entity lookup by unique ID
-                var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
-                if (shiftType == null)
-                {
-                    return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value });
-                }
+                var shiftType = ensureShiftType;
 
                 // Transaction: create instance + assignment slots atomically
                 using var transaction = await _db.Database.BeginTransactionAsync();
@@ -562,6 +572,13 @@ public partial class TableModel : PageModel
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value });
             }
 
+            // F7 FIX: per-handler shift-assign authorization (class gate is not sufficient).
+            // Target company/jobType come from the resolved ShiftType (NOT the caller's tenant).
+            if (CurrentUserIdOrNull() is not int createInstUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(createInstUserId, shiftType.GetEffectiveCompanyId(companyId), shiftType.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
+
             // Transaction: create instance + assignment slots atomically
             using var transaction = await _db.Database.BeginTransactionAsync();
             try
@@ -639,6 +656,13 @@ public partial class TableModel : PageModel
             {
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
+
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the assignment's own
+            // ShiftInstance company + its ShiftType job type (NOT the caller's tenant).
+            if (CurrentUserIdOrNull() is not int slotUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(slotUserId, assignment.ShiftInstance.CompanyId, assignment.ShiftInstance.ShiftType?.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // Validate via service (job type, grouping, weekly cap, rest hours)
             var validation = await _assignmentService.ValidateShiftAssignmentAsync(request.UserId, assignment.ShiftInstanceId);
@@ -939,6 +963,13 @@ public partial class TableModel : PageModel
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
 
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the assignment's own
+            // ShiftInstance company + its ShiftType job type (NOT the caller's tenant).
+            if (CurrentUserIdOrNull() is not int unassignUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(unassignUserId, assignment.ShiftInstance.CompanyId, assignment.ShiftInstance.ShiftType?.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
+
             // Capture data before removal for notification
             var instanceId = assignment.ShiftInstance.Id;
             var workDate = assignment.ShiftInstance.WorkDate;
@@ -1003,6 +1034,13 @@ public partial class TableModel : PageModel
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
 
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the assignment's own
+            // ShiftInstance company + its ShiftType job type (NOT the caller's tenant).
+            if (CurrentUserIdOrNull() is not int clearUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(clearUserId, assignment.ShiftInstance.CompanyId, assignment.ShiftInstance.ShiftType?.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
+
             // Clear user and trainee without deleting the assignment slot
             assignment.UserId = null;
             assignment.TraineeUserId = null;
@@ -1061,6 +1099,18 @@ public partial class TableModel : PageModel
             {
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftInstanceNotFound"].Value });
             }
+
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the instance's own company
+            // + its ShiftType job type (NOT the caller's tenant). Minimal lookup for the job type.
+            if (CurrentUserIdOrNull() is not int staffingUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            var staffingJobTypeId = await _db.ShiftTypes
+                .IgnoreQueryFilters()
+                .Where(st => st.Id == instance.ShiftTypeId)
+                .Select(st => st.JobTypeId)
+                .FirstOrDefaultAsync();
+            if (!await CanAssignForShiftScopeAsync(staffingUserId, instance.CompanyId, staffingJobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // If this instance is from a Program and not yet detached, detach it now
             if (instance.OriginalProgramId.HasValue && !instance.IsDetached)
@@ -1216,6 +1266,20 @@ public partial class TableModel : PageModel
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftInstanceNotFound"].Value });
             }
 
+            // F7 FIX: per-handler shift-assign authorization (defense in depth with the molecule
+            // membership check above). Target scope = the instance's own company + its ShiftType job
+            // type (NOT the caller's tenant). Minimal lookup for the job type (company branch above
+            // does not Include the ShiftType).
+            if (CurrentUserIdOrNull() is not int deleteUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            var deleteJobTypeId = await _db.ShiftTypes
+                .IgnoreQueryFilters()
+                .Where(st => st.Id == instance.ShiftTypeId)
+                .Select(st => st.JobTypeId)
+                .FirstOrDefaultAsync();
+            if (!await CanAssignForShiftScopeAsync(deleteUserId, instance.CompanyId, deleteJobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
+
             // Delete all assignments first
             // SECURITY-AUDITED: SAFE — scoped by the validated instance.Id
             var assignments = await _db.ShiftAssignments
@@ -1288,6 +1352,13 @@ public partial class TableModel : PageModel
             {
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
+
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the assignment's own
+            // ShiftInstance company + its ShiftType job type (NOT the caller's tenant).
+            if (CurrentUserIdOrNull() is not int addTraineeUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(addTraineeUserId, assignment.ShiftInstance.CompanyId, assignment.ShiftInstance.ShiftType?.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // Validate trainee assignment (self-training, same company, trainee role)
             var validation = await _assignmentService.ValidateTraineeAssignmentAsync(request.TraineeUserId, request.AssignmentId);
@@ -1390,6 +1461,13 @@ public partial class TableModel : PageModel
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
 
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the assignment's own
+            // ShiftInstance company + its ShiftType job type (NOT the caller's tenant).
+            if (CurrentUserIdOrNull() is not int removeTraineeUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(removeTraineeUserId, assignment.ShiftInstance.CompanyId, assignment.ShiftInstance.ShiftType?.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
+
             // Capture trainee info before clearing
             var removedTraineeId = assignment.TraineeUserId;
 
@@ -1451,6 +1529,13 @@ public partial class TableModel : PageModel
             {
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_AssignmentNotFound"].Value });
             }
+
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the assignment's own
+            // ShiftInstance company + its ShiftType job type (NOT the caller's tenant).
+            if (CurrentUserIdOrNull() is not int changeUserUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(changeUserUserId, assignment.ShiftInstance.CompanyId, assignment.ShiftInstance.ShiftType?.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // Validate new user assignment via service
             var validation = await _assignmentService.ValidateShiftAssignmentAsync(request.NewUserId, assignment.ShiftInstanceId);
@@ -1557,6 +1642,14 @@ public partial class TableModel : PageModel
                     return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value }) { StatusCode = 403 };
             }
 
+            // F7 FIX: per-handler shift-assign authorization (defense in depth with the ownership
+            // check above). Target scope = the ShiftType's own company + job type (NOT the caller's
+            // tenant). Shift-TYPE config uses the same assign-grant family.
+            if (CurrentUserIdOrNull() is not int metadataUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(metadataUserId, shiftType.GetEffectiveCompanyId(companyId), shiftType.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
+
             // Validate name
             if (string.IsNullOrWhiteSpace(request.Name))
             {
@@ -1623,6 +1716,15 @@ public partial class TableModel : PageModel
                 if (!await IsCallerInMoleculeAsync(request.MoleculeId.Value))
                     return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UnauthorizedMolecule"].Value }) { StatusCode = 403 };
             }
+
+            // F7 FIX: per-handler shift-assign authorization (defense in depth with the molecule
+            // access check above). Target scope = the new ShiftType's company (the caller's tenant,
+            // which is where the row is created below) + the requested job type. Shift-TYPE config
+            // uses the same assign-grant family.
+            if (CurrentUserIdOrNull() is not int createTypeUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(createTypeUserId, companyId, request.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // Create custom shift type with a unique internal key but user-visible name
             var customKey = $"CUSTOM_{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant()}";
@@ -1867,6 +1969,18 @@ public partial class TableModel : PageModel
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftInstanceNotFound"].Value });
             }
 
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the instance's own company
+            // + its ShiftType job type (NOT the caller's tenant). Minimal lookup for the job type.
+            if (CurrentUserIdOrNull() is not int detachUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            var detachJobTypeId = await _db.ShiftTypes
+                .IgnoreQueryFilters()
+                .Where(st => st.Id == instance.ShiftTypeId)
+                .Select(st => st.JobTypeId)
+                .FirstOrDefaultAsync();
+            if (!await CanAssignForShiftScopeAsync(detachUserId, instance.CompanyId, detachJobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
+
             // Call service to detach instance
             await _programService.DetachInstanceAsync(request.ShiftInstanceId, request.Reason);
 
@@ -1905,6 +2019,18 @@ public partial class TableModel : PageModel
             {
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftNotDetached"].Value });
             }
+
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the instance's own company
+            // + its ShiftType job type (NOT the caller's tenant). Minimal lookup for the job type.
+            if (CurrentUserIdOrNull() is not int resetUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            var resetJobTypeId = await _db.ShiftTypes
+                .IgnoreQueryFilters()
+                .Where(st => st.Id == instance.ShiftTypeId)
+                .Select(st => st.JobTypeId)
+                .FirstOrDefaultAsync();
+            if (!await CanAssignForShiftScopeAsync(resetUserId, instance.CompanyId, resetJobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // Call service to reset instance to Program defaults
             await _programService.ResetInstanceToProgramAsync(request.ShiftInstanceId);
@@ -2200,6 +2326,14 @@ public partial class TableModel : PageModel
             {
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_SourceShiftNotFound"].Value });
             }
+
+            // F7 FIX: per-handler shift-assign authorization. Target scope = the source instance's own
+            // company + its ShiftType job type (NOT the caller's tenant). Fill copies into the source's
+            // company, so the source scope governs the whole operation.
+            if (CurrentUserIdOrNull() is not int fillUserId)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
+            if (!await CanAssignForShiftScopeAsync(fillUserId, sourceInstance.CompanyId, sourceInstance.ShiftType?.JobTypeId))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // Load source assignments separately
             // SECURITY-AUDITED: SAFE — scoped by validated sourceInstance.Id
@@ -2685,6 +2819,30 @@ public partial class TableModel : PageModel
             .Where(m => moleculeIds.Contains(m.Id) && m.IsActive)
             .OrderBy(m => m.DisplayName)
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// F7 FIX: Per-handler authorization for shift-assignment mutations.
+    /// Mirrors the FINDING-002 FIX block in OnPostAssignEmployeeAsync — checks the same
+    /// shift-assign grant family (Assign{Alhut,Text,BR,Tech}Shifts) plus the AdminAccess
+    /// short-circuit. The class-level [Authorize(Policy="Grant:ManagerHomeAccess")] gate is
+    /// NOT sufficient: ~59% of users hold it but must not be able to mutate shifts.
+    ///
+    /// CRITICAL — pass the TARGET shift/instance/assignment's actual companyId and jobTypeId
+    /// (NOT the caller's own company). Manager shift-assign grants are stored MOLECULE-scoped
+    /// (MoleculeId set, CompanyId null); HasGrantWithScopeAsync cascades a molecule-scoped grant
+    /// to ANY company within that molecule, so passing the target's company preserves the required
+    /// molecule-wide access while still rejecting cross-molecule / cross-tenant targets.
+    /// </summary>
+    private async Task<bool> CanAssignForShiftScopeAsync(int userId, int? companyId, int? jobTypeId)
+    {
+        if (await _grantService.HasGrantAsync(userId, "AdminAccess"))
+            return true;
+
+        return await _grantService.HasGrantWithScopeAsync(userId, "AssignAlhutShifts", companyId: companyId, jobTypeId: jobTypeId)
+            || await _grantService.HasGrantWithScopeAsync(userId, "AssignTextShifts", companyId: companyId, jobTypeId: jobTypeId)
+            || await _grantService.HasGrantWithScopeAsync(userId, "AssignBRShifts", companyId: companyId, jobTypeId: jobTypeId)
+            || await _grantService.HasGrantWithScopeAsync(userId, "AssignTechShifts", companyId: companyId, jobTypeId: jobTypeId);
     }
 
     /// <summary>
