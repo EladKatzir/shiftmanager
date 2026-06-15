@@ -423,8 +423,8 @@ public class GrantServiceTests : IDisposable
     public async Task CanReachUserForNoteAsync_ManagerTier_CrossCompanyWithinMolecule_ReturnsTrue()
     {
         var entities = await SetupTestEntitiesAsync();
-        // Target in Companies[1], caller has molecule-scoped AssignAlhutShifts covering both companies.
-        var assignGrantType = new GrantType { Key = "AssignAlhutShifts", NameKey = "Grant_AssignAlhutShifts", Category = GrantCategory.Shift };
+        // Target in Companies[1], caller has molecule-scoped AssignShifts covering both companies.
+        var assignGrantType = new GrantType { Key = "AssignShifts", NameKey = "Grant_AssignShifts", Category = GrantCategory.Shift };
         _db.GrantTypes.Add(assignGrantType);
         await _db.SaveChangesAsync();
         await _service.GrantAsync(entities.User.Id, assignGrantType.Id, GrantScope.Molecule(entities.Molecule.Id));

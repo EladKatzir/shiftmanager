@@ -50,10 +50,7 @@ public class GrantService : IGrantService
     public async Task<bool> HasCalendarEditPermissionAsync(int userId)
     {
         return await HasGrantAsync(userId, "AdminAccess")
-            || await HasGrantAsync(userId, "AssignAlhutShifts")
-            || await HasGrantAsync(userId, "AssignTextShifts")
-            || await HasGrantAsync(userId, "AssignBRShifts")
-            || await HasGrantAsync(userId, "AssignTechShifts")
+            || await HasGrantAsync(userId, "AssignShifts")
             || await HasGrantAsync(userId, "AssignChores")
             || await HasGrantAsync(userId, "ManageOnDuty")
             || await HasGrantAsync(userId, "EditOnCallCalendar");
@@ -93,8 +90,7 @@ public class GrantService : IGrantService
         // accessible-company set from their actual assign grants decides cross-company reach.
         var assignGrantKeys = new[]
         {
-            "AssignAlhutShifts", "AssignTextShifts", "AssignBRShifts", "AssignTechShifts",
-            "AssignChores", "ManageOnDuty"
+            "AssignShifts", "AssignChores", "ManageOnDuty"
         };
         var accessibleCompanies = new HashSet<int>();
         foreach (var key in assignGrantKeys)
@@ -110,10 +106,7 @@ public class GrantService : IGrantService
     private async Task<bool> HasAnyAssignGrantAsync(int userId)
     {
         return await HasGrantAsync(userId, "AdminAccess")
-            || await HasGrantAsync(userId, "AssignAlhutShifts")
-            || await HasGrantAsync(userId, "AssignTextShifts")
-            || await HasGrantAsync(userId, "AssignBRShifts")
-            || await HasGrantAsync(userId, "AssignTechShifts")
+            || await HasGrantAsync(userId, "AssignShifts")
             || await HasGrantAsync(userId, "AssignChores")
             || await HasGrantAsync(userId, "ManageOnDuty");
     }

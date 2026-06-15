@@ -437,7 +437,7 @@ public partial class TableModel : PageModel
             // F7 FIX: per-handler shift-assign authorization (class gate is not sufficient)
             if (CurrentUserIdOrNull() is not int ensureUserId)
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
-            if (!await CanAssignForShiftScopeAsync(ensureUserId, ensureShiftType.GetEffectiveCompanyId(companyId), ensureShiftType.JobTypeId))
+            if (!await CanAssignForShiftTypeAsync(ensureUserId, ensureShiftType))
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // Get or create instance (idempotent)
@@ -576,7 +576,7 @@ public partial class TableModel : PageModel
             // Target company/jobType come from the resolved ShiftType (NOT the caller's tenant).
             if (CurrentUserIdOrNull() is not int createInstUserId)
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
-            if (!await CanAssignForShiftScopeAsync(createInstUserId, shiftType.GetEffectiveCompanyId(companyId), shiftType.JobTypeId))
+            if (!await CanAssignForShiftTypeAsync(createInstUserId, shiftType))
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // Transaction: create instance + assignment slots atomically
@@ -801,10 +801,7 @@ public partial class TableModel : PageModel
                     .Select(st => (int?)st.JobTypeId)
                     .FirstOrDefaultAsync();
 
-                var hasAnyShiftGrant = await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignAlhutShifts", companyId: companyId, jobTypeId: probeShiftJobTypeId)
-                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTextShifts", companyId: companyId, jobTypeId: probeShiftJobTypeId)
-                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignBRShifts", companyId: companyId, jobTypeId: probeShiftJobTypeId)
-                    || await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTechShifts", companyId: companyId, jobTypeId: probeShiftJobTypeId);
+                var hasAnyShiftGrant = await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignShifts", companyId: companyId, jobTypeId: probeShiftJobTypeId);
 
                 if (!hasAnyShiftGrant)
                     return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
@@ -1647,7 +1644,7 @@ public partial class TableModel : PageModel
             // tenant). Shift-TYPE config uses the same assign-grant family.
             if (CurrentUserIdOrNull() is not int metadataUserId)
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
-            if (!await CanAssignForShiftScopeAsync(metadataUserId, shiftType.GetEffectiveCompanyId(companyId), shiftType.JobTypeId))
+            if (!await CanAssignForShiftTypeAsync(metadataUserId, shiftType))
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
 
             // Validate name
@@ -2822,28 +2819,38 @@ public partial class TableModel : PageModel
     }
 
     /// <summary>
-    /// F7 FIX: Per-handler authorization for shift-assignment mutations.
-    /// Mirrors the FINDING-002 FIX block in OnPostAssignEmployeeAsync — checks the same
-    /// shift-assign grant family (Assign{Alhut,Text,BR,Tech}Shifts) plus the AdminAccess
-    /// short-circuit. The class-level [Authorize(Policy="Grant:ManagerHomeAccess")] gate is
-    /// NOT sufficient: ~59% of users hold it but must not be able to mutate shifts.
+    /// Per-handler authorization for shift-assignment mutations. Checks the unified, job-type-agnostic
+    /// AssignShifts grant (2026-06-16 collapse of the 8 Assign*Shifts grants) plus the AdminAccess
+    /// short-circuit. The class-level [Authorize(Policy="Grant:ManagerHomeAccess")] gate is NOT
+    /// sufficient: ~59% of users hold it but must not be able to mutate shifts.
     ///
-    /// CRITICAL — pass the TARGET shift/instance/assignment's actual companyId and jobTypeId
-    /// (NOT the caller's own company). Manager shift-assign grants are stored MOLECULE-scoped
-    /// (MoleculeId set, CompanyId null); HasGrantWithScopeAsync cascades a molecule-scoped grant
-    /// to ANY company within that molecule, so passing the target's company preserves the required
-    /// molecule-wide access while still rejecting cross-molecule / cross-tenant targets.
+    /// CRITICAL — pass the TARGET shift/instance/assignment's actual scope (NOT the caller's own
+    /// company). Manager AssignShifts grants are stored MOLECULE-scoped (MoleculeId set, CompanyId
+    /// null); HasGrantWithScopeAsync cascades a molecule-scoped grant to ANY company within that
+    /// molecule, so passing the target's company/molecule preserves molecule-wide access while still
+    /// rejecting cross-molecule / cross-tenant targets.
     /// </summary>
-    private async Task<bool> CanAssignForShiftScopeAsync(int userId, int? companyId, int? jobTypeId)
+    private async Task<bool> CanAssignForShiftScopeAsync(int userId, int? companyId, int? moleculeId, int? jobTypeId)
     {
         if (await _grantService.HasGrantAsync(userId, "AdminAccess"))
             return true;
 
-        return await _grantService.HasGrantWithScopeAsync(userId, "AssignAlhutShifts", companyId: companyId, jobTypeId: jobTypeId)
-            || await _grantService.HasGrantWithScopeAsync(userId, "AssignTextShifts", companyId: companyId, jobTypeId: jobTypeId)
-            || await _grantService.HasGrantWithScopeAsync(userId, "AssignBRShifts", companyId: companyId, jobTypeId: jobTypeId)
-            || await _grantService.HasGrantWithScopeAsync(userId, "AssignTechShifts", companyId: companyId, jobTypeId: jobTypeId);
+        return await _grantService.HasGrantWithScopeAsync(userId, "AssignShifts",
+            companyId: companyId, moleculeId: moleculeId, jobTypeId: jobTypeId);
     }
+
+    // Convenience overload for call sites that already resolved the TARGET's real company (e.g. the
+    // owning ShiftInstance.CompanyId). No molecule needed — the company cascades correctly.
+    private Task<bool> CanAssignForShiftScopeAsync(int userId, int? companyId, int? jobTypeId)
+        => CanAssignForShiftScopeAsync(userId, companyId, moleculeId: null, jobTypeId);
+
+    // Fix #5: resolve a ShiftType's TRUE scope. A molecule/area-scoped type has CompanyId == null;
+    // GetEffectiveCompanyId would wrongly resolve that to the CALLER's company, so use the type's own
+    // MoleculeId instead — rejecting a foreign-molecule shift type the caller has no scope over.
+    private Task<bool> CanAssignForShiftTypeAsync(int userId, ShiftType shiftType)
+        => shiftType.CompanyId.HasValue
+            ? CanAssignForShiftScopeAsync(userId, companyId: shiftType.CompanyId.Value, moleculeId: null, jobTypeId: shiftType.JobTypeId)
+            : CanAssignForShiftScopeAsync(userId, companyId: null, moleculeId: shiftType.MoleculeId, jobTypeId: shiftType.JobTypeId);
 
     /// <summary>
     /// Validates that the caller's company belongs to the specified molecule.

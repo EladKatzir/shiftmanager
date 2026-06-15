@@ -214,7 +214,7 @@
                     <loc key="Calendar_Empty_Action_ViewAll" />
                 </a>
             }
-            <require-grant key="AssignAlhutShifts,AssignTextShifts,AssignBRShifts,AssignTechShifts" mode="any">
+            <require-grant key="AssignShifts">
             <a href="/Calendar/Table" class="btn btn-primary">
                 <loc key="Calendar_Empty_Action_CreateShift" />
             </a>
@@ -333,7 +333,7 @@
                                 }
                                 else if (item.Type == CalendarItemType.Shift)
                                 {
-                                    <require-grant key="AssignAlhutShifts,AssignTextShifts,AssignBRShifts,AssignTechShifts" mode="any">
+                                    <require-grant key="AssignShifts">
                                     <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
                                         <span class="manage-icon"><icon name="settings" /></span>
                                     </a>
@@ -394,7 +394,7 @@
                                         }
                                         else if (item.Type == CalendarItemType.Shift)
                                         {
-                                            <require-grant key="AssignAlhutShifts,AssignTextShifts,AssignBRShifts,AssignTechShifts" mode="any">
+                                            <require-grant key="AssignShifts">
                                             <a href="@item.ManagementUrl" class="item-manage-link" loc-title="Calendar_ManageShift">
                                                 <span class="manage-icon"><icon name="settings" /></span>
                                             </a>

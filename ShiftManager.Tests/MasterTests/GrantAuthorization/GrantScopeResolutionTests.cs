@@ -237,4 +237,23 @@ public class GrantScopeResolutionTests : MasterTestBase
         result.Should().BeTrue(
             "BRDirector's AssignShifts should match across own molecule");
     }
+
+    [Fact]
+    public async Task AreaAdmin_AssignShifts_AuthorizesAllShiftFamilies_LockoutFixed()
+    {
+        // Regression for review #3: before the collapse, the authorization OR-chain checked only
+        // 4 of 8 Assign*Shifts keys, so a holder of a tech-family-only assign grant (Hanava/Delta/
+        // Yekev/Moviltech) was Forbidden. The unified AssignShifts has no family axis, so an AreaAdmin
+        // is authorized for any shift in their area — the lockout cannot recur.
+        var areaAdmin = GetTestUser("Tzafona", "AreaAdmin");
+        var orenMolecule = Fixture.MoleculeByName["Oren"];
+        var grantService = CreateGrantServiceWithHierarchy();
+
+        var result = await grantService.HasGrantWithScopeAsync(
+            areaAdmin.Id, "AssignShifts",
+            moleculeId: orenMolecule.Id);
+
+        result.Should().BeTrue(
+            "AreaAdmin's area-scoped AssignShifts authorizes every shift family in their area");
+    }
 }

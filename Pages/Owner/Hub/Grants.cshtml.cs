@@ -116,15 +116,15 @@ public class GrantsModel : PageModel
     {
         try
         {
-            // Load stats
-            TotalGrantTypes = await _db.GrantTypes.CountAsync(gt => gt.IsActive);
+            // Load stats (exclude deprecated grant types — kept for id stability but not assignable)
+            TotalGrantTypes = await _db.GrantTypes.CountAsync(gt => gt.IsActive && !gt.IsDeprecated);
             TotalRoleTemplates = await _roleService.GetActiveRoleTemplateCountAsync();
             TotalGrants = await _db.Grants.IgnoreQueryFilters().CountAsync();
             UsersWithGrants = await _db.Grants.IgnoreQueryFilters().Select(g => g.UserId).Distinct().CountAsync();
 
-            // Load grant types by category
+            // Load grant types by category (deprecated grants hidden from the admin catalog)
             var grantTypes = await _db.GrantTypes
-                .Where(gt => gt.IsActive)
+                .Where(gt => gt.IsActive && !gt.IsDeprecated)
                 .OrderBy(gt => gt.Category)
                 .ThenBy(gt => gt.Key)
                 .Select(gt => new GrantTypeViewModel

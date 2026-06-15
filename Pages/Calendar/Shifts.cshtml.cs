@@ -235,11 +235,8 @@ public class ShiftsModel : PageModel
         // Calculate date range
         CalculateDateRange();
 
-        // Check edit permission scoped to the selected molecule and job type
-        CanEdit = await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignAlhutShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId) ||
-                  await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTextShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId) ||
-                  await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignBRShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId) ||
-                  await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignTechShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId);
+        // Check edit permission scoped to the selected molecule and job type (unified AssignShifts grant)
+        CanEdit = await _grantService.HasGrantWithScopeAsync(currentUserId, "AssignShifts", moleculeId: MoleculeId, jobTypeId: JobTypeId);
 
         // Note-writing is broader than assignment: any user with WriteOverviewNotes (every role has it)
         // can type free-text on calendar cells. Check is unscoped — grant 110 is company-wide by default.
@@ -249,8 +246,7 @@ public class ShiftsModel : PageModel
         // read-only banner can tell them exactly what to request from an administrator.
         RequiredGrantNameKeys = CanEdit
             ? new List<string>()
-            : await _grantService.GetGrantNameKeysAsync(
-                "AssignAlhutShifts", "AssignTextShifts", "AssignBRShifts", "AssignTechShifts");
+            : await _grantService.GetGrantNameKeysAsync("AssignShifts");
 
         // Distribution lists for the by-user "Lists" control. Filtering by a list needs no grant (open to all
         // viewers); CanManageLists (scoped to this molecule) gates the "+" manage button.
