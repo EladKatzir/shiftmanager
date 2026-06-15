@@ -65,7 +65,7 @@ public sealed class ChoresRosterAccountTypeTests : IAsyncLifetime
             {
                 Id = 1, Email = "std@test.com", DisplayName = "Standard",
                 CompanyId = 1, IsActive = true, AccountType = AccountType.Standard,
-                Role = UserRole.Employee
+                Role = UserRole.Employee, DoesChores = true   // D9: opted-in so the account-type gate is what's under test
             },
             new AppUser
             {
@@ -92,6 +92,7 @@ public sealed class ChoresRosterAccountTypeTests : IAsyncLifetime
             db: _db,
             choreService: Mock.Of<IChoreService>(),
             choreTypeService: Mock.Of<IChoreTypeService>(),
+            choreCategoryService: new ChoreCategoryService(_db),
             grantService: Mock.Of<IGrantService>(),
             companyContext: Mock.Of<ICompanyContext>(),
             localizer: localizer.Object,
@@ -131,6 +132,54 @@ public sealed class ChoresRosterAccountTypeTests : IAsyncLifetime
         // via DisplayName rather than the enum value.
         users.Should().ContainSingle("only the Standard user should pass the AccountType filter");
         users[0].DisplayName.Should().Be("Standard");
+    }
+
+    /// <summary>
+    /// D9 roster predicate: a Standard user appears only if they participate in chores —
+    /// either <c>DoesChores = true</c> OR they belong to ≥1 ChoreCategory. A Standard user
+    /// with neither is excluded. Mil/GroupUser are excluded regardless (the account-type gate
+    /// dominates the participation clause).
+    /// </summary>
+    [Fact]
+    public async Task GetUsersForMoleculeAsync_D9_IncludesDoesChoresAndCategoryMembers_ExcludesNeitherAndNonStandard()
+    {
+        // Hierarchy
+        var area = new Area { Id = 1, ProjectId = 1, Name = "Area", DisplayName = "Area" };
+        _db.Areas.Add(area);
+        _db.Molecules.Add(new Molecule { Id = MolId, AreaId = 1, Name = "Mol", Type = MoleculeType.Workforce });
+        _db.Companies.Add(new Company { Id = 1, MoleculeId = MolId, Name = "Co", DisplayName = "Co" });
+        await _db.SaveChangesAsync();
+
+        var category = new ChoreCategory { Id = 1, MoleculeId = MolId, Name = "Physical", DisplayName = "Physical", IsActive = true };
+        _db.ChoreCategories.Add(category);
+        await _db.SaveChangesAsync();
+
+        _db.Users.AddRange(
+            // (A) Standard + DoesChores → INCLUDED
+            new AppUser { Id = 1, Email = "does@test.com", DisplayName = "DoesChores", CompanyId = 1, IsActive = true,
+                          AccountType = AccountType.Standard, Role = UserRole.Employee, DoesChores = true },
+            // (B) Standard + NOT DoesChores but category member → INCLUDED
+            new AppUser { Id = 2, Email = "cat@test.com", DisplayName = "CategoryMember", CompanyId = 1, IsActive = true,
+                          AccountType = AccountType.Standard, Role = UserRole.Employee, DoesChores = false },
+            // (C) Standard + neither → EXCLUDED
+            new AppUser { Id = 3, Email = "neither@test.com", DisplayName = "Neither", CompanyId = 1, IsActive = true,
+                          AccountType = AccountType.Standard, Role = UserRole.Employee, DoesChores = false },
+            // (D) Mil + DoesChores → EXCLUDED (account-type gate dominates)
+            new AppUser { Id = 4, Email = "mil@test.com", DisplayName = "Mil", CompanyId = 1, IsActive = true,
+                          AccountType = AccountType.Mil, Role = UserRole.Employee, DoesChores = true },
+            // (E) GroupUser + category member → EXCLUDED
+            new AppUser { Id = 5, Email = "grp@test.com", DisplayName = "GroupUser", CompanyId = 1, IsActive = true,
+                          AccountType = AccountType.GroupUser, Role = UserRole.Employee, DoesChores = false });
+        await _db.SaveChangesAsync();
+        _db.UserChoreCategories.Add(new UserChoreCategory { UserId = 2, ChoreCategoryId = 1 }); // makes (B) a member
+        _db.UserChoreCategories.Add(new UserChoreCategory { UserId = 5, ChoreCategoryId = 1 }); // (E) member but GroupUser
+        await _db.SaveChangesAsync();
+
+        var model = BuildModel();
+        var users = await model.GetUsersForMoleculeAsync(MolId);
+
+        users.Select(u => u.DisplayName).Should().BeEquivalentTo(new[] { "DoesChores", "CategoryMember" },
+            "D9 includes Standard DoesChores + Standard category-members, excludes Standard-with-neither and all Mil/GroupUser");
     }
 
     /// <summary>

@@ -25,6 +25,7 @@ public class ChoresModel : PageModel
     private readonly AppDbContext _db;
     private readonly IChoreService _choreService;
     private readonly IChoreTypeService _choreTypeService;
+    private readonly IChoreCategoryService _choreCategoryService;
     private readonly IGrantService _grantService;
     private readonly ICompanyContext _companyContext;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -37,6 +38,7 @@ public class ChoresModel : PageModel
         AppDbContext db,
         IChoreService choreService,
         IChoreTypeService choreTypeService,
+        IChoreCategoryService choreCategoryService,
         IGrantService grantService,
         ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
@@ -48,6 +50,7 @@ public class ChoresModel : PageModel
         _db = db;
         _choreService = choreService;
         _choreTypeService = choreTypeService;
+        _choreCategoryService = choreCategoryService;
         _grantService = grantService;
         _companyContext = companyContext;
         _localizer = localizer;
@@ -296,29 +299,12 @@ public class ChoresModel : PageModel
             .Where(kvp => kvp.Value != null)
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
 
-        // Build groups by chore type
         var isHebrew = CultureInfo.CurrentUICulture.Name.StartsWith("he", StringComparison.Ordinal);
-        var groups = ChoreTypes.Select(ct => new ExcelCalendarGroup
-        {
-            Id = $"choretype-{ct.Id}",
-            Name = LocalizeChoreTypeName(ct, isHebrew),
-            SortOrder = ct.SortOrder
-        }).ToList();
 
-        // Build rows - one per user
-        var rows = new List<ExcelCalendarRow>();
-        foreach (var user in users)
-        {
-            var row = new ExcelCalendarRow
-            {
-                Id = $"user-{user.Id}",
-                Label = user.DisplayName
-            };
-
-            // Build cells for each date
-            row.Cells = BuildCellsForUser(user.Id, chores, overlays, textEntries, overviewNotes, homeShifts, isHebrew);
-            rows.Add(row);
-        }
+        // Category-accordion + mirrored rows (parity with the shift by-user calendar). Replaces the
+        // legacy flat ChoreType grouping. Group id = "chorecategory-{id}"; company-{id} fallback.
+        var (rows, groups) = await BuildChoreCategoryGroupedRowsAsync(
+            users, moleculeId, chores, overlays, textEntries, overviewNotes, homeShifts, isHebrew);
 
         CalendarData = new ExcelCalendarTableViewModel
         {
@@ -337,6 +323,115 @@ public class ChoresModel : PageModel
         CalendarData.RowOrderContextKey = $"chores:{moleculeId}";
     }
 
+    /// <summary>
+    /// Category-accordion grouping for the by-user Chores calendar (parity with the shift by-user
+    /// calendar's BuildCategoryGroupedRowsAsync). A chore participant renders as a MIRRORED row under
+    /// EACH ChoreCategory they belong to (UserChoreCategory); a participant with no category falls
+    /// under their Company header so nobody is lost. Group id = "chorecategory-{id}" (spec §7.5);
+    /// fallback "company-{id}". Duplicate data-row-id across mirrored rows is safe (the calendar
+    /// resolves interactions from the cell's data-row-id, not a DOM id).
+    /// </summary>
+    internal async Task<(List<ExcelCalendarRow> rows, List<ExcelCalendarGroup> groups)> BuildChoreCategoryGroupedRowsAsync(
+        List<AppUser> users,
+        int moleculeId,
+        List<Chore> chores,
+        Dictionary<(int UserId, DateOnly Date), FyiOverlayData> overlays,
+        Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
+        Dictionary<(int UserId, DateOnly Date), string> overviewNotes,
+        Dictionary<(int UserId, DateOnly Date), List<HomeShiftItem>> homeShifts,
+        bool isHebrew)
+    {
+        var rows = new List<ExcelCalendarRow>();
+        var groups = new List<ExcelCalendarGroup>();
+
+        // Company names: per-row badge for cross-company category members + company-group headers.
+        // SECURITY-AUDITED: SAFE — scoped to the molecule-derived user set's CompanyIds.
+        var companyIds = users.Select(u => u.CompanyId).Distinct().ToList();
+        var companyLookup = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => companyIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.LocalizedName);
+
+        // Categories (active, ordered) + memberships restricted to the participants in this view.
+        var categories = await _choreCategoryService.GetCategoriesForMoleculeAsync(moleculeId);
+        var participantIds = users.Select(u => u.Id).ToHashSet();
+        var byCategory = new Dictionary<int, HashSet<int>>();
+        if (participantIds.Count > 0)
+        {
+            var memberships = await _db.UserChoreCategories
+                .Where(m => participantIds.Contains(m.UserId))
+                .Select(m => new { m.ChoreCategoryId, m.UserId })
+                .ToListAsync();
+            byCategory = memberships
+                .GroupBy(m => m.ChoreCategoryId)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.UserId).ToHashSet());
+        }
+
+        var placedParticipants = new HashSet<int>();
+        int sortOrder = 0;
+
+        ExcelCalendarRow BuildRow(AppUser user, string groupId, string? companyName)
+        {
+            var row = new ExcelCalendarRow
+            {
+                Id = $"user-{user.Id}",
+                Label = user.DisplayName,
+                GroupId = groupId,
+                CompanyName = companyName
+            };
+            row.Cells = BuildCellsForUser(user.Id, chores, overlays, textEntries, overviewNotes, homeShifts, isHebrew);
+            return row;
+        }
+
+        // Category accordions in service order; the same participant can appear under several (mirrored rows).
+        foreach (var cat in categories)
+        {
+            if (!byCategory.TryGetValue(cat.Id, out var memberIdSet))
+                continue;
+            var members = users.Where(u => memberIdSet.Contains(u.Id)).OrderBy(u => u.DisplayName).ToList();
+            if (members.Count == 0)
+                continue;
+
+            var groupId = $"chorecategory-{cat.Id}";
+            groups.Add(new ExcelCalendarGroup
+            {
+                Id = groupId,
+                Name = cat.DisplayName,
+                SortOrder = sortOrder++,
+                Color = cat.Color,         // rendered as a dot/accent on the header, never a text background (spec §7.7)
+                MemberCount = members.Count
+            });
+            foreach (var user in members)
+            {
+                placedParticipants.Add(user.Id);
+                rows.Add(BuildRow(user, groupId, companyLookup.GetValueOrDefault(user.CompanyId)));
+            }
+        }
+
+        // Company groups: any participant not mapped to a category (so nobody is lost).
+        var companyGrouped = users
+            .Where(u => !placedParticipants.Contains(u.Id))
+            .GroupBy(u => u.CompanyId)
+            .OrderBy(g => companyLookup.GetValueOrDefault(g.Key, ""));
+        foreach (var grp in companyGrouped)
+        {
+            var groupId = $"company-{grp.Key}";
+            var members = grp.OrderBy(u => u.DisplayName).ToList();
+            groups.Add(new ExcelCalendarGroup
+            {
+                Id = groupId,
+                Name = companyLookup.GetValueOrDefault(grp.Key, $"Company #{grp.Key}"),
+                SortOrder = sortOrder++,
+                MemberCount = members.Count
+            });
+            // Company badge is redundant inside a company group — suppress it.
+            foreach (var user in members)
+                rows.Add(BuildRow(user, groupId, null));
+        }
+
+        return (rows, groups);
+    }
+
     internal async Task<List<AppUser>> GetUsersForMoleculeAsync(int moleculeId)
     {
         // Get all companies in this molecule
@@ -345,11 +440,14 @@ public class ChoresModel : PageModel
             .Select(c => c.Id)
             .ToListAsync();
 
-        // Get active Standard-account users in those companies (Mil + GroupUser excluded from Chores)
+        // Get active Standard-account users who participate in chores (D9): Mil + GroupUser excluded;
+        // a Standard user appears only if they opted-in via DoesChores OR belong to ≥1 ChoreCategory.
+        // Phase-1 backfill set DoesChores=true for existing active Standard users, so the live roster is preserved.
         return await _db.Users
             .IgnoreQueryFilters()
             .Where(u => companyIds.Contains(u.CompanyId) && u.IsActive
-                     && u.AccountType == ShiftManager.Models.Support.AccountType.Standard)
+                     && u.AccountType == ShiftManager.Models.Support.AccountType.Standard
+                     && (u.DoesChores || u.ChoreCategories.Any()))
             .OrderBy(u => u.DisplayName)
             .Select(u => new AppUser
             {
@@ -364,7 +462,9 @@ public class ChoresModel : PageModel
     /// Per-user-per-date HOME shift item used to render the read-only HOME overlay
     /// chip on Chores/OnCall calendars (Task 24). Carries source-icon + time fields.
     /// </summary>
-    private record HomeShiftItem(
+    // internal (not private) so the grouping unit test can name the dictionary value type
+    // when invoking BuildChoreCategoryGroupedRowsAsync directly (InternalsVisibleTo configured).
+    internal record HomeShiftItem(
         string Name,
         string? ShiftStart,
         string? ShiftEnd,
