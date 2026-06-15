@@ -1,0 +1,5393 @@
+{
+  "results": {
+    "Owner": {
+      "/": {
+        "status": 200,
+        "finalUrl": "/",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Home": {
+        "status": 200,
+        "finalUrl": "/Home",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/AccessDenied": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Error": {
+        "status": 200,
+        "finalUrl": "/Error",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/StatusCode": {
+        "status": 404,
+        "finalUrl": "/StatusCode",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My": {
+        "status": 200,
+        "finalUrl": "/My",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Profile": {
+        "status": 200,
+        "finalUrl": "/My/Profile",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Settings": {
+        "status": 200,
+        "finalUrl": "/My/Settings",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Requests": {
+        "status": 200,
+        "finalUrl": "/My/Requests",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/NotificationCenter": {
+        "status": 200,
+        "finalUrl": "/My/NotificationCenter",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/ApiKeys": {
+        "status": 200,
+        "finalUrl": "/My/ApiKeys",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Help": {
+        "status": 200,
+        "finalUrl": "/My/Help",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpCalendar": {
+        "status": 200,
+        "finalUrl": "/My/HelpCalendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpGettingStarted": {
+        "status": 200,
+        "finalUrl": "/My/HelpGettingStarted",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpRoles": {
+        "status": 200,
+        "finalUrl": "/My/HelpRoles",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpAdmin": {
+        "status": 200,
+        "finalUrl": "/My/HelpAdmin",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Onboarding": {
+        "status": 200,
+        "finalUrl": "/My/Onboarding",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Shifts": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/OnCall": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Overview": {
+        "status": 200,
+        "finalUrl": "/Calendar/Overview",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Day": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Week": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Month": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Table": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/ManageDistributionLists": {
+        "status": 200,
+        "finalUrl": "/Calendar/ManageDistributionLists",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Chores/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Friends": {
+        "status": 200,
+        "finalUrl": "/Friends",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/MyTeam": {
+        "status": 200,
+        "finalUrl": "/MyTeam",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Schedule": {
+        "status": 200,
+        "finalUrl": "/Schedule",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Game/Leaderboard": {
+        "status": 200,
+        "finalUrl": "/Game/Leaderboard",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests": {
+        "status": 200,
+        "finalUrl": "/Requests#timeoff",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests/Swaps/Create": {
+        "status": 200,
+        "finalUrl": "/Requests/Swaps/Create",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Assignments/Manage": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/OnDuty": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Feedback": {
+        "status": 200,
+        "finalUrl": "/Public/Feedback",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Director/CompanyFilter": {
+        "status": 200,
+        "finalUrl": "/Director/CompanyFilter",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/NotificationHub": {
+        "status": 200,
+        "finalUrl": "/Director/NotificationHub",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/ViewAsMode": {
+        "status": 200,
+        "finalUrl": "/Director/ViewAsMode",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Admin": {
+        "status": 200,
+        "finalUrl": "/Admin",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Users": {
+        "status": 200,
+        "finalUrl": "/Admin/Users",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Companies": {
+        "status": 200,
+        "finalUrl": "/Admin/Companies",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Analytics": {
+        "status": 200,
+        "finalUrl": "/Admin/Analytics",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Announcements": {
+        "status": 200,
+        "finalUrl": "/Admin/Announcements",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/AuditLog": {
+        "status": 200,
+        "finalUrl": "/Admin/AuditLog",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Config": {
+        "status": 200,
+        "finalUrl": "/Admin/Config",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Directors": {
+        "status": 200,
+        "finalUrl": "/Admin/Directors",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/EditProfile": {
+        "status": 400,
+        "finalUrl": "/Admin/EditProfile",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/DutyRotation": {
+        "status": 200,
+        "finalUrl": "/Admin/DutyRotation",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/HomeTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/HomeTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/SetupTasks": {
+        "status": 200,
+        "finalUrl": "/Admin/SetupTasks",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Areas": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Areas",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Molecules": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Molecules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Projects": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Projects",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Departments": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Departments",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/JobTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/JobTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ChoreTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/ChoreTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/DutyTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/DutyTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Stores": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Stores",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ShiftGroupings": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/ShiftGroupings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Hierarchy": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Hierarchy",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Grants": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Grants",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Roles": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Roles",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/AreaPalette": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/AreaPalette",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings": {
+        "status": 200,
+        "finalUrl": "/Admin/Settings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings/ApprovalRules": {
+        "status": 200,
+        "finalUrl": "/Admin/Settings/ApprovalRules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Molecules/ApprovalSettings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FMolecules%2FApprovalSettings",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Owner": {
+        "status": 200,
+        "finalUrl": "/Owner/Hub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub": {
+        "status": 200,
+        "finalUrl": "/Owner/Hub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/Grants": {
+        "status": 200,
+        "finalUrl": "/Owner/Hub/Grants",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/PermissionSimulator": {
+        "status": 200,
+        "finalUrl": "/Owner/Hub/PermissionSimulator",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/RoleTemplates": {
+        "status": 200,
+        "finalUrl": "/Owner/Hub/RoleTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/SeedData": {
+        "status": 200,
+        "finalUrl": "/Owner/Hub/SeedData",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/AuditSearch": {
+        "status": 200,
+        "finalUrl": "/Owner/Hub/AuditSearch",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/AreaConfig": {
+        "status": 200,
+        "finalUrl": "/Owner/AreaConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Backup": {
+        "status": 200,
+        "finalUrl": "/Owner/Backup",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Blueprints": {
+        "status": 200,
+        "finalUrl": "/Owner/Blueprints",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DataLifecycle": {
+        "status": 200,
+        "finalUrl": "/Owner/DataLifecycle",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DatabaseConsole": {
+        "status": 200,
+        "finalUrl": "/Owner/DatabaseConsole",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailConfig": {
+        "status": 200,
+        "finalUrl": "/Owner/EmailConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailTemplates": {
+        "status": 200,
+        "finalUrl": "/Owner/EmailTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/FeatureFlags": {
+        "status": 200,
+        "finalUrl": "/Owner/FeatureFlags",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GameConfig": {
+        "status": 200,
+        "finalUrl": "/Owner/GameConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GriffinConfig": {
+        "status": 200,
+        "finalUrl": "/Owner/GriffinConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LanguageManagement": {
+        "status": 200,
+        "finalUrl": "/Owner/LanguageManagement",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LockedUsers": {
+        "status": 200,
+        "finalUrl": "/Owner/LockedUsers",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/MasterPrograms": {
+        "status": 200,
+        "finalUrl": "/Owner/MasterPrograms",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Permissions": {
+        "status": 200,
+        "finalUrl": "/Owner/Permissions",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Programs": {
+        "status": 200,
+        "finalUrl": "/Owner/Programs",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SelectCompany": {
+        "status": 200,
+        "finalUrl": "/Owner/Hub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SystemHealth": {
+        "status": 200,
+        "finalUrl": "/Owner/SystemHealth",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Telemetry": {
+        "status": 200,
+        "finalUrl": "/Owner/Telemetry",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Diagnostic": {
+        "status": 200,
+        "finalUrl": "/Diagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/GriffinDiagnostic": {
+        "status": 200,
+        "finalUrl": "/GriffinDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Dev/FeedbackPreview": {
+        "status": 200,
+        "finalUrl": "/Dev/FeedbackPreview",
+        "verdict": "PASS",
+        "req": 100
+      }
+    },
+    "Director": {
+      "/": {
+        "status": 200,
+        "finalUrl": "/",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Home": {
+        "status": 200,
+        "finalUrl": "/Home",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/AccessDenied": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Error": {
+        "status": 200,
+        "finalUrl": "/Error",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/StatusCode": {
+        "status": 404,
+        "finalUrl": "/StatusCode",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My": {
+        "status": 200,
+        "finalUrl": "/My",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Profile": {
+        "status": 200,
+        "finalUrl": "/My/Profile",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Settings": {
+        "status": 200,
+        "finalUrl": "/My/Settings",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Requests": {
+        "status": 200,
+        "finalUrl": "/My/Requests",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/NotificationCenter": {
+        "status": 200,
+        "finalUrl": "/My/NotificationCenter",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/ApiKeys": {
+        "status": 200,
+        "finalUrl": "/My/ApiKeys",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Help": {
+        "status": 200,
+        "finalUrl": "/My/Help",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpCalendar": {
+        "status": 200,
+        "finalUrl": "/My/HelpCalendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpGettingStarted": {
+        "status": 200,
+        "finalUrl": "/My/HelpGettingStarted",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpRoles": {
+        "status": 200,
+        "finalUrl": "/My/HelpRoles",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpAdmin": {
+        "status": 200,
+        "finalUrl": "/My/HelpAdmin",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Onboarding": {
+        "status": 200,
+        "finalUrl": "/My/Onboarding",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Shifts": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/OnCall": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Overview": {
+        "status": 200,
+        "finalUrl": "/Calendar/Overview",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Day": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Week": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Month": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Table": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/ManageDistributionLists": {
+        "status": 200,
+        "finalUrl": "/Calendar/ManageDistributionLists",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Chores/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Friends": {
+        "status": 200,
+        "finalUrl": "/Friends",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/MyTeam": {
+        "status": 200,
+        "finalUrl": "/MyTeam",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Schedule": {
+        "status": 200,
+        "finalUrl": "/Schedule",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Game/Leaderboard": {
+        "status": 200,
+        "finalUrl": "/Game/Leaderboard",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests": {
+        "status": 200,
+        "finalUrl": "/Requests#timeoff",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests/Swaps/Create": {
+        "status": 200,
+        "finalUrl": "/Requests/Swaps/Create",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Assignments/Manage": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/OnDuty": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Feedback": {
+        "status": 200,
+        "finalUrl": "/Public/Feedback",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Director/CompanyFilter": {
+        "status": 200,
+        "finalUrl": "/Director/CompanyFilter",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/NotificationHub": {
+        "status": 200,
+        "finalUrl": "/Director/NotificationHub",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/ViewAsMode": {
+        "status": 200,
+        "finalUrl": "/Director/ViewAsMode",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Admin": {
+        "status": 200,
+        "finalUrl": "/Admin",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Users": {
+        "status": 200,
+        "finalUrl": "/Admin/Users",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Companies": {
+        "status": 200,
+        "finalUrl": "/Admin/Companies",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Analytics": {
+        "status": 200,
+        "finalUrl": "/Admin/Analytics",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Announcements": {
+        "status": 200,
+        "finalUrl": "/Admin/Announcements",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/AuditLog": {
+        "status": 200,
+        "finalUrl": "/Admin/AuditLog",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Config": {
+        "status": 200,
+        "finalUrl": "/Admin/Config",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Directors": {
+        "status": 200,
+        "finalUrl": "/Admin/Directors",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/EditProfile": {
+        "status": 400,
+        "finalUrl": "/Admin/EditProfile",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/DutyRotation": {
+        "status": 200,
+        "finalUrl": "/Admin/DutyRotation",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/HomeTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FHomeTypes",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/SetupTasks": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSetupTasks",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Areas": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreas",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/Molecules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FMolecules",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/Projects": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FProjects",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/Departments": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDepartments",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/JobTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FJobTypes",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/ChoreTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FChoreTypes",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/DutyTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDutyTypes",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/Stores": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FStores",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/ShiftGroupings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FShiftGroupings",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/Hierarchy": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Hierarchy",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Grants": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Grants",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Roles": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Roles",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/AreaPalette": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreaPalette",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Settings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Settings/ApprovalRules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings%2FApprovalRules",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Molecules/ApprovalSettings": {
+        "status": 200,
+        "finalUrl": "/Admin/Molecules/ApprovalSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Owner": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FGrants",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/PermissionSimulator": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FPermissionSimulator",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/RoleTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FRoleTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/SeedData": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FSeedData",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/AuditSearch": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FAuditSearch",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/AreaConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FAreaConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Backup": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBackup",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Blueprints": {
+        "status": 200,
+        "finalUrl": "/Owner/Blueprints",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/DataLifecycle": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDataLifecycle",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DatabaseConsole": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDatabaseConsole",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/FeatureFlags": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FFeatureFlags",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GameConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGameConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GriffinConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGriffinConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LanguageManagement": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLanguageManagement",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LockedUsers": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLockedUsers",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/MasterPrograms": {
+        "status": 200,
+        "finalUrl": "/Owner/MasterPrograms",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/Permissions": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPermissions",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Programs": {
+        "status": 200,
+        "finalUrl": "/Owner/Programs",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/SelectCompany": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSelectCompany",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SystemHealth": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSystemHealth",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Telemetry": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FTelemetry",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Diagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/GriffinDiagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FGriffinDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Dev/FeedbackPreview": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDev%2FFeedbackPreview",
+        "verdict": "PASS",
+        "req": 100
+      }
+    },
+    "Manager": {
+      "/": {
+        "status": 200,
+        "finalUrl": "/",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Home": {
+        "status": 200,
+        "finalUrl": "/Home",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/AccessDenied": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Error": {
+        "status": 200,
+        "finalUrl": "/Error",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/StatusCode": {
+        "status": 404,
+        "finalUrl": "/StatusCode",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My": {
+        "status": 200,
+        "finalUrl": "/My",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Profile": {
+        "status": 200,
+        "finalUrl": "/My/Profile",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Settings": {
+        "status": 200,
+        "finalUrl": "/My/Settings",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Requests": {
+        "status": 200,
+        "finalUrl": "/My/Requests",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/NotificationCenter": {
+        "status": 200,
+        "finalUrl": "/My/NotificationCenter",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/ApiKeys": {
+        "status": 200,
+        "finalUrl": "/My/ApiKeys",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Help": {
+        "status": 200,
+        "finalUrl": "/My/Help",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpCalendar": {
+        "status": 200,
+        "finalUrl": "/My/HelpCalendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpGettingStarted": {
+        "status": 200,
+        "finalUrl": "/My/HelpGettingStarted",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpRoles": {
+        "status": 200,
+        "finalUrl": "/My/HelpRoles",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpAdmin": {
+        "status": 200,
+        "finalUrl": "/My/HelpAdmin",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Onboarding": {
+        "status": 200,
+        "finalUrl": "/My/Onboarding",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Shifts": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/OnCall": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Overview": {
+        "status": 200,
+        "finalUrl": "/Calendar/Overview",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Day": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Week": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Month": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Table": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/ManageDistributionLists": {
+        "status": 200,
+        "finalUrl": "/Calendar/ManageDistributionLists",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Chores/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Friends": {
+        "status": 200,
+        "finalUrl": "/Friends",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/MyTeam": {
+        "status": 200,
+        "finalUrl": "/MyTeam",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Schedule": {
+        "status": 200,
+        "finalUrl": "/Schedule",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Game/Leaderboard": {
+        "status": 200,
+        "finalUrl": "/Game/Leaderboard",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests": {
+        "status": 200,
+        "finalUrl": "/Requests#timeoff",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests/Swaps/Create": {
+        "status": 200,
+        "finalUrl": "/Requests/Swaps/Create",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Assignments/Manage": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/OnDuty": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Feedback": {
+        "status": 200,
+        "finalUrl": "/Public/Feedback",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Director/CompanyFilter": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FCompanyFilter",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/NotificationHub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FNotificationHub",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/ViewAsMode": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FViewAsMode",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Admin": {
+        "status": 200,
+        "finalUrl": "/Admin",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Users": {
+        "status": 200,
+        "finalUrl": "/Admin/Users",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Companies": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FCompanies",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Analytics": {
+        "status": 200,
+        "finalUrl": "/Admin/Analytics",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Announcements": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAnnouncements",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/AuditLog": {
+        "status": 200,
+        "finalUrl": "/Admin/AuditLog",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Config": {
+        "status": 200,
+        "finalUrl": "/Admin/Config",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Directors": {
+        "status": 200,
+        "finalUrl": "/Admin/Directors",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/EditProfile": {
+        "status": 400,
+        "finalUrl": "/Admin/EditProfile",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/DutyRotation": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FDutyRotation",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/HomeTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FHomeTypes",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/SetupTasks": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSetupTasks",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Areas": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreas",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/Molecules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FMolecules",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/Projects": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FProjects",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/Departments": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDepartments",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/JobTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FJobTypes",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/ChoreTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/ChoreTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/DutyTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/DutyTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Stores": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FStores",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/ShiftGroupings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FShiftGroupings",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Organization/Hierarchy": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Hierarchy",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Grants": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Grants",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Roles": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Roles",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/AreaPalette": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreaPalette",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Settings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Settings/ApprovalRules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings%2FApprovalRules",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Admin/Molecules/ApprovalSettings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FMolecules%2FApprovalSettings",
+        "verdict": "WARN-DENIED",
+        "req": 60
+      },
+      "/Owner": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FGrants",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/PermissionSimulator": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FPermissionSimulator",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/RoleTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FRoleTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/SeedData": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FSeedData",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/AuditSearch": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FAuditSearch",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/AreaConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FAreaConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Backup": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBackup",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Blueprints": {
+        "status": 200,
+        "finalUrl": "/Owner/Blueprints",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/DataLifecycle": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDataLifecycle",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DatabaseConsole": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDatabaseConsole",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/FeatureFlags": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FFeatureFlags",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GameConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGameConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GriffinConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGriffinConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LanguageManagement": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLanguageManagement",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LockedUsers": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLockedUsers",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/MasterPrograms": {
+        "status": 200,
+        "finalUrl": "/Owner/MasterPrograms",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/Permissions": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPermissions",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Programs": {
+        "status": 200,
+        "finalUrl": "/Owner/Programs",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/SelectCompany": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSelectCompany",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SystemHealth": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSystemHealth",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Telemetry": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FTelemetry",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Diagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/GriffinDiagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FGriffinDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Dev/FeedbackPreview": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDev%2FFeedbackPreview",
+        "verdict": "PASS",
+        "req": 100
+      }
+    },
+    "MoleculeAdmin": {
+      "/": {
+        "status": 200,
+        "finalUrl": "/",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Home": {
+        "status": 200,
+        "finalUrl": "/Home",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/AccessDenied": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Error": {
+        "status": 200,
+        "finalUrl": "/Error",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/StatusCode": {
+        "status": 404,
+        "finalUrl": "/StatusCode",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My": {
+        "status": 200,
+        "finalUrl": "/My",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Profile": {
+        "status": 200,
+        "finalUrl": "/My/Profile",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Settings": {
+        "status": 200,
+        "finalUrl": "/My/Settings",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Requests": {
+        "status": 200,
+        "finalUrl": "/My/Requests",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/NotificationCenter": {
+        "status": 200,
+        "finalUrl": "/My/NotificationCenter",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/ApiKeys": {
+        "status": 200,
+        "finalUrl": "/My/ApiKeys",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Help": {
+        "status": 200,
+        "finalUrl": "/My/Help",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpCalendar": {
+        "status": 200,
+        "finalUrl": "/My/HelpCalendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpGettingStarted": {
+        "status": 200,
+        "finalUrl": "/My/HelpGettingStarted",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpRoles": {
+        "status": 200,
+        "finalUrl": "/My/HelpRoles",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpAdmin": {
+        "status": 200,
+        "finalUrl": "/My/HelpAdmin",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Onboarding": {
+        "status": 200,
+        "finalUrl": "/My/Onboarding",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Shifts": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/OnCall": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Overview": {
+        "status": 200,
+        "finalUrl": "/Calendar/Overview",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Day": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Week": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Month": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Table": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/ManageDistributionLists": {
+        "status": 200,
+        "finalUrl": "/Calendar/ManageDistributionLists",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Chores/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Friends": {
+        "status": 200,
+        "finalUrl": "/Friends",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/MyTeam": {
+        "status": 200,
+        "finalUrl": "/MyTeam",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Schedule": {
+        "status": 200,
+        "finalUrl": "/Schedule",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Game/Leaderboard": {
+        "status": 200,
+        "finalUrl": "/Game/Leaderboard",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests": {
+        "status": 200,
+        "finalUrl": "/Requests#timeoff",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests/Swaps/Create": {
+        "status": 200,
+        "finalUrl": "/Requests/Swaps/Create",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Assignments/Manage": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/OnDuty": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Feedback": {
+        "status": 200,
+        "finalUrl": "/Public/Feedback",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Director/CompanyFilter": {
+        "status": 200,
+        "finalUrl": "/Director/CompanyFilter",
+        "verdict": "FAIL-ESCALATION",
+        "req": 80
+      },
+      "/Director/NotificationHub": {
+        "status": 200,
+        "finalUrl": "/Director/NotificationHub",
+        "verdict": "FAIL-ESCALATION",
+        "req": 80
+      },
+      "/Director/ViewAsMode": {
+        "status": 200,
+        "finalUrl": "/Director/ViewAsMode",
+        "verdict": "FAIL-ESCALATION",
+        "req": 80
+      },
+      "/Admin": {
+        "status": 200,
+        "finalUrl": "/Admin",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Users": {
+        "status": 200,
+        "finalUrl": "/Admin/Users",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Companies": {
+        "status": 200,
+        "finalUrl": "/Admin/Companies",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Analytics": {
+        "status": 200,
+        "finalUrl": "/Admin/Analytics",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Announcements": {
+        "status": 200,
+        "finalUrl": "/Admin/Announcements",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/AuditLog": {
+        "status": 200,
+        "finalUrl": "/Admin/AuditLog",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Config": {
+        "status": 200,
+        "finalUrl": "/Admin/Config",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Directors": {
+        "status": 200,
+        "finalUrl": "/Admin/Directors",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/EditProfile": {
+        "status": 400,
+        "finalUrl": "/Admin/EditProfile",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/DutyRotation": {
+        "status": 200,
+        "finalUrl": "/Admin/DutyRotation",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/HomeTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/HomeTypes",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/SetupTasks": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSetupTasks",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Areas": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreas",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Molecules": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Molecules",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Projects": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FProjects",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Departments": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Departments",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/JobTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FJobTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ChoreTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/ChoreTypes",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/DutyTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/DutyTypes",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Stores": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Stores",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/ShiftGroupings": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/ShiftGroupings",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Hierarchy": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Hierarchy",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Grants": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Grants",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Roles": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Roles",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/AreaPalette": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/AreaPalette",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Settings": {
+        "status": 200,
+        "finalUrl": "/Admin/Settings",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Settings/ApprovalRules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings%2FApprovalRules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Molecules/ApprovalSettings": {
+        "status": 200,
+        "finalUrl": "/Admin/Molecules/ApprovalSettings",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Owner": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FGrants",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/PermissionSimulator": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FPermissionSimulator",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/RoleTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FRoleTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/SeedData": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FSeedData",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/AuditSearch": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FAuditSearch",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/AreaConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FAreaConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Backup": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBackup",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Blueprints": {
+        "status": 200,
+        "finalUrl": "/Owner/Blueprints",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/DataLifecycle": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDataLifecycle",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DatabaseConsole": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDatabaseConsole",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/FeatureFlags": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FFeatureFlags",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GameConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGameConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GriffinConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGriffinConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LanguageManagement": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLanguageManagement",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LockedUsers": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLockedUsers",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/MasterPrograms": {
+        "status": 200,
+        "finalUrl": "/Owner/MasterPrograms",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/Permissions": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPermissions",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Programs": {
+        "status": 200,
+        "finalUrl": "/Owner/Programs",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/SelectCompany": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSelectCompany",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SystemHealth": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSystemHealth",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Telemetry": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FTelemetry",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Diagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/GriffinDiagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FGriffinDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Dev/FeedbackPreview": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDev%2FFeedbackPreview",
+        "verdict": "PASS",
+        "req": 100
+      }
+    },
+    "AreaAdmin": {
+      "/": {
+        "status": 200,
+        "finalUrl": "/",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Home": {
+        "status": 200,
+        "finalUrl": "/Home",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/AccessDenied": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Error": {
+        "status": 200,
+        "finalUrl": "/Error",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/StatusCode": {
+        "status": 404,
+        "finalUrl": "/StatusCode",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My": {
+        "status": 200,
+        "finalUrl": "/My",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Profile": {
+        "status": 200,
+        "finalUrl": "/My/Profile",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Settings": {
+        "status": 200,
+        "finalUrl": "/My/Settings",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Requests": {
+        "status": 200,
+        "finalUrl": "/My/Requests",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/NotificationCenter": {
+        "status": 200,
+        "finalUrl": "/My/NotificationCenter",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/ApiKeys": {
+        "status": 200,
+        "finalUrl": "/My/ApiKeys",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Help": {
+        "status": 200,
+        "finalUrl": "/My/Help",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpCalendar": {
+        "status": 200,
+        "finalUrl": "/My/HelpCalendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpGettingStarted": {
+        "status": 200,
+        "finalUrl": "/My/HelpGettingStarted",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpRoles": {
+        "status": 200,
+        "finalUrl": "/My/HelpRoles",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpAdmin": {
+        "status": 200,
+        "finalUrl": "/My/HelpAdmin",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Onboarding": {
+        "status": 200,
+        "finalUrl": "/My/Onboarding",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Shifts": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/OnCall": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Overview": {
+        "status": 200,
+        "finalUrl": "/Calendar/Overview",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Day": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Week": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Month": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Table": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/ManageDistributionLists": {
+        "status": 200,
+        "finalUrl": "/Calendar/ManageDistributionLists",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Chores/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Friends": {
+        "status": 200,
+        "finalUrl": "/Friends",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/MyTeam": {
+        "status": 200,
+        "finalUrl": "/MyTeam",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Schedule": {
+        "status": 200,
+        "finalUrl": "/Schedule",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Game/Leaderboard": {
+        "status": 200,
+        "finalUrl": "/Game/Leaderboard",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests": {
+        "status": 200,
+        "finalUrl": "/Requests#timeoff",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests/Swaps/Create": {
+        "status": 200,
+        "finalUrl": "/Requests/Swaps/Create",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Assignments/Manage": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/OnDuty": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Feedback": {
+        "status": 200,
+        "finalUrl": "/Public/Feedback",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Director/CompanyFilter": {
+        "status": 200,
+        "finalUrl": "/Director/CompanyFilter",
+        "verdict": "FAIL-ESCALATION",
+        "req": 80
+      },
+      "/Director/NotificationHub": {
+        "status": 200,
+        "finalUrl": "/Director/NotificationHub",
+        "verdict": "FAIL-ESCALATION",
+        "req": 80
+      },
+      "/Director/ViewAsMode": {
+        "status": 200,
+        "finalUrl": "/Director/ViewAsMode",
+        "verdict": "FAIL-ESCALATION",
+        "req": 80
+      },
+      "/Admin": {
+        "status": 200,
+        "finalUrl": "/Admin",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Users": {
+        "status": 200,
+        "finalUrl": "/Admin/Users",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Companies": {
+        "status": 200,
+        "finalUrl": "/Admin/Companies",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Analytics": {
+        "status": 200,
+        "finalUrl": "/Admin/Analytics",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Announcements": {
+        "status": 200,
+        "finalUrl": "/Admin/Announcements",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/AuditLog": {
+        "status": 200,
+        "finalUrl": "/Admin/AuditLog",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Config": {
+        "status": 200,
+        "finalUrl": "/Admin/Config",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Directors": {
+        "status": 200,
+        "finalUrl": "/Admin/Directors",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/EditProfile": {
+        "status": 400,
+        "finalUrl": "/Admin/EditProfile",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/DutyRotation": {
+        "status": 200,
+        "finalUrl": "/Admin/DutyRotation",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/HomeTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/HomeTypes",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/SetupTasks": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSetupTasks",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Areas": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Areas",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Molecules": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Molecules",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Projects": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Projects",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Departments": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Departments",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/JobTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/JobTypes",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/ChoreTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/ChoreTypes",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/DutyTypes": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/DutyTypes",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Stores": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Stores",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/ShiftGroupings": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/ShiftGroupings",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Hierarchy": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Hierarchy",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Grants": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Grants",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Roles": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Roles",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/AreaPalette": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/AreaPalette",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Settings": {
+        "status": 200,
+        "finalUrl": "/Admin/Settings",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Settings/ApprovalRules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings%2FApprovalRules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Molecules/ApprovalSettings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FMolecules%2FApprovalSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Owner": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FGrants",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/PermissionSimulator": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FPermissionSimulator",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/RoleTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FRoleTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/SeedData": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FSeedData",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/AuditSearch": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FAuditSearch",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/AreaConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FAreaConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Backup": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBackup",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Blueprints": {
+        "status": 200,
+        "finalUrl": "/Owner/Blueprints",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/DataLifecycle": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDataLifecycle",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DatabaseConsole": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDatabaseConsole",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/FeatureFlags": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FFeatureFlags",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GameConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGameConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GriffinConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGriffinConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LanguageManagement": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLanguageManagement",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LockedUsers": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLockedUsers",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/MasterPrograms": {
+        "status": 200,
+        "finalUrl": "/Owner/MasterPrograms",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/Permissions": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPermissions",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Programs": {
+        "status": 200,
+        "finalUrl": "/Owner/Programs",
+        "verdict": "FAIL-ESCALATION",
+        "req": 100
+      },
+      "/Owner/SelectCompany": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSelectCompany",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SystemHealth": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSystemHealth",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Telemetry": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FTelemetry",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Diagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/GriffinDiagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FGriffinDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Dev/FeedbackPreview": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDev%2FFeedbackPreview",
+        "verdict": "PASS",
+        "req": 100
+      }
+    },
+    "Assigner": {
+      "/": {
+        "status": 200,
+        "finalUrl": "/",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Home": {
+        "status": 200,
+        "finalUrl": "/Home",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/AccessDenied": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Error": {
+        "status": 200,
+        "finalUrl": "/Error",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/StatusCode": {
+        "status": 404,
+        "finalUrl": "/StatusCode",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My": {
+        "status": 200,
+        "finalUrl": "/My",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Profile": {
+        "status": 200,
+        "finalUrl": "/My/Profile",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Settings": {
+        "status": 200,
+        "finalUrl": "/My/Settings",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Requests": {
+        "status": 200,
+        "finalUrl": "/My/Requests",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/NotificationCenter": {
+        "status": 200,
+        "finalUrl": "/My/NotificationCenter",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/ApiKeys": {
+        "status": 200,
+        "finalUrl": "/My/ApiKeys",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Help": {
+        "status": 200,
+        "finalUrl": "/My/Help",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpCalendar": {
+        "status": 200,
+        "finalUrl": "/My/HelpCalendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpGettingStarted": {
+        "status": 200,
+        "finalUrl": "/My/HelpGettingStarted",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpRoles": {
+        "status": 200,
+        "finalUrl": "/My/HelpRoles",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpAdmin": {
+        "status": 200,
+        "finalUrl": "/My/HelpAdmin",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Onboarding": {
+        "status": 200,
+        "finalUrl": "/My/Onboarding",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Shifts": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/OnCall": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Overview": {
+        "status": 200,
+        "finalUrl": "/Calendar/Overview",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Day": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Week": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Month": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Table": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FCalendar%2FTable",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Calendar/ManageDistributionLists": {
+        "status": 200,
+        "finalUrl": "/Calendar/ManageDistributionLists",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Chores/Calendar": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FChores%2FCalendar",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Friends": {
+        "status": 200,
+        "finalUrl": "/Friends",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/MyTeam": {
+        "status": 200,
+        "finalUrl": "/MyTeam",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Schedule": {
+        "status": 200,
+        "finalUrl": "/Schedule",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Game/Leaderboard": {
+        "status": 200,
+        "finalUrl": "/Game/Leaderboard",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests": {
+        "status": 200,
+        "finalUrl": "/Requests#timeoff",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests/Swaps/Create": {
+        "status": 200,
+        "finalUrl": "/Requests/Swaps/Create",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Assignments/Manage": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAssignments%2FManage",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Public/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/OnDuty": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Feedback": {
+        "status": 200,
+        "finalUrl": "/Public/Feedback",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Director/CompanyFilter": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FCompanyFilter",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/NotificationHub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FNotificationHub",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/ViewAsMode": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FViewAsMode",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Admin": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Users": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FUsers",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Companies": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FCompanies",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Analytics": {
+        "status": 200,
+        "finalUrl": "/Admin/Analytics",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Announcements": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAnnouncements",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/AuditLog": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAuditLog",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Config": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FConfig",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Directors": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FDirectors",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/EditProfile": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FEditProfile",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/DutyRotation": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FDutyRotation",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/HomeTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FHomeTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/SetupTasks": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSetupTasks",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Areas": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreas",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Molecules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FMolecules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Projects": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FProjects",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Departments": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDepartments",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/JobTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FJobTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ChoreTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FChoreTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/DutyTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDutyTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Stores": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FStores",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ShiftGroupings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FShiftGroupings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Hierarchy": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Hierarchy",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FGrants",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Roles": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FRoles",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/AreaPalette": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreaPalette",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings/ApprovalRules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings%2FApprovalRules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Molecules/ApprovalSettings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FMolecules%2FApprovalSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Owner": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FGrants",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/PermissionSimulator": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FPermissionSimulator",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/RoleTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FRoleTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/SeedData": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FSeedData",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/AuditSearch": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FAuditSearch",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/AreaConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FAreaConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Backup": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBackup",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Blueprints": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBlueprints",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DataLifecycle": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDataLifecycle",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DatabaseConsole": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDatabaseConsole",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/FeatureFlags": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FFeatureFlags",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GameConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGameConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GriffinConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGriffinConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LanguageManagement": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLanguageManagement",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LockedUsers": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLockedUsers",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/MasterPrograms": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FMasterPrograms",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Permissions": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPermissions",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Programs": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPrograms",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SelectCompany": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSelectCompany",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SystemHealth": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSystemHealth",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Telemetry": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FTelemetry",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Diagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/GriffinDiagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FGriffinDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Dev/FeedbackPreview": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDev%2FFeedbackPreview",
+        "verdict": "PASS",
+        "req": 100
+      }
+    },
+    "Employee": {
+      "/": {
+        "status": 200,
+        "finalUrl": "/",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Home": {
+        "status": 200,
+        "finalUrl": "/Home",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/AccessDenied": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Error": {
+        "status": 200,
+        "finalUrl": "/Error",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/StatusCode": {
+        "status": 404,
+        "finalUrl": "/StatusCode",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My": {
+        "status": 200,
+        "finalUrl": "/My",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Profile": {
+        "status": 200,
+        "finalUrl": "/My/Profile",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Settings": {
+        "status": 200,
+        "finalUrl": "/My/Settings",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Requests": {
+        "status": 200,
+        "finalUrl": "/My/Requests",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/NotificationCenter": {
+        "status": 200,
+        "finalUrl": "/My/NotificationCenter",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/ApiKeys": {
+        "status": 200,
+        "finalUrl": "/My/ApiKeys",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Help": {
+        "status": 200,
+        "finalUrl": "/My/Help",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpCalendar": {
+        "status": 200,
+        "finalUrl": "/My/HelpCalendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpGettingStarted": {
+        "status": 200,
+        "finalUrl": "/My/HelpGettingStarted",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpRoles": {
+        "status": 200,
+        "finalUrl": "/My/HelpRoles",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpAdmin": {
+        "status": 200,
+        "finalUrl": "/My/HelpAdmin",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Onboarding": {
+        "status": 200,
+        "finalUrl": "/My/Onboarding",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Shifts": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/OnCall": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Overview": {
+        "status": 200,
+        "finalUrl": "/Calendar/Overview",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Day": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Week": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Month": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Table": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FCalendar%2FTable",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Calendar/ManageDistributionLists": {
+        "status": 200,
+        "finalUrl": "/Calendar/ManageDistributionLists",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Chores/Calendar": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FChores%2FCalendar",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Friends": {
+        "status": 200,
+        "finalUrl": "/Friends",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/MyTeam": {
+        "status": 200,
+        "finalUrl": "/MyTeam",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Schedule": {
+        "status": 200,
+        "finalUrl": "/Schedule",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Game/Leaderboard": {
+        "status": 200,
+        "finalUrl": "/Game/Leaderboard",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests": {
+        "status": 200,
+        "finalUrl": "/Requests#timeoff",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests/Swaps/Create": {
+        "status": 200,
+        "finalUrl": "/Requests/Swaps/Create",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Assignments/Manage": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAssignments%2FManage",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Public/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/OnDuty": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Feedback": {
+        "status": 200,
+        "finalUrl": "/Public/Feedback",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Director/CompanyFilter": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FCompanyFilter",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/NotificationHub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FNotificationHub",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/ViewAsMode": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FViewAsMode",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Admin": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Users": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FUsers",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Companies": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FCompanies",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Analytics": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAnalytics",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Announcements": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAnnouncements",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/AuditLog": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAuditLog",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Config": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FConfig",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Directors": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FDirectors",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/EditProfile": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FEditProfile",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/DutyRotation": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FDutyRotation",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/HomeTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FHomeTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/SetupTasks": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSetupTasks",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Areas": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreas",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Molecules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FMolecules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Projects": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FProjects",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Departments": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDepartments",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/JobTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FJobTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ChoreTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FChoreTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/DutyTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDutyTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Stores": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FStores",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ShiftGroupings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FShiftGroupings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Hierarchy": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Hierarchy",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FGrants",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Roles": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FRoles",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/AreaPalette": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreaPalette",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings/ApprovalRules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings%2FApprovalRules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Molecules/ApprovalSettings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FMolecules%2FApprovalSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Owner": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FGrants",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/PermissionSimulator": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FPermissionSimulator",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/RoleTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FRoleTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/SeedData": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FSeedData",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/AuditSearch": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FAuditSearch",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/AreaConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FAreaConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Backup": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBackup",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Blueprints": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBlueprints",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DataLifecycle": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDataLifecycle",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DatabaseConsole": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDatabaseConsole",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/FeatureFlags": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FFeatureFlags",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GameConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGameConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GriffinConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGriffinConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LanguageManagement": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLanguageManagement",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LockedUsers": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLockedUsers",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/MasterPrograms": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FMasterPrograms",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Permissions": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPermissions",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Programs": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPrograms",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SelectCompany": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSelectCompany",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SystemHealth": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSystemHealth",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Telemetry": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FTelemetry",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Diagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/GriffinDiagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FGriffinDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Dev/FeedbackPreview": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDev%2FFeedbackPreview",
+        "verdict": "PASS",
+        "req": 100
+      }
+    },
+    "Trainee": {
+      "/": {
+        "status": 200,
+        "finalUrl": "/",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Home": {
+        "status": 200,
+        "finalUrl": "/Home",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/AccessDenied": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Error": {
+        "status": 200,
+        "finalUrl": "/Error",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/StatusCode": {
+        "status": 404,
+        "finalUrl": "/StatusCode",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My": {
+        "status": 200,
+        "finalUrl": "/My",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Profile": {
+        "status": 200,
+        "finalUrl": "/My/Profile",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Settings": {
+        "status": 200,
+        "finalUrl": "/My/Settings",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Requests": {
+        "status": 200,
+        "finalUrl": "/My/Requests",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/NotificationCenter": {
+        "status": 200,
+        "finalUrl": "/My/NotificationCenter",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/ApiKeys": {
+        "status": 200,
+        "finalUrl": "/My/ApiKeys",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Help": {
+        "status": 200,
+        "finalUrl": "/My/Help",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpCalendar": {
+        "status": 200,
+        "finalUrl": "/My/HelpCalendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpGettingStarted": {
+        "status": 200,
+        "finalUrl": "/My/HelpGettingStarted",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpRoles": {
+        "status": 200,
+        "finalUrl": "/My/HelpRoles",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpAdmin": {
+        "status": 200,
+        "finalUrl": "/My/HelpAdmin",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Onboarding": {
+        "status": 200,
+        "finalUrl": "/My/Onboarding",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Shifts": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/OnCall": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Overview": {
+        "status": 200,
+        "finalUrl": "/Calendar/Overview",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Day": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Week": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Month": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Table": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FCalendar%2FTable",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Calendar/ManageDistributionLists": {
+        "status": 200,
+        "finalUrl": "/Calendar/ManageDistributionLists",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Chores/Calendar": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FChores%2FCalendar",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Friends": {
+        "status": 200,
+        "finalUrl": "/Friends",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/MyTeam": {
+        "status": 200,
+        "finalUrl": "/MyTeam",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Schedule": {
+        "status": 200,
+        "finalUrl": "/Schedule",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Game/Leaderboard": {
+        "status": 200,
+        "finalUrl": "/Game/Leaderboard",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests": {
+        "status": 200,
+        "finalUrl": "/Requests#timeoff",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests/Swaps/Create": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Assignments/Manage": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAssignments%2FManage",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Public/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/OnDuty": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Feedback": {
+        "status": 200,
+        "finalUrl": "/Public/Feedback",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Director/CompanyFilter": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FCompanyFilter",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/NotificationHub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FNotificationHub",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/ViewAsMode": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FViewAsMode",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Admin": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Users": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FUsers",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Companies": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FCompanies",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Analytics": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAnalytics",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Announcements": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAnnouncements",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/AuditLog": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAuditLog",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Config": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FConfig",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Directors": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FDirectors",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/EditProfile": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FEditProfile",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/DutyRotation": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FDutyRotation",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/HomeTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FHomeTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/SetupTasks": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSetupTasks",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Areas": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreas",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Molecules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FMolecules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Projects": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FProjects",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Departments": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDepartments",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/JobTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FJobTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ChoreTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FChoreTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/DutyTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDutyTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Stores": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FStores",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ShiftGroupings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FShiftGroupings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Hierarchy": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Hierarchy",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FGrants",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Roles": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FRoles",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/AreaPalette": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreaPalette",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings/ApprovalRules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings%2FApprovalRules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Molecules/ApprovalSettings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FMolecules%2FApprovalSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Owner": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FGrants",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/PermissionSimulator": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FPermissionSimulator",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/RoleTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FRoleTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/SeedData": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FSeedData",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/AuditSearch": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FAuditSearch",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/AreaConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FAreaConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Backup": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBackup",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Blueprints": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBlueprints",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DataLifecycle": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDataLifecycle",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DatabaseConsole": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDatabaseConsole",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/FeatureFlags": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FFeatureFlags",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GameConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGameConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GriffinConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGriffinConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LanguageManagement": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLanguageManagement",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LockedUsers": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLockedUsers",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/MasterPrograms": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FMasterPrograms",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Permissions": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPermissions",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Programs": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPrograms",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SelectCompany": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSelectCompany",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SystemHealth": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSystemHealth",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Telemetry": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FTelemetry",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Diagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/GriffinDiagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FGriffinDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Dev/FeedbackPreview": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDev%2FFeedbackPreview",
+        "verdict": "PASS",
+        "req": 100
+      }
+    },
+    "NoGrants": {
+      "/": {
+        "status": 200,
+        "finalUrl": "/",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Home": {
+        "status": 200,
+        "finalUrl": "/Home",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/AccessDenied": {
+        "status": 403,
+        "finalUrl": "/AccessDenied",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Error": {
+        "status": 200,
+        "finalUrl": "/Error",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/StatusCode": {
+        "status": 404,
+        "finalUrl": "/StatusCode",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My": {
+        "status": 200,
+        "finalUrl": "/My",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Profile": {
+        "status": 200,
+        "finalUrl": "/My/Profile",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Settings": {
+        "status": 200,
+        "finalUrl": "/My/Settings",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Requests": {
+        "status": 200,
+        "finalUrl": "/My/Requests",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/NotificationCenter": {
+        "status": 200,
+        "finalUrl": "/My/NotificationCenter",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/ApiKeys": {
+        "status": 200,
+        "finalUrl": "/My/ApiKeys",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Help": {
+        "status": 200,
+        "finalUrl": "/My/Help",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpCalendar": {
+        "status": 200,
+        "finalUrl": "/My/HelpCalendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpGettingStarted": {
+        "status": 200,
+        "finalUrl": "/My/HelpGettingStarted",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpRoles": {
+        "status": 200,
+        "finalUrl": "/My/HelpRoles",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/HelpAdmin": {
+        "status": 200,
+        "finalUrl": "/My/HelpAdmin",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/My/Onboarding": {
+        "status": 200,
+        "finalUrl": "/My/Onboarding",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar": {
+        "status": 200,
+        "finalUrl": "/Calendar",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Shifts": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/OnCall": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Overview": {
+        "status": 200,
+        "finalUrl": "/Calendar/Overview",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Day": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Week": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Month": {
+        "status": 200,
+        "finalUrl": "/Calendar/Shifts",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Calendar/Table": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FCalendar%2FTable",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Calendar/ManageDistributionLists": {
+        "status": 200,
+        "finalUrl": "/Calendar/ManageDistributionLists",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Chores/Calendar": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FChores%2FCalendar",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Friends": {
+        "status": 200,
+        "finalUrl": "/Friends",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/MyTeam": {
+        "status": 200,
+        "finalUrl": "/MyTeam",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Schedule": {
+        "status": 200,
+        "finalUrl": "/Schedule",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Game/Leaderboard": {
+        "status": 200,
+        "finalUrl": "/Game/Leaderboard",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests": {
+        "status": 200,
+        "finalUrl": "/Requests#timeoff",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Requests/Swaps/Create": {
+        "status": 200,
+        "finalUrl": "/Requests/Swaps/Create",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Assignments/Manage": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAssignments%2FManage",
+        "verdict": "WARN-DENIED",
+        "req": 0
+      },
+      "/Public/Chores": {
+        "status": 200,
+        "finalUrl": "/Calendar/Chores",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/OnDuty": {
+        "status": 200,
+        "finalUrl": "/Calendar/OnCall",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Public/Feedback": {
+        "status": 200,
+        "finalUrl": "/Public/Feedback",
+        "verdict": "PASS",
+        "req": 0
+      },
+      "/Director/CompanyFilter": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FCompanyFilter",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/NotificationHub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FNotificationHub",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Director/ViewAsMode": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDirector%2FViewAsMode",
+        "verdict": "PASS",
+        "req": 80
+      },
+      "/Admin": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Users": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FUsers",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Companies": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FCompanies",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Analytics": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAnalytics",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Announcements": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAnnouncements",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/AuditLog": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FAuditLog",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Config": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FConfig",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Directors": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FDirectors",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/EditProfile": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FEditProfile",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/DutyRotation": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FDutyRotation",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/HomeTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FHomeTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/SetupTasks": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSetupTasks",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Areas": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreas",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Molecules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FMolecules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Projects": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FProjects",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Departments": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDepartments",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/JobTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FJobTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ChoreTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FChoreTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/DutyTypes": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FDutyTypes",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Stores": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FStores",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/ShiftGroupings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FShiftGroupings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Hierarchy": {
+        "status": 200,
+        "finalUrl": "/Admin/Organization/Hierarchy",
+        "verdict": "FAIL-ESCALATION",
+        "req": 60
+      },
+      "/Admin/Organization/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FGrants",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/Roles": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FRoles",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Organization/AreaPalette": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FOrganization%2FAreaPalette",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Settings/ApprovalRules": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FSettings%2FApprovalRules",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Admin/Molecules/ApprovalSettings": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FAdmin%2FMolecules%2FApprovalSettings",
+        "verdict": "PASS",
+        "req": 60
+      },
+      "/Owner": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/Grants": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FGrants",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/PermissionSimulator": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FPermissionSimulator",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/RoleTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FRoleTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/SeedData": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FSeedData",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Hub/AuditSearch": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FHub%2FAuditSearch",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/AreaConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FAreaConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Backup": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBackup",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Blueprints": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FBlueprints",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DataLifecycle": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDataLifecycle",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/DatabaseConsole": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FDatabaseConsole",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/EmailTemplates": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FEmailTemplates",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/FeatureFlags": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FFeatureFlags",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GameConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGameConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/GriffinConfig": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FGriffinConfig",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LanguageManagement": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLanguageManagement",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/LockedUsers": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FLockedUsers",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/MasterPrograms": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FMasterPrograms",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Permissions": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPermissions",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Programs": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FPrograms",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SelectCompany": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSelectCompany",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/SystemHealth": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FSystemHealth",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Owner/Telemetry": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FOwner%2FTelemetry",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Diagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/GriffinDiagnostic": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FGriffinDiagnostic",
+        "verdict": "PASS",
+        "req": 100
+      },
+      "/Dev/FeedbackPreview": {
+        "status": 403,
+        "finalUrl": "/AccessDenied?ReturnUrl=%2FDev%2FFeedbackPreview",
+        "verdict": "PASS",
+        "req": 100
+      }
+    }
+  },
+  "issues": [
+    "[Director] /Owner/Blueprints -> SERVED (HTTP 200, /Owner/Blueprints) but required tier 100 > user tier 80",
+    "[Director] /Owner/MasterPrograms -> SERVED (HTTP 200, /Owner/MasterPrograms) but required tier 100 > user tier 80",
+    "[Director] /Owner/Programs -> SERVED (HTTP 200, /Owner/Programs) but required tier 100 > user tier 80",
+    "[Manager] /Owner/Blueprints -> SERVED (HTTP 200, /Owner/Blueprints) but required tier 100 > user tier 60",
+    "[Manager] /Owner/MasterPrograms -> SERVED (HTTP 200, /Owner/MasterPrograms) but required tier 100 > user tier 60",
+    "[Manager] /Owner/Programs -> SERVED (HTTP 200, /Owner/Programs) but required tier 100 > user tier 60",
+    "[MoleculeAdmin] /Director/CompanyFilter -> SERVED (HTTP 200, /Director/CompanyFilter) but required tier 80 > user tier 55",
+    "[MoleculeAdmin] /Director/NotificationHub -> SERVED (HTTP 200, /Director/NotificationHub) but required tier 80 > user tier 55",
+    "[MoleculeAdmin] /Director/ViewAsMode -> SERVED (HTTP 200, /Director/ViewAsMode) but required tier 80 > user tier 55",
+    "[MoleculeAdmin] /Admin -> SERVED (HTTP 200, /Admin) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Users -> SERVED (HTTP 200, /Admin/Users) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Companies -> SERVED (HTTP 200, /Admin/Companies) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Analytics -> SERVED (HTTP 200, /Admin/Analytics) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Announcements -> SERVED (HTTP 200, /Admin/Announcements) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/AuditLog -> SERVED (HTTP 200, /Admin/AuditLog) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Config -> SERVED (HTTP 200, /Admin/Config) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Directors -> SERVED (HTTP 200, /Admin/Directors) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/EditProfile -> SERVED (HTTP 400, /Admin/EditProfile) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/DutyRotation -> SERVED (HTTP 200, /Admin/DutyRotation) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/HomeTypes -> SERVED (HTTP 200, /Admin/HomeTypes) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization -> SERVED (HTTP 200, /Admin/Organization) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/Molecules -> SERVED (HTTP 200, /Admin/Organization/Molecules) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/Departments -> SERVED (HTTP 200, /Admin/Organization/Departments) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/ChoreTypes -> SERVED (HTTP 200, /Admin/Organization/ChoreTypes) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/DutyTypes -> SERVED (HTTP 200, /Admin/Organization/DutyTypes) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/Stores -> SERVED (HTTP 200, /Admin/Organization/Stores) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/ShiftGroupings -> SERVED (HTTP 200, /Admin/Organization/ShiftGroupings) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/Hierarchy -> SERVED (HTTP 200, /Admin/Organization/Hierarchy) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/Grants -> SERVED (HTTP 200, /Admin/Organization/Grants) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/Roles -> SERVED (HTTP 200, /Admin/Organization/Roles) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Organization/AreaPalette -> SERVED (HTTP 200, /Admin/Organization/AreaPalette) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Settings -> SERVED (HTTP 200, /Admin/Settings) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Admin/Molecules/ApprovalSettings -> SERVED (HTTP 200, /Admin/Molecules/ApprovalSettings) but required tier 60 > user tier 55",
+    "[MoleculeAdmin] /Owner/Blueprints -> SERVED (HTTP 200, /Owner/Blueprints) but required tier 100 > user tier 55",
+    "[MoleculeAdmin] /Owner/MasterPrograms -> SERVED (HTTP 200, /Owner/MasterPrograms) but required tier 100 > user tier 55",
+    "[MoleculeAdmin] /Owner/Programs -> SERVED (HTTP 200, /Owner/Programs) but required tier 100 > user tier 55",
+    "[AreaAdmin] /Director/CompanyFilter -> SERVED (HTTP 200, /Director/CompanyFilter) but required tier 80 > user tier 58",
+    "[AreaAdmin] /Director/NotificationHub -> SERVED (HTTP 200, /Director/NotificationHub) but required tier 80 > user tier 58",
+    "[AreaAdmin] /Director/ViewAsMode -> SERVED (HTTP 200, /Director/ViewAsMode) but required tier 80 > user tier 58",
+    "[AreaAdmin] /Admin -> SERVED (HTTP 200, /Admin) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Users -> SERVED (HTTP 200, /Admin/Users) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Companies -> SERVED (HTTP 200, /Admin/Companies) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Analytics -> SERVED (HTTP 200, /Admin/Analytics) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Announcements -> SERVED (HTTP 200, /Admin/Announcements) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/AuditLog -> SERVED (HTTP 200, /Admin/AuditLog) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Config -> SERVED (HTTP 200, /Admin/Config) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Directors -> SERVED (HTTP 200, /Admin/Directors) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/EditProfile -> SERVED (HTTP 400, /Admin/EditProfile) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/DutyRotation -> SERVED (HTTP 200, /Admin/DutyRotation) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/HomeTypes -> SERVED (HTTP 200, /Admin/HomeTypes) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization -> SERVED (HTTP 200, /Admin/Organization) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/Areas -> SERVED (HTTP 200, /Admin/Organization/Areas) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/Molecules -> SERVED (HTTP 200, /Admin/Organization/Molecules) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/Projects -> SERVED (HTTP 200, /Admin/Organization/Projects) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/Departments -> SERVED (HTTP 200, /Admin/Organization/Departments) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/JobTypes -> SERVED (HTTP 200, /Admin/Organization/JobTypes) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/ChoreTypes -> SERVED (HTTP 200, /Admin/Organization/ChoreTypes) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/DutyTypes -> SERVED (HTTP 200, /Admin/Organization/DutyTypes) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/Stores -> SERVED (HTTP 200, /Admin/Organization/Stores) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/ShiftGroupings -> SERVED (HTTP 200, /Admin/Organization/ShiftGroupings) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/Hierarchy -> SERVED (HTTP 200, /Admin/Organization/Hierarchy) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/Grants -> SERVED (HTTP 200, /Admin/Organization/Grants) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/Roles -> SERVED (HTTP 200, /Admin/Organization/Roles) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Organization/AreaPalette -> SERVED (HTTP 200, /Admin/Organization/AreaPalette) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Admin/Settings -> SERVED (HTTP 200, /Admin/Settings) but required tier 60 > user tier 58",
+    "[AreaAdmin] /Owner/Blueprints -> SERVED (HTTP 200, /Owner/Blueprints) but required tier 100 > user tier 58",
+    "[AreaAdmin] /Owner/MasterPrograms -> SERVED (HTTP 200, /Owner/MasterPrograms) but required tier 100 > user tier 58",
+    "[AreaAdmin] /Owner/Programs -> SERVED (HTTP 200, /Owner/Programs) but required tier 100 > user tier 58",
+    "[Assigner] /Admin/Analytics -> SERVED (HTTP 200, /Admin/Analytics) but required tier 60 > user tier 40",
+    "[Assigner] /Admin/Organization -> SERVED (HTTP 200, /Admin/Organization) but required tier 60 > user tier 40",
+    "[Assigner] /Admin/Organization/Hierarchy -> SERVED (HTTP 200, /Admin/Organization/Hierarchy) but required tier 60 > user tier 40",
+    "[Employee] /Admin/Organization -> SERVED (HTTP 200, /Admin/Organization) but required tier 60 > user tier 20",
+    "[Employee] /Admin/Organization/Hierarchy -> SERVED (HTTP 200, /Admin/Organization/Hierarchy) but required tier 60 > user tier 20",
+    "[Trainee] /Admin/Organization -> SERVED (HTTP 200, /Admin/Organization) but required tier 60 > user tier 10",
+    "[Trainee] /Admin/Organization/Hierarchy -> SERVED (HTTP 200, /Admin/Organization/Hierarchy) but required tier 60 > user tier 10",
+    "[NoGrants] /Admin/Organization -> SERVED (HTTP 200, /Admin/Organization) but required tier 60 > user tier 5",
+    "[NoGrants] /Admin/Organization/Hierarchy -> SERVED (HTTP 200, /Admin/Organization/Hierarchy) but required tier 60 > user tier 5"
+  ]
+}

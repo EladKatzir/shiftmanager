@@ -1,0 +1,18 @@
+{
+  "mgrMolecule": 1,
+  "instance": {
+    "instanceId": 94,
+    "CompanyId": 15,
+    "MoleculeId": 9,
+    "JobTypeId": null
+  },
+  "assignment": {
+    "assignmentId": 1,
+    "UserId": null
+  },
+  "crossUser": {
+    "Id": 16,
+    "Email": "dir.text@test",
+    "MoleculeId": 2
+  }
+}
