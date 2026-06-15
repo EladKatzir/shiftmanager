@@ -185,7 +185,7 @@ public abstract class MasterTestBase : IAsyncLifetime
         return new ChoreService(
             Db, tenantMock.Object, httpContextMock,
             directorService, grantService, logger, companyCacheService,
-            BusyServiceMockFactory.Real(Db));
+            BusyServiceMockFactory.Real(Db), new EligibilityEvaluator());
     }
 
     /// <summary>

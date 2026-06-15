@@ -3,6 +3,7 @@ using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Api.Dto;
 using ShiftManager.Models.Support;
+using ShiftManager.Services;
 
 namespace ShiftManager.Services.Api;
 
@@ -191,7 +192,7 @@ public class ChoreApiService
             return (null, MapBusyKeyToV1Message(firstWarn.Key));
         }
 
-        // Create chore
+        // Create chore — untimed, type-less API path → the global fallback weight, frozen at create.
         var chore = new Chore
         {
             CompanyId = companyId,
@@ -199,6 +200,7 @@ public class ChoreApiService
             Date = date,
             Title = dto.Title.Trim(),
             Notes = string.IsNullOrWhiteSpace(dto.Notes) ? null : dto.Notes.Trim(),
+            WeightMinutes = ChoreService.DEFAULT_CHORE_WEIGHT_MINUTES,
             CreatedBy = creatorId,
             CreatedAt = DateTime.UtcNow
         };

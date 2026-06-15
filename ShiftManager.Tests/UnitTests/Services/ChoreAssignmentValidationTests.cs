@@ -56,7 +56,7 @@ public class ChoreAssignmentValidationTests : IDisposable
             Mock.Of<IGrantService>(),
             Mock.Of<ILogger<ChoreService>>(),
             Mock.Of<ICompanyCacheService>(),
-            BusyServiceMockFactory.Real(_db));
+            BusyServiceMockFactory.Real(_db), new EligibilityEvaluator());
 
         SeedHierarchy();
     }

@@ -52,7 +52,7 @@ public class ChoreCrudTests : MasterTestBase
         return new ChoreService(
             Db, tenantMock.Object, httpContextMock,
             directorService, grantMock.Object, logger, companyCacheMock.Object,
-            BusyServiceMockFactory.Real(Db));
+            BusyServiceMockFactory.Real(Db), new EligibilityEvaluator());
     }
 
     // ================================================================

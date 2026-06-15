@@ -59,7 +59,7 @@ public class ChoreServiceTests : IDisposable
             _grantServiceMock.Object,
             loggerMock,
             _companyCacheMock.Object,
-            BusyServiceMockFactory.Real(_db));
+            BusyServiceMockFactory.Real(_db), new EligibilityEvaluator());
 
         // Seed the current user
         _db.Users.Add(new AppUser

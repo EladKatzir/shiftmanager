@@ -90,7 +90,7 @@ public class JusticeServiceBugfixTests : IDisposable
         var choreService = new ChoreService(
             _db, Mock.Of<ITenantResolver>(), httpAccessor.Object, Mock.Of<IDirectorService>(),
             Mock.Of<IGrantService>(), Mock.Of<ILogger<ChoreService>>(), Mock.Of<ICompanyCacheService>(),
-            busyService);
+            busyService, new EligibilityEvaluator());
         var onDutyService = new OnDutyService(
             _db, httpAccessor.Object, Mock.Of<IDirectorService>(), Mock.Of<IGrantService>(),
             Mock.Of<ILogger<OnDutyService>>(), Mock.Of<IFeatureFlagService>(), busyService);
@@ -368,7 +368,7 @@ public class JusticeServiceA8ChoreHoleCharacterizationTests : IDisposable
         var choreService = new ChoreService(
             _db, Mock.Of<ITenantResolver>(), httpAccessor.Object,
             Mock.Of<IDirectorService>(), Mock.Of<IGrantService>(),
-            Mock.Of<ILogger<ChoreService>>(), Mock.Of<ICompanyCacheService>(), busyService);
+            Mock.Of<ILogger<ChoreService>>(), Mock.Of<ICompanyCacheService>(), busyService, new EligibilityEvaluator());
         var onDutyService = new OnDutyService(
             _db, httpAccessor.Object, Mock.Of<IDirectorService>(), Mock.Of<IGrantService>(),
             Mock.Of<ILogger<OnDutyService>>(), Mock.Of<IFeatureFlagService>(), busyService);

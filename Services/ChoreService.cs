@@ -16,6 +16,15 @@ namespace ShiftManager.Services;
 //      mutating state.
 public class ChoreService : IChoreService
 {
+    /// <summary>Global fallback chore duration weight in minutes (8h). Single source of truth;
+    /// JusticeService scales chore targets by this. Frozen into Chore.WeightMinutes at create.</summary>
+    public const int DEFAULT_CHORE_WEIGHT_MINUTES = 480;
+
+    /// <summary>Stamp guardrails (spec D10): reject before any work if the inclusive date span
+    /// exceeds this many days, or the total prospective chores exceeds <see cref="MaxStampChores"/>.</summary>
+    private const int MaxStampSpanDays = 92;
+    private const int MaxStampChores = 500;
+
     private readonly AppDbContext _db;
     private readonly ITenantResolver _tenantResolver;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -25,6 +34,7 @@ public class ChoreService : IChoreService
 
     private readonly ICompanyCacheService _companyCacheService;
     private readonly IBusyService _busyService;
+    private readonly IEligibilityEvaluator _eligibilityEvaluator;
 
     public ChoreService(
         AppDbContext db,
@@ -34,7 +44,8 @@ public class ChoreService : IChoreService
         IGrantService grantService,
         ILogger<ChoreService> logger,
         ICompanyCacheService companyCacheService,
-        IBusyService busyService)
+        IBusyService busyService,
+        IEligibilityEvaluator eligibilityEvaluator)
     {
         _db = db;
         _tenantResolver = tenantResolver;
@@ -44,6 +55,23 @@ public class ChoreService : IChoreService
         _logger = logger;
         _busyService = busyService;
         _companyCacheService = companyCacheService;
+        _eligibilityEvaluator = eligibilityEvaluator;
+    }
+
+    /// <summary>
+    /// Resolves a chore's frozen weight: explicit same-day [start,end) minutes →
+    /// ChoreType.DefaultWeightMinutes → DEFAULT_CHORE_WEIGHT_MINUTES (480). EndTime &lt;= StartTime
+    /// (midnight-crossing, out of scope) falls through to the type default / fallback.
+    /// </summary>
+    internal static int ResolveWeightMinutes(TimeOnly? startTime, TimeOnly? endTime, int? choreTypeDefaultWeight)
+    {
+        if (startTime.HasValue && endTime.HasValue && endTime.Value > startTime.Value)
+        {
+            var minutes = (int)(endTime.Value - startTime.Value).TotalMinutes;
+            if (minutes > 0)
+                return minutes;
+        }
+        return choreTypeDefaultWeight ?? DEFAULT_CHORE_WEIGHT_MINUTES;
     }
 
     private int GetCurrentUserId()
@@ -301,6 +329,20 @@ public class ChoreService : IChoreService
                     return (false, "BUSY_OVERRIDE_REQUIRED", null, validation, token);
                 }
 
+                // Freeze the fairness weight at create time. CreateChoreAsync carries no
+                // StartTime/EndTime (untimed manual chores), so resolution falls through to the
+                // chore type's DefaultWeightMinutes, else the 480 global fallback.
+                int? typeDefaultWeight = null;
+                if (choreTypeId.HasValue)
+                {
+                    // ChoreType is molecule-scoped (not tenant-filtered); load by explicit id.
+                    typeDefaultWeight = await _db.ChoreTypes.IgnoreQueryFilters()
+                        .Where(ct => ct.Id == choreTypeId.Value)
+                        .Select(ct => ct.DefaultWeightMinutes)
+                        .FirstOrDefaultAsync();
+                }
+                var weightMinutes = ResolveWeightMinutes(startTime: null, endTime: null, typeDefaultWeight);
+
                 chore = new Chore
                 {
                     CompanyId = assignee.CompanyId,
@@ -310,6 +352,7 @@ public class ChoreService : IChoreService
                     Date = date,
                     Title = title.Trim(),
                     Notes = notes?.Trim(),
+                    WeightMinutes = weightMinutes,
                     CreatedBy = currentUserId,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -525,6 +568,8 @@ public class ChoreService : IChoreService
                 Date = date,
                 Title = title.Trim(),
                 Notes = notes?.Trim(),
+                // Untimed, type-less chore → the global fallback weight, frozen at create.
+                WeightMinutes = DEFAULT_CHORE_WEIGHT_MINUTES,
                 CreatedBy = currentUserId,
                 CreatedAt = DateTime.UtcNow
             };
@@ -722,5 +767,116 @@ public class ChoreService : IChoreService
         var target = new BusyTarget.Chore(date, moleculeId, choreTypeId);
         var v = await _busyService.ValidateAsync(target, userId, actorUserId: 0, overrideToken);
         return new ChoreAssignmentValidation(v.CanProceed, v.Errors, v.Warnings);
+    }
+
+    /// <inheritdoc/>
+    public async Task<StampResult> StampTemplateAsync(
+        int templateId,
+        DateOnly from,
+        DateOnly to,
+        IReadOnlyList<DayOfWeek> weekdays,
+        IReadOnlyList<int> assigneeIds,
+        bool rotate)
+    {
+        var created = new List<StampCreated>();
+        var skipped = new List<StampSkipped>();
+
+        // ChoreTemplate is molecule-scoped (not tenant-filtered); load by explicit id.
+        // SECURITY-AUDITED: SAFE — the page layer gates this with AssignChores before calling;
+        // CreateChoreAsync re-checks CanUserManageChoreForAssigneeAsync per (date,user) below.
+        var template = await _db.ChoreTemplates.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.Id == templateId);
+        if (template == null || !template.IsActive)
+            return new StampResult(created, skipped);
+
+        if (assigneeIds.Count == 0 || from > to)
+            return new StampResult(created, skipped);
+
+        var weekdaySet = weekdays.Count == 0
+            ? null // empty = every day in range
+            : weekdays.ToHashSet();
+
+        // ===== Stamp-size cap (spec D10) — reject before ANY work, not a partial run =====
+        // Reject if the inclusive span is too long, or the total prospective chores is too large.
+        var spanDays = to.DayNumber - from.DayNumber + 1;
+        if (spanDays > MaxStampSpanDays)
+            return new StampResult(created, new[] { new StampSkipped(from, 0, "STAMP_TOO_LARGE") });
+
+        // Count matching dates (respecting the weekday filter) to size the prospective work.
+        var matchingDates = 0;
+        for (var d = from; d <= to; d = d.AddDays(1))
+        {
+            if (weekdaySet == null || weekdaySet.Contains(d.DayOfWeek))
+                matchingDates++;
+        }
+        // rotate → one chore per matching date; fan-out → dates × assignees.
+        var prospective = rotate ? matchingDates : (long)matchingDates * assigneeIds.Count;
+        if (prospective > MaxStampChores)
+            return new StampResult(created, new[] { new StampSkipped(from, 0, "STAMP_TOO_LARGE") });
+
+        int rotateIndex = 0;
+        for (var date = from; date <= to; date = date.AddDays(1))
+        {
+            if (weekdaySet != null && !weekdaySet.Contains(date.DayOfWeek))
+                continue;
+
+            // rotate=true → one assignee this date (round-robin); rotate=false → all assignees.
+            IEnumerable<int> assigneesForDate;
+            if (rotate)
+            {
+                var userId = assigneeIds[rotateIndex % assigneeIds.Count];
+                rotateIndex++;
+                assigneesForDate = new[] { userId };
+            }
+            else
+            {
+                assigneesForDate = assigneeIds;
+            }
+
+            foreach (var userId in assigneesForDate)
+            {
+                var result = await CreateChoreAsync(
+                    assigneeId: userId,
+                    date: date,
+                    title: template.DefaultTitle,
+                    notes: template.Notes,
+                    forceAssign: false,
+                    moleculeId: template.MoleculeId,
+                    choreTypeId: template.ChoreTypeId,
+                    overrideToken: null);
+
+                if (result.Success && result.Chore != null)
+                {
+                    created.Add(new StampCreated(date, userId, result.Chore.Id));
+                }
+                else
+                {
+                    // Surface the first hard-error key, or the warning sentinel, or the raw message.
+                    var reasonKey = result.Validation?.Errors.FirstOrDefault()?.Key
+                        ?? (result.Message == "BUSY_OVERRIDE_REQUIRED" ? "BUSY_OVERRIDE_REQUIRED" : result.Message);
+                    skipped.Add(new StampSkipped(date, userId, reasonKey));
+                }
+            }
+        }
+
+        return new StampResult(created, skipped);
+    }
+
+    /// <inheritdoc/>
+    public async Task<EligibilityResult> GetEligibilityForCandidateAsync(int userId, int choreTypeId)
+    {
+        // SECURITY-AUDITED: SAFE — read-only eligibility hint for the picker; user/rules/exemptions are
+        // loaded by explicit id. The actual assignment gate is BusyService.ValidateChoreAsync.
+        var user = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+            return EligibilityResult.Eligible; // no user → nothing to block on (picker won't list them anyway)
+
+        var rules = await _db.EligibilityRules.IgnoreQueryFilters()
+            .Where(r => r.ChoreTypeId == choreTypeId)
+            .ToListAsync();
+        var hasExemption = await _db.UserChoreExemptions.IgnoreQueryFilters()
+            .AnyAsync(e => e.UserId == userId && e.ChoreTypeId == choreTypeId);
+
+        return _eligibilityEvaluator.Evaluate(user, rules, hasExemption);
     }
 }
