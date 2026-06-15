@@ -1688,6 +1688,8 @@ public class GriffinServiceTests : IDisposable
                 e.Ignore(u => u.Department);
                 e.Ignore(u => u.HomeType);
                 e.Ignore(u => u.ShiftCategories);
+                e.Ignore(u => u.ChoreCategories);
+                e.Ignore(u => u.ChoreExemptions);
             });
         }
     }
