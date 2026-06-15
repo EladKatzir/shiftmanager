@@ -369,15 +369,17 @@
     </dialog>
     @Html.AntiForgeryToken()
     <script>
+        // Keys here are the actual ValidationIssue.Key / sentinel values the server puts in
+        // StampSkipped.ReasonKey (NOT resx key names). Officer/exempt are hard errors with their own
+        // key; gender mismatch + busy conflicts surface as BUSY_OVERRIDE_REQUIRED (an overrideable
+        // warning the unattended stamp can't clear) → the generic "not eligible or conflict" reason.
         window.__stampReasonKeys = {
             'STAMP_TOO_LARGE': @Html.Raw(Json.Serialize(Localizer["Stamp_TooLarge"].Value)),
-            'USER_NOT_IN_MOLECULE': @Html.Raw(Json.Serialize(Localizer["Stamp_SkippedGeneric"].Value)),
+            'ELIG_OFFICER_RANK': @Html.Raw(Json.Serialize(Localizer["Error_ChoreRequiresOfficerRank"].Value)),
+            'ELIG_EXEMPT': @Html.Raw(Json.Serialize(Localizer["Error_ChoreUserExempt"].Value)),
             'BUSY_OVERRIDE_REQUIRED': @Html.Raw(Json.Serialize(Localizer["Stamp_SkippedGeneric"].Value)),
-            'Error_ChoreRequiresGenderMale': @Html.Raw(Json.Serialize(Localizer["Error_ChoreRequiresGenderMale"].Value)),
-            'Error_ChoreRequiresGenderFemale': @Html.Raw(Json.Serialize(Localizer["Error_ChoreRequiresGenderFemale"].Value)),
-            'Error_ChoreRequiresOfficerRank': @Html.Raw(Json.Serialize(Localizer["Error_ChoreRequiresOfficerRank"].Value)),
-            'Error_ChoreUserExempt': @Html.Raw(Json.Serialize(Localizer["Error_ChoreUserExempt"].Value)),
-            'Error_ChoreGenderUnspecified': @Html.Raw(Json.Serialize(Localizer["Error_ChoreGenderUnspecified"].Value))
+            'USER_NOT_IN_MOLECULE': @Html.Raw(Json.Serialize(Localizer["Stamp_SkippedGeneric"].Value)),
+            'ACCOUNT_CANNOT_DO_CHORES': @Html.Raw(Json.Serialize(Localizer["Stamp_SkippedGeneric"].Value))
         };
         window.__stampGeneric = @Html.Raw(Json.Serialize(Localizer["Stamp_SkippedGeneric"].Value));
         window.__stampCreatedFmt = @Html.Raw(Json.Serialize(Localizer["Stamp_Created"].Value));

@@ -13546,7 +13546,7 @@
     <value>סוגי תורנויות משויכים למולקולה ספציפית</value>
   </data>
   <data name="CreateNewChoreType" xml:space="preserve">
-    <value>יצירת סוג מטלה חדש</value>
+    <value>צור סוג תורנות חדש</value>
   </data>
   <data name="CreateChoreType" xml:space="preserve">
     <value>צור סוג מטלה</value>
@@ -16265,7 +16265,7 @@
   <data name="Elig_GenderMale" xml:space="preserve"><value>גברים בלבד</value></data>
   <data name="Elig_GenderFemale" xml:space="preserve"><value>נשים בלבד</value></data>
   <data name="Elig_RequiresOfficer" xml:space="preserve"><value>נדרשת דרגת קצונה</value></data>
-  <data name="Elig_Officer" xml:space="preserve"><value>קצונה</value></data>
+  <data name="Elig_Officer" xml:space="preserve"><value>קצינים בלבד</value></data>
   <data name="Exemptions" xml:space="preserve"><value>פטורים</value></data>
   <data name="ExemptionReasonHint" xml:space="preserve"><value>אופציונלי. אינו נשמר ביומני הביקורת.</value></data>
   <data name="ExemptionAdd" xml:space="preserve"><value>הוסף פטור</value></data>
@@ -16297,8 +16297,8 @@
   <data name="StampRotateHint" xml:space="preserve"><value>פעיל: סבב אדם אחד ליום. כבוי: כולם בכל יום מתאים.</value></data>
   <data name="StampSubmit" xml:space="preserve"><value>החתם</value></data>
   <data name="StampResultHeader" xml:space="preserve"><value>תוצאת ההחתמה</value></data>
-  <data name="Stamp_Created" xml:space="preserve"><value>{0} נוצרו</value></data>
-  <data name="Stamp_Skipped" xml:space="preserve"><value>{0} דולגו</value></data>
+  <data name="Stamp_Created" xml:space="preserve"><value>נוצרו: {0}</value></data>
+  <data name="Stamp_Skipped" xml:space="preserve"><value>דולגו: {0}</value></data>
   <data name="Stamp_SkippedGeneric" xml:space="preserve"><value>דולג (לא זכאי או התנגשות)</value></data>
   <data name="Stamp_TooLarge" xml:space="preserve"><value>יותר מדי תורנויות להחתמה בבת אחת (מקסימום 92 ימים, 500 תורנויות).</value></data>
   <data name="Error_StampInvalidInput" xml:space="preserve"><value>בחר טווח תאריכים תקין ולפחות משובץ אחד.</value></data>
@@ -16320,7 +16320,7 @@
   <data name="Users_DoesChoresOn" xml:space="preserve"><value>{0} כעת משתתף/ת בתורנויות.</value></data>
   <data name="Users_DoesChoresOff" xml:space="preserve"><value>{0} אינו/ה משתתף/ת בתורנויות.</value></data>
   <data name="Users_DoesChoresOffTitle" xml:space="preserve"><value>להפסיק השתתפות בתורנויות?</value></data>
-  <data name="Users_DoesChoresOffPrompt" xml:space="preserve"><value>ל-{0} יש {1} תורנויות עתידיות. לשמור או לבטל?</value></data>
+  <data name="Users_DoesChoresOffPrompt" xml:space="preserve"><value>ל-{0} יש {1} תורנויות עתידיות. לשמור אותן או לבטלן?</value></data>
   <data name="Users_KeepChores" xml:space="preserve"><value>שמור תורנויות</value></data>
   <data name="Users_DeleteChores" xml:space="preserve"><value>בטל תורנויות</value></data>
   <data name="Users_NoChoreCategories" xml:space="preserve"><value>אין קטגוריות תורנויות</value></data>
@@ -16335,7 +16335,7 @@
   <data name="Error_ChoreRequiresGenderMale" xml:space="preserve"><value>תורנות זו מוגבלת לגברים בלבד.</value></data>
   <data name="Error_ChoreRequiresGenderFemale" xml:space="preserve"><value>תורנות זו מוגבלת לנשים בלבד.</value></data>
   <data name="Error_ChoreGenderUnspecified" xml:space="preserve"><value>תורנות זו מגבילה לפי מגדר ומגדר המשתמש אינו מתועד.</value></data>
-  <data name="Elig_RequiresGender" xml:space="preserve"><value>מוגבל מגדר</value></data>
+  <data name="Elig_RequiresGender" xml:space="preserve"><value>הגבלת מגדר</value></data>
   <data name="Elig_RequiresOfficerRank" xml:space="preserve"><value>קצינים בלבד</value></data>
   <data name="Elig_Exempt" xml:space="preserve"><value>פטור</value></data>
   <data name="Elig_Blocked" xml:space="preserve"><value>חסום</value></data>

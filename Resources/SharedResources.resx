@@ -16335,8 +16335,8 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="StampRotateHint" xml:space="preserve"><value>On: round-robin one person per day. Off: everyone, every matching day.</value></data>
   <data name="StampSubmit" xml:space="preserve"><value>Stamp</value></data>
   <data name="StampResultHeader" xml:space="preserve"><value>Stamp Result</value></data>
-  <data name="Stamp_Created" xml:space="preserve"><value>{0} created</value></data>
-  <data name="Stamp_Skipped" xml:space="preserve"><value>{0} skipped</value></data>
+  <data name="Stamp_Created" xml:space="preserve"><value>Created: {0}</value></data>
+  <data name="Stamp_Skipped" xml:space="preserve"><value>Skipped: {0}</value></data>
   <data name="Stamp_SkippedGeneric" xml:space="preserve"><value>Skipped (not eligible or conflict)</value></data>
   <data name="Stamp_TooLarge" xml:space="preserve"><value>Too many chores to stamp at once (max 92 days, 500 chores).</value></data>
   <data name="Error_StampInvalidInput" xml:space="preserve"><value>Pick a valid date range and at least one assignee.</value></data>
