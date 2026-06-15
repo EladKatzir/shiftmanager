@@ -389,6 +389,7 @@ builder.Services.AddScoped<TeamCalendarEventAggregator>();
 builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
 builder.Services.AddScoped<IDistributionListService, DistributionListService>();
 builder.Services.AddScoped<IChoreTypeService, ChoreTypeService>();
+builder.Services.AddScoped<IChoreTemplateService, ChoreTemplateService>();
 builder.Services.AddScoped<IHomeTypeService, HomeTypeService>();
 builder.Services.AddScoped<IHomeMaterialiserService, HomeMaterialiserService>();
 builder.Services.AddScoped<IUserDayNoteService, UserDayNoteService>();
