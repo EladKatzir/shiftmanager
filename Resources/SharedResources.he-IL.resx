@@ -16240,4 +16240,96 @@
   <data name="Justice_Caption_Gauge" xml:space="preserve"><value>עד כמה העבודה מחולקת באופן שווה — נמוך יותר הוגן יותר.</value></data>
   <data name="Justice_Caption_Donut" xml:space="preserve"><value>כל מקטע מייצג את חלקו של שורה אחת מסך העבודה.</value></data>
   <data name="Justice_Help_SpreadIndex" xml:space="preserve"><value>0 = חלוקה מושלמת; גבוה יותר = יותר חוסר איזון.</value></data>
+  <data name="ChoreCategories" xml:space="preserve"><value>קטגוריות תורנויות</value></data>
+  <data name="ChoreCategoriesInfo" xml:space="preserve"><value>קבוצות פונקציונליות מעל סוגי התורנויות (למשל פיזי, מחשב).</value></data>
+  <data name="CreateChoreCategory" xml:space="preserve"><value>צור קטגוריה</value></data>
+  <data name="ChoreCategory" xml:space="preserve"><value>קטגוריית תורנות</value></data>
+  <data name="Uncategorized" xml:space="preserve"><value>ללא קטגוריה</value></data>
+  <data name="NoChoreCategoriesYet" xml:space="preserve"><value>אין עדיין קטגוריות תורנויות.</value></data>
+  <data name="ChoreCategoryDeleteConfirm" xml:space="preserve"><value>למחוק קטגוריה זו? סוגי התורנויות יהפכו ללא משויכים.</value></data>
+  <data name="Error_ChoreCategoryNameRequired" xml:space="preserve"><value>נדרש שם קטגוריה.</value></data>
+  <data name="Error_ChoreCategoryNameExists" xml:space="preserve"><value>קטגוריה בשם זה כבר קיימת.</value></data>
+  <data name="Error_ChoreCategoryNotFound" xml:space="preserve"><value>קטגוריית תורנות לא נמצאה.</value></data>
+  <data name="Success_ChoreCategoryCreated" xml:space="preserve"><value>הקטגוריה '{0}' נוצרה.</value></data>
+  <data name="Success_ChoreCategoryUpdated" xml:space="preserve"><value>הקטגוריה עודכנה.</value></data>
+  <data name="Success_ChoreCategoryDeleted" xml:space="preserve"><value>הקטגוריה '{0}' נמחקה.</value></data>
+  <data name="DefaultWeight" xml:space="preserve"><value>משקל ברירת מחדל</value></data>
+  <data name="DefaultWeightHint" xml:space="preserve"><value>משמש לחישוב הוגנות כשאין שעות מפורשות. ריק → 8 שעות.</value></data>
+  <data name="Hours_Short" xml:space="preserve"><value>ש'</value></data>
+  <data name="Minutes_Short" xml:space="preserve"><value>ד'</value></data>
+  <data name="Eligibility" xml:space="preserve"><value>זכאות</value></data>
+  <data name="Elig_GenderAny" xml:space="preserve"><value>כל מגדר</value></data>
+  <data name="Elig_GenderMale" xml:space="preserve"><value>גברים בלבד</value></data>
+  <data name="Elig_GenderFemale" xml:space="preserve"><value>נשים בלבד</value></data>
+  <data name="Elig_RequiresOfficer" xml:space="preserve"><value>נדרשת דרגת קצונה</value></data>
+  <data name="Elig_Officer" xml:space="preserve"><value>קצונה</value></data>
+  <data name="Exemptions" xml:space="preserve"><value>פטורים</value></data>
+  <data name="ExemptionReasonHint" xml:space="preserve"><value>אופציונלי. אינו נשמר ביומני הביקורת.</value></data>
+  <data name="ExemptionAdd" xml:space="preserve"><value>הוסף פטור</value></data>
+  <data name="ExemptionNone" xml:space="preserve"><value>אין פטורים לסוג תורנות זה.</value></data>
+  <data name="ExemptionUser" xml:space="preserve"><value>משתמש</value></data>
+  <data name="ExemptionReason" xml:space="preserve"><value>סיבה</value></data>
+  <data name="ManageChoreTemplates" xml:space="preserve"><value>ניהול תבניות תורנויות</value></data>
+  <data name="ChoreTemplates" xml:space="preserve"><value>תבניות תורנויות</value></data>
+  <data name="ManageChoreTemplatesSubtitle" xml:space="preserve"><value>צור הגדרות תורנות לשימוש חוזר והחתם אותן על פני טווח תאריכים.</value></data>
+  <data name="ChoreTemplatesAreMoleculeScoped" xml:space="preserve"><value>תבניות התורנויות משויכות למולקולה. בחר מולקולה לניהול התבניות שלה.</value></data>
+  <data name="CreateNewChoreTemplate" xml:space="preserve"><value>צור תבנית חדשה</value></data>
+  <data name="CreateChoreTemplate" xml:space="preserve"><value>צור תבנית</value></data>
+  <data name="AllChoreTemplates" xml:space="preserve"><value>כל התבניות</value></data>
+  <data name="NoChoreTemplatesYet" xml:space="preserve"><value>אין עדיין תבניות תורנויות.</value></data>
+  <data name="TemplateName" xml:space="preserve"><value>שם התבנית</value></data>
+  <data name="TemplateDefaultTitle" xml:space="preserve"><value>כותרת תורנות ברירת מחדל</value></data>
+  <data name="TemplateChoreType" xml:space="preserve"><value>סוג תורנות (אופציונלי)</value></data>
+  <data name="TemplateStartTime" xml:space="preserve"><value>שעת התחלה</value></data>
+  <data name="TemplateEndTime" xml:space="preserve"><value>שעת סיום</value></data>
+  <data name="WeightOverride" xml:space="preserve"><value>עקיפת משקל</value></data>
+  <data name="Stamp" xml:space="preserve"><value>החתם</value></data>
+  <data name="StampTemplate" xml:space="preserve"><value>החתם תבנית</value></data>
+  <data name="StampFrom" xml:space="preserve"><value>מתאריך</value></data>
+  <data name="StampTo" xml:space="preserve"><value>עד תאריך</value></data>
+  <data name="StampWeekdays" xml:space="preserve"><value>ימי שבוע</value></data>
+  <data name="StampWeekdaysHint" xml:space="preserve"><value>השאר ריק כדי להחתים כל יום בטווח.</value></data>
+  <data name="StampAssignees" xml:space="preserve"><value>משובצים</value></data>
+  <data name="StampRotate" xml:space="preserve"><value>סבב (משובץ אחד ליום)</value></data>
+  <data name="StampRotateHint" xml:space="preserve"><value>פעיל: סבב אדם אחד ליום. כבוי: כולם בכל יום מתאים.</value></data>
+  <data name="StampSubmit" xml:space="preserve"><value>החתם</value></data>
+  <data name="StampResultHeader" xml:space="preserve"><value>תוצאת ההחתמה</value></data>
+  <data name="Stamp_Created" xml:space="preserve"><value>{0} נוצרו</value></data>
+  <data name="Stamp_Skipped" xml:space="preserve"><value>{0} דולגו</value></data>
+  <data name="Stamp_SkippedGeneric" xml:space="preserve"><value>דולג (לא זכאי או התנגשות)</value></data>
+  <data name="Stamp_TooLarge" xml:space="preserve"><value>יותר מדי תורנויות להחתמה בבת אחת (מקסימום 92 ימים, 500 תורנויות).</value></data>
+  <data name="Error_StampInvalidInput" xml:space="preserve"><value>בחר טווח תאריכים תקין ולפחות משובץ אחד.</value></data>
+  <data name="Error_StampFailed" xml:space="preserve"><value>ההחתמה נכשלה. נסה טווח קטן יותר.</value></data>
+  <data name="Success_ChoreTemplateCreated" xml:space="preserve"><value>התבנית '{0}' נוצרה.</value></data>
+  <data name="Success_ChoreTemplateUpdated" xml:space="preserve"><value>התבנית עודכנה.</value></data>
+  <data name="Success_ChoreTemplateDeleted" xml:space="preserve"><value>התבנית '{0}' נמחקה.</value></data>
+  <data name="Error_ChoreTemplateNotFound" xml:space="preserve"><value>תבנית תורנות לא נמצאה.</value></data>
+  <data name="Error_ChoreTemplateNameRequired" xml:space="preserve"><value>נדרשים שם תבנית וכותרת ברירת מחדל.</value></data>
+  <data name="ChoreTemplateDeleteConfirm" xml:space="preserve"><value>למחוק תבנית זו?</value></data>
+  <data name="Weekday_Sun" xml:space="preserve"><value>א'</value></data>
+  <data name="Weekday_Mon" xml:space="preserve"><value>ב'</value></data>
+  <data name="Weekday_Tue" xml:space="preserve"><value>ג'</value></data>
+  <data name="Weekday_Wed" xml:space="preserve"><value>ד'</value></data>
+  <data name="Weekday_Thu" xml:space="preserve"><value>ה'</value></data>
+  <data name="Weekday_Fri" xml:space="preserve"><value>ו'</value></data>
+  <data name="Weekday_Sat" xml:space="preserve"><value>ש'</value></data>
+  <data name="Users_DoesChores" xml:space="preserve"><value>משתתף/ת בתורנויות</value></data>
+  <data name="Users_DoesChoresOn" xml:space="preserve"><value>{0} כעת משתתף/ת בתורנויות.</value></data>
+  <data name="Users_DoesChoresOff" xml:space="preserve"><value>{0} אינו/ה משתתף/ת בתורנויות.</value></data>
+  <data name="Users_DoesChoresOffTitle" xml:space="preserve"><value>להפסיק השתתפות בתורנויות?</value></data>
+  <data name="Users_DoesChoresOffPrompt" xml:space="preserve"><value>ל-{0} יש {1} תורנויות עתידיות. לשמור או לבטל?</value></data>
+  <data name="Users_KeepChores" xml:space="preserve"><value>שמור תורנויות</value></data>
+  <data name="Users_DeleteChores" xml:space="preserve"><value>בטל תורנויות</value></data>
+  <data name="Users_NoChoreCategories" xml:space="preserve"><value>אין קטגוריות תורנויות</value></data>
+  <data name="Users_ChoreCategoriesTitle" xml:space="preserve"><value>קטגוריות תורנויות</value></data>
+  <data name="Users_ParticipatesChoresHint" xml:space="preserve"><value>האם המשתמש ברשימת התורנויות.</value></data>
+  <data name="Users_Gender" xml:space="preserve"><value>מגדר</value></data>
+  <data name="Users_GenderUpdated" xml:space="preserve"><value>המגדר עודכן עבור {0}.</value></data>
+  <data name="Gender_Unspecified" xml:space="preserve"><value>לא צוין</value></data>
+  <data name="Gender_Male" xml:space="preserve"><value>זכר</value></data>
+  <data name="Gender_Female" xml:space="preserve"><value>נקבה</value></data>
+  <data name="Error_InvalidValue" xml:space="preserve"><value>ערך לא תקין.</value></data>
+  <data name="Error_ChoreRequiresGenderMale" xml:space="preserve"><value>תורנות זו מוגבלת לגברים בלבד.</value></data>
+  <data name="Error_ChoreRequiresGenderFemale" xml:space="preserve"><value>תורנות זו מוגבלת לנשים בלבד.</value></data>
+  <data name="Error_ChoreGenderUnspecified" xml:space="preserve"><value>תורנות זו מגבילה לפי מגדר ומגדר המשתמש אינו מתועד.</value></data>
 </root>
