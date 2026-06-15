@@ -29,7 +29,11 @@ public sealed class ChoreWeightAndStampTests : IAsyncLifetime
     private const int Molecule = 1;
     private const int FreeTextTemplate = 300;
     private const int OfficerTemplate = 301;
+    private const int TimedTemplate = 302;          // 10:00-14:00, no override → weight from times (240)
+    private const int OverrideTemplate = 303;       // WeightMinutesOverride=90 (wins over its 10:00-14:00 times)
+    private const int TypedTemplate = 304;          // no times/override, ChoreType.DefaultWeightMinutes=120 → 120
     private const int OfficerChoreType = 200;
+    private const int WeightedChoreType = 201;       // DefaultWeightMinutes = 120
 
     // ----- pure resolver tests (no DB) -----
     [Fact]
@@ -69,7 +73,9 @@ public sealed class ChoreWeightAndStampTests : IAsyncLifetime
                           AccountType = AccountType.Standard, Rank = MilitaryRank.Turai },
             new AppUser { Id = 11, CompanyId = 1, Email = "u2@x.mil", DisplayName = "U2", IsActive = true,
                           AccountType = AccountType.Standard, Rank = MilitaryRank.Turai });
-        _db.ChoreTypes.Add(new ChoreType { Id = OfficerChoreType, MoleculeId = Molecule, Name = "Guard", DisplayName = "Guard", CreatedByUserId = 10 });
+        _db.ChoreTypes.AddRange(
+            new ChoreType { Id = OfficerChoreType, MoleculeId = Molecule, Name = "Guard", DisplayName = "Guard", CreatedByUserId = 10 },
+            new ChoreType { Id = WeightedChoreType, MoleculeId = Molecule, Name = "Weighted", DisplayName = "Weighted", DefaultWeightMinutes = 120, CreatedByUserId = 10 });
         await _db.SaveChangesAsync();
 
         _db.EligibilityRules.Add(new EligibilityRule
@@ -79,7 +85,13 @@ public sealed class ChoreWeightAndStampTests : IAsyncLifetime
         });
         _db.ChoreTemplates.AddRange(
             new ChoreTemplate { Id = FreeTextTemplate, MoleculeId = Molecule, Name = "Daily", DefaultTitle = "Sweep", IsActive = true, CreatedBy = 10 },
-            new ChoreTemplate { Id = OfficerTemplate, MoleculeId = Molecule, Name = "Guard", DefaultTitle = "Guard", ChoreTypeId = OfficerChoreType, IsActive = true, CreatedBy = 10 });
+            new ChoreTemplate { Id = OfficerTemplate, MoleculeId = Molecule, Name = "Guard", DefaultTitle = "Guard", ChoreTypeId = OfficerChoreType, IsActive = true, CreatedBy = 10 },
+            new ChoreTemplate { Id = TimedTemplate, MoleculeId = Molecule, Name = "Timed", DefaultTitle = "Patrol",
+                               StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(14, 0), IsActive = true, CreatedBy = 10 },
+            new ChoreTemplate { Id = OverrideTemplate, MoleculeId = Molecule, Name = "Override", DefaultTitle = "Override",
+                               StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(14, 0), WeightMinutesOverride = 90, IsActive = true, CreatedBy = 10 },
+            new ChoreTemplate { Id = TypedTemplate, MoleculeId = Molecule, Name = "Typed", DefaultTitle = "Typed",
+                               ChoreTypeId = WeightedChoreType, IsActive = true, CreatedBy = 10 });
         await _db.SaveChangesAsync();
         _db.ChangeTracker.Clear();
 
@@ -203,6 +215,77 @@ public sealed class ChoreWeightAndStampTests : IAsyncLifetime
         await _sut.StampTemplateAsync(FreeTextTemplate, day, day, Array.Empty<DayOfWeek>(), new[] { 10 }, rotate: false);
         var chore = await _db.Chores.IgnoreQueryFilters().SingleAsync();
         chore.WeightMinutes.Should().Be(480, "free-text template → no times, no type default → 480 fallback frozen at create");
+    }
+
+    // ----- 3a: template times / WeightMinutesOverride drive the stamped chore -----
+
+    [Fact]
+    public async Task Stamp_Template_With_Times_Sets_Times_And_Weight_From_Span()
+    {
+        // (a) Template 10:00-14:00, no override → stamped chore carries those times AND weight 240m.
+        var day = new DateOnly(2026, 7, 6);
+        await _sut.StampTemplateAsync(TimedTemplate, day, day, Array.Empty<DayOfWeek>(), new[] { 10 }, rotate: false);
+
+        var chore = await _db.Chores.IgnoreQueryFilters().SingleAsync();
+        chore.StartTime.Should().Be(new TimeOnly(10, 0), "the stamped chore inherits the template StartTime");
+        chore.EndTime.Should().Be(new TimeOnly(14, 0), "the stamped chore inherits the template EndTime");
+        chore.WeightMinutes.Should().Be(240, "10:00-14:00 = 240m frozen at create");
+    }
+
+    [Fact]
+    public async Task Stamp_Template_With_Override_Uses_Override_Regardless_Of_Times()
+    {
+        // (b) Template has both 10:00-14:00 times AND WeightMinutesOverride=90 → override wins (90, not 240).
+        var day = new DateOnly(2026, 7, 6);
+        await _sut.StampTemplateAsync(OverrideTemplate, day, day, Array.Empty<DayOfWeek>(), new[] { 10 }, rotate: false);
+
+        var chore = await _db.Chores.IgnoreQueryFilters().SingleAsync();
+        chore.StartTime.Should().Be(new TimeOnly(10, 0));
+        chore.EndTime.Should().Be(new TimeOnly(14, 0));
+        chore.WeightMinutes.Should().Be(90, "an explicit WeightMinutesOverride wins outright over the [start,end) span");
+    }
+
+    [Fact]
+    public async Task Stamp_Template_No_Times_No_Override_Uses_ChoreType_Default()
+    {
+        // (c) Template with no times/override but a ChoreType.DefaultWeightMinutes=120 → 120.
+        var day = new DateOnly(2026, 7, 6);
+        await _sut.StampTemplateAsync(TypedTemplate, day, day, Array.Empty<DayOfWeek>(), new[] { 10 }, rotate: false);
+
+        var chore = await _db.Chores.IgnoreQueryFilters().SingleAsync();
+        chore.StartTime.Should().BeNull("the template carries no times");
+        chore.EndTime.Should().BeNull();
+        chore.WeightMinutes.Should().Be(120, "no times, no override → fall through to the chore type's DefaultWeightMinutes");
+    }
+
+    [Fact]
+    public async Task Stamp_Bare_Template_Uses_480_Fallback()
+    {
+        // (d) Bare template (no times, no override, no type) → 480 global fallback.
+        var day = new DateOnly(2026, 7, 6);
+        await _sut.StampTemplateAsync(FreeTextTemplate, day, day, Array.Empty<DayOfWeek>(), new[] { 10 }, rotate: false);
+
+        var chore = await _db.Chores.IgnoreQueryFilters().SingleAsync();
+        chore.StartTime.Should().BeNull();
+        chore.EndTime.Should().BeNull();
+        chore.WeightMinutes.Should().Be(480, "nothing to resolve from → 480 global fallback frozen at create");
+    }
+
+    [Fact]
+    public async Task Manual_CreateChore_Without_New_Args_Keeps_Prior_Default_Weight()
+    {
+        // Regression: a manual create (no times, no override, no type) still yields the prior 480
+        // fallback and null times — the new optional params default to null so the path is unchanged.
+        var (success, _, chore, _, _) = await _sut.CreateChoreAsync(
+            assigneeId: 10,
+            date: new DateOnly(2026, 7, 6),
+            title: "Manual sweep");
+
+        success.Should().BeTrue();
+        chore.Should().NotBeNull();
+        chore!.StartTime.Should().BeNull();
+        chore.EndTime.Should().BeNull();
+        chore.WeightMinutes.Should().Be(480, "manual create with no new args behaves exactly as before");
     }
 
     [Fact]

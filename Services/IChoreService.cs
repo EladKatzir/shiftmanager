@@ -6,7 +6,7 @@ namespace ShiftManager.Services;
 
 public interface IChoreService
 {
-    Task<(bool Success, string Message, Chore? Chore, BusyValidation? Validation, string? OverrideToken)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false, int? moleculeId = null, int? choreTypeId = null, string? overrideToken = null);
+    Task<(bool Success, string Message, Chore? Chore, BusyValidation? Validation, string? OverrideToken)> CreateChoreAsync(int assigneeId, DateOnly date, string title, string? notes = null, bool forceAssign = false, int? moleculeId = null, int? choreTypeId = null, string? overrideToken = null, TimeOnly? startTime = null, TimeOnly? endTime = null, int? weightOverride = null);
     Task<(bool Success, string Message)> CancelChoreAsync(int choreId, string? reason = null);
     Task<(bool Success, string Message)> RestoreChoreAsync(int choreId);
     Task<(bool Success, string Message, Chore? Chore)> ReplaceShiftWithChoreAsync(int shiftAssignmentId, string title, string? notes = null);

@@ -249,7 +249,10 @@ public class ChoreService : IChoreService
         bool forceAssign = false,
         int? moleculeId = null,
         int? choreTypeId = null,
-        string? overrideToken = null)
+        string? overrideToken = null,
+        TimeOnly? startTime = null,
+        TimeOnly? endTime = null,
+        int? weightOverride = null)
     {
         var currentUserId = GetCurrentUserId();
         int? companyId = null;
@@ -329,9 +332,10 @@ public class ChoreService : IChoreService
                     return (false, "BUSY_OVERRIDE_REQUIRED", null, validation, token);
                 }
 
-                // Freeze the fairness weight at create time. CreateChoreAsync carries no
-                // StartTime/EndTime (untimed manual chores), so resolution falls through to the
-                // chore type's DefaultWeightMinutes, else the 480 global fallback.
+                // Freeze the fairness weight at create time. When a template (or other caller)
+                // supplies an explicit weightOverride it wins outright; otherwise resolve from the
+                // supplied [start,end) times → chore type's DefaultWeightMinutes → 480 global fallback.
+                // The manual/API/QuickAdd paths pass no times and no override, preserving prior behavior.
                 int? typeDefaultWeight = null;
                 if (choreTypeId.HasValue)
                 {
@@ -341,7 +345,7 @@ public class ChoreService : IChoreService
                         .Select(ct => ct.DefaultWeightMinutes)
                         .FirstOrDefaultAsync();
                 }
-                var weightMinutes = ResolveWeightMinutes(startTime: null, endTime: null, typeDefaultWeight);
+                var weightMinutes = weightOverride ?? ResolveWeightMinutes(startTime, endTime, typeDefaultWeight);
 
                 chore = new Chore
                 {
@@ -352,6 +356,8 @@ public class ChoreService : IChoreService
                     Date = date,
                     Title = title.Trim(),
                     Notes = notes?.Trim(),
+                    StartTime = startTime,
+                    EndTime = endTime,
                     WeightMinutes = weightMinutes,
                     CreatedBy = currentUserId,
                     CreatedAt = DateTime.UtcNow
@@ -843,7 +849,13 @@ public class ChoreService : IChoreService
                     forceAssign: false,
                     moleculeId: template.MoleculeId,
                     choreTypeId: template.ChoreTypeId,
-                    overrideToken: null);
+                    overrideToken: null,
+                    // Stamped chores inherit the template's schedule + frozen weight: explicit
+                    // WeightMinutesOverride wins; else [StartTime,EndTime) drives the weight; else
+                    // the chore type's default / 480 fallback (resolved inside CreateChoreAsync).
+                    startTime: template.StartTime,
+                    endTime: template.EndTime,
+                    weightOverride: template.WeightMinutesOverride);
 
                 if (result.Success && result.Chore != null)
                 {
