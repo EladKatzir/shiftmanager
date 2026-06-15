@@ -350,6 +350,11 @@ public static class GrantTypeSeed
         // ============================================
         grants.Add(new GrantType { Id = id++, Key = "ManageShiftCategories", NameKey = "Grant_ManageShiftCategories", DescriptionKey = "Grant_ManageShiftCategories_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
 
+        // Id 137 — AssignShifts: the unified, job-type-agnostic shift-assignment grant that
+        // replaces the 8 per-type/per-tech-family Assign*Shifts grants (3,4,5,6,81-84). Permission
+        // is gated by org scope only; job-type relevance lives in candidate filtering (sub-project 3b).
+        grants.Add(new GrantType { Id = id++, Key = "AssignShifts", NameKey = "Grant_AssignShifts", DescriptionKey = "Grant_AssignShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+
         return grants;
     }
 }

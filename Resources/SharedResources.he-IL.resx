@@ -10600,6 +10600,12 @@
   <data name="Grant_AssignChores" xml:space="preserve">
     <value>שיבוץ מטלות</value>
   </data>
+  <data name="Grant_AssignShifts" xml:space="preserve">
+    <value>שיבוץ למשמרות</value>
+  </data>
+  <data name="Grant_AssignShifts_Desc" xml:space="preserve">
+    <value>שיבוץ עובדים למשמרות בתוך ההיקף שהוענק.</value>
+  </data>
   <data name="Grant_ManageOnDuty" xml:space="preserve">
     <value>ניהול כוננויות</value>
   </data>

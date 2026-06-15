@@ -1092,8 +1092,8 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 136 grants (added ManageShiftCategories on 2026-06-09)
-        grantTypes.Should().HaveCount(136, "Should have exactly 136 grant types including all shift, duty, chore, vacation, swap, user management, grant management, hierarchy, settings, analytics, email, system, navigation, join request, home rotation, store, collaborative on-call editing, per-area palette, Justice analytics, distribution-list, and shift-category grants");
+        // Assert - 137 grant types (added AssignShifts on 2026-06-16, collapsing the 8 per-type assign grants)
+        grantTypes.Should().HaveCount(137, "Should have exactly 137 grant types including the unified AssignShifts grant");
     }
 
     [Fact]
