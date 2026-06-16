@@ -63,7 +63,8 @@ public class ShiftAssignmentService : IShiftAssignmentService
     public async Task<List<EligibleUserDto>> GetEligibleUsersForShiftTypeAsync(
         int shiftTypeId,
         int? jobTypeId = null,
-        int? shiftGroupingId = null)
+        int? shiftGroupingId = null,
+        bool categoryFilter = false)
     {
         var shiftType = await _db.ShiftTypes
             .Include(st => st.Molecule)
@@ -105,19 +106,60 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 : await _db.Companies.Where(c => c.MoleculeId == shiftType.MoleculeId).Select(c => c.Id).ToListAsync();
         }
 
-        // Start with active users from the determined companies
-        // SECURITY-AUDITED: SAFE — re-scoped by ShiftGrouping-derived companyIds or shift type's own companyId
-        var usersQuery = _db.Users
-            .IgnoreQueryFilters()
-            .Where(u => u.IsActive && companyIds.Contains(u.CompanyId));
-
-        // Filter by JobType if specified
-        if (effectiveJobTypeId.HasValue)
+        List<int> participantUserIds;
+        if (categoryFilter)
         {
-            usersQuery = usersQuery.Where(u => u.JobTypeId == effectiveJobTypeId.Value);
+            // NEW (3b): category-membership eligibility. Drop the jobType filter; gate by DoesShifts
+            // (per-company membership, mirror fallback) + the shift's single category.
+            // SECURITY-AUDITED: SAFE — re-scoped by companyIds (grouping-derived or shift type's company).
+            // Per-company DoesShifts participants: membership row with DoesShifts=true in any candidate
+            // company, OR no membership row in candidate companies AND mirrored AppUser.DoesShifts.
+            var doersFromMembership = (await _db.CompanyMemberships
+                .Where(m => companyIds.Contains(m.CompanyId) && m.DoesShifts)
+                .Select(m => m.UserId).ToListAsync()).ToHashSet();
+            var anyMembershipUserIds = (await _db.CompanyMemberships
+                .Where(m => companyIds.Contains(m.CompanyId))
+                .Select(m => m.UserId).ToListAsync()).ToHashSet();
+
+            var candidates = await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.IsActive
+                            && u.AccountType != AccountType.GroupUser
+                            && companyIds.Contains(u.CompanyId))
+                .Select(u => new { u.Id, u.DoesShifts })
+                .ToListAsync();
+
+            participantUserIds = candidates
+                .Where(u => doersFromMembership.Contains(u.Id)
+                            || (!anyMembershipUserIds.Contains(u.Id) && u.DoesShifts))
+                .Select(u => u.Id)
+                .ToList();
+
+            var catId = shiftType.CategoryId;
+            if (catId.HasValue)
+            {
+                var membersOfCat = (await _db.UserShiftCategories
+                    .Where(m => m.ShiftCategoryId == catId.Value && participantUserIds.Contains(m.UserId))
+                    .Select(m => m.UserId).ToListAsync()).ToHashSet();
+                participantUserIds = participantUserIds.Where(id => membersOfCat.Contains(id)).ToList();
+            }
+            // catId == null -> all participants (the runtime D1 shared-shift fallback)
+        }
+        else
+        {
+            // LEGACY (behavior-preserving): job-type filter exactly as before.
+            // SECURITY-AUDITED: SAFE — re-scoped by ShiftGrouping-derived companyIds or shift type's own companyId
+            var legacyQuery = _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => u.IsActive && companyIds.Contains(u.CompanyId));
+            if (effectiveJobTypeId.HasValue)
+                legacyQuery = legacyQuery.Where(u => u.JobTypeId == effectiveJobTypeId.Value);
+            participantUserIds = await legacyQuery.Select(u => u.Id).ToListAsync();
         }
 
-        var users = await usersQuery
+        var users = await _db.Users
+            .IgnoreQueryFilters()
+            .Where(u => participantUserIds.Contains(u.Id))
             .Include(u => u.JobType)
             .Select(u => new
             {

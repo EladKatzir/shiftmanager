@@ -29,8 +29,11 @@ public interface IShiftAssignmentService
 
     /// <summary>
     /// Gets users eligible for a shift type (before instance creation).
+    /// When <paramref name="categoryFilter"/> is true (3b), eligibility is DoesShifts (per-company
+    /// membership, mirror fallback) + the shift's ShiftCategory membership instead of the legacy
+    /// jobType filter; a null CategoryId returns all participants (the shared-shift fallback).
     /// </summary>
-    Task<List<EligibleUserDto>> GetEligibleUsersForShiftTypeAsync(int shiftTypeId, int? jobTypeId = null, int? shiftGroupingId = null);
+    Task<List<EligibleUserDto>> GetEligibleUsersForShiftTypeAsync(int shiftTypeId, int? jobTypeId = null, int? shiftGroupingId = null, bool categoryFilter = false);
 
     /// <summary>
     /// Validates if a user can be assigned to a specific shift.
