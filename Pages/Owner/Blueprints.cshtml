@@ -196,6 +196,15 @@
                                 {
                                     <span class="badge badge-secondary"><loc key="Offline" /></span>
                                 }
+                                @* 3b: nudge admins to categorize assignable shift types so the user-picker can filter them. *@
+                                @if (shiftType.CategoryId == null && shiftType.JobTypeId != null
+                                     && !shiftType.IsOffline && shiftType.Key != "HOME")
+                                {
+                                    <span class="badge badge-warning"
+                                          title="@Localizer["Admin_ShiftType_NoCategory_Tooltip"]">
+                                        <loc key="Admin_ShiftType_NoCategory_Badge" />
+                                    </span>
+                                }
                             </td>
                             <td>
                                 @if (shiftType.Scope == ShiftManager.Models.Support.ShiftScope.Company && !string.IsNullOrWhiteSpace(shiftType.NameKey))
