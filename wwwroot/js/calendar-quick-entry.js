@@ -214,7 +214,6 @@
         if (hint) {
             var h = document.createElement('div');
             h.className = 'quick-entry-elig-hint';
-            h.style.cssText = 'font-size:0.85em;opacity:0.7;margin-top:2px;';
             h.textContent = hint;
             row.appendChild(h);
         }
@@ -227,7 +226,6 @@
         row.setAttribute('role', 'button');
         row.tabIndex = -1;
         row.textContent = label;
-        row.style.cssText = 'cursor:pointer;text-decoration:underline;';
         row.addEventListener('mousedown', function (e) { e.preventDefault(); onClick(); });
         dropdown.appendChild(row);
     }
@@ -251,7 +249,6 @@
         // Disambiguation secondary line: company now (sync), busy glyph decorated async below.
         var sub = document.createElement('span');
         sub.className = 'quick-entry-item__sub';
-        sub.style.cssText = 'display:block;font-size:0.8em;opacity:0.65;';
         sub.textContent = item.companyName || '';
         el.appendChild(sub);
         el._subEl = sub;

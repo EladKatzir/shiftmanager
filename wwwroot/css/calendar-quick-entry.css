@@ -160,6 +160,56 @@
     font-size: 0.75rem;
 }
 
+/* ── 3b: per-shift eligibility (two-line user rows + state rows) ──
+   Tokens only (no hardcoded colors) so dark mode + RTL follow automatically. */
+.quick-entry-item--two-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+}
+
+.quick-entry-item__name {
+    font-size: 0.8125rem;
+    line-height: 1.3;
+}
+
+.quick-entry-item__sub {
+    font-size: 0.72rem;
+    line-height: 1.3;
+    color: var(--text-muted);
+}
+
+/* Hard scheduling conflict: still clickable, but de-emphasized + a danger accent.
+   Excluded from Enter auto-commit in JS (the server re-validates on assign regardless). */
+.quick-entry-item--conflict {
+    border-inline-start: 3px solid var(--danger, #dc2626);
+    opacity: 0.78;
+}
+
+/* Structural-zero / loading / failed state rows inherit .quick-entry-no-matches centering;
+   the hint is the muted second line under the primary message. */
+.quick-entry-elig-hint {
+    margin-top: 2px;
+    font-size: 0.72rem;
+    font-style: normal;
+    color: var(--text-muted);
+}
+
+/* "Show all shift workers" escape-hatch row (rendered for the noCategory state). */
+.quick-entry-elig-action {
+    justify-content: center;
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: underline;
+    font-style: normal;
+    cursor: pointer;
+}
+
+.quick-entry-elig-action:hover {
+    background: var(--primary-soft, rgba(59, 130, 246, 0.1));
+    color: var(--primary);
+}
+
 /* Inline prompt toast (for confirmations) */
 .quick-entry-prompt {
     position: fixed;
