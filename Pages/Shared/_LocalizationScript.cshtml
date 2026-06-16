@@ -223,6 +223,17 @@
         // Quick Entry overflow (calendar-quick-entry.js)
         "QuickEntry_MoreItems": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_MoreItems"].Value)),
 
+        // Quick Entry / bottom-sheet per-shift eligibility (3b — calendar-quick-entry.js + calendar-bottom-sheet.js)
+        "QuickEntry_Loading": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_Loading"].Value)),
+        "QuickEntry_NoEligibleUsers": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_NoEligibleUsers"].Value)),
+        "QuickEntry_NoEligibleUsersHint": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_NoEligibleUsersHint"].Value)),
+        "QuickEntry_NoCategorySet": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_NoCategorySet"].Value)),
+        "QuickEntry_NoCategorySetHint": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_NoCategorySetHint"].Value)),
+        "QuickEntry_NoTextMatch": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_NoTextMatch"].Value)),
+        "QuickEntry_LoadFailedFallback": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_LoadFailedFallback"].Value)),
+        "QuickEntry_ResultsAvailable": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_ResultsAvailable"].Value)),
+        "QuickEntry_ShowAllWorkers": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["QuickEntry_ShowAllWorkers"].Value)),
+
         // Bottom Sheet contextual empty states (calendar-bottom-sheet.js)
         "BottomSheet_NoShiftsFor": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["BottomSheet_NoShiftsFor"].Value)),
         "BottomSheet_NoChoresFor": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["BottomSheet_NoChoresFor"].Value)),
