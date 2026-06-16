@@ -32,8 +32,8 @@ public sealed class ShiftCandidateServiceTests : IDisposable
     private Molecule _mol = null!, _techMol = null!;
     private Company _c1 = null!, _t1 = null!;
     private ShiftCategory _catA = null!, _catT = null!;
-    private ShiftType _stCat = null!, _stHome = null!, _stNullJob = null!, _stAssignableNull = null!, _stTechCat = null!;
-    private AppUser _a = null!, _b = null!, _tu = null!;
+    private ShiftType _stCat = null!, _stHome = null!, _stOffline = null!, _stNullJob = null!, _stAssignableNull = null!, _stTechCat = null!;
+    private AppUser _a = null!, _b = null!, _tu = null!, _nonDoer = null!, _groupUser = null!;
 
     public ShiftCandidateServiceTests()
     {
@@ -83,7 +83,8 @@ public sealed class ShiftCandidateServiceTests : IDisposable
         var area = new Area { ProjectId = project.Id, Name = "A", DisplayName = "A" };
         _db.Areas.Add(area); await _db.SaveChangesAsync();
         var job = new JobType { AreaId = area.Id, Name = "Alhut", DisplayName = "Alhut", SortOrder = 1 };
-        _db.JobTypes.Add(job); await _db.SaveChangesAsync();
+        var job2 = new JobType { AreaId = area.Id, Name = "Other", DisplayName = "Other", SortOrder = 2 };
+        _db.JobTypes.AddRange(job, job2); await _db.SaveChangesAsync();
 
         _mol = new Molecule { AreaId = area.Id, Name = "M", Type = MoleculeType.Workforce };
         _techMol = new Molecule { AreaId = area.Id, Name = "TM", Type = MoleculeType.Tech };
@@ -97,16 +98,20 @@ public sealed class ShiftCandidateServiceTests : IDisposable
         _db.ShiftCategories.AddRange(_catA, _catT); await _db.SaveChangesAsync();
 
         _stCat = new ShiftType { Scope = ShiftScope.Molecule, MoleculeId = _mol.Id, JobTypeId = job.Id, CategoryId = _catA.Id, Key = ShiftType.KEY_MORNING, Start = new TimeOnly(8, 0), End = new TimeOnly(16, 0) };
-        _stHome = new ShiftType { Scope = ShiftScope.Molecule, MoleculeId = _mol.Id, JobTypeId = job.Id, CategoryId = null, Key = "HOME", Start = new TimeOnly(0, 0), End = new TimeOnly(0, 0) };
+        _stHome = new ShiftType { Scope = ShiftScope.Molecule, MoleculeId = _mol.Id, JobTypeId = null, CategoryId = null, Key = ShiftType.KEY_HOME, Start = new TimeOnly(0, 0), End = new TimeOnly(0, 0) };
+        _stOffline = new ShiftType { Scope = ShiftScope.Molecule, MoleculeId = _mol.Id, JobTypeId = null, CategoryId = null, Key = ShiftType.KEY_OFFLINE, Start = new TimeOnly(0, 0), End = new TimeOnly(0, 0) };
         _stNullJob = new ShiftType { Scope = ShiftScope.Molecule, MoleculeId = _mol.Id, JobTypeId = null, CategoryId = null, Key = "MIDDLE", Start = new TimeOnly(12, 0), End = new TimeOnly(20, 0) };
         _stAssignableNull = new ShiftType { Scope = ShiftScope.Molecule, MoleculeId = _mol.Id, JobTypeId = job.Id, CategoryId = null, Key = "NOON", Start = new TimeOnly(10, 0), End = new TimeOnly(18, 0) };
         _stTechCat = new ShiftType { Scope = ShiftScope.Molecule, MoleculeId = _techMol.Id, TechShiftType = ShiftType.TECH_HANAVA, CategoryId = _catT.Id, RequiresOfficerRank = false, Key = "TECH_CAT", Start = new TimeOnly(8, 0), End = new TimeOnly(20, 0) };
-        _db.ShiftTypes.AddRange(_stCat, _stHome, _stNullJob, _stAssignableNull, _stTechCat); await _db.SaveChangesAsync();
+        _db.ShiftTypes.AddRange(_stCat, _stHome, _stOffline, _stNullJob, _stAssignableNull, _stTechCat); await _db.SaveChangesAsync();
 
         _a = NewUser(_c1.Id, job.Id, "alpha", doesShifts: true);
         _b = NewUser(_c1.Id, job.Id, "bravo", doesShifts: true);
         _tu = NewUser(_t1.Id, job.Id, "techie", doesShifts: true);
-        _db.Users.AddRange(_a, _b, _tu); await _db.SaveChangesAsync();
+        // job2 so these don't appear in the jobType-filtered legacy test; they DO appear for HOME/OFFLINE.
+        _nonDoer = NewUser(_c1.Id, job2.Id, "nondoer", doesShifts: false);
+        _groupUser = NewUser(_c1.Id, job2.Id, "grouper", doesShifts: true, accountType: AccountType.GroupUser);
+        _db.Users.AddRange(_a, _b, _tu, _nonDoer, _groupUser); await _db.SaveChangesAsync();
 
         // A in CatA; B not in CatA. TU in CatT.
         _db.UserShiftCategories.AddRange(
@@ -115,11 +120,12 @@ public sealed class ShiftCandidateServiceTests : IDisposable
         await _db.SaveChangesAsync();
     }
 
-    private static AppUser NewUser(int companyId, int jobTypeId, string tag, bool doesShifts)
+    private static AppUser NewUser(int companyId, int jobTypeId, string tag, bool doesShifts,
+        AccountType accountType = AccountType.Standard)
         => new AppUser
         {
             CompanyId = companyId, JobTypeId = jobTypeId, Email = tag + "@t.mil", DisplayName = tag,
-            IsActive = true, DoesShifts = doesShifts, AccountType = AccountType.Standard,
+            IsActive = true, DoesShifts = doesShifts, AccountType = accountType,
             PasswordHash = Array.Empty<byte>(), PasswordSalt = Array.Empty<byte>()
         };
 
@@ -150,15 +156,30 @@ public sealed class ShiftCandidateServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task FlagOn_NullCategory_HomeType_Returns_All_Reason_SharedFallback()
+    public async Task FlagOn_HomeShift_Returns_Everyone_Including_NonDoesShifts_ExcludesGroupUser()
     {
         await SeedAsync();
         Flag(true);
 
+        // HOME is a presence status, not a real shift: assignable to ANYONE active in the molecule —
+        // including DoesShifts=false users (_nonDoer) — but never GroupUser (_groupUser).
         var result = await _router.GetEligibleCandidatesAsync(_mol.Id, _stHome.Id, currentCompanyId: _c1.Id);
 
         result.Reason.Should().Be("sharedFallback");
-        result.Users.Select(u => u.Id).Should().BeEquivalentTo(new[] { _a.Id, _b.Id });
+        result.Users.Select(u => u.Id).Should().BeEquivalentTo(new[] { _a.Id, _b.Id, _nonDoer.Id });
+    }
+
+    [Fact]
+    public async Task FlagOn_OfflineShift_Returns_Everyone_Including_NonDoesShifts()
+    {
+        await SeedAsync();
+        Flag(true);
+
+        // OFFLINE is the same presence-status family as HOME — assignable to anyone, no DoesShifts gate.
+        var result = await _router.GetEligibleCandidatesAsync(_mol.Id, _stOffline.Id, currentCompanyId: _c1.Id);
+
+        result.Reason.Should().Be("sharedFallback");
+        result.Users.Select(u => u.Id).Should().BeEquivalentTo(new[] { _a.Id, _b.Id, _nonDoer.Id });
     }
 
     [Fact]
