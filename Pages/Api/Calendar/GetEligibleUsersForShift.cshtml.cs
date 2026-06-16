@@ -11,28 +11,30 @@ using System.Security.Claims;
 namespace ShiftManager.Pages.Api.Calendar;
 
 /// <summary>
-/// API endpoint for fetching eligible users for a Tech molecule shift type.
-/// Filters by EligibleCompanyIds and RequiresOfficerRank from the ShiftType.
-/// Used by calendar-bottom-sheet.js to populate the user picker in Tech shift-mode.
+/// API endpoint for fetching eligible users for ANY molecule kind's shift type (3b). Routes through
+/// ShiftCandidateService, which reads the company-level CategoryBasedShiftEligibility flag and either
+/// returns the legacy set (flag off) or the DoesShifts + ShiftCategory-filtered set (flag on), with the
+/// null-category fork (sharedFallback vs noCategory + the allowFallback escape hatch). Officer-rank is
+/// preserved for Tech molecules inside the leaf. Used by calendar-bottom-sheet.js + calendar-quick-entry.js.
 /// </summary>
 [Authorize]
 [IgnoreAntiforgeryToken]
 public class GetEligibleUsersForShiftModel : PageModel
 {
-    private readonly IShiftCalendarService _shiftCalendarService;
+    private readonly IShiftCandidateService _candidateService;
     private readonly IScopeFilterService _scopeFilterService;
     private readonly AppDbContext _db;
     private readonly ILogger<GetEligibleUsersForShiftModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
 
     public GetEligibleUsersForShiftModel(
-        IShiftCalendarService shiftCalendarService,
+        IShiftCandidateService candidateService,
         IScopeFilterService scopeFilterService,
         AppDbContext db,
         ILogger<GetEligibleUsersForShiftModel> logger,
         IStringLocalizer<SharedResources> localizer)
     {
-        _shiftCalendarService = shiftCalendarService;
+        _candidateService = candidateService;
         _scopeFilterService = scopeFilterService;
         _db = db;
         _logger = logger;
@@ -41,7 +43,8 @@ public class GetEligibleUsersForShiftModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(
         [FromQuery] int moleculeId,
-        [FromQuery] int shiftTypeId)
+        [FromQuery] int shiftTypeId,
+        [FromQuery] bool allowFallback = false)
     {
         try
         {
@@ -73,12 +76,18 @@ public class GetEligibleUsersForShiftModel : PageModel
             if (!shiftTypeBelongsToMolecule)
                 return new JsonResult(new { success = false, message = "Invalid parameters" }) { StatusCode = 400 };
 
-            var users = await _shiftCalendarService.GetEligibleUsersForShiftTypeAsync(moleculeId, shiftTypeId);
+            // Resolve the caller's current company for the company-level flag check (3b).
+            var currentCompanyId = 0;
+            int.TryParse(User.FindFirst("CompanyId")?.Value, out currentCompanyId);
+
+            var result = await _candidateService.GetEligibleCandidatesAsync(
+                moleculeId, shiftTypeId, currentCompanyId, allowFallback);
 
             return new JsonResult(new
             {
                 success = true,
-                users = users.Select(u => new { id = u.Id, name = u.DisplayName }).ToList()
+                reason = result.Reason,
+                users = result.Users.Select(u => new { id = u.Id, name = u.Name, companyName = u.CompanyName }).ToList()
             });
         }
         catch (Exception ex)
