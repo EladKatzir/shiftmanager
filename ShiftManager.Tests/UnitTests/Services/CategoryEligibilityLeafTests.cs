@@ -27,8 +27,9 @@ public sealed class CategoryEligibilityLeafTests : IDisposable
     private readonly SqliteConnection _conn;
     private readonly AppDbContext _db;
     private readonly ShiftAssignmentService _workforce;
+    private readonly ShiftCalendarService _tech;
 
-    // captured after seeding
+    // captured after seeding (workforce)
     private Molecule _molecule = null!;
     private Company _c1 = null!, _c2 = null!;
     private ShiftGrouping _grouping = null!;
@@ -37,6 +38,12 @@ public sealed class CategoryEligibilityLeafTests : IDisposable
     private ShiftType _stCat = null!;   // CategoryId = catA, JobTypeId = Alhut
     private ShiftType _stNull = null!;  // CategoryId = null (shared, null jobType)
     private AppUser _a = null!, _b = null!, _c = null!, _d = null!, _e = null!, _f = null!, _g = null!;
+
+    // captured after seeding (tech)
+    private Molecule _techMol = null!;
+    private ShiftType _stTechCat = null!;   // CategoryId = catT, RequiresOfficerRank=true
+    private ShiftType _stTechNull = null!;   // CategoryId = null, RequiresOfficerRank=false
+    private AppUser _officerMember = null!, _nonOfficerMember = null!, _officerNonMember = null!, _techGroupUser = null!;
 
     public CategoryEligibilityLeafTests()
     {
@@ -59,6 +66,13 @@ public sealed class CategoryEligibilityLeafTests : IDisposable
         _workforce = new ShiftAssignmentService(
             _db, localizer, logger, hierarchy.Object, audit, config.Object, configCache,
             BusyServiceMockFactory.Real(_db, config.Object, restHours: 11, weeklyCap: 48));
+
+        var calLogger = Mock.Of<ILogger<ShiftCalendarService>>();
+        var companyCache = new Mock<ICompanyCacheService>();
+        var calLocalization = new Mock<ICompanyLocalizationService>();
+        calLocalization.Setup(l => l.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync((ShiftType st, int _, string _) => st.Name);
+        _tech = new ShiftCalendarService(_db, calLogger, companyCache.Object, calLocalization.Object);
     }
 
     public void Dispose()
@@ -134,7 +148,7 @@ public sealed class CategoryEligibilityLeafTests : IDisposable
     }
 
     private static AppUser NewUser(int companyId, int jobTypeId, string tag, bool doesShifts,
-        AccountType accountType = AccountType.Standard)
+        AccountType accountType = AccountType.Standard, MilitaryRank rank = default)
         => new AppUser
         {
             CompanyId = companyId,
@@ -144,9 +158,94 @@ public sealed class CategoryEligibilityLeafTests : IDisposable
             IsActive = true,
             DoesShifts = doesShifts,
             AccountType = accountType,
+            Rank = rank,
             PasswordHash = Array.Empty<byte>(),
             PasswordSalt = Array.Empty<byte>()
         };
+
+    private async Task SeedTechAsync()
+    {
+        var project = new Project { Name = "TP", DisplayName = "TP" };
+        _db.Projects.Add(project); await _db.SaveChangesAsync();
+        var area = new Area { ProjectId = project.Id, Name = "TA", DisplayName = "TA" };
+        _db.Areas.Add(area); await _db.SaveChangesAsync();
+        var job = new JobType { AreaId = area.Id, Name = "Tech", DisplayName = "Tech", SortOrder = 1 };
+        _db.JobTypes.Add(job); await _db.SaveChangesAsync();
+
+        _techMol = new Molecule { AreaId = area.Id, Name = "TM", Type = MoleculeType.Tech };
+        _db.Molecules.Add(_techMol); await _db.SaveChangesAsync();
+        var t1 = new Company { MoleculeId = _techMol.Id, Name = "T1", DisplayName = "T1" };
+        _db.Companies.Add(t1); await _db.SaveChangesAsync();
+
+        var catT = new ShiftCategory { MoleculeId = _techMol.Id, Name = "CatT", DisplayName = "CatT" };
+        _db.ShiftCategories.Add(catT); await _db.SaveChangesAsync();
+
+        _stTechCat = new ShiftType
+        {
+            Scope = ShiftScope.Molecule, MoleculeId = _techMol.Id, TechShiftType = ShiftType.TECH_HANAVA,
+            CategoryId = catT.Id, RequiresOfficerRank = true, Key = "TECH_CAT",
+            Start = new TimeOnly(8, 0), End = new TimeOnly(20, 0)
+        };
+        _stTechNull = new ShiftType
+        {
+            Scope = ShiftScope.Molecule, MoleculeId = _techMol.Id, TechShiftType = ShiftType.TECH_DELTA,
+            CategoryId = null, RequiresOfficerRank = false, Key = "TECH_NULL",
+            Start = new TimeOnly(20, 0), End = new TimeOnly(8, 0)
+        };
+        _db.ShiftTypes.AddRange(_stTechCat, _stTechNull); await _db.SaveChangesAsync();
+
+        _officerMember = NewUser(t1.Id, job.Id, "officerMember", doesShifts: true, rank: MilitaryRank.SegenMishne);
+        _nonOfficerMember = NewUser(t1.Id, job.Id, "nonOfficerMember", doesShifts: true); // rank default (< 9)
+        _officerNonMember = NewUser(t1.Id, job.Id, "officerNonMember", doesShifts: true, rank: MilitaryRank.SegenMishne);
+        _techGroupUser = NewUser(t1.Id, job.Id, "techGroupUser", doesShifts: true,
+            accountType: AccountType.GroupUser, rank: MilitaryRank.SegenMishne);
+        _db.Users.AddRange(_officerMember, _nonOfficerMember, _officerNonMember, _techGroupUser);
+        await _db.SaveChangesAsync();
+
+        // catT members: officerMember, nonOfficerMember, techGroupUser. officerNonMember is NOT in catT.
+        _db.UserShiftCategories.AddRange(
+            new UserShiftCategory { UserId = _officerMember.Id, ShiftCategoryId = catT.Id },
+            new UserShiftCategory { UserId = _nonOfficerMember.Id, ShiftCategoryId = catT.Id },
+            new UserShiftCategory { UserId = _techGroupUser.Id, ShiftCategoryId = catT.Id });
+        await _db.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task Tech_CategoryFilter_Keeps_OfficerRank_And_Adds_Category_Gate()
+    {
+        await SeedTechAsync();
+
+        var result = await _tech.GetEligibleUsersForShiftTypeAsync(_techMol.Id, _stTechCat.Id, categoryFilter: true);
+
+        // RequiresOfficerRank + catT membership: officerMember in. nonOfficerMember out (rank),
+        // officerNonMember out (not in catT), techGroupUser out (GroupUser).
+        result.Select(u => u.Id).Should().BeEquivalentTo(new[] { _officerMember.Id });
+    }
+
+    [Fact]
+    public async Task Tech_CategoryFilter_NullCategory_Falls_Back_To_All_Participants_Excl_GroupUser()
+    {
+        await SeedTechAsync();
+
+        var result = await _tech.GetEligibleUsersForShiftTypeAsync(_techMol.Id, _stTechNull.Id, categoryFilter: true);
+
+        // No officer-rank requirement + null category -> all DoesShifts participants, GroupUser excluded.
+        result.Select(u => u.Id).Should()
+            .BeEquivalentTo(new[] { _officerMember.Id, _nonOfficerMember.Id, _officerNonMember.Id });
+    }
+
+    [Fact]
+    public async Task Tech_LegacyBranch_Unchanged_When_CategoryFilter_False()
+    {
+        await SeedTechAsync();
+
+        var result = await _tech.GetEligibleUsersForShiftTypeAsync(_techMol.Id, _stTechCat.Id); // default false
+
+        // Legacy tech: EligibleCompanyIds (none -> all) + officer rank, NO category/DoesShifts/GroupUser gate.
+        // Officers only -> officerMember, officerNonMember, techGroupUser. nonOfficerMember excluded by rank.
+        result.Select(u => u.Id).Should()
+            .BeEquivalentTo(new[] { _officerMember.Id, _officerNonMember.Id, _techGroupUser.Id });
+    }
 
     [Fact]
     public async Task Workforce_CategoryFilter_Returns_Only_Category_Members_Across_Multiple_Categories()

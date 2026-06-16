@@ -58,8 +58,11 @@ public interface IShiftCalendarService
 
     /// <summary>
     /// Gets users eligible for a specific shift type based on EligibleCompanyIds and RequiresOfficerRank.
+    /// When <paramref name="categoryFilter"/> is true (3b), also gates by DoesShifts (per-company
+    /// membership, mirror fallback) + the shift's ShiftCategory membership and excludes GroupUser;
+    /// officer-rank is still enforced. A null CategoryId returns all participants (shared-shift fallback).
     /// </summary>
-    Task<List<AppUser>> GetEligibleUsersForShiftTypeAsync(int moleculeId, int shiftTypeId);
+    Task<List<AppUser>> GetEligibleUsersForShiftTypeAsync(int moleculeId, int shiftTypeId, bool categoryFilter = false);
 
     // Assignment
     Task<AssignmentResult> AssignUserAsync(int shiftInstanceId, int userId, int assignedByUserId);

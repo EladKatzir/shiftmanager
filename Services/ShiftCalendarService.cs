@@ -239,7 +239,7 @@ public class ShiftCalendarService : IShiftCalendarService
         }
     }
 
-    public async Task<List<AppUser>> GetEligibleUsersForShiftTypeAsync(int moleculeId, int shiftTypeId)
+    public async Task<List<AppUser>> GetEligibleUsersForShiftTypeAsync(int moleculeId, int shiftTypeId, bool categoryFilter = false)
     {
         // SECURITY-AUDITED: SAFE — scoped by moleculeId + shiftTypeId; eligibility filters applied
         var shiftType = await _db.ShiftTypes
@@ -261,6 +261,43 @@ public class ShiftCalendarService : IShiftCalendarService
         // Apply officer rank filter (SegenMishne = 9)
         if (shiftType.RequiresOfficerRank)
             query = query.Where(u => (int)u.Rank >= 9);
+
+        if (categoryFilter)
+        {
+            // NEW (3b): exclude GroupUser, gate by DoesShifts (per-company membership, mirror fallback)
+            // + the shift's single category. Officer-rank stays enforced above.
+            query = query.Where(u => u.AccountType != AccountType.GroupUser);
+
+            var companyIds = await query.Select(u => u.CompanyId).Distinct().ToListAsync();
+            var doersFromMembership = (await _db.CompanyMemberships
+                .Where(m => companyIds.Contains(m.CompanyId) && m.DoesShifts)
+                .Select(m => m.UserId).ToListAsync()).ToHashSet();
+            var anyMembershipUserIds = (await _db.CompanyMemberships
+                .Where(m => companyIds.Contains(m.CompanyId))
+                .Select(m => m.UserId).ToListAsync()).ToHashSet();
+
+            var candidates = await query.Select(u => new { u.Id, u.DoesShifts }).ToListAsync();
+            var participantIds = candidates
+                .Where(u => doersFromMembership.Contains(u.Id)
+                            || (!anyMembershipUserIds.Contains(u.Id) && u.DoesShifts))
+                .Select(u => u.Id).ToHashSet();
+
+            var catId = shiftType.CategoryId;
+            if (catId.HasValue)
+            {
+                var membersOfCat = (await _db.UserShiftCategories
+                    .Where(m => m.ShiftCategoryId == catId.Value && participantIds.Contains(m.UserId))
+                    .Select(m => m.UserId).ToListAsync()).ToHashSet();
+                participantIds.IntersectWith(membersOfCat);
+            }
+
+            return await _db.Users
+                .IgnoreQueryFilters()
+                .Where(u => participantIds.Contains(u.Id))
+                .Include(u => u.JobType)
+                .OrderBy(u => u.DisplayName)
+                .ToListAsync();
+        }
 
         return await query
             .Include(u => u.JobType)
