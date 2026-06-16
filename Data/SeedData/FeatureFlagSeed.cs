@@ -125,6 +125,9 @@ public static class FeatureFlagSeed
 
             // Localization flags — read at startup, require an app restart to take effect.
             FDisabled(Flags.HebrewDefault, "When enabled: anonymous visitors default to Hebrew, and legacy en-US cookies from the old default are auto-cleared on next visit. Read ONCE at app startup — toggling this flag in the UI requires an app restart to take effect. Disabled by default for rollback safety.", now),
+
+            // Shift eligibility (3b) — default OFF; enable per-company after CategoryId backfill is verified.
+            FDisabled(Flags.CategoryBasedShiftEligibility, "When enabled (per company): the assign user-picker is filtered to DoesShifts + the shift's ShiftCategory members instead of the legacy job-type list. Default OFF — enable only after ShiftType.CategoryId is backfilled and verified for the company.", now),
         };
     }
 
@@ -255,5 +258,8 @@ public static class FeatureFlagSeed
 
         // Localization flags (startup-only — require app restart to take effect)
         public const string HebrewDefault = "FF_HEBREW_DEFAULT";
+
+        // Shift eligibility (3b) — default OFF; enable per-company after CategoryId backfill is verified.
+        public const string CategoryBasedShiftEligibility = "FF_CATEGORY_BASED_SHIFT_ELIGIBILITY";
     }
 }

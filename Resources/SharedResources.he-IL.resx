@@ -14269,6 +14269,39 @@
   <data name="QuickEntry_NoMatches" xml:space="preserve">
     <value>אין תוצאות</value>
   </data>
+  <data name="QuickEntry_Loading" xml:space="preserve">
+    <value>טוען עובדים זמינים…</value>
+  </data>
+  <data name="QuickEntry_NoEligibleUsers" xml:space="preserve">
+    <value>אין עובדים זמינים למשמרת זו</value>
+  </data>
+  <data name="QuickEntry_NoEligibleUsersHint" xml:space="preserve">
+    <value>אף עובד אינו משויך לקטגוריית המשמרת</value>
+  </data>
+  <data name="QuickEntry_NoCategorySet" xml:space="preserve">
+    <value>למשמרת זו לא הוגדרה קטגוריה</value>
+  </data>
+  <data name="QuickEntry_NoCategorySetHint" xml:space="preserve">
+    <value>פנו למנהל להגדרת קטגוריה</value>
+  </data>
+  <data name="QuickEntry_NoTextMatch" xml:space="preserve">
+    <value>אין עובדים זמינים התואמים ל-"{0}"</value>
+  </data>
+  <data name="QuickEntry_LoadFailedFallback" xml:space="preserve">
+    <value>טעינת העובדים נכשלה — נסו שוב</value>
+  </data>
+  <data name="QuickEntry_ResultsAvailable" xml:space="preserve">
+    <value>{0} עובדים זמינים</value>
+  </data>
+  <data name="QuickEntry_ShowAllWorkers" xml:space="preserve">
+    <value>הצג את כל עובדי המשמרת</value>
+  </data>
+  <data name="Admin_ShiftType_NoCategory_Badge" xml:space="preserve">
+    <value>ללא קטגוריה</value>
+  </data>
+  <data name="Admin_ShiftType_NoCategory_Tooltip" xml:space="preserve">
+    <value>לא ניתן לשבץ עובדים למשמרת זו עד שתוגדר לה קטגוריה</value>
+  </data>
   <data name="QuickEntry_SaveAsText" xml:space="preserve">
     <value>שמור כטקסט</value>
   </data>
