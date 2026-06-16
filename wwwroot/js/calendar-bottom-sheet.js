@@ -472,10 +472,13 @@
             defaultOpt.textContent = (window.AppLocalizer?.BottomSheet_DefaultOption || '-- Select --');
             userSelect.appendChild(defaultOpt);
 
-            // For Tech molecules in shift-mode, fetch eligible users per shift type dynamically
+            // For shift-mode rows, fetch eligible users per shift type. Tech molecules always use the
+            // endpoint (today's behavior); workforce molecules switch to it only when the 3b category
+            // flag is on — so flag-off keeps the legacy page-list behavior byte-identical.
             var calPageConfig = window.CalendarPageConfig;
-            if (calPageConfig && calPageConfig.isTechMolecule && calPageConfig.moleculeId > 0 &&
-                    itemType === 'user' && cellData.rowId && cellData.rowId.startsWith('shift-')) {
+            if (calPageConfig && (calPageConfig.isTechMolecule || calPageConfig.categoryEligibilityEnabled)
+                    && calPageConfig.moleculeId > 0
+                    && itemType === 'user' && cellData.rowId && cellData.rowId.startsWith('shift-')) {
                 var shiftTypeId = parseInt(cellData.rowId.replace('shift-', ''), 10);
                 if (!isNaN(shiftTypeId) && shiftTypeId > 0) {
                     populateEligibleUsersAsync(userSelect, calPageConfig.moleculeId, shiftTypeId, cellData.date);
@@ -772,26 +775,64 @@
     }
 
     // --- Fetch eligible users for a Tech molecule shift type and populate a <select> ---
-    async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId, date, instanceIdHint) {
+    function appendDisabledOption(selectEl, text) {
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.disabled = true;
+        opt.textContent = text;
+        selectEl.appendChild(opt);
+    }
+
+    // Remove every option EXCEPT a leading non-disabled empty default (the "-- Select --" placeholder).
+    function clearRealOptions(selectEl) {
+        Array.prototype.slice.call(selectEl.options).forEach(function (opt) {
+            if (opt.value || opt.disabled) selectEl.removeChild(opt);
+        });
+    }
+
+    // A native <select> can't host a button, so render the "Show all shift workers" escape hatch as a
+    // sibling link right after it (3b: promotes a noCategory result to the all-DoesShifts fallback list).
+    function appendFallbackButton(selectEl, onClick) {
+        if (selectEl._fallbackBtn && selectEl._fallbackBtn.parentNode) {
+            selectEl._fallbackBtn.parentNode.removeChild(selectEl._fallbackBtn);
+        }
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-link bottom-sheet__fallback-btn';
+        btn.textContent = loc('QuickEntry_ShowAllWorkers', 'Show all shift workers');
+        btn.addEventListener('click', function () {
+            if (btn.parentNode) btn.parentNode.removeChild(btn);
+            selectEl._fallbackBtn = null;
+            onClick();
+        });
+        selectEl._fallbackBtn = btn;
+        if (selectEl.parentNode) selectEl.parentNode.insertBefore(btn, selectEl.nextSibling);
+    }
+
+    async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId, date, allowFallback) {
         var loadingOpt = document.createElement('option');
         loadingOpt.value = '';
         loadingOpt.disabled = true;
-        loadingOpt.textContent = '...';
+        loadingOpt.textContent = loc('QuickEntry_Loading', 'Loading…');
         selectEl.appendChild(loadingOpt);
+        selectEl.setAttribute('aria-busy', 'true');
         try {
-            var response = await fetch(
-                '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + moleculeId + '&shiftTypeId=' + shiftTypeId,
-                { credentials: 'same-origin' }
-            );
+            var url = '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + moleculeId + '&shiftTypeId=' + shiftTypeId
+                + (allowFallback ? '&allowFallback=true' : '');
+            var response = await fetch(url, { credentials: 'same-origin' });
             if (!response.ok) throw new Error('Server returned ' + response.status);
             var data = await response.json();
             if (loadingOpt.parentNode === selectEl) selectEl.removeChild(loadingOpt);
-            if (data.success && Array.isArray(data.users)) {
+            selectEl.removeAttribute('aria-busy');
+            if (!data.success) throw new Error('unsuccessful');
+
+            if (Array.isArray(data.users) && data.users.length > 0) {
                 data.users.forEach(function (user) {
                     var opt = document.createElement('option');
                     opt.value = user.id;
-                    opt.textContent = user.name;
                     opt.dataset.userName = user.name;
+                    // Native <select>: append company as a " — {company}" suffix (3b disambiguation).
+                    opt.textContent = user.companyName ? (user.name + ' — ' + user.companyName) : user.name;
                     selectEl.appendChild(opt);
                 });
 
@@ -800,15 +841,21 @@
                     decorateOptionsWithBusyAsync(selectEl, data.users.map(function (u) { return u.id; }), date, moleculeId, null)
                         .catch(function (err) { console.warn('Busy decoration failed:', err); });
                 }
+            } else if (data.reason === 'noCategory') {
+                // Structural zero: assignable shift missing a category. Nudge + escape hatch.
+                appendDisabledOption(selectEl, loc('QuickEntry_NoCategorySet', 'This shift has no category set'));
+                appendFallbackButton(selectEl, function () {
+                    clearRealOptions(selectEl);
+                    populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId, date, true);
+                });
+            } else {
+                appendDisabledOption(selectEl, loc('QuickEntry_NoEligibleUsers', 'No eligible users for this shift'));
             }
         } catch (e) {
             if (loadingOpt.parentNode === selectEl) selectEl.removeChild(loadingOpt);
+            selectEl.removeAttribute('aria-busy');
             console.error('Failed to load eligible users:', e);
-            var errOpt = document.createElement('option');
-            errOpt.value = '';
-            errOpt.disabled = true;
-            errOpt.textContent = (window.AppLocalizer?.BottomSheet_LoadError || 'Failed to load users');
-            selectEl.appendChild(errOpt);
+            appendDisabledOption(selectEl, loc('QuickEntry_LoadFailedFallback', "Couldn't load eligible users — try again"));
         }
     }
 

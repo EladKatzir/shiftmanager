@@ -39,6 +39,7 @@ public class ShiftsModel : PageModel
     private readonly IDistributionListService _distributionListService;
     private readonly IShiftCategoryService _categoryService;
     private readonly IDraftModeService _draftService;
+    private readonly IFeatureFlagService _featureFlags;
 
     public ShiftsModel(
         AppDbContext db,
@@ -56,7 +57,8 @@ public class ShiftsModel : PageModel
         IJusticeService justiceService,
         IDistributionListService distributionListService,
         IShiftCategoryService categoryService,
-        IDraftModeService draftService)
+        IDraftModeService draftService,
+        IFeatureFlagService featureFlags)
     {
         _db = db;
         _calendarService = calendarService;
@@ -74,6 +76,7 @@ public class ShiftsModel : PageModel
         _distributionListService = distributionListService;
         _categoryService = categoryService;
         _draftService = draftService;
+        _featureFlags = featureFlags;
     }
 
     // Query parameters
@@ -151,6 +154,10 @@ public class ShiftsModel : PageModel
 
     public bool IsTechMolecule { get; set; }
 
+    /// <summary>3b: when true (per-company flag), the assign user-picker filters by DoesShifts + ShiftCategory.
+    /// When false, the picker keeps its legacy behavior exactly (zero-risk default-off rollout).</summary>
+    public bool CategoryEligibilityEnabled { get; set; }
+
     // Navigation
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
@@ -213,6 +220,12 @@ public class ShiftsModel : PageModel
 
         SelectedMolecule = AvailableMolecules.FirstOrDefault(m => m.Id == MoleculeId);
         IsTechMolecule = SelectedMolecule?.Type == MoleculeType.Tech;
+
+        // 3b: resolve the per-company eligibility flag (switcher-aware tenant). Default OFF keeps the
+        // assign picker byte-identical to today; ON switches the 3 UIs to category-filtered candidates.
+        CategoryEligibilityEnabled = await _featureFlags.IsEnabledAsync(
+            ShiftManager.Data.SeedData.FeatureFlagSeed.Flags.CategoryBasedShiftEligibility,
+            userId: null, companyId: _tenantResolver.GetCurrentTenantId());
 
         // Tech molecules don't use JobType for shift filtering — their shift types have JobTypeId = null.
         // Force null to prevent the user's personal JobTypeId (e.g., Hakam) from filtering out Tech shifts.
