@@ -417,6 +417,7 @@ builder.Services.AddScoped<IHierarchySettingsService, HierarchySettingsService>(
 
 // Shift Assignment Service — JobType/ShiftGrouping-aware assignment + validation
 builder.Services.AddScoped<IShiftAssignmentService, ShiftAssignmentService>();
+builder.Services.AddScoped<IShiftCandidateService, ShiftCandidateService>();
 
 // Busy Service — single source of truth for "is user busy on date?" used by
 // shift, chore, on-duty, swap, and fill-range flows. See plan in docs/superpowers/specs.
