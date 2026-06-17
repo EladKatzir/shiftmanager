@@ -16445,5 +16445,5 @@
   <data name="HelpNav_Persona_Admin" xml:space="preserve"><value>מנהל מולקולה / אזור</value></data>
   <data name="HelpNav_PersonaDesc_Admin" xml:space="preserve"><value>אתה מקים את המערכת. מרכזי אנשים, ארגון והרשאות מחזיקים משתמשים, מבנה, תפקידים והרשאות; זכאות למשמרות ותורנויות נמצאת בשיבוץ ▸ זכאות.</value></data>
   <data name="HelpNav_Persona_Owner" xml:space="preserve"><value>בעלים / מפעיל</value></data>
-  <data name="HelpNav_PersonaDesc_Owner" xml:space="preserve"><value>אתה מפעיל את הפלטפורמה. תובנות מציג בריאות, טלמטריה, ביקורת וניתוחים; מערכת מחזיק דגלי תכונה, אינטגרציות, לוקליזציה ואזור הסכנה ⚠ נתונים ותפעול.</value></data>
+  <data name="HelpNav_PersonaDesc_Owner" xml:space="preserve"><value>אתה מפעיל את הפלטפורמה. תובנות מציג בריאות, טלמטריה, ביקורת וניתוחים; מערכת מחזיק דגלי תכונה, אינטגרציות, לוקליזציה ואזור הסכנה נתונים ותפעול.</value></data>
 </root>

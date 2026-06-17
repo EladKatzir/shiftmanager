@@ -16483,5 +16483,5 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="HelpNav_Persona_Admin" xml:space="preserve"><value>Molecule / Area Admin</value></data>
   <data name="HelpNav_PersonaDesc_Admin" xml:space="preserve"><value>You set the app up. The People, Organization and Access hubs hold users, structure, roles and grants; shift and chore eligibility lives in Scheduling ▸ Eligibility.</value></data>
   <data name="HelpNav_Persona_Owner" xml:space="preserve"><value>Owner / Operator</value></data>
-  <data name="HelpNav_PersonaDesc_Owner" xml:space="preserve"><value>You run the platform. Insights shows health, telemetry, audit and analytics; System holds feature flags, integrations, localization and the ⚠ Data &amp; Ops danger zone.</value></data>
+  <data name="HelpNav_PersonaDesc_Owner" xml:space="preserve"><value>You run the platform. Insights shows health, telemetry, audit and analytics; System holds feature flags, integrations, localization and the Data &amp; Ops danger zone.</value></data>
 </root>
