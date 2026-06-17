@@ -343,6 +343,9 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 // Domain-hub navigation (Model B redesign) — policy-derived visibility behind FF_NEW_NAV.
 builder.Services.AddScoped<ShiftManager.Services.Navigation.INavigationService, ShiftManager.Services.Navigation.NavigationService>();
 
+// Eligibility editor (Issue 3) — unified "who can do category X / why is Y blocked" query engine.
+builder.Services.AddScoped<ShiftManager.Services.Eligibility.IEligibilityQueryService, ShiftManager.Services.Eligibility.EligibilityQueryService>();
+
 // v3.0 Grant Authorization
 builder.Services.AddScoped<IAuthorizationHandler, GrantAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, GrantPolicyProvider>();
