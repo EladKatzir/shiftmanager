@@ -16378,4 +16378,52 @@
   <data name="Elig_RequiresOfficerRank" xml:space="preserve"><value>קצינים בלבד</value></data>
   <data name="Elig_Exempt" xml:space="preserve"><value>פטור</value></data>
   <data name="Elig_Blocked" xml:space="preserve"><value>חסום</value></data>
+  <data name="Nav2_Home" xml:space="preserve"><value>בית</value></data>
+  <data name="Nav2_Scheduling" xml:space="preserve"><value>שיבוץ</value></data>
+  <data name="Nav2_MyScheduleLabel" xml:space="preserve"><value>הלוח שלי</value></data>
+  <data name="Nav2_Sched_Calendars" xml:space="preserve"><value>לוחות שנה</value></data>
+  <data name="Nav2_Sched_Planning" xml:space="preserve"><value>תכנון</value></data>
+  <data name="Nav2_Sched_Definitions" xml:space="preserve"><value>הגדרות</value></data>
+  <data name="Nav2_ShiftPlans" xml:space="preserve"><value>תוכניות משמרות</value></data>
+  <data name="Nav2_MasterPlans" xml:space="preserve"><value>תוכניות אב</value></data>
+  <data name="Nav2_ChoreTemplates" xml:space="preserve"><value>תבניות תורנויות</value></data>
+  <data name="Nav2_Blueprints" xml:space="preserve"><value>תבניות משמרת</value></data>
+  <data name="Nav2_ShiftGroupings" xml:space="preserve"><value>קבוצות משמרת</value></data>
+  <data name="Nav2_DutyTypes" xml:space="preserve"><value>סוגי תורנות</value></data>
+  <data name="Nav2_Eligibility" xml:space="preserve"><value>זכאות</value></data>
+  <data name="Nav2_Rules" xml:space="preserve"><value>כללים</value></data>
+  <data name="Nav2_Approvals" xml:space="preserve"><value>אישורים</value></data>
+  <data name="Nav2_CrossCompanyApprovals" xml:space="preserve"><value>אישורים בין-חברתיים</value></data>
+  <data name="Nav2_People" xml:space="preserve"><value>אנשים</value></data>
+  <data name="Nav2_HomeTypes" xml:space="preserve"><value>סוגי בית</value></data>
+  <data name="Nav2_Hierarchy" xml:space="preserve"><value>היררכיה</value></data>
+  <data name="Nav2_JobTypes" xml:space="preserve"><value>סוגי תפקיד</value></data>
+  <data name="Nav2_ChoreTypes" xml:space="preserve"><value>סוגי תורנויות</value></data>
+  <data name="Nav2_Stores" xml:space="preserve"><value>חנויות</value></data>
+  <data name="Nav2_AreaPalette" xml:space="preserve"><value>פלטת אזור</value></data>
+  <data name="Nav2_Access" xml:space="preserve"><value>הרשאות</value></data>
+  <data name="Nav2_Roles" xml:space="preserve"><value>תפקידים</value></data>
+  <data name="Nav2_Grants" xml:space="preserve"><value>הרשאות פרטניות</value></data>
+  <data name="Nav2_RoleTemplates" xml:space="preserve"><value>תבניות תפקיד</value></data>
+  <data name="Nav2_Simulator" xml:space="preserve"><value>סימולטור הרשאות</value></data>
+  <data name="Nav2_Directors" xml:space="preserve"><value>מנהלים אזוריים</value></data>
+  <data name="Nav2_LockedUsers" xml:space="preserve"><value>משתמשים נעולים</value></data>
+  <data name="Nav2_Insights" xml:space="preserve"><value>תובנות</value></data>
+  <data name="Nav2_System" xml:space="preserve"><value>מערכת</value></data>
+  <data name="Nav2_Integrations" xml:space="preserve"><value>אינטגרציות</value></data>
+  <data name="Nav2_EmailConfig" xml:space="preserve"><value>דוא״ל</value></data>
+  <data name="Nav2_EmailTemplates" xml:space="preserve"><value>תבניות דוא״ל</value></data>
+  <data name="Nav2_Sso" xml:space="preserve"><value>כניסה מאוחדת</value></data>
+  <data name="Nav2_GameConfig" xml:space="preserve"><value>משחק</value></data>
+  <data name="Nav2_Localization" xml:space="preserve"><value>לוקליזציה</value></data>
+  <data name="Nav2_ContentConfig" xml:space="preserve"><value>תוכן והגדרות</value></data>
+  <data name="Nav2_AreaConfig" xml:space="preserve"><value>הגדרות אזור</value></data>
+  <data name="Nav2_SetupTasks" xml:space="preserve"><value>משימות הקמה</value></data>
+  <data name="Nav2_DataOps" xml:space="preserve"><value>נתונים ותפעול</value></data>
+  <data name="Nav2_Backup" xml:space="preserve"><value>גיבוי</value></data>
+  <data name="Nav2_DataLifecycle" xml:space="preserve"><value>מחזור חיי נתונים</value></data>
+  <data name="Nav2_ExportUserData" xml:space="preserve"><value>ייצוא נתוני משתמש</value></data>
+  <data name="Nav2_DatabaseConsole" xml:space="preserve"><value>קונסולת מסד נתונים</value></data>
+  <data name="Nav2_EligibilityHome_Title" xml:space="preserve"><value>זכאות</value></data>
+  <data name="Nav2_EligibilityHome_Intro" xml:space="preserve"><value>נהל מי זכאי לכל קטגוריית משמרת ותורנות — הכללים והחברות, במקום אחד.</value></data>
 </root>

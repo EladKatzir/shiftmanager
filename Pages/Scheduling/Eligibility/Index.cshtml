@@ -1,0 +1,31 @@
+@page
+@model ShiftManager.Pages.Scheduling.Eligibility.IndexModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources> L
+@{
+    ViewData["Title"] = L["Nav2_EligibilityHome_Title"];
+}
+
+<p class="lead" style="max-width:62ch;">@L["Nav2_EligibilityHome_Intro"]</p>
+
+<div class="elig-home-grid">
+    <a class="elig-home-card" href="/Owner/Blueprints">
+        <span class="elig-home-card__icon"><i data-lucide="layers"></i></span>
+        <span class="elig-home-card__title">@L["Nav2_Blueprints"]</span>
+    </a>
+    <a class="elig-home-card" href="/Admin/Organization/ChoreTypes">
+        <span class="elig-home-card__icon"><i data-lucide="list-checks"></i></span>
+        <span class="elig-home-card__title">@L["Nav2_ChoreTypes"]</span>
+    </a>
+    <a class="elig-home-card" href="/Admin/Users">
+        <span class="elig-home-card__icon"><i data-lucide="users"></i></span>
+        <span class="elig-home-card__title">@L["People"]</span>
+    </a>
+</div>
+
+<style>
+    .elig-home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+    .elig-home-card { display: flex; flex-direction: column; gap: 0.6rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: 0.75rem; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.15s ease, transform 0.15s ease; }
+    .elig-home-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .elig-home-card__icon { color: var(--primary); }
+    .elig-home-card__title { font-weight: 600; }
+</style>

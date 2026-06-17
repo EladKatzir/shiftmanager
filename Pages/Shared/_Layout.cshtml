@@ -9,6 +9,7 @@
 @inject IViewAsModeService ViewAsModeService
 @inject IFeatureFlagService FeatureFlagService
 @inject IAreaPaletteService AreaPaletteService
+@inject ShiftManager.Services.Navigation.INavigationService NavService
 @{
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
@@ -493,7 +494,13 @@
             }
 
             @* Navigation - Unified sidebar: all access controlled via per-item grants *@
-            <nav class="app-sidebar-nav">
+            <nav class="app-sidebar-nav"@(NavService.IsNewNavEnabled() ? " data-nav=\"v2\"" : null)>
+            @if (NavService.IsNewNavEnabled())
+            {
+                <partial name="_NavSidebar" />
+            }
+            else
+            {
                 @* === MY SHIFTY === *@
                 <div class="nav-section-header"><loc key="Calendar_MyCalendar" /></div>
 
@@ -692,6 +699,7 @@
                     <span class="app-sidebar-nav-icon"><i data-lucide="help-circle"></i></span>
                     <span><loc key="Help_NavLink" /></span>
                 </a>
+            }
             </nav>
 
             @* On-Call Widget moved to Bottom Dock (Sprint 6) *@

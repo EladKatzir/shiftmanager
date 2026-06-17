@@ -1,0 +1,59 @@
+@using ShiftManager.Models.Navigation
+@using ShiftManager.Services.Navigation
+@inject INavigationService Nav
+@inject Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources> L
+@{
+    var path = ViewContext.HttpContext.Request.Path.Value ?? "/";
+    var nodes = await Nav.GetVisibleNavAsync(User);
+
+    Func<NavNode, bool> descActive = null!;
+    descActive = n =>
+    {
+        if (!string.IsNullOrEmpty(n.ActivePrefix) && path.StartsWith(n.ActivePrefix!, StringComparison.OrdinalIgnoreCase))
+            return true;
+        foreach (var c in n.ChildNodes) if (descActive(c)) return true;
+        return false;
+    };
+
+    // P4 role-aware label: a viewer who only sees the Calendars subgroup gets "My Schedule".
+    bool IsViewerScheduling(NavNode hub) =>
+        hub.LocKey == "Nav2_Scheduling"
+        && !hub.ChildNodes.Any(c => c.LocKey is "Nav2_Sched_Planning" or "Nav2_Sched_Definitions" or "Nav2_Eligibility" or "Nav2_Rules");
+}
+@foreach (var top in nodes)
+{
+    if (!top.IsGroup)
+    {
+        <partial name="_NavItem" model="top" />
+    }
+    else
+    {
+        var open = descActive(top);
+        var label = IsViewerScheduling(top) ? L["Nav2_MyScheduleLabel"] : L[top.LocKey];
+        <details class="nav-hub"@(open ? " open" : "") data-nav-hub="@top.LocKey">
+            <summary class="nav-hub__header">
+                <span class="app-sidebar-nav-icon">@if (!string.IsNullOrEmpty(top.Icon)){<i data-lucide="@top.Icon"></i>}</span>
+                <span class="nav-hub__label">@label</span>
+                <span class="nav-hub__chevron" aria-hidden="true">▾</span>
+            </summary>
+            <div class="nav-hub__body">
+                @foreach (var child in top.ChildNodes)
+                {
+                    if (!child.IsGroup)
+                    {
+                        <partial name="_NavItem" model="child" />
+                    }
+                    else
+                    {
+                        var danger = child.LocKey == "Nav2_DataOps";
+                        <div class="nav-subgroup-header@(danger ? " nav-subgroup-header--danger" : "")">@L[child.LocKey]</div>
+                        @foreach (var leaf in child.ChildNodes)
+                        {
+                            <partial name="_NavItem" model="leaf" />
+                        }
+                    }
+                }
+            </div>
+        </details>
+    }
+}
