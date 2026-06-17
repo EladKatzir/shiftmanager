@@ -10,6 +10,7 @@ using ShiftManager.Models.Support;
 using ShiftManager.Hubs;
 using ShiftManager.Resources;
 using ShiftManager.Services;
+using ShiftManager.Services.Remediation;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -50,9 +51,11 @@ public partial class TableModel : PageModel
         ITenantResolver tenantResolver,
         IStringLocalizer<SharedResources> localizer,
         IAuditLogService auditLogService,
-        IDraftModeService draftService)
+        IDraftModeService draftService,
+        IFailureRemediationService remediation)
     {
         _db = db;
+        _remediation = remediation;
         _companyContext = companyContext;
         _logger = logger;
         _busyUserService = busyUserService;
@@ -71,6 +74,14 @@ public partial class TableModel : PageModel
     }
 
     private readonly IDraftModeService _draftService;
+    private readonly IFailureRemediationService _remediation;
+
+    /// <summary>Builds the "go fix it" remediation payload for a failure key, or null if none.</summary>
+    private object? MakeFix(string? key, int? userId)
+    {
+        var fix = _remediation.For(key, userId);
+        return fix is null ? null : new { fix.Label, fix.Url };
+    }
 
     /// <summary>
     /// Resolves the localized display name for a shift type using the full fallback chain.
@@ -674,6 +685,7 @@ public partial class TableModel : PageModel
                     success = false,
                     error = validation.Errors.FirstOrDefault()?.Message ?? _localizer["Calendar_Error_ValidationFailed"].Value,
                     errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
+                    fix = MakeFix(validation.Errors.FirstOrDefault()?.Key, request.UserId),
                 });
             }
 
@@ -858,6 +870,7 @@ public partial class TableModel : PageModel
                     success = false,
                     error = validation.Errors.FirstOrDefault()?.Message ?? _localizer["Calendar_Error_ValidationFailed"].Value,
                     errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
+                    fix = MakeFix(validation.Errors.FirstOrDefault()?.Key, request.UserId),
                 });
             }
 
@@ -1367,6 +1380,7 @@ public partial class TableModel : PageModel
                     success = false,
                     error = validation.Errors.FirstOrDefault()?.Message ?? _localizer["Calendar_Error_ValidationFailed"].Value,
                     errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
+                    fix = MakeFix(validation.Errors.FirstOrDefault()?.Key, request.TraineeUserId),
                 });
             }
 
@@ -1544,6 +1558,7 @@ public partial class TableModel : PageModel
                     success = false,
                     error = validation.Errors.FirstOrDefault()?.Message ?? _localizer["Calendar_Error_ValidationFailed"].Value,
                     errors = validation.Errors.Select(e => new { e.Key, e.Message, e.Category }),
+                    fix = MakeFix(validation.Errors.FirstOrDefault()?.Key, request.NewUserId),
                 });
             }
 

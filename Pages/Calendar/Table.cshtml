@@ -2401,7 +2401,7 @@ async function addTrainee(assignmentId, traineeId, traineeName) {
                 document.getElementById('removeTraineeItem').style.display = 'block';
             }
         } else {
-            window.FeedbackModal.show('error', '@Localizer["Error_Prefix"].Value.Trim()' + (result.error || ''));
+            window.FeedbackModal.show('error', '@Localizer["Error_Prefix"].Value.Trim()' + (result.error || ''), result.fix ? { action: { label: result.fix.label, url: result.fix.url } } : undefined);
         }
     } catch (error) {
         console.error('Error adding trainee:', error);
@@ -2484,7 +2484,7 @@ async function assignUserToSlot(assignmentId, userId) {
         if (result.success) {
             location.reload();
         } else {
-            window.FeedbackModal.show('error', '@Localizer["Error_Prefix"].Value.Trim()' + (result.error || ''));
+            window.FeedbackModal.show('error', '@Localizer["Error_Prefix"].Value.Trim()' + (result.error || ''), result.fix ? { action: { label: result.fix.label, url: result.fix.url } } : undefined);
         }
     } catch (error) {
         console.error('Error assigning user to slot:', error);
@@ -2523,7 +2523,7 @@ async function changeUser(assignmentId, newUserId, newUserName) {
         if (result.success) {
             location.reload();
         } else {
-            window.FeedbackModal.show('error', '@Localizer["Error_Prefix"].Value.Trim()' + (result.error || ''));
+            window.FeedbackModal.show('error', '@Localizer["Error_Prefix"].Value.Trim()' + (result.error || ''), result.fix ? { action: { label: result.fix.label, url: result.fix.url } } : undefined);
         }
     } catch (error) {
         console.error('Error changing user:', error);
