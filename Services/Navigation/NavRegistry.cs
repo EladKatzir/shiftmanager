@@ -9,7 +9,8 @@ namespace ShiftManager.Services.Navigation;
 /// Every leaf's <see cref="NavNode.Policy"/> is the SAME authorization policy its
 /// destination page enforces, so <see cref="NavigationService"/> can derive visibility
 /// from <c>IAuthorizationService</c> (design principle P2 — visibility == access).
-/// <c>NavRegistryPolicyParityTests</c> asserts node policy == page policy to prevent drift.
+/// <c>NavRegistryPolicyParityTests</c> reflects over each route's PageModel and asserts the nav
+/// policy is never looser than the page's [Authorize(Policy)] (so no visible-but-403 can drift in).
 ///
 /// Phase 1 points leaves at EXISTING routes so nothing 404s and nothing is physically moved.
 /// Later phases repoint individual leaves at merged/hosted surfaces (e.g. Eligibility home,
@@ -51,7 +52,7 @@ public static class NavRegistry
             SubGroup("Nav2_Sched_Definitions",
                 Link("Nav2_Blueprints", "/Owner/Blueprints", policy: G("ManagerHomeAccess"), icon: "layers"),
                 Link("Nav2_ShiftGroupings", "/Admin/Organization/ShiftGroupings", policy: G("ManageShiftGroupings"), icon: "group"),
-                Link("Nav2_DutyTypes", "/Admin/Organization/DutyTypes", policy: G("EditChoreTypes"), icon: "shield")),
+                Link("Nav2_DutyTypes", "/Admin/Organization/DutyTypes", policy: G("ManageOnDutyTypes"), icon: "shield")),
             Link("Nav2_Eligibility", "/Scheduling/Eligibility", policy: G("ManageShiftCategories"), icon: "user-check"),
             Link("Nav2_Rules", "/Admin/Config", policy: G("ManagerHomeAccess"), icon: "sliders-horizontal", activeMatch: "/Admin/Config")),
 
@@ -67,7 +68,7 @@ public static class NavRegistry
 
         // ── People ───────────────────────────────────────────────────────────────
         Hub("Nav2_People", "users",
-            Link("People", "/Admin/Users", policy: G("ViewUsers"), icon: "users", activeMatch: "/Admin/Users"),
+            Link("People", "/Admin/Users", policy: G("ManagerHomeAccess"), icon: "users", activeMatch: "/Admin/Users"),
             Link("Companies", "/Admin/Companies", policy: G("EditCompany"), icon: "building-2"),
             Link("Announcements", "/Admin/Announcements", policy: G("ManageAnnouncements"), icon: "megaphone"),
             Link("Nav2_HomeTypes", "/Admin/HomeTypes", policy: G("ManageHomeTypes"), icon: "house")),

@@ -1,25 +1,34 @@
 @page
+@using Microsoft.AspNetCore.Authorization
 @model ShiftManager.Pages.Scheduling.Eligibility.IndexModel
 @inject Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources> L
+@inject IAuthorizationService Authz
 @{
+    Layout = "_Layout";
     ViewData["Title"] = L["Nav2_EligibilityHome_Title"];
+    // Each card carries its destination page's policy; render it only if the user is authorized
+    // for that destination (visibility == access — no click-into-403 inside this page either).
+    var cards = new[]
+    {
+        (href: "/Owner/Blueprints", icon: "layers", key: "Nav2_Blueprints", policy: "Grant:ManagerHomeAccess"),
+        (href: "/Admin/Organization/ChoreTypes", icon: "list-checks", key: "Nav2_ChoreTypes", policy: "Grant:EditChoreTypes"),
+        (href: "/Admin/Users", icon: "users", key: "People", policy: "Grant:ManagerHomeAccess"),
+    };
 }
 
 <p class="lead" style="max-width:62ch;">@L["Nav2_EligibilityHome_Intro"]</p>
 
 <div class="elig-home-grid">
-    <a class="elig-home-card" href="/Owner/Blueprints">
-        <span class="elig-home-card__icon"><i data-lucide="layers"></i></span>
-        <span class="elig-home-card__title">@L["Nav2_Blueprints"]</span>
-    </a>
-    <a class="elig-home-card" href="/Admin/Organization/ChoreTypes">
-        <span class="elig-home-card__icon"><i data-lucide="list-checks"></i></span>
-        <span class="elig-home-card__title">@L["Nav2_ChoreTypes"]</span>
-    </a>
-    <a class="elig-home-card" href="/Admin/Users">
-        <span class="elig-home-card__icon"><i data-lucide="users"></i></span>
-        <span class="elig-home-card__title">@L["People"]</span>
-    </a>
+    @foreach (var c in cards)
+    {
+        if ((await Authz.AuthorizeAsync(User, c.policy)).Succeeded)
+        {
+            <a class="elig-home-card" href="@c.href">
+                <span class="elig-home-card__icon"><i data-lucide="@c.icon"></i></span>
+                <span class="elig-home-card__title">@L[c.key]</span>
+            </a>
+        }
+    }
 </div>
 
 <style>
