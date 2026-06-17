@@ -800,6 +800,12 @@
                             @await Component.InvokeAsync("DecisionRibbon")
                         }
 
+                        @* Viewing-scope control (design-bar / company-context primitive) — new nav only *@
+                        @if (NavService.IsNewNavEnabled())
+                        {
+                            @await Component.InvokeAsync("ViewingScope")
+                        }
+
                         @* Notifications *@
                         <a href="/My/NotificationCenter" class="action-btn" style="position: relative;" aria-label="@Localizer["Nav_Notifications"]">
                             <span><icon name="bell" /></span>

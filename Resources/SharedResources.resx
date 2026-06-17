@@ -16499,4 +16499,7 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Elig_Editor_Member" xml:space="preserve"><value>Members</value></data>
   <data name="Elig_Editor_ShiftCats" xml:space="preserve"><value>Shift categories</value></data>
   <data name="Elig_Editor_ChoreCats" xml:space="preserve"><value>Chore categories</value></data>
+  <data name="Scope_ViewingNofM" xml:space="preserve"><value>Viewing {0} of {1} companies</value></data>
+  <data name="Scope_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="Scope_Tooltip" xml:space="preserve"><value>Choose which companies you're viewing</value></data>
 </root>

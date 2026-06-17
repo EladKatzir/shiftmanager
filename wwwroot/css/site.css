@@ -4851,6 +4851,23 @@ code {
 .nav-subgroup-header--danger { color: var(--danger); }
 .nav-subgroup-header--danger::before { content: "\26A0\00A0"; }
 
+/* Viewing-scope header dropdown (company-context primitive / design bar) */
+.vscope { position: relative; display: inline-block; }
+.vscope__btn { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; list-style: none; }
+.vscope__btn::-webkit-details-marker { display: none; }
+.vscope__btn::marker { content: ""; }
+.vscope__label { font-size: 0.85rem; }
+.vscope__chev { font-size: 0.7rem; opacity: 0.6; }
+.vscope__menu {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 6px); min-width: 240px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 0.6rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18); padding: 0.6rem; z-index: var(--z-dropdown, 1060);
+}
+.vscope__list { display: flex; flex-direction: column; gap: 0.2rem; max-height: 280px; overflow-y: auto; }
+.vscope__item { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.4rem; border-radius: 0.4rem; cursor: pointer; color: var(--text); }
+.vscope__item:hover { background: var(--surface-soft, rgba(127,127,127,0.1)); }
+.vscope__actions { margin-top: 0.5rem; display: flex; justify-content: flex-end; }
+
 /* Collapsed sidebar: keep icons, hide hub labels/chevrons + subgroup headers */
 .app-sidebar.is-collapsed .nav-hub__label,
 .app-sidebar.is-collapsed .nav-hub__chevron,

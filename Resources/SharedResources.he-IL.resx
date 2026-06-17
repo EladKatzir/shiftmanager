@@ -16461,4 +16461,7 @@
   <data name="Elig_Editor_Member" xml:space="preserve"><value>חברים</value></data>
   <data name="Elig_Editor_ShiftCats" xml:space="preserve"><value>קטגוריות משמרת</value></data>
   <data name="Elig_Editor_ChoreCats" xml:space="preserve"><value>קטגוריות תורנות</value></data>
+  <data name="Scope_ViewingNofM" xml:space="preserve"><value>צופה ב-{0} מתוך {1} חברות</value></data>
+  <data name="Scope_Apply" xml:space="preserve"><value>החל</value></data>
+  <data name="Scope_Tooltip" xml:space="preserve"><value>בחר אילו חברות אתה צופה בהן</value></data>
 </root>
