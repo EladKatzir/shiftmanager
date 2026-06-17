@@ -54,7 +54,7 @@ public static class NavRegistry
                 Link("Nav2_ShiftGroupings", "/Admin/Organization/ShiftGroupings", policy: G("ManageShiftGroupings"), icon: "group"),
                 Link("Nav2_DutyTypes", "/Admin/Organization/DutyTypes", policy: G("ManageOnDutyTypes"), icon: "shield")),
             Link("Nav2_Eligibility", "/Scheduling/Eligibility", policy: G("ManageShiftCategories"), icon: "user-check"),
-            Link("Nav2_Rules", "/Admin/Config", policy: G("ManagerHomeAccess"), icon: "sliders-horizontal", activeMatch: "/Admin/Config")),
+            Link("Nav2_Rules", "/Admin/Settings", policy: G("ViewSettings"), icon: "sliders-horizontal", activeMatch: "/Admin/Settings")),
 
         // ── Requests (own) + Approvals (managers) ────────────────────────────────
         Link("Requests", "/My/Requests", icon: "file-text", activeMatch: "/My/Requests"),
