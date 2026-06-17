@@ -7,6 +7,7 @@ using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
 using ShiftManager.Services;
+using ShiftManager.Services.Remediation;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -28,19 +29,22 @@ public class QuickAddOnDutyModel : PageModel
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<QuickAddOnDutyModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IFailureRemediationService _remediation;
 
     public QuickAddOnDutyModel(
         IOnDutyService onDutyService,
         INotificationService notificationService,
         IAuditLogService auditLogService,
         ILogger<QuickAddOnDutyModel> logger,
-        IStringLocalizer<SharedResources> localizer)
+        IStringLocalizer<SharedResources> localizer,
+        IFailureRemediationService remediation)
     {
         _onDutyService = onDutyService;
         _notificationService = notificationService;
         _auditLogService = auditLogService;
         _logger = logger;
         _localizer = localizer;
+        _remediation = remediation;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -215,11 +219,13 @@ public class QuickAddOnDutyModel : PageModel
 
                 if (result.Message == "OFFICER_RANK_REQUIRED")
                 {
+                    var odFix = _remediation.For("OFFICER_RANK_REQUIRED", data.AssigneeId);
                     return new JsonResult(new
                     {
                         success = false,
                         error = "OFFICER_RANK_REQUIRED",
-                        message = _localizer["QuickAddOnDuty_OfficerRankRequired"].Value
+                        message = _localizer["QuickAddOnDuty_OfficerRankRequired"].Value,
+                        fix = odFix is null ? null : new { odFix.Label, odFix.Url }
                     })
                     {
                         StatusCode = 403

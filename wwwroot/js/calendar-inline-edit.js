@@ -334,7 +334,7 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, moleculeId, confirmH
                     if (errorResult.error === 'OFFICER_RANK_REQUIRED') {
                         showAcknowledgedError(errorResult.message || (getCurrentCulture() === 'he-IL'
                             ? 'סוג תורנות זה דורש דרגת קצין'
-                            : 'This duty type requires officer rank'));
+                            : 'This duty type requires officer rank'), errorResult.fix);
                         return;
                     }
                 } catch (e) { /* fall through */ }
