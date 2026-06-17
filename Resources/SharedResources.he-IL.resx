@@ -16446,4 +16446,19 @@
   <data name="HelpNav_PersonaDesc_Admin" xml:space="preserve"><value>אתה מקים את המערכת. מרכזי אנשים, ארגון והרשאות מחזיקים משתמשים, מבנה, תפקידים והרשאות; זכאות למשמרות ותורנויות נמצאת בשיבוץ ▸ זכאות.</value></data>
   <data name="HelpNav_Persona_Owner" xml:space="preserve"><value>בעלים / מפעיל</value></data>
   <data name="HelpNav_PersonaDesc_Owner" xml:space="preserve"><value>אתה מפעיל את הפלטפורמה. תובנות מציג בריאות, טלמטריה, ביקורת וניתוחים; מערכת מחזיק דגלי תכונה, אינטגרציות, לוקליזציה ואזור הסכנה נתונים ותפעול.</value></data>
+  <data name="Elig_Reason_AccountType" xml:space="preserve"><value>סוג חשבון שאינו ניתן לשיבוץ</value></data>
+  <data name="Elig_Reason_NoShifts" xml:space="preserve"><value>לא עושה משמרות</value></data>
+  <data name="Elig_Reason_NoChores" xml:space="preserve"><value>לא עושה תורנויות</value></data>
+  <data name="Elig_Reason_NotMember" xml:space="preserve"><value>לא בקטגוריה זו</value></data>
+  <data name="Elig_Editor_ByCategory" xml:space="preserve"><value>לפי קטגוריה</value></data>
+  <data name="Elig_Editor_ByPerson" xml:space="preserve"><value>לפי אדם</value></data>
+  <data name="Elig_Editor_PickCategory" xml:space="preserve"><value>בחר קטגוריה…</value></data>
+  <data name="Elig_Editor_PickPerson" xml:space="preserve"><value>בחר אדם…</value></data>
+  <data name="Elig_Editor_Eligible" xml:space="preserve"><value>זכאי</value></data>
+  <data name="Elig_Editor_NotEligible" xml:space="preserve"><value>חסום / הוסף</value></data>
+  <data name="Elig_Editor_Add" xml:space="preserve"><value>הוסף</value></data>
+  <data name="Elig_Editor_Remove" xml:space="preserve"><value>הסר</value></data>
+  <data name="Elig_Editor_Member" xml:space="preserve"><value>חברים</value></data>
+  <data name="Elig_Editor_ShiftCats" xml:space="preserve"><value>קטגוריות משמרת</value></data>
+  <data name="Elig_Editor_ChoreCats" xml:space="preserve"><value>קטגוריות תורנות</value></data>
 </root>

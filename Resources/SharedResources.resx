@@ -16484,4 +16484,19 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="HelpNav_PersonaDesc_Admin" xml:space="preserve"><value>You set the app up. The People, Organization and Access hubs hold users, structure, roles and grants; shift and chore eligibility lives in Scheduling ▸ Eligibility.</value></data>
   <data name="HelpNav_Persona_Owner" xml:space="preserve"><value>Owner / Operator</value></data>
   <data name="HelpNav_PersonaDesc_Owner" xml:space="preserve"><value>You run the platform. Insights shows health, telemetry, audit and analytics; System holds feature flags, integrations, localization and the Data &amp; Ops danger zone.</value></data>
+  <data name="Elig_Reason_AccountType" xml:space="preserve"><value>Account type can't be assigned</value></data>
+  <data name="Elig_Reason_NoShifts" xml:space="preserve"><value>Doesn't do shifts</value></data>
+  <data name="Elig_Reason_NoChores" xml:space="preserve"><value>Doesn't do chores</value></data>
+  <data name="Elig_Reason_NotMember" xml:space="preserve"><value>Not in this category</value></data>
+  <data name="Elig_Editor_ByCategory" xml:space="preserve"><value>By category</value></data>
+  <data name="Elig_Editor_ByPerson" xml:space="preserve"><value>By person</value></data>
+  <data name="Elig_Editor_PickCategory" xml:space="preserve"><value>Choose a category…</value></data>
+  <data name="Elig_Editor_PickPerson" xml:space="preserve"><value>Choose a person…</value></data>
+  <data name="Elig_Editor_Eligible" xml:space="preserve"><value>Eligible</value></data>
+  <data name="Elig_Editor_NotEligible" xml:space="preserve"><value>Blocked / add</value></data>
+  <data name="Elig_Editor_Add" xml:space="preserve"><value>Add</value></data>
+  <data name="Elig_Editor_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Elig_Editor_Member" xml:space="preserve"><value>Members</value></data>
+  <data name="Elig_Editor_ShiftCats" xml:space="preserve"><value>Shift categories</value></data>
+  <data name="Elig_Editor_ChoreCats" xml:space="preserve"><value>Chore categories</value></data>
 </root>

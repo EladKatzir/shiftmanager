@@ -23,7 +23,13 @@ public interface IEligibilityQueryService
 
     /// <summary>For one user: every shift + chore category in their molecule, with eligibility + reasons. Null if the user doesn't exist.</summary>
     Task<UserEligibilityView?> GetUserEligibilityAsync(int userId);
+
+    /// <summary>Active users in a molecule (id + name) — populates the By-person picker.</summary>
+    Task<IReadOnlyList<UserOption>> GetMoleculeUsersAsync(int moleculeId);
 }
+
+/// <summary>A selectable user in the By-person picker.</summary>
+public sealed record UserOption(int Id, string Name);
 
 /// <summary>A category and its classified candidate list.</summary>
 public sealed record CategoryCandidatesView(int CategoryId, string Name, bool IsChore, IReadOnlyList<CandidateEligibility> Candidates);

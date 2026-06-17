@@ -83,6 +83,12 @@ public class EligibilityQueryService : IEligibilityQueryService
         return new UserEligibilityView(user.Id, user.DisplayName, shiftResult, choreResult);
     }
 
+    public async Task<IReadOnlyList<UserOption>> GetMoleculeUsersAsync(int moleculeId)
+    {
+        var users = await UsersInMoleculeAsync(moleculeId);
+        return users.Select(u => new UserOption(u.Id, u.Name)).ToList();
+    }
+
     private async Task<List<UserRow>> UsersInMoleculeAsync(int moleculeId)
     {
         var companyIds = await _db.Companies.IgnoreQueryFilters()

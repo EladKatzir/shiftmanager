@@ -1,40 +1,182 @@
 @page
-@using Microsoft.AspNetCore.Authorization
 @model ShiftManager.Pages.Scheduling.Eligibility.IndexModel
 @inject Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources> L
-@inject IAuthorizationService Authz
 @{
     Layout = "_Layout";
     ViewData["Title"] = L["Nav2_EligibilityHome_Title"];
-    // Each card carries its destination page's policy; render it only if the user is authorized
-    // for that destination (visibility == access — no click-into-403 inside this page either).
-    var cards = new[]
-    {
-        (href: "/Owner/Blueprints", icon: "layers", key: "Nav2_Blueprints", policy: "Grant:ManagerHomeAccess"),
-        (href: "/Admin/Organization/ChoreTypes", icon: "list-checks", key: "Nav2_ChoreTypes", policy: "Grant:EditChoreTypes"),
-        (href: "/Admin/Users", icon: "users", key: "People", policy: "Grant:ManagerHomeAccess"),
-    };
 }
 
-<p class="lead" style="max-width:62ch;">@L["Nav2_EligibilityHome_Intro"]</p>
+<p class="lead" style="max-width:64ch;">@L["Nav2_EligibilityHome_Intro"]</p>
 
-<div class="elig-home-grid">
-    @foreach (var c in cards)
-    {
-        if ((await Authz.AuthorizeAsync(User, c.policy)).Succeeded)
-        {
-            <a class="elig-home-card" href="@c.href">
-                <span class="elig-home-card__icon"><i data-lucide="@c.icon"></i></span>
-                <span class="elig-home-card__title">@L[c.key]</span>
-            </a>
-        }
-    }
+<div class="elig-tabs" role="tablist">
+    <button type="button" class="elig-tab is-active" data-tab="category" role="tab">@L["Elig_Editor_ByCategory"]</button>
+    <button type="button" class="elig-tab" data-tab="person" role="tab">@L["Elig_Editor_ByPerson"]</button>
 </div>
 
+<div class="elig-panel" id="panel-category">
+    <select id="catSelect" class="form-select" style="max-width:360px;">
+        <option value="">@L["Elig_Editor_PickCategory"]</option>
+        @if (Model.ShiftCategoryOptions.Any())
+        {
+            <optgroup label="@L["Elig_Editor_ShiftCats"]">
+                @foreach (var c in Model.ShiftCategoryOptions)
+                {
+                    <option value="s:@c.Id">@c.Name</option>
+                }
+            </optgroup>
+        }
+        @if (Model.ChoreCategoryOptions.Any())
+        {
+            <optgroup label="@L["Elig_Editor_ChoreCats"]">
+                @foreach (var c in Model.ChoreCategoryOptions)
+                {
+                    <option value="c:@c.Id">@c.Name</option>
+                }
+            </optgroup>
+        }
+    </select>
+    <div id="catResults" class="elig-results"></div>
+</div>
+
+<div class="elig-panel" id="panel-person" hidden>
+    <select id="personSelect" class="form-select" style="max-width:360px;">
+        <option value="">@L["Elig_Editor_PickPerson"]</option>
+        @foreach (var u in Model.UserOptions)
+        {
+            <option value="@u.Id">@u.Name</option>
+        }
+    </select>
+    <div id="personResults" class="elig-results"></div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+(function () {
+    const T = {
+        eligible: @Html.Raw(Json.Serialize(L["Elig_Editor_Eligible"].Value)),
+        notEligible: @Html.Raw(Json.Serialize(L["Elig_Editor_NotEligible"].Value)),
+        add: @Html.Raw(Json.Serialize(L["Elig_Editor_Add"].Value)),
+        remove: @Html.Raw(Json.Serialize(L["Elig_Editor_Remove"].Value)),
+        member: @Html.Raw(Json.Serialize(L["Elig_Editor_Member"].Value)),
+        shiftCats: @Html.Raw(Json.Serialize(L["Elig_Editor_ShiftCats"].Value)),
+        choreCats: @Html.Raw(Json.Serialize(L["Elig_Editor_ChoreCats"].Value))
+    };
+    const tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
+    const token = tokenEl ? tokenEl.value : '';
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // ---- tabs ----
+    document.querySelectorAll('.elig-tab').forEach(btn => btn.addEventListener('click', () => {
+        document.querySelectorAll('.elig-tab').forEach(b => b.classList.toggle('is-active', b === btn));
+        document.getElementById('panel-category').hidden = btn.dataset.tab !== 'category';
+        document.getElementById('panel-person').hidden = btn.dataset.tab !== 'person';
+    }));
+
+    function reasonsHtml(reasons) {
+        if (!reasons || !reasons.length) return '';
+        return '<span class="elig-reasons">' + reasons.map(r => '<span class="elig-chip">' + esc(r) + '</span>').join('') + '</span>';
+    }
+
+    function rowHtml(c, categoryId, isChore) {
+        const btnLabel = c.member ? T.remove : T.add;
+        const btnCls = c.member ? 'btn-ghost' : 'btn-primary';
+        const status = c.eligible ? '<span class="elig-ok">✓</span>' : '<span class="elig-warn">!</span>';
+        return '<div class="elig-row' + (c.eligible ? '' : ' is-blocked') + '">' +
+            '<span class="elig-row__status">' + status + '</span>' +
+            '<span class="elig-row__name">' + esc(c.name) + '</span>' +
+            reasonsHtml(c.reasons) +
+            '<button type="button" class="btn ' + btnCls + ' btn-sm elig-toggle" ' +
+              'data-user="' + c.userId + '" data-cat="' + categoryId + '" data-chore="' + (isChore ? '1' : '0') + '" data-add="' + (c.member ? '0' : '1') + '">' +
+              esc(btnLabel) + '</button>' +
+            '</div>';
+    }
+
+    async function loadCategory(catVal) {
+        const results = document.getElementById('catResults');
+        if (!catVal) { results.innerHTML = ''; return; }
+        const isChore = catVal[0] === 'c';
+        const id = catVal.slice(2);
+        results.innerHTML = '<p class="subtitle">…</p>';
+        const resp = await fetch('?handler=Category&id=' + encodeURIComponent(id) + '&chore=' + isChore);
+        if (!resp.ok) { results.innerHTML = ''; return; }
+        const data = await resp.json();
+        const members = data.candidates.filter(c => c.member);
+        const others = data.candidates.filter(c => !c.member);
+        results.innerHTML =
+            '<h3 class="elig-section-h">' + esc(T.member) + ' (' + members.length + ')</h3>' +
+            (members.map(c => rowHtml(c, id, data.isChore)).join('') || '<p class="subtitle">—</p>') +
+            '<h3 class="elig-section-h">' + esc(T.notEligible) + ' / +</h3>' +
+            (others.map(c => rowHtml(c, id, data.isChore)).join('') || '<p class="subtitle">—</p>');
+        bindToggles(() => loadCategory(catVal));
+    }
+
+    function personCatRow(c) {
+        const btnLabel = c.member ? T.remove : T.add;
+        const btnCls = c.member ? 'btn-ghost' : 'btn-primary';
+        const status = c.eligible ? '<span class="elig-ok">✓</span>' : '<span class="elig-warn">!</span>';
+        return '<div class="elig-row' + (c.eligible ? '' : ' is-blocked') + '">' +
+            '<span class="elig-row__status">' + status + '</span>' +
+            '<span class="elig-row__name">' + esc(c.name) + '</span>' +
+            reasonsHtml(c.reasons) +
+            '<button type="button" class="btn ' + btnCls + ' btn-sm elig-toggle" ' +
+              'data-user="' + window.__eligUser + '" data-cat="' + c.categoryId + '" data-chore="' + (c.isChore ? '1' : '0') + '" data-add="' + (c.member ? '0' : '1') + '">' +
+              esc(btnLabel) + '</button>' +
+            '</div>';
+    }
+
+    async function loadPerson(userId) {
+        const results = document.getElementById('personResults');
+        if (!userId) { results.innerHTML = ''; return; }
+        window.__eligUser = userId;
+        results.innerHTML = '<p class="subtitle">…</p>';
+        const resp = await fetch('?handler=Person&userId=' + encodeURIComponent(userId));
+        if (!resp.ok) { results.innerHTML = ''; return; }
+        const data = await resp.json();
+        results.innerHTML =
+            '<h3 class="elig-section-h">' + esc(T.shiftCats) + '</h3>' +
+            (data.shift.map(personCatRow).join('') || '<p class="subtitle">—</p>') +
+            '<h3 class="elig-section-h">' + esc(T.choreCats) + '</h3>' +
+            (data.chore.map(personCatRow).join('') || '<p class="subtitle">—</p>');
+        bindToggles(() => loadPerson(userId));
+    }
+
+    function bindToggles(reload) {
+        document.querySelectorAll('.elig-toggle').forEach(btn => btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            const body = {
+                userId: parseInt(btn.dataset.user, 10),
+                categoryId: parseInt(btn.dataset.cat, 10),
+                isChore: btn.dataset.chore === '1',
+                add: btn.dataset.add === '1'
+            };
+            const resp = await fetch('?handler=Toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(body)
+            });
+            if (resp.ok) reload(); else btn.disabled = false;
+        }));
+    }
+
+    document.getElementById('catSelect').addEventListener('change', e => loadCategory(e.target.value));
+    document.getElementById('personSelect').addEventListener('change', e => loadPerson(e.target.value));
+})();
+</script>
+
 <style>
-    .elig-home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
-    .elig-home-card { display: flex; flex-direction: column; gap: 0.6rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: 0.75rem; background: var(--surface); color: var(--text); text-decoration: none; transition: border-color 0.15s ease, transform 0.15s ease; }
-    .elig-home-card:hover { border-color: var(--primary); transform: translateY(-2px); }
-    .elig-home-card__icon { color: var(--primary); }
-    .elig-home-card__title { font-weight: 600; }
+    .elig-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); margin: 1rem 0; }
+    .elig-tab { padding: 0.6rem 1rem; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 600; cursor: pointer; }
+    .elig-tab.is-active { color: var(--primary); border-bottom-color: var(--primary); }
+    .elig-results { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+    .elig-section-h { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 1rem 0 0.25rem; font-weight: 700; }
+    .elig-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); }
+    .elig-row.is-blocked { border-color: var(--warning, #e0a800); }
+    .elig-row__status { width: 1.2rem; text-align: center; }
+    .elig-row__name { font-weight: 600; flex: 0 0 auto; min-width: 8rem; }
+    .elig-ok { color: var(--success, #16a34a); }
+    .elig-warn { color: var(--warning, #e0a800); font-weight: 700; }
+    .elig-reasons { display: flex; flex-wrap: wrap; gap: 0.3rem; flex: 1 1 auto; }
+    .elig-chip { font-size: 0.72rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--surface-soft, rgba(127,127,127,0.12)); color: var(--muted); }
+    .elig-toggle { margin-inline-start: auto; }
 </style>
