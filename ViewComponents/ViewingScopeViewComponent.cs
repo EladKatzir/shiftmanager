@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
@@ -17,12 +18,14 @@ public class ViewingScopeViewComponent : ViewComponent
     private readonly IDirectorService _director;
     private readonly ICompanyFilterService _filter;
     private readonly AppDbContext _db;
+    private readonly IAuthorizationService _authz;
 
-    public ViewingScopeViewComponent(IDirectorService director, ICompanyFilterService filter, AppDbContext db)
+    public ViewingScopeViewComponent(IDirectorService director, ICompanyFilterService filter, AppDbContext db, IAuthorizationService authz)
     {
         _director = director;
         _filter = filter;
         _db = db;
+        _authz = authz;
     }
 
     public record ScopeCompany(int Id, string Name);
@@ -30,6 +33,11 @@ public class ViewingScopeViewComponent : ViewComponent
 
     public async Task<IViewComponentResult> InvokeAsync()
     {
+        // Visibility == access: the control only renders if the user passes the SAME policy the
+        // /Director/SetScope endpoint enforces (DirectorHubAccess) — so it can never be a visible-but-403.
+        var authorized = await _authz.AuthorizeAsync(HttpContext.User, "Grant:DirectorHubAccess");
+        if (!authorized.Succeeded) return Content(string.Empty);
+
         var companyIds = await _director.GetDirectorCompanyIdsAsync();
         if (companyIds.Count <= 1) return Content(string.Empty); // not a multi-company overseer → no control
 
