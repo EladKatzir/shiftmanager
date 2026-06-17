@@ -340,6 +340,9 @@ builder.Services.AddScoped<IChoreCategoryService, ChoreCategoryService>();
 builder.Services.AddScoped<IDraftModeService, DraftModeService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+// Domain-hub navigation (Model B redesign) — policy-derived visibility behind FF_NEW_NAV.
+builder.Services.AddScoped<ShiftManager.Services.Navigation.INavigationService, ShiftManager.Services.Navigation.NavigationService>();
+
 // v3.0 Grant Authorization
 builder.Services.AddScoped<IAuthorizationHandler, GrantAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, GrantPolicyProvider>();

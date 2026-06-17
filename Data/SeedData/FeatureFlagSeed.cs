@@ -26,6 +26,8 @@ public static class FeatureFlagSeed
             // ============================================================
             // NOTE: NewNavEnabled, ScopeSwitcherEnabled, NewCalendarStyles removed — features are permanently active, no fallback UI exists.
             F(Flags.WidgetsEnabled, "Enables the dashboard widgets system (On-Call Widget, Quick Actions, etc.)", now),
+            // Domain-hub navigation (Model B) — seeded DISABLED; enable per company after the new IA is verified. Off = legacy nav, byte-identical.
+            FDisabled(Flags.NewNav, "Enables the domain-hub navigation redesign (new sidebar, header context controls, command palette). Off = legacy navigation, unchanged.", now),
 
             // ============================================================
             // Excel Calendar Feature Flags (existing)
@@ -169,6 +171,8 @@ public static class FeatureFlagSeed
         // UI flags
         // Removed: NewNavEnabled, ScopeSwitcherEnabled, NewCalendarStyles — permanently active, no fallback UI
         public const string WidgetsEnabled = "FF_WIDGETS_ENABLED";
+        // Domain-hub navigation redesign (Model B). OFF = legacy sidebar/header, byte-identical.
+        public const string NewNav = "FF_NEW_NAV";
 
         // Excel Calendar flags
         public const string ExcelCalendars = "FF_EXCEL_CALENDARS";
