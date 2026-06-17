@@ -16502,4 +16502,10 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Scope_ViewingNofM" xml:space="preserve"><value>Viewing {0} of {1} companies</value></data>
   <data name="Scope_Apply" xml:space="preserve"><value>Apply</value></data>
   <data name="Scope_Tooltip" xml:space="preserve"><value>Choose which companies you're viewing</value></data>
+  <data name="Fix_ChangeRank" xml:space="preserve"><value>Change rank</value></data>
+  <data name="Fix_EditProfile" xml:space="preserve"><value>Edit profile</value></data>
+  <data name="Fix_ChoreRules" xml:space="preserve"><value>Edit chore rules</value></data>
+  <data name="Fix_ManageUser" xml:space="preserve"><value>Manage user</value></data>
+  <data name="Fix_Eligibility" xml:space="preserve"><value>Manage eligibility</value></data>
+  <data name="Fix_ButtonAria" xml:space="preserve"><value>Go to the place to fix this</value></data>
 </root>

@@ -202,8 +202,9 @@ function handleApiError(response, error = null) {
  * Show an error the user must acknowledge via the global FeedbackModal.
  * FeedbackModal is loaded in _Layout.cshtml so it is always available.
  */
-function showAcknowledgedError(message) {
-    window.FeedbackModal.show('error', message);
+function showAcknowledgedError(message, fix) {
+    // fix = { label, url } from the server — renders a "go fix it" button in the modal.
+    window.FeedbackModal.show('error', message, (fix && fix.url) ? { action: fix } : undefined);
 }
 
 /**
@@ -212,13 +213,17 @@ function showAcknowledgedError(message) {
  */
 async function showServerErrorAsync(response, fallbackMessage) {
     var serverMessage = null;
+    var fix = null;
     try {
         var parsed = await response.clone().json();
         if (parsed && typeof parsed.message === 'string' && parsed.message.length > 0) {
             serverMessage = parsed.message;
         }
+        if (parsed && parsed.fix && parsed.fix.url) {
+            fix = { label: parsed.fix.label, url: parsed.fix.url };
+        }
     } catch (e) { /* non-JSON body — fall back */ }
-    showAcknowledgedError(serverMessage || fallbackMessage);
+    showAcknowledgedError(serverMessage || fallbackMessage, fix);
 }
 
 /**
@@ -277,11 +282,11 @@ async function quickAddChore(date, assigneeId, title, choreTypeId = null, confir
                     showToast(retryResult.message || window.AppLocalizer.ChoreCreatedSuccessfully, 'success');
                     triggerCalendarRefresh();
                 } else {
-                    showAcknowledgedError(retryResult.message || window.AppLocalizer.ErrorCreatingChore);
+                    showAcknowledgedError(retryResult.message || window.AppLocalizer.ErrorCreatingChore, retryResult.fix);
                 }
             }
         } else {
-            showAcknowledgedError(result.message || window.AppLocalizer.ErrorCreatingChore);
+            showAcknowledgedError(result.message || window.AppLocalizer.ErrorCreatingChore, result.fix);
         }
     } catch (error) {
         handleApiError(null, error);

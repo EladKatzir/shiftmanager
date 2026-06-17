@@ -346,6 +346,9 @@ builder.Services.AddScoped<ShiftManager.Services.Navigation.INavigationService, 
 // Eligibility editor (Issue 3) — unified "who can do category X / why is Y blocked" query engine.
 builder.Services.AddScoped<ShiftManager.Services.Eligibility.IEligibilityQueryService, ShiftManager.Services.Eligibility.EligibilityQueryService>();
 
+// Actionable failure remediation — maps a failure code to the place to go fix it ("why + Fix button").
+builder.Services.AddScoped<ShiftManager.Services.Remediation.IFailureRemediationService, ShiftManager.Services.Remediation.FailureRemediationService>();
+
 // v3.0 Grant Authorization
 builder.Services.AddScoped<IAuthorizationHandler, GrantAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, GrantPolicyProvider>();

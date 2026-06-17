@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Resources;
 using ShiftManager.Services;
+using ShiftManager.Services.Remediation;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -21,19 +22,22 @@ public class QuickAddChoreModel : PageModel
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<QuickAddChoreModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IFailureRemediationService _remediation;
 
     public QuickAddChoreModel(
         IChoreService choreService,
         INotificationService notificationService,
         IAuditLogService auditLogService,
         ILogger<QuickAddChoreModel> logger,
-        IStringLocalizer<SharedResources> localizer)
+        IStringLocalizer<SharedResources> localizer,
+        IFailureRemediationService remediation)
     {
         _choreService = choreService;
         _notificationService = notificationService;
         _auditLogService = auditLogService;
         _logger = logger;
         _localizer = localizer;
+        _remediation = remediation;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -188,8 +192,18 @@ public class QuickAddChoreModel : PageModel
                     });
                 }
 
-                // Hard error
-                return new JsonResult(new { success = false, message = result.Message })
+                // Hard error — forward the localized reason, the machine key, and a "go fix it" remediation.
+                var hardErr = result.Validation?.Errors.FirstOrDefault();
+                var errKey = hardErr?.Key ?? result.Message;
+                var errMsg = hardErr?.Message ?? result.Message;
+                var fix = _remediation.For(errKey, data.AssigneeId, data.ChoreTypeId);
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = errMsg,
+                    key = errKey,
+                    fix = fix is null ? null : new { fix.Label, fix.Url }
+                })
                 {
                     StatusCode = 400
                 };

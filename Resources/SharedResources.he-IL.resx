@@ -16464,4 +16464,10 @@
   <data name="Scope_ViewingNofM" xml:space="preserve"><value>צופה ב-{0} מתוך {1} חברות</value></data>
   <data name="Scope_Apply" xml:space="preserve"><value>החל</value></data>
   <data name="Scope_Tooltip" xml:space="preserve"><value>בחר אילו חברות אתה צופה בהן</value></data>
+  <data name="Fix_ChangeRank" xml:space="preserve"><value>שנה דרגה</value></data>
+  <data name="Fix_EditProfile" xml:space="preserve"><value>ערוך פרופיל</value></data>
+  <data name="Fix_ChoreRules" xml:space="preserve"><value>ערוך כללי תורנות</value></data>
+  <data name="Fix_ManageUser" xml:space="preserve"><value>נהל משתמש</value></data>
+  <data name="Fix_Eligibility" xml:space="preserve"><value>נהל זכאות</value></data>
+  <data name="Fix_ButtonAria" xml:space="preserve"><value>עבור למקום לתיקון</value></data>
 </root>
