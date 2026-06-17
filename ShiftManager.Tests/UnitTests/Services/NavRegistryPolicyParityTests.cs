@@ -21,7 +21,12 @@ public class NavRegistryPolicyParityTests
 {
     private const string PagesRoot = "ShiftManager.Pages";
 
-    private static string Norm(string r) => ("/" + r.Trim('/')).TrimEnd('/');
+    private static string Norm(string r)
+    {
+        var q = r.IndexOf('?');
+        if (q >= 0) r = r.Substring(0, q); // a "?view=..." route still addresses its base page
+        return ("/" + r.Trim('/')).TrimEnd('/');
+    }
 
     /// <summary>route (case-insensitive, no trailing slash) -> page policy ("Grant:X" or null = authenticated-only).</summary>
     private static Dictionary<string, string?> BuildPagePolicyMap()

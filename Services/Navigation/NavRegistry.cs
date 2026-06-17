@@ -69,6 +69,7 @@ public static class NavRegistry
         // ── People ───────────────────────────────────────────────────────────────
         Hub("Nav2_People", "users",
             Link("People", "/Admin/Users", policy: G("ManagerHomeAccess"), icon: "users", activeMatch: "/Admin/Users"),
+            Link("JoinRequests", "/Admin/Users?view=joinrequests", policy: G("ManagerHomeAccess"), icon: "user-plus"),
             Link("Companies", "/Admin/Companies", policy: G("EditCompany"), icon: "building-2"),
             Link("Announcements", "/Admin/Announcements", policy: G("ManageAnnouncements"), icon: "megaphone"),
             Link("Nav2_HomeTypes", "/Admin/HomeTypes", policy: G("ManageHomeTypes"), icon: "house")),
