@@ -16499,6 +16499,21 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Elig_Editor_Member" xml:space="preserve"><value>Members</value></data>
   <data name="Elig_Editor_ShiftCats" xml:space="preserve"><value>Shift categories</value></data>
   <data name="Elig_Editor_ChoreCats" xml:space="preserve"><value>Chore categories</value></data>
+  <data name="MyElig_Title" xml:space="preserve"><value>My eligibility</value></data>
+  <data name="MyElig_NavLink" xml:space="preserve"><value>My eligibility</value></data>
+  <data name="MyElig_Subtitle" xml:space="preserve"><value>What you can be assigned to — and why not, where you can't.</value></data>
+  <data name="MyElig_Intro" xml:space="preserve"><value>This is set by your managers. If something here should be available to you, ask them to update it.</value></data>
+  <data name="MyElig_Shifts" xml:space="preserve"><value>Shifts</value></data>
+  <data name="MyElig_Chores" xml:space="preserve"><value>Chores</value></data>
+  <data name="MyElig_Available" xml:space="preserve"><value>Available to you</value></data>
+  <data name="MyElig_NotAvailable" xml:space="preserve"><value>Not available to you</value></data>
+  <data name="MyElig_NoneAvailable" xml:space="preserve"><value>Nothing here yet.</value></data>
+  <data name="MyElig_Empty" xml:space="preserve"><value>No shift or chore groups are defined yet.</value></data>
+  <data name="MyElig_AskManager" xml:space="preserve"><value>Ask your manager</value></data>
+  <data name="MyElig_Reason_AccountType" xml:space="preserve"><value>Your account type isn't assigned to these.</value></data>
+  <data name="MyElig_Reason_NoShifts" xml:space="preserve"><value>Shifts are turned off for your account.</value></data>
+  <data name="MyElig_Reason_NoChores" xml:space="preserve"><value>Chores are turned off for your account.</value></data>
+  <data name="MyElig_Reason_NotMember" xml:space="preserve"><value>You're not in this group.</value></data>
   <data name="Scope_ViewingNofM" xml:space="preserve"><value>Viewing {0} of {1} companies</value></data>
   <data name="Scope_Apply" xml:space="preserve"><value>Apply</value></data>
   <data name="Scope_Tooltip" xml:space="preserve"><value>Choose which companies you're viewing</value></data>

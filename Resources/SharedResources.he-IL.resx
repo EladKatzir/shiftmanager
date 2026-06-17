@@ -16461,6 +16461,21 @@
   <data name="Elig_Editor_Member" xml:space="preserve"><value>חברים</value></data>
   <data name="Elig_Editor_ShiftCats" xml:space="preserve"><value>קטגוריות משמרת</value></data>
   <data name="Elig_Editor_ChoreCats" xml:space="preserve"><value>קטגוריות תורנות</value></data>
+  <data name="MyElig_Title" xml:space="preserve"><value>הזכאות שלי</value></data>
+  <data name="MyElig_NavLink" xml:space="preserve"><value>הזכאות שלי</value></data>
+  <data name="MyElig_Subtitle" xml:space="preserve"><value>למה אפשר לשבץ אותך — ולמה לא, היכן שאי אפשר.</value></data>
+  <data name="MyElig_Intro" xml:space="preserve"><value>ההגדרות נקבעות על ידי המנהלים שלך. אם משהו כאן אמור להיות זמין לך, בקש מהם לעדכן.</value></data>
+  <data name="MyElig_Shifts" xml:space="preserve"><value>משמרות</value></data>
+  <data name="MyElig_Chores" xml:space="preserve"><value>תורנויות</value></data>
+  <data name="MyElig_Available" xml:space="preserve"><value>זמין לך</value></data>
+  <data name="MyElig_NotAvailable" xml:space="preserve"><value>לא זמין לך</value></data>
+  <data name="MyElig_NoneAvailable" xml:space="preserve"><value>אין כאן עדיין כלום.</value></data>
+  <data name="MyElig_Empty" xml:space="preserve"><value>עדיין לא הוגדרו קבוצות משמרות או תורנויות.</value></data>
+  <data name="MyElig_AskManager" xml:space="preserve"><value>פנה למנהל שלך</value></data>
+  <data name="MyElig_Reason_AccountType" xml:space="preserve"><value>סוג החשבון שלך אינו משובץ לאלה.</value></data>
+  <data name="MyElig_Reason_NoShifts" xml:space="preserve"><value>משמרות מכובות עבור החשבון שלך.</value></data>
+  <data name="MyElig_Reason_NoChores" xml:space="preserve"><value>תורנויות מכובות עבור החשבון שלך.</value></data>
+  <data name="MyElig_Reason_NotMember" xml:space="preserve"><value>אינך חבר בקבוצה זו.</value></data>
   <data name="Scope_ViewingNofM" xml:space="preserve"><value>צופה ב-{0} מתוך {1} חברות</value></data>
   <data name="Scope_Apply" xml:space="preserve"><value>החל</value></data>
   <data name="Scope_Tooltip" xml:space="preserve"><value>בחר אילו חברות אתה צופה בהן</value></data>

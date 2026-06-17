@@ -120,6 +120,7 @@ public static class NavRegistry
         Hub("Nav_Personal", "user",
             Link("MyProfile", "/My/Profile", icon: "user"),
             Link("My_Settings", "/My/Settings", icon: "settings"),
+            Link("MyElig_NavLink", "/My/Eligibility", icon: "badge-check"),
             Link("MyGroups", "/MyTeam/Index", icon: "users"),
             Link("MyFriends", "/Friends", icon: "heart-handshake", flag: FeatureFlagSeed.Flags.FriendshipsEnabled),
             Link("Help_NavLink", "/My/Help", icon: "help-circle")),
