@@ -16464,4 +16464,24 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Nav2_DatabaseConsole" xml:space="preserve"><value>Database Console</value></data>
   <data name="Nav2_EligibilityHome_Title" xml:space="preserve"><value>Eligibility</value></data>
   <data name="Nav2_EligibilityHome_Intro" xml:space="preserve"><value>Manage who can be assigned to each shift and chore category — the rules and the membership, in one place.</value></data>
+  <data name="HelpNav_Title" xml:space="preserve"><value>Where everything lives</value></data>
+  <data name="HelpNav_Subtitle" xml:space="preserve"><value>Your personal map of the app — and a quick guide for every role.</value></data>
+  <data name="HelpNav_YourMap" xml:space="preserve"><value>Your navigation map</value></data>
+  <data name="HelpNav_YourMap_Desc" xml:space="preserve"><value>Every place you can go, grouped by hub. Built from your own permissions, so it always matches your sidebar.</value></data>
+  <data name="HelpNav_ByRole" xml:space="preserve"><value>Guides by role</value></data>
+  <data name="HelpNav_ByRole_Desc" xml:space="preserve"><value>What each type of user mainly works with.</value></data>
+  <data name="HelpNav_HubCard_Title" xml:space="preserve"><value>Where everything lives</value></data>
+  <data name="HelpNav_HubCard_Desc" xml:space="preserve"><value>A map of the navigation — find any feature, by role.</value></data>
+  <data name="HelpNav_Persona_Employee" xml:space="preserve"><value>Employee / Soldier</value></data>
+  <data name="HelpNav_PersonaDesc_Employee" xml:space="preserve"><value>Your week, time-off and swaps, and your profile. You live in Home, My Schedule, Requests and Me. The bell in the top bar holds your notifications.</value></data>
+  <data name="HelpNav_Persona_Lead" xml:space="preserve"><value>Team Lead</value></data>
+  <data name="HelpNav_PersonaDesc_Lead" xml:space="preserve"><value>You do shifts and run a team. Assign in Scheduling ▸ Calendars (the calendar toolbar holds drafts, fairness and quick-entry); approve your team in Requests; check fairness in Insights ▸ Analytics.</value></data>
+  <data name="HelpNav_Persona_Assigner" xml:space="preserve"><value>Scheduler / Manager</value></data>
+  <data name="HelpNav_PersonaDesc_Assigner" xml:space="preserve"><value>You build the roster. Calendars, Planning (Shift Plans, Master Plans, Templates) and Definitions all sit under Scheduling; clear the queue in Approvals; set who can work what in Scheduling ▸ Eligibility.</value></data>
+  <data name="HelpNav_Persona_Director" xml:space="preserve"><value>Director</value></data>
+  <data name="HelpNav_PersonaDesc_Director" xml:space="preserve"><value>You oversee several companies. Use the company controls in the top bar to switch and scope; cross-company approvals and oversight live under Director Tools and Insights.</value></data>
+  <data name="HelpNav_Persona_Admin" xml:space="preserve"><value>Molecule / Area Admin</value></data>
+  <data name="HelpNav_PersonaDesc_Admin" xml:space="preserve"><value>You set the app up. The People, Organization and Access hubs hold users, structure, roles and grants; shift and chore eligibility lives in Scheduling ▸ Eligibility.</value></data>
+  <data name="HelpNav_Persona_Owner" xml:space="preserve"><value>Owner / Operator</value></data>
+  <data name="HelpNav_PersonaDesc_Owner" xml:space="preserve"><value>You run the platform. Insights shows health, telemetry, audit and analytics; System holds feature flags, integrations, localization and the ⚠ Data &amp; Ops danger zone.</value></data>
 </root>

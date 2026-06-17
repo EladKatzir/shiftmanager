@@ -1,0 +1,99 @@
+@page
+@using ShiftManager.Models.Navigation
+@using ShiftManager.Services.Navigation
+@model ShiftManager.Pages.My.HelpNavigationModel
+@inject INavigationService Nav
+@inject Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources> L
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = L["HelpNav_Title"];
+    var tree = await Nav.GetVisibleNavAsync(User);
+}
+
+<div class="help-page">
+    <div class="help-header">
+        <h1>@L["HelpNav_Title"]</h1>
+        <p class="help-subtitle">@L["HelpNav_Subtitle"]</p>
+    </div>
+
+    @* Section 1 — the current user's own reachable map (auto-built, always accurate) *@
+    <div class="help-section">
+        <h2 class="help-section__title"><span class="help-section__icon">📍</span> @L["HelpNav_YourMap"]</h2>
+        <p class="help-subtitle" style="margin-bottom:1rem;">@L["HelpNav_YourMap_Desc"]</p>
+        <div class="navmap">
+            @foreach (var top in tree)
+            {
+                if (!top.IsGroup)
+                {
+                    <a class="navmap__leaf navmap__leaf--top" href="@top.Route">@L[top.LocKey]</a>
+                }
+                else
+                {
+                    <div class="navmap__hub">
+                        <div class="navmap__hub-title">@L[top.LocKey]</div>
+                        <div class="navmap__items">
+                            @foreach (var child in top.ChildNodes)
+                            {
+                                if (!child.IsGroup)
+                                {
+                                    <a class="navmap__leaf" href="@child.Route">@L[child.LocKey]</a>
+                                }
+                                else
+                                {
+                                    <div class="navmap__sub">@L[child.LocKey]</div>
+                                    @foreach (var leaf in child.ChildNodes)
+                                    {
+                                        <a class="navmap__leaf navmap__leaf--nested" href="@leaf.Route">@L[leaf.LocKey]</a>
+                                    }
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    @* Section 2 — static guide for every rank *@
+    <div class="help-section">
+        <h2 class="help-section__title"><span class="help-section__icon">🧭</span> @L["HelpNav_ByRole"]</h2>
+        <p class="help-subtitle" style="margin-bottom:1rem;">@L["HelpNav_ByRole_Desc"]</p>
+        <div class="role-guide">
+            @foreach (var p in new[] { "Employee", "Lead", "Assigner", "Director", "Admin", "Owner" })
+            {
+                <div class="role-guide__card">
+                    <h3 class="role-guide__name">@L["HelpNav_Persona_" + p]</h3>
+                    <p class="role-guide__desc">@L["HelpNav_PersonaDesc_" + p]</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .help-page { max-width: 880px; margin: 0 auto; padding: 1rem; }
+        .help-header { margin-bottom: 1.5rem; }
+        .help-header h1 { font-size: 1.75rem; font-weight: 700; color: var(--text); margin: 0 0 0.5rem; }
+        .help-subtitle { color: var(--muted); margin: 0; }
+        .help-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .help-section__title { display: flex; align-items: center; gap: 0.5rem; font-size: 1.15rem; font-weight: 600; color: var(--text); margin: 0 0 0.5rem; }
+
+        .navmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1rem; }
+        .navmap__hub { border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; background: var(--surface-soft, var(--bg)); }
+        .navmap__hub-title { font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+        .navmap__items { display: flex; flex-direction: column; gap: 0.15rem; }
+        .navmap__sub { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0.4rem 0 0.1rem; }
+        .navmap__leaf { display: block; padding: 0.3rem 0.4rem; border-radius: 6px; color: var(--text); text-decoration: none; font-size: 0.92rem; }
+        .navmap__leaf:hover { background: var(--surface-soft, rgba(127,127,127,0.1)); color: var(--primary); }
+        .navmap__leaf--nested { padding-inline-start: 0.9rem; }
+        .navmap__leaf--top { font-weight: 600; }
+
+        .role-guide { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+        .role-guide__card { border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.15rem; background: var(--surface-soft, var(--bg)); }
+        .role-guide__name { font-size: 1rem; font-weight: 700; color: var(--primary); margin: 0 0 0.4rem; }
+        .role-guide__desc { font-size: 0.9rem; color: var(--muted); line-height: 1.55; margin: 0; }
+
+        @@media (max-width: 768px) { .help-page { padding: 0.5rem; } .navmap, .role-guide { grid-template-columns: 1fr; } }
+    </style>
+}

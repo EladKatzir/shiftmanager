@@ -16426,4 +16426,24 @@
   <data name="Nav2_DatabaseConsole" xml:space="preserve"><value>קונסולת מסד נתונים</value></data>
   <data name="Nav2_EligibilityHome_Title" xml:space="preserve"><value>זכאות</value></data>
   <data name="Nav2_EligibilityHome_Intro" xml:space="preserve"><value>נהל מי זכאי לכל קטגוריית משמרת ותורנות — הכללים והחברות, במקום אחד.</value></data>
+  <data name="HelpNav_Title" xml:space="preserve"><value>איפה כל דבר נמצא</value></data>
+  <data name="HelpNav_Subtitle" xml:space="preserve"><value>מפה אישית של המערכת — ומדריך מהיר לכל תפקיד.</value></data>
+  <data name="HelpNav_YourMap" xml:space="preserve"><value>מפת הניווט שלך</value></data>
+  <data name="HelpNav_YourMap_Desc" xml:space="preserve"><value>כל מקום שאליו אפשר להגיע, מקובץ לפי מרכז. נבנה מההרשאות שלך, כך שתמיד תואם לסרגל הצד.</value></data>
+  <data name="HelpNav_ByRole" xml:space="preserve"><value>מדריכים לפי תפקיד</value></data>
+  <data name="HelpNav_ByRole_Desc" xml:space="preserve"><value>במה כל סוג משתמש עובד בעיקר.</value></data>
+  <data name="HelpNav_HubCard_Title" xml:space="preserve"><value>איפה כל דבר נמצא</value></data>
+  <data name="HelpNav_HubCard_Desc" xml:space="preserve"><value>מפה של הניווט — מצא כל יכולת, לפי תפקיד.</value></data>
+  <data name="HelpNav_Persona_Employee" xml:space="preserve"><value>עובד / חייל</value></data>
+  <data name="HelpNav_PersonaDesc_Employee" xml:space="preserve"><value>השבוע שלך, חופשות והחלפות, והפרופיל שלך. אתה נמצא בבית, הלוח שלי, בקשות ואישי. הפעמון בסרגל העליון מחזיק את ההתראות שלך.</value></data>
+  <data name="HelpNav_Persona_Lead" xml:space="preserve"><value>ראש צוות</value></data>
+  <data name="HelpNav_PersonaDesc_Lead" xml:space="preserve"><value>אתה עושה משמרות ומנהל צוות. שבץ בשיבוץ ▸ לוחות שנה (סרגל הכלים של הלוח מחזיק טיוטות, הוגנות והזנה מהירה); אשר לצוות שלך בבקשות; בדוק הוגנות בתובנות ▸ ניתוחים.</value></data>
+  <data name="HelpNav_Persona_Assigner" xml:space="preserve"><value>משבץ / מנהל</value></data>
+  <data name="HelpNav_PersonaDesc_Assigner" xml:space="preserve"><value>אתה בונה את הסידור. לוחות שנה, תכנון (תוכניות משמרות, תוכניות אב, תבניות) והגדרות נמצאים תחת שיבוץ; טפל בתור באישורים; הגדר מי זכאי למה בשיבוץ ▸ זכאות.</value></data>
+  <data name="HelpNav_Persona_Director" xml:space="preserve"><value>מנהל אזורי</value></data>
+  <data name="HelpNav_PersonaDesc_Director" xml:space="preserve"><value>אתה מפקח על כמה חברות. השתמש בבקרות החברה בסרגל העליון כדי להחליף ולמקד; אישורים בין-חברתיים ובקרה נמצאים תחת כלי מפקד ותובנות.</value></data>
+  <data name="HelpNav_Persona_Admin" xml:space="preserve"><value>מנהל מולקולה / אזור</value></data>
+  <data name="HelpNav_PersonaDesc_Admin" xml:space="preserve"><value>אתה מקים את המערכת. מרכזי אנשים, ארגון והרשאות מחזיקים משתמשים, מבנה, תפקידים והרשאות; זכאות למשמרות ותורנויות נמצאת בשיבוץ ▸ זכאות.</value></data>
+  <data name="HelpNav_Persona_Owner" xml:space="preserve"><value>בעלים / מפעיל</value></data>
+  <data name="HelpNav_PersonaDesc_Owner" xml:space="preserve"><value>אתה מפעיל את הפלטפורמה. תובנות מציג בריאות, טלמטריה, ביקורת וניתוחים; מערכת מחזיק דגלי תכונה, אינטגרציות, לוקליזציה ואזור הסכנה ⚠ נתונים ותפעול.</value></data>
 </root>
