@@ -385,25 +385,39 @@
                 })
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || (window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign user'));
-            }
+            // Parse once so we can surface the server's "why + go fix it" payload on failure.
+            const result = await response.json().catch(() => null);
 
-            const result = await response.json();
-
-            if (result.success) {
+            if (response.ok && result && result.success) {
                 showToast(window.AppLocalizer?.Roster_AssignedSuccess || 'Employee assigned successfully', 'success');
 
                 // Refresh calendar data or reload as fallback
                 if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { window.location.reload(); }
-            } else {
-                throw new Error(result.error || (window.AppLocalizer?.Roster_AssignmentFailed || 'Assignment failed'));
+                return;
             }
+
+            // Failure: show WHY, plus a button to the exact place to fix it when the server supplies one
+            // (e.g. assignee lacks officer rank -> their profile; not category-eligible -> Eligibility editor).
+            const message = (result && (result.error || result.message))
+                || (window.AppLocalizer?.Roster_AssignmentFailed || 'Assignment failed');
+            showRosterAssignmentError(message, result && result.fix);
 
         } catch (error) {
             Logger.error('RosterDock', 'Assignment error:', error);
-            showToast(error.message || (window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign employee'), 'error');
+            showToast(window.AppLocalizer?.Roster_FailedToAssign || 'Failed to assign employee', 'error');
+        }
+    }
+
+    /**
+     * Surface an assignment failure with the optional "go fix it" remediation button — the same
+     * why+fix affordance the calendar quick-add paths use (FeedbackModal action link). Falls back to
+     * a toast when FeedbackModal isn't present so the reason is never silently dropped.
+     */
+    function showRosterAssignmentError(message, fix) {
+        if (window.FeedbackModal && typeof window.FeedbackModal.show === 'function') {
+            window.FeedbackModal.show('error', message, (fix && fix.url) ? { action: fix } : undefined);
+        } else {
+            showToast(message, 'error');
         }
     }
 
