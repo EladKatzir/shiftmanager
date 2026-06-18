@@ -9,7 +9,6 @@
 @inject IViewAsModeService ViewAsModeService
 @inject IFeatureFlagService FeatureFlagService
 @inject IAreaPaletteService AreaPaletteService
-@inject ShiftManager.Services.Navigation.INavigationService NavService
 @{
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
@@ -494,212 +493,9 @@
             }
 
             @* Navigation - Unified sidebar: all access controlled via per-item grants *@
-            <nav class="app-sidebar-nav"@(NavService.IsNewNavEnabled() ? " data-nav=\"v2\"" : null)>
-            @if (NavService.IsNewNavEnabled())
-            {
+            @* Domain-hub navigation — the only nav (FF_NEW_NAV retired; legacy sidebar deleted). *@
+            <nav class="app-sidebar-nav" data-nav="v2">
                 <partial name="_NavSidebar" />
-            }
-            else
-            {
-                @* === MY SHIFTY === *@
-                <div class="nav-section-header"><loc key="Calendar_MyCalendar" /></div>
-
-                <a href="/Home/Index" class="app-sidebar-nav-item @(currentPath == "/" || currentPath == "/Home" || currentPath == "/Home/Index" ? "active" : "")">
-                    <span class="app-sidebar-nav-icon"><i data-lucide="home"></i></span>
-                    <span><loc key="Home" /></span>
-                </a>
-                <require-grant key="ManagerHomeAccess">
-                    <a href="/Admin/Index" class="app-sidebar-nav-item @(currentPath == "/Admin/Index" || currentPath == "/Admin" ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="gauge"></i></span>
-                        <span><loc key="Nav_CommandCenter" /></span>
-                    </a>
-                </require-grant>
-                <a href="@shiftsCalendarUrl" class="app-sidebar-nav-item @((currentPath.StartsWith("/Calendar") && !currentPath.StartsWith("/Calendar/Overview") && !currentPath.StartsWith("/Calendar/Table") && !currentPath.StartsWith("/Calendar/Chores") && !currentPath.StartsWith("/Calendar/OnCall")) || currentPath.StartsWith("/Schedule") ? "active" : "")">
-                    <span class="app-sidebar-nav-icon"><i data-lucide="calendar"></i></span>
-                    <span><loc key="Schedule" /></span>
-                </a>
-                <a href="/Calendar/Overview" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar/Overview") ? "active" : "")">
-                    <span class="app-sidebar-nav-icon"><i data-lucide="eye"></i></span>
-                    <span><loc key="CompanyOverview" /></span>
-                </a>
-                <require-grant key="ManagerHomeAccess">
-                    <a href="/Requests/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/Requests") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="file-text"></i></span>
-                        <span><loc key="Requests" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="ManagerHomeAccess" negate="true">
-                    <a href="/My/Requests" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Requests") || currentPath.StartsWith("/Requests") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="file-text"></i></span>
-                        <span><loc key="Requests" /></span>
-                    </a>
-                </require-grant>
-
-                @* === MANAGEMENT — only if user has any management items === *@
-                @* KEEP IN SYNC: This grant list must include ALL grants used for items in this section *@
-                <require-grant key="ManagerHomeAccess,ViewChores,ViewDuties,ManageOnDuty" mode="any">
-                    <div class="nav-section-header"><loc key="Calendar_Management" /></div>
-                </require-grant>
-
-                <require-grant key="ManagerHomeAccess">
-                    @if (shiftsTableUrl != shiftsCalendarUrl)
-                    {
-                        <a href="@shiftsTableUrl" class="app-sidebar-nav-item @(currentPath.StartsWith("/Calendar/Table") ? "active" : "")">
-                            <span class="app-sidebar-nav-icon"><i data-lucide="table"></i></span>
-                            <span><loc key="Calendar_ShiftsManagement" /></span>
-                        </a>
-                    }
-                </require-grant>
-                <require-grant key="ManagerHomeAccess">
-                    <a href="/Owner/Programs" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner/Programs") || currentPath.StartsWith("/Owner/MasterPrograms") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="clipboard-list"></i></span>
-                        <span><loc key="Nav_ShiftPlans" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="ManagerHomeAccess">
-                    <a href="/Owner/Blueprints" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner/Blueprints") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="layers"></i></span>
-                        <span><loc key="Nav_Blueprints" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="ViewChores">
-                    <a href="@choresCalendarUrl" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/Chores") || currentPath.StartsWith("/Calendar/Chores") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="brush"></i></span>
-                        <span><loc key="Chores" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="ViewDuties">
-                    <a href="@onCallCalendarUrl" class="app-sidebar-nav-item @(currentPath.StartsWith("/Public/OnDuty") || currentPath.StartsWith("/Calendar/OnCall") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="pin"></i></span>
-                        <span><loc key="OnDuty" /></span>
-                    </a>
-                </require-grant>
-                @if (FeatureFlagService.IsEnabled(FeatureFlagSeed.Flags.DutyRotationEnabled))
-                {
-                    <require-grant key="ManageOnDuty">
-                        <a href="/Admin/DutyRotation" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/DutyRotation") ? "active" : "")">
-                            <span class="app-sidebar-nav-icon"><i data-lucide="refresh-cw"></i></span>
-                            <span><loc key="DutyRotations" /></span>
-                        </a>
-                    </require-grant>
-                }
-
-                @* === DIRECTOR TOOLS — only if user has DirectorHubAccess === *@
-                <require-grant key="DirectorHubAccess">
-                    <div class="nav-section-header"><loc key="Section_DirectorTools" /></div>
-
-                    <a href="/Director/ViewAsMode" class="app-sidebar-nav-item @(currentPath.StartsWith("/Director/ViewAs") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="eye-off"></i></span>
-                        <span><loc key="Section_ViewAsManager" /></span>
-                    </a>
-                    <a href="/Director/NotificationHub" class="app-sidebar-nav-item @(currentPath.StartsWith("/Director/Notification") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="bell-ring"></i></span>
-                        <span><loc key="NotificationHub" /></span>
-                    </a>
-                    <a href="/Director/CompanyFilter" class="app-sidebar-nav-item @(currentPath.StartsWith("/Director/CompanyFilter") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="filter"></i></span>
-                        <span><loc key="CompanyFilter" /></span>
-                    </a>
-                </require-grant>
-
-                @* === ADMIN — only if user has any admin items === *@
-                @* KEEP IN SYNC: This grant list must include ALL grants used for items in this section *@
-                <require-grant key="ViewUsers,EditCompany,ViewAnalytics,ViewAuditLog,ViewSettings,ManageAnnouncements,ManagerHomeAccess" mode="any">
-                    <div class="nav-section-header"><loc key="Nav_Admin" /></div>
-                </require-grant>
-
-                <require-grant key="ViewUsers">
-                    <a href="/Admin/Users" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Users") || currentPath.StartsWith("/Admin/EditProfile") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="users"></i></span>
-                        <span><loc key="People" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="EditCompany">
-                    <a href="/Admin/Companies" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Companies") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="building-2"></i></span>
-                        <span><loc key="Companies" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="ViewAnalytics">
-                    <a href="/Admin/Analytics" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Analytics") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="bar-chart-3"></i></span>
-                        <span><loc key="Analytics" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="ViewAuditLog">
-                    <a href="/Admin/AuditLog" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/AuditLog") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="search"></i></span>
-                        <span><loc key="AuditLog" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="ViewSettings">
-                    <a href="/Admin/Config" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Config") || currentPath.StartsWith("/Admin/Settings") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="settings"></i></span>
-                        <span><loc key="Settings" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="ManageAnnouncements">
-                    <a href="/Admin/Announcements" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Announcements") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="megaphone"></i></span>
-                        <span><loc key="Announcements" /></span>
-                    </a>
-                </require-grant>
-                <require-grant key="ViewHierarchy,ManagerHomeAccess">
-                    <a href="/Admin/Organization" class="app-sidebar-nav-item @(currentPath.StartsWith("/Admin/Organization") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="git-branch"></i></span>
-                        <span><loc key="Organization" /></span>
-                    </a>
-                </require-grant>
-
-                @* === OWNER PANEL — only if user has AdminAccess === *@
-                <require-grant key="AdminAccess">
-                    <div class="nav-section-header"><loc key="Owner_AdminPanel" /></div>
-
-                    <a href="/Owner/Index" class="app-sidebar-nav-item @(currentPath == "/Owner/Index" || currentPath == "/Owner" || currentPath.StartsWith("/Owner/Hub") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="shield"></i></span>
-                        <span><loc key="Owner_AdminPanel" /></span>
-                    </a>
-                    <a href="/Owner/Telemetry" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner/Telemetry") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="activity"></i></span>
-                        <span><loc key="Telemetry" /></span>
-                    </a>
-                    <a href="/Owner/FeatureFlags" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner/FeatureFlags") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="toggle-left"></i></span>
-                        <span><loc key="Nav_FeatureFlags" /></span>
-                    </a>
-                    <a href="/Owner/SystemHealth" class="app-sidebar-nav-item @(currentPath.StartsWith("/Owner/SystemHealth") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="heart-pulse"></i></span>
-                        <span><loc key="SystemHealth" /></span>
-                    </a>
-                </require-grant>
-
-                @* === PERSONAL === *@
-                <div class="nav-section-header"><loc key="Nav_Personal" /></div>
-
-                <a href="/MyTeam/Index" class="app-sidebar-nav-item @(currentPath.StartsWith("/MyTeam") ? "active" : "")">
-                    <span class="app-sidebar-nav-icon"><i data-lucide="users"></i></span>
-                    <span><loc key="MyGroups" /></span>
-                </a>
-                @if (friendshipsEnabled)
-                {
-                    <a href="/Friends" class="app-sidebar-nav-item @(currentPath.StartsWith("/Friends") ? "active" : "")">
-                        <span class="app-sidebar-nav-icon"><i data-lucide="heart-handshake"></i></span>
-                        <span><loc key="MyFriends" /></span>
-                    </a>
-                }
-                <a href="/My/Profile" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Profile") ? "active" : "")">
-                    <span class="app-sidebar-nav-icon"><i data-lucide="user"></i></span>
-                    <span><loc key="MyProfile" /></span>
-                </a>
-                <a href="/My/Settings" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Settings") ? "active" : "")">
-                    <span class="app-sidebar-nav-icon"><i data-lucide="settings"></i></span>
-                    <span><loc key="My_Settings" /></span>
-                </a>
-                <a href="/My/Help" class="app-sidebar-nav-item @(currentPath.StartsWith("/My/Help") ? "active" : "")">
-                    <span class="app-sidebar-nav-icon"><i data-lucide="help-circle"></i></span>
-                    <span><loc key="Help_NavLink" /></span>
-                </a>
-            }
             </nav>
 
             @* On-Call Widget moved to Bottom Dock (Sprint 6) *@
@@ -800,11 +596,8 @@
                             @await Component.InvokeAsync("DecisionRibbon")
                         }
 
-                        @* Viewing-scope control (design-bar / company-context primitive) — new nav only *@
-                        @if (NavService.IsNewNavEnabled())
-                        {
-                            @await Component.InvokeAsync("ViewingScope")
-                        }
+                        @* Viewing-scope control (design-bar / company-context primitive) — self-hides for non-directors / single-company users. *@
+                        @await Component.InvokeAsync("ViewingScope")
 
                         @* Notifications *@
                         <a href="/My/NotificationCenter" class="action-btn" style="position: relative;" aria-label="@Localizer["Nav_Notifications"]">

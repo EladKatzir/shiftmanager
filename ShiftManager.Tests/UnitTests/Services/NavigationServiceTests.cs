@@ -47,27 +47,6 @@ public class NavigationServiceTests
     }
 
     [Fact]
-    public void IsNewNavEnabled_False_WhenUnauthenticated()
-    {
-        var svc = Build(authorizeAll: true, flagsOn: true, authenticated: false);
-        Assert.False(svc.IsNewNavEnabled());
-    }
-
-    [Fact]
-    public void IsNewNavEnabled_True_WhenAuthenticatedAndFlagOn()
-    {
-        var svc = Build(authorizeAll: true, flagsOn: true);
-        Assert.True(svc.IsNewNavEnabled());
-    }
-
-    [Fact]
-    public void IsNewNavEnabled_False_WhenFlagOff()
-    {
-        var svc = Build(authorizeAll: true, flagsOn: false);
-        Assert.False(svc.IsNewNavEnabled());
-    }
-
-    [Fact]
     public async Task Owner_SeesEveryHub()
     {
         var svc = Build(authorizeAll: true, flagsOn: true);

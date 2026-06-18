@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Navigation;
 
 namespace ShiftManager.Services.Navigation;
@@ -23,10 +22,6 @@ public class NavigationService : INavigationService
     }
 
     private int? UserIdOrNull => _currentUser.IsAuthenticated ? _currentUser.UserId : null;
-
-    public bool IsNewNavEnabled()
-        => _currentUser.IsAuthenticated
-           && _flags.IsEnabled(FeatureFlagSeed.Flags.NewNav, UserIdOrNull, _currentUser.CompanyId);
 
     public async Task<IReadOnlyList<NavNode>> GetVisibleNavAsync(ClaimsPrincipal user)
     {
