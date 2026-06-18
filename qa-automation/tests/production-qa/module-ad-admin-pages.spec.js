@@ -451,7 +451,7 @@ test.describe('Module AD: Diagnostic & Seed Verification (P1)', () => {
     // STRICT: At least the base company should appear
     const pageText = await page.locator('body').innerText();
     // The hierarchy has known company names from seed data
-    const hasCompanies = /company|חברה|tzafona|hir|alhut|text|br|hakam/i.test(pageText);
+    const hasCompanies = /company|דסק|חברה|tzafona|hir|alhut|text|br|hakam/i.test(pageText);
     expect(hasCompanies).toBe(true);
 
     await saveEvidence(page, EVIDENCE, 'AD-28-seeded-companies.png');

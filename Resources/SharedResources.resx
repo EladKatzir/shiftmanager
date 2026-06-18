@@ -6441,7 +6441,7 @@ Are you absolutely sure you want to delete this user?</value>
     <comment>A-015 - Placeholder for company name input</comment>
   </data>
   <data name="Placeholder_CompanyNameHe" xml:space="preserve">
-    <value>החברה שלי בע"מ</value>
+    <value>הדסק שלי בע"מ</value>
     <comment>Placeholder for Hebrew company name input (intentionally Hebrew in both cultures — it's a Hebrew-language sample)</comment>
   </data>
   <data name="CompanyNameHe_ClearHint" xml:space="preserve">

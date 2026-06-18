@@ -224,19 +224,19 @@
     <value>פתח אישורים</value>
   </data>
   <data name="CompaniesOverview" xml:space="preserve">
-    <value>סקירת חברות</value>
+    <value>סקירת דסקים</value>
   </data>
   <data name="NextDayOff" xml:space="preserve">
     <value>יום חופש הבא</value>
   </data>
   <data name="TotalCompanies" xml:space="preserve">
-    <value>סך כל החברות</value>
+    <value>סך כל הדסקים</value>
   </data>
   <data name="ActiveCompanies" xml:space="preserve">
-    <value>חברות פעילות</value>
+    <value>דסקים פעילים</value>
   </data>
   <data name="ManageCompanies" xml:space="preserve">
-    <value>נהל חברות</value>
+    <value>נהל דסקים</value>
   </data>
 
   
@@ -244,7 +244,7 @@
     <value>לוחות שנה</value>
   </data>
   <data name="CompanyShifts" xml:space="preserve">
-    <value>משמרות החברה</value>
+    <value>משמרות הדסק</value>
   </data>
   <data name="Table" xml:space="preserve">
     <value>טבלה</value>
@@ -280,7 +280,7 @@
     <value>צפה בתובנות, מדדים ודוחות על הביצועים ותזמון הצוות שלך</value>
   </data>
   <data name="ConfigureSystemSettings" xml:space="preserve">
-    <value>הגדר הגדרות חברה, התראות אימייל וסוגי תורנות</value>
+    <value>הגדר הגדרות דסק, התראות אימייל וסוגי תורנות</value>
   </data>
   <data name="ManageShiftTypesAndSchedules" xml:space="preserve">
     <value>הגדר ונהל סוגי משמרות עם טווחי הזמן שלהם</value>
@@ -289,10 +289,10 @@
     <value>צפה ונהל בקשות חופש מאושרות עבור הצוות שלך</value>
   </data>
   <data name="ManageCompaniesAndOrganizations" xml:space="preserve">
-    <value>צור ונהל חברות, הקצה מנהלים והגדר הגדרות רב-דיירות</value>
+    <value>צור ונהל דסקים, הקצה מנהלים והגדר הגדרות רב-דיירות</value>
   </data>
   <data name="ManageDirectorAssignments" xml:space="preserve">
-    <value>הקצה דירקטורים לחברות ונהל הרשאות פיקוח בין חברות</value>
+    <value>הקצה דירקטורים לדסקים ונהל הרשאות פיקוח בין דסקים</value>
   </data>
   <data name="ViewSystemAuditLog" xml:space="preserve">
     <value>עקוב אחר כל השינויים במערכת, פעולות משתמשים ואירועי אבטחה לצורך ציות ואיתור באגים</value>
@@ -753,19 +753,19 @@
 
 
   <data name="Companies" xml:space="preserve">
-    <value>חברות</value>
+    <value>דסקים</value>
   </data>
   <data name="AddNewCompany" xml:space="preserve">
-    <value>הוסף חברה חדשה</value>
+    <value>הוסף דסק חדש</value>
   </data>
   <data name="CompanyDetails" xml:space="preserve">
-    <value>פרטי החברה</value>
+    <value>פרטי הדסק</value>
   </data>
   <data name="CompanyName" xml:space="preserve">
-    <value>שם החברה</value>
+    <value>שם הדסק</value>
   </data>
   <data name="CompanyMoleculeHint" xml:space="preserve">
-    <value>המולקולה שהחברה שייכת אליה</value>
+    <value>המולקולה שהדסק שייך אליה</value>
   </data>
   <data name="CompanySlugHint" xml:space="preserve">
     <value>(אותיות קטנות באנגלית, מספרים ומקפים)</value>
@@ -786,19 +786,19 @@
     <value>סיסמת מנהל</value>
   </data>
   <data name="CreateCompanyManager" xml:space="preserve">
-    <value>צור חברה ומנהל</value>
+    <value>צור דסק ומנהל</value>
   </data>
   <data name="Note" xml:space="preserve">
     <value>הערה</value>
   </data>
   <data name="CreatingCompanyWill" xml:space="preserve">
-    <value>יצירת חברה תכלול:</value>
+    <value>יצירת דסק תכלול:</value>
   </data>
   <data name="CreateCompanyWithDetails" xml:space="preserve">
-    <value>יצירת החברה עם השם והמזהה שצוינו</value>
+    <value>יצירת הדסק עם השם והמזהה שצוינו</value>
   </data>
   <data name="CreateManagerAccount" xml:space="preserve">
-    <value>יצירת חשבון משתמש מנהל לחברה זו</value>
+    <value>יצירת חשבון משתמש מנהל לדסק זה</value>
   </data>
   <data name="GenerateDefaultShiftTypes" xml:space="preserve">
     <value>יצירת סוגי משמרות ברירת מחדל (בוקר, צהריים, לילה, אמצע)</value>
@@ -807,31 +807,31 @@
     <value>הגדרת תצורת ברירת מחדל (שעות מנוחה, תקרת שעות שבועית)</value>
   </data>
   <data name="AllCompanies" xml:space="preserve">
-    <value>כל החברות</value>
+    <value>כל הדסקים</value>
   </data>
   <data name="NoCompaniesYet" xml:space="preserve">
-    <value>אין חברות עדיין. צור אחת למעלה כדי להתחיל.</value>
+    <value>אין דסקים עדיין. צור אחד למעלה כדי להתחיל.</value>
   </data>
   <data name="RenameCompany" xml:space="preserve">
-    <value>שנה שם חברה</value>
+    <value>שנה שם דסק</value>
   </data>
   <data name="DeleteCompany" xml:space="preserve">
-    <value>מחק חברה</value>
+    <value>מחק דסק</value>
   </data>
   <data name="NewCompanyName" xml:space="preserve">
-    <value>שם חברה חדש</value>
+    <value>שם דסק חדש</value>
   </data>
   <data name="ConfirmDeleteCompany" xml:space="preserve">
-    <value>האם אתה בטוח שברצונך למחוק חברה זו? פעולה זו תמחק לצמיתות את כל סוגי המשמרות, מופעי המשמרות, ההקצאות, בקשות החופש ובקשות ההחלפה הקשורים לחברה זו. לא ניתן לבטל פעולה זו.</value>
+    <value>האם אתה בטוח שברצונך למחוק דסק זה? פעולה זו תמחק לצמיתות את כל סוגי המשמרות, מופעי המשמרות, ההקצאות, בקשות החופש ובקשות ההחלפה הקשורים לדסק זה. לא ניתן לבטל פעולה זו.</value>
   </data>
   <data name="CompanyDeleted" xml:space="preserve">
-    <value>החברה נמחקה בהצלחה</value>
+    <value>הדסק נמחק בהצלחה</value>
   </data>
   <data name="CompanyRenamed" xml:space="preserve">
-    <value>החברה שונתה בהצלחה</value>
+    <value>הדסק שונה בהצלחה</value>
   </data>
   <data name="CannotDeleteCompanyWithOwner" xml:space="preserve">
-    <value>לא ניתן למחוק חברה: משתמשי בעלים חייבים להיות מוסרים או מועברים תחילה</value>
+    <value>לא ניתן למחוק דסק: משתמשי בעלים חייבים להיות מוסרים או מועברים תחילה</value>
   </data>
   <data name="Rename" xml:space="preserve">
     <value>שנה שם</value>
@@ -846,7 +846,7 @@
     <value>-- בחר מנהל קיים (אופציונלי) --</value>
   </data>
   <data name="IfDirectorSelected" xml:space="preserve">
-    <value>אם נבחר מנהל, הוא יוקצה לחברה זו במקום ליצור מנהל חדש.</value>
+    <value>אם נבחר מנהל, הוא יוקצה לדסק זה במקום ליצור מנהל חדש.</value>
   </data>
 
   
@@ -854,13 +854,13 @@
     <value>הקצאות מנהלים</value>
   </data>
   <data name="AssignDirectorToCompany" xml:space="preserve">
-    <value>הקצה מנהל לחברה</value>
+    <value>הקצה מנהל לדסק</value>
   </data>
   <data name="SelectDirector" xml:space="preserve">
     <value>-- בחר מנהל --</value>
   </data>
   <data name="SelectCompany" xml:space="preserve">
-    <value>-- בחר חברה --</value>
+    <value>-- בחר דסק --</value>
   </data>
   <data name="CurrentDirectorAssignments" xml:space="preserve">
     <value>הקצאות מנהלים נוכחיות</value>
@@ -878,13 +878,13 @@
     <value>האם אתה בטוח שברצונך לבטל את גישת המנהל עבור {0} מ-{1}?</value>
   </data>
   <data name="NoDirectorAssignments" xml:space="preserve">
-    <value>אין הקצאות מנהלים עדיין. הקצה מנהלים לחברות למעלה.</value>
+    <value>אין הקצאות מנהלים עדיין. הקצה מנהלים לדסקים למעלה.</value>
   </data>
   <data name="AboutDirectorRole" xml:space="preserve">
     <value>אודות תפקיד המנהל:</value>
   </data>
   <data name="DirectorsCanOversee" xml:space="preserve">
-    <value>מנהלים יכולים לפקח על מספר חברות ויש להם את ההרשאות הבאות בחברות שהוקצו להם:</value>
+    <value>מנהלים יכולים לפקח על מספר דסקים ויש להם את ההרשאות הבאות בדסקים שהוקצו להם:</value>
   </data>
   <data name="DirectorPerm1" xml:space="preserve">
     <value>הוספה/הסרה של משתמשים (תפקידי עובד ומנהל בלבד)</value>
@@ -896,10 +896,10 @@
     <value>אישור/דחיה של בקשות חופשה והחלפת משמרות</value>
   </data>
   <data name="DirectorPerm4" xml:space="preserve">
-    <value>צפייה בלוחות מחוונים ודוחות של מספר חברות</value>
+    <value>צפייה בלוחות מחוונים ודוחות של מספר דסקים</value>
   </data>
   <data name="DirectorsCannot" xml:space="preserve">
-    <value>מנהלים לא יכולים ליצור/למחוק חברות או להקצות את תפקיד הבעלים.</value>
+    <value>מנהלים לא יכולים ליצור/למחוק דסקים או להקצות את תפקיד הבעלים.</value>
   </data>
 
   
@@ -995,7 +995,7 @@
     <value>מרכז התראות</value>
   </data>
   <data name="CompanyFilter" xml:space="preserve">
-    <value>סינון חברות</value>
+    <value>סינון דסקים</value>
   </data>
   <data name="ViewAsManager" xml:space="preserve">
     <value>תצוגה כמנהל</value>
@@ -1017,13 +1017,13 @@
     <value>מידע דיבאג רב-דיירים</value>
   </data>
   <data name="CompaniesInSystem" xml:space="preserve">
-    <value>חברות במערכת</value>
+    <value>דסקים במערכת</value>
   </data>
   <data name="UserInformation" xml:space="preserve">
     <value>מידע משתמש</value>
   </data>
   <data name="CompanyId" xml:space="preserve">
-    <value>מזהה חברה</value>
+    <value>מזהה דסק</value>
   </data>
   <data name="ShiftInstancesForOctober2025" xml:space="preserve">
     <value>משמרות לאוקטובר 2025</value>
@@ -1070,7 +1070,7 @@
     <value>מצב תצוגה כמנהל</value>
   </data>
   <data name="ViewAsModeDescription" xml:space="preserve">
-    <value>היכנס ל"מצב תצוגה כמנהל" כדי להגביל את התצוגה שלך לחברה אחת עם הרשאות ברמת מנהל. זה שימושי לפתרון בעיות או הבנת חוויית המנהל.</value>
+    <value>היכנס ל"מצב תצוגה כמנהל" כדי להגביל את התצוגה שלך לדסק אחד עם הרשאות ברמת מנהל. זה שימושי לפתרון בעיות או הבנת חוויית המנהל.</value>
   </data>
   <data name="CurrentlyInViewAsManagerMode" xml:space="preserve">
     <value>כרגע במצב תצוגה כמנהל</value>
@@ -1079,31 +1079,31 @@
     <value>אתה צופה כמנהל של:</value>
   </data>
   <data name="ViewScopedToCompany" xml:space="preserve">
-    <value>התצוגה שלך מוגבלת לחברה זו בלבד. כל החברות האחרות מוסתרות. ההרשאות שלך תואמות לרמת מנהל עבור חברה זו.</value>
+    <value>התצוגה שלך מוגבלת לדסק זה בלבד. כל הדסקים האחרים מוסתרים. ההרשאות שלך תואמות לרמת מנהל עבור דסק זה.</value>
   </data>
   <data name="ExitViewAsManagerMode" xml:space="preserve">
     <value>צא ממצב תצוגה כמנהל</value>
   </data>
   <data name="SelectCompanyToView" xml:space="preserve">
-    <value>בחר חברה לצפייה</value>
+    <value>בחר דסק לצפייה</value>
   </data>
   <data name="ChooseCompanyViewAsManager" xml:space="preserve">
-    <value>בחר חברה לצפייה כמנהל. בזמן מצב זה:</value>
+    <value>בחר דסק לצפייה כמנהל. בזמן מצב זה:</value>
   </data>
   <data name="OnlyThisCompanyDataVisible" xml:space="preserve">
-    <value>רק הנתונים של חברה זו יהיו גלויים</value>
+    <value>רק הנתונים של דסק זה יהיו גלויים</value>
   </data>
   <data name="PermissionsMatchManagerLevel" xml:space="preserve">
     <value>ההרשאות שלך יתאימו לרמת מנהל</value>
   </data>
   <data name="SeeWhatManagerSees" xml:space="preserve">
-    <value>תוכל לראות בדיוק מה שמנהל רואה עבור חברה זו</value>
+    <value>תוכל לראות בדיוק מה שמנהל רואה עבור דסק זה</value>
   </data>
   <data name="AllOtherCompaniesHidden" xml:space="preserve">
-    <value>כל החברות האחרות יהיו מוסתרות</value>
+    <value>כל הדסקים האחרים יהיו מוסתרים</value>
   </data>
   <data name="NotAssignedToAnyCompanies" xml:space="preserve">
-    <value>עדיין לא הוקצית לאף חברה.</value>
+    <value>עדיין לא הוקצית לאף דסק.</value>
   </data>
   <data name="Important" xml:space="preserve">
     <value>חשוב:</value>
@@ -1114,25 +1114,25 @@
 
   
   <data name="CompanyFilterDescription" xml:space="preserve">
-    <value>בחר אילו חברות אתה רוצה לראות בלוחות שנה, בקשות ולוחות מחוונים. השאר הכל לא מסומן כדי לראות את כל החברות המוקצות.</value>
+    <value>בחר אילו דסקים אתה רוצה לראות בלוחות שנה, בקשות ולוחות מחוונים. השאר הכל לא מסומן כדי לראות את כל הדסקים המוקצים.</value>
   </data>
   <data name="YourAssignedCompanies" xml:space="preserve">
-    <value>החברות המוקצות שלך</value>
+    <value>הדסקים המוקצים שלך</value>
   </data>
   <data name="ApplyFilter" xml:space="preserve">
     <value>החל סינון</value>
   </data>
   <data name="ShowAllCompanies" xml:space="preserve">
-    <value>הצג את כל החברות</value>
+    <value>הצג את כל הדסקים</value>
   </data>
   <data name="CompanyFilterAppliesTo" xml:space="preserve">
-    <value>סינון החברות חל על:</value>
+    <value>סינון הדסקים חל על:</value>
   </data>
   <data name="CalendarViewsOnlySelected" xml:space="preserve">
-    <value>תצוגות לוח שנה (מציג רק משמרות מהחברות הנבחרות)</value>
+    <value>תצוגות לוח שנה (מציג רק משמרות מהדסקים הנבחרים)</value>
   </data>
   <data name="RequestListsOnlySelected" xml:space="preserve">
-    <value>רשימות בקשות (מציג רק בקשות מהחברות הנבחרות)</value>
+    <value>רשימות בקשות (מציג רק בקשות מהדסקים הנבחרים)</value>
   </data>
   <data name="DashboardsAndReports" xml:space="preserve">
     <value>לוחות מחוונים ודוחות</value>
@@ -1143,13 +1143,13 @@
 
   
   <data name="NotificationHubDescription" xml:space="preserve">
-    <value>סקירה רב-חברתית של כל ההתראות והבקשות הממתינות מהחברות המוקצות שלך.</value>
+    <value>סקירה מרובת-דסקים של כל ההתראות והבקשות הממתינות מהדסקים המוקצים שלך.</value>
   </data>
   <data name="PendingTimeOffRequests" xml:space="preserve">
     <value>בקשות חופשה ממתינות</value>
   </data>
   <data name="Company" xml:space="preserve">
-    <value>חברה</value>
+    <value>דסק</value>
   </data>
   <data name="User" xml:space="preserve">
     <value>משתמש</value>
@@ -1185,7 +1185,7 @@
     <value>אין התראות עדיין.</value>
   </data>
   <data name="NotificationHubInfo" xml:space="preserve">
-    <value>מרכז זה מצרף נתונים מכל החברות שאתה מפקח עליהן כמנהל אזורי. קיצורי חברות מוצגים בשורה עם שמות מלאים בריחוף.</value>
+    <value>מרכז זה מצרף נתונים מכל הדסקים שאתה מפקח עליהם כמנהל אזורי. קיצורי דסקים מוצגים בשורה עם שמות מלאים בריחוף.</value>
   </data>
 
   
@@ -1803,7 +1803,7 @@
 האם אתה בטוח לחלוטין שברצונך למחוק משתמש זה?</value>
   </data>
   <data name="ConfirmRevokeDirectorAccess" xml:space="preserve">
-    <value>האם אתה בטוח שברצונך לשלול הרשאת מנהל מ-{0} מחברה {1}?</value>
+    <value>האם אתה בטוח שברצונך לשלול הרשאת מנהל מ-{0} מדסק {1}?</value>
   </data>
   <data name="ConfirmDeleteTimeOff" xml:space="preserve">
     <value>האם אתה בטוח שברצונך למחוק את החופש המאושר עבור {0}? לא ניתן לבטל פעולה זו.</value>
@@ -2057,7 +2057,7 @@
     <value>בחר סוג</value>
   </data>
   <data name="CompanySettings" xml:space="preserve">
-    <value>הגדרות חברה</value>
+    <value>הגדרות דסק</value>
   </data>
   <data name="OnDutyTypes" xml:space="preserve">
     <value>סוגי משמרות רוחב</value>
@@ -2249,7 +2249,7 @@
     <value>חברי הצוות הנוכחיים</value>
   </data>
   <data name="AvailableUsers" xml:space="preserve">
-    <value>משתמשי החברה שלא בצוות</value>
+    <value>משתמשי הדסק שלא בצוות</value>
   </data>
   <data name="SearchByName" xml:space="preserve">
     <value>חיפוש לפי שם...</value>
@@ -3073,7 +3073,7 @@
     <value>סה"כ משתמשים</value>
   </data>
   <data name="Owner_TotalCompanies" xml:space="preserve">
-    <value>סה"כ חברות</value>
+    <value>סה"כ דסקים</value>
   </data>
   <data name="Owner_DatabaseSize" xml:space="preserve">
     <value>גודל מסד נתונים</value>
@@ -3181,7 +3181,7 @@
     <value>מושבת</value>
   </data>
   <data name="Owner_SystemHealth_Companies" xml:space="preserve">
-    <value>חברות:</value>
+    <value>דסקים:</value>
   </data>
   <data name="Owner_SystemHealth_Users" xml:space="preserve">
     <value>משתמשים:</value>
@@ -3334,16 +3334,16 @@
     <value>שחזר ווידג'ט</value>
   </data>
   <data name="Owner_Companies" xml:space="preserve">
-    <value>חברות</value>
+    <value>דסקים</value>
   </data>
   <data name="Owner_Companies_Desc" xml:space="preserve">
-    <value>ניהול דיירים, יצירה ועריכת חברות</value>
+    <value>ניהול דיירים, יצירה ועריכת דסקים</value>
   </data>
   <data name="Owner_Directors" xml:space="preserve">
     <value>מנהלים</value>
   </data>
   <data name="Owner_Directors_Desc" xml:space="preserve">
-    <value>הקצאת מנהלים לניהול חברות</value>
+    <value>הקצאת מנהלים לניהול דסקים</value>
   </data>
   <data name="Owner_RecentActivity" xml:space="preserve">
     <value>פעילות אחרונה</value>
@@ -3941,13 +3941,13 @@
     <value>סיסמה לא יכולה לחרוג מ-128 תווים.</value>
   </data>
   <data name="Error_Signup_SelectValidCompany" xml:space="preserve">
-    <value>אנא בחר חברה חוקית.</value>
+    <value>אנא בחר דסק חוקי.</value>
   </data>
   <data name="Error_Signup_EmailExists" xml:space="preserve">
     <value>חשבון עם כתובת אימייל זו כבר קיים. אנא התחבר במקום.</value>
   </data>
   <data name="Error_Signup_CompanyNotFound" xml:space="preserve">
-    <value>החברה שנבחרה לא נמצאה.</value>
+    <value>הדסק שנבחר לא נמצא.</value>
   </data>
 
   
@@ -4051,7 +4051,7 @@
     <value>הבנתי</value>
   </data>
   <data name="NoShiftTypesAvailable" xml:space="preserve">
-    <value>אין סוגי משמרת זמינים עבור חברה זו.</value>
+    <value>אין סוגי משמרת זמינים עבור דסק זה.</value>
   </data>
   <data name="NoResultsFound" xml:space="preserve">
     <value>לא נמצאו תוצאות</value>
@@ -4123,7 +4123,7 @@
     <value>ניהול ארגונים</value>
   </data>
   <data name="AssignDirectors" xml:space="preserve">
-    <value>הקצאת מנהלים לחברות</value>
+    <value>הקצאת מנהלים לדסקים</value>
   </data>
   <data name="SystemSettings" xml:space="preserve">
     <value>הגדרות מערכת</value>
@@ -4191,13 +4191,13 @@
 
   
   <data name="Error_CompanyNameAndSlugRequired" xml:space="preserve">
-    <value>שם החברה ומזהה החברה נדרשים.</value>
+    <value>שם הדסק ומזהה הדסק נדרשים.</value>
   </data>
   <data name="Error_CompanyNameOrSlugTooLong" xml:space="preserve">
-    <value>שם החברה או מזהה החברה חורגים מהאורך המקסימלי (200/100 תווים).</value>
+    <value>שם הדסק או מזהה הדסק חורגים מהאורך המקסימלי (200/100 תווים).</value>
   </data>
   <data name="Error_CompanyDisplayNameTooLong" xml:space="preserve">
-    <value>שם התצוגה של החברה אינו יכול לחרוג מ-200 תווים.</value>
+    <value>שם התצוגה של הדסק אינו יכול לחרוג מ-200 תווים.</value>
   </data>
   <data name="Error_ManagerDisplayNameTooLong" xml:space="preserve">
     <value>שם התצוגה של המנהל אינו יכול לחרוג מ-200 תווים.</value>
@@ -4206,10 +4206,10 @@
     <value>אימייל המנהל אינו יכול לחרוג מ-255 תווים.</value>
   </data>
   <data name="Error_CompanySlugAlreadyExists" xml:space="preserve">
-    <value>מזהה החברה כבר קיים. אנא בחר מזהה אחר.</value>
+    <value>מזהה הדסק כבר קיים. אנא בחר מזהה אחר.</value>
   </data>
   <data name="Error_CompanySlugInvalidFormat" xml:space="preserve">
-    <value>מזהה החברה חייב להיות באותיות קטנות ולהכיל רק אותיות, מספרים ומקפים.</value>
+    <value>מזהה הדסק חייב להיות באותיות קטנות ולהכיל רק אותיות, מספרים ומקפים.</value>
   </data>
   <data name="Error_ManagerFieldsRequired" xml:space="preserve">
     <value>אימייל, שם תצוגה וסיסמה של המנהל נדרשים (או בחר מנהל קיים).</value>
@@ -4221,34 +4221,34 @@
     <value>המנהל הנבחר אינו קיים או אינו מנהל.</value>
   </data>
   <data name="Success_DirectorAssigned" xml:space="preserve">
-    <value>מנהל '{0}' ({1}) הוקצה לניהול חברה זו.</value>
+    <value>מנהל '{0}' ({1}) הוקצה לניהול דסק זה.</value>
   </data>
   <data name="Success_ManagerCreated" xml:space="preserve">
     <value>המנהל יכול להתחבר עם אימייל: {0}</value>
   </data>
   <data name="Success_CompanyCreated" xml:space="preserve">
-    <value>חברה '{0}' נוצרה בהצלחה. {1}</value>
+    <value>דסק '{0}' נוצר בהצלחה. {1}</value>
   </data>
   <data name="Error_CompanyCreationFailed" xml:space="preserve">
-    <value>אירעה שגיאה בעת יצירת החברה. אנא נסה שנית.</value>
+    <value>אירעה שגיאה בעת יצירת הדסק. אנא נסה שנית.</value>
   </data>
   <data name="Error_InvalidCompanyIdOrName" xml:space="preserve">
-    <value>מזהה או שם חברה לא תקין.</value>
+    <value>מזהה או שם דסק לא תקין.</value>
   </data>
   <data name="Error_CompanyNotFound" xml:space="preserve">
-    <value>החברה לא נמצאה.</value>
+    <value>הדסק לא נמצא.</value>
   </data>
   <data name="Success_CompanyRenamed" xml:space="preserve">
-    <value>החברה שונתה בהצלחה ל-'{0}'.</value>
+    <value>הדסק שונה בהצלחה ל-'{0}'.</value>
   </data>
   <data name="Error_CannotDeleteCompanyWithOwners" xml:space="preserve">
-    <value>לא ניתן למחוק חברה: משתמשי בעלים חייבים להיות מוסרים או מועברים תחילה. בעלים חייבים תמיד להישאר במערכת.</value>
+    <value>לא ניתן למחוק דסק: משתמשי בעלים חייבים להיות מוסרים או מועברים תחילה. בעלים חייבים תמיד להישאר במערכת.</value>
   </data>
   <data name="Success_CompanyDeleted" xml:space="preserve">
-    <value>חברה '{0}' וכל הנתונים הקשורים נמחקו בהצלחה.</value>
+    <value>דסק '{0}' וכל הנתונים הקשורים נמחקו בהצלחה.</value>
   </data>
   <data name="Error_CompanyDeletionFailed" xml:space="preserve">
-    <value>אירעה שגיאה בעת מחיקת החברה. אנא נסה שנית.</value>
+    <value>אירעה שגיאה בעת מחיקת הדסק. אנא נסה שנית.</value>
   </data>
 
   
@@ -4612,7 +4612,7 @@
     <value>חדשות טובות! החשבון שלך אושר על ידי מנהל המערכת. כעת תוכל להתחבר ולגשת למערכת ניהול המשמרות.</value>
   </data>
   <data name="Email_Company" xml:space="preserve">
-    <value>חברה</value>
+    <value>דסק</value>
   </data>
   <data name="Email_AssignedRole" xml:space="preserve">
     <value>תפקיד שהוקצה</value>
@@ -4720,7 +4720,7 @@
     <value>חברי צוות</value>
   </data>
   <data name="Dashboard_TeamMembers_Desc" xml:space="preserve">
-    <value>בחברה שלך</value>
+    <value>בדסק שלך</value>
   </data>
   <data name="Dashboard_Notifications" xml:space="preserve">
     <value>התראות</value>
@@ -4804,7 +4804,7 @@
     <value>מצב עריכה פעיל</value>
   </data>
   <data name="EditMode_Company" xml:space="preserve">
-    <value>חברה:</value>
+    <value>דסק:</value>
   </data>
   <data name="EditMode_Culture" xml:space="preserve">
     <value>תרבות:</value>
@@ -4834,13 +4834,13 @@
     <value>בטל את כל הטיוטות וצא ממצב עריכה</value>
   </data>
   <data name="OwnerSelector_ManagingCompany" xml:space="preserve">
-    <value>ניהול חברה:</value>
+    <value>ניהול דסק:</value>
   </data>
   <data name="OwnerSelector_Home" xml:space="preserve">
     <value>(בית)</value>
   </data>
   <data name="OwnerSelector_ClearSelectionTooltip" xml:space="preserve">
-    <value>נקה בחירה וחזור לחברת הבית</value>
+    <value>נקה בחירה וחזור לדסק הבית</value>
   </data>
   <data name="Owner_EmailTemplates" xml:space="preserve">
     <value>תבניות אימייל</value>
@@ -4894,16 +4894,16 @@
     <value>תבנית האימייל נשמרה בהצלחה</value>
   </data>
   <data name="Success_EmailTemplateAppliedToAll" xml:space="preserve">
-    <value>תבנית האימייל הוחלה על {0} חברות</value>
+    <value>תבנית האימייל הוחלה על {0} דסקים</value>
   </data>
   <data name="ApplyToAllCompanies" xml:space="preserve">
-    <value>החל על כל החברות</value>
+    <value>החל על כל הדסקים</value>
   </data>
   <data name="ApplyToAllCompanies_Desc" xml:space="preserve">
-    <value>שמירה כתבנית בסיס לכל החברות בפעולה אחת. ניתן לדרוס לכל חברה בנפרד אח"כ.</value>
+    <value>שמירה כתבנית בסיס לכל הדסקים בפעולה אחת. ניתן לדרוס לכל דסק בנפרד אח"כ.</value>
   </data>
   <data name="Confirm_ApplyToAllCompanies" xml:space="preserve">
-    <value>פעולה זו תחיל את ההגדרה על כל החברות. להמשיך?</value>
+    <value>פעולה זו תחיל את ההגדרה על כל הדסקים. להמשיך?</value>
   </data>
   <data name="Success_EmailTemplateReset" xml:space="preserve">
     <value>תבנית האימייל אופסה לברירת מחדל</value>
@@ -4998,7 +4998,7 @@
     <value>מרכז תפעול</value>
   </data>
   <data name="CompanyScope" xml:space="preserve">
-    <value>חברה והיקף</value>
+    <value>דסק והיקף</value>
   </data>
   <data name="PeopleManagement" xml:space="preserve">
     <value>ניהול אנשים</value>
@@ -5035,7 +5035,7 @@
     <value>מחק משתמש</value>
   </data>
   <data name="Users_Company" xml:space="preserve">
-    <value>חברה</value>
+    <value>דסק</value>
   </data>
 
   <!-- UI Overhaul v3.0 - Navigation -->
@@ -5063,16 +5063,16 @@
     <value>צפייה נוכחית</value>
   </data>
   <data name="ContextSwitcher_SelectContext" xml:space="preserve">
-    <value>בחר חברה או מולקולה</value>
+    <value>בחר דסק או מולקולה</value>
   </data>
   <data name="ContextSwitcher_SearchPlaceholder" xml:space="preserve">
-    <value>חפש חברות...</value>
+    <value>חפש דסקים...</value>
   </data>
   <data name="ContextSwitcher_SearchLabel" xml:space="preserve">
-    <value>חפש חברה</value>
+    <value>חפש דסק</value>
   </data>
   <data name="ContextSwitcher_SwitchCompany" xml:space="preserve">
-    <value>החלף חברה</value>
+    <value>החלף דסק</value>
   </data>
   <data name="ContextSwitcher_MoleculeLabel" xml:space="preserve">
     <value>צופה במולקולה</value>
@@ -5084,16 +5084,16 @@
     <value>{0} ({1} דסקים)</value>
   </data>
   <data name="ContextSwitcher_NoResults" xml:space="preserve">
-    <value>לא נמצאו חברות תואמות</value>
+    <value>לא נמצאו דסקים תואמים</value>
   </data>
   <data name="ContextSwitcher_LoadError" xml:space="preserve">
-    <value>לא ניתן לטעון חברות</value>
+    <value>לא ניתן לטעון דסקים</value>
   </data>
   <data name="ContextSwitcher_Retry" xml:space="preserve">
-    <value>נסה שוב לטעון חברות</value>
+    <value>נסה שוב לטעון דסקים</value>
   </data>
   <data name="ContextSwitcher_NoContextsAvailable" xml:space="preserve">
-    <value>אין חברות זמינות</value>
+    <value>אין דסקים זמינים</value>
   </data>
   <data name="ContextSwitcher_ContextUnavailable" xml:space="preserve">
     <value>הבחירה הקודמת שלך אינה זמינה עוד</value>
@@ -5113,7 +5113,7 @@
     <value>שלי בלבד</value>
   </data>
   <data name="ScopeSwitcher_MyCompany" xml:space="preserve">
-    <value>החברה שלי</value>
+    <value>הדסק שלי</value>
   </data>
   <data name="ScopeSwitcher_FullMolecule" xml:space="preserve">
     <value>מולקולה מלאה</value>
@@ -5505,13 +5505,13 @@
     <value>האימות עבר</value>
   </data>
   <data name="Owner_DataLifecycle_CompanyMatch" xml:space="preserve">
-    <value>התאמת חברה</value>
+    <value>התאמת דסק</value>
   </data>
   <data name="Owner_DataLifecycle_ArchiveCompany" xml:space="preserve">
-    <value>חברת ארכיון</value>
+    <value>דסק ארכיון</value>
   </data>
   <data name="Owner_DataLifecycle_CurrentCompany" xml:space="preserve">
-    <value>חברה נוכחית</value>
+    <value>דסק נוכחי</value>
   </data>
   <data name="Owner_DataLifecycle_MissingUsers" xml:space="preserve">
     <value>משתמשים חסרים</value>
@@ -5564,7 +5564,7 @@
     <value>רשימת משתמשים</value>
   </data>
   <data name="Owner_DatabaseConsole_ListCompanies" xml:space="preserve">
-    <value>רשימת חברות</value>
+    <value>רשימת דסקים</value>
   </data>
   <data name="Owner_DatabaseConsole_SqlQuery" xml:space="preserve">
     <value>שאילתת SQL</value>
@@ -5925,11 +5925,11 @@
 
   <!-- A-015: Missing Localization Strings - Placeholders -->
   <data name="Placeholder_CompanyName" xml:space="preserve">
-    <value>החברה שלי בע"מ</value>
+    <value>הדסק שלי בע"מ</value>
     <comment>A-015 - Placeholder for company name input</comment>
   </data>
   <data name="Placeholder_CompanyNameHe" xml:space="preserve">
-    <value>החברה שלי בע"מ</value>
+    <value>הדסק שלי בע"מ</value>
     <comment>Placeholder for Hebrew company name input</comment>
   </data>
   <data name="CompanyNameHe_ClearHint" xml:space="preserve">
@@ -5941,7 +5941,7 @@
     <comment>A-015 - Placeholder for company slug input</comment>
   </data>
   <data name="Placeholder_CompanyDisplayName" xml:space="preserve">
-    <value>החברה שלי</value>
+    <value>הדסק שלי</value>
     <comment>A-015 - Placeholder for company display name</comment>
   </data>
   <data name="Placeholder_Email" xml:space="preserve">
@@ -6400,13 +6400,13 @@
     <value>קב"ר</value>
   </data>
   <data name="Role_BRDirector_Desc" xml:space="preserve">
-    <value>מנהל משמרות בר ופעילות כלל-חברתית</value>
+    <value>מנהל משמרות בר ופעילות כלל-דסקית</value>
   </data>
   <data name="Role_AlhutLead" xml:space="preserve">
     <value>מפקד צוות אלחוט</value>
   </data>
   <data name="Role_AlhutLead_Desc" xml:space="preserve">
-    <value>מנהל משמרות אלחוט בחברה אחת</value>
+    <value>מנהל משמרות אלחוט בתוך דסק אחד</value>
   </data>
   <data name="Role_Lead" xml:space="preserve">
     <value>מפ"צ</value>
@@ -6424,25 +6424,25 @@
     <value>מפקד צוות טקסט</value>
   </data>
   <data name="Role_TextLead_Desc" xml:space="preserve">
-    <value>מנהל משמרות טקסט בחברה אחת</value>
+    <value>מנהל משמרות טקסט בתוך דסק אחד</value>
   </data>
   <data name="Role_AlhutDirector" xml:space="preserve">
     <value>מפקד מחלקת אלחוט</value>
   </data>
   <data name="Role_AlhutDirector_Desc" xml:space="preserve">
-    <value>מנהל את כל משמרות האלחוט בכל החברות במולקולה</value>
+    <value>מנהל את כל משמרות האלחוט בכל הדסקים במולקולה</value>
   </data>
   <data name="Role_TextDirector" xml:space="preserve">
     <value>מפקד מחלקת טקסט</value>
   </data>
   <data name="Role_TextDirector_Desc" xml:space="preserve">
-    <value>מנהל את כל משמרות הטקסט בכל החברות במולקולה</value>
+    <value>מנהל את כל משמרות הטקסט בכל הדסקים במולקולה</value>
   </data>
   <data name="Role_MoleculeAdmin" xml:space="preserve">
     <value>מפקד מולקולה</value>
   </data>
   <data name="Role_MoleculeAdmin_Desc" xml:space="preserve">
-    <value>ניהול מלא של המולקולה כולל כל החברות</value>
+    <value>ניהול מלא של המולקולה כולל כל הדסקים</value>
   </data>
   <data name="Role_DepartmentLead" xml:space="preserve">
     <value>מפקד מחלקה טכנית</value>
@@ -6544,7 +6544,7 @@
 
   <!-- A-015: Section Headers -->
   <data name="Section_Companies" xml:space="preserve">
-    <value>חברות</value>
+    <value>דסקים</value>
     <comment>A-015 - Section header for companies</comment>
   </data>
   <data name="Section_Directors" xml:space="preserve">
@@ -6552,11 +6552,11 @@
     <comment>A-015 - Section header for directors</comment>
   </data>
   <data name="Section_DirectorsDesc" xml:space="preserve">
-    <value>הקצה דירקטורים לחברות</value>
+    <value>הקצה דירקטורים לדסקים</value>
     <comment>A-015 - Description for directors section</comment>
   </data>
   <data name="Section_CompanyContext" xml:space="preserve">
-    <value>הקשר חברה</value>
+    <value>הקשר דסק</value>
     <comment>A-015 - Section header for company context</comment>
   </data>
   <data name="Section_PeopleManagement" xml:space="preserve">
@@ -6608,7 +6608,7 @@
     <comment>A-015 - Description for shift types section</comment>
   </data>
   <data name="Section_CompanySettings" xml:space="preserve">
-    <value>הגדרות חברה</value>
+    <value>הגדרות דסק</value>
     <comment>A-015 - Section header for company settings</comment>
   </data>
   <data name="Section_OperationsManagement" xml:space="preserve">
@@ -7038,7 +7038,7 @@
     <value>בחר מולקולה קודם</value>
   </data>
   <data name="Auth_NoCompaniesAvailable" xml:space="preserve">
-    <value>אין חברות זמינות במולקולה זו</value>
+    <value>אין דסקים זמינים במולקולה זו</value>
   </data>
   <data name="Auth_NoJobTypesAvailable" xml:space="preserve">
     <value>אין סוגי תפקידים זמינים</value>
@@ -7094,7 +7094,7 @@
     <comment>A-015 - Language name for Hebrew</comment>
   </data>
   <data name="Misc_ManageCompanyFilter" xml:space="preserve">
-    <value>נהל מסנן חברה</value>
+    <value>נהל מסנן דסק</value>
     <comment>A-015 - Link text for manage company filter</comment>
   </data>
   <data name="Misc_ExitViewMode" xml:space="preserve">
@@ -7128,7 +7128,7 @@
 
   <!-- A-015: Additional Section Descriptions -->
   <data name="DirectorHub_Subtitle" xml:space="preserve">
-    <value>מרכז ניהול חוצה חברות</value>
+    <value>מרכז ניהול חוצה-דסקים</value>
     <comment>A-015 - Page subtitle for director hub</comment>
   </data>
   <data name="Blueprints_Subtitle" xml:space="preserve">
@@ -7136,15 +7136,15 @@
     <comment>A-015 - Page subtitle for blueprints</comment>
   </data>
   <data name="Section_CompanyScope" xml:space="preserve">
-    <value>חברה והיקף</value>
+    <value>דסק והיקף</value>
     <comment>A-015 - Section header for company scope</comment>
   </data>
   <data name="Section_CompaniesDesc" xml:space="preserve">
-    <value>נהל דיירים, צור/ערוך חברות</value>
+    <value>נהל דיירים, צור/ערוך דסקים</value>
     <comment>A-015 - Description for companies section</comment>
   </data>
   <data name="Section_CompanyContextDesc" xml:space="preserve">
-    <value>בחר חברה פעילה לפעולות</value>
+    <value>בחר דסק פעיל לפעולות</value>
     <comment>A-015 - Description for company context section</comment>
   </data>
   <data name="Section_UsersDesc" xml:space="preserve">
@@ -7216,7 +7216,7 @@
     <comment>A-015 - Description for requests section</comment>
   </data>
   <data name="Section_NotificationHubDesc" xml:space="preserve">
-    <value>התראות חוצות חברות</value>
+    <value>התראות חוצות-דסקים</value>
     <comment>A-015 - Description for notification hub section</comment>
   </data>
   <data name="Button_CreateShiftType" xml:space="preserve">
@@ -7914,7 +7914,7 @@
     <value>תוכנית אב חייבת לכלול לפחות תוכנית אחת.</value>
   </data>
   <data name="Error_MasterProgramService_ProgramsNotInCompany" xml:space="preserve">
-    <value>תוכנית אחת או יותר שנבחרו לא נמצאו או אינן שייכות לחברה שלכם.</value>
+    <value>תוכנית אחת או יותר שנבחרו לא נמצאו או אינן שייכות לדסק שלכם.</value>
   </data>
   <data name="Error_MasterProgramService_NoProgramsInMaster" xml:space="preserve">
     <value>לתוכנית אב זו אין תוכניות מוגדרות. הוסיפו לפחות תוכנית אחת לפני יצירת משמרות.</value>
@@ -7941,7 +7941,7 @@
     <value>שם התוכנית הוא שדה חובה.</value>
   </data>
   <data name="Error_ShiftProgramService_ShiftTypeNotInMolecule" xml:space="preserve">
-    <value>סוג המשמרת שנבחר אינו זמין עבור החברה שלכם.</value>
+    <value>סוג המשמרת שנבחר אינו זמין עבור הדסק שלכם.</value>
   </data>
   <data name="Error_ShiftProgramService_InstanceNotFound" xml:space="preserve">
     <value>מופע המשמרת לא נמצא.</value>
@@ -7995,7 +7995,7 @@
     <value>סוג המשרה אינו זמין באזור של המשתמש.</value>
   </data>
   <data name="Error_JobTypeService_MoleculeMismatch" xml:space="preserve">
-    <value>סוג המשרה שייך למולקולה אחרת מהחברה של המשתמש.</value>
+    <value>סוג המשרה שייך למולקולה אחרת מהדסק של המשתמש.</value>
   </data>
   <data name="Error_JobTypeService_ValidationFailed" xml:space="preserve">
     <value>המשתמש אינו זכאי לסוג משרה זה.</value>
@@ -8028,7 +8028,7 @@
     <value>פרטי משתמש לא תקינים. נא להתחבר מחדש.</value>
   </data>
   <data name="Error_SelectDirectorAndCompany" xml:space="preserve">
-    <value>נא לבחור גם מנהל וגם חברה.</value>
+    <value>נא לבחור גם מנהל וגם דסק.</value>
   </data>
   <data name="Error_SelectedUserNotDirector" xml:space="preserve">
     <value>המשתמש שנבחר אינו מנהל.</value>
@@ -8037,7 +8037,7 @@
     <value>המנהל כבר משובץ.</value>
   </data>
   <data name="Success_DirectorAssignedToCompany" xml:space="preserve">
-    <value>המנהל שובץ לחברה בהצלחה.</value>
+    <value>המנהל שובץ לדסק בהצלחה.</value>
   </data>
   <data name="Error_AssignmentNotFound" xml:space="preserve">
     <value>שיבוץ לא נמצא.</value>
@@ -8046,7 +8046,7 @@
     <value>הרשאת מנהל בוטלה.</value>
   </data>
   <data name="Error_DirectorAlreadyAssignedToCompany" xml:space="preserve">
-    <value>המנהל כבר משובץ לחברה זו.</value>
+    <value>המנהל כבר משובץ לדסק זה.</value>
   </data>
   <data name="Success_DirectorReassigned" xml:space="preserve">
     <value>המנהל שובץ מחדש בהצלחה.</value>
@@ -8118,19 +8118,19 @@
     <value>מחיקת תמונת הפרופיל נכשלה.</value>
   </data>
   <data name="Success_ViewAsModeEntered" xml:space="preserve">
-    <value>מציג כמנהל. ההרשאות והנתונים שלך מוגבלים לחברה זו.</value>
+    <value>מציג כמנהל. ההרשאות והנתונים שלך מוגבלים לדסק זה.</value>
   </data>
   <data name="Error_UnableToEnterViewAsMode" xml:space="preserve">
-    <value>לא ניתן להיכנס למצב צפייה כמנהל. ייתכן שאין לך גישה לחברה זו.</value>
+    <value>לא ניתן להיכנס למצב צפייה כמנהל. ייתכן שאין לך גישה לדסק זה.</value>
   </data>
   <data name="Success_ViewAsModeExited" xml:space="preserve">
     <value>יצאת ממצב צפייה כמנהל. הרשאות מנהל מלאות שוחזרו.</value>
   </data>
   <data name="Success_CompanyFilterUpdated" xml:space="preserve">
-    <value>סינון חברה עודכן בהצלחה.</value>
+    <value>סינון דסק עודכן בהצלחה.</value>
   </data>
   <data name="Success_CompanyFilterCleared" xml:space="preserve">
-    <value>סינון חברה נוקה. מציג את כל החברות.</value>
+    <value>סינון דסק נוקה. מציג את כל הדסקים.</value>
   </data>
   <data name="Error_SelectUser" xml:space="preserve">
     <value>נא לבחור משתמש.</value>
@@ -8139,7 +8139,7 @@
     <value>המשתמש שנבחר לא נמצא.</value>
   </data>
   <data name="Error_CannotAssignCrossCompany" xml:space="preserve">
-    <value>לא ניתן לשבץ משתמש מחברה אחרת למשמרת זו.</value>
+    <value>לא ניתן לשבץ משתמש מדסק אחר למשמרת זו.</value>
   </data>
   <data name="Error_CannotOverAssign" xml:space="preserve">
     <value>לא ניתן לשבץ מעבר לנדרש. הגדל את הדרישה תחילה.</value>
@@ -8157,13 +8157,13 @@
     <value>נחפף הוסר בהצלחה.</value>
   </data>
   <data name="Error_MissingCompanyIdOrCulture" xml:space="preserve">
-    <value>חסר מזהה חברה או פרמטר שפה.</value>
+    <value>חסר מזהה דסק או פרמטר שפה.</value>
   </data>
   <data name="Error_InvalidCulture" xml:space="preserve">
     <value>שפה לא תקינה. חייב להיות en-US או he-IL.</value>
   </data>
   <data name="Error_CanOnlyEditCurrentCompanyTranslations" xml:space="preserve">
-    <value>ניתן לערוך תרגומים רק עבור החברה הנבחרת כעת.</value>
+    <value>ניתן לערוך תרגומים רק עבור הדסק הנבחר כעת.</value>
   </data>
   <data name="Success_GriffinConfigSaved" xml:space="preserve">
     <value>תצורת Griffin ADFS נשמרה בהצלחה.</value>
@@ -8217,7 +8217,7 @@
     <value>ניתן להחליף רק משמרות שלך.</value>
   </data>
   <data name="Error_InvalidSwapTargetUser" xml:space="preserve">
-    <value>המשתמש שנבחר אינו תקין או אינו בחברה שלך.</value>
+    <value>המשתמש שנבחר אינו תקין או אינו בדסק שלך.</value>
   </data>
   <data name="Error_MissingAuthToken" xml:space="preserve">
     <value>אסימון אימות חסר.</value>
@@ -8265,7 +8265,7 @@
     <value>מפתחות API פעילים</value>
   </data>
   <data name="AdminApiKeyManagementDescription" xml:space="preserve">
-    <value>בדוק ואשר בקשות מפתח API מכל המשתמשים בחברה שלך</value>
+    <value>בדוק ואשר בקשות מפתח API מכל המשתמשים בדסק שלך</value>
   </data>
   <data name="AdminApiKeySaveWarning" xml:space="preserve">
     <value>חשוב: העתק מפתח זה ושלח אותו למבקש בצורה מאובטחת. הוא לא יוצג שוב!</value>
@@ -8277,7 +8277,7 @@
     <value>כל בקשות מפתח API</value>
   </data>
   <data name="AllCompanyApiKeys" xml:space="preserve">
-    <value>כל מפתחות API בחברה</value>
+    <value>כל מפתחות API בדסק</value>
   </data>
   <data name="AllRequests" xml:space="preserve">
     <value>כל הבקשות</value>
@@ -8728,7 +8728,7 @@
     <value>הערות לוח תקציר</value>
   </data>
   <data name="Grant_WriteOverviewNotes_Desc" xml:space="preserve">
-    <value>הוספת הערות חופשיות ללוח תקציר החברה</value>
+    <value>הוספת הערות חופשיות ללוח תקציר הדסק</value>
   </data>
   <data name="Grant_ManageOnDutyTypes" xml:space="preserve">
     <value>ניהול סוגי כוננויות</value>
@@ -8933,7 +8933,7 @@
     <value>גישה למרכז מנהלים</value>
   </data>
   <data name="Grant_DirectorHubAccess_Desc" xml:space="preserve">
-    <value>גישה למרכז המנהלים לניהול חוצה חברות</value>
+    <value>גישה למרכז המנהלים לניהול חוצה-דסקים</value>
   </data>
   <data name="Grant_ManagerHomeAccess" xml:space="preserve">
     <value>גישה לדף הבית של מנהל</value>
@@ -8942,10 +8942,10 @@
     <value>גישה ללוח הבקרה של מנהל</value>
   </data>
   <data name="Grant_ViewCompanyCalendar" xml:space="preserve">
-    <value>צפייה בלוח שנה חברתי</value>
+    <value>צפייה בלוח השנה של הדסק</value>
   </data>
   <data name="Grant_ViewCompanyCalendar_Desc" xml:space="preserve">
-    <value>צפייה בסקירה הכללית של לוח השנה החברתי</value>
+    <value>צפייה בסקירה הכללית של לוח השנה של הדסק</value>
   </data>
   <data name="TechShift_Hanava" xml:space="preserve">
     <value>משמרת הנבה</value>
@@ -9197,7 +9197,7 @@
     <value>מולקולות</value>
   </data>
   <data name="OwnerHub_Companies" xml:space="preserve">
-    <value>חברות</value>
+    <value>דסקים</value>
   </data>
   <data name="OwnerHub_ManageHierarchy" xml:space="preserve">
     <value>ניהול היררכיה</value>
@@ -9931,7 +9931,7 @@
     <value>סך משתמשים</value>
   </data>
   <data name="UnassignedCompanies" xml:space="preserve">
-    <value>חברות לא משויכות</value>
+    <value>דסקים לא משויכים</value>
   </data>
   <data name="QuickActions" xml:space="preserve">
     <value>פעולות מהירות</value>
@@ -10159,7 +10159,7 @@
     <value>צור ונהל קבוצות משמרות</value>
   </data>
   <data name="ShiftGroupingsCombineCompaniesAndJobTypes" xml:space="preserve">
-    <value>קבוצות משמרות משלבות חברות וסוגי תפקידים</value>
+    <value>קבוצות משמרות משלבות דסקים וסוגי תפקידים</value>
   </data>
   <data name="AllShiftGroupings" xml:space="preserve">
     <value>כל קבוצות המשמרות</value>
@@ -10369,7 +10369,7 @@
     <value>בחר את האזור להקצאה זו</value>
   </data>
   <data name="CompanyScopeHint" xml:space="preserve">
-    <value>בחר את החברה להקצאה זו</value>
+    <value>בחר את הדסק להקצאה זו</value>
   </data>
   <data name="DepartmentScopeHint" xml:space="preserve">
     <value>בחר את המחלקה להקצאה זו</value>
@@ -10405,7 +10405,7 @@
     <value>תפקיד</value>
   </data>
   <data name="ManageCompanyAnnouncements" xml:space="preserve">
-    <value>נהל הודעות חברה</value>
+    <value>נהל הודעות דסק</value>
   </data>
   <data name="CreateAnnouncement" xml:space="preserve">
     <value>צור הודעה</value>
@@ -10429,7 +10429,7 @@
     <value>הגדרות אזור</value>
   </data>
   <data name="EditCompanyOverrides" xml:space="preserve">
-    <value>ערוך דריסות חברה</value>
+    <value>ערוך דריסות דסק</value>
   </data>
   <data name="EditMoleculeOverrides" xml:space="preserve">
     <value>ערוך דריסות מולקולה</value>
@@ -10447,7 +10447,7 @@
     <value>עודכן לאחרונה</value>
   </data>
   <data name="SettingsCascadeInfo" xml:space="preserve">
-    <value>הגדרות מורשות ממולקולה לחברה. דריסות חברה חלות אלא אם למולקולה יש הגדרות משלה.</value>
+    <value>הגדרות מורשות ממולקולה לדסק. דריסות דסק חלות אלא אם למולקולה יש הגדרות משלה.</value>
   </data>
   <data name="RestHoursBetweenShifts" xml:space="preserve">
     <value>שעות מנוחה בין משמרות</value>
@@ -11018,7 +11018,7 @@
     <value>שלח אימייל בדיקה לאימות ההגדרות שלך</value>
   </data>
   <data name="AuditSearch_CompanyId" xml:space="preserve">
-    <value>מזהה חברה</value>
+    <value>מזהה דסק</value>
   </data>
   <data name="AuditSearch_NoResultsMessage" xml:space="preserve">
     <value>נסה לשנות את מסנני החיפוש כדי למצוא רשומות ביומן הביקורת.</value>
@@ -11345,7 +11345,7 @@
     <value>אישור מרובה נכשל</value>
   </data>
   <data name="Error_CanOnlyDeleteOwnCompanyUsers" xml:space="preserve">
-    <value>ניתן למחוק משתמשים מהחברה שלך בלבד</value>
+    <value>ניתן למחוק משתמשים מהדסק שלך בלבד</value>
   </data>
   <data name="Error_CannotChangeToTrainee_ActiveShifts" xml:space="preserve">
     <value>לא ניתן לשנות תפקיד למתמחה כשלמשתמש יש משמרות פעילות</value>
@@ -11375,10 +11375,10 @@
     <value>לא ניתן לשלוח בקשת חברות לעצמך</value>
   </data>
   <data name="Error_CompanyAndJobTypeScopeRequired" xml:space="preserve">
-    <value>טווח חברה וסוג תפקיד הם חובה</value>
+    <value>טווח דסק וסוג תפקיד הם חובה</value>
   </data>
   <data name="Error_CompanyScopeRequired" xml:space="preserve">
-    <value>טווח חברה הוא שדה חובה</value>
+    <value>טווח דסק הוא שדה חובה</value>
   </data>
   <data name="Error_ContentRequired" xml:space="preserve">
     <value>תוכן הוא שדה חובה</value>
@@ -11447,7 +11447,7 @@
     <value>קבוצה לא נמצאה</value>
   </data>
   <data name="Error_InvalidCompanySelected" xml:space="preserve">
-    <value>נבחרה חברה לא חוקית</value>
+    <value>נבחר דסק לא חוקי</value>
   </data>
   <data name="Error_InvalidRequestId" xml:space="preserve">
     <value>מזהה בקשה לא חוקי</value>
@@ -11501,10 +11501,10 @@
     <value>אין לך הרשאה למחוק משתמש זה</value>
   </data>
   <data name="Error_NoPermissionDifferentCompany" xml:space="preserve">
-    <value>אין לך הרשאה לנהל משתמשים בחברה אחרת</value>
+    <value>אין לך הרשאה לנהל משתמשים בדסק אחר</value>
   </data>
   <data name="Error_NoPermissionForCompany" xml:space="preserve">
-    <value>אין לך הרשאה לחברה זו</value>
+    <value>אין לך הרשאה לדסק זה</value>
   </data>
   <data name="Error_NoPermissionModifyUser" xml:space="preserve">
     <value>אין לך הרשאה לשנות משתמש זה</value>
@@ -11795,7 +11795,7 @@
     <value>למשתמש זה אין תפקיד מתמחה</value>
   </data>
   <data name="Error_TraineeDifferentCompany" xml:space="preserve">
-    <value>המתמחה חייב להשתייך לאותה חברה כמו השיבוץ</value>
+    <value>המתמחה חייב להשתייך לאותו דסק כמו השיבוץ</value>
   </data>
   <data name="Error_UserNotInMolecule" xml:space="preserve">
     <value>המשתמש אינו שייך לאותו מולקולה כמו המשמרת</value>
@@ -11815,7 +11815,7 @@
     <value>משתמשים</value>
   </data>
   <data name="Nav_Companies" xml:space="preserve">
-    <value>חברות</value>
+    <value>דסקים</value>
   </data>
   <data name="Nav_Directors" xml:space="preserve">
     <value>מנהלים</value>
@@ -12079,13 +12079,13 @@
     <value>תכונות ליבה</value>
   </data>
   <data name="FeatureFlags_EnforceCompanyScope_Desc" xml:space="preserve">
-    <value>אכוף הפרדת נתונים לפי חברה (מרובת דיירים)</value>
+    <value>אכוף הפרדת נתונים לפי דסק (מרובת דיירים)</value>
   </data>
   <data name="FeatureFlags_Critical" xml:space="preserve">
     <value>קריטי</value>
   </data>
   <data name="FeatureFlags_EnableDirectorRole_Desc" xml:space="preserve">
-    <value>הפעל תפקיד מנהל עם הרשאות חוצות חברה</value>
+    <value>הפעל תפקיד מנהל עם הרשאות חוצות-דסק</value>
   </data>
   <data name="FeatureFlags_High" xml:space="preserve">
     <value>גבוה</value>
@@ -12320,10 +12320,10 @@
     <value>אימות כלל-מערכתי</value>
   </data>
   <data name="Griffin_SystemWideAuth_Desc" xml:space="preserve">
-    <value>Griffin ADFS מוגדר פעם אחת ברמת הבעלים וחל על כל החברות במערכת שלך. משתמשים מכל חברה יכולים להזדהות באמצעות אישורי הדומיין שלהם.</value>
+    <value>Griffin ADFS מוגדר פעם אחת ברמת הבעלים וחל על כל הדסקים במערכת שלך. משתמשים מכל דסק יכולים להזדהות באמצעות אישורי הדומיין שלהם.</value>
   </data>
   <data name="Griffin_Subtitle" xml:space="preserve">
-    <value>הגדר אימות דומיין מרכזי לכל החברות</value>
+    <value>הגדר אימות דומיין מרכזי לכל הדסקים</value>
   </data>
   <data name="Griffin_ServiceConfig" xml:space="preserve">
     <value>הגדרות שירות Griffin</value>
@@ -12398,25 +12398,25 @@
     <value>מוגדר פעם אחת על ידי בעל המערכת</value>
   </data>
   <data name="Griffin_Config2" xml:space="preserve">
-    <value>חל על כל החברות במערכת</value>
+    <value>חל על כל הדסקים במערכת</value>
   </data>
   <data name="Griffin_Config3" xml:space="preserve">
     <value>שרת Griffin יחיד משרת את כל הפריסה</value>
   </data>
   <data name="Griffin_Config4" xml:space="preserve">
-    <value>אימות עקבי בכל החברות והמשתמשים</value>
+    <value>אימות עקבי בכל הדסקים והמשתמשים</value>
   </data>
   <data name="Griffin_NoteText" xml:space="preserve">
-    <value>חברות בודדות לא יכולות לדרוס או להשבית אימות ADFS. אם מופעל כאן, כל המשתמשים בכל החברות יראו את אפשרות "התחבר עם Griffin ADFS" בדף הכניסה.</value>
+    <value>דסקים בודדים לא יכולים לדרוס או להשבית אימות ADFS. אם מופעל כאן, כל המשתמשים בכל הדסקים יראו את אפשרות "התחבר עם Griffin ADFS" בדף הכניסה.</value>
   </data>
   <data name="LangMgmt_Title" xml:space="preserve">
     <value>ניהול שפות</value>
   </data>
   <data name="LangMgmt_Subtitle" xml:space="preserve">
-    <value>הגדר שפות והתאם תרגומים לחברה שלך</value>
+    <value>הגדר שפות והתאם תרגומים לדסק שלך</value>
   </data>
   <data name="LangMgmt_CompanySettings" xml:space="preserve">
-    <value>הגדרות שפת חברה</value>
+    <value>הגדרות שפת דסק</value>
   </data>
   <data name="LangMgmt_CompanySettings_Desc" xml:space="preserve">
     <value>הגדר אילו שתי שפות זמינות למשתמשים למעבר ביניהן.</value>
@@ -12509,7 +12509,7 @@
     <value>הוסף דריסה</value>
   </data>
   <data name="LangMgmt_SelectCompanyFirst" xml:space="preserve">
-    <value>אנא בחר חברה באמצעות התפריט למעלה כדי לנהל הגדרות שפה.</value>
+    <value>אנא בחר דסק באמצעות התפריט למעלה כדי לנהל הגדרות שפה.</value>
   </data>
   <data name="Blueprints_ShiftKeyPlaceholder" xml:space="preserve">
     <value>למשל, CUSTOM_1</value>
@@ -12521,7 +12521,7 @@
     <value>משמרת יום</value>
   </data>
   <data name="Blueprints_CompanyOnly" xml:space="preserve">
-    <value>חברה בלבד</value>
+    <value>דסק בלבד</value>
   </data>
   <data name="Blueprints_MoleculeScopeHint" xml:space="preserve">
     <value>אופציונלי: הפוך לגלוי ברחבי המולקולה</value>
@@ -12548,7 +12548,7 @@
     <value>הפרסום נכשל</value>
   </data>
   <data name="Blueprints_ConfirmUnpublish" xml:space="preserve">
-    <value>להסיר את היקף המולקולה? סוג המשמרת יהיה גלוי רק לחברה זו.</value>
+    <value>להסיר את היקף המולקולה? סוג המשמרת יהיה גלוי רק לדסק זה.</value>
   </data>
   <data name="Blueprints_FailedToUnpublish" xml:space="preserve">
     <value>ביטול הפרסום נכשל</value>
@@ -12566,13 +12566,13 @@
     <value>טקסט תרגום מותאם</value>
   </data>
   <data name="Director_AssignedCompanies" xml:space="preserve">
-    <value>חברות משויכות</value>
+    <value>דסקים משויכים</value>
   </data>
   <data name="Director_FilterActive" xml:space="preserve">
     <value>סינון פעיל</value>
   </data>
   <data name="Director_ManageCompanyFilter" xml:space="preserve">
-    <value>נהל סינון חברות</value>
+    <value>נהל סינון דסקים</value>
   </data>
   <data name="Calendar_NoShiftTypesConfigured" xml:space="preserve">
     <value>לא הוגדרו סוגי משמרות.</value>
@@ -12653,7 +12653,7 @@
     <value>נא לבחור מולקולה</value>
   </data>
   <data name="Error_Signup_HQNotFound" xml:space="preserve">
-    <value>חברת מטה לא נמצאה למולקולה זו. פנה לתמיכה.</value>
+    <value>דסק מטה לא נמצא למולקולה זו. פנה לתמיכה.</value>
   </data>
   <data name="Error_Signup_InvalidDepartment" xml:space="preserve">
     <value>המחלקה שנבחרה אינה תקינה. בחר מחלקה תקפה למולקולה זו.</value>
@@ -13327,7 +13327,7 @@
     <value>הודעות</value>
   </data>
   <data name="Section_AnnouncementsDesc" xml:space="preserve">
-    <value>הודעות והתראות חברה</value>
+    <value>הודעות והתראות דסק</value>
   </data>
   <data name="Section_ApprovalRules" xml:space="preserve">
     <value>כללי אישור</value>
@@ -13345,7 +13345,7 @@
     <value>משימות הקמה</value>
   </data>
   <data name="Section_SetupTasksDesc" xml:space="preserve">
-    <value>אשף הקמת חברה ורשימת משימות</value>
+    <value>אשף הקמת דסק ורשימת משימות</value>
   </data>
   <data name="CompanyOverview" xml:space="preserve">
     <value>צפייה בצוות</value>
@@ -13380,15 +13380,15 @@
     <comment>Admin Hub section header for director utilities</comment>
   </data>
   <data name="Section_CompanyFilter" xml:space="preserve">
-    <value>סינון חברות</value>
+    <value>סינון דסקים</value>
     <comment>Admin Hub card - director company filter</comment>
   </data>
   <data name="Section_CompanyFilterDesc" xml:space="preserve">
-    <value>בחר אילו חברות לנהל</value>
+    <value>בחר אילו דסקים לנהל</value>
     <comment>Admin Hub card description - company filter</comment>
   </data>
   <data name="Owner_Section_CompanyConfig" xml:space="preserve">
-    <value>הגדרות חברה</value>
+    <value>הגדרות דסק</value>
     <comment>Owner Panel section for items moved from sidebar</comment>
   </data>
   <data name="MyGroupsSubtitle" xml:space="preserve">
@@ -13662,7 +13662,7 @@
     <value>סוג כוננות '{0}' הושבת</value>
   </data>
   <data name="Error_CompanyIneligibleForShift" xml:space="preserve">
-    <value>החברה של המשתמש אינה זכאית לסוג משמרת זה</value>
+    <value>הדסק של המשתמש אינו זכאי לסוג משמרת זה</value>
   </data>
   <data name="Error_OfficerRankRequired" xml:space="preserve">
     <value>סוג משמרת זה דורש דרגת קצין</value>
@@ -13976,10 +13976,10 @@
     <value>אימייל בדיקה נשלח</value>
   </data>
   <data name="AuditAction_OwnerSelectedCompany" xml:space="preserve">
-    <value>חברה נבחרה</value>
+    <value>דסק נבחר</value>
   </data>
   <data name="AuditAction_OwnerClearedCompanySelection" xml:space="preserve">
-    <value>בחירת חברה נוקתה</value>
+    <value>בחירת דסק נוקתה</value>
   </data>
   <data name="AuditAction_DirectorSelectedMolecule" xml:space="preserve">
     <value>מולקולה נבחרה</value>
@@ -14098,7 +14098,7 @@
     <value>הגדרות אימייל</value>
   </data>
   <data name="AuditEntity_CompanySelection" xml:space="preserve">
-    <value>בחירת חברה</value>
+    <value>בחירת דסק</value>
   </data>
   <data name="AuditEntity_MoleculeSelection" xml:space="preserve">
     <value>בחירת מולקולה</value>
@@ -15052,7 +15052,7 @@
   </data>
   <!-- Confirm modal title keys (Feedback Consolidation 2026-04-02) -->
   <data name="ConfirmDeleteCompany_Title" xml:space="preserve">
-    <value>מחיקת חברה</value>
+    <value>מחיקת דסק</value>
   </data>
   <data name="ConfirmDeleteAnnouncement_Title" xml:space="preserve">
     <value>מחיקת הודעה</value>
@@ -15112,7 +15112,7 @@
     <value>איפוס תבנית</value>
   </data>
   <data name="Confirm_ApplyToAllCompanies_Title" xml:space="preserve">
-    <value>החלה על כל החברות</value>
+    <value>החלה על כל הדסקים</value>
   </data>
   <data name="MasterPrograms_ConfirmDelete_Title" xml:space="preserve">
     <value>מחיקת תוכנית אב</value>
@@ -15216,19 +15216,19 @@
   <data name="Grant_EditAreaCalendarPalette_Desc" xml:space="preserve"><value>מאפשר התאמה אישית של צבעי משמרות / תורנות / מטלות / חופשות עבור המרחב.</value></data>
   <!-- Justice Analytics — added 2026-05-03 -->
   <data name="Grant_ViewJusticeTable" xml:space="preserve"><value>צפייה בניתוח צדק העומס</value></data>
-  <data name="Grant_ViewJusticeTable_Desc" xml:space="preserve"><value>מאפשר צפייה בעמוד צדק העומס שמשווה את חלוקת העומס בין משתמשים, חברות ומולקולות.</value></data>
+  <data name="Grant_ViewJusticeTable_Desc" xml:space="preserve"><value>מאפשר צפייה בעמוד צדק העומס שמשווה את חלוקת העומס בין משתמשים, דסקים ומולקולות.</value></data>
   <data name="Grant_EditJusticeTargets" xml:space="preserve"><value>עריכת יעדי צדק</value></data>
   <data name="Grant_EditJusticeTargets_Desc" xml:space="preserve"><value>מאפשר עריכת יעדי הציפייה לפי (סוג עבודה, היקף) שמזינים את חישוב הסטייה.</value></data>
   <data name="Justice_PageTitle" xml:space="preserve"><value>צדק — חלוקת עומס</value></data>
-  <data name="Justice_Subtitle" xml:space="preserve"><value>תמיכה בקבלת החלטות לשיבוץ הוגן יותר בין משתמשים, חברות ומולקולות.</value></data>
+  <data name="Justice_Subtitle" xml:space="preserve"><value>תמיכה בקבלת החלטות לשיבוץ הוגן יותר בין משתמשים, דסקים ומולקולות.</value></data>
   <data name="Justice_Targets" xml:space="preserve"><value>יעדים</value></data>
   <data name="Justice_Targets_ComingPhase2" xml:space="preserve"><value>חלון ההגדרות מגיע בשלב 2</value></data>
   <data name="Justice_ExportCsv" xml:space="preserve"><value>ייצוא CSV</value></data>
   <data name="Justice_Level" xml:space="preserve"><value>תצוגה</value></data>
-  <data name="Justice_Level_UsersInCompany" xml:space="preserve"><value>משתמשים בחברה</value></data>
-  <data name="Justice_Level_CompaniesInMolecule" xml:space="preserve"><value>חברות במולקולה</value></data>
+  <data name="Justice_Level_UsersInCompany" xml:space="preserve"><value>משתמשים בדסק</value></data>
+  <data name="Justice_Level_CompaniesInMolecule" xml:space="preserve"><value>דסקים במולקולה</value></data>
   <data name="Justice_Level_MoleculesInArea" xml:space="preserve"><value>מולקולות במרחב</value></data>
-  <data name="Justice_Pick_Company" xml:space="preserve"><value>חברה</value></data>
+  <data name="Justice_Pick_Company" xml:space="preserve"><value>דסק</value></data>
   <data name="Justice_Pick_Molecule" xml:space="preserve"><value>מולקולה</value></data>
   <data name="Justice_Pick_Area" xml:space="preserve"><value>מרחב</value></data>
   <data name="Justice_Pick_None" xml:space="preserve"><value>(אין הרשאה)</value></data>
@@ -15316,7 +15316,7 @@
   <data name="Justice_DrillInto" xml:space="preserve"><value>התעמק ב-</value></data>
   <data name="Justice_DrillInto_Placeholder" xml:space="preserve"><value>בחר…</value></data>
   <data name="Justice_DrillInto_Aria" xml:space="preserve"><value>תפריט בחירה להתעמקות</value></data>
-  <data name="Justice_DrillMenu_Companies" xml:space="preserve"><value>חברות</value></data>
+  <data name="Justice_DrillMenu_Companies" xml:space="preserve"><value>דסקים</value></data>
   <data name="Justice_DrillMenu_Molecules" xml:space="preserve"><value>מולקולות</value></data>
   <data name="Justice_DrillMenu_Units" xml:space="preserve"><value>יחידות</value></data>
   <data name="Justice_DrillMenu_AllUsersInMolecule" xml:space="preserve"><value>כל המשתמשים במולקולה</value></data>
@@ -15365,10 +15365,10 @@
   <data name="Justice_Trend_Aria" xml:space="preserve"><value>גרף מגמה</value></data>
   <data name="Justice_Ribbon_Label" xml:space="preserve"><value>סרגל שוויון</value></data>
   <data name="Justice_ReminderCard_Title" xml:space="preserve"><value>התעמק עוד</value></data>
-  <data name="Justice_ReminderCard_Body" xml:space="preserve"><value>אתם צופים ברמת מולקולה. התעמקו לחברה ספציפית או צפו בכל המשתמשים ישירות.</value></data>
+  <data name="Justice_ReminderCard_Body" xml:space="preserve"><value>אתם צופים ברמת מולקולה. התעמקו לדסק ספציפי או צפו בכל המשתמשים ישירות.</value></data>
   <data name="Justice_ReminderCard_PathA_Label" xml:space="preserve"><value>אפשרות א'</value></data>
-  <data name="Justice_ReminderCard_PathA_Action" xml:space="preserve"><value>לחץ על שורת חברה</value></data>
-  <data name="Justice_ReminderCard_PathA_Hint" xml:space="preserve"><value>פותח את פירוט המשתמשים לחברה זו.</value></data>
+  <data name="Justice_ReminderCard_PathA_Action" xml:space="preserve"><value>לחץ על שורת דסק</value></data>
+  <data name="Justice_ReminderCard_PathA_Hint" xml:space="preserve"><value>פותח את פירוט המשתמשים לדסק זה.</value></data>
   <data name="Justice_ReminderCard_PathB_Label" xml:space="preserve"><value>אפשרות ב'</value></data>
   <data name="Justice_ReminderCard_PathB_Action" xml:space="preserve"><value>כל המשתמשים במולקולה</value></data>
   <data name="Justice_ReminderCard_PathB_Hint" xml:space="preserve"><value>מציג את כל המשתמשים ב-{0} זה לצד זה.</value></data>
@@ -15445,7 +15445,7 @@
   <data name="ExportUserData_Subtitle" xml:space="preserve"><value>ייצוא נתוני משתמש מלאים כ-JSON לצורך תאימות ל-GDPR או סקירה מנהלית.</value></data>
   <data name="ExportUserData_SelectUsers" xml:space="preserve"><value>בחר משתמשים לייצוא</value></data>
   <data name="ExportUserData_NSelected" xml:space="preserve"><value>{0} נבחרו</value></data>
-  <data name="ExportUserData_SearchPlaceholder" xml:space="preserve"><value>חפש לפי שם, דוא"ל או חברה...</value></data>
+  <data name="ExportUserData_SearchPlaceholder" xml:space="preserve"><value>חפש לפי שם, דוא"ל או דסק...</value></data>
   <data name="ExportUserData_SearchAriaLabel" xml:space="preserve"><value>חיפוש משתמשים</value></data>
   <data name="ExportUserData_SelectAll" xml:space="preserve"><value>בחר הכל</value></data>
   <data name="ExportUserData_DeselectAll" xml:space="preserve"><value>נקה בחירה</value></data>
@@ -15534,7 +15534,7 @@
   <data name="PermSim_SelectRole" xml:space="preserve"><value>תבנית תפקיד</value></data>
   <data name="PermSim_RoleScopeArea" xml:space="preserve"><value>אזור התפקיד</value></data>
   <data name="PermSim_RoleScopeMolecule" xml:space="preserve"><value>מולקולה של התפקיד</value></data>
-  <data name="PermSim_RoleScopeCompany" xml:space="preserve"><value>חברה של התפקיד</value></data>
+  <data name="PermSim_RoleScopeCompany" xml:space="preserve"><value>דסק של התפקיד</value></data>
   <data name="PermSim_RoleScopeJobType" xml:space="preserve"><value>סוג תפקיד</value></data>
   <data name="PermSim_Any" xml:space="preserve"><value>כל</value></data>
   <data name="PermSim_WhatGrant" xml:space="preserve"><value>מה (הרשאה)</value></data>
@@ -15544,7 +15544,7 @@
   <data name="PermSim_ScopeProject" xml:space="preserve"><value>פרויקט</value></data>
   <data name="PermSim_ScopeArea" xml:space="preserve"><value>אזור</value></data>
   <data name="PermSim_ScopeMolecule" xml:space="preserve"><value>מולקולה</value></data>
-  <data name="PermSim_ScopeCompany" xml:space="preserve"><value>חברה</value></data>
+  <data name="PermSim_ScopeCompany" xml:space="preserve"><value>דסק</value></data>
   <data name="PermSim_ScopeDept" xml:space="preserve"><value>מזהה מחלקה</value></data>
   <data name="PermSim_ScopeJobType" xml:space="preserve"><value>סוג עבודה</value></data>
   <data name="PermSim_TargetUserId" xml:space="preserve"><value>מזהה משתמש יעד</value></data>
@@ -15633,7 +15633,7 @@
   <data name="FP_Btn_ServerInlineError" xml:space="preserve"><value>שרת: שגיאה מוטבעת</value></data>
   <data name="FP_Pattern9_Title" xml:space="preserve"><value>דפוס 9 — טוסט החלפת הקשר</value></data>
   <data name="FP_Pattern9_Desc" xml:space="preserve"><value>גלולה במיקום קבוע שנעלמת אוטומטית אחרי 3 שניות. מקודדת ידנית ב-_Layout.cshtml. רק 2 כותבים.</value></data>
-  <data name="FP_Sample_ContextSwitch" xml:space="preserve"><value>ההקשר הוחלף ל"חברת אלף"</value></data>
+  <data name="FP_Sample_ContextSwitch" xml:space="preserve"><value>ההקשר הוחלף ל"דסק אלף"</value></data>
   <data name="FP_Btn_TriggerContextSwitch" xml:space="preserve"><value>הצג טוסט החלפת הקשר</value></data>
   <data name="FP_Pattern10_Title" xml:space="preserve"><value>דפוס 10 — דיאלוג התנגשות (משימות)</value></data>
   <data name="FP_Pattern10_Desc" xml:space="preserve"><value>מודל מקומי לדף מונע-TempData להתנגשויות יצירת משימה. לא בשימוש חוזר.</value></data>
@@ -15863,13 +15863,13 @@
     <value>העברה</value>
   </data>
   <data name="Users_MoveTitle" xml:space="preserve">
-    <value>העברת משתמש לחברה אחרת</value>
+    <value>העברת משתמש לדסק אחר</value>
   </data>
   <data name="Users_MoveDestination" xml:space="preserve">
-    <value>חברת יעד</value>
+    <value>דסק יעד</value>
   </data>
   <data name="Users_MoveSelectCompany" xml:space="preserve">
-    <value>בחר חברה…</value>
+    <value>בחר דסק…</value>
   </data>
   <data name="Users_MoveConfirm" xml:space="preserve">
     <value>העבר משתמש</value>
@@ -15881,19 +15881,19 @@
     <value>לא ניתן להעביר את עצמך.</value>
   </data>
   <data name="Error_MoveSameCompany" xml:space="preserve">
-    <value>המשתמש כבר נמצא בחברה זו.</value>
+    <value>המשתמש כבר נמצא בדסק זה.</value>
   </data>
   <data name="Error_MoveDestHq" xml:space="preserve">
-    <value>לא ניתן להעביר משתמש לחברת מטה.</value>
+    <value>לא ניתן להעביר משתמש לדסק מטה.</value>
   </data>
   <data name="Error_MoveCrossMolecule" xml:space="preserve">
-    <value>ניתן להעביר משתמש רק לחברה באותה מולקולה.</value>
+    <value>ניתן להעביר משתמש רק לדסק באותה מולקולה.</value>
   </data>
   <data name="Error_NoPermissionSourceCompany" xml:space="preserve">
-    <value>אין לך הרשאה לחברה הנוכחית של המשתמש.</value>
+    <value>אין לך הרשאה לדסק הנוכחי של המשתמש.</value>
   </data>
   <data name="Error_NoPermissionDestCompany" xml:space="preserve">
-    <value>אין לך הרשאה לחברת היעד.</value>
+    <value>אין לך הרשאה לדסק היעד.</value>
   </data>
   <data name="Error_NoPermissionMoveRole" xml:space="preserve">
     <value>אין לך הרשאה להקצות את תפקיד המשתמש הזה.</value>
@@ -15902,7 +15902,7 @@
     <value>אין לך הרשאה לנהל את שיוכי המשתמש הזה (התפקיד שלו מעל סמכותך).</value>
   </data>
   <data name="Error_MembershipAlreadyExists" xml:space="preserve">
-    <value>המשתמש כבר חבר בחברה זו.</value>
+    <value>המשתמש כבר חבר בדסק זה.</value>
   </data>
   <data name="Error_MoveFailed" xml:space="preserve">
     <value>לא ניתן היה להשלים את ההעברה.</value>
@@ -15914,7 +15914,7 @@
     <value>מסיר גישת מנהל מעל: {0}.</value>
   </data>
   <data name="Users_Companies" xml:space="preserve">
-    <value>חברות</value>
+    <value>דסקים</value>
   </data>
   <data name="Users_Membership_Primary" xml:space="preserve">
     <value>ראשי</value>
@@ -15926,13 +15926,13 @@
     <value>הסר</value>
   </data>
   <data name="Users_Membership_Add" xml:space="preserve">
-    <value>הוסף לחברה</value>
+    <value>הוסף לדסק</value>
   </data>
   <data name="Users_Membership_AddTitle" xml:space="preserve">
-    <value>הוספת שייכות לחברה</value>
+    <value>הוספת שייכות לדסק</value>
   </data>
   <data name="Users_Membership_RemoveTitle" xml:space="preserve">
-    <value>הסרת שייכות לחברה</value>
+    <value>הסרת שייכות לדסק</value>
   </data>
   <data name="Users_RemoveMembershipImpact_Summary" xml:space="preserve">
     <value>יוסר: {0} משמרות, {1} בקשות חופשה, {2} מטלות, {3} בקשות החלפה, {4} תורנויות, {5} הרשאות.</value>
@@ -15944,16 +15944,16 @@
     <value>השייכות הוסרה בהצלחה.</value>
   </data>
   <data name="Users_Membership_PrimarySet" xml:space="preserve">
-    <value>החברה הראשית עודכנה.</value>
+    <value>הדסק הראשי עודכן.</value>
   </data>
   <data name="Users_Membership_Role" xml:space="preserve">
     <value>תפקיד</value>
   </data>
   <data name="Users_Membership_Company" xml:space="preserve">
-    <value>חברה</value>
+    <value>דסק</value>
   </data>
   <data name="Users_Membership_SelectCompany" xml:space="preserve">
-    <value>בחר חברה…</value>
+    <value>בחר דסק…</value>
   </data>
   <data name="Users_Membership_SelectRole" xml:space="preserve">
     <value>בחר תפקיד (אופציונלי)…</value>
@@ -15971,7 +15971,7 @@
     <value>ערוך</value>
   </data>
   <data name="Users_Membership_EditTitle" xml:space="preserve">
-    <value>עריכת שייכות לחברה</value>
+    <value>עריכת שייכות לדסק</value>
   </data>
   <data name="Users_Membership_Updated" xml:space="preserve">
     <value>השייכות עודכנה בהצלחה.</value>
@@ -15980,10 +15980,10 @@
     <value>לא ניתן להסיר את השייכות הראשית — תחילה קבע שייכות אחרת כראשית.</value>
   </data>
   <data name="Error_MembershipNotFound" xml:space="preserve">
-    <value>לא נמצאה שייכות פעילה למשתמש זה בחברה זו.</value>
+    <value>לא נמצאה שייכות פעילה למשתמש זה בדסק זה.</value>
   </data>
   <data name="ContextSwitcher_SelectMemberCompany" xml:space="preserve">
-    <value>בחר חברה</value>
+    <value>בחר דסק</value>
   </data>
   <data name="OptOut_Title" xml:space="preserve">
     <value>התראות במייל</value>
@@ -16166,7 +16166,7 @@
     <value>המשתמש אינו חניך</value>
   </data>
   <data name="Error_TraineeAssignment_DifferentCompany" xml:space="preserve">
-    <value>החניך חייב להשתייך לאותה חברה</value>
+    <value>החניך חייב להשתייך לאותו דסק</value>
   </data>
   <data name="Error_TraineeAssignment_TimeConflict" xml:space="preserve">
     <value>לחניך יש משמרת חופפת בזמן זה</value>
