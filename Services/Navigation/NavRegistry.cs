@@ -52,6 +52,9 @@ public static class NavRegistry
             SubGroup("Nav2_Sched_Definitions",
                 Link("Nav2_Blueprints", "/Owner/Blueprints", policy: G("ManagerHomeAccess"), icon: "layers"),
                 Link("Nav2_ShiftGroupings", "/Admin/Organization/ShiftGroupings", policy: G("ManageShiftGroupings"), icon: "group"),
+                // Chore-type defs belong with shift Blueprints / DutyTypes (parity spine), not the
+                // Organization route they happen to be filed under — same call DutyTypes made above.
+                Link("Nav2_ChoreTypes", "/Admin/Organization/ChoreTypes", policy: G("EditChoreTypes"), icon: "list-checks"),
                 Link("Nav2_DutyTypes", "/Admin/Organization/DutyTypes", policy: G("ManageOnDutyTypes"), icon: "shield")),
             Link("Nav2_Eligibility", "/Scheduling/Eligibility", policy: G("ManageShiftCategories"), icon: "user-check"),
             Link("Nav2_Rules", "/Admin/Settings", policy: G("ViewSettings"), icon: "sliders-horizontal", activeMatch: "/Admin/Settings")),
@@ -78,7 +81,6 @@ public static class NavRegistry
         Hub("Organization", "git-branch",
             Link("Nav2_Hierarchy", "/Admin/Organization", policy: G("ViewHierarchy"), icon: "git-branch", activeMatch: "/Admin/Organization"),
             Link("Nav2_JobTypes", "/Admin/Organization/JobTypes", policy: G("ManageJobTypes"), icon: "briefcase"),
-            Link("Nav2_ChoreTypes", "/Admin/Organization/ChoreTypes", policy: G("EditChoreTypes"), icon: "list-checks"),
             Link("Nav2_Stores", "/Admin/Organization/Stores", policy: G("ManageStores"), icon: "store", flag: FeatureFlagSeed.Flags.StoreHoursEnabled),
             Link("Nav2_AreaPalette", "/Admin/Organization/AreaPalette", policy: G("EditAreaCalendarPalette"), icon: "palette")),
 
