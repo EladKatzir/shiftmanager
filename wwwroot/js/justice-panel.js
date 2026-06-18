@@ -566,7 +566,9 @@
         }
 
         if (calendarKind === 'shifts' && typeof window.quickAddShift === 'function') {
-            window.quickAddShift(holeContext.shiftTypeId, holeContext.date, userId)
+            // Pass the specific hole's shiftInstanceId so the assignment fills THIS instance, not an
+            // arbitrary same-ShiftType+Date instance in another company of the molecule.
+            window.quickAddShift(holeContext.shiftTypeId, holeContext.date, userId, undefined, undefined, holeContext.shiftInstanceId)
                 .then(function () { refreshPayload(); showMainView(); })
                 .catch(function () { reEnableMakeBtns(); });
             return;

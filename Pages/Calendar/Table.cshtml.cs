@@ -830,34 +830,53 @@ public partial class TableModel : PageModel
                 return new JsonResult(new { success = true, draft = true });
             }
 
-            // Get or create shift instance (service expects pre-existing instance)
-            // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
-            var instance = await _db.ShiftInstances
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(si => si.ShiftTypeId == request.ShiftTypeId && si.WorkDate == request.Date);
-
-            if (instance == null)
+            // Resolve the shift instance to assign into.
+            ShiftInstance? instance;
+            if (request.ShiftInstanceId is int explicitInstanceId && explicitInstanceId > 0)
             {
-                // SECURITY-AUDITED: SAFE — entity lookup by unique ID
-                var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
-                if (shiftType == null)
-                {
+                // Instance-aware callers (e.g. Justice "make it real" drilling into a specific hole) name
+                // the EXACT instance. Resolve by id so we fill THAT hole instead of FirstOrDefault-ing an
+                // arbitrary same-ShiftType+Date instance from another company in the molecule. Require the
+                // ShiftType to match the one the grant check above was scoped to (prevents a mismatched
+                // ShiftType/instance pair); the assignment itself is still validated below.
+                // SECURITY-AUDITED: SAFE — lookup by unique id, re-scoped by request.ShiftTypeId.
+                instance = await _db.ShiftInstances
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(si => si.Id == explicitInstanceId && si.ShiftTypeId == request.ShiftTypeId);
+                if (instance == null)
                     return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value });
-                }
+            }
+            else
+            {
+                // Get or create shift instance (service expects pre-existing instance)
+                // SECURITY-AUDITED: SAFE — entity lookup by unique ShiftTypeId+WorkDate composite key
+                instance = await _db.ShiftInstances
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(si => si.ShiftTypeId == request.ShiftTypeId && si.WorkDate == request.Date);
 
-                instance = new ShiftInstance
+                if (instance == null)
                 {
-                    CompanyId = shiftType.GetEffectiveCompanyId(companyId),  // Use ShiftType's company, not caller's tenant
-                    ShiftTypeId = request.ShiftTypeId,
-                    WorkDate = request.Date,
-                    StaffingRequired = 1,
-                    Concurrency = 0
-                };
-                _db.ShiftInstances.Add(instance);
-                var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
-                    () => _db.SaveChangesAsync(), "ShiftInstance");
-                if (!saveResult.Success)
-                    return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+                    // SECURITY-AUDITED: SAFE — entity lookup by unique ID
+                    var shiftType = await _db.ShiftTypes.IgnoreQueryFilters().FirstOrDefaultAsync(st => st.Id == request.ShiftTypeId);
+                    if (shiftType == null)
+                    {
+                        return new JsonResult(new { success = false, error = _localizer["Calendar_Error_ShiftTypeNotFound"].Value });
+                    }
+
+                    instance = new ShiftInstance
+                    {
+                        CompanyId = shiftType.GetEffectiveCompanyId(companyId),  // Use ShiftType's company, not caller's tenant
+                        ShiftTypeId = request.ShiftTypeId,
+                        WorkDate = request.Date,
+                        StaffingRequired = 1,
+                        Concurrency = 0
+                    };
+                    _db.ShiftInstances.Add(instance);
+                    var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                        () => _db.SaveChangesAsync(), "ShiftInstance");
+                    if (!saveResult.Success)
+                        return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+                }
             }
 
             // Validate assignment via service (job type, grouping, weekly cap, rest hours)
@@ -1913,6 +1932,14 @@ public partial class TableModel : PageModel
         public string? OverrideToken { get; set; }
         /// <summary>When set, the assignment is STAGED into this draft sandbox instead of written live.</summary>
         public int? DraftSessionId { get; set; }
+        /// <summary>
+        /// Optional: the EXACT shift instance to fill. Callers that already know the instance
+        /// (e.g. Justice "make it real" drilling into a specific hole) pass it so we don't
+        /// re-resolve by ShiftType+Date — which is ambiguous when the same ShiftType exists in
+        /// multiple companies of the molecule and would FirstOrDefault the wrong company's instance.
+        /// When null/0, the legacy ShiftType+Date resolution (create-if-missing) is used.
+        /// </summary>
+        public int? ShiftInstanceId { get; set; }
     }
 
     public class UnassignEmployeeRequest

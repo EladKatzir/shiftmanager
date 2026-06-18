@@ -380,7 +380,11 @@ async function quickAddOnDuty(date, assigneeId, onDutyType, moleculeId, confirmH
  * @param {string} date - Date in yyyy-MM-dd format
  * @param {number} assigneeId - User ID to assign
  */
-async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = defaultConfirm, _retried) {
+// shiftInstanceId (optional): when the caller already knows the exact hole to fill (Justice
+// "make it real"), pass it so the server targets that instance instead of re-resolving by
+// ShiftType+Date (ambiguous across companies sharing the ShiftType). Omitted by the
+// bottom-sheet / quick-entry callers, which keep the legacy ShiftType+Date behavior.
+async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = defaultConfirm, _retried, shiftInstanceId) {
     try {
         const response = await fetch('/Calendar/Table?handler=AssignEmployee', {
             method: 'POST',
@@ -390,6 +394,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
                 shiftTypeId: parseInt(shiftTypeId),
                 date: date,
                 userId: parseInt(assigneeId),
+                shiftInstanceId: shiftInstanceId ? parseInt(shiftInstanceId) : null,
                 // Draft Mode (Epic 4): when set, the assignment is staged into the private sandbox.
                 draftSessionId: window.__draftSessionId || null
             })
@@ -409,8 +414,12 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
             const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
             showToast(result.message || successMsg, 'success');
             triggerCalendarRefresh();
-        } else if (result.error && result.error.indexOf('SHIFT_FULLY_STAFFED') !== -1 ||
-                   (result.errorKey === 'SHIFT_FULLY_STAFFED' && !_retried)) {
+        } else if (!shiftInstanceId && (
+                   (result.error && result.error.indexOf('SHIFT_FULLY_STAFFED') !== -1) ||
+                   (result.errorKey === 'SHIFT_FULLY_STAFFED' && !_retried))) {
+            // Only auto-expand capacity on the legacy ShiftType+Date path. When a specific
+            // instance was named (Justice make-it-real), don't grow an arbitrary re-resolved
+            // instance — surface the error instead (a "hole" shouldn't be fully staffed anyway).
             // Shift is at capacity — ask the user if they want to expand it
             const culture = getCurrentCulture();
             const confirmMsg = culture === 'he-IL'
@@ -432,6 +441,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
                         shiftTypeId: parseInt(shiftTypeId),
                         date: date,
                         userId: parseInt(assigneeId),
+                        shiftInstanceId: shiftInstanceId ? parseInt(shiftInstanceId) : null,
                         overrideToken: result.overrideToken
                     })
                 });
