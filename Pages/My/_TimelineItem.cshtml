@@ -1,13 +1,13 @@
-@model ShiftManager.Pages.My.IndexModel.TimelineItem
+@model ShiftManager.Models.Schedule.TimelineItem
 @inject ShiftManager.Services.ILocalizationService Localization
 @{
     var typeClass = Model.Type.ToString().ToLower();
     var iconName = Model.Type switch
     {
-        ShiftManager.Pages.My.IndexModel.ItemType.Vacation => "palm-tree",
-        ShiftManager.Pages.My.IndexModel.ItemType.OnDuty => "siren",
-        ShiftManager.Pages.My.IndexModel.ItemType.Shift => "moon",
-        ShiftManager.Pages.My.IndexModel.ItemType.Chore => "brush",
+        ShiftManager.Models.Schedule.ItemType.Vacation => "palm-tree",
+        ShiftManager.Models.Schedule.ItemType.OnDuty => "siren",
+        ShiftManager.Models.Schedule.ItemType.Shift => "moon",
+        ShiftManager.Models.Schedule.ItemType.Chore => "brush",
         _ => "clipboard-list"
     };
 }

@@ -5,6 +5,7 @@
 @using ShiftManager.ViewComponents
 @inject IStringLocalizer<SharedResources> Localizer
 @inject ShiftManager.Services.ILocalizationService Localization
+@inject ShiftManager.Services.Navigation.INavigationService NavService
 @{
     ViewData["Title"] = Localizer["Home"];
     Layout = "_Layout";
@@ -42,6 +43,14 @@
 </style>
 
 <div class="home-dashboard">
+
+    @* Schedule spine (FF_NEW_NAV) — "Home is the schedule-spine for everyone": the signed-in user's
+       own upcoming week is the page; role widgets below stack around it. A manager/director is still
+       an employee with their own shifts. Flag-off keeps Home exactly as before. *@
+    @if (NavService.IsNewNavEnabled())
+    {
+        @await Component.InvokeAsync("PersonalSpine")
+    }
 
     @* Who Is On Shift widget — self-gated to EditArea / AdminAccess holders; renders empty for others *@
     <div class="home-dashboard__who-on-shift">

@@ -16476,6 +16476,7 @@
   <data name="MyElig_Reason_NoShifts" xml:space="preserve"><value>משמרות מכובות עבור החשבון שלך.</value></data>
   <data name="MyElig_Reason_NoChores" xml:space="preserve"><value>תורנויות מכובות עבור החשבון שלך.</value></data>
   <data name="MyElig_Reason_NotMember" xml:space="preserve"><value>אינך חבר בקבוצה זו.</value></data>
+  <data name="MySpine_Empty" xml:space="preserve"><value>אין שיבוצים בשבועיים הקרובים.</value></data>
   <data name="Scope_ViewingNofM" xml:space="preserve"><value>צופה ב-{0} מתוך {1} חברות</value></data>
   <data name="Scope_Apply" xml:space="preserve"><value>החל</value></data>
   <data name="Scope_Tooltip" xml:space="preserve"><value>בחר אילו חברות אתה צופה בהן</value></data>

@@ -349,6 +349,9 @@ builder.Services.AddScoped<ShiftManager.Services.Eligibility.IEligibilityQuerySe
 // Actionable failure remediation — maps a failure code to the place to go fix it ("why + Fix button").
 builder.Services.AddScoped<ShiftManager.Services.Remediation.IFailureRemediationService, ShiftManager.Services.Remediation.FailureRemediationService>();
 
+// Personal schedule timeline — one source of truth for /My timeline + the Home schedule-spine (Phase 6).
+builder.Services.AddScoped<IPersonalTimelineService, PersonalTimelineService>();
+
 // v3.0 Grant Authorization
 builder.Services.AddScoped<IAuthorizationHandler, GrantAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, GrantPolicyProvider>();

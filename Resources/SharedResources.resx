@@ -16514,6 +16514,7 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="MyElig_Reason_NoShifts" xml:space="preserve"><value>Shifts are turned off for your account.</value></data>
   <data name="MyElig_Reason_NoChores" xml:space="preserve"><value>Chores are turned off for your account.</value></data>
   <data name="MyElig_Reason_NotMember" xml:space="preserve"><value>You're not in this group.</value></data>
+  <data name="MySpine_Empty" xml:space="preserve"><value>Nothing scheduled in the next two weeks.</value></data>
   <data name="Scope_ViewingNofM" xml:space="preserve"><value>Viewing {0} of {1} companies</value></data>
   <data name="Scope_Apply" xml:space="preserve"><value>Apply</value></data>
   <data name="Scope_Tooltip" xml:space="preserve"><value>Choose which companies you're viewing</value></data>
