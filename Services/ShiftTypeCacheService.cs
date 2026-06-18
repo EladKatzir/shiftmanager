@@ -84,10 +84,12 @@ public class ShiftTypeCacheService : IShiftTypeCacheService
         else
             query = query.Where(st => st.JobTypeId == null);
 
-        shiftTypes = await query
+        // SortOrder is a [NotMapped] computed property (derived from Key) — it cannot be
+        // translated to SQL. Materialize first, then order in memory.
+        shiftTypes = (await query.ToListAsync())
             .OrderBy(st => st.SortOrder)
             .ThenBy(st => st.Start)
-            .ToListAsync();
+            .ToList();
 
         var cacheOptions = new MemoryCacheEntryOptions()
             .SetAbsoluteExpiration(TimeSpan.FromMinutes(CacheDurationMinutes))
@@ -119,10 +121,12 @@ public class ShiftTypeCacheService : IShiftTypeCacheService
         else
             query = query.Where(st => st.JobTypeId == null);
 
-        shiftTypes = await query
+        // SortOrder is a [NotMapped] computed property (derived from Key) — it cannot be
+        // translated to SQL. Materialize first, then order in memory.
+        shiftTypes = (await query.ToListAsync())
             .OrderBy(st => st.SortOrder)
             .ThenBy(st => st.Start)
-            .ToListAsync();
+            .ToList();
 
         var cacheOptions = new MemoryCacheEntryOptions()
             .SetAbsoluteExpiration(TimeSpan.FromMinutes(CacheDurationMinutes))
