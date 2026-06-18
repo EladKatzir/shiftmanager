@@ -76,6 +76,30 @@
     }
 
     /* ─────────────────────────────────────────────────────────────
+       Chore work-type detection + hours formatter.
+       Chore Actual/Expected are weighted MINUTES; the data-exp-* attrs stay
+       numeric (minutes) so the basis toggle can swap them, but the visible
+       Expected cell must read in hours — same as the server-rendered value.
+       IS_CHORE is read once from the table's data-worktype attribute.
+       formatHoursFromMinutes mirrors ShiftManager.Services.DurationFormat.FormatHours
+       (minutes/60, 1 decimal, trailing ".0" trimmed, locale-neutral 'h').
+    ───────────────────────────────────────────────────────────── */
+    var IS_CHORE = (function () {
+        var t = document.querySelector('table.jt');
+        return !!(t && t.getAttribute('data-worktype') === 'Chore');
+    })();
+
+    function formatHoursFromMinutes(minutes) {
+        var m = Number(minutes);
+        if (!isFinite(m) || m < 0) m = 0;
+        // Mirror the server: FormatHours((int)Math.Round(activeExp)) — round minutes to a whole
+        // number first, THEN divide by 60, so a fractional-minute data-exp-* attr can't drift.
+        var h = Math.round(m) / 60;
+        var s = (Math.round(h * 10) / 10).toString();
+        return s + 'h';
+    }
+
+    /* ─────────────────────────────────────────────────────────────
        1. FAIRNESS-BASIS TOGGLE
     ───────────────────────────────────────────────────────────── */
     var basisSwitch = document.querySelector('[data-basis-toggle]');
@@ -161,6 +185,10 @@
                 ? expTd.getAttribute('data-exp-bysize')
                 : expTd.getAttribute('data-exp-equal');
             if (expVal !== null) {
+                /* For chore work-type the data-exp-* value is weighted minutes — render it as
+                   hours so the post-toggle cell matches the server-rendered chore Expected
+                   (e.g. "12.5h"). Shift/on-duty keep the raw numeric value unchanged. */
+                var expDisplay = IS_CHORE ? formatHoursFromMinutes(expVal) : expVal;
                 var expCell = expTd.querySelector('.expected-cell');
                 if (expCell) {
                     /* Replace the leading text node (the number) before .basis-tag */
@@ -169,10 +197,10 @@
                         /* Set the text node that precedes the tag */
                         var firstNode = expCell.firstChild;
                         if (firstNode && firstNode.nodeType === Node.TEXT_NODE) {
-                            firstNode.nodeValue = expVal + ' ';
+                            firstNode.nodeValue = expDisplay + ' ';
                         } else {
                             /* No text node — insert one before tag */
-                            expCell.insertBefore(document.createTextNode(expVal + ' '), tag);
+                            expCell.insertBefore(document.createTextNode(expDisplay + ' '), tag);
                         }
                         tag.textContent = newTagText;
                     }

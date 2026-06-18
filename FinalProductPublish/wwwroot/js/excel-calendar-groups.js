@@ -76,6 +76,7 @@
 
             // Don't toggle when clicking editable elements
             if (e.target.closest('[data-editable]') || e.target.closest('input')) return;
+            if (e.target.closest('.excel-calendar__group-grip')) return; // grip = drag, not collapse
 
             const groupId = header.dataset.groupId;
             if (groupId) {

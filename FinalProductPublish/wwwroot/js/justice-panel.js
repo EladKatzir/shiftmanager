@@ -213,10 +213,13 @@
         var rows = data.rows || [];
         if (rows.length === 0) { el.innerHTML = ''; return; }
         var max = Number(data.maxRibbonValue || 1);
+        var isChore = isChoreWorkType(data);
         var html = rows.map(function (r) {
             var weight = Math.max(1, Number(r.actual) || 0);
             var band = (r.band || 'NoTarget').toLowerCase().replace(/_/g, '');
-            var name = (r.name || '') + ' ' + (r.actual || 0);
+            // Phase 5: chore absolute load is weighted minutes — show it as hours in the hover title.
+            var actualLabel = isChore ? formatHoursFromMinutes(r.actual) : (r.actual || 0);
+            var name = (r.name || '') + ' ' + actualLabel;
             return '<span class="equity-segment dev-band-' + escape(band) +
                    '" style="flex: ' + weight + '" title="' + escape(name) + '"></span>';
         }).join('');
@@ -405,6 +408,16 @@
                 ? '<span class="justice-candidate__status justice-candidate__status--warn" title="' + escape((c.warnings || []).join(', ')) + '">⚠</span>'
                 : '<span class="justice-candidate__status justice-candidate__status--ok">✓</span>');
 
+        // Visible reason chips (chore parity Phase 4) — additive to the existing status glyph + title.
+        // Delegated to the shared EligibilityChip helper for DRY with the chore bottom-sheet; guarded so the
+        // drawer still renders if the helper failed to load.
+        var eligChips = (window.EligibilityChip)
+            ? window.EligibilityChip.renderChips({
+                hardReasons: c.hardBlockReason ? [c.hardBlockReason] : [],
+                warnings: c.warnings || []
+              })
+            : '';
+
         return '<li class="justice-candidate ' + (isBlocked ? 'justice-candidate--blocked' : '') + '" ' +
                'data-justice-candidate-user="' + escape(String(c.userId)) + '" ' +
                'data-justice-candidate-blocked="' + (isBlocked ? '1' : '0') + '">' +
@@ -416,6 +429,7 @@
                     '<span class="justice-candidate__meta">' +
                         '<span class="justice-candidate__pill dev-band-' + escape(band) + '" dir="ltr">' + dev + '</span>' +
                         statusGlyph +
+                        eligChips +
                     '</span>' +
                 '</span>' +
             '</button>' +
@@ -487,6 +501,19 @@
         var devBefore = formatDeviation(data.candidateDeviationBefore);
         var devAfter = formatDeviation(data.candidateDeviationAfter);
 
+        // Phase 5 follow-up: for the CHORE work-type the actual is weighted MINUTES, so the server's
+        // +1 "after" is meaningless. Show the prospective chore weight added instead (480 = the
+        // documented per-chore default; there's no per-candidate type at preview time), and render
+        // both numbers as hours. Shift/on-duty keep the raw server before→after (count of items).
+        var actualBeforeLabel = actualBefore;
+        var actualAfterLabel = actualAfter;
+        if (holeContext && holeContext.kind === 'chore' && typeof formatHoursFromMinutes === 'function') {
+            var DEFAULT_CHORE_WEIGHT_MINUTES = 480;
+            var prospectiveAfter = actualBefore + DEFAULT_CHORE_WEIGHT_MINUTES;
+            actualBeforeLabel = formatHoursFromMinutes(actualBefore);
+            actualAfterLabel = formatHoursFromMinutes(prospectiveAfter);
+        }
+
         // Phase 2d: chore CTA is disabled until the title input has a non-empty value.
         // Shifts/onduty have no such gate (they don't need a user-supplied title).
         var choreBlocked = holeContext && holeContext.kind === 'chore' && !choreTitle.trim();
@@ -503,7 +530,7 @@
                 '</div>' +
                 '<div class="justice-preview__row">' +
                     '<span class="justice-preview__label">' + escape(loc('Justice_Panel_Actual', 'Actual')) + '</span>' +
-                    '<span class="justice-preview__value" dir="ltr">' + actualBefore + ' → ' + actualAfter +
+                    '<span class="justice-preview__value" dir="ltr">' + escape(String(actualBeforeLabel)) + ' → ' + escape(String(actualAfterLabel)) +
                     ' <span class="justice-preview__pill" dir="ltr">' + devBefore + ' → ' + devAfter + '</span></span>' +
                 '</div>' +
                 '<div class="justice-preview__cta">' +
@@ -539,7 +566,9 @@
         }
 
         if (calendarKind === 'shifts' && typeof window.quickAddShift === 'function') {
-            window.quickAddShift(holeContext.shiftTypeId, holeContext.date, userId)
+            // Pass the specific hole's shiftInstanceId so the assignment fills THIS instance, not an
+            // arbitrary same-ShiftType+Date instance in another company of the molecule.
+            window.quickAddShift(holeContext.shiftTypeId, holeContext.date, userId, undefined, undefined, holeContext.shiftInstanceId)
                 .then(function () { refreshPayload(); showMainView(); })
                 .catch(function () { reEnableMakeBtns(); });
             return;
@@ -689,6 +718,23 @@
         if (!isFinite(n)) return '—';
         var sign = n > 0 ? '+' : '';
         return sign + Math.round(n) + '%';
+    }
+
+    /** Phase 5: chore work-type queries; absolute load is weighted minutes shown as hours. */
+    function isChoreWorkType(data) {
+        return !!(data && data.query && data.query.workType === 'Chore');
+    }
+
+    /**
+     * Phase 5: format weighted minutes as hours for chore work-type rows. e.g. 960 → "16h".
+     * Numeric mirror of the server-side ShiftManager.Services.DurationFormat.FormatHours (minutes/60,
+     * 1 decimal, trailing ".0" trimmed). Kept locale-neutral ('h') in the drawer.
+     */
+    function formatHoursFromMinutes(minutes) {
+        var m = Number(minutes) || 0;
+        var h = m / 60;
+        var s = (Math.round(h * 10) / 10).toString();
+        return s + 'h';
     }
 
     function initialsOf(name) {

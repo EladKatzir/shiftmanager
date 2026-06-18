@@ -4812,6 +4812,74 @@ code {
   display: none;
 }
 
+/* ============================================================
+   Domain-hub navigation (FF_NEW_NAV / Model B redesign)
+   Leaves reuse .app-sidebar-nav-item; hubs are collapsible <details>.
+   Colors mirror .app-sidebar-nav-item / .nav-section-header to avoid
+   any dark-on-dark contrast regression in dark/RTL themes.
+   ============================================================ */
+.nav-hub { border: none; margin: 0; }
+.nav-hub__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+  user-select: none;
+  border-radius: 0.5rem;
+}
+.nav-hub__header::-webkit-details-marker { display: none; }
+.nav-hub__header::marker { content: ""; }
+.nav-hub__header:hover { background: var(--surface-soft); }
+.nav-hub__label { flex: 1 1 auto; }
+.nav-hub__chevron { font-size: 0.7rem; opacity: 0.5; transition: transform 0.18s ease; }
+.nav-hub[open] > .nav-hub__header .nav-hub__chevron { transform: rotate(180deg); }
+.nav-hub__body { padding-inline-start: 0.5rem; }
+
+.nav-subgroup-header {
+  padding: 0.5rem 1rem 0.2rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.nav-subgroup-header--danger { color: var(--danger); }
+.nav-subgroup-header--danger::before { content: "\26A0\00A0"; }
+
+/* Viewing-scope header dropdown (company-context primitive / design bar) */
+.vscope { position: relative; display: inline-block; }
+.vscope__btn { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; list-style: none; }
+.vscope__btn::-webkit-details-marker { display: none; }
+.vscope__btn::marker { content: ""; }
+.vscope__label { font-size: 0.85rem; }
+.vscope__chev { font-size: 0.7rem; opacity: 0.6; }
+.vscope__menu {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 6px); min-width: 240px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 0.6rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18); padding: 0.6rem; z-index: var(--z-dropdown, 1060);
+}
+.vscope__list { display: flex; flex-direction: column; gap: 0.2rem; max-height: 280px; overflow-y: auto; }
+.vscope__item { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.4rem; border-radius: 0.4rem; cursor: pointer; color: var(--text); }
+.vscope__item:hover { background: var(--surface-soft, rgba(127,127,127,0.1)); }
+.vscope__actions { margin-top: 0.5rem; display: flex; justify-content: flex-end; }
+
+/* Collapsed sidebar: keep icons, hide hub labels/chevrons + subgroup headers */
+.app-sidebar.is-collapsed .nav-hub__label,
+.app-sidebar.is-collapsed .nav-hub__chevron,
+.sidebar-initially-collapsed .app-sidebar .nav-hub__label,
+.sidebar-initially-collapsed .app-sidebar .nav-hub__chevron { display: none; }
+.app-sidebar.is-collapsed .nav-hub__header,
+.sidebar-initially-collapsed .app-sidebar .nav-hub__header { justify-content: center; padding: 0.75rem; }
+.app-sidebar.is-collapsed .nav-subgroup-header,
+.sidebar-initially-collapsed .app-sidebar .nav-subgroup-header {
+  opacity: 0; max-height: 0; overflow: hidden; padding: 0; margin: 0;
+}
+
 /* Item header with action buttons */
 .item-header {
   display: flex;
@@ -7210,3 +7278,257 @@ code {
 .data-table--sticky-col thead th:first-child {
   z-index: 5;
 }
+
+/* ============================================================
+   Phase 3.3: Hebrew typography
+   Titles use 'Segoe UI Semibold', regular text uses 'Segoe UI'.
+   Tables are deliberately left on the original base font stack.
+   Scoped to html.hebrew so English/LTR is unaffected.
+   ============================================================ */
+html.hebrew body {
+  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+}
+
+html.hebrew h1,
+html.hebrew h2,
+html.hebrew h3,
+html.hebrew h4,
+html.hebrew h5,
+html.hebrew h6,
+html.hebrew .page-title,
+html.hebrew .section-title,
+html.hebrew .card-title,
+html.hebrew .modal-title,
+html.hebrew .modal__title,
+html.hebrew .auth-hero__title,
+html.hebrew .auth-alert__title,
+html.hebrew .cal-empty__title {
+  font-family: 'Segoe UI Semibold', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Leave table fonts EXACTLY as they are — re-assert the original base stack so the
+   html.hebrew body override above does not cascade into any table/grid surface. */
+html.hebrew table,
+html.hebrew table *,
+html.hebrew .data-table,
+html.hebrew .data-table *,
+html.hebrew .excel-calendar,
+html.hebrew .excel-calendar * {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+}
+
+/* ========================================
+   Who Is On Shift Widget
+   ======================================== */
+.home-dashboard__who-on-shift {
+  margin-bottom: var(--space-5);
+}
+
+.who-on-shift {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 10px);
+  padding: var(--space-4);
+}
+
+.who-on-shift__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.who-on-shift__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* --- Picker (details/summary dropdown) --- */
+.who-on-shift__picker {
+  position: relative;
+}
+
+.who-on-shift__picker-panel {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 4px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,.12));
+  padding: var(--space-3);
+  min-width: 220px;
+  z-index: var(--z-dropdown, 1060);
+}
+
+.who-on-shift__picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: var(--space-3);
+}
+
+.who-on-shift__picker-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.who-on-shift__picker-key {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.who-on-shift__save-btn {
+  width: 100%;
+}
+
+/* --- Empty prompt --- */
+.who-on-shift__empty-prompt {
+  text-align: center;
+  padding: var(--space-4) 0;
+  margin: 0;
+}
+
+/* --- Grid of cubes --- */
+.who-on-shift__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+/* --- Individual cube --- */
+.who-on-shift__cube {
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-3);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  transition: box-shadow 0.15s ease;
+}
+
+.who-on-shift__cube--full {
+  background: var(--success) !important;
+  color: var(--success-text) !important;
+  border-color: var(--success) !important;
+}
+
+.who-on-shift__cube--under {
+  background: var(--warning) !important;
+  color: var(--warning-text) !important;
+  border-color: var(--warning) !important;
+}
+
+.who-on-shift__cube--empty {
+  background: var(--surface-soft) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border) !important;
+}
+
+/* Ensure nested text picks up cube color */
+.who-on-shift__cube--full .who-on-shift__cube-title,
+.who-on-shift__cube--full .who-on-shift__cube-count,
+.who-on-shift__cube--full .who-on-shift__user-name,
+.who-on-shift__cube--full .who-on-shift__no-one {
+  color: var(--success-text) !important;
+}
+
+.who-on-shift__cube--under .who-on-shift__cube-title,
+.who-on-shift__cube--under .who-on-shift__cube-count,
+.who-on-shift__cube--under .who-on-shift__user-name,
+.who-on-shift__cube--under .who-on-shift__no-one {
+  color: var(--warning-text) !important;
+}
+
+/* --- Cube header (title + LIVE badge) --- */
+.who-on-shift__cube-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.who-on-shift__cube-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+/* --- LIVE badge --- */
+.who-on-shift__live-badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--danger) !important;
+  color: var(--danger-text) !important;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* --- Staffing count --- */
+.who-on-shift__cube-count {
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* --- User list --- */
+.who-on-shift__users {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.who-on-shift__user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.825rem;
+}
+
+.who-on-shift__user-name {
+  flex: 1;
+}
+
+/* --- Trainee badge --- */
+.who-on-shift__trainee-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0,0,0,0.15);
+  color: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.who-on-shift__no-one {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* --- RTL adjustments (logical properties already used for inset-inline-end) --- */
+[dir="rtl"] .who-on-shift__picker-panel {
+  inset-inline-end: 0;
+}
+
+/* --- Dark mode: no additional overrides needed — tokens handle it --- */

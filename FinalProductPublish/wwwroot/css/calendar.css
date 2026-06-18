@@ -2843,6 +2843,45 @@
     opacity: 0.9;
 }
 
+/* Day-scoped free-text note (CalendarDayNote) shown under the date in the column header.
+   Company-wide; created via Quick Entry's "Add day note" option. The chip carries its OWN
+   surface background, so on the today/weekend headers (which force descendant text to white
+   via color:!important) the chip text MUST re-assert --text with !important or it becomes
+   white-on-light and unreadable. The compound .day-note-text selector also out-specifies the
+   header rule, so this holds regardless of stylesheet source order. */
+.excel-calendar__day-note {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-top: 0.25rem;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0.1rem 0.3rem;
+    font-size: var(--text-tiny);
+    font-weight: 400;
+    color: var(--text) !important;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-inline-start: 2px solid var(--accent);
+    border-radius: var(--radius-sm, 4px);
+    cursor: default;
+    unicode-bidi: isolate;
+}
+
+.excel-calendar__day-note-icon {
+    flex-shrink: 0;
+    direction: ltr;
+    font-size: 0.7rem;
+}
+
+.excel-calendar__day-note .excel-calendar__day-note-text {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text) !important;
+}
+
 /* Sticky Zone B (left column).
  *
  * Root cause of pre-2026-05-29 failure: the OLD `.excel-calendar { max-height:
@@ -3952,6 +3991,19 @@
     margin-bottom: 12px;
 }
 
+/* Eligibility reason-chip container under the chore-type dropdown (chores parity Phase 4).
+   Chip styling itself lives in components.css (.elig-chip); this only spaces it from the select. */
+.bottom-sheet__elig-hint {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    empty-cells: hide;
+}
+.bottom-sheet__elig-hint:empty {
+    margin-top: 0;
+}
+
 .bottom-sheet__field-label {
     display: block;
     font-size: 0.85rem;
@@ -4375,3 +4427,17 @@ body.bottom-sheet-open {
   /* Keep the × visible on the home palette */
   color: var(--shift-home-text) !important;
 }
+
+/* ================================================================
+   Calendar Row Reorder — grip handles + drop-line styles
+   ================================================================ */
+.excel-calendar__row-grip {
+    cursor: grab; opacity: 0; margin-inline-end: 4px; user-select: none;
+    color: var(--text-muted); font-size: 0.8rem; transition: opacity .12s;
+}
+tr[data-row-id]:hover .excel-calendar__row-grip,
+.excel-calendar__row-grip:focus { opacity: .7; }
+.excel-calendar__group-grip { cursor: grab; }
+.excel-calendar__group-grip:focus,
+.excel-calendar__row-grip:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { .excel-calendar__row-grip { transition: none; } }

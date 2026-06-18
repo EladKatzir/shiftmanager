@@ -78,7 +78,8 @@
                 : 'Disable Just Mine to use Quick Entry',
             'QuickEntry_CreateChore': isHe ? '\u05E6\u05D5\u05E8 \u05EA\u05D5\u05E8\u05E0\u05D5\u05EA' : 'Create chore',
             'QuickEntry_TitlePlaceholder': isHe ? '\u05DB\u05D5\u05EA\u05E8\u05EA...' : 'Title...',
-            'QuickEntry_EnterYesEscNo': isHe ? 'Enter=\u05DB\u05DF, Esc=\u05DC\u05D0' : 'Enter=yes, Esc=no'
+            'QuickEntry_EnterYesEscNo': isHe ? 'Enter=\u05DB\u05DF, Esc=\u05DC\u05D0' : 'Enter=yes, Esc=no',
+            'QuickEntry_AddDayNote': isHe ? '\u05D4\u05D5\u05E1\u05E3 \u05D4\u05E2\u05E8\u05EA \u05D9\u05D5\u05DD' : 'Add day note'
         };
         return labels[key] || key;
     }
@@ -91,6 +92,10 @@
 
     function isChoresCalendar() {
         return !!document.querySelector('.excel-calendar[data-calendar-type="chores"]');
+    }
+
+    function isShiftsCalendar() {
+        return !!document.querySelector('.excel-calendar[data-calendar-type="shifts"]');
     }
 
     function isJustMineActive() {
@@ -133,27 +138,267 @@
 
     // --- Item loading ---
 
+    // ====================================================================================
+    // 3b: per-shift eligibility (fetch-on-focus + two-tier cache + states + disambiguation)
+    // All of this is INERT unless window.CalendarPageConfig.categoryEligibilityEnabled is true
+    // AND the active cell is a shift-mode user-assignment cell. Flag off => legacy path untouched.
+    // ====================================================================================
+    var eligibleCache = {};        // "mol:shift" -> { users:[{id,name,companyName}], reason }
+    var eligibleInFlight = {};     // "mol:shift" -> Promise (dedupe concurrent focus)
+    var qeLiveRegion = null;       // visually-hidden aria-live status region
+
+    function eligibleKey(mol, st) { return mol + ':' + st; }
+
+    function categoryEligibilityOn() {
+        return !!(window.CalendarPageConfig && window.CalendarPageConfig.categoryEligibilityEnabled);
+    }
+
+    function shiftTypeIdForCell(cellData) {
+        if (cellData && cellData.rowId && cellData.rowId.indexOf('shift-') === 0) {
+            var n = parseInt(cellData.rowId.replace('shift-', ''), 10);
+            return (!isNaN(n) && n > 0) ? n : 0;
+        }
+        return 0; // user-mode rows assign a shift TYPE, not a user — no per-shift user filtering
+    }
+
+    function fetchEligible(mol, st, allowFallback) {
+        var key = eligibleKey(mol, st);
+        if (!allowFallback && eligibleCache[key]) return Promise.resolve(eligibleCache[key]);
+        if (!allowFallback && eligibleInFlight[key]) return eligibleInFlight[key];
+        var url = '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + mol + '&shiftTypeId=' + st
+            + (allowFallback ? '&allowFallback=true' : '');
+        var p = fetch(url, { credentials: 'same-origin' })
+            .then(function (r) { if (!r.ok) throw new Error('status ' + r.status); return r.json(); })
+            .then(function (data) {
+                if (!data.success) throw new Error('unsuccessful');
+                var entry = { users: data.users || [], reason: data.reason || 'category' };
+                eligibleCache[key] = entry;       // session cache (eligibility only; busy is never cached)
+                delete eligibleInFlight[key];
+                return entry;
+            })
+            .catch(function (e) { delete eligibleInFlight[key]; throw e; });
+        if (!allowFallback) eligibleInFlight[key] = p;
+        return p;
+    }
+
+    function qeAnnounce(msg) {
+        if (!qeLiveRegion) {
+            qeLiveRegion = document.createElement('div');
+            qeLiveRegion.setAttribute('aria-live', 'polite');
+            qeLiveRegion.setAttribute('role', 'status');
+            qeLiveRegion.style.cssText = 'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;';
+            document.body.appendChild(qeLiveRegion);
+        }
+        qeLiveRegion.textContent = msg || '';
+    }
+
+    function qeFormatLabel(key, value) {
+        return (getLocalizedLabel(key) || '').replace('{0}', value);
+    }
+
+    // Buffer Enter pressed during the load window, then replay it once the list arrives.
+    function flushBufferedEnter(input) {
+        if (!input || !input._bufferedEnter) return;
+        input._bufferedEnter = false;
+        if (activeInput !== input) return;
+        var idx = selectedIndex >= 0 ? selectedIndex : 0;
+        var item = filteredItems[idx];
+        if (item && !item._hasHardError) {
+            if (item.type === '_command') selectSlashCommand(item);
+            else selectItem(item);
+        }
+    }
+
+    // --- eligibility dropdown rendering (state rows are NOT role=option, so arrow-nav + Enter skip them) ---
+    function appendEligState(primary, hint) {
+        var row = document.createElement('div');
+        row.className = 'quick-entry-no-matches quick-entry-elig-state';
+        var p = document.createElement('div');
+        p.textContent = primary;
+        row.appendChild(p);
+        if (hint) {
+            var h = document.createElement('div');
+            h.className = 'quick-entry-elig-hint';
+            h.textContent = hint;
+            row.appendChild(h);
+        }
+        dropdown.appendChild(row);
+    }
+
+    function appendEligAction(label, onClick) {
+        var row = document.createElement('div');
+        row.className = 'quick-entry-item quick-entry-elig-action';
+        row.setAttribute('role', 'button');
+        row.tabIndex = -1;
+        row.textContent = label;
+        row.addEventListener('mousedown', function (e) { e.preventDefault(); onClick(); });
+        dropdown.appendChild(row);
+    }
+
+    function renderEligUserOption(item) {
+        var idx = filteredItems.length;
+        filteredItems.push(item);
+        item._hasHardError = false;
+
+        var el = document.createElement('div');
+        el.className = 'quick-entry-item quick-entry-item--two-line';
+        el.setAttribute('role', 'option');
+        el.id = dropdown.id + '-item-' + idx;
+        el.dataset.index = idx;
+
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'quick-entry-item__name';
+        nameSpan.textContent = item.text;
+        el.appendChild(nameSpan);
+
+        // Disambiguation secondary line: company now (sync), busy glyph decorated async below.
+        var sub = document.createElement('span');
+        sub.className = 'quick-entry-item__sub';
+        sub.textContent = item.companyName || '';
+        el.appendChild(sub);
+        el._subEl = sub;
+        item._optionEl = el;
+
+        (function (capturedIdx) {
+            el.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                selectedIndex = capturedIdx;
+                selectItem(filteredItems[capturedIdx]);
+            });
+        })(idx);
+
+        dropdown.appendChild(el);
+    }
+
+    function finishEligDropdown() {
+        activeInput.setAttribute('aria-expanded', 'true');
+        activeInput.setAttribute('aria-controls', dropdown.id);
+        if (filteredItems.length > 0 && selectedIndex < 0) selectedIndex = 0; // top-match for Enter
+        positionDropdown();
+    }
+
+    // Best-effort busy-glyph decoration of the visible eligible rows (reuses GetBusyStates vocabulary).
+    function decorateEligBusy(items) {
+        if (!items || items.length === 0 || !activeInput || !activeInput._cellData) return;
+        var date = activeInput._cellData.date;
+        var molId = window.CalendarPageConfig && window.CalendarPageConfig.moleculeId;
+        if (!date || !molId) return;
+        var ids = items.map(function (it) { return parseInt(it.id, 10); }).filter(function (n) { return !isNaN(n) && n > 0; });
+        if (ids.length === 0) return;
+        fetch('/Api/Calendar/GetBusyStates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ userIds: ids, date: date, moleculeId: molId, target: null })
+        })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (json) {
+            if (!json || !json.success || !json.busy) return;
+            items.forEach(function (it) {
+                var state = json.busy[it.id];
+                if (!state || !it._optionEl) return;
+                var badges = [];
+                if (state.hasShift) {
+                    if (state.shift && state.shift.isHome) badges.push('\u{1F3E0}');
+                    else if (state.shift && state.shift.isOffline) badges.push('\u{1F4F4}');
+                    else badges.push('⏱');
+                }
+                if (state.hasChore) badges.push('\u{1F9F9}');
+                if (state.hasOnDuty) badges.push('\u{1F6E1}');
+                if (state.hasVacation) badges.push('\u{1F334}');
+                if (state.hasHardError) {
+                    it._hasHardError = true; // excluded from Enter auto-commit (server re-validates anyway)
+                    it._optionEl.classList.add('quick-entry-item--conflict');
+                }
+                if (badges.length && it._optionEl._subEl) {
+                    it._optionEl._subEl.textContent = badges.join('') + ' ' + (it.companyName || '');
+                }
+            });
+        })
+        .catch(function (err) { console.warn('Quick-entry busy decoration failed:', err); });
+    }
+
+    // Owns the user-assignment dropdown entirely when eligibility is active. Returns nothing; always
+    // renders SOMETHING (loading / no-category+button / no-eligible / no-text-match / the user rows).
+    function renderEligibleDropdown(query) {
+        var input = activeInput;
+        if (input._eligState === 'loading') { appendEligState(getLocalizedLabel('QuickEntry_Loading'), null); finishEligDropdown(); return; }
+        if (input._eligState === 'failed') { appendEligState(getLocalizedLabel('QuickEntry_LoadFailedFallback'), null); finishEligDropdown(); return; }
+
+        var elig = input._eligible || { users: [], reason: 'category' };
+        if (!elig.users || elig.users.length === 0) {
+            if (elig.reason === 'noCategory') {
+                appendEligState(getLocalizedLabel('QuickEntry_NoCategorySet'), getLocalizedLabel('QuickEntry_NoCategorySetHint'));
+                appendEligAction(getLocalizedLabel('QuickEntry_ShowAllWorkers'), function () {
+                    input._eligState = 'loading';
+                    updateDropdown(input.value || '');
+                    fetchEligible(window.CalendarPageConfig.moleculeId, input._eligShiftTypeId, true)
+                        .then(function (entry) {
+                            if (activeInput !== input) return;
+                            input._eligible = entry; input._eligState = 'ready';
+                            loadItems(); updateDropdown(input.value || '');
+                        })
+                        .catch(function () { if (activeInput === input) { input._eligState = 'failed'; updateDropdown(input.value || ''); } });
+                });
+            } else {
+                appendEligState(getLocalizedLabel('QuickEntry_NoEligibleUsers'), getLocalizedLabel('QuickEntry_NoEligibleUsersHint'));
+            }
+            finishEligDropdown();
+            return;
+        }
+
+        var result = filterAndGroup(query);
+        var items = (result.groups.user || []).map(function (e) { return e.item; });
+        if (items.length === 0) {
+            appendEligState(qeFormatLabel('QuickEntry_NoTextMatch', '"' + query.trim() + '"'), null);
+            finishEligDropdown();
+            return;
+        }
+        for (var i = 0; i < items.length; i++) renderEligUserOption(items[i]);
+        if (result.overflow.user > 0) {
+            var more = document.createElement('div');
+            more.className = 'quick-entry-overflow';
+            more.textContent = (window.AppLocalizer && window.AppLocalizer.QuickEntry_MoreItems || '+{0} more...').replace('{0}', result.overflow.user);
+            dropdown.appendChild(more);
+        }
+        finishEligDropdown();
+        decorateEligBusy(items);
+    }
+
     function loadItems() {
         allItems = [];
-        var assigneeSelect = document.querySelector('[data-role="assignee-select"]');
-        if (!assigneeSelect) return;
 
-        // Skip loading assignee items if the page marks them as Quick Entry-excluded
-        // (e.g., Chores page — rows are users, only chore types should appear in dropdown)
-        if (assigneeSelect.dataset.quickentrySkip !== 'true') {
-            var itemType = assigneeSelect.dataset.itemType;
-
-            var options = assigneeSelect.querySelectorAll('option');
-            for (var i = 0; i < options.length; i++) {
-                var opt = options[i];
-                if (!opt.value) continue;
-                allItems.push({
-                    id: opt.value,
-                    text: opt.textContent.trim(),
-                    type: itemType === 'user' ? 'user' : 'shift',
-                    key: opt.dataset.key || null,
-                    color: null
+        // 3b: per-shift eligibility — when the active cell loaded an eligible set, the user candidates
+        // come ONLY from that set (never the whole-molecule page list — no silent fallback). When the
+        // flag is off, _eligActive is false and this branch is skipped entirely (legacy behavior).
+        if (activeInput && activeInput._eligActive) {
+            if (activeInput._eligState === 'ready' && activeInput._eligible && Array.isArray(activeInput._eligible.users)) {
+                activeInput._eligible.users.forEach(function (u) {
+                    allItems.push({ id: String(u.id), text: u.name, companyName: u.companyName || null, type: 'user', key: null, color: null });
                 });
+            }
+            // not ready -> no user items yet; updateDropdown renders the loading/empty state row.
+        } else {
+            var assigneeSelect = document.querySelector('[data-role="assignee-select"]');
+            if (!assigneeSelect) return;
+
+            // Skip loading assignee items if the page marks them as Quick Entry-excluded
+            // (e.g., Chores page — rows are users, only chore types should appear in dropdown)
+            if (assigneeSelect.dataset.quickentrySkip !== 'true') {
+                var itemType = assigneeSelect.dataset.itemType;
+
+                var options = assigneeSelect.querySelectorAll('option');
+                for (var i = 0; i < options.length; i++) {
+                    var opt = options[i];
+                    if (!opt.value) continue;
+                    allItems.push({
+                        id: opt.value,
+                        text: opt.textContent.trim(),
+                        type: itemType === 'user' ? 'user' : 'shift',
+                        key: opt.dataset.key || null,
+                        color: null
+                    });
+                }
             }
         }
 
@@ -297,6 +542,13 @@
         var overflow = result.overflow;
         var mode = getCurrentMode();
 
+        // 3b: per-shift eligibility owns the user-assignment dropdown (shift-mode, non-chores, no slash
+        // command). State rows + the company/busy disambiguation line are rendered there.
+        if (activeInput._eligActive && mode === 'shift' && !isChoresCalendar() && !slashCommand) {
+            renderEligibleDropdown(query);
+            return;
+        }
+
         var groupOrder = mode === 'shift'
             ? (isChoresCalendar() ? ['chore'] : ['user'])
             : ['shift', 'chore', 'duty'];
@@ -408,9 +660,45 @@
             dropdown.appendChild(choreEl);
             if (totalItems === 0) selectedIndex = choreIdx; // Auto-select when no chore type matches
             totalItems++;
+        } else if (query.trim().length > 0 && isShiftsCalendar() &&
+            activeInput._cellData && activeInput._cellData.date) {
+            // Day-note option — Shifts calendar, ANY mode/row (shift-mode where rows are shift types, or
+            // user-mode where rows are workers). NOT gated on totalItems: it appears as a separated trailing
+            // option alongside any matches. Replaces the old user-mode-only "save as text" on this calendar
+            // so there is exactly one note action, reachable from the default shift-mode view.
+            var dnItem = { type: 'day-note', text: query.trim(), date: activeInput._cellData.date };
+            var dnIdx = filteredItems.length;
+            filteredItems.push(dnItem);
+
+            var dnEl = document.createElement('div');
+            dnEl.className = 'quick-entry-item quick-entry-item--text-entry quick-entry-item--day-note';
+            dnEl.setAttribute('role', 'option');
+            dnEl.id = dropdown.id + '-item-' + dnIdx;
+            dnEl.dataset.index = dnIdx;
+
+            var dnIcon = document.createElement('span');
+            dnIcon.className = 'quick-entry-text-icon';
+            dnIcon.textContent = '📝'; // 📝
+
+            dnEl.appendChild(dnIcon);
+
+            var dnLabel = document.createElement('span');
+            dnLabel.textContent = getLocalizedLabel('QuickEntry_AddDayNote') + ': "' + query.trim() + '"';
+            dnEl.appendChild(dnLabel);
+
+            (function (capturedIdx) {
+                dnEl.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    selectedIndex = capturedIdx;
+                    selectItem(filteredItems[capturedIdx]);
+                });
+            })(dnIdx);
+
+            dropdown.appendChild(dnEl);
+            if (totalItems === 0) selectedIndex = dnIdx; // Auto-select for Enter only when nothing else matched
         } else if (totalItems === 0 && query.trim().length > 0 && getCurrentMode() === 'user' &&
             activeInput._cellData && activeInput._cellData.rowId.indexOf('user-') === 0) {
-            // Show "Save as text" option for unmatched text in user-mode (Shifts)
+            // Show "Save as text" option for unmatched text in user-mode (legacy — non-Shifts calendars)
             var textItem = { type: 'text-entry', text: query.trim() };
             var textIdx = filteredItems.length;
             filteredItems.push(textItem);
@@ -615,6 +903,40 @@
 
         input._cellData = cellData;
 
+        // 3b: per-shift eligibility fetch-on-focus. Only when the per-company flag is on AND this is a
+        // shift-mode user-assignment cell. Otherwise _eligActive stays false and the legacy path runs.
+        input._eligActive = false;
+        input._eligState = 'idle';
+        input._eligShiftTypeId = 0;
+        var eligStId = shiftTypeIdForCell(cellData);
+        if (categoryEligibilityOn() && getCurrentMode() === 'shift' && !isChoresCalendar()
+            && eligStId > 0 && window.CalendarPageConfig && window.CalendarPageConfig.moleculeId > 0) {
+            input._eligActive = true;
+            input._eligState = 'loading';
+            input._eligShiftTypeId = eligStId;
+            input.setAttribute('aria-busy', 'true');
+            qeAnnounce(getLocalizedLabel('QuickEntry_Loading'));
+            var eligMolId = window.CalendarPageConfig.moleculeId;
+            fetchEligible(eligMolId, eligStId, false)
+                .then(function (entry) {
+                    if (activeInput !== input) return; // focus moved during the fetch
+                    input._eligible = entry;
+                    input._eligState = 'ready';
+                    input.removeAttribute('aria-busy');
+                    qeAnnounce(qeFormatLabel('QuickEntry_ResultsAvailable', entry.users.length));
+                    loadItems();
+                    updateDropdown(input.value || '');
+                    flushBufferedEnter(input);
+                })
+                .catch(function () {
+                    if (activeInput !== input) return;
+                    input._eligState = 'failed';
+                    input.removeAttribute('aria-busy');
+                    qeAnnounce(getLocalizedLabel('QuickEntry_LoadFailedFallback'));
+                    updateDropdown(input.value || '');
+                });
+        }
+
         if (allItems.length === 0) loadItems();
 
         input.addEventListener('input', handleInput);
@@ -728,12 +1050,26 @@
                 e.preventDefault();
                 if (choreTypeForTitle) {
                     commitChoreTitle();
-                } else if (selectedIndex >= 0 && filteredItems[selectedIndex]) {
-                    var item = filteredItems[selectedIndex];
-                    if (item.type === '_command') {
-                        selectSlashCommand(item);
-                    } else {
-                        selectItem(item);
+                } else if (activeInput && activeInput._eligActive && activeInput._eligState === 'loading') {
+                    // 3b: buffer Enter during the eligibility load window; flushBufferedEnter replays it
+                    // once the list arrives, so a fast typist never commits against a stale/empty list.
+                    activeInput._bufferedEnter = true;
+                } else {
+                    // Excel-like confirm: if the user typed but never arrowed to a specific
+                    // row, commit the TOP match (index 0) instead of doing nothing. This lets
+                    // the user type a name and press Enter to assign, without clicking the row.
+                    // filteredItems only ever holds selectable rows (the "no matches"
+                    // placeholder is never pushed), so a non-empty list = a valid target.
+                    var enterIdx = selectedIndex >= 0 ? selectedIndex : 0;
+                    var item = filteredItems[enterIdx];
+                    if (item) {
+                        if (item._hasHardError) {
+                            // 3b: never auto-commit a hard-conflicted user on Enter — require an explicit click.
+                        } else if (item.type === '_command') {
+                            selectSlashCommand(item);
+                        } else {
+                            selectItem(item);
+                        }
                     }
                 }
                 break;
@@ -856,6 +1192,23 @@
                 }
             } else {
                 closeInput();
+            }
+            return;
+        }
+
+        if (item.type === 'day-note') {
+            // Day-scoped note — attaches to the DATE (company-wide), not a user. Works in any mode/row.
+            var currentCellDN = activeCell;
+            var doAdvanceDN = !!advance;
+            var dnPromise = window.quickAddDayNote(date, item.text);
+            if (dnPromise && typeof dnPromise.then === 'function') {
+                dnPromise.then(function () {
+                    closeInput();
+                    if (doAdvanceDN) advanceToNextCell(currentCellDN);
+                });
+            } else {
+                closeInput();
+                if (doAdvanceDN) advanceToNextCell(currentCellDN);
             }
             return;
         }
@@ -1183,18 +1536,39 @@
 
     function attachListeners() {
         calendarTable = document.querySelector('.excel-calendar');
-        if (calendarTable) {
-            calendarTable.addEventListener('click', handleCellClick);
-        }
+        // Delegate the cell-click on `document`, NOT on the .excel-calendar node.
+        // triggerCalendarRefresh() (calendar-inline-edit.js) swaps the entire grid via
+        // grid.replaceWith(fresh) after every assignment/note save. A listener bound to the
+        // old node would be orphaned, leaving the UI "locked" (no input opens) until a full
+        // page reload — the Phase 1 lockup bug. handleCellClick already gates on isActive +
+        // closest('.excel-calendar__cell'), so document-level delegation is safe and immune
+        // to grid swaps. (The bottom-sheet cell handler only binds on touch devices, so there
+        // is no desktop conflict; on touch it runs in capture phase and still takes priority.)
+        document.addEventListener('click', handleCellClick);
+        // Re-point the SignalR DOM observer after each in-place grid refresh.
+        document.addEventListener('calendar:grid-refreshed', handleGridRefreshed);
         setupDomObserver();
     }
 
     function detachListeners() {
-        if (calendarTable) {
-            calendarTable.removeEventListener('click', handleCellClick);
-            calendarTable = null;
+        document.removeEventListener('click', handleCellClick);
+        document.removeEventListener('calendar:grid-refreshed', handleGridRefreshed);
+        calendarTable = null;
+        teardownDomObserver();
+    }
+
+    // After an in-place grid refresh, the previous .excel-calendar node — and the
+    // MutationObserver bound to it — are detached. Close any input whose cell no longer
+    // exists, then re-bind the observer to the fresh grid so live SignalR updates keep
+    // restoring in-progress typing. (The click handler lives on document, so it survives
+    // the swap untouched.)
+    function handleGridRefreshed() {
+        if (!isActive) return;
+        if (activeCell && !document.body.contains(activeCell)) {
+            closeInput();
         }
         teardownDomObserver();
+        setupDomObserver();
     }
 
     // --- Toggle ---

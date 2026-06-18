@@ -206,8 +206,9 @@ public static class RoleTemplateSeed
         const GrantScopeMode ETP = GrantScopeMode.ExpandToProject;
 
         // ============================================
-        // EMPLOYEE (Template 1) — 21 grants
+        // EMPLOYEE (Template 1) — 20 grants
         // All SAR (company-scoped). Base for all workforce roles.
+        // F2 SECURITY: ViewGrants (35) removed — base users must not see the permission map.
         // ============================================
         grants.Add(G(1, 1, SAR));    // ViewShifts
         grants.Add(G(1, 16, SAR));   // ViewChores
@@ -217,8 +218,7 @@ public static class RoleTemplateSeed
         grants.Add(G(1, 25, SAR));   // RequestSwap (NOT 26 — old seed was off-by-one!)
         grants.Add(G(1, 115, SAR));  // ViewCompanyCalendar
         grants.Add(G(1, 117, SAR));  // ViewCompanyUsers
-        grants.Add(G(1, 35, SAR));   // ViewGrants
-        grants.Add(G(1, 39, SAR));   // ViewHierarchy
+        grants.Add(G(1, 39, SAR));   // ViewHierarchy (org tree — kept; benign structure view)
         grants.Add(G(1, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(1, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(1, 62, SAR));   // ViewTextShiftCalendar
@@ -230,8 +230,9 @@ public static class RoleTemplateSeed
         grants.Add(G(1, 68, SAR, useOwnJobType: true));   // CanBeAssignedHakamShifts (OWN)
 
         // ============================================
-        // TRAINEE (Template 12) — 20 grants
+        // TRAINEE (Template 12) — 19 grants
         // Same as Employee minus RequestSwap
+        // F2 SECURITY: ViewGrants (35) removed — base users must not see the permission map.
         // ============================================
         grants.Add(G(12, 1, SAR));    // ViewShifts
         grants.Add(G(12, 16, SAR));   // ViewChores
@@ -241,8 +242,7 @@ public static class RoleTemplateSeed
         // NO RequestSwap for Trainee
         grants.Add(G(12, 115, SAR));  // ViewCompanyCalendar
         grants.Add(G(12, 117, SAR));  // ViewCompanyUsers
-        grants.Add(G(12, 35, SAR));   // ViewGrants
-        grants.Add(G(12, 39, SAR));   // ViewHierarchy
+        grants.Add(G(12, 39, SAR));   // ViewHierarchy (org tree — kept; benign structure view)
         grants.Add(G(12, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(12, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(12, 62, SAR));   // ViewTextShiftCalendar
@@ -254,8 +254,9 @@ public static class RoleTemplateSeed
         grants.Add(G(12, 68, SAR, useOwnJobType: true));   // CanBeAssignedHakamShifts (OWN)
 
         // ============================================
-        // ASSIGNER (Template 8) — 22 grants
+        // ASSIGNER (Template 8) — 21 grants
         // All Employee grants at SAR + AssignChores at ETM
+        // F2 SECURITY: ViewGrants (35) removed — Assigner has no RevokeGrants and must not see the permission map.
         // ============================================
         grants.Add(G(8, 1, SAR));    // ViewShifts
         grants.Add(G(8, 16, SAR));   // ViewChores
@@ -265,8 +266,7 @@ public static class RoleTemplateSeed
         grants.Add(G(8, 25, SAR));   // RequestSwap
         grants.Add(G(8, 115, SAR));  // ViewCompanyCalendar
         grants.Add(G(8, 117, SAR));  // ViewCompanyUsers
-        grants.Add(G(8, 35, SAR));   // ViewGrants
-        grants.Add(G(8, 39, SAR));   // ViewHierarchy
+        grants.Add(G(8, 39, SAR));   // ViewHierarchy (org tree — kept; benign structure view)
         grants.Add(G(8, 110, ETM));  // WriteOverviewNotes — molecule-wide free-text for all molecule members (Issue 3)
         grants.Add(G(8, 61, SAR));   // ViewAlhutShiftCalendar
         grants.Add(G(8, 62, SAR));   // ViewTextShiftCalendar
@@ -306,8 +306,7 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 67, SAR, useOwnJobType: true));
         grants.Add(G(3, 68, SAR, useOwnJobType: true));
         // Lead-specific grants
-        grants.Add(G(3, 3, ETM, useOwnJobType: true));    // AssignAlhutShifts (ETM, OWN)
-        grants.Add(G(3, 4, ETM, useOwnJobType: true));    // AssignTextShifts (ETM, OWN)
+        grants.Add(G(3, 137, ETM));    // AssignShifts (unified; replaced AssignAlhut/Text, job-type-agnostic)
         grants.Add(G(3, 2, ETM));    // ViewAllShifts (ETM — Lead/מפ"צ sees shifts across all companies in their molecule, matches AssignAlhut/AssignText molecule scope)
         grants.Add(G(3, 7, SAR, useOwnJobType: true));    // EditShiftPrograms (OWN)
         grants.Add(G(3, 8, SAR, useOwnJobType: true));    // CreateShiftPrograms (OWN)
@@ -365,7 +364,7 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 67, SAR, useOwnJobType: true));
         grants.Add(G(2, 68, SAR, useOwnJobType: true));
         // BRDirector-specific
-        grants.Add(G(2, 5, ETM, canGive: true));   // AssignBRShifts (ETM, ALL, CanGive)
+        grants.Add(G(2, 137, ETM, canGive: true));   // AssignShifts (unified; replaced AssignBRShifts)
         grants.Add(G(2, 13, ETM, canGive: true));  // AssignHakamDuties (ETM — קב"ר assigns Hakam duties across their molecule)
         grants.Add(G(2, 2, ETM));                   // ViewAllShifts (ETM)
         grants.Add(G(2, 7, SAR, useOwnJobType: true));
@@ -433,8 +432,7 @@ public static class RoleTemplateSeed
         grants.Add(G(5, 62, ETM));
         grants.Add(G(5, 63, ETM));
         grants.Add(G(5, 64, ETM));
-        grants.Add(G(5, 3, ETM, canGive: true, useOwnJobType: true));  // AssignAlhutShifts (ETM, OWN, CanGive)
-        grants.Add(G(5, 4, ETM, canGive: true, useOwnJobType: true));  // AssignTextShifts (ETM, OWN, CanGive)
+        grants.Add(G(5, 137, ETM, canGive: true));  // AssignShifts (unified; replaced AssignAlhut/Text, job-type-agnostic)
         grants.Add(G(5, 2, ETM));
         grants.Add(G(5, 7, ETM, useOwnJobType: true));
         grants.Add(G(5, 8, ETM, useOwnJobType: true));
@@ -501,7 +499,6 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 62, ETM));
         grants.Add(G(7, 63, ETM));
         grants.Add(G(7, 64, ETM));
-        grants.Add(G(7, 5, ETM, canGive: true));   // AssignBRShifts
         grants.Add(G(7, 2, ETM));                   // ViewAllShifts
         grants.Add(G(7, 7, ETM));                   // EditShiftPrograms (ALL)
         grants.Add(G(7, 8, ETM));
@@ -526,8 +523,7 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 114, ETM));
         grants.Add(G(7, 120, ETM));
         // MoleculeAdmin extras
-        grants.Add(G(7, 3, ETM, canGive: true));    // AssignAlhutShifts (ALL, CanGive)
-        grants.Add(G(7, 4, ETM, canGive: true));    // AssignTextShifts (ALL, CanGive)
+        grants.Add(G(7, 137, ETM, canGive: true));    // AssignShifts (unified; replaced Alhut/Text/BR/Tech/Hanava/Delta/Yekev/Moviltech)
         grants.Add(G(7, 18, ETM));
         grants.Add(G(7, 19, ETM));
         grants.Add(G(7, 30, ETM));
@@ -553,16 +549,11 @@ public static class RoleTemplateSeed
         grants.Add(G(7, 32, ETM));   // ResetPasswords (BUG 1 fix)
         grants.Add(G(7, 33, ETM));   // AssignJobTypes (BUG 2 fix)
         grants.Add(G(7, 24, ETM));   // ApproveExtendedLeave (ALL — BUG 3 fix)
-        // Tech grants (GAP 1 fix)
-        grants.Add(G(7, 6, ETM));    // AssignTechShifts
+        // Tech grants (GAP 1 fix) — AssignTechShifts + Assign{Hanava,Delta,Yekev,Moviltech}Shifts folded into AssignShifts (137) above
         grants.Add(G(7, 77, ETM));   // ViewHanavaCalendar
         grants.Add(G(7, 78, ETM));   // ViewDeltaCalendar
         grants.Add(G(7, 79, ETM));   // ViewYekevCalendar
         grants.Add(G(7, 80, ETM));   // ViewMoviltechCalendar
-        grants.Add(G(7, 81, ETM));   // AssignHanavaShifts
-        grants.Add(G(7, 82, ETM));   // AssignDeltaShifts
-        grants.Add(G(7, 83, ETM));   // AssignYekevShifts
-        grants.Add(G(7, 84, ETM));   // AssignMoviltechShifts
         grants.Add(G(7, 85, ETM));   // ManageHanavaBlueprints
         grants.Add(G(7, 86, ETM));   // ManageHanavaPrograms
         grants.Add(G(7, 87, ETM));   // ManageDeltaBlueprints
@@ -617,15 +608,11 @@ public static class RoleTemplateSeed
         grants.Add(G(9, 112, SAR));  // AccessAdminNavigation (GAP 3 fix)
         grants.Add(G(9, 114, SAR));  // ManagerHomeAccess (GAP 3 fix)
         // Tech grants (GAP 1 fix)
-        grants.Add(G(9, 6, SAR));    // AssignTechShifts
+        grants.Add(G(9, 137, SAR));    // AssignShifts (unified; replaced Tech/Hanava/Delta/Yekev/Moviltech)
         grants.Add(G(9, 77, SAR));   // ViewHanavaCalendar
         grants.Add(G(9, 78, SAR));   // ViewDeltaCalendar
         grants.Add(G(9, 79, SAR));   // ViewYekevCalendar
         grants.Add(G(9, 80, SAR));   // ViewMoviltechCalendar
-        grants.Add(G(9, 81, SAR));   // AssignHanavaShifts
-        grants.Add(G(9, 82, SAR));   // AssignDeltaShifts
-        grants.Add(G(9, 83, SAR));   // AssignYekevShifts
-        grants.Add(G(9, 84, SAR));   // AssignMoviltechShifts
         grants.Add(G(9, 85, SAR));   // ManageHanavaBlueprints
         grants.Add(G(9, 86, SAR));   // ManageHanavaPrograms
         grants.Add(G(9, 87, SAR));   // ManageDeltaBlueprints
@@ -671,9 +658,7 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 62, ETA));
         grants.Add(G(10, 63, ETA));
         grants.Add(G(10, 64, ETA));
-        grants.Add(G(10, 3, ETA, canGive: true));
-        grants.Add(G(10, 4, ETA, canGive: true));
-        grants.Add(G(10, 5, ETA, canGive: true));
+        grants.Add(G(10, 137, ETA, canGive: true));  // AssignShifts (unified; replaced Alhut/Text/BR/Tech/Hanava/Delta/Yekev/Moviltech)
         grants.Add(G(10, 2, ETA));
         grants.Add(G(10, 7, ETA));
         grants.Add(G(10, 8, ETA));
@@ -739,16 +724,11 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 24, ETA));   // ApproveExtendedLeave (ALL — BUG 3 fix)
         grants.Add(G(10, 47, ETA));   // ManageDepartments
         grants.Add(G(10, 124, ETA));  // ManageHierarchy (add/rename/delete companies & departments)
-        // Tech grants (GAP 1 fix)
-        grants.Add(G(10, 6, ETA));    // AssignTechShifts
+        // Tech grants (GAP 1 fix) — AssignTechShifts + Assign{Hanava,Delta,Yekev,Moviltech}Shifts folded into AssignShifts (137) above
         grants.Add(G(10, 77, ETA));   // ViewHanavaCalendar
         grants.Add(G(10, 78, ETA));   // ViewDeltaCalendar
         grants.Add(G(10, 79, ETA));   // ViewYekevCalendar
         grants.Add(G(10, 80, ETA));   // ViewMoviltechCalendar
-        grants.Add(G(10, 81, ETA));   // AssignHanavaShifts
-        grants.Add(G(10, 82, ETA));   // AssignDeltaShifts
-        grants.Add(G(10, 83, ETA));   // AssignYekevShifts
-        grants.Add(G(10, 84, ETA));   // AssignMoviltechShifts
         grants.Add(G(10, 85, ETA));   // ManageHanavaBlueprints
         grants.Add(G(10, 86, ETA));   // ManageHanavaPrograms
         grants.Add(G(10, 87, ETA));   // ManageDeltaBlueprints
@@ -798,10 +778,7 @@ public static class RoleTemplateSeed
         grants.Add(G(11, 115, ETP, canGive: true));  // ViewCompanyCalendar
         grants.Add(G(11, 117, ETP, canGive: true));  // ViewCompanyUsers
         // Shift assignment + management (ETP)
-        grants.Add(G(11, 3, ETP, canGive: true));    // AssignAlhutShifts
-        grants.Add(G(11, 4, ETP, canGive: true));    // AssignTextShifts
-        grants.Add(G(11, 5, ETP, canGive: true));    // AssignBRShifts
-        grants.Add(G(11, 6, ETP, canGive: true));    // AssignTechShifts
+        grants.Add(G(11, 137, ETP, canGive: true));    // AssignShifts (unified; replaced Alhut/Text/BR/Tech/Hanava/Delta/Yekev/Moviltech)
         grants.Add(G(11, 7, ETP, canGive: true));    // EditShiftPrograms
         grants.Add(G(11, 8, ETP, canGive: true));    // CreateShiftPrograms
         grants.Add(G(11, 9, ETP, canGive: true));    // DeleteShiftPrograms
@@ -887,10 +864,6 @@ public static class RoleTemplateSeed
         grants.Add(G(11, 78, ETP, canGive: true));   // ViewDeltaCalendar
         grants.Add(G(11, 79, ETP, canGive: true));   // ViewYekevCalendar
         grants.Add(G(11, 80, ETP, canGive: true));   // ViewMoviltechCalendar
-        grants.Add(G(11, 81, ETP, canGive: true));   // AssignHanavaShifts
-        grants.Add(G(11, 82, ETP, canGive: true));   // AssignDeltaShifts
-        grants.Add(G(11, 83, ETP, canGive: true));   // AssignYekevShifts
-        grants.Add(G(11, 84, ETP, canGive: true));   // AssignMoviltechShifts
         grants.Add(G(11, 85, ETP, canGive: true));   // ManageHanavaBlueprints
         grants.Add(G(11, 86, ETP, canGive: true));   // ManageHanavaPrograms
         grants.Add(G(11, 87, ETP, canGive: true));   // ManageDeltaBlueprints
@@ -1020,7 +993,7 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 133, ETM));   // Lead — molecule (per 2026-04-25 scope expansion)
         grants.Add(G(5, 133, ETM));   // Director — molecule
         grants.Add(G(7, 133, ETM));   // MoleculeAdmin
-        grants.Add(G(8, 133, SAR));   // Assigner — molecule (their RoleTemplate scope is Molecule)
+        grants.Add(G(8, 133, SAR));   // Assigner — molecule (role scope IS Molecule; retains Analytics access per 2026-06-15 product decision)
         grants.Add(G(10, 133, ETA));  // AreaAdmin
         grants.Add(G(11, 133, ETP, canGive: true));  // Owner
 

@@ -637,6 +637,15 @@
             Multitenancy Phase 2: Automatic tenant scoping for new entities with feature flag support
             </summary>
         </member>
+        <member name="T:ShiftManager.Data.SeedData.AssignShiftsCollapse">
+            <summary>
+            Idempotent startup self-heal for the 8→1 Assign*Shifts collapse (review #3). Mirrors the F2
+            ViewGrants self-heal: runs BEFORE RepairUserGrants so the de-seeded grants are not re-applied.
+            Marks the 8 old grant types deprecated, removes their template mappings, and migrates each
+            holder's old grant rows to a single AssignShifts row per distinct org-scope tuple (job-type pin
+            dropped — two job-type-pinned grants at the same molecule collapse to one).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Data.SeedData.DataMigrationHelper">
             <summary>
             Helps migrate existing data to the v3.0 organizational hierarchy.
@@ -3032,6 +3041,141 @@
         <member name="M:ShiftManager.Migrations.AddCalendarFeedToken.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddUserCalendarRowOrder">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUserCalendarRowOrder.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUserCalendarRowOrder.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUserCalendarRowOrder.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddEmailConfigOverrideEnabled">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddEmailConfigOverrideEnabled.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddEmailConfigOverrideEnabled.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddEmailConfigOverrideEnabled.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddUserMonitoredShift">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUserMonitoredShift.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUserMonitoredShift.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddUserMonitoredShift.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddAccountTypeToAppUser">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAccountTypeToAppUser.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAccountTypeToAppUser.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddAccountTypeToAppUser.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddChoreFoundation">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddChoreFoundation.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddChoreFoundation.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddChoreFoundation.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.BackfillChoreFoundation">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillChoreFoundation.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillChoreFoundation.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillChoreFoundation.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddGrantTypeIsDeprecated">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddGrantTypeIsDeprecated.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddGrantTypeIsDeprecated.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddGrantTypeIsDeprecated.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.BackfillShiftTypeCategoryId">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillShiftTypeCategoryId.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillShiftTypeCategoryId.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.BackfillShiftTypeCategoryId.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddCalendarDayNote">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCalendarDayNote.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCalendarDayNote.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddCalendarDayNote.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.ChoreFoundationBackfillSql">
+            <summary>
+            Raw SQLite statements that seed the chore-parity foundation onto an existing database. Held as
+            shared constants so the <c>BackfillChoreFoundation</c> migration and its regression test run the
+            EXACT same SQL — no drift. Idempotent (safe to re-run): category creation is guarded by NOT EXISTS,
+            type assignment only touches NULLs, weight backfill only touches timed chores, participant marking
+            is a stable predicate.
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ChoreFoundationBackfillSql.CreateGeneralCategories">
+            <summary>1) One "General" category per molecule that has ≥1 chore type and no existing 'General'.</summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ChoreFoundationBackfillSql.AssignTypesToGeneral">
+            <summary>2) Assign each uncategorized chore type to its molecule's General category.</summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ChoreFoundationBackfillSql.BackfillChoreWeights">
+            <summary>3) Freeze WeightMinutes from explicit times where both present (else keep the 480 default).
+            Guards EndTime > StartTime so midnight-crossing chores (out of scope) keep the default.
+            TimeOnly is stored as "HH:mm" → substr(t,1,2)=hours, substr(t,4,2)=minutes.</summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ChoreFoundationBackfillSql.MarkChoreParticipants">
+            <summary>4) Existing active Standard users become chore participants (preserves the roster under
+            the new DoesChores predicate). AccountType 0 = Standard.</summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ChoreFoundationBackfillSql.Forward">
+            <summary>The forward backfill, in order.</summary>
+        </member>
         <member name="T:ShiftManager.Migrations.CompanyMembershipBackfillSql">
             <summary>
             Backfill SQL shared between the BackfillCompanyMembershipsFromPrimary migration and its
@@ -3069,6 +3213,29 @@
             <summary>4) Enforce invariant: a user with no resolvable category is not marked as doing shifts.</summary>
         </member>
         <member name="F:ShiftManager.Migrations.ShiftCategoryBackfillSql.Forward">
+            <summary>The forward backfill, in order.</summary>
+        </member>
+        <member name="T:ShiftManager.Migrations.ShiftTypeCategoryBackfillSql">
+             <summary>
+             Idempotent backfill that stamps <c>ShiftType.CategoryId</c> from the categories the original
+             <see cref="T:ShiftManager.Migrations.ShiftCategoryBackfillSql"/> synthesized. That backfill created one ShiftCategory per
+             distinct *primary* shift type, stamping its Name as "&lt;DisplayName&gt; [&lt;sourceShiftTypeId&gt;]" —
+             a deterministic, collision-free tag. We reverse that EXACT tag to point each shift type at its own
+             category, WITHOUT inventing new categories.
+            
+             Safeguards:
+               * Only NULL CategoryId rows are touched (idempotent; never clobbers an admin's manual choice).
+               * Molecule resolved via COALESCE(st.MoleculeId, company.MoleculeId), matching the forward SQL.
+               * The join uses the IDENTICAL Name expression the forward backfill used (see
+                 <see cref="F:ShiftManager.Migrations.ShiftCategoryBackfillSql.MapUsers"/>), so a type maps to its own category and nothing
+                 else. Types that were never anyone's primary (incl. shared HOME/OFFLINE) have no matching
+                 category and stay NULL — they resolve via the runtime D1 fallback in ShiftCandidateService.
+             </summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ShiftTypeCategoryBackfillSql.StampCategoryId">
+            <summary>Stamp CategoryId from the "[id]"-tagged category synthesized by the user backfill.</summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.ShiftTypeCategoryBackfillSql.Forward">
             <summary>The forward backfill, in order.</summary>
         </member>
         <member name="T:ShiftManager.Models.Analytics.BackToBackShiftDto">
@@ -3770,6 +3937,12 @@
             Replaces the retired PrimaryShiftTypeId overload (see DoesShifts + ShiftCategories).
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.AppUser.AccountType">
+            <summary>
+            Account archetype (Standard/Mil/GroupUser). Orthogonal to JobType + Role.
+            Drives capability/visibility via UserCapabilities. Defaults to Standard.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.AppUser.HomeTypeId">
             <summary>
             User's assigned home rotation type. Single source of truth for home type assignment.
@@ -3781,6 +3954,18 @@
             Categories this user participates in (many-to-many). Only meaningful when DoesShifts is true.
             A user in several categories renders as a mirrored row under each.
             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.AppUser.Gender">
+            <summary>Sensitive: gender-segregated chore eligibility only. Default Unspecified. Editable by any user-editor (no dedicated grant).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.AppUser.DoesChores">
+            <summary>Whether this user participates in chore scheduling. Mirrors <see cref="P:ShiftManager.Models.AppUser.DoesShifts"/>.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.AppUser.ChoreCategories">
+            <summary>Chore categories this user participates in (N:N). Meaningful only when DoesChores is true.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.AppUser.ChoreExemptions">
+            <summary>Per-type chore exemptions (waivers) for this user.</summary>
         </member>
         <member name="T:ShiftManager.Models.AreaCalendarPalette">
              <summary>
@@ -3872,6 +4057,18 @@
             User agent (browser info) of the user who performed the action
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.CalendarDayNote">
+             <summary>
+             A free-text note attached to a whole calendar DAY (not a specific user), scoped to a company.
+             Created via Quick Entry's "Add note to this day" option, available in any calendar view
+             (shift-mode where rows are shift types, or user-mode where rows are workers).
+            
+             One editable note per (Date, CompanyId) — uniqueness enforced by a DB unique index AND by
+             upsert semantics at the service level. This is intentionally distinct from
+             <see cref="T:ShiftManager.Models.CalendarTextEntry"/>, whose notes attach to a specific UserId; a shift-type cell
+             has no single user, so day notes need a user-agnostic home.
+             </summary>
+        </member>
         <member name="T:ShiftManager.Models.CalendarFeedToken">
              <summary>
              Per-user secret token for the self-hosted iCalendar subscription feed
@@ -3940,6 +4137,9 @@
             Optional additional notes/details
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.Chore.WeightMinutes">
+            <summary>Fairness weight in minutes, frozen at create time (times → ChoreType.DefaultWeightMinutes → 480).</summary>
+        </member>
         <member name="P:ShiftManager.Models.Chore.CreatedBy">
             <summary>
             User who created/assigned this chore
@@ -3963,6 +4163,21 @@
         <member name="P:ShiftManager.Models.Chore.IsActive">
             <summary>
             Whether this chore is active (not canceled)
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.ChoreCategory">
+            <summary>
+            A molecule-scoped, functional grouping of chore types (e.g. "Physical", "Computer").
+            A ChoreType belongs to at most one category via <see cref="P:ShiftManager.Models.ChoreType.ChoreCategoryId"/>.
+            Users participate in chores (AppUser.DoesChores) and are mapped to one or more categories
+            via <see cref="T:ShiftManager.Models.UserChoreCategory"/>. Mirrors <see cref="T:ShiftManager.Models.ShiftCategory"/>; NOT tenant-filtered
+            (visibility is molecule-scoped via MoleculeId).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.ChoreTemplate">
+            <summary>
+            A reusable chore definition a manager can "stamp" across a date range. Carries NO schedule —
+            stamping (Phase 2) loops the existing manual CreateChoreAsync per (date, assignee). Molecule-scoped.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.Company.NameHe">
@@ -4375,6 +4590,14 @@
             Data transfer object for profile updates
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.EligibilityRule">
+            <summary>
+            A chore-scoped eligibility requirement attached to one ChoreType (gender or officer-rank).
+            A chore type may carry several rules. Global config table — no tenant filter. Evaluated by
+            IEligibilityEvaluator as gates at assignment time (gender → overrideable warning; officer → hard).
+            Chore-specific by design — shifts do NOT use this table.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.EmailApiLog">
             <summary>
             Diagnostic log entry for email API requests and responses.
@@ -4426,6 +4649,10 @@
             <summary>
             User who last updated this configuration
             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.EmailConfig.OverrideEnabled">
+            <summary>When false, this per-company override is ignored and the global config is used instead
+            (a reversible "disable override"). Default true. Distinct from Enabled (email on/off).</summary>
         </member>
         <member name="T:ShiftManager.Models.EmailTemplateCustomization">
             <summary>
@@ -4635,6 +4862,13 @@
         <member name="P:ShiftManager.Models.GameScore.CurrentMonth">
             <summary>
             Month/Year identifier for monthly leaderboard filtering (format: "YYYY-MM")
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.GrantType.IsDeprecated">
+            <summary>
+            True for grant types retained for ID-stability/audit history but no longer assignable
+            (e.g. the 8 per-type Assign*Shifts grants superseded by AssignShifts on 2026-06-16).
+            Hidden from the grant-admin catalog; never re-applied to templates or users.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.GriffinApiLog">
@@ -4912,6 +5146,47 @@
             Vacations strictly longer than this number of days require approval from both tiers
             (Lead+Director for Alhut/Text; BRDirector+MoleculeAdmin otherwise). Default 7.
             After requests are always single-approval regardless of this value.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Navigation.NavNode">
+             <summary>
+             A single node in the domain-hub navigation tree (Model B redesign).
+            
+             One source of truth: <see cref="!:NavRegistry"/> declares the whole tree; both the
+             renderer (<c>_NavSidebar.cshtml</c>) and the policy-parity test read from it.
+            
+             VISIBILITY == ACCESS (design principle P2): <see cref="P:ShiftManager.Models.Navigation.NavNode.Policy"/> MUST be the SAME
+             authorization policy the destination page enforces (e.g. "Grant:ManagerHomeAccess").
+             The navigation service derives visibility by asking <c>IAuthorizationService</c> about
+             that policy — never a hand-rolled re-check — so a link can never be visible-but-403.
+             A null <see cref="P:ShiftManager.Models.Navigation.NavNode.Policy"/> means "any authenticated user" (the AuthorizeFolder("/") default).
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Models.Navigation.NavNode.#ctor(System.String,System.String,System.String,System.String,System.String,System.String,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Navigation.NavNode},ShiftManager.Models.Navigation.NavRole)">
+             <summary>
+             A single node in the domain-hub navigation tree (Model B redesign).
+            
+             One source of truth: <see cref="!:NavRegistry"/> declares the whole tree; both the
+             renderer (<c>_NavSidebar.cshtml</c>) and the policy-parity test read from it.
+            
+             VISIBILITY == ACCESS (design principle P2): <see cref="P:ShiftManager.Models.Navigation.NavNode.Policy"/> MUST be the SAME
+             authorization policy the destination page enforces (e.g. "Grant:ManagerHomeAccess").
+             The navigation service derives visibility by asking <c>IAuthorizationService</c> about
+             that policy — never a hand-rolled re-check — so a link can never be visible-but-403.
+             A null <see cref="P:ShiftManager.Models.Navigation.NavNode.Policy"/> means "any authenticated user" (the AuthorizeFolder("/") default).
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.Navigation.NavNode.IsGroup">
+            <summary>True when this node is a hub/group header that owns child nodes.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.Navigation.NavNode.ActivePrefix">
+            <summary>Path prefix used for active-state highlighting; defaults to <see cref="P:ShiftManager.Models.Navigation.NavNode.Route"/>.</summary>
+        </member>
+        <member name="T:ShiftManager.Models.Navigation.NavRole">
+            <summary>
+            Coarse role tier, reserved for role-aware label/depth (P4 — e.g. the "My Schedule" ⇄
+            "Scheduling" slot). Visibility itself is always driven by <see cref="P:ShiftManager.Models.Navigation.NavNode.Policy"/>,
+            not by this enum; this only tunes presentation.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.NotificationCategoryMute">
@@ -5255,6 +5530,31 @@
             Cross-company — does NOT implement IBelongsToCompany.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.Schedule.ItemType">
+            <summary>
+            The personal-schedule item types that make up a user's unified timeline. Shared by the rich
+            <c>/My</c> timeline page AND the Home schedule-spine (Phase 6 merge) — both render the same
+            <see cref="T:ShiftManager.Models.Schedule.TimelineItem"/> shape produced by <c>IPersonalTimelineService</c>.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Schedule.TimelineItem">
+            <summary>One entry in a user's personal schedule timeline (a shift, vacation, on-duty, or chore).</summary>
+        </member>
+        <member name="M:ShiftManager.Models.Schedule.TimelineItem.#ctor(System.Int32,ShiftManager.Models.Schedule.ItemType,System.DateOnly,System.Nullable{System.DateOnly},System.String,System.String,System.String,System.Boolean,System.Double,System.String)">
+            <summary>One entry in a user's personal schedule timeline (a shift, vacation, on-duty, or chore).</summary>
+        </member>
+        <member name="T:ShiftManager.Models.Schedule.StatsData">
+            <summary>Per-type counts + hours over the queried range (drives the /My stats chart).</summary>
+        </member>
+        <member name="M:ShiftManager.Models.Schedule.StatsData.#ctor(System.Int32,System.Double,System.Int32,System.Double,System.Int32,System.Double,System.Int32,System.Double)">
+            <summary>Per-type counts + hours over the queried range (drives the /My stats chart).</summary>
+        </member>
+        <member name="T:ShiftManager.Models.Schedule.PersonalTimeline">
+            <summary>The result of a personal-timeline query: the ordered items plus their aggregate stats.</summary>
+        </member>
+        <member name="M:ShiftManager.Models.Schedule.PersonalTimeline.#ctor(System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Schedule.TimelineItem},ShiftManager.Models.Schedule.StatsData)">
+            <summary>The result of a personal-timeline query: the ordered items plus their aggregate stats.</summary>
+        </member>
         <member name="P:ShiftManager.Models.ShiftAssignment.IsTraineeShift">
             <summary>
             Per-assignment trainee flag (Shikma model: trainees take shifts directly, not shadowing).
@@ -5430,6 +5730,14 @@
             Store opening hours entry — one per day-of-week per store.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.Support.AccountType">
+            <summary>
+            Account archetype, orthogonal to JobType/Role. Standard = a normal person.
+            Mil = shared reserve (מילואים) account: does shifts, no chores, no Requests, hidden from Overview.
+            GroupUser = administrative shared (יוזר קיבוצי) account: no shifts/chores/assignment, no Requests, hidden from all calendars+analytics.
+            Both Mil and GroupUser retain role-based powers and normal email notifications.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.Support.BusyLevel">
             <summary>
             Severity of the highest busy condition for a user on a given date.
@@ -5489,6 +5797,10 @@
             Validation result with errors (hard blocks) and warnings (overrideable).
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.Support.EligibilityRuleKind">
+            <summary>The kind of hard requirement an <c>EligibilityRule</c> expresses. Chore-scoped — the
+            rule attaches to one ChoreType via a direct FK; shifts do NOT use this.</summary>
+        </member>
         <member name="F:ShiftManager.Models.Support.RequestStatus.PendingSecondApproval">
             <summary>
             Dual-approval intermediate state: one tier (Lead or Director) has approved
@@ -5517,6 +5829,14 @@
             <summary>
             Defines the organizational scope at which a ShiftType is defined and managed.
             Ordered narrowest→broadest to enable safe comparison (scope >= ShiftScope.Molecule = "at least molecule-wide").
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.Gender">
+            <summary>
+            Sensitive personal attribute used ONLY for gender-segregated chore eligibility
+            (male-only / female-only chores). Unspecified is the backfill default and means
+            "not recorded". A gender-restricted chore produces an OVERRIDEABLE WARNING for any
+            non-matching user (including Unspecified) — the manager may override (decided 2026-06-14).
             </summary>
         </member>
         <member name="T:ShiftManager.Models.Support.GriffinStage">
@@ -5664,6 +5984,13 @@
         <member name="M:ShiftManager.Models.Support.ShiftInstanceOverride.HasAnyOverride">
             <summary>
             Check if any override flag is set.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.Support.UserCapabilities">
+            <summary>
+            Single source of truth for what each AccountType may do / where it is visible.
+            Chokepoints call these for in-memory AppUser instances. Inside EF IQueryable
+            filters use the raw enum comparison instead (these methods don't translate to SQL).
             </summary>
         </member>
         <member name="T:ShiftManager.Models.SwapRequest">
@@ -6016,6 +6343,43 @@
             After: StartDate+1 at 13:00
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.UserCalendarRowOrder">
+            <summary>
+            A single user's personal ordering of a calendar's categories or rows.
+            NOT IBelongsToCompany — it is a per-user UI preference, read only for its owner,
+            so there is no cross-tenant read path. Two axes share this table, distinguished by GroupId:
+              - GroupId == ""            → category order; RowId holds a group id (e.g. "category-5","dl-3").
+              - GroupId == "category-5"  → row order inside that category; RowId holds a row id ("user-14").
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.UserCalendarRowOrder.UserId">
+            <summary>Owner of this personal ordering.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.UserCalendarRowOrder.ContextKey">
+            <summary>Identifies the view, e.g. "shifts:9:2:user", "chores:9", "oncall:4", "overview:5".</summary>
+        </member>
+        <member name="P:ShiftManager.Models.UserCalendarRowOrder.GroupId">
+            <summary>"" = the category-ordering namespace; otherwise the category/list this row lives in.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.UserCalendarRowOrder.RowId">
+            <summary>A row id ("user-14"/"shift-7") for row order, or a group id ("category-5") for category order.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.UserCalendarRowOrder.SortOrder">
+            <summary>0-based position within (UserId, ContextKey, GroupId).</summary>
+        </member>
+        <member name="T:ShiftManager.Models.UserChoreCategory">
+            <summary>
+            Many-to-many join between a user and the chore categories they participate in. Only meaningful
+            when AppUser.DoesChores = true. Mirrors <see cref="T:ShiftManager.Models.UserShiftCategory"/>.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.UserChoreExemption">
+            <summary>
+            A per-person negative override: this user is waived from a specific chore type (e.g. a
+            disability accommodation). NOT an EligibilityRule (those are positive requirements on the type).
+            Reason is optional, sensitive, capped at 200 chars; never logged in plaintext audit.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.UserJoinRequest">
             <summary>
             Represents a pending request from a user to join a company with a specific role.
@@ -6104,6 +6468,19 @@
             Authentication method used to create this request: "Local" (password signup) or "Griffin" (ADFS SSO).
             Null for requests created before this field was added.
             </summary>
+        </member>
+        <member name="T:ShiftManager.Models.UserMonitoredShift">
+            <summary>
+            A single user's personal selection of shift types to monitor on the "Who is on Shift" home dashboard.
+            NOT IBelongsToCompany — it is a per-user preference read only for its owner,
+            so there is no cross-tenant read path.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.UserMonitoredShift.UserId">
+            <summary>Owner of this personal monitoring selection.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.UserMonitoredShift.ShiftTypeId">
+            <summary>The shift type the user has chosen to monitor.</summary>
         </member>
         <member name="T:ShiftManager.Models.UserShiftCategory">
             <summary>
@@ -6338,6 +6715,19 @@
             Carried through to <see cref="P:ShiftManager.Services.JusticeQuery.Basis"/>.
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.ShiftCategoryId">
+            <summary>
+            Optional ShiftCategory filter. When set, only users who belong to this category
+            (via UserShiftCategory) are shown, and only shifts of that category are counted.
+            Only meaningful for WorkType=Shift or All at user levels.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.ChoreCategoryId">
+            <summary>
+            Optional ChoreCategory filter. Meaningful only for WorkType=Chore. When set, chore actuals
+            and the chore sparkline are restricted to chores whose type belongs to this category.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.CompareFrom">
             <summary>
             A/B comparison: start of the compare period (period B). When both CompareFrom and
@@ -6371,6 +6761,38 @@
         <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.AreaOptions">
             <summary>
             Areas the current user can pick (drilled from molecules they can access).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.CategoryOptions">
+            <summary>
+            Shift categories available for filtering. Populated when a molecule scope is resolved
+            (either directly for UsersInMolecule, or via company → molecule for UsersInCompany).
+            Empty when no molecule can be determined (e.g. CompaniesInMolecule, MoleculesInArea levels).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Admin.AnalyticsModel.ChoreCategoryOptions">
+            <summary>
+            Chore categories available for filtering when WorkType=Chore. Populated from the active
+            molecule's ChoreCategories. Empty when no molecule can be determined or WorkType != Chore.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.AnalyticsModel.PopulateCategoryOptionsAsync(System.Threading.CancellationToken)">
+            <summary>
+            Populates <see cref="P:ShiftManager.Pages.Admin.AnalyticsModel.CategoryOptions"/> from the active molecule's ShiftCategories.
+            Resolves the molecule ID from the current Level/ScopeId:
+              • UsersInMolecule  → ScopeId IS the molecule ID.
+              • UsersInCompany   → look up Company.MoleculeId for the current ScopeId.
+              • Other levels     → leave empty (category filter not applicable).
+            Must be called AFTER NormalizeScopeAndLevelDefaults so ScopeId is resolved.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.AnalyticsModel.PopulateChoreCategoryOptionsAsync(System.Threading.CancellationToken)">
+            <summary>
+            Phase 5: populate the chore-category filter options. Mirrors PopulateCategoryOptionsAsync
+            but reads ChoreCategories and is gated on WorkType=Chore (the selector is chore-only).
+            Molecule resolution: UsersInMolecule/CompaniesInMolecule → ScopeId IS the molecule;
+            UsersInCompany → Company.MoleculeId. Other levels leave the list empty.
+            Must be called AFTER NormalizeScopeAndLevelDefaults so ScopeId is resolved.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Admin.AnalyticsModel.CanDrillScopeAsync(System.Int32,ShiftManager.Models.JusticeScope,System.Int32,System.Threading.CancellationToken)">
@@ -6435,6 +6857,12 @@
             MoleculeAdmin OR Director (any JobType) within that molecule.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.ChoreTemplates.IndexModel.ResolveAccessibleChoreTypeIdAsync(System.Nullable{System.Int32},System.Int32)">
+            <summary>Returns the chore type id only if it exists in the given molecule; otherwise null (clears the link).</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.ChoreTypes.IndexModel.ToWeightMinutes(System.Int32,System.Int32)">
+            <summary>hours+minutes → total minutes; 0/0 → null (type carries no default → chore-create falls to 480).</summary>
+        </member>
         <member name="M:ShiftManager.Pages.Admin.Organization.ChoreTypes.IndexModel.IsUserAuthorizedForMoleculeAsync(System.Int32)">
             <summary>
             Verifies the current user has grant access to the specified molecule.
@@ -6490,6 +6918,12 @@
         <member name="P:ShiftManager.Pages.Admin.UsersModel.JobTypesByCompany">
             <summary>Maps companyId → list of valid jobTypeIds, for client-side filtering in the add-user form.</summary>
         </member>
+        <member name="P:ShiftManager.Pages.Admin.UsersModel.BlockedDeleteUserId">
+            <summary>
+            Set when a normal delete was blocked by FK constraints (error code 19).
+            The view uses this to render the "Force delete anyway" option.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Admin.UsersModel.AuthorizeUserEditAsync(System.Int32)">
             <summary>
             Shared edit gate for the DoesShifts / category handlers — mirrors the JobType/Toggle handlers:
@@ -6509,6 +6943,25 @@
         </member>
         <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostUserCategoriesAsync(ShiftManager.Pages.Admin.UsersModel.UserCategoriesRequest)">
             <summary>Replaces a user's shift-category memberships (AJAX). Ids are validated against the user's molecule.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnGetDoesChoresImpactAsync(System.Int32)">
+            <summary>Future-chore impact preview (AJAX) for the "turn off Participates in Chores" confirm.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostDoesChoresAsync(System.Int32,System.Boolean,System.Boolean)">
+            <summary>
+            Master "Participates in Chores" toggle. When turning OFF, <paramref name="deleteFutureChores"/>
+            controls whether the user's future chores are soft-canceled (CanceledAt set) or kept.
+            Category memberships are intentionally preserved so toggling back ON restores the prior mapping.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostUserChoreCategoriesAsync(ShiftManager.Pages.Admin.UsersModel.UserChoreCategoriesRequest)">
+            <summary>Replaces a user's chore-category memberships (AJAX). Ids are validated against the user's molecule.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.UsersModel.OnPostGenderAsync(System.Int32,System.Int32)">
+            <summary>
+            Sets a user's <see cref="P:ShiftManager.Models.AppUser.Gender"/> (3-state). Rides the existing user-edit authz
+            (<see cref="M:ShiftManager.Pages.Admin.UsersModel.AuthorizeUserEditAsync(System.Int32)"/>) — NO dedicated grant (decided 2026-06-14). Value change is audited.
+            </summary>
         </member>
         <member name="M:ShiftManager.Pages.Admin.UsersModel.MapUserRoleToRoleTemplateKey(ShiftManager.Models.Support.UserRole,System.String)">
             <summary>
@@ -6609,6 +7062,14 @@
             users in lock-step with the post-submit validator.
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.GetChoreEligibilityForCandidateModel">
+            <summary>
+            At-a-glance eligibility hint for a (user × choreType) pair, for the assignment picker.
+            Returns hard-block reasons (officer/exempt) and warnings (gender) as localized strings.
+            This is a DISPLAY hint only — the authoritative gate is BusyService.ValidateChoreAsync.
+            Mirrors the auth/scope pattern of GetEligibleUsersForChore.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.GetChoresDataModel">
             <summary>
             API endpoint for shadow refresh of Chores calendar data.
@@ -6631,9 +7092,11 @@
         </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.GetEligibleUsersForShiftModel">
             <summary>
-            API endpoint for fetching eligible users for a Tech molecule shift type.
-            Filters by EligibleCompanyIds and RequiresOfficerRank from the ShiftType.
-            Used by calendar-bottom-sheet.js to populate the user picker in Tech shift-mode.
+            API endpoint for fetching eligible users for ANY molecule kind's shift type (3b). Routes through
+            ShiftCandidateService, which reads the company-level CategoryBasedShiftEligibility flag and either
+            returns the legacy set (flag off) or the DoesShifts + ShiftCategory-filtered set (flag on), with the
+            null-category fork (sharedFallback vs noCategory + the allowFallback escape hatch). Officer-rank is
+            preserved for Tech molecules inside the leaf. Used by calendar-bottom-sheet.js + calendar-quick-entry.js.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.GetOnCallDataModel">
@@ -7060,6 +7523,16 @@
             Chores are molecule-scoped (cross-company within molecule).
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Calendar.ChoresModel.BuildChoreCategoryGroupedRowsAsync(System.Collections.Generic.List{ShiftManager.Models.AppUser},System.Int32,System.Collections.Generic.List{ShiftManager.Models.Chore},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},ShiftManager.Services.FyiOverlayData},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}}},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.String},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{ShiftManager.Pages.Calendar.ChoresModel.HomeShiftItem}},System.Boolean)">
+            <summary>
+            Category-accordion grouping for the by-user Chores calendar (parity with the shift by-user
+            calendar's BuildCategoryGroupedRowsAsync). A chore participant renders as a MIRRORED row under
+            EACH ChoreCategory they belong to (UserChoreCategory); a participant with no category falls
+            under their Company header so nobody is lost. Group id = "chorecategory-{id}" (spec §7.5);
+            fallback "company-{id}". Duplicate data-row-id across mirrored rows is safe (the calendar
+            resolves interactions from the cell's data-row-id, not a DOM id).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Calendar.ChoresModel.HomeShiftItem">
             <summary>
             Per-user-per-date HOME shift item used to render the read-only HOME overlay
@@ -7257,6 +7730,10 @@
         <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.SelectedDistributionListIds">
             <summary>Parsed, de-duplicated selected distribution-list IDs (defensive int.TryParse per item).</summary>
         </member>
+        <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.CategoryEligibilityEnabled">
+            <summary>3b: when true (per-company flag), the assign user-picker filters by DoesShifts + ShiftCategory.
+            When false, the picker keeps its legacy behavior exactly (zero-risk default-off rollout).</summary>
+        </member>
         <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.BuildListGroupedRowsAsync(System.Collections.Generic.List{ShiftManager.Models.AppUser},System.Collections.Generic.List{System.Int32},System.Int32,System.Collections.Generic.List{ShiftManager.Models.ShiftInstance},System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},ShiftManager.Services.FyiOverlayData},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}}},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.String})">
             <summary>
             Builds collapsible sections for the by-user calendar — one section per selected distribution list,
@@ -7319,6 +7796,9 @@
             Pure in-memory recompute; never writes to the DB.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Calendar.TableModel.MakeFix(System.String,System.Nullable{System.Int32})">
+            <summary>Builds the "go fix it" remediation payload for a failure key, or null if none.</summary>
+        </member>
         <member name="M:ShiftManager.Pages.Calendar.TableModel.LocalizeShiftTypeName(ShiftManager.Models.ShiftType)">
             <summary>
             Resolves the localized display name for a shift type using the full fallback chain.
@@ -7329,6 +7809,15 @@
         </member>
         <member name="P:ShiftManager.Pages.Calendar.TableModel.AssignEmployeeRequest.DraftSessionId">
             <summary>When set, the assignment is STAGED into this draft sandbox instead of written live.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.TableModel.AssignEmployeeRequest.ShiftInstanceId">
+            <summary>
+            Optional: the EXACT shift instance to fill. Callers that already know the instance
+            (e.g. Justice "make it real" drilling into a specific hole) pass it so we don't
+            re-resolve by ShiftType+Date — which is ambiguous when the same ShiftType exists in
+            multiple companies of the molecule and would FirstOrDefault the wrong company's instance.
+            When null/0, the legacy ShiftType+Date resolution (create-if-missing) is used.
+            </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.TableModel.OnPostDetachInstanceAsync(ShiftManager.Pages.Calendar.TableModel.DetachInstanceRequest)">
             <summary>
@@ -7365,6 +7854,20 @@
             Get conflicts and warnings for Radar Mode.
             Returns cells that are underfilled or have overlapping assignments.
             </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.TableModel.CanAssignForShiftScopeAsync(System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32})">
+             <summary>
+             Per-handler authorization for shift-assignment mutations. Checks the unified, job-type-agnostic
+             AssignShifts grant (2026-06-16 collapse of the 8 Assign*Shifts grants) plus the AdminAccess
+             short-circuit. The class-level [Authorize(Policy="Grant:ManagerHomeAccess")] gate is NOT
+             sufficient: ~59% of users hold it but must not be able to mutate shifts.
+            
+             CRITICAL — pass the TARGET shift/instance/assignment's actual scope (NOT the caller's own
+             company). Manager AssignShifts grants are stored MOLECULE-scoped (MoleculeId set, CompanyId
+             null); HasGrantWithScopeAsync cascades a molecule-scoped grant to ANY company within that
+             molecule, so passing the target's company/molecule preserves molecule-wide access while still
+             rejecting cross-molecule / cross-tenant targets.
+             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.TableModel.IsCallerInMoleculeAsync(System.Int32)">
             <summary>
@@ -7408,6 +7911,13 @@
             Returns null if the date cannot be created.
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Director.SetScopeModel">
+            <summary>
+            POST-only endpoint behind the header "Viewing N of M" scope control. Sets the cross-company
+            viewing scope and returns the user to the page they were on (so scope is adjustable from anywhere,
+            not just the old /Director/CompanyFilter page).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Game.LeaderboardModel">
             <summary>
             Leaderboard page showing top game scores — company-scoped (E-08 fix)
@@ -7440,6 +7950,20 @@
             path production uses after Griffin returns. Does NOT sign the admin in as the target.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Home.IndexModel.OnPostSaveMonitoredShiftsAsync(System.Collections.Generic.List{System.Int32})">
+            <summary>
+            PRG handler: saves the user's monitored shift selection for the Who-Is-On-Shift widget.
+            Gated to EditArea or AdminAccess grant holders; silently redirects others.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.IndexModel">
+            <summary>
+            Root "/" landing. Under the domain-hub navigation (now the only nav), Home is the schedule-spine
+            for everyone, so "/" redirects to /Home/Index — which renders the personal spine + role widgets +
+            company announcements. The former "Task Overview" dashboard that lived here was consolidated into
+            Home (Phase 6 Home-spine merge); its announcements feed moved with it.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.LocalizedPageModel">
             <summary>
             Base class for all Razor Pages that provides localization support.
@@ -7454,6 +7978,41 @@
         <member name="P:ShiftManager.Pages.LocalizedPageModel.Success">
             <summary>
             Success message to display to the user (localized).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.My.EligibilityModel">
+             <summary>
+             Employee-facing, READ-ONLY "why am I (in)eligible?" surface. For the signed-in user only, it
+             lists which shift/chore categories they can be assigned to and — where they can't — the plain
+             reason (account type, shifts/chores turned off, or not a member of the group). These reasons are
+             manager-managed, so this page EXPLAINS ("ask your manager") rather than offering a self-service
+             fix; the manager-facing "why + fix button" lives on the assignment failure instead. This is the
+             self-scoped mirror of the By-person Eligibility editor view (Issue 3, Phase 3).
+            
+             SECURITY: only ever queries the caller's OWN id (<see cref="P:ShiftManager.Services.ICurrentUserService.UserId"/>) —
+             never a bound parameter — so plain <c>[Authorize]</c> is safe (no info disclosure), even though
+             <see cref="T:ShiftManager.Services.Eligibility.IEligibilityQueryService"/> reads with IgnoreQueryFilters.
+             </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.My.EligibilityModel.Row">
+            <summary>One category line: its name, whether the user is eligible, and (if not) the reason.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.My.EligibilityModel.Row.#ctor(System.String,System.Boolean,System.String)">
+            <summary>One category line: its name, whether the user is eligible, and (if not) the reason.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.My.EligibilityModel.FirstReason(System.Collections.Generic.IReadOnlyList{ShiftManager.Services.Eligibility.EligibilityReason},System.Boolean)">
+            <summary>
+            The first (most fundamental) blocking reason, framed for the employee in the first person.
+            <see cref="M:ShiftManager.Services.Eligibility.EligibilityClassifier.ClassifyMembership(ShiftManager.Models.Support.AccountType,System.Boolean,System.Boolean,System.Boolean)"/> orders reasons account → participation
+            → membership, so reasons[0] is the deepest block to surface.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.My.HelpNavigationModel">
+            <summary>
+            "Where everything lives" — a per-user navigation guide. Section 1 renders the CURRENT user's
+            reachable destinations (built from INavigationService, so it always matches their sidebar and
+            is auto-localized). Section 2 is a static per-role guide for all six ranks.
+            Authenticated only (AuthorizeFolder("/") convention) — no special grant.
             </summary>
         </member>
         <member name="P:ShiftManager.Pages.My.NotificationCenterModel.CalendarFeedUrl">
@@ -7850,6 +8409,12 @@
             False for employees who can only view their own requests.
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Requests.IndexModel.AvailableApprovers">
+            <summary>
+            Eligible "specific approver" options for the manager's own time-off request card.
+            Populated only on the manager path; empty for employees (who don't see the card here).
+            </summary>
+        </member>
         <member name="M:ShiftManager.Pages.Requests.IndexModel.DeserializeWarnings(System.String)">
             <summary>
             Deserialize the JSON-persisted warnings written at swap-request creation time.
@@ -7883,6 +8448,15 @@
             excluding the two swap participants. Mirrors the time-off approver-pool resolution.
             SECURITY-AUDITED: IgnoreQueryFilters SAFE — a molecule may span companies; scoped by molecule.
             </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Scheduling.Eligibility.IndexModel">
+             <summary>
+             The single discoverable Eligibility editor (Issue 3). By-category: pick a category, see every
+             candidate classified eligible/why-not, toggle membership inline. By-person: pick a person, see
+             every category they can/can't do and why. Replaces the old three-page scavenger hunt.
+            
+             Policy MUST match the NavRegistry node policy for this route (P2: visibility == access).
+             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Shared.JusticePanelModel">
              <summary>
@@ -8408,12 +8982,19 @@
             SECURITY-AUDITED: Same IgnoreQueryFilters rationale as GetForUsersAndDateRangeAsync.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)">
+        <member name="F:ShiftManager.Services.ChoreService.DEFAULT_CHORE_WEIGHT_MINUTES">
+            <summary>Global fallback chore duration weight in minutes (8h). Single source of truth;
+            JusticeService scales chore targets by this. Frozen into Chore.WeightMinutes at create.</summary>
+        </member>
+        <member name="F:ShiftManager.Services.ChoreService.MaxStampSpanDays">
+            <summary>Stamp guardrails (spec D10): reject before any work if the inclusive date span
+            exceeds this many days, or the total prospective chores exceeds <see cref="F:ShiftManager.Services.ChoreService.MaxStampChores"/>.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ChoreService.ResolveWeightMinutes(System.Nullable{System.TimeOnly},System.Nullable{System.TimeOnly},System.Nullable{System.Int32})">
             <summary>
-            Phase 2d: validate a hypothetical chore assignment without writing. Used by the Justice
-            drawer's eligibility ranking on the Chores calendar. Delegates to <see cref="M:ShiftManager.Services.IBusyService.ValidateAsync(ShiftManager.Models.Support.BusyTarget,System.Int32,System.Int32,System.String)"/>
-            with a <c>BusyTarget.Chore</c>; the existing busy logic enforces molecule boundary,
-            vacation overlap, cross-resource conflicts, and duplicate-chore detection.
+            Resolves a chore's frozen weight: explicit same-day [start,end) minutes →
+            ChoreType.DefaultWeightMinutes → DEFAULT_CHORE_WEIGHT_MINUTES (480). EndTime &lt;= StartTime
+            (midnight-crossing, out of scope) falls through to the type default / fallback.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ChoreService.CanUserManageChoresAsync(System.Int32)">
@@ -8462,7 +9043,7 @@
             Returns (hasConflict, startDate, endDate, type)
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.ChoreService.CreateChoreAsync(System.Int32,System.DateOnly,System.String,System.String,System.Boolean,System.Nullable{System.Int32},System.Nullable{System.Int32},System.String)">
+        <member name="M:ShiftManager.Services.ChoreService.CreateChoreAsync(System.Int32,System.DateOnly,System.String,System.String,System.Boolean,System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.Nullable{System.TimeOnly},System.Nullable{System.TimeOnly},System.Nullable{System.Int32})">
             <summary>
             Create a new chore assignment
             </summary>
@@ -8494,6 +9075,12 @@
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:ShiftManager.Services.ChoreService.StampTemplateAsync(System.Int32,System.DateOnly,System.DateOnly,System.Collections.Generic.IReadOnlyList{System.DayOfWeek},System.Collections.Generic.IReadOnlyList{System.Int32},System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:ShiftManager.Services.ChoreService.GetEligibilityForCandidateAsync(System.Int32,System.Int32)">
             <inheritdoc/>
         </member>
         <member name="T:ShiftManager.Services.ClientTelemetryService">
@@ -8705,6 +9292,125 @@
         <member name="M:ShiftManager.Services.DistributionListService.ValidateAsync(System.Int32,System.String,System.Collections.Generic.IReadOnlyCollection{System.Int32},System.Nullable{System.Int32})">
             <summary>Validates name presence/uniqueness and that every member belongs to the molecule (cross-company OK).</summary>
         </member>
+        <member name="T:ShiftManager.Services.DurationFormat">
+            <summary>
+            Single, shared formatter for chore/shift durations in minutes. Bilingual via
+            <see cref="P:System.Globalization.CultureInfo.CurrentUICulture"/> (Hebrew = he/he-IL). Used by admin weight inputs, the
+            chores calendar, and the Justice/Analytics fairness display. Defined ONCE here so the unit symbols
+            never drift across phases.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DurationFormat.FormatMinutes(System.Int32)">
+            <summary>"1h 30m" / "1ש׳ 30ד׳". Whole hours drop the minutes; sub-hour drops the hours; 0 → "0m"/"0ד׳".</summary>
+        </member>
+        <member name="M:ShiftManager.Services.DurationFormat.FormatHours(System.Int32)">
+            <summary>"12.5h" / "12.5ש׳". Trailing ".0" is dropped (12h, not 12.0h). Invariant decimal point.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.EligibilityEvaluator">
+            <inheritdoc cref="T:ShiftManager.Services.IEligibilityEvaluator"/>
+        </member>
+        <member name="T:ShiftManager.Services.Eligibility.EligibilityClassifier">
+            <summary>
+            Pure (no DB), unit-testable classification of WHY a user is (in)eligible for a category.
+            Mirrors the silent set-membership predicates used by the shift candidate leaf methods
+            (<c>ShiftAssignmentService</c>/<c>ShiftCalendarService</c>, categoryFilter:true) and the
+            chore participant query (<c>Chores.cshtml.cs</c>) — but EMITS reasons instead of filtering
+            silently. Chore RULE violations are reused verbatim from <see cref="T:ShiftManager.Services.IEligibilityEvaluator"/>.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.EligibilityClassifier.ClassifyMembership(ShiftManager.Models.Support.AccountType,System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            The participation + membership layer, shared by both axes.
+            Shifts exclude GroupUser; chores are Standard-account only.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.EligibilityClassifier.MapRuleViolations(ShiftManager.Services.EligibilityResult)">
+            <summary>Maps the chore evaluator's rule violations into the unified reason vocabulary.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Eligibility.EligibilityQueryService">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Services.Eligibility.EligibilityReason">
+            <summary>
+            Unified, surfaceable reason a user is (in)eligible for a shift/chore category. This is the gap
+            the redesign fills: shift eligibility was a silent set-membership filter with NO per-user reason;
+            chore eligibility had reasons (<see cref="!:Models.Support.EligibilityViolation"/>) but only per
+            chore-type. The Eligibility editor + the employee "why am I (in)eligible?" surface both need a
+            single reason vocabulary.
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Services.Eligibility.EligibilityReason.AccountTypeIneligible">
+            <summary>GroupUser (shifts) or any non-Standard account (chores) is excluded from candidate sets.</summary>
+        </member>
+        <member name="F:ShiftManager.Services.Eligibility.EligibilityReason.NotParticipating">
+            <summary>The user's DoesShifts / DoesChores master flag is off.</summary>
+        </member>
+        <member name="F:ShiftManager.Services.Eligibility.EligibilityReason.NotCategoryMember">
+            <summary>The user is not a member of this shift/chore category.</summary>
+        </member>
+        <member name="F:ShiftManager.Services.Eligibility.EligibilityReason.RequiresGender">
+            <summary>A chore rule requires a specific gender the user doesn't match (overrideable warning).</summary>
+        </member>
+        <member name="F:ShiftManager.Services.Eligibility.EligibilityReason.RequiresOfficerRank">
+            <summary>A chore rule requires officer rank the user doesn't hold (hard block).</summary>
+        </member>
+        <member name="F:ShiftManager.Services.Eligibility.EligibilityReason.Exempt">
+            <summary>The user has a chore exemption (waiver) for this subject (hard block).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Eligibility.CandidateEligibility">
+            <summary>One candidate's eligibility for a category: eligible flag + the ordered reasons they're blocked.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.CandidateEligibility.#ctor(System.Int32,System.String,System.Boolean,System.Collections.Generic.IReadOnlyList{ShiftManager.Services.Eligibility.EligibilityReason})">
+            <summary>One candidate's eligibility for a category: eligible flag + the ordered reasons they're blocked.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Eligibility.CategoryEligibility">
+            <summary>One category's eligibility status for a user (used by the By-person view).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.CategoryEligibility.#ctor(System.Int32,System.String,System.Boolean,System.Boolean,System.Boolean,System.Collections.Generic.IReadOnlyList{ShiftManager.Services.Eligibility.EligibilityReason})">
+            <summary>One category's eligibility status for a user (used by the By-person view).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Eligibility.IEligibilityQueryService">
+             <summary>
+             The query engine behind the Eligibility editor (Issue 3). Answers the two questions the old
+             three-page scavenger hunt couldn't: "who is eligible for category X (and why not)?" (By-category)
+             and "which categories can person Y do (and why are they blocked)?" (By-person).
+            
+             Scope: the membership + participation axis (DoesShifts/DoesChores + category membership +
+             account type) which is the editable part. Chore RULE blocks (gender/officer/exempt) are
+             per chore-TYPE and remain surfaced in the ChoreTypes admin; this engine focuses on the axis
+             the editor edits.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.IEligibilityQueryService.GetShiftCategoryCandidatesAsync(System.Int32)">
+            <summary>All active users in the category's molecule, each classified eligible/why-not. Null if the category doesn't exist.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.IEligibilityQueryService.GetChoreCategoryCandidatesAsync(System.Int32)">
+            <summary>Chore equivalent (Standard accounts + DoesChores + chore-category membership).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.IEligibilityQueryService.GetUserEligibilityAsync(System.Int32)">
+            <summary>For one user: every shift + chore category in their molecule, with eligibility + reasons. Null if the user doesn't exist.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.IEligibilityQueryService.GetMoleculeUsersAsync(System.Int32)">
+            <summary>Active users in a molecule (id + name) — populates the By-person picker.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Eligibility.UserOption">
+            <summary>A selectable user in the By-person picker.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.UserOption.#ctor(System.Int32,System.String)">
+            <summary>A selectable user in the By-person picker.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Eligibility.CategoryCandidatesView">
+            <summary>A category and its classified candidate list.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.CategoryCandidatesView.#ctor(System.Int32,System.String,System.Boolean,System.Collections.Generic.IReadOnlyList{ShiftManager.Services.Eligibility.CandidateEligibility})">
+            <summary>A category and its classified candidate list.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Eligibility.UserEligibilityView">
+            <summary>A user and their per-category eligibility across both axes.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Eligibility.UserEligibilityView.#ctor(System.Int32,System.String,System.Collections.Generic.IReadOnlyList{ShiftManager.Services.Eligibility.CategoryEligibility},System.Collections.Generic.IReadOnlyList{ShiftManager.Services.Eligibility.CategoryEligibility})">
+            <summary>A user and their per-category eligibility across both axes.</summary>
+        </member>
         <member name="T:ShiftManager.Services.EmailApiLogService">
             <summary>
             Service for managing email API diagnostic logs.
@@ -8786,6 +9492,9 @@
             <summary>
             Reader for the background processor to consume queued emails.
             </summary>
+        </member>
+        <member name="T:ShiftManager.Services.CompanyOverrideRow">
+            <summary>Row in the owner email-override dashboard table.</summary>
         </member>
         <member name="T:ShiftManager.Services.EmailConfigService">
             <summary>
@@ -9347,6 +10056,143 @@
             without a second roundtrip.
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.ICalendarDayNoteService">
+            <summary>
+            Manages day-scoped free-text notes (<see cref="T:ShiftManager.Models.CalendarDayNote"/>) — one editable note per
+            (Date, CompanyId). All methods take an explicit companyId and bypass the ambient tenant query
+            filter (same security model as <see cref="T:ShiftManager.Services.ICalendarTextEntryService"/>): authorization is
+            enforced at the API endpoint, and the companyId is the caller's resolved tenant.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICalendarDayNoteService.SetDayNoteAsync(System.DateOnly,System.Int32,System.String,System.Int32)">
+            <summary>Upsert the day note for (date, companyId). Creates if absent, updates text if present.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICalendarDayNoteService.DeleteDayNoteAsync(System.DateOnly,System.Int32)">
+            <summary>Delete the day note for (date, companyId). Returns true if a note existed and was removed.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICalendarDayNoteService.GetDayNotesForCompanyAsync(System.Int32,System.DateOnly,System.DateOnly)">
+            <summary>Bulk-load day notes for a company within an inclusive date range, keyed by date.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICalendarRowOrderService.GetOrderMapAsync(System.Int32,System.String)">
+            <summary>All saved positions for a user+context as (GroupId, RowId) → SortOrder.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICalendarRowOrderService.SaveOrderAsync(System.Int32,System.String,System.String,System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>Replace the ordering of one namespace. groupId "" = category order (itemIds are group ids);
+            a real groupId = row order in that group (itemIds are row ids).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.IChoreCategoryService">
+            <summary>
+            Manages molecule-scoped <see cref="T:ShiftManager.Models.ChoreCategory"/> entities: CRUD, the chore-type↔category
+            assignment (<see cref="P:ShiftManager.Models.ChoreType.ChoreCategoryId"/>), and per-user membership
+            (<see cref="T:ShiftManager.Models.UserChoreCategory"/>). Mirrors <see cref="T:ShiftManager.Services.IShiftCategoryService"/>. Categories are the
+            "who does chores" axis (alongside <see cref="P:ShiftManager.Models.AppUser.DoesChores"/>).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreCategoryService.CreateAsync(System.Int32,System.String,System.String,System.String,System.String,System.String)">
+            <summary>Creates a category. Returns null if the (molecule, name) pair already exists.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreCategoryService.RenameAsync(System.Int32,System.String,System.String,System.String,System.String,System.String)">
+            <summary>Renames/recolors a category. Returns false on not-found or a (molecule, name) collision.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreCategoryService.DeleteAsync(System.Int32)">
+            <summary>Hard-deletes a category: cascades its memberships and nulls its chore types' ChoreCategoryId (FK SetNull).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreCategoryService.GetUsageAsync(System.Int32)">
+            <summary>Counts the chore types owned by, and users mapped to, a category (for delete-impact preview).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreCategoryService.AssignChoreTypeAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Sets (or clears, when categoryId is null) a chore type's owning category. The category must live
+            in the same molecule as the chore type. Returns false on not-found / cross-molecule mismatch.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreCategoryService.SetUserCategoriesAsync(System.Int32,System.Collections.Generic.IReadOnlyCollection{System.Int32})">
+            <summary>Replaces a user's chore-category memberships with exactly the supplied set.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.IChoreEligibilityAdminService">
+            <summary>
+            Admin operations over chore eligibility: the <see cref="T:ShiftManager.Models.EligibilityRule"/> set attached to a
+            chore type (replace semantics) and per-user <see cref="T:ShiftManager.Models.UserChoreExemption"/> waivers.
+            Gated at the PAGE layer by the existing <c>EditChoreTypes</c> grant — this service performs no
+            authorization. Rules are chore-scoped (keyed by <see cref="P:ShiftManager.Models.EligibilityRule.ChoreTypeId"/>); shifts do NOT use this table.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreEligibilityAdminService.GetRulesForChoreTypeAsync(System.Int32)">
+            <summary>All rules currently attached to a chore type.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreEligibilityAdminService.SetRulesForChoreTypeAsync(System.Int32,System.Nullable{ShiftManager.Models.Support.Gender},System.Boolean,System.Int32)">
+            <summary>
+            Replaces the chore type's eligibility rules with exactly the supplied requirements
+            (delete-then-insert). <paramref name="requiredGender"/> null clears the gender rule;
+            <paramref name="requiresOfficerRank"/> false clears the officer rule. <paramref name="createdBy"/>
+            stamps the audit FK. Returns false if the chore type does not exist.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreEligibilityAdminService.GetExemptionsForChoreTypeAsync(System.Int32)">
+            <summary>Users currently exempt from a chore type.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreEligibilityAdminService.AddExemptionAsync(System.Int32,System.Int32,System.String,System.Int32)">
+            <summary>
+            Adds a waiver for (user, type). Idempotent: returns the existing row if one is already present
+            (does not duplicate, does not overwrite the reason). Returns null if the chore type or user is missing.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreEligibilityAdminService.RemoveExemptionAsync(System.Int32,System.Int32)">
+            <summary>Removes the (user, type) waiver. Returns false if no such waiver exists.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Phase 2d: validate a hypothetical chore assignment without writing. Used by the Justice
+            drawer's eligibility ranking on the Chores calendar. Delegates to <see cref="M:ShiftManager.Services.IBusyService.ValidateAsync(ShiftManager.Models.Support.BusyTarget,System.Int32,System.Int32,System.String)"/>
+            with a <c>BusyTarget.Chore</c>; the existing busy logic enforces molecule boundary,
+            vacation overlap, cross-resource conflicts, and duplicate-chore detection.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreService.StampTemplateAsync(System.Int32,System.DateOnly,System.DateOnly,System.Collections.Generic.IReadOnlyList{System.DayOfWeek},System.Collections.Generic.IReadOnlyList{System.Int32},System.Boolean)">
+            <summary>
+            Phase 2: stamps a <see cref="T:ShiftManager.Models.ChoreTemplate"/> across a date range. Loops the existing manual
+            <see cref="M:ShiftManager.Services.IChoreService.CreateChoreAsync(System.Int32,System.DateOnly,System.String,System.String,System.Boolean,System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.Nullable{System.TimeOnly},System.Nullable{System.TimeOnly},System.Nullable{System.Int32})"/> per (date, assignee); each validates independently. A day that
+            hard-errors (or otherwise fails) for an assignee is skipped and reported — never throws for a
+            single bad day. Respects the one-active-chore-per-user-per-day unique index per stamp. Rejects
+            outright (STAMP_TOO_LARGE) before any work when the date span exceeds 92 days OR the total
+            prospective chores exceeds 500.
+            </summary>
+            <param name="rotate">true → round-robin: one assignee per date, cycling through
+            <paramref name="assigneeIds"/>. false → fan-out: every assignee on every matching date.</param>
+        </member>
+        <member name="M:ShiftManager.Services.IChoreService.GetEligibilityForCandidateAsync(System.Int32,System.Int32)">
+            <summary>
+            Phase 2: evaluates whether a candidate is eligible for a chore type (gender/officer/exempt),
+            for the assignment picker's "greyed + reason" affordance. Pure eligibility only — does NOT
+            check date conflicts (the picker layers BusyService on top). Free-text (choreTypeId resolving
+            to no rules) returns eligible.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.StampCreated">
+            <summary>One chore that <see cref="M:ShiftManager.Services.IChoreService.StampTemplateAsync(System.Int32,System.DateOnly,System.DateOnly,System.Collections.Generic.IReadOnlyList{System.DayOfWeek},System.Collections.Generic.IReadOnlyList{System.Int32},System.Boolean)"/> created.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.StampCreated.#ctor(System.DateOnly,System.Int32,System.Int32)">
+            <summary>One chore that <see cref="M:ShiftManager.Services.IChoreService.StampTemplateAsync(System.Int32,System.DateOnly,System.DateOnly,System.Collections.Generic.IReadOnlyList{System.DayOfWeek},System.Collections.Generic.IReadOnlyList{System.Int32},System.Boolean)"/> created.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.StampSkipped">
+            <summary>One (date, user) the stamp could NOT create, with a stable reason key for localization.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.StampSkipped.#ctor(System.DateOnly,System.Int32,System.String)">
+            <summary>One (date, user) the stamp could NOT create, with a stable reason key for localization.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.StampResult">
+            <summary>Summary of a template stamp: what was created and what was skipped (and why).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.StampResult.#ctor(System.Collections.Generic.IReadOnlyList{ShiftManager.Services.StampCreated},System.Collections.Generic.IReadOnlyList{ShiftManager.Services.StampSkipped})">
+            <summary>Summary of a template stamp: what was created and what was skipped (and why).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.IChoreTemplateService">
+            <summary>
+            Molecule-scoped CRUD over reusable <see cref="T:ShiftManager.Models.ChoreTemplate"/> definitions a manager stamps across a
+            date range. Carries NO schedule and does NOT stamp — stamping is <see cref="M:ShiftManager.Services.IChoreService.StampTemplateAsync(System.Int32,System.DateOnly,System.DateOnly,System.Collections.Generic.IReadOnlyList{System.DayOfWeek},System.Collections.Generic.IReadOnlyList{System.Int32},System.Boolean)"/>.
+            Mirrors <see cref="T:ShiftManager.Services.IChoreTypeService"/>. Page layer gates with the existing EditChoreTypes grant.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.IClientTelemetryService">
             <summary>
             Service for managing client-side telemetry data in air-gapped environments.
@@ -9848,6 +10694,42 @@
         <member name="M:ShiftManager.Services.IDraftModeService.GetOverlayAsync(System.Int32)">
             <summary>The staged assignees for every touched cell — used to overlay the calendar render.</summary>
         </member>
+        <member name="T:ShiftManager.Services.EligibilityViolation">
+            <summary>
+            One distinct eligibility failure. Severity is intentionally NOT encoded here — the caller
+            (BusyService) maps kind → severity per the spec: RequiresGender → overrideable WARNING;
+            RequiresOfficerRank and Exempt → HARD errors.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.EligibilityResult">
+            <summary>
+            Outcome of an eligibility evaluation for one (user, subject) pair. <see cref="P:ShiftManager.Services.EligibilityResult.IsEligible"/> is
+            just <c>Violations.Count == 0</c>; <see cref="P:ShiftManager.Services.EligibilityResult.Violations"/> lists every distinct failure so the
+            caller can render and severity-map each one.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.EligibilityResult.#ctor(System.Collections.Generic.IReadOnlyList{ShiftManager.Services.EligibilityViolation})">
+            <summary>
+            Outcome of an eligibility evaluation for one (user, subject) pair. <see cref="P:ShiftManager.Services.EligibilityResult.IsEligible"/> is
+            just <c>Violations.Count == 0</c>; <see cref="P:ShiftManager.Services.EligibilityResult.Violations"/> lists every distinct failure so the
+            caller can render and severity-map each one.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IEligibilityEvaluator">
+            <summary>
+            Pure, stateless evaluator of <see cref="T:ShiftManager.Models.EligibilityRule"/> rows + a per-user exemption flag
+            against a materialized <see cref="T:ShiftManager.Models.AppUser"/>. No DB access, no DI dependencies — fully unit
+            testable. Reused by BusyService (assignment gate) and ChoreService (picker hints).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IEligibilityEvaluator.Evaluate(ShiftManager.Models.AppUser,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.EligibilityRule},System.Boolean)">
+            <param name="user">The candidate. Only <c>Gender</c> and <c>Rank</c> are read.</param>
+            <param name="rulesForSubject">All eligibility rules already loaded for the one subject
+            (e.g. the ChoreType). The evaluator does NOT filter by subject — the caller batch-loads
+            the correct subject's rows.</param>
+            <param name="userHasExemptionForSubject">True iff a UserChoreExemption row exists for this
+            (user, subject). Modeled as a flag (not a rule) because exemptions are chore-specific.</param>
+        </member>
         <member name="T:ShiftManager.Services.IEmailApiLogService">
             <summary>
             Service for managing email API diagnostic logs.
@@ -9948,6 +10830,19 @@
         <member name="M:ShiftManager.Services.IEmailConfigService.GetDecryptedApiKeyAsync">
             <summary>
             Gets the decrypted API key for the effective config (company-specific or global).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IEmailConfigService.GetAllCompanyOverridesWithNamesAsync">
+            <summary>
+            Returns all per-company email overrides (CompanyId != null) with company names resolved.
+            SECURITY: requires owner-level access (AdminAccess grant) — caller is responsible for authorization.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IEmailConfigService.SetOverrideEnabledAsync(System.Int32,System.Boolean)">
+            <summary>
+            Sets OverrideEnabled on the specified company's email config override.
+            When false, the global config is used instead (reversible disable).
+            Returns false if no override exists for the company.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IEmailTemplateService.GetAllTemplatesAsync">
@@ -11020,6 +11915,22 @@
             </summary>
             <returns>Home company ID or null if not found</returns>
         </member>
+        <member name="T:ShiftManager.Services.IPersonalTimelineService">
+            <summary>
+            Builds a user's unified personal schedule timeline (shifts + vacations + on-duty + chores) over a
+            date range, with conflict detection and per-type stats. Extracted from the <c>/My</c> page model
+            so the SAME pipeline feeds both the rich <c>/My</c> timeline and the Home schedule-spine
+            (Phase 6 merge — "Home is the schedule-spine for everyone"). One source of truth for "what's on
+            my schedule," two presentations.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IPersonalTimelineService.GetTimelineAsync(System.Int32,System.DateOnly,System.DateOnly)">
+            <summary>
+            All of <paramref name="userId"/>'s schedule items whose date overlaps [rangeStart, rangeEnd],
+            ordered by date, with same-date conflict flags and aggregate stats. Trainees also see the
+            shifts they shadow. Returns empty (not null) if the user doesn't exist.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.IPurgeService">
             <summary>
             Service for purging historical data with safety mechanisms
@@ -11293,9 +12204,12 @@
             Gets users eligible for a specific shift instance based on JobType and ShiftGrouping.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IShiftAssignmentService.GetEligibleUsersForShiftTypeAsync(System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+        <member name="M:ShiftManager.Services.IShiftAssignmentService.GetEligibleUsersForShiftTypeAsync(System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Boolean)">
             <summary>
             Gets users eligible for a shift type (before instance creation).
+            When <paramref name="categoryFilter"/> is true (3b), eligibility is DoesShifts (per-company
+            membership, mirror fallback) + the shift's ShiftCategory membership instead of the legacy
+            jobType filter; a null CategoryId returns all participants (the shared-shift fallback).
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IShiftAssignmentService.ValidateShiftAssignmentAsync(System.Int32,System.Int32)">
@@ -11359,9 +12273,37 @@
             Returns a dictionary keyed by (ShiftTypeId, Date) with the effective capacity.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IShiftCalendarService.GetEligibleUsersForShiftTypeAsync(System.Int32,System.Int32)">
+        <member name="M:ShiftManager.Services.IShiftCalendarService.GetEligibleUsersForShiftTypeAsync(System.Int32,System.Int32,System.Boolean)">
             <summary>
             Gets users eligible for a specific shift type based on EligibleCompanyIds and RequiresOfficerRank.
+            When <paramref name="categoryFilter"/> is true (3b), also gates by DoesShifts (per-company
+            membership, mirror fallback) + the shift's ShiftCategory membership and excludes GroupUser;
+            officer-rank is still enforced. A null CategoryId returns all participants (shared-shift fallback).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.EligibleCandidateDto">
+            <summary>One assignable candidate, uniform across the workforce + tech leaves.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.EligibleCandidateDto.#ctor(System.Int32,System.String,System.String)">
+            <summary>One assignable candidate, uniform across the workforce + tech leaves.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.EligibleCandidatesResult">
+            <summary>
+            Router result. <see cref="P:ShiftManager.Services.EligibleCandidatesResult.Reason"/> is "category" | "sharedFallback" | "noCategory" and drives the
+            UI empty-state messaging (see the 3b plan's reason table).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.EligibleCandidatesResult.#ctor(System.String,System.Collections.Generic.IReadOnlyList{ShiftManager.Services.EligibleCandidateDto})">
+            <summary>
+            Router result. <see cref="P:ShiftManager.Services.EligibleCandidatesResult.Reason"/> is "category" | "sharedFallback" | "noCategory" and drives the
+            UI empty-state messaging (see the 3b plan's reason table).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IShiftCandidateService">
+            <summary>
+            The single per-shift candidate router. Reads the company-level CategoryBasedShiftEligibility flag,
+            dispatches to the preserved workforce/tech leaf methods (does NOT merge their bodies), applies the
+            null-category fallback rules, and projects a uniform list. Authorization stays in the endpoint.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IShiftCategoryService">
@@ -11513,6 +12455,12 @@
             Set the "Show My Items Only" preference
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.ApproverOption">
+            <summary>One selectable entry in the optional "specific approver" dropdown on the time-off form.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ApproverOption.#ctor(System.Int32,System.String,System.String)">
+            <summary>One selectable entry in the optional "specific approver" dropdown on the time-off form.</summary>
+        </member>
         <member name="M:ShiftManager.Services.IVacationApprovalService.ProcessApprovalSideEffectsAsync(System.Int32)">
             <summary>
             Processes post-approval side effects: removes overlapping shifts, cancels trainee shadowing, sends notification.
@@ -11527,6 +12475,27 @@
             - Hakam/BR/Other requesters: BRDirector or MoleculeAdmin in molecule
             Empty-pool fallback: MoleculeAdmin users in the molecule (regardless of JobType).
             Self-exclusion: requester is never in their own pool.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IVacationApprovalService.GetGrantBasedApproverOptionsAsync(System.Int32)">
+            <summary>
+            Grant-based pool backing the optional "specific approver" dropdown on the time-off
+            request form: active users holding ApproveVacations or ApproveExtendedLeave (CanOwn)
+            scoped to ANY of the requester's shift-active companies (multi-company union — a
+            single-company requester gets only approvers scoped to their own company).
+            Distinct from <see cref="M:ShiftManager.Services.IVacationApprovalService.GetApproverPoolAsync(System.Int32)"/> (job-type-vertical routing for an
+            existing request). The requester is NOT self-excluded here; self-approval is blocked
+            separately at approval time.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IVacationApprovalService.IsEligibleApproverAsync(System.Int32,System.Int32)">
+            <summary>
+            True if <paramref name="approverUserId"/> is an eligible "specific approver" for
+            <paramref name="requesterUserId"/> — i.e. is present in
+            <see cref="M:ShiftManager.Services.IVacationApprovalService.GetGrantBasedApproverOptionsAsync(System.Int32)"/> for that requester. This is the
+            single source of truth shared with the request-form dropdown, so an approver that
+            is OFFERED in the dropdown is always ACCEPTED on submit (and vice-versa). Multi-company
+            requesters: an approver scoped to ANY of their member companies is eligible.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IValidationService">
@@ -11600,6 +12569,58 @@
         <member name="M:ShiftManager.Services.IViewAsModeService.GetViewAsCompanyNameAsync">
             <summary>
             Get the company name being viewed as manager
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.MonitorableShiftType">
+            <summary>A shift type the user may select to monitor on the home dashboard.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.MonitorableShiftType.#ctor(System.Int32,System.String,System.String)">
+            <summary>A shift type the user may select to monitor on the home dashboard.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.ShiftCubeUser">
+            <summary>A single user shown inside a shift cube on the home dashboard.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ShiftCubeUser.#ctor(System.String,System.Boolean)">
+            <summary>A single user shown inside a shift cube on the home dashboard.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.ShiftCube">
+            <summary>
+            Dashboard cube representing a single monitored shift type for the current day.
+            Always present (even when no instance exists today) so the admin still sees the row.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ShiftCube.#ctor(System.Int32,System.String,System.Int32,System.Int32,System.Boolean,System.Collections.Generic.List{ShiftManager.Services.ShiftCubeUser})">
+            <summary>
+            Dashboard cube representing a single monitored shift type for the current day.
+            Always present (even when no instance exists today) so the admin still sees the row.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IWhoIsOnShiftService">
+            <summary>
+            Dashboard service for the "Who is on Shift" home widget.
+            Provides scope resolution, selection persistence, and live cube building.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IWhoIsOnShiftService.GetMonitorableShiftTypesAsync(System.Int32)">
+            <summary>
+            Returns the shift types visible to the user (in their accessible molecules / area).
+            Uses ViewShifts grant scope, mirroring the shift calendar's molecule resolution.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IWhoIsOnShiftService.GetSelectedShiftIdsAsync(System.Int32)">
+            <summary>Returns the ShiftTypeIds the user has saved for monitoring.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IWhoIsOnShiftService.SaveSelectedShiftsAsync(System.Int32,System.Collections.Generic.IReadOnlyList{System.Int32})">
+            <summary>
+            Whole-set replace: deletes all existing selections for the user and writes the new set.
+            Mirrors CalendarRowOrderService.SaveOrderAsync whole-namespace-replace semantics.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IWhoIsOnShiftService.BuildWhoIsOnShiftAsync(System.Int32)">
+            <summary>
+            Builds one ShiftCube per selected shift type showing who is on shift today.
+            Always returns a cube per selection (empty users + count 0 when no instance today).
+            IsLiveNow handles overnight shifts where End &lt; Start.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.JobTypeService">
@@ -11774,7 +12795,7 @@
             when the user lands without parameters.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.JusticeQuery.#ctor(ShiftManager.Models.JusticeScope,System.Nullable{System.Int32},System.DateOnly,System.DateOnly,ShiftManager.Models.JusticeWorkType,System.Boolean,ShiftManager.Models.JusticeLevel,ShiftManager.Models.FairnessBasis)">
+        <member name="M:ShiftManager.Services.JusticeQuery.#ctor(ShiftManager.Models.JusticeScope,System.Nullable{System.Int32},System.DateOnly,System.DateOnly,ShiftManager.Models.JusticeWorkType,System.Boolean,ShiftManager.Models.JusticeLevel,ShiftManager.Models.FairnessBasis,System.Nullable{System.Int32},System.Nullable{System.Int32})">
             <summary>
             All inputs required to render the Justice analytics page.
             Bound from the query string of /Admin/Analytics. Defaults filled in by the page model
@@ -12169,6 +13190,52 @@
              project-wide error-handling overhaul. All errors return localized messages via
              <see cref="T:Microsoft.Extensions.Localization.IStringLocalizer`1"/> with keys <c>Error_MasterProgramService_*</c>.
              </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Navigation.INavigationService">
+            <summary>
+            Builds the per-user domain-hub navigation by deriving each node's visibility from its
+            destination page's authorization policy (P2 — visibility == access). This is the only
+            navigation; the legacy sidebar and the FF_NEW_NAV gate were retired at ship.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Navigation.INavigationService.GetVisibleNavAsync(System.Security.Claims.ClaimsPrincipal)">
+            <summary>The navigation tree filtered to what this user may see (groups with no visible child are dropped).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Navigation.INavigationService.GetVisibleLeavesAsync(System.Security.Claims.ClaimsPrincipal)">
+            <summary>Flat list of every visible, route-bearing node — for the Ctrl-K command palette.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Navigation.NavigationService">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.Navigation.NavigationService.FilterAsync(System.Security.Claims.ClaimsPrincipal,ShiftManager.Models.Navigation.NavNode)">
+            <summary>Returns a copy of <paramref name="node"/> with only visible children, or null if it should be hidden.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Navigation.NavigationService.AuthorizedAsync(System.Security.Claims.ClaimsPrincipal,ShiftManager.Models.Navigation.NavNode)">
+            <summary>
+            The core of P2: visibility is the page's OWN policy result, not a re-implemented check.
+            Null policy == "any authenticated user" (the AuthorizeFolder("/") default).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Navigation.NavRegistry">
+             <summary>
+             THE single source of truth for the domain-hub navigation tree (Model B redesign).
+            
+             Every leaf's <see cref="P:ShiftManager.Models.Navigation.NavNode.Policy"/> is the SAME authorization policy its
+             destination page enforces, so <see cref="T:ShiftManager.Services.Navigation.NavigationService"/> can derive visibility
+             from <c>IAuthorizationService</c> (design principle P2 — visibility == access).
+             <c>NavRegistryPolicyParityTests</c> reflects over each route's PageModel and asserts the nav
+             policy is never looser than the page's [Authorize(Policy)] (so no visible-but-403 can drift in).
+            
+             Phase 1 points leaves at EXISTING routes so nothing 404s and nothing is physically moved.
+             Later phases repoint individual leaves at merged/hosted surfaces (e.g. Eligibility home,
+             scope-aware Rules) behind the same FF_NEW_NAV flag.
+             </summary>
+        </member>
+        <member name="F:ShiftManager.Services.Navigation.NavRegistry.Root">
+            <summary>The complete navigation tree (pre-authorization). Order = display order.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Navigation.NavRegistry.AllLeaves">
+            <summary>Flat list of every leaf (route-bearing) node — used by the palette + parity test.</summary>
         </member>
         <member name="T:ShiftManager.Services.NotificationPreferenceService">
              <summary>
@@ -12570,6 +13637,15 @@
             Manages cookie-based company selection for Owner role with 12-hour expiry.
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.PersonalTimelineService">
+            <inheritdoc />
+            <remarks>
+            Query logic moved verbatim from <c>Pages/My/IndexModel.OnGetAsync</c> (Phase 6 Home-spine merge)
+            so the rich /My timeline is byte-identical and the Home spine reuses the exact same pipeline.
+            Item titles are intentionally preserved as the original (non-localized) strings to keep /My
+            unchanged; localizing them is a separate, pre-existing concern.
+            </remarks>
+        </member>
         <member name="T:ShiftManager.Services.PiiMasker">
             <summary>
             Utility for masking PII (Personally Identifiable Information) in log output.
@@ -12673,6 +13749,22 @@
             Uses periodic timer-based cleanup to prevent memory leaks.
             Note: For multi-server deployments, use Redis or similar distributed cache.
             </summary>
+        </member>
+        <member name="T:ShiftManager.Services.Remediation.Remediation">
+            <summary>A "go fix it" action attached to a failure: a localized label + the URL of the exact place to change it.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.Remediation.Remediation.#ctor(System.String,System.String)">
+            <summary>A "go fix it" action attached to a failure: a localized label + the URL of the exact place to change it.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.Remediation.IFailureRemediationService">
+            <summary>
+            Maps a validation/eligibility failure code to the concrete place to go fix it (the "why + button"
+            pattern). Centralised so every assign/change endpoint produces the same remediation for the same
+            reason. The fix URL is context-aware (e.g. officer-rank → that user's profile).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.Remediation.IFailureRemediationService.For(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <summary>The remediation for a failure key, or null if there's no self-service fix.</summary>
         </member>
         <member name="T:ShiftManager.Services.ScheduleExportService">
             <summary>
@@ -13225,6 +14317,24 @@
             Applies Unicode NFC normalization to handle Hebrew niqqud consistently (fixes A-13).
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.WhoIsOnShiftService.GetMonitorableShiftTypesAsync(System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.WhoIsOnShiftService.GetSelectedShiftIdsAsync(System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.WhoIsOnShiftService.SaveSelectedShiftsAsync(System.Int32,System.Collections.Generic.IReadOnlyList{System.Int32})">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.WhoIsOnShiftService.BuildWhoIsOnShiftAsync(System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Services.WhoIsOnShiftService.FormatShiftName(System.String)">
+            <summary>
+            Mirrors ShiftType.Name computed property fallback for key-based display names.
+            Used when NameEn is null/empty (molecule/area shifts without a custom English name).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.IWidgetService">
             <summary>
             Service for building grant-based widgets with additive content merging.
@@ -13707,9 +14817,23 @@
             Defaults to "Calendar_RowMode_Shifts" for unset instances (RowMode initializer = "Shifts").
             </summary>
         </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.RowOrderContextKey">
+            <summary>Per-user reorder context key, e.g. "shifts:9:2:user". Null disables reordering for this render.</summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.DayNotes">
+            <summary>
+            Day-scoped free-text notes (<see cref="T:ShiftManager.Models.CalendarDayNote"/>) keyed by date,
+            rendered in the date-column headers. Company-wide and view-independent, so they show in both
+            shift-mode and user-mode. Populated only by calendars that support day notes (Shifts); empty elsewhere.
+            </summary>
+        </member>
         <member name="P:ShiftManager.ViewComponents.ExcelCalendarAssignment.ShiftTypeId">
             <summary>Owning shift type — set ONLY for real shift assignments (not text/chore/overlay chips).
             Drives Draft Mode removal (× → stage-clear by shiftType+date+user) and is null elsewhere.</summary>
+        </member>
+        <member name="M:ShiftManager.ViewComponents.CalendarOrderApplier.Apply(System.Collections.Generic.List{ShiftManager.ViewComponents.ExcelCalendarRow},System.Collections.Generic.List{ShiftManager.ViewComponents.ExcelCalendarGroup},System.Collections.Generic.Dictionary{System.ValueTuple{System.String,System.String},System.Int32})">
+            <summary>In-place stable reorder of groups (by "" namespace) and rows (by their group namespace).
+            Positioned items first in saved SortOrder; un-positioned keep default order after them.</summary>
         </member>
         <member name="T:ShiftManager.ViewComponents.HierarchyTreeViewComponent">
             <summary>
@@ -13909,6 +15033,23 @@
             Represents a single page item (either a page number or ellipsis)
             </summary>
         </member>
+        <member name="T:ShiftManager.ViewComponents.PersonalSpineViewComponent">
+            <summary>
+            The Home "schedule spine" (Phase 6 — "Home is the schedule-spine for everyone"). Renders the
+            signed-in user's upcoming personal items (next two weeks) grouped Today / Tomorrow / This week /
+            Later, reusing the SAME <see cref="T:ShiftManager.Services.IPersonalTimelineService"/> that feeds the rich /My timeline.
+            A "view full schedule" link opens /My for the full filterable view + detail drawer. Self-contained
+            markup (no dependency on the /My drawer JS), so it can drop into any page. A manager/director is
+            still an employee with their own shifts — so this renders for everyone, with role widgets stacking
+            around it on Home.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.ViewComponents.PersonalSpineViewComponent.SpineGroup">
+            <summary>A labelled bucket of timeline items (label is a loc key resolved in the view).</summary>
+        </member>
+        <member name="M:ShiftManager.ViewComponents.PersonalSpineViewComponent.SpineGroup.#ctor(System.String,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.Schedule.TimelineItem})">
+            <summary>A labelled bucket of timeline items (label is a loc key resolved in the view).</summary>
+        </member>
         <member name="T:ShiftManager.ViewComponents.ScopeSwitcherViewComponent">
             <summary>
             ViewComponent for the Scope Switcher UI that allows users to switch between organizational scopes.
@@ -13939,6 +15080,25 @@
             Checks for: disk space, backup failures, notification failures, security warnings.
             Results are cached for 15 minutes to avoid per-request overhead.
             </summary>
+        </member>
+        <member name="T:ShiftManager.ViewComponents.ViewingScopeViewComponent">
+            <summary>
+            The "Viewing N of M companies" header control (design-bar redesign / P3 company-context primitive).
+            Promotes the cross-company scope from a buried /Director/CompanyFilter page to a persistent header
+            dropdown. Self-hides for anyone who doesn't oversee more than one company (so single-company users
+            and non-directors never see it). This is the PLURAL "scope" axis — distinct from the SINGULAR
+            active-company ContextSwitcher.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.ViewComponents.WhoIsOnShiftViewComponent">
+            <summary>
+            "Who is on Shift" home dashboard widget for Area Admins (מפק"מ).
+            Self-gates: renders empty unless the user is an Area Admin (EditArea), a CO/מפק"מ = MoleculeAdmin
+            (EditMolecule), or an Owner (AdminAccess).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.ViewComponents.WhoIsOnShiftViewModel">
+            <summary>View model for the WhoIsOnShift widget.</summary>
         </member>
         <member name="P:ErrorModel.RequestId">
             <summary>

@@ -45,8 +45,13 @@
     }
 
     // --- Error display helpers (uses ErrorStates API when available, falls back to showToast) ---
-    function showErrorMsg(msg) {
-        if (window.ErrorStates) {
+    // Optional `fix` ({ url, label }) — when the server supplies a "go fix it" remediation for an
+    // assignment failure (officer rank -> profile, eligibility -> editor), show it via FeedbackModal
+    // so the user gets the reason AND a one-click link to the place to change it.
+    function showErrorMsg(msg, fix) {
+        if (fix && fix.url && window.FeedbackModal && typeof window.FeedbackModal.show === 'function') {
+            window.FeedbackModal.show('error', msg, { action: fix });
+        } else if (window.ErrorStates) {
             window.ErrorStates.showError(msg);
         } else if (window.showToast) {
             window.showToast(msg, 'error');
@@ -364,6 +369,10 @@
             // Chore-specific fields: title input + chore type dropdown
             var choreTitleInput = null;
             var choreTypeDropdown = null;
+            // Eligibility hint element + refresh fn (chore parity Phase 4). Declared at function scope so
+            // the seed call placed after assignBtn can reach refreshElig; assigned inside the chores block.
+            var eligHint = null;
+            var refreshElig = null;
             if (calendarType === 'chores') {
                 // Chore title input
                 var titleFieldGroup = document.createElement('div');
@@ -404,7 +413,39 @@
                         choreTypeDropdown.appendChild(ctOpt);
                     }
                     ctFieldGroup.appendChild(choreTypeDropdown);
+
+                    // Eligibility hint (chore parity Phase 4): when both a chore type and a user are chosen,
+                    // fetch the (user × type) eligibility and render reason chips. Hard block (officer/exempt)
+                    // disables Assign; a gender warning shows a chip but stays selectable (manager overrides
+                    // at assign time). DISPLAY hint only — BusyService.ValidateChoreAsync is the real gate.
+                    eligHint = document.createElement('div');
+                    eligHint.className = 'bottom-sheet__elig-hint';
+                    eligHint.id = 'bottom-sheet-elig-hint';
+                    ctFieldGroup.appendChild(eligHint);
+
                     addSection.appendChild(ctFieldGroup);
+
+                    // refreshElig references userSelect + assignBtn (declared lower in this function scope).
+                    // It is only INVOKED after those vars execute (via change events / the seed call placed
+                    // after assignBtn exists), so the closure resolves them correctly (CLAUDE.md §1 gate).
+                    refreshElig = function () {
+                        var cfg = window.CalendarPageConfig;
+                        var typeId = choreTypeDropdown ? parseInt(choreTypeDropdown.value, 10) : NaN;
+                        var uId = (typeof userSelect !== 'undefined' && userSelect) ? parseInt(userSelect.value, 10) : NaN;
+                        if (eligHint) eligHint.innerHTML = '';
+                        if (typeof assignBtn !== 'undefined' && assignBtn) assignBtn.disabled = false;
+                        if (!cfg || !(cfg.moleculeId > 0) || isNaN(typeId) || typeId <= 0 || isNaN(uId) || uId <= 0) return;
+                        fetch('/Api/Calendar/GetChoreEligibilityForCandidate?moleculeId=' + cfg.moleculeId +
+                              '&userId=' + uId + '&choreTypeId=' + typeId, { credentials: 'same-origin' })
+                            .then(function (r) { return r.ok ? r.json() : null; })
+                            .then(function (data) {
+                                if (!data || !data.success || !window.EligibilityChip) return;
+                                if (eligHint) eligHint.innerHTML = window.EligibilityChip.renderChips(data);
+                                if (typeof assignBtn !== 'undefined' && assignBtn && data.isHardBlocked) assignBtn.disabled = true;
+                            })
+                            .catch(function (err) { console.warn('Eligibility hint failed:', err); });
+                    };
+                    choreTypeDropdown.addEventListener('change', refreshElig);
                 }
             }
 
@@ -436,10 +477,13 @@
             defaultOpt.textContent = (window.AppLocalizer?.BottomSheet_DefaultOption || '-- Select --');
             userSelect.appendChild(defaultOpt);
 
-            // For Tech molecules in shift-mode, fetch eligible users per shift type dynamically
+            // For shift-mode rows, fetch eligible users per shift type. Tech molecules always use the
+            // endpoint (today's behavior); workforce molecules switch to it only when the 3b category
+            // flag is on — so flag-off keeps the legacy page-list behavior byte-identical.
             var calPageConfig = window.CalendarPageConfig;
-            if (calPageConfig && calPageConfig.isTechMolecule && calPageConfig.moleculeId > 0 &&
-                    itemType === 'user' && cellData.rowId && cellData.rowId.startsWith('shift-')) {
+            if (calPageConfig && (calPageConfig.isTechMolecule || calPageConfig.categoryEligibilityEnabled)
+                    && calPageConfig.moleculeId > 0
+                    && itemType === 'user' && cellData.rowId && cellData.rowId.startsWith('shift-')) {
                 var shiftTypeId = parseInt(cellData.rowId.replace('shift-', ''), 10);
                 if (!isNaN(shiftTypeId) && shiftTypeId > 0) {
                     populateEligibleUsersAsync(userSelect, calPageConfig.moleculeId, shiftTypeId, cellData.date);
@@ -499,6 +543,13 @@
                 }
             });
             actionsEl.appendChild(assignBtn);
+
+            // Wire the chore eligibility hint now that userSelect + assignBtn both exist (closure-safe).
+            // The user dropdown changes the assignee; the chore-type dropdown change is wired above.
+            if (calendarType === 'chores' && refreshElig) {
+                userSelect.addEventListener('change', refreshElig);
+                refreshElig(); // seed the hint for the row's default user + selected type
+            }
         }
 
         // Cancel button
@@ -661,12 +712,12 @@
                             close();
                             if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
                         } else {
-                            showErrorMsg(r2.error || 'Error');
+                            showErrorMsg(r2.error || 'Error', r2.fix);
                         }
                     });
                 });
             } else {
-                showErrorMsg(result.error || 'Error');
+                showErrorMsg(result.error || 'Error', result.fix);
             }
         })
         .catch(function () {
@@ -729,26 +780,64 @@
     }
 
     // --- Fetch eligible users for a Tech molecule shift type and populate a <select> ---
-    async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId, date, instanceIdHint) {
+    function appendDisabledOption(selectEl, text) {
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.disabled = true;
+        opt.textContent = text;
+        selectEl.appendChild(opt);
+    }
+
+    // Remove every option EXCEPT a leading non-disabled empty default (the "-- Select --" placeholder).
+    function clearRealOptions(selectEl) {
+        Array.prototype.slice.call(selectEl.options).forEach(function (opt) {
+            if (opt.value || opt.disabled) selectEl.removeChild(opt);
+        });
+    }
+
+    // A native <select> can't host a button, so render the "Show all shift workers" escape hatch as a
+    // sibling link right after it (3b: promotes a noCategory result to the all-DoesShifts fallback list).
+    function appendFallbackButton(selectEl, onClick) {
+        if (selectEl._fallbackBtn && selectEl._fallbackBtn.parentNode) {
+            selectEl._fallbackBtn.parentNode.removeChild(selectEl._fallbackBtn);
+        }
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-link bottom-sheet__fallback-btn';
+        btn.textContent = loc('QuickEntry_ShowAllWorkers', 'Show all shift workers');
+        btn.addEventListener('click', function () {
+            if (btn.parentNode) btn.parentNode.removeChild(btn);
+            selectEl._fallbackBtn = null;
+            onClick();
+        });
+        selectEl._fallbackBtn = btn;
+        if (selectEl.parentNode) selectEl.parentNode.insertBefore(btn, selectEl.nextSibling);
+    }
+
+    async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId, date, allowFallback) {
         var loadingOpt = document.createElement('option');
         loadingOpt.value = '';
         loadingOpt.disabled = true;
-        loadingOpt.textContent = '...';
+        loadingOpt.textContent = loc('QuickEntry_Loading', 'Loading…');
         selectEl.appendChild(loadingOpt);
+        selectEl.setAttribute('aria-busy', 'true');
         try {
-            var response = await fetch(
-                '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + moleculeId + '&shiftTypeId=' + shiftTypeId,
-                { credentials: 'same-origin' }
-            );
+            var url = '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + moleculeId + '&shiftTypeId=' + shiftTypeId
+                + (allowFallback ? '&allowFallback=true' : '');
+            var response = await fetch(url, { credentials: 'same-origin' });
             if (!response.ok) throw new Error('Server returned ' + response.status);
             var data = await response.json();
             if (loadingOpt.parentNode === selectEl) selectEl.removeChild(loadingOpt);
-            if (data.success && Array.isArray(data.users)) {
+            selectEl.removeAttribute('aria-busy');
+            if (!data.success) throw new Error('unsuccessful');
+
+            if (Array.isArray(data.users) && data.users.length > 0) {
                 data.users.forEach(function (user) {
                     var opt = document.createElement('option');
                     opt.value = user.id;
-                    opt.textContent = user.name;
                     opt.dataset.userName = user.name;
+                    // Native <select>: append company as a " — {company}" suffix (3b disambiguation).
+                    opt.textContent = user.companyName ? (user.name + ' — ' + user.companyName) : user.name;
                     selectEl.appendChild(opt);
                 });
 
@@ -757,15 +846,21 @@
                     decorateOptionsWithBusyAsync(selectEl, data.users.map(function (u) { return u.id; }), date, moleculeId, null)
                         .catch(function (err) { console.warn('Busy decoration failed:', err); });
                 }
+            } else if (data.reason === 'noCategory') {
+                // Structural zero: assignable shift missing a category. Nudge + escape hatch.
+                appendDisabledOption(selectEl, loc('QuickEntry_NoCategorySet', 'This shift has no category set'));
+                appendFallbackButton(selectEl, function () {
+                    clearRealOptions(selectEl);
+                    populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId, date, true);
+                });
+            } else {
+                appendDisabledOption(selectEl, loc('QuickEntry_NoEligibleUsers', 'No eligible users for this shift'));
             }
         } catch (e) {
             if (loadingOpt.parentNode === selectEl) selectEl.removeChild(loadingOpt);
+            selectEl.removeAttribute('aria-busy');
             console.error('Failed to load eligible users:', e);
-            var errOpt = document.createElement('option');
-            errOpt.value = '';
-            errOpt.disabled = true;
-            errOpt.textContent = (window.AppLocalizer?.BottomSheet_LoadError || 'Failed to load users');
-            selectEl.appendChild(errOpt);
+            appendDisabledOption(selectEl, loc('QuickEntry_LoadFailedFallback', "Couldn't load eligible users — try again"));
         }
     }
 

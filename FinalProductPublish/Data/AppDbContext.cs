@@ -39,9 +39,15 @@ public class AppDbContext : DbContext
     public DbSet<ProfileChangeAudit> ProfileChangeAudits => Set<ProfileChangeAudit>();
     public DbSet<Chore> Chores => Set<Chore>();
     public DbSet<ChoreType> ChoreTypes => Set<ChoreType>();
+    public DbSet<ChoreCategory> ChoreCategories => Set<ChoreCategory>();
+    public DbSet<UserChoreCategory> UserChoreCategories => Set<UserChoreCategory>();
+    public DbSet<EligibilityRule> EligibilityRules => Set<EligibilityRule>();
+    public DbSet<UserChoreExemption> UserChoreExemptions => Set<UserChoreExemption>();
+    public DbSet<ChoreTemplate> ChoreTemplates => Set<ChoreTemplate>();
     public DbSet<ShiftCapacityOverride> ShiftCapacityOverrides => Set<ShiftCapacityOverride>();
     public DbSet<UserDayNote> UserDayNotes => Set<UserDayNote>();
     public DbSet<CalendarTextEntry> CalendarTextEntries => Set<CalendarTextEntry>();
+    public DbSet<CalendarDayNote> CalendarDayNotes => Set<CalendarDayNote>();
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
@@ -162,6 +168,12 @@ public class AppDbContext : DbContext
     // ========================================
     public DbSet<DistributionList> DistributionLists => Set<DistributionList>();
     public DbSet<DistributionListMember> DistributionListMembers => Set<DistributionListMember>();
+
+    // Per-user calendar row/category ordering preferences (NOT tenant-scoped — personal UI preference)
+    public DbSet<UserCalendarRowOrder> UserCalendarRowOrders => Set<UserCalendarRowOrder>();
+
+    // Per-user "Who is on Shift" dashboard monitored shift selections (NOT tenant-scoped — personal UI preference)
+    public DbSet<UserMonitoredShift> UserMonitoredShifts => Set<UserMonitoredShift>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -601,6 +613,77 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => new { e.MoleculeId, e.Name }).IsUnique();
         });
 
+        // ===== Chore↔ShiftType parity (Phase 1 foundation) =====
+        // ChoreCategory: molecule-scoped, NOT tenant-filtered (mirrors ShiftCategory).
+        modelBuilder.Entity<ChoreCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Molecule)
+                .WithMany()
+                .HasForeignKey(e => e.MoleculeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.MoleculeId, e.Name }).IsUnique();
+        });
+
+        // ChoreType → ChoreCategory: nullable (uncategorized allowed), SetNull on category delete
+        // (mirrors ShiftType.CategoryId). WithMany(cc => cc.ChoreTypes) prevents a shadow FK.
+        modelBuilder.Entity<ChoreType>()
+            .HasOne(ct => ct.ChoreCategory)
+            .WithMany(cc => cc.ChoreTypes)
+            .HasForeignKey(ct => ct.ChoreCategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ChoreType>()
+            .HasIndex(ct => ct.ChoreCategoryId);
+
+        // UserChoreCategory: N:N user↔category, unique per pair (mirrors UserShiftCategory).
+        modelBuilder.Entity<UserChoreCategory>()
+            .HasIndex(ucc => new { ucc.UserId, ucc.ChoreCategoryId }).IsUnique();
+        modelBuilder.Entity<UserChoreCategory>()
+            .HasOne(ucc => ucc.User).WithMany(u => u.ChoreCategories)
+            .HasForeignKey(ucc => ucc.UserId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserChoreCategory>()
+            .HasOne(ucc => ucc.ChoreCategory).WithMany(cc => cc.Members)
+            .HasForeignKey(ucc => ucc.ChoreCategoryId).OnDelete(DeleteBehavior.Cascade);
+
+        // EligibilityRule: chore-scoped (per ChoreType), no tenant filter; several rules per type.
+        modelBuilder.Entity<EligibilityRule>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.ChoreTypeId);
+            entity.HasOne(e => e.ChoreType).WithMany()
+                .HasForeignKey(e => e.ChoreTypeId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Creator).WithMany()
+                .HasForeignKey(e => e.CreatedBy).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // UserChoreExemption: per-person waiver, unique per (user, type).
+        modelBuilder.Entity<UserChoreExemption>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.UserId, e.ChoreTypeId }).IsUnique();
+            entity.HasOne(e => e.User).WithMany(u => u.ChoreExemptions)
+                .HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ChoreType).WithMany()
+                .HasForeignKey(e => e.ChoreTypeId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Creator).WithMany()
+                .HasForeignKey(e => e.CreatedBy).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ChoreTemplate: molecule-scoped reusable definition; TimeOnly props need the converter.
+        modelBuilder.Entity<ChoreTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.MoleculeId, e.IsActive });
+            entity.Property(e => e.StartTime).HasConversion(timeConverter);
+            entity.Property(e => e.EndTime).HasConversion(timeConverter);
+            entity.HasOne(e => e.Molecule).WithMany()
+                .HasForeignKey(e => e.MoleculeId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ChoreType).WithMany()
+                .HasForeignKey(e => e.ChoreTypeId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Creator).WithMany()
+                .HasForeignKey(e => e.CreatedBy).OnDelete(DeleteBehavior.Restrict);
+        });
+
         // Configure ShiftCapacityOverride (Excel Calendars feature)
         modelBuilder.Entity<ShiftCapacityOverride>(entity =>
         {
@@ -636,6 +719,20 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
+
+        // Configure CalendarDayNote (day-scoped free-text notes — one per (Date, CompanyId), upsert at service level)
+        modelBuilder.Entity<CalendarDayNote>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.CompanyId, e.Date }).IsUnique(); // one note per company per day
+            entity.Property(e => e.Text).HasMaxLength(500);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+        // Defense-in-depth tenant filter (production). Service methods use IgnoreQueryFilters + explicit
+        // companyId, so this is never invoked in unit tests where _tenantResolver is null.
+        modelBuilder.Entity<CalendarDayNote>()
+            .HasQueryFilter(e => e.CompanyId == _tenantResolver!.GetCurrentTenantId());
 
         // Configure Language Management
         // CompanyLanguageSettings: Unique index on CompanyId (one settings per company)
@@ -1093,6 +1190,18 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(dlm => dlm.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Per-user calendar ordering (categories + rows). NOT company-scoped — no global query filter.
+        modelBuilder.Entity<UserCalendarRowOrder>()
+            .HasIndex(o => new { o.UserId, o.ContextKey, o.GroupId, o.RowId })
+            .IsUnique();
+        modelBuilder.Entity<UserCalendarRowOrder>()
+            .HasIndex(o => new { o.UserId, o.ContextKey });
+
+        // Per-user "Who is on Shift" monitored shift selections. NOT company-scoped — no global query filter.
+        modelBuilder.Entity<UserMonitoredShift>()
+            .HasIndex(m => new { m.UserId, m.ShiftTypeId })
+            .IsUnique();
 
         // ✅ PHASE 19: Configure GameScore entity
         modelBuilder.Entity<GameScore>()

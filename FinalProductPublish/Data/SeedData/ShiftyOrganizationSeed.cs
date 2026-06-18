@@ -100,6 +100,11 @@ public static class ShiftyOrganizationSeed
         db.JobTypes.Add(shikmaProjectManager);
         await db.SaveChangesAsync();
 
+        // Techno — clones ProjectManager (organizational only, no shift eligibility impact)
+        var shikmaTechno = new JobType { AreaId = area.Id, MoleculeId = shikma.Id, Name = "Techno", DisplayName = "טכנו", SortOrder = 11 };
+        db.JobTypes.Add(shikmaTechno);
+        await db.SaveChangesAsync();
+
         // ============================================================
         // COMPANIES (for Workforce Molecules)
         // ============================================================
