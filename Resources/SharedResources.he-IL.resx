@@ -16384,4 +16384,112 @@
   <data name="Elig_RequiresOfficerRank" xml:space="preserve"><value>קצינים בלבד</value></data>
   <data name="Elig_Exempt" xml:space="preserve"><value>פטור</value></data>
   <data name="Elig_Blocked" xml:space="preserve"><value>חסום</value></data>
+  <data name="Nav2_Home" xml:space="preserve"><value>בית</value></data>
+  <data name="Nav2_Scheduling" xml:space="preserve"><value>שיבוץ</value></data>
+  <data name="Nav2_MyScheduleLabel" xml:space="preserve"><value>הלוח שלי</value></data>
+  <data name="Nav2_Sched_Calendars" xml:space="preserve"><value>לוחות שנה</value></data>
+  <data name="Nav2_Sched_Planning" xml:space="preserve"><value>תכנון</value></data>
+  <data name="Nav2_Sched_Definitions" xml:space="preserve"><value>הגדרות</value></data>
+  <data name="Nav2_ShiftPlans" xml:space="preserve"><value>תוכניות משמרות</value></data>
+  <data name="Nav2_MasterPlans" xml:space="preserve"><value>תוכניות אב</value></data>
+  <data name="Nav2_ChoreTemplates" xml:space="preserve"><value>תבניות תורנויות</value></data>
+  <data name="Nav2_Blueprints" xml:space="preserve"><value>תבניות משמרת</value></data>
+  <data name="Nav2_ShiftGroupings" xml:space="preserve"><value>קבוצות משמרת</value></data>
+  <data name="Nav2_DutyTypes" xml:space="preserve"><value>סוגי תורנות</value></data>
+  <data name="Nav2_Eligibility" xml:space="preserve"><value>זכאות</value></data>
+  <data name="Nav2_Rules" xml:space="preserve"><value>כללים</value></data>
+  <data name="Nav2_Approvals" xml:space="preserve"><value>אישורים</value></data>
+  <data name="Nav2_CrossCompanyApprovals" xml:space="preserve"><value>אישורים חוצי-דסקים</value></data>
+  <data name="Nav2_People" xml:space="preserve"><value>אנשים</value></data>
+  <data name="Nav2_HomeTypes" xml:space="preserve"><value>סוגי בית</value></data>
+  <data name="Nav2_Hierarchy" xml:space="preserve"><value>היררכיה</value></data>
+  <data name="Nav2_JobTypes" xml:space="preserve"><value>סוגי תפקיד</value></data>
+  <data name="Nav2_ChoreTypes" xml:space="preserve"><value>סוגי תורנויות</value></data>
+  <data name="Nav2_Stores" xml:space="preserve"><value>חנויות</value></data>
+  <data name="Nav2_AreaPalette" xml:space="preserve"><value>פלטת אזור</value></data>
+  <data name="Nav2_Access" xml:space="preserve"><value>הרשאות</value></data>
+  <data name="Nav2_Roles" xml:space="preserve"><value>תפקידים</value></data>
+  <data name="Nav2_Grants" xml:space="preserve"><value>הרשאות פרטניות</value></data>
+  <data name="Nav2_RoleTemplates" xml:space="preserve"><value>תבניות תפקיד</value></data>
+  <data name="Nav2_Simulator" xml:space="preserve"><value>סימולטור הרשאות</value></data>
+  <data name="Nav2_Directors" xml:space="preserve"><value>מנהלים אזוריים</value></data>
+  <data name="Nav2_LockedUsers" xml:space="preserve"><value>משתמשים נעולים</value></data>
+  <data name="Nav2_Insights" xml:space="preserve"><value>תובנות</value></data>
+  <data name="Nav2_System" xml:space="preserve"><value>מערכת</value></data>
+  <data name="Nav2_Integrations" xml:space="preserve"><value>אינטגרציות</value></data>
+  <data name="Nav2_EmailConfig" xml:space="preserve"><value>דוא״ל</value></data>
+  <data name="Nav2_EmailTemplates" xml:space="preserve"><value>תבניות דוא״ל</value></data>
+  <data name="Nav2_Sso" xml:space="preserve"><value>כניסה מאוחדת</value></data>
+  <data name="Nav2_GameConfig" xml:space="preserve"><value>משחק</value></data>
+  <data name="Nav2_Localization" xml:space="preserve"><value>לוקליזציה</value></data>
+  <data name="Nav2_ContentConfig" xml:space="preserve"><value>תוכן והגדרות</value></data>
+  <data name="Nav2_AreaConfig" xml:space="preserve"><value>הגדרות אזור</value></data>
+  <data name="Nav2_SetupTasks" xml:space="preserve"><value>משימות הקמה</value></data>
+  <data name="Nav2_DataOps" xml:space="preserve"><value>נתונים ותפעול</value></data>
+  <data name="Nav2_Backup" xml:space="preserve"><value>גיבוי</value></data>
+  <data name="Nav2_DataLifecycle" xml:space="preserve"><value>מחזור חיי נתונים</value></data>
+  <data name="Nav2_ExportUserData" xml:space="preserve"><value>ייצוא נתוני משתמש</value></data>
+  <data name="Nav2_DatabaseConsole" xml:space="preserve"><value>קונסולת מסד נתונים</value></data>
+  <data name="Nav2_EligibilityHome_Title" xml:space="preserve"><value>זכאות</value></data>
+  <data name="Nav2_EligibilityHome_Intro" xml:space="preserve"><value>נהל מי זכאי לכל קטגוריית משמרת ותורנות — הכללים והחברות, במקום אחד.</value></data>
+  <data name="HelpNav_Title" xml:space="preserve"><value>איפה כל דבר נמצא</value></data>
+  <data name="HelpNav_Subtitle" xml:space="preserve"><value>מפה אישית של המערכת — ומדריך מהיר לכל תפקיד.</value></data>
+  <data name="HelpNav_YourMap" xml:space="preserve"><value>מפת הניווט שלך</value></data>
+  <data name="HelpNav_YourMap_Desc" xml:space="preserve"><value>כל מקום שאליו אפשר להגיע, מקובץ לפי מרכז. נבנה מההרשאות שלך, כך שתמיד תואם לסרגל הצד.</value></data>
+  <data name="HelpNav_ByRole" xml:space="preserve"><value>מדריכים לפי תפקיד</value></data>
+  <data name="HelpNav_ByRole_Desc" xml:space="preserve"><value>במה כל סוג משתמש עובד בעיקר.</value></data>
+  <data name="HelpNav_HubCard_Title" xml:space="preserve"><value>איפה כל דבר נמצא</value></data>
+  <data name="HelpNav_HubCard_Desc" xml:space="preserve"><value>מפה של הניווט — מצא כל יכולת, לפי תפקיד.</value></data>
+  <data name="HelpNav_Persona_Employee" xml:space="preserve"><value>עובד / חייל</value></data>
+  <data name="HelpNav_PersonaDesc_Employee" xml:space="preserve"><value>השבוע שלך, חופשות והחלפות, והפרופיל שלך. אתה נמצא בבית, הלוח שלי, בקשות ואישי. הפעמון בסרגל העליון מחזיק את ההתראות שלך.</value></data>
+  <data name="HelpNav_Persona_Lead" xml:space="preserve"><value>ראש צוות</value></data>
+  <data name="HelpNav_PersonaDesc_Lead" xml:space="preserve"><value>אתה עושה משמרות ומנהל צוות. שבץ בשיבוץ ▸ לוחות שנה (סרגל הכלים של הלוח מחזיק טיוטות, הוגנות והזנה מהירה); אשר לצוות שלך בבקשות; בדוק הוגנות בתובנות ▸ ניתוחים.</value></data>
+  <data name="HelpNav_Persona_Assigner" xml:space="preserve"><value>משבץ / מנהל</value></data>
+  <data name="HelpNav_PersonaDesc_Assigner" xml:space="preserve"><value>אתה בונה את הסידור. לוחות שנה, תכנון (תוכניות משמרות, תוכניות אב, תבניות) והגדרות נמצאים תחת שיבוץ; טפל בתור באישורים; הגדר מי זכאי למה בשיבוץ ▸ זכאות.</value></data>
+  <data name="HelpNav_Persona_Director" xml:space="preserve"><value>מנהל אזורי</value></data>
+  <data name="HelpNav_PersonaDesc_Director" xml:space="preserve"><value>אתה מפקח על כמה דסקים. השתמש בבקרות הדסק בסרגל העליון כדי להחליף ולמקד; אישורים חוצי-דסקים ובקרה נמצאים תחת כלי מפקד ותובנות.</value></data>
+  <data name="HelpNav_Persona_Admin" xml:space="preserve"><value>מנהל מולקולה / אזור</value></data>
+  <data name="HelpNav_PersonaDesc_Admin" xml:space="preserve"><value>אתה מקים את המערכת. מרכזי אנשים, ארגון והרשאות מחזיקים משתמשים, מבנה, תפקידים והרשאות; זכאות למשמרות ותורנויות נמצאת בשיבוץ ▸ זכאות.</value></data>
+  <data name="HelpNav_Persona_Owner" xml:space="preserve"><value>בעלים / מפעיל</value></data>
+  <data name="HelpNav_PersonaDesc_Owner" xml:space="preserve"><value>אתה מפעיל את הפלטפורמה. תובנות מציג בריאות, טלמטריה, ביקורת וניתוחים; מערכת מחזיק דגלי תכונה, אינטגרציות, לוקליזציה ואזור הסכנה נתונים ותפעול.</value></data>
+  <data name="Elig_Reason_AccountType" xml:space="preserve"><value>סוג חשבון שאינו ניתן לשיבוץ</value></data>
+  <data name="Elig_Reason_NoShifts" xml:space="preserve"><value>לא עושה משמרות</value></data>
+  <data name="Elig_Reason_NoChores" xml:space="preserve"><value>לא עושה תורנויות</value></data>
+  <data name="Elig_Reason_NotMember" xml:space="preserve"><value>לא בקטגוריה זו</value></data>
+  <data name="Elig_Editor_ByCategory" xml:space="preserve"><value>לפי קטגוריה</value></data>
+  <data name="Elig_Editor_ByPerson" xml:space="preserve"><value>לפי אדם</value></data>
+  <data name="Elig_Editor_PickCategory" xml:space="preserve"><value>בחר קטגוריה…</value></data>
+  <data name="Elig_Editor_PickPerson" xml:space="preserve"><value>בחר אדם…</value></data>
+  <data name="Elig_Editor_Eligible" xml:space="preserve"><value>זכאי</value></data>
+  <data name="Elig_Editor_NotEligible" xml:space="preserve"><value>חסום / הוסף</value></data>
+  <data name="Elig_Editor_Add" xml:space="preserve"><value>הוסף</value></data>
+  <data name="Elig_Editor_Remove" xml:space="preserve"><value>הסר</value></data>
+  <data name="Elig_Editor_Member" xml:space="preserve"><value>חברים</value></data>
+  <data name="Elig_Editor_ShiftCats" xml:space="preserve"><value>קטגוריות משמרת</value></data>
+  <data name="Elig_Editor_ChoreCats" xml:space="preserve"><value>קטגוריות תורנות</value></data>
+  <data name="MyElig_Title" xml:space="preserve"><value>הזכאות שלי</value></data>
+  <data name="MyElig_NavLink" xml:space="preserve"><value>הזכאות שלי</value></data>
+  <data name="MyElig_Subtitle" xml:space="preserve"><value>למה אפשר לשבץ אותך — ולמה לא, היכן שאי אפשר.</value></data>
+  <data name="MyElig_Intro" xml:space="preserve"><value>ההגדרות נקבעות על ידי המנהלים שלך. אם משהו כאן אמור להיות זמין לך, בקש מהם לעדכן.</value></data>
+  <data name="MyElig_Shifts" xml:space="preserve"><value>משמרות</value></data>
+  <data name="MyElig_Chores" xml:space="preserve"><value>תורנויות</value></data>
+  <data name="MyElig_Available" xml:space="preserve"><value>זמין לך</value></data>
+  <data name="MyElig_NotAvailable" xml:space="preserve"><value>לא זמין לך</value></data>
+  <data name="MyElig_NoneAvailable" xml:space="preserve"><value>אין כאן עדיין כלום.</value></data>
+  <data name="MyElig_Empty" xml:space="preserve"><value>עדיין לא הוגדרו קבוצות משמרות או תורנויות.</value></data>
+  <data name="MyElig_AskManager" xml:space="preserve"><value>פנה למנהל שלך</value></data>
+  <data name="MyElig_Reason_AccountType" xml:space="preserve"><value>סוג החשבון שלך אינו משובץ לאלה.</value></data>
+  <data name="MyElig_Reason_NoShifts" xml:space="preserve"><value>משמרות מכובות עבור החשבון שלך.</value></data>
+  <data name="MyElig_Reason_NoChores" xml:space="preserve"><value>תורנויות מכובות עבור החשבון שלך.</value></data>
+  <data name="MyElig_Reason_NotMember" xml:space="preserve"><value>אינך חבר בקבוצה זו.</value></data>
+  <data name="MySpine_Empty" xml:space="preserve"><value>אין שיבוצים בשבועיים הקרובים.</value></data>
+  <data name="Scope_ViewingNofM" xml:space="preserve"><value>צופה ב-{0} מתוך {1} דסקים</value></data>
+  <data name="Scope_Apply" xml:space="preserve"><value>החל</value></data>
+  <data name="Scope_Tooltip" xml:space="preserve"><value>בחר אילו דסקים אתה צופה בהם</value></data>
+  <data name="Fix_ChangeRank" xml:space="preserve"><value>שנה דרגה</value></data>
+  <data name="Fix_EditProfile" xml:space="preserve"><value>ערוך פרופיל</value></data>
+  <data name="Fix_ChoreRules" xml:space="preserve"><value>ערוך כללי תורנות</value></data>
+  <data name="Fix_ManageUser" xml:space="preserve"><value>נהל משתמש</value></data>
+  <data name="Fix_Eligibility" xml:space="preserve"><value>נהל זכאות</value></data>
+  <data name="Fix_ButtonAria" xml:space="preserve"><value>עבור למקום לתיקון</value></data>
 </root>

@@ -1,0 +1,284 @@
+@page
+@model ShiftManager.Pages.My.EligibilityModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["MyElig_Title"];
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["MyElig_Title"], IsActive = true }
+})
+
+<div class="myelig-page">
+    <div class="myelig-header">
+        <h1><loc key="MyElig_Title" /></h1>
+        <p class="myelig-subtitle"><loc key="MyElig_Subtitle" /></p>
+    </div>
+
+    <div class="myelig-intro">
+        <span class="myelig-intro__icon" aria-hidden="true">&#x2139;&#xFE0F;</span>
+        <span><loc key="MyElig_Intro" /></span>
+    </div>
+
+    @if (!Model.HasAnyCategories)
+    {
+        <div class="myelig-empty">
+            <loc key="MyElig_Empty" />
+        </div>
+    }
+    else
+    {
+        <div class="myelig-grid">
+            @* eligible list, then blocked list, framed for the employee *@
+            @{
+                void RenderColumn(string headingKey, string icon, List<ShiftManager.Pages.My.EligibilityModel.Row> rows)
+                {
+                    var available = rows.Where(r => r.Eligible).ToList();
+                    var blocked = rows.Where(r => !r.Eligible).ToList();
+                    <section class="myelig-card">
+                        <h2 class="myelig-card__title">
+                            <span class="myelig-card__icon" aria-hidden="true">@icon</span>
+                            @Localizer[headingKey]
+                        </h2>
+
+                        <h3 class="myelig-sub myelig-sub--ok">@Localizer["MyElig_Available"]</h3>
+                        @if (available.Count == 0)
+                        {
+                            <p class="myelig-none">@Localizer["MyElig_NoneAvailable"]</p>
+                        }
+                        else
+                        {
+                            <ul class="myelig-list">
+                                @foreach (var r in available)
+                                {
+                                    <li class="myelig-row myelig-row--ok">
+                                        <span class="myelig-row__mark" aria-hidden="true">&#x2713;</span>
+                                        <span class="myelig-row__name">@r.Name</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+
+                        @if (blocked.Count > 0)
+                        {
+                            <h3 class="myelig-sub myelig-sub--blocked">@Localizer["MyElig_NotAvailable"]</h3>
+                            <ul class="myelig-list">
+                                @foreach (var r in blocked)
+                                {
+                                    <li class="myelig-row myelig-row--blocked">
+                                        <span class="myelig-row__mark" aria-hidden="true">&#x2014;</span>
+                                        <span class="myelig-row__body">
+                                            <span class="myelig-row__name">@r.Name</span>
+                                            <span class="myelig-row__reason">@r.Reason</span>
+                                        </span>
+                                        <span class="myelig-row__hint">@Localizer["MyElig_AskManager"]</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </section>
+                }
+            }
+
+            @{ RenderColumn("MyElig_Shifts", "\U0001F4C5", Model.Shifts); }
+            @{ RenderColumn("MyElig_Chores", "\U0001F5C2", Model.Chores); }
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        .myelig-page {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .myelig-header {
+            margin-bottom: 1rem;
+        }
+
+        .myelig-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .myelig-subtitle {
+            color: var(--muted);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .myelig-intro {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            background: var(--surface-soft, var(--bg));
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.875rem 1rem;
+            color: var(--muted);
+            font-size: 0.925rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .myelig-intro__icon {
+            flex-shrink: 0;
+        }
+
+        .myelig-empty {
+            background: var(--surface);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .myelig-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .myelig-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem 1.5rem;
+        }
+
+        .myelig-card__title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 1rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .myelig-sub {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .myelig-sub--ok {
+            color: var(--success, #16A34A);
+        }
+
+        .myelig-sub--blocked {
+            color: var(--muted);
+        }
+
+        .myelig-none {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-style: italic;
+            margin: 0;
+        }
+
+        .myelig-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .myelig-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface-soft, var(--bg));
+        }
+
+        .myelig-row__mark {
+            flex-shrink: 0;
+            font-weight: 700;
+            width: 1.1rem;
+            text-align: center;
+        }
+
+        /* accent the LEFT edge (logical inline-start, RTL-aware) rather than fill the row,
+           keeping text on the page surface for guaranteed contrast in light + dark. */
+        .myelig-row--ok {
+            border-inline-start: 3px solid var(--success, #16A34A);
+        }
+
+        .myelig-row--ok .myelig-row__mark {
+            color: var(--success, #16A34A);
+        }
+
+        .myelig-row--blocked {
+            border-inline-start: 3px solid var(--border);
+            align-items: flex-start;
+        }
+
+        .myelig-row--blocked .myelig-row__mark {
+            color: var(--muted);
+        }
+
+        .myelig-row__body {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .myelig-row__name {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .myelig-row__reason {
+            color: var(--muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .myelig-row__hint {
+            flex-shrink: 0;
+            align-self: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.15rem 0.6rem;
+            white-space: nowrap;
+        }
+
+        @@media (max-width: 768px) {
+            .myelig-page {
+                padding: 0.5rem;
+            }
+
+            .myelig-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .myelig-row__hint {
+                display: none;
+            }
+        }
+    </style>
+}

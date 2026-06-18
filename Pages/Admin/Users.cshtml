@@ -474,6 +474,12 @@
     </style>
 }
 
+@* Focused "Join requests" view (its dedicated People ▸ Join requests home) — hide the roster table. *@
+@if (Model.IsJoinRequestsOnly)
+{
+    <style>#existingUsersSection { display: none !important; }</style>
+}
+
 <!-- Page Header -->
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
@@ -733,7 +739,7 @@
 </div>
 
 <!-- Existing Users Section -->
-<div class="section-card">
+<div class="section-card" id="existingUsersSection">
     <h2 class="section-title">@Localizer["ExistingUsers"]</h2>
 
     <!-- Add User Form (moved above table for quick access) -->

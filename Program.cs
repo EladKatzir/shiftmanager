@@ -340,6 +340,18 @@ builder.Services.AddScoped<IChoreCategoryService, ChoreCategoryService>();
 builder.Services.AddScoped<IDraftModeService, DraftModeService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+// Domain-hub navigation (Model B redesign) — policy-derived visibility behind FF_NEW_NAV.
+builder.Services.AddScoped<ShiftManager.Services.Navigation.INavigationService, ShiftManager.Services.Navigation.NavigationService>();
+
+// Eligibility editor (Issue 3) — unified "who can do category X / why is Y blocked" query engine.
+builder.Services.AddScoped<ShiftManager.Services.Eligibility.IEligibilityQueryService, ShiftManager.Services.Eligibility.EligibilityQueryService>();
+
+// Actionable failure remediation — maps a failure code to the place to go fix it ("why + Fix button").
+builder.Services.AddScoped<ShiftManager.Services.Remediation.IFailureRemediationService, ShiftManager.Services.Remediation.FailureRemediationService>();
+
+// Personal schedule timeline — one source of truth for /My timeline + the Home schedule-spine (Phase 6).
+builder.Services.AddScoped<IPersonalTimelineService, PersonalTimelineService>();
+
 // v3.0 Grant Authorization
 builder.Services.AddScoped<IAuthorizationHandler, GrantAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, GrantPolicyProvider>();

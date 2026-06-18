@@ -4812,6 +4812,74 @@ code {
   display: none;
 }
 
+/* ============================================================
+   Domain-hub navigation (FF_NEW_NAV / Model B redesign)
+   Leaves reuse .app-sidebar-nav-item; hubs are collapsible <details>.
+   Colors mirror .app-sidebar-nav-item / .nav-section-header to avoid
+   any dark-on-dark contrast regression in dark/RTL themes.
+   ============================================================ */
+.nav-hub { border: none; margin: 0; }
+.nav-hub__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+  user-select: none;
+  border-radius: 0.5rem;
+}
+.nav-hub__header::-webkit-details-marker { display: none; }
+.nav-hub__header::marker { content: ""; }
+.nav-hub__header:hover { background: var(--surface-soft); }
+.nav-hub__label { flex: 1 1 auto; }
+.nav-hub__chevron { font-size: 0.7rem; opacity: 0.5; transition: transform 0.18s ease; }
+.nav-hub[open] > .nav-hub__header .nav-hub__chevron { transform: rotate(180deg); }
+.nav-hub__body { padding-inline-start: 0.5rem; }
+
+.nav-subgroup-header {
+  padding: 0.5rem 1rem 0.2rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.nav-subgroup-header--danger { color: var(--danger); }
+.nav-subgroup-header--danger::before { content: "\26A0\00A0"; }
+
+/* Viewing-scope header dropdown (company-context primitive / design bar) */
+.vscope { position: relative; display: inline-block; }
+.vscope__btn { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; list-style: none; }
+.vscope__btn::-webkit-details-marker { display: none; }
+.vscope__btn::marker { content: ""; }
+.vscope__label { font-size: 0.85rem; }
+.vscope__chev { font-size: 0.7rem; opacity: 0.6; }
+.vscope__menu {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 6px); min-width: 240px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 0.6rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18); padding: 0.6rem; z-index: var(--z-dropdown, 1060);
+}
+.vscope__list { display: flex; flex-direction: column; gap: 0.2rem; max-height: 280px; overflow-y: auto; }
+.vscope__item { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.4rem; border-radius: 0.4rem; cursor: pointer; color: var(--text); }
+.vscope__item:hover { background: var(--surface-soft, rgba(127,127,127,0.1)); }
+.vscope__actions { margin-top: 0.5rem; display: flex; justify-content: flex-end; }
+
+/* Collapsed sidebar: keep icons, hide hub labels/chevrons + subgroup headers */
+.app-sidebar.is-collapsed .nav-hub__label,
+.app-sidebar.is-collapsed .nav-hub__chevron,
+.sidebar-initially-collapsed .app-sidebar .nav-hub__label,
+.sidebar-initially-collapsed .app-sidebar .nav-hub__chevron { display: none; }
+.app-sidebar.is-collapsed .nav-hub__header,
+.sidebar-initially-collapsed .app-sidebar .nav-hub__header { justify-content: center; padding: 0.75rem; }
+.app-sidebar.is-collapsed .nav-subgroup-header,
+.sidebar-initially-collapsed .app-sidebar .nav-subgroup-header {
+  opacity: 0; max-height: 0; overflow: hidden; padding: 0; margin: 0;
+}
+
 /* Item header with action buttons */
 .item-header {
   display: flex;

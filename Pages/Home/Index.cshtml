@@ -43,6 +43,11 @@
 
 <div class="home-dashboard">
 
+    @* Schedule spine — "Home is the schedule-spine for everyone": the signed-in user's own upcoming
+       week is the page; role widgets below stack around it. A manager/director is still an employee
+       with their own shifts. *@
+    @await Component.InvokeAsync("PersonalSpine")
+
     @* Who Is On Shift widget — self-gated to EditArea / AdminAccess holders; renders empty for others *@
     <div class="home-dashboard__who-on-shift">
         @await Component.InvokeAsync("WhoIsOnShift")
@@ -388,4 +393,38 @@
             </div>
         }
     }
+
+    @* Company Announcements — preserved from the legacy "/" landing so the consolidated Home keeps them. *@
+    <div class="dashboard-section" style="margin-bottom: 2rem;">
+        <h3 class="text-title" style="margin: 0 0 1rem 0;"><loc key="Dashboard_Announcements" /></h3>
+        <div class="card">
+            <div class="card-body">
+                @if (Model.RecentAnnouncements.Any())
+                {
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        @foreach (var announcement in Model.RecentAnnouncements.Take(5))
+                        {
+                            <div style="padding: 0.75rem; background: var(--surface-soft, var(--bg)); border-radius: 8px; @(announcement.IsPinned ? "border-inline-start: 3px solid var(--primary);" : "")">
+                                <div class="text-body" style="font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                                    @if (announcement.IsPinned)
+                                    {
+                                        <icon name="pin" />
+                                    }
+                                    @announcement.Title
+                                </div>
+                                <div class="text-caption" style="color: var(--text-muted); margin: 0.15rem 0 0.4rem;">
+                                    @announcement.Creator?.DisplayName • @Localization.FormatShortDate(announcement.CreatedAt)
+                                </div>
+                                <div class="text-body" style="font-size: 0.9rem;">@announcement.Content</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-subtle" style="margin: 0;"><loc key="Dashboard_NoAnnouncements" /></p>
+                }
+            </div>
+        </div>
+    </div>
 </div>

@@ -1,0 +1,152 @@
+@model ShiftManager.ViewComponents.PersonalSpineViewComponent.SpineVm
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.Models.Schedule
+@inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
+@functions {
+    static string IconFor(ItemType t) => t switch
+    {
+        ItemType.Vacation => "palm-tree",
+        ItemType.OnDuty => "siren",
+        ItemType.Shift => "moon",
+        ItemType.Chore => "brush",
+        _ => "clipboard-list"
+    };
+}
+
+<div class="card home-spine">
+    <div class="card-header home-spine__header">
+        <h3 class="card-title">@Localizer["MySchedule"]</h3>
+        <a href="/My/Index" class="home-spine__link">@Localizer["ViewFullSchedule"] &rarr;</a>
+    </div>
+    <div class="card-body">
+        @if (Model.TotalCount == 0)
+        {
+            <p class="home-spine__empty">@Localizer["MySpine_Empty"]</p>
+        }
+        else
+        {
+            foreach (var group in Model.Groups)
+            {
+                <div class="home-spine__group">
+                    <div class="home-spine__group-label">@Localizer[group.LabelKey]</div>
+                    <ul class="home-spine__list">
+                        @foreach (var item in group.Items)
+                        {
+                            var typeClass = item.Type.ToString().ToLowerInvariant();
+                            <li class="home-spine__item">
+                                <span class="home-spine__bar home-spine__bar--@typeClass" aria-hidden="true"></span>
+                                <span class="home-spine__icon" aria-hidden="true"><icon name="@IconFor(item.Type)" /></span>
+                                <span class="home-spine__main">
+                                    <span class="home-spine__title">
+                                        @item.Title
+                                        @if (item.HasConflict)
+                                        {
+                                            <span class="home-spine__conflict" title="@Localizer["Conflict"]" aria-label="@Localizer["Conflict"]">&#x26A0;</span>
+                                        }
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(item.TimeRange))
+                                    {
+                                        <span class="home-spine__time">@item.TimeRange</span>
+                                    }
+                                </span>
+                                <span class="home-spine__date">@Localization.FormatShortDate(item.Date.ToDateTime(TimeOnly.MinValue))</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .home-spine { margin-bottom: 2rem; }
+    .home-spine__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    .home-spine__link {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--primary);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .home-spine__link:hover { text-decoration: underline; }
+    .home-spine__empty {
+        color: var(--muted, var(--text-muted));
+        margin: 0;
+        font-style: italic;
+    }
+    .home-spine__group { margin-bottom: 1.1rem; }
+    .home-spine__group:last-child { margin-bottom: 0; }
+    .home-spine__group-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted, var(--text-muted));
+        margin-bottom: 0.4rem;
+    }
+    .home-spine__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    .home-spine__item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.7rem;
+        background: var(--surface-soft, var(--bg));
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+    /* logical inline-start accent → flips correctly in RTL */
+    .home-spine__bar {
+        flex-shrink: 0;
+        width: 4px;
+        align-self: stretch;
+        border-radius: 2px;
+        background: var(--border);
+    }
+    .home-spine__bar--shift    { background: var(--primary); }
+    .home-spine__bar--vacation { background: var(--success, #16A34A); }
+    .home-spine__bar--onduty   { background: var(--danger, #EF4444); }
+    .home-spine__bar--chore    { background: var(--warning, #D97706); }
+    .home-spine__icon {
+        flex-shrink: 0;
+        color: var(--muted, var(--text-muted));
+        display: inline-flex;
+    }
+    .home-spine__main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+    .home-spine__title {
+        color: var(--text);
+        font-weight: 500;
+        font-size: 0.92rem;
+    }
+    .home-spine__conflict { color: var(--danger, #EF4444); margin-inline-start: 0.25rem; }
+    .home-spine__time {
+        color: var(--muted, var(--text-muted));
+        font-size: 0.8rem;
+    }
+    .home-spine__date {
+        flex-shrink: 0;
+        color: var(--muted, var(--text-muted));
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+</style>

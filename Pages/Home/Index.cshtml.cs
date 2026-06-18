@@ -22,14 +22,16 @@ namespace ShiftManager.Pages.Home
         private readonly IGrantService _grantService;
         private readonly ILogger<IndexModel> _logger;
         private readonly IWhoIsOnShiftService _whoIsOnShiftService;
+        private readonly IAnnouncementService _announcementService;
 
-        public IndexModel(AppDbContext context, ICompanyContext companyContext, IGrantService grantService, ILogger<IndexModel> logger, IWhoIsOnShiftService whoIsOnShiftService)
+        public IndexModel(AppDbContext context, ICompanyContext companyContext, IGrantService grantService, ILogger<IndexModel> logger, IWhoIsOnShiftService whoIsOnShiftService, IAnnouncementService announcementService)
         {
             _context = context;
             _companyContext = companyContext;
             _grantService = grantService;
             _logger = logger;
             _whoIsOnShiftService = whoIsOnShiftService;
+            _announcementService = announcementService;
         }
 
         // Common properties (all users)
@@ -66,6 +68,10 @@ namespace ShiftManager.Pages.Home
         public bool IsOwner { get; set; }
         public string UserName { get; set; } = "";
         public string FirstName { get; set; } = "";
+
+        // Company announcements — carried over from the legacy "/" landing so the consolidated Home
+        // (now the only landing under the domain-hub nav) doesn't lose them.
+        public List<Announcement> RecentAnnouncements { get; set; } = new();
 
         public async Task OnGetAsync()
         {
@@ -114,6 +120,9 @@ namespace ShiftManager.Pages.Home
             {
                 await LoadDirectorDataAsync(companyId, today, userId);
             }
+
+            // Active company announcements (everyone) — preserved from the legacy landing.
+            RecentAnnouncements = await _announcementService.GetActiveAnnouncementsAsync(userId);
         }
 
         private async Task LoadCommonDataAsync(int userId, int companyId, DateOnly today, DateOnly startOfWeek, DateOnly endOfWeek)

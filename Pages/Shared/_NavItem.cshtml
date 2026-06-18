@@ -1,0 +1,12 @@
+@using ShiftManager.Models.Navigation
+@inject Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources> L
+@model NavNode
+@{
+    var path = ViewContext.HttpContext.Request.Path.Value ?? "/";
+    var active = !string.IsNullOrEmpty(Model.ActivePrefix)
+                 && path.StartsWith(Model.ActivePrefix, StringComparison.OrdinalIgnoreCase);
+}
+<a href="@Model.Route" class="app-sidebar-nav-item@(active ? " active" : "")">
+    <span class="app-sidebar-nav-icon">@if (!string.IsNullOrEmpty(Model.Icon)){<i data-lucide="@Model.Icon"></i>}</span>
+    <span>@L[Model.LocKey]</span>
+</a>

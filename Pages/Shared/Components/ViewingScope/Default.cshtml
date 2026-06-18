@@ -1,0 +1,34 @@
+@using ShiftManager.ViewComponents
+@inject Microsoft.Extensions.Localization.IStringLocalizer<ShiftManager.Resources.SharedResources> L
+@model ViewingScopeViewComponent.ViewingScopeVm
+@{
+    var m = Model.Companies.Count;
+    var viewingAll = Model.Selected.Count == 0;
+    var n = viewingAll ? m : Model.Selected.Count;
+    bool Checked(int id) => viewingAll || Model.Selected.Contains(id);
+}
+<details class="vscope">
+    <summary class="action-btn vscope__btn" title="@L["Scope_Tooltip"]">
+        <span><icon name="building-2" /></span>
+        <span class="vscope__label">@string.Format(L["Scope_ViewingNofM"].Value, n, m)</span>
+        <span class="vscope__chev" aria-hidden="true">▾</span>
+    </summary>
+    <div class="vscope__menu">
+        <form method="post" action="/Director/SetScope">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+            <div class="vscope__list">
+                @foreach (var c in Model.Companies)
+                {
+                    <label class="vscope__item">
+                        <input type="checkbox" name="CompanyIds" value="@c.Id" @(Checked(c.Id) ? "checked" : "") />
+                        <span>@c.Name</span>
+                    </label>
+                }
+            </div>
+            <div class="vscope__actions">
+                <button type="submit" class="btn btn-primary btn-sm">@L["Scope_Apply"]</button>
+            </div>
+        </form>
+    </div>
+</details>

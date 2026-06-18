@@ -45,8 +45,13 @@
     }
 
     // --- Error display helpers (uses ErrorStates API when available, falls back to showToast) ---
-    function showErrorMsg(msg) {
-        if (window.ErrorStates) {
+    // Optional `fix` ({ url, label }) — when the server supplies a "go fix it" remediation for an
+    // assignment failure (officer rank -> profile, eligibility -> editor), show it via FeedbackModal
+    // so the user gets the reason AND a one-click link to the place to change it.
+    function showErrorMsg(msg, fix) {
+        if (fix && fix.url && window.FeedbackModal && typeof window.FeedbackModal.show === 'function') {
+            window.FeedbackModal.show('error', msg, { action: fix });
+        } else if (window.ErrorStates) {
             window.ErrorStates.showError(msg);
         } else if (window.showToast) {
             window.showToast(msg, 'error');
@@ -707,12 +712,12 @@
                             close();
                             if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
                         } else {
-                            showErrorMsg(r2.error || 'Error');
+                            showErrorMsg(r2.error || 'Error', r2.fix);
                         }
                     });
                 });
             } else {
-                showErrorMsg(result.error || 'Error');
+                showErrorMsg(result.error || 'Error', result.fix);
             }
         })
         .catch(function () {

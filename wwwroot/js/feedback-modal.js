@@ -176,7 +176,8 @@
     var bodyEl = modal.querySelector('#' + MODAL_ID + '-body');
     bodyEl.innerHTML = bodyHtml;
 
-    // Footer: optional retry first (so OK stays the rightmost/default action), then OK.
+    // Footer: optional retry, then OK, then (rightmost) an optional "go fix it" action link.
+    // options.action = { label, url } — navigates to the exact place to fix the failure.
     var footerEl = modal.querySelector('.modal__footer');
     var footerHtml = '';
     if (typeof options.retry === 'function') {
@@ -184,9 +185,15 @@
                       escapeHtml(strings.retry) +
                     '</button>';
     }
-    footerHtml += '<button type="button" class="btn btn-primary" data-action="ok">' +
+    var hasFix = options.action && options.action.url;
+    footerHtml += '<button type="button" class="btn ' + (hasFix ? 'btn-secondary' : 'btn-primary') + '" data-action="ok">' +
                     escapeHtml(strings.ok) +
                   '</button>';
+    if (hasFix) {
+      footerHtml += '<a class="btn btn-primary" data-action="fix" href="' + escapeHtml(options.action.url) + '">' +
+                      escapeHtml(options.action.label || strings.ok) +
+                    '</a>';
+    }
     footerEl.innerHTML = footerHtml;
 
     var okBtn = footerEl.querySelector('[data-action="ok"]');

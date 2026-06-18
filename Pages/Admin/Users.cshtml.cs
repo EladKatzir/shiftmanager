@@ -147,6 +147,13 @@ public partial class UsersModel : LocalizedPageModel
     [BindProperty(SupportsGet = true)]
     public UserRole? FilterRole { get; set; }
 
+    // Focused view mode: "joinrequests" renders ONLY the Join Requests section (its dedicated
+    // "People ▸ Join requests" home in the new nav). Empty = the full roster (unchanged).
+    [BindProperty(SupportsGet = true)]
+    public string? View { get; set; }
+
+    public bool IsJoinRequestsOnly => string.Equals(View, "joinrequests", System.StringComparison.OrdinalIgnoreCase);
+
     // Filter parameters for existing users
     [BindProperty(SupportsGet = true)]
     public int? UserFilterCompanyId { get; set; }
