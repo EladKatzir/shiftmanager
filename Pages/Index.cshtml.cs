@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Services;
+using ShiftManager.Services.Navigation;
 using System.Security.Claims;
 
 namespace ShiftManager.Pages;
@@ -15,12 +17,14 @@ public class IndexModel : PageModel
     private readonly AppDbContext _db;
     private readonly IAnnouncementService _announcementService;
     private readonly IGrantService _grantService;
+    private readonly INavigationService _nav;
 
-    public IndexModel(AppDbContext db, IAnnouncementService announcementService, IGrantService grantService)
+    public IndexModel(AppDbContext db, IAnnouncementService announcementService, IGrantService grantService, INavigationService nav)
     {
         _db = db;
         _announcementService = announcementService;
         _grantService = grantService;
+        _nav = nav;
     }
 
     // Dashboard metrics
@@ -35,24 +39,34 @@ public class IndexModel : PageModel
     public string NextShiftType { get; set; } = string.Empty;
     public List<Announcement> RecentAnnouncements { get; set; } = new();
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
+        // Phase 6 (Home spine): under the new nav, Home is the schedule-spine landing for everyone.
+        // The nav "Home" link already targets /Home/Index (which renders the personal spine + role
+        // widgets), so the post-login "/" landing must resolve to the SAME page — otherwise users
+        // land on this legacy Task-Overview dashboard and never see the spine by default. Flag-off
+        // keeps this page exactly as before (byte-identical legacy landing).
+        if (_nav.IsNewNavEnabled())
+        {
+            return RedirectToPage("/Home/Index");
+        }
+
         var claimsPrincipal = User as ClaimsPrincipal;
         if (claimsPrincipal?.Identity?.IsAuthenticated != true)
         {
-            return;
+            return Page();
         }
 
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
         {
-            return;
+            return Page();
         }
 
         var user = await _db.Users.FindAsync(userId);
         if (user == null)
         {
-            return;
+            return Page();
         }
 
         UserRole = user.Role; // For display purposes only
@@ -140,5 +154,7 @@ public class IndexModel : PageModel
 
         // Load recent announcements
         RecentAnnouncements = await _announcementService.GetActiveAnnouncementsAsync(userId);
+
+        return Page();
     }
 }
