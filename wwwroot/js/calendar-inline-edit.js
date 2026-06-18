@@ -541,6 +541,52 @@ async function quickAddTextEntry(date, userId, text) {
 window.quickAddTextEntry = quickAddTextEntry;
 
 /**
+ * Save (or clear, when text is empty) a day-scoped note via Quick Entry.
+ * Unlike quickAddTextEntry, this attaches to the DATE (company-wide), not a specific user,
+ * so it works in any calendar view (shift-mode or user-mode).
+ * @param {string} date - ISO date (YYYY-MM-DD)
+ * @param {string} text - Free-text content; empty clears the day note
+ */
+async function quickAddDayNote(date, text) {
+    try {
+        const response = await fetch('/Api/Calendar/QuickAddDayNote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                date: date,
+                text: (text || '').trim()
+            })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                handleApiError(response);
+                return;
+            }
+            showToast(getErrorMessage('serverError'), 'error');
+            return;
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            var msg = window.AppLocalizer?.QuickEntry_DayNoteSaved || 'Note saved';
+            showToast(msg, 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.message || 'Error', 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+window.quickAddDayNote = quickAddDayNote;
+
+/**
  * Delete a text entry
  * @param {number} id - CalendarTextEntry ID
  */

@@ -14345,6 +14345,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="QuickEntry_TextDeleted" xml:space="preserve">
     <value>Text entry deleted</value>
   </data>
+  <data name="QuickEntry_AddDayNote" xml:space="preserve">
+    <value>Add day note</value>
+  </data>
+  <data name="QuickEntry_DayNoteSaved" xml:space="preserve">
+    <value>Day note saved</value>
+  </data>
   <data name="QuickEntry_Tooltip" xml:space="preserve">
     <value>Type to assign, Tab to move right, Escape to cancel. Use / for chores and more.</value>
   </data>

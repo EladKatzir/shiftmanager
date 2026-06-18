@@ -35,6 +35,7 @@ public class ShiftsModel : PageModel
     private readonly ITraineeService _traineeService;
     private readonly IChoreTypeService _choreTypeService;
     private readonly ICalendarTextEntryService _textEntryService;
+    private readonly ICalendarDayNoteService _dayNoteService;
     private readonly IJusticeService _justiceService;
     private readonly IDistributionListService _distributionListService;
     private readonly IShiftCategoryService _categoryService;
@@ -54,6 +55,7 @@ public class ShiftsModel : PageModel
         ITraineeService traineeService,
         IChoreTypeService choreTypeService,
         ICalendarTextEntryService textEntryService,
+        ICalendarDayNoteService dayNoteService,
         IJusticeService justiceService,
         IDistributionListService distributionListService,
         IShiftCategoryService categoryService,
@@ -72,6 +74,7 @@ public class ShiftsModel : PageModel
         _traineeService = traineeService;
         _choreTypeService = choreTypeService;
         _textEntryService = textEntryService;
+        _dayNoteService = dayNoteService;
         _justiceService = justiceService;
         _distributionListService = distributionListService;
         _categoryService = categoryService;
@@ -281,6 +284,14 @@ public class ShiftsModel : PageModel
             {
                 await BuildShiftBasedCalendarAsync(MoleculeId.Value, JobTypeId);
             }
+        }
+
+        // Day-scoped notes for the date-column headers. Company-wide (visible in BOTH shift-mode and
+        // user-mode), so loaded once here regardless of which build path ran above.
+        var dayNoteCompanyId = _tenantResolver.GetCurrentTenantId();
+        if (dayNoteCompanyId > 0)
+        {
+            CalendarData.DayNotes = await _dayNoteService.GetDayNotesForCompanyAsync(dayNoteCompanyId, StartDate, EndDate);
         }
 
         // Expose users for bottom-sheet dropdown (same query as BuildUserBasedCalendarAsync)

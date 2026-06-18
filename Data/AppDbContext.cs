@@ -47,6 +47,7 @@ public class AppDbContext : DbContext
     public DbSet<ShiftCapacityOverride> ShiftCapacityOverrides => Set<ShiftCapacityOverride>();
     public DbSet<UserDayNote> UserDayNotes => Set<UserDayNote>();
     public DbSet<CalendarTextEntry> CalendarTextEntries => Set<CalendarTextEntry>();
+    public DbSet<CalendarDayNote> CalendarDayNotes => Set<CalendarDayNote>();
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
@@ -718,6 +719,20 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
+
+        // Configure CalendarDayNote (day-scoped free-text notes — one per (Date, CompanyId), upsert at service level)
+        modelBuilder.Entity<CalendarDayNote>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.CompanyId, e.Date }).IsUnique(); // one note per company per day
+            entity.Property(e => e.Text).HasMaxLength(500);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+        // Defense-in-depth tenant filter (production). Service methods use IgnoreQueryFilters + explicit
+        // companyId, so this is never invoked in unit tests where _tenantResolver is null.
+        modelBuilder.Entity<CalendarDayNote>()
+            .HasQueryFilter(e => e.CompanyId == _tenantResolver!.GetCurrentTenantId());
 
         // Configure Language Management
         // CompanyLanguageSettings: Unique index on CompanyId (one settings per company)

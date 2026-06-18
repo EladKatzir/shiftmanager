@@ -2843,6 +2843,45 @@
     opacity: 0.9;
 }
 
+/* Day-scoped free-text note (CalendarDayNote) shown under the date in the column header.
+   Company-wide; created via Quick Entry's "Add day note" option. The chip carries its OWN
+   surface background, so on the today/weekend headers (which force descendant text to white
+   via color:!important) the chip text MUST re-assert --text with !important or it becomes
+   white-on-light and unreadable. The compound .day-note-text selector also out-specifies the
+   header rule, so this holds regardless of stylesheet source order. */
+.excel-calendar__day-note {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-top: 0.25rem;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0.1rem 0.3rem;
+    font-size: var(--text-tiny);
+    font-weight: 400;
+    color: var(--text) !important;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-inline-start: 2px solid var(--accent);
+    border-radius: var(--radius-sm, 4px);
+    cursor: default;
+    unicode-bidi: isolate;
+}
+
+.excel-calendar__day-note-icon {
+    flex-shrink: 0;
+    direction: ltr;
+    font-size: 0.7rem;
+}
+
+.excel-calendar__day-note .excel-calendar__day-note-text {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text) !important;
+}
+
 /* Sticky Zone B (left column).
  *
  * Root cause of pre-2026-05-29 failure: the OLD `.excel-calendar { max-height:

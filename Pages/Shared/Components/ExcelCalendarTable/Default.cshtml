@@ -50,6 +50,13 @@
                         data-date="@day.ToString("yyyy-MM-dd")">
                         <span class="excel-calendar__day-name">@dayName</span>
                         <span class="excel-calendar__day-date">@day.ToString("dd/MM")</span>
+                        @if (Model.DayNotes.TryGetValue(day, out var dayNoteText) && !string.IsNullOrWhiteSpace(dayNoteText))
+                        {
+                            <span class="excel-calendar__day-note" title="@dayNoteText">
+                                <span class="excel-calendar__day-note-icon" aria-hidden="true">📝</span>
+                                <span class="excel-calendar__day-note-text">@dayNoteText</span>
+                            </span>
+                        }
                     </th>
                 }
                 @if (hasWeeklyHours)

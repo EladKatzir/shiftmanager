@@ -14311,6 +14311,12 @@
   <data name="QuickEntry_TextDeleted" xml:space="preserve">
     <value>הטקסט נמחק</value>
   </data>
+  <data name="QuickEntry_AddDayNote" xml:space="preserve">
+    <value>הוסף הערת יום</value>
+  </data>
+  <data name="QuickEntry_DayNoteSaved" xml:space="preserve">
+    <value>הערת היום נשמרה</value>
+  </data>
   <data name="QuickEntry_Tooltip" xml:space="preserve">
     <value>הקלד לשיבוץ, Tab למעבר ימינה, Escape לביטול. הקלד / לתורנויות ועוד.</value>
   </data>

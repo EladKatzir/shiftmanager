@@ -394,6 +394,7 @@ builder.Services.AddScoped<IHomeTypeService, HomeTypeService>();
 builder.Services.AddScoped<IHomeMaterialiserService, HomeMaterialiserService>();
 builder.Services.AddScoped<IUserDayNoteService, UserDayNoteService>();
 builder.Services.AddScoped<ICalendarTextEntryService, CalendarTextEntryService>();
+builder.Services.AddScoped<ICalendarDayNoteService, CalendarDayNoteService>();
 
 // SignalR for real-time calendar updates
 builder.Services.AddSignalR();

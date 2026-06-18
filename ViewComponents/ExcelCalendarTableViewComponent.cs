@@ -48,6 +48,13 @@ public class ExcelCalendarTableViewModel
 
     /// <summary>Per-user reorder context key, e.g. "shifts:9:2:user". Null disables reordering for this render.</summary>
     public string? RowOrderContextKey { get; set; }
+
+    /// <summary>
+    /// Day-scoped free-text notes (<see cref="ShiftManager.Models.CalendarDayNote"/>) keyed by date,
+    /// rendered in the date-column headers. Company-wide and view-independent, so they show in both
+    /// shift-mode and user-mode. Populated only by calendars that support day notes (Shifts); empty elsewhere.
+    /// </summary>
+    public Dictionary<DateOnly, string> DayNotes { get; set; } = new();
 }
 
 public class ExcelCalendarRow

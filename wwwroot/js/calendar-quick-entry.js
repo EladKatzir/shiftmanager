@@ -78,7 +78,8 @@
                 : 'Disable Just Mine to use Quick Entry',
             'QuickEntry_CreateChore': isHe ? '\u05E6\u05D5\u05E8 \u05EA\u05D5\u05E8\u05E0\u05D5\u05EA' : 'Create chore',
             'QuickEntry_TitlePlaceholder': isHe ? '\u05DB\u05D5\u05EA\u05E8\u05EA...' : 'Title...',
-            'QuickEntry_EnterYesEscNo': isHe ? 'Enter=\u05DB\u05DF, Esc=\u05DC\u05D0' : 'Enter=yes, Esc=no'
+            'QuickEntry_EnterYesEscNo': isHe ? 'Enter=\u05DB\u05DF, Esc=\u05DC\u05D0' : 'Enter=yes, Esc=no',
+            'QuickEntry_AddDayNote': isHe ? '\u05D4\u05D5\u05E1\u05E3 \u05D4\u05E2\u05E8\u05EA \u05D9\u05D5\u05DD' : 'Add day note'
         };
         return labels[key] || key;
     }
@@ -91,6 +92,10 @@
 
     function isChoresCalendar() {
         return !!document.querySelector('.excel-calendar[data-calendar-type="chores"]');
+    }
+
+    function isShiftsCalendar() {
+        return !!document.querySelector('.excel-calendar[data-calendar-type="shifts"]');
     }
 
     function isJustMineActive() {
@@ -655,9 +660,45 @@
             dropdown.appendChild(choreEl);
             if (totalItems === 0) selectedIndex = choreIdx; // Auto-select when no chore type matches
             totalItems++;
+        } else if (query.trim().length > 0 && isShiftsCalendar() &&
+            activeInput._cellData && activeInput._cellData.date) {
+            // Day-note option — Shifts calendar, ANY mode/row (shift-mode where rows are shift types, or
+            // user-mode where rows are workers). NOT gated on totalItems: it appears as a separated trailing
+            // option alongside any matches. Replaces the old user-mode-only "save as text" on this calendar
+            // so there is exactly one note action, reachable from the default shift-mode view.
+            var dnItem = { type: 'day-note', text: query.trim(), date: activeInput._cellData.date };
+            var dnIdx = filteredItems.length;
+            filteredItems.push(dnItem);
+
+            var dnEl = document.createElement('div');
+            dnEl.className = 'quick-entry-item quick-entry-item--text-entry quick-entry-item--day-note';
+            dnEl.setAttribute('role', 'option');
+            dnEl.id = dropdown.id + '-item-' + dnIdx;
+            dnEl.dataset.index = dnIdx;
+
+            var dnIcon = document.createElement('span');
+            dnIcon.className = 'quick-entry-text-icon';
+            dnIcon.textContent = '📝'; // 📝
+
+            dnEl.appendChild(dnIcon);
+
+            var dnLabel = document.createElement('span');
+            dnLabel.textContent = getLocalizedLabel('QuickEntry_AddDayNote') + ': "' + query.trim() + '"';
+            dnEl.appendChild(dnLabel);
+
+            (function (capturedIdx) {
+                dnEl.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    selectedIndex = capturedIdx;
+                    selectItem(filteredItems[capturedIdx]);
+                });
+            })(dnIdx);
+
+            dropdown.appendChild(dnEl);
+            if (totalItems === 0) selectedIndex = dnIdx; // Auto-select for Enter only when nothing else matched
         } else if (totalItems === 0 && query.trim().length > 0 && getCurrentMode() === 'user' &&
             activeInput._cellData && activeInput._cellData.rowId.indexOf('user-') === 0) {
-            // Show "Save as text" option for unmatched text in user-mode (Shifts)
+            // Show "Save as text" option for unmatched text in user-mode (legacy — non-Shifts calendars)
             var textItem = { type: 'text-entry', text: query.trim() };
             var textIdx = filteredItems.length;
             filteredItems.push(textItem);
@@ -1151,6 +1192,23 @@
                 }
             } else {
                 closeInput();
+            }
+            return;
+        }
+
+        if (item.type === 'day-note') {
+            // Day-scoped note — attaches to the DATE (company-wide), not a user. Works in any mode/row.
+            var currentCellDN = activeCell;
+            var doAdvanceDN = !!advance;
+            var dnPromise = window.quickAddDayNote(date, item.text);
+            if (dnPromise && typeof dnPromise.then === 'function') {
+                dnPromise.then(function () {
+                    closeInput();
+                    if (doAdvanceDN) advanceToNextCell(currentCellDN);
+                });
+            } else {
+                closeInput();
+                if (doAdvanceDN) advanceToNextCell(currentCellDN);
             }
             return;
         }
