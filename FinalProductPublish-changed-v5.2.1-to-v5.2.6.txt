@@ -1,0 +1,71 @@
+# FinalProductPublish — changed files between builds
+# FROM: 65ce5b5  "Update FinalProductPublish to v5.2.1"  (Thu Jun 11 2026)
+# TO:   86a8179  "v5.2.6 new sidebar"                     (Fri Jun 19 2026)
+# These are the ONLY commits that touched FinalProductPublish/ — nothing in between.
+#
+# 38 files total: 3 ADDED, 35 MODIFIED, 0 DELETED.
+# Total payload: 26.68 MiB  (23.20 MiB if ShiftManager.pdb is excluded).
+# Paths below are relative to the FinalProductPublish/ directory.
+# ---------------------------------------------------------------------------
+
+# === ADDED (must be CREATED on the air-gapped side — overwrite won't suffice) ===
+Data/SeedData/AssignShiftsCollapse.cs
+wwwroot/js/calendar-row-reorder.js
+wwwroot/js/eligibility-chip.js
+
+# === COMPILED BINARIES (the bulk of the payload; all app C#/Razor lives here) ===
+ShiftManager.dll                       # 21.6 MB — ALL code incl. precompiled Razor views (sidebar/nav/Hebrew rename)
+he-IL/ShiftManager.resources.dll       # Hebrew satellite assembly (localized strings)
+ShiftManager.exe                       # launcher/host
+ShiftManager.pdb                       # debug symbols — NOT needed at runtime (see note)
+ShiftManager.xml                       # XML doc comments — NOT needed at runtime
+
+# === BUNDLED SOURCE (reference copies shipped in the publish) ===
+Data/AppDbContext.cs
+Data/SeedData/FeatureFlagSeed.cs
+Data/SeedData/GrantTypeSeed.cs
+Data/SeedData/QaTestUserSeed.cs
+Data/SeedData/RoleTemplateSeed.cs
+Data/SeedData/ShiftyOrganizationSeed.cs
+
+# === STATIC ASSETS (CSS) ===
+wwwroot/css/calendar-quick-entry.css
+wwwroot/css/calendar.css
+wwwroot/css/components.css
+wwwroot/css/justice.css
+wwwroot/css/site.css
+
+# === STATIC ASSETS (JS) ===
+wwwroot/js/calendar-bottom-sheet.js
+wwwroot/js/calendar-inline-edit.js
+wwwroot/js/calendar-quick-entry.js
+wwwroot/js/excel-calendar-groups.js
+wwwroot/js/feedback-modal.js
+wwwroot/js/justice-panel.js
+wwwroot/js/justice.js
+wwwroot/js/roster-dock.js
+
+# === DOCS / METADATA / CHECKSUMS (transfer these so integrity checks match) ===
+DEPLOYMENT_GUIDE.txt
+DEPLOYMENT_READINESS_REPORT.txt
+DLL_CHECKSUMS.txt
+FINAL_CERTIFICATION.txt
+QUICK_START.txt
+README.txt
+SHA256SUMS.txt
+START_HERE.bat
+UPGRADE_GUIDE.txt
+VERIFICATION_CHECKLIST.txt
+VERSION.txt
+
+# ---------------------------------------------------------------------------
+# NOTE on ShiftManager.pdb (3.65 MB): debug symbols, not required to run the app.
+# Dropping it shrinks the transfer to 23.20 MiB. BUT it is listed in
+# SHA256SUMS.txt (line 202). If your air-gapped validator checks the FULL
+# SHA256SUMS manifest, a missing .pdb will fail validation — in that case
+# either keep the .pdb, or also edit the SHA256SUMS.txt copy to remove its line.
+# (DLL_CHECKSUMS.txt does NOT reference the .pdb.)
+#
+# NOTE: this incremental set assumes the air-gapped side already holds a COMPLETE,
+# intact v5.2.1 (65ce5b5) publish. Overwriting these 38 paths on top of that
+# baseline yields a byte-identical v5.2.6. Unchanged files are not included.
