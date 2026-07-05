@@ -29,6 +29,7 @@ public class CompaniesModel : LocalizedPageModel
     private readonly ICompanyCacheService _companyCacheService;
     private readonly IRoleService _roleService;
     private readonly IConcurrencyService _concurrencyService;
+    private readonly ICompanyMoleculeTransferService _companyMoveService;
 
     public CompaniesModel(
         IStringLocalizer<SharedResources> localizer,
@@ -37,7 +38,8 @@ public class CompaniesModel : LocalizedPageModel
         ISetupTaskService setupTaskService,
         ICompanyCacheService companyCacheService,
         IRoleService roleService,
-        IConcurrencyService concurrencyService) : base(localizer)
+        IConcurrencyService concurrencyService,
+        ICompanyMoleculeTransferService companyMoveService) : base(localizer)
     {
         _db = db;
         _logger = logger;
@@ -45,9 +47,10 @@ public class CompaniesModel : LocalizedPageModel
         _companyCacheService = companyCacheService;
         _roleService = roleService;
         _concurrencyService = concurrencyService;
+        _companyMoveService = companyMoveService;
     }
 
-    public record CompanyVM(int Id, string Name, string? NameHe, string? Slug, string? DisplayName, int UserCount, string? MoleculeName);
+    public record CompanyVM(int Id, string Name, string? NameHe, string? Slug, string? DisplayName, int UserCount, string? MoleculeName, int? MoleculeId);
     public record DirectorVM(int Id, string DisplayName, string Email);
     public record MoleculeVM(int Id, string Name, string DisplayName);
 
@@ -70,6 +73,9 @@ public class CompaniesModel : LocalizedPageModel
     [BindProperty] public int RenameCompanyId { get; set; }
     [BindProperty] public string NewCompanyName { get; set; } = string.Empty;
     [BindProperty] public string? NewCompanyNameHe { get; set; }
+
+    [BindProperty] public int MoveCompanyId { get; set; }
+    [BindProperty] public int MoveTargetMoleculeId { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -99,7 +105,8 @@ public class CompaniesModel : LocalizedPageModel
                 c.Slug,
                 c.DisplayName,
                 userCountsByCompany.GetValueOrDefault(c.Id, 0),
-                c.Molecule != null ? (c.Molecule.DisplayName ?? c.Molecule.Name) : null
+                c.Molecule != null ? (c.Molecule.DisplayName ?? c.Molecule.Name) : null,
+                c.MoleculeId
             ))
             .ToListAsync())
             .OrderBy(c => Models.Company.ResolveLocalizedName(c.Name, c.DisplayName, c.NameHe),
@@ -536,6 +543,48 @@ public class CompaniesModel : LocalizedPageModel
         slug = slug.Trim('-');
         // Fallback if slug is empty (e.g., all non-latin chars)
         return string.IsNullOrEmpty(slug) ? "company" : slug;
+    }
+
+    /// <summary>AJAX preview: what moving a company to another molecule would delete/affect.</summary>
+    public async Task<IActionResult> OnGetMoveImpactAsync(int id, int targetMoleculeId)
+    {
+        var impact = await _companyMoveService.GetMoveImpactAsync(id, targetMoleculeId);
+        return new JsonResult(new
+        {
+            shiftInstances = impact.ShiftInstances,
+            shiftAssignments = impact.ShiftAssignments,
+            shiftPrograms = impact.ShiftPrograms,
+            chores = impact.Chores,
+            affectedUsers = impact.AffectedUsers,
+            companyScopedShiftTypes = impact.CompanyScopedShiftTypes,
+            targetMoleculeValid = impact.TargetMoleculeValid,
+            warnings = impact.Warnings
+        });
+    }
+
+    /// <summary>Move a company (with its users) to another molecule. Deletes shifts; keeps vacations.</summary>
+    public async Task<IActionResult> OnPostMoveCompanyAsync()
+    {
+        if (MoveCompanyId <= 0 || MoveTargetMoleculeId <= 0)
+        {
+            TempData["ErrorMessage"] = _localizer["Error_InvalidCompanyIdOrName"].Value;
+            return RedirectToPage();
+        }
+
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var actingAdminId);
+
+        var result = await _companyMoveService.MoveCompanyToMoleculeAsync(MoveCompanyId, MoveTargetMoleculeId, actingAdminId);
+        if (!result.Success)
+        {
+            TempData["ErrorMessage"] = _localizer[result.ErrorKey ?? "Error_MoveFailed"].Value;
+            return RedirectToPage();
+        }
+
+        // Molecule/area embedded in cached hierarchy + SignalR groups; invalidate so the next load re-resolves.
+        _companyCacheService.InvalidateCache(MoveCompanyId);
+        _logger.LogInformation("Company {CompanyId} moved to molecule {MoleculeId} by {AdminId}", MoveCompanyId, MoveTargetMoleculeId, actingAdminId);
+        TempData["SuccessMessage"] = _localizer["Companies_MoveSuccess"].Value;
+        return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteCompanyAsync(int id)

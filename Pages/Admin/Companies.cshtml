@@ -308,7 +308,8 @@
         }
 
         /* Modal */
-        #renameModal {
+        #renameModal,
+        #moveMoleculeModal {
             display: none;
             position: fixed;
             top: 0;
@@ -323,7 +324,8 @@
             animation: fadeIn 0.2s ease;
         }
 
-        #renameModal.active {
+        #renameModal.active,
+        #moveMoleculeModal.active {
             display: flex;
         }
 
@@ -607,6 +609,14 @@
                                         onclick="renameCompanyClick(this)">
                                     @Localizer["Rename"]
                                 </button>
+                                <button type="button" class="btn btn-ghost"
+                                        data-company-id="@c.Id"
+                                        data-company-name="@System.Web.HttpUtility.HtmlAttributeEncode(c.DisplayName ?? c.Name)"
+                                        data-current-molecule-id="@(c.MoleculeId?.ToString() ?? "")"
+                                        onclick="moveCompanyClick(this)">
+                                    <span><icon name="git-branch" /></span>
+                                    <span>@Localizer["Companies_MoveMolecule"]</span>
+                                </button>
                                 <form method="post" asp-page-handler="DeleteCompany" style="display:inline"
                                       data-confirm-modal
                                       data-confirm-title="@Localizer["ConfirmDeleteCompany_Title"]"
@@ -661,6 +671,45 @@
     </div>
 </div>
 
+<!-- Move Company to Molecule Modal -->
+<div id="moveMoleculeModal">
+    <div class="modal-content">
+        <h3 class="modal-header">@Localizer["Companies_MoveMolecule"]</h3>
+        <form method="post" asp-page-handler="MoveCompany"
+              data-confirm-modal
+              data-confirm-title="@Localizer["Companies_MoveConfirm_Title"]"
+              data-confirm-message="@Localizer["Companies_MoveConfirm_Message"]"
+              data-confirm-action="@Localizer["Companies_MoveMolecule"]"
+              data-confirm-level="danger">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="moveCompanyId" name="MoveCompanyId" />
+            <p id="moveCompanyLabel" style="font-weight:600; margin-bottom:1rem;"></p>
+            <div class="form-group">
+                <label class="form-label">@Localizer["Companies_TargetMolecule"]</label>
+                <select class="form-input" id="moveTargetMolecule" name="MoveTargetMoleculeId" required>
+                    <option value="">@Localizer["SelectMolecule"]</option>
+                    @foreach (var molecule in Model.AvailableMolecules)
+                    {
+                        <option value="@molecule.Id">@(molecule.DisplayName ?? molecule.Name)</option>
+                    }
+                </select>
+            </div>
+            <div id="moveImpactBox" class="info-box" style="display:none; margin-top:1rem;">
+                <p><strong>@Localizer["Companies_MoveImpact_Title"]</strong></p>
+                <ul id="moveImpactList" style="margin:0.5rem 0 0; padding-inline-start:1.2rem;"></ul>
+                <p class="form-hint" style="margin-top:0.5rem;">@Localizer["Companies_MoveImpact_KeepsVacations"]</p>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-danger" id="moveSubmitBtn" disabled>
+                    <span><icon name="git-branch" /></span>
+                    <span>@Localizer["Companies_MoveMolecule"]</span>
+                </button>
+                <button type="button" class="btn btn-ghost" onclick="closeMoveModal()">@Localizer["Cancel"]</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 // Rename company using data attributes to avoid XSS and quote issues
 function renameCompanyClick(button) {
@@ -686,6 +735,63 @@ document.getElementById('renameModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeRenameModal();
     }
+});
+
+// --- Move company to another molecule ---
+function moveCompanyClick(button) {
+    const id = button.getAttribute('data-company-id');
+    const name = button.getAttribute('data-company-name');
+    const currentMoleculeId = button.getAttribute('data-current-molecule-id') || '';
+    document.getElementById('moveCompanyId').value = id;
+    document.getElementById('moveCompanyLabel').textContent = name;
+    const sel = document.getElementById('moveTargetMolecule');
+    sel.value = '';
+    // Hide the company's current molecule from the target options.
+    Array.from(sel.options).forEach(function(opt) {
+        opt.hidden = opt.value !== '' && opt.value === currentMoleculeId;
+    });
+    document.getElementById('moveImpactBox').style.display = 'none';
+    document.getElementById('moveSubmitBtn').disabled = true;
+    document.getElementById('moveMoleculeModal').classList.add('active');
+}
+
+function closeMoveModal() {
+    document.getElementById('moveMoleculeModal').classList.remove('active');
+}
+
+document.getElementById('moveMoleculeModal').addEventListener('click', function(e) {
+    if (e.target === this) closeMoveModal();
+});
+
+document.getElementById('moveTargetMolecule').addEventListener('change', async function() {
+    const companyId = document.getElementById('moveCompanyId').value;
+    const targetId = this.value;
+    const box = document.getElementById('moveImpactBox');
+    const submitBtn = document.getElementById('moveSubmitBtn');
+    if (!targetId) { box.style.display = 'none'; submitBtn.disabled = true; return; }
+    try {
+        const resp = await fetch(`/Admin/Companies?handler=MoveImpact&id=${encodeURIComponent(companyId)}&targetMoleculeId=${encodeURIComponent(targetId)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin'
+        });
+        const data = await resp.json();
+        const list = document.getElementById('moveImpactList');
+        list.innerHTML = '';
+        const rows = [
+            ['@Localizer["Companies_MoveImpact_Shifts"]', (data.shiftInstances || 0) + ' / ' + (data.shiftAssignments || 0)],
+            ['@Localizer["Companies_MoveImpact_Programs"]', data.shiftPrograms || 0],
+            ['@Localizer["Companies_MoveImpact_Chores"]', data.chores || 0],
+            ['@Localizer["Companies_MoveImpact_Users"]', data.affectedUsers || 0]
+        ];
+        rows.forEach(function(r) {
+            const li = document.createElement('li');
+            li.textContent = r[0] + ': ' + r[1];
+            list.appendChild(li);
+        });
+        box.style.display = 'block';
+    } catch (e) {
+        box.style.display = 'none';
+    }
+    submitBtn.disabled = false; // a chosen target is enough to proceed (server re-validates)
 });
 
 // Toggle manager fields based on director selection
