@@ -2882,6 +2882,45 @@
     color: var(--text) !important;
 }
 
+/* Day-note delete affordance. Explicit color (not inherited) so it stays readable on TODAY's
+   column, where .excel-calendar__header-day--today forces --primary-contrast on descendants. */
+.excel-calendar__day-note-delete {
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0 0.2rem;
+    margin-inline-start: 0.05rem;
+    font-size: 0.9rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.65;
+    color: var(--text) !important;
+    border-radius: var(--radius-sm, 4px);
+}
+
+.excel-calendar__day-note-delete:hover {
+    opacity: 1;
+    color: var(--danger) !important;
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+@media (pointer: fine) {
+    .excel-calendar__day-note:hover .excel-calendar__day-note-delete {
+        display: inline-flex;
+    }
+}
+
+/* Touch devices have no hover — always reveal so the note stays deletable. */
+@media (pointer: coarse) {
+    .excel-calendar__day-note-delete {
+        display: inline-flex;
+    }
+}
+
 /* Sticky Zone B (left column).
  *
  * Root cause of pre-2026-05-29 failure: the OLD `.excel-calendar { max-height:
@@ -3136,9 +3175,55 @@
     transform: scale(1.1);
 }
 
+/* Desktop hover-reveal add-trainee button — mirrors the remove button but with an "add" accent. */
+.excel-calendar__add-trainee-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--primary) 14%, transparent);
+    color: var(--primary);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+
+.excel-calendar__add-trainee-btn:hover {
+    background: var(--primary);
+    color: var(--primary-contrast) !important;
+    transform: scale(1.1);
+}
+
+/* Inline trainee picker inserted next to the chip on "+" click. */
+.excel-calendar__trainee-picker {
+    display: block;
+    margin-top: 2px;
+    max-width: 100%;
+    font-size: var(--text-tiny);
+    padding: 1px 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+}
+
 /* Show on hover — desktop only (pointer: fine = mouse/trackpad) */
 @media (pointer: fine) {
-    .excel-calendar__assignment:hover .excel-calendar__remove-btn {
+    .excel-calendar__assignment:hover .excel-calendar__remove-btn,
+    .excel-calendar__assignment:hover .excel-calendar__add-trainee-btn {
+        display: inline-flex;
+    }
+}
+
+/* Touch devices: keep the add-trainee button reachable (no hover). */
+@media (pointer: coarse) {
+    .excel-calendar__add-trainee-btn {
         display: inline-flex;
     }
 }

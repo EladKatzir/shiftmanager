@@ -588,7 +588,10 @@ async function quickAddDayNote(date, text) {
 
         const result = await response.json();
         if (result.success) {
-            var msg = window.AppLocalizer?.QuickEntry_DayNoteSaved || 'Note saved';
+            var isDelete = !(text || '').trim();
+            var msg = isDelete
+                ? (window.AppLocalizer?.QuickEntry_DayNoteDeleted || 'Note deleted')
+                : (window.AppLocalizer?.QuickEntry_DayNoteSaved || 'Note saved');
             showToast(msg, 'success');
             triggerCalendarRefresh();
         } else {
@@ -600,6 +603,111 @@ async function quickAddDayNote(date, text) {
 }
 
 window.quickAddDayNote = quickAddDayNote;
+
+/**
+ * Delete a day-scoped note by upserting empty text (the endpoint treats empty text as a delete).
+ * @param {string} date - ISO date (YYYY-MM-DD)
+ */
+async function deleteDayNote(date) {
+    if (!date) return;
+    await quickAddDayNote(date, '');
+}
+
+window.deleteDayNote = deleteDayNote;
+
+// Delegated so it survives calendar re-renders: the header day-note × removes the note.
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.excel-calendar__day-note-delete');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    deleteDayNote(btn.dataset.date);
+});
+
+/**
+ * Issue 4: inline "+" trainee picker on a shift chip. Reuses the page's hidden #traineeSelect
+ * (the same source the mobile bottom-sheet uses) and the /Calendar/Table?handler=AddTrainee endpoint.
+ */
+function openInlineTraineePicker(btn) {
+    var chip = btn.closest('.excel-calendar__assignment');
+    if (!chip) return;
+    // Toggle: a second click removes an open picker.
+    var existing = chip.parentNode && chip.parentNode.querySelector('.excel-calendar__trainee-picker');
+    if (existing) { existing.remove(); return; }
+
+    var source = document.getElementById('traineeSelect');
+    if (!source || source.options.length === 0) {
+        showToast(window.AppLocalizer?.Calendar_NoTraineesAvailable || 'No trainees available', 'info');
+        return;
+    }
+
+    var assignmentId = parseInt(btn.dataset.assignmentId, 10);
+    if (isNaN(assignmentId)) return;
+
+    var select = document.createElement('select');
+    select.className = 'excel-calendar__trainee-picker';
+    var def = document.createElement('option');
+    def.value = '';
+    def.textContent = window.AppLocalizer?.BottomSheet_AddTrainee || 'Add trainee...';
+    select.appendChild(def);
+    for (var i = 0; i < source.options.length; i++) {
+        var o = document.createElement('option');
+        o.value = source.options[i].value;
+        o.textContent = source.options[i].textContent;
+        select.appendChild(o);
+    }
+    select.addEventListener('change', function () {
+        var traineeId = parseInt(select.value, 10);
+        if (select.value && !isNaN(traineeId)) {
+            select.disabled = true;
+            addTraineeToAssignment(assignmentId, traineeId);
+        }
+    });
+    // Dismiss on Escape or when focus leaves.
+    select.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') select.remove(); });
+    select.addEventListener('blur', function () { setTimeout(function () { if (select.parentNode) select.remove(); }, 150); });
+
+    // Insert after the chip (not inside — keeps the chip layout intact).
+    chip.insertAdjacentElement('afterend', select);
+    select.focus();
+}
+
+function addTraineeToAssignment(assignmentId, traineeUserId, overrideToken) {
+    var body = { assignmentId: assignmentId, traineeUserId: traineeUserId };
+    if (overrideToken) body.overrideToken = overrideToken;
+    fetch('/Calendar/Table?handler=AddTrainee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin',
+        body: JSON.stringify(body)
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+        if (result.success) {
+            showToast(window.AppLocalizer?.BottomSheet_TraineeAssigned || 'Trainee assigned', 'success');
+            triggerCalendarRefresh();
+        } else if (result.requiresOverride) {
+            var confirmFn = (window.FeedbackModal && typeof window.FeedbackModal.confirm === 'function')
+                ? function () { return window.FeedbackModal.confirm('warning', { warnings: result.warnings || [] }); }
+                : function () { return Promise.resolve(confirm((result.warnings || []).map(function (w) { return w.message; }).join('\n'))); };
+            confirmFn().then(function (proceed) {
+                if (proceed) addTraineeToAssignment(assignmentId, traineeUserId, result.overrideToken);
+            });
+        } else {
+            showToast(result.error || getErrorMessage('serverError'), 'error');
+        }
+    })
+    .catch(function (error) { handleApiError(null, error); });
+}
+
+// Delegated so it survives calendar re-renders: the chip "+" opens the inline trainee picker.
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.excel-calendar__add-trainee-btn');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openInlineTraineePicker(btn);
+});
 
 /**
  * Delete a text entry

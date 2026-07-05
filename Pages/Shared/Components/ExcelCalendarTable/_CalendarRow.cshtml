@@ -171,6 +171,17 @@
                                 // so render it for the synthetic (negative-id) staged chips too.
                                 var isDraftShiftChip = Model.DraftSessionId != null && assignment.ShiftTypeId.HasValue && assignment.UserId.HasValue;
                             }
+                            @* Issue 4: add-trainee "+" for real shift chips that have a worker but no trainee yet. *@
+                            @if (!isReadOnly && assignment.Id > 0 && assignment.UserId.HasValue
+                                 && assignment.TraineeUserId == null && !assignment.IsTrainee
+                                 && !assignment.IsTraineeShift && !isHomeChip)
+                            {
+                                <button type="button"
+                                        class="excel-calendar__add-trainee-btn"
+                                        data-assignment-id="@assignment.Id"
+                                        aria-label="@Localizer["Calendar_AddTrainee"] @assignment.Name"
+                                        title="@Localizer["Calendar_AddTrainee"]">+</button>
+                            }
                             @if (!isReadOnly && (assignment.Id > 0 || isDraftShiftChip))
                             {
                                 <button type="button"

@@ -55,6 +55,14 @@
                             <span class="excel-calendar__day-note" title="@dayNoteText">
                                 <span class="excel-calendar__day-note-icon" aria-hidden="true">📝</span>
                                 <span class="excel-calendar__day-note-text">@dayNoteText</span>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    <button type="button"
+                                            class="excel-calendar__day-note-delete"
+                                            data-date="@day.ToString("yyyy-MM-dd")"
+                                            aria-label="@Localizer["QuickEntry_DeleteDayNote"]"
+                                            title="@Localizer["QuickEntry_DeleteDayNote"]">×</button>
+                                }
                             </span>
                         }
                     </th>
