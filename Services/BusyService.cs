@@ -505,6 +505,10 @@ public class BusyService : IBusyService
         bool isOfflineShift = shiftType.IsOffline;
         bool isHomeShift = shiftType.IsHome;
         bool isExemptShift = isOfflineShift || isHomeShift;
+        // Issue 1: overlap/rest are governed by the configurable IsBlocking column; the weekly cap
+        // by CountsTowardHourLimits. Presence statuses stay exempt via the computed properties.
+        bool newBlocks = shiftType.BlocksConcurrentShifts;
+        bool newCounts = shiftType.CountsTowardHours;
         var (newStart, newEnd) = TimeHelpers.GetShiftWindow(shiftType, shiftInstance.WorkDate);
 
         var windowStart = TimeHelpers.WeekStart(shiftInstance.WorkDate).AddDays(-1);
@@ -519,6 +523,7 @@ public class BusyService : IBusyService
                 sa.ShiftInstance.WorkDate,
                 sa.ShiftInstance.ShiftType.Start,
                 sa.ShiftInstance.ShiftType.End,
+                sa.ShiftInstance.ShiftType.IsBlocking,
                 IsOffline = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_OFFLINE,
                 IsHome = sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME
                       || sa.ShiftInstance.ShiftType.Key == ShiftType.KEY_HOME_PM
@@ -527,12 +532,15 @@ public class BusyService : IBusyService
                 ShiftNameEn = sa.ShiftInstance.ShiftType.NameEn
             }).ToListAsync();
 
-        // Overlap detection
-        if (!isExemptShift)
+        // A neighbour blocks concurrency only if its column says so AND it isn't a presence status.
+        static bool NeighbourBlocks(bool isBlocking, bool isOffline, bool isHome) => isBlocking && !isOffline && !isHome;
+
+        // Overlap detection — fires only when BOTH the candidate and the neighbour block.
+        if (newBlocks)
         {
             foreach (var ra in nearbyAssignments)
             {
-                if (ra.IsOffline || ra.IsHome) continue;
+                if (!NeighbourBlocks(ra.IsBlocking, ra.IsOffline, ra.IsHome)) continue;
                 var (rs, re) = TimeHelpers.GetShiftWindow(
                     new ShiftType { Start = ra.Start, End = ra.End }, ra.WorkDate);
                 if (rs < newEnd && newStart < re)
@@ -553,12 +561,12 @@ public class BusyService : IBusyService
             }
         }
 
-        // Rest period
-        if (!isExemptShift)
+        // Rest period — only blocking shifts impose a rest gap, and only against blocking neighbours.
+        if (newBlocks)
         {
             var restRequired = effectiveSettings?.RestHours ?? 8;
             var nonExemptWindows = nearbyAssignments
-                .Where(ra => !ra.IsOffline && !ra.IsHome)
+                .Where(ra => NeighbourBlocks(ra.IsBlocking, ra.IsOffline, ra.IsHome))
                 .Select(ra => TimeHelpers.GetShiftWindow(
                     new ShiftType { Start = ra.Start, End = ra.End }, ra.WorkDate))
                 .ToList();
@@ -702,8 +710,8 @@ public class BusyService : IBusyService
                     EndTime: null)));
         }
 
-        // Weekly cap
-        if (!isExemptShift)
+        // Weekly cap — only shifts whose hours count are checked or summed.
+        if (newCounts)
         {
             var weeklyCap = effectiveSettings?.WeeklyCap ?? 56;
             var weekStartDayConfig = await _configCache.GetConfigAsync(shiftInstance.CompanyId, "WeekStartDay");
@@ -719,10 +727,24 @@ public class BusyService : IBusyService
                 .Where(sa => sa.UserId == userId
                     && sa.ShiftInstance.WorkDate >= startOfWeek
                     && sa.ShiftInstance.WorkDate <= endOfWeek)
-                .Select(sa => new { sa.ShiftInstance.WorkDate, sa.ShiftInstance.ShiftType.Start, sa.ShiftInstance.ShiftType.End })
+                .Select(sa => new
+                {
+                    sa.ShiftInstance.WorkDate,
+                    sa.ShiftInstance.ShiftType.Start,
+                    sa.ShiftInstance.ShiftType.End,
+                    sa.ShiftInstance.ShiftType.CountsTowardHourLimits,
+                    ShiftKey = sa.ShiftInstance.ShiftType.Key
+                })
                 .ToListAsync();
 
+            // Exclude non-counting shifts (and presence statuses) from the weekly total so they
+            // never inflate the sum a real shift is checked against.
             var weekWindows = weekShiftTimes
+                .Where(s => s.CountsTowardHourLimits
+                    && s.ShiftKey != ShiftType.KEY_OFFLINE
+                    && s.ShiftKey != ShiftType.KEY_HOME
+                    && s.ShiftKey != ShiftType.KEY_HOME_PM
+                    && s.ShiftKey != ShiftType.KEY_HOME_AM)
                 .Select(s => TimeHelpers.GetShiftWindow(new ShiftType { Start = s.Start, End = s.End }, s.WorkDate))
                 .OrderBy(w => w.start)
                 .ToList();

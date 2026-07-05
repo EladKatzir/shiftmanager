@@ -353,6 +353,42 @@ public class BlueprintsModel : PageModel
     }
 
     /// <summary>
+    /// Issue 1: toggle whether a shift type blocks overlapping/back-to-back shifts and whether its
+    /// hours count toward the weekly cap and analytics. Presence statuses (Offline/Home) are
+    /// intrinsically exempt regardless of these columns, so the view disables the toggles for them.
+    /// </summary>
+    public async Task<IActionResult> OnPostUpdateShiftFlagsAsync([FromBody] UpdateShiftFlagsRequest request)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var shiftType = await _db.ShiftTypes.FindAsync(request.ShiftTypeId);
+            if (shiftType == null)
+                return new JsonResult(new { success = false, error = "Shift type not found" });
+
+            var (allowed, errorMessage) = await CheckEditGrantForShiftTypeAsync(userId, shiftType);
+            if (!allowed)
+                return new JsonResult(new { success = false, error = errorMessage }) { StatusCode = 403 };
+
+            shiftType.IsBlocking = request.IsBlocking;
+            shiftType.CountsTowardHourLimits = request.CountsTowardHourLimits;
+
+            var saveResult = await _concurrencyService.SaveWithConcurrencyHandlingAsync(
+                () => _db.SaveChangesAsync(), "ShiftType", request.ShiftTypeId);
+            if (!saveResult.Success)
+                return new JsonResult(new { success = false, error = saveResult.ErrorMessage }) { StatusCode = 409 };
+
+            InvalidateCachesForShiftType(shiftType);
+            return new JsonResult(new { success = true, message = "Shift settings updated" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update shift flags");
+            return new JsonResult(new { success = false, error = "Failed to update shift settings" });
+        }
+    }
+
+    /// <summary>
     /// Inline replacement for the old (broken) "PopulateNameKeys" form handler. Assigns the canonical
     /// <c>ShiftType_{Key}_Name</c> NameKey to every shift type that is currently missing one — the same
     /// convention <see cref="OnPostCreateShiftTypeAsync"/> uses for new shift types. Idempotent: a
@@ -718,6 +754,13 @@ public class BlueprintsModel : PageModel
         public int ShiftTypeId { get; set; }
         public string StartTime { get; set; } = string.Empty;
         public string EndTime { get; set; } = string.Empty;
+    }
+
+    public class UpdateShiftFlagsRequest
+    {
+        public int ShiftTypeId { get; set; }
+        public bool IsBlocking { get; set; } = true;
+        public bool CountsTowardHourLimits { get; set; } = true;
     }
 
     public class RenameCategoryRequest

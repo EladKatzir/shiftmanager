@@ -82,7 +82,9 @@ public static class TechShiftTypeSeed
                 NameKey = "Home",
                 Start = new TimeOnly(0, 0),
                 End = new TimeOnly(23, 59),
-                RowColor = "#F8E7B1"
+                RowColor = "#F8E7B1",
+                IsBlocking = false,
+                CountsTowardHourLimits = false
             },
             // OFFLINE shift type — at base doing backlogged/offline work
             new ShiftType
@@ -95,7 +97,9 @@ public static class TechShiftTypeSeed
                 NameKey = "ShiftType_OFFLINE_Name",
                 Start = new TimeOnly(0, 0),
                 End = new TimeOnly(0, 0),
-                RowColor = "#E0E0E0"
+                RowColor = "#E0E0E0",
+                IsBlocking = false,
+                CountsTowardHourLimits = false
             }
         };
     }
@@ -158,7 +162,9 @@ public static class TechShiftTypeSeed
                 NameKey = "Home",
                 Start = new TimeOnly(0, 0),
                 End = new TimeOnly(23, 59),
-                RowColor = "#F8E7B1"
+                RowColor = "#F8E7B1",
+                IsBlocking = false,
+                CountsTowardHourLimits = false
             },
             new ShiftType
             {
@@ -170,7 +176,9 @@ public static class TechShiftTypeSeed
                 NameKey = "ShiftType_OFFLINE_Name",
                 Start = new TimeOnly(0, 0),
                 End = new TimeOnly(0, 0),
-                RowColor = "#E0E0E0"
+                RowColor = "#E0E0E0",
+                IsBlocking = false,
+                CountsTowardHourLimits = false
             }
         };
     }

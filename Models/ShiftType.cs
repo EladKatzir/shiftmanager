@@ -63,6 +63,21 @@ public class ShiftType
     public bool RequiresOfficerRank { get; set; } = false;
 
     /// <summary>
+    /// If true (default), holding this shift blocks the user from overlapping/back-to-back shifts
+    /// (overlap + rest-period checks). If false, the shift can coexist with others — e.g. a status
+    /// shift held alongside a morning shift. Presence statuses (Offline/Home) are intrinsically
+    /// non-blocking regardless of this column; see <see cref="BlocksConcurrentShifts"/>.
+    /// </summary>
+    public bool IsBlocking { get; set; } = true;
+
+    /// <summary>
+    /// If true (default), this shift's hours count toward the weekly-hours cap and analytics totals.
+    /// If false, its hours are ignored everywhere hours are summed. Presence statuses (Offline/Home)
+    /// never count regardless of this column; see <see cref="CountsTowardHours"/>.
+    /// </summary>
+    public bool CountsTowardHourLimits { get; set; } = true;
+
+    /// <summary>
     /// English display name for this shift type (molecule/area-scoped custom names).
     /// If null/empty, falls back to predefined names based on Key.
     /// </summary>
@@ -139,6 +154,23 @@ public class ShiftType
     /// </summary>
     [NotMapped]
     public bool IsHome => Key == KEY_HOME || Key == KEY_HOME_PM || Key == KEY_HOME_AM;
+
+    /// <summary>
+    /// True if this shift participates in overlap / rest-period conflict detection. Driven by the
+    /// configurable <see cref="IsBlocking"/> column, except presence statuses (Offline/Home) which
+    /// are intrinsically non-blocking regardless of the column (they model "available for other work").
+    /// A conflict fires only when BOTH the candidate and the neighbouring shift block.
+    /// </summary>
+    [NotMapped]
+    public bool BlocksConcurrentShifts => IsBlocking && !IsOffline && !IsHome;
+
+    /// <summary>
+    /// True if this shift's hours count toward the weekly cap and analytics totals. Driven by the
+    /// configurable <see cref="CountsTowardHourLimits"/> column, except presence statuses (Offline/Home)
+    /// which never count regardless of the column.
+    /// </summary>
+    [NotMapped]
+    public bool CountsTowardHours => CountsTowardHourLimits && !IsOffline && !IsHome;
 
     /// <summary>
     /// Get the sort order for this shift type (for consistent ordering across views).

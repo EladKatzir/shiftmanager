@@ -265,4 +265,40 @@ public class AnalyticsServiceTests : IDisposable
         stats.ApprovedCount.Should().Be(2);
         stats.PendingCount.Should().Be(1);
     }
+
+    // ─── Issue 1: non-counting shifts excluded from analytics hours ───────
+
+    private void SeedShiftAssignmentWithType(int userId, DateOnly date, TimeOnly start, TimeOnly end,
+        string key, bool counts, int stId)
+    {
+        _db.ShiftTypes.Add(new ShiftType
+        {
+            Id = stId, Key = key, Start = start, End = end, MoleculeId = 1, CompanyId = 1,
+            IsBlocking = true, CountsTowardHourLimits = counts
+        });
+        var inst = new ShiftInstance { CompanyId = 1, ShiftTypeId = stId, WorkDate = date, StaffingRequired = 1 };
+        _db.ShiftInstances.Add(inst);
+        _db.SaveChanges();
+        _db.ShiftAssignments.Add(new ShiftAssignment { CompanyId = 1, UserId = userId, ShiftInstanceId = inst.Id, CreatedAt = DateTime.UtcNow });
+        _db.SaveChanges();
+    }
+
+    /// <summary>
+    /// A shift type with CountsTowardHourLimits = false contributes 0 hours to the employee-hours
+    /// report, even though its assignment still exists. Owner decision: "counts toward hours" is
+    /// ignored everywhere hours are summed.
+    /// </summary>
+    [Fact]
+    public async Task GetEmployeeHoursAsync_NonCountingShift_ExcludedFromTotalHours()
+    {
+        SeedActiveUser(1);
+        SeedShiftAssignmentWithType(1, StartDate, new TimeOnly(8, 0), new TimeOnly(16, 0), "MORNING_A", counts: true, stId: 5001);   // 8h, counts
+        SeedShiftAssignmentWithType(1, StartDate.AddDays(1), new TimeOnly(9, 0), new TimeOnly(19, 0), "STATUS_A", counts: false, stId: 5002); // 10h, does NOT count
+        await _db.SaveChangesAsync();
+
+        var result = await _sut.GetEmployeeHoursAsync(StartDate.AddDays(-1), EndDate.AddDays(2));
+
+        result.Should().ContainSingle(e => e.UserId == 1);
+        result.Single(e => e.UserId == 1).TotalHours.Should().Be(8m, "only the counting shift's hours are summed");
+    }
 }

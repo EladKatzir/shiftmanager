@@ -92,7 +92,9 @@ public class AnalyticsService : IAnalyticsService
                     Shifts = g.Select(a => new
                     {
                         Start = a.ShiftInstance.ShiftType.Start,
-                        End = a.ShiftInstance.ShiftType.End
+                        End = a.ShiftInstance.ShiftType.End,
+                        Counts = a.ShiftInstance.ShiftType.CountsTowardHourLimits,
+                        Key = a.ShiftInstance.ShiftType.Key
                     }).ToList()
                 })
                 .ToListAsync();
@@ -102,7 +104,15 @@ public class AnalyticsService : IAnalyticsService
             var results = groupedData
                 .Select(g =>
                 {
-                    var totalHours = g.Shifts.Sum(shift =>
+                    // Issue 1: exclude non-counting shifts and presence statuses (Offline/Home)
+                    // from the hours total — "counts toward hours" is honoured everywhere hours sum.
+                    var totalHours = g.Shifts
+                        .Where(shift => shift.Counts
+                            && shift.Key != ShiftType.KEY_OFFLINE
+                            && shift.Key != ShiftType.KEY_HOME
+                            && shift.Key != ShiftType.KEY_HOME_PM
+                            && shift.Key != ShiftType.KEY_HOME_AM)
+                        .Sum(shift =>
                     {
                         var start = shift.Start;
                         var end = shift.End;

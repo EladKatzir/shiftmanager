@@ -183,6 +183,7 @@
                         <th><loc key="Type" /></th>
                         <th><loc key="Blueprints_Scope" /></th>
                         <th><loc key="Blueprints_Category" /></th>
+                        <th><loc key="Blueprints_ShiftRules" /></th>
                         <th><loc key="Actions" /></th>
                     </tr>
                 </thead>
@@ -302,6 +303,25 @@
                                 else
                                 {
                                     <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                @{
+                                    var isPresenceShift = shiftType.IsOffline || shiftType.IsHome;
+                                }
+                                <label class="checkbox-inline d-block" title="@Localizer["Blueprints_IsBlocking_Tooltip"]">
+                                    <input type="checkbox" class="js-shift-flag" data-shift-id="@shiftType.Id" data-flag="blocking"
+                                           checked="@shiftType.IsBlocking" disabled="@isPresenceShift" />
+                                    <loc key="Blueprints_IsBlocking" />
+                                </label>
+                                <label class="checkbox-inline d-block" title="@Localizer["Blueprints_CountsTowardHours_Tooltip"]">
+                                    <input type="checkbox" class="js-shift-flag" data-shift-id="@shiftType.Id" data-flag="counts"
+                                           checked="@shiftType.CountsTowardHourLimits" disabled="@isPresenceShift" />
+                                    <loc key="Blueprints_CountsTowardHours" />
+                                </label>
+                                @if (isPresenceShift)
+                                {
+                                    <small class="text-muted d-block">@Localizer["Blueprints_PresenceExempt"]</small>
                                 }
                             </td>
                             <td>
@@ -1122,6 +1142,38 @@
                     window.FeedbackModal.show('error', '@Localizer["Error_FailedToUpdate"].Value.Trim()');
                 } finally {
                     this.disabled = false;
+                }
+            });
+        });
+
+        // Issue 1: toggle "is blocking" / "counts toward hours" on a shift type.
+        // Both flags are sent together (the DTO carries both); a failed save reverts the checkbox.
+        document.querySelectorAll('.js-shift-flag').forEach(cb => {
+            cb.addEventListener('change', async function () {
+                const shiftTypeId = parseInt(this.dataset.shiftId, 10);
+                const row = this.closest('tr');
+                const isBlocking = row.querySelector('.js-shift-flag[data-flag="blocking"]').checked;
+                const countsTowardHourLimits = row.querySelector('.js-shift-flag[data-flag="counts"]').checked;
+                try {
+                    const resp = await fetch('/Owner/Blueprints?handler=UpdateShiftFlags', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': blueprintsToken() },
+                        body: JSON.stringify({ shiftTypeId, isBlocking, countsTowardHourLimits })
+                    });
+                    let result = null;
+                    try { result = await resp.json(); } catch (e) { /* non-JSON */ }
+                    if (resp.ok && result && result.success) {
+                        window.Toast && window.Toast.success
+                            ? window.Toast.success('@Localizer["Blueprints_SettingsSaved"].Value.Trim()')
+                            : null;
+                    } else {
+                        this.checked = !this.checked; // revert on failure
+                        window.FeedbackModal.show('error', (result && result.error) || '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+                    }
+                } catch (err) {
+                    this.checked = !this.checked; // revert on failure
+                    console.error('Failed to update shift flags', err);
+                    window.FeedbackModal.show('error', '@Localizer["Error_FailedToUpdate"].Value.Trim()');
                 }
             });
         });

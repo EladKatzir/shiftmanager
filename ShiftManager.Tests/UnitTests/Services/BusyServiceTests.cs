@@ -341,4 +341,137 @@ public class BusyServiceTests : IDisposable
         validation.Errors.Should().NotContain(e => e.Key == "USER_NOT_IN_MOLECULE",
             "user reaches molecule 31 via a secondary CompanyMembership");
     }
+
+    // ---------------------------------------------------------------------
+    // Issue 1: per-shift-type "is blocking" + "counts toward hour limits".
+    // Overlap/rest fire only when BOTH shifts block; a shift's hours count
+    // toward the weekly cap only when it counts. Presence types stay exempt.
+    // ---------------------------------------------------------------------
+
+    /// <summary>Seeds a shift type + instance + an assignment for <paramref name="userId"/> (an EXISTING shift).</summary>
+    private async Task SeedAssignedShiftAsync(int stId, int userId, int companyId, DateOnly date,
+        TimeOnly start, TimeOnly end, string key, bool isBlocking = true, bool countsTowardHours = true)
+    {
+        var st = new ShiftType
+        {
+            Id = stId, Key = key, Start = start, End = end, MoleculeId = 1, CompanyId = companyId,
+            IsBlocking = isBlocking, CountsTowardHourLimits = countsTowardHours
+        };
+        _db.ShiftTypes.Add(st);
+        var inst = new ShiftInstance { CompanyId = companyId, ShiftTypeId = st.Id, WorkDate = date, StaffingRequired = 1 };
+        _db.ShiftInstances.Add(inst);
+        await _db.SaveChangesAsync();
+        _db.ShiftAssignments.Add(new ShiftAssignment { CompanyId = companyId, UserId = userId, ShiftInstanceId = inst.Id, CreatedAt = DateTime.UtcNow });
+        await _db.SaveChangesAsync();
+    }
+
+    /// <summary>Seeds a shift type + an UNASSIGNED instance (the candidate the user is about to take).</summary>
+    private async Task<int> SeedCandidateInstanceAsync(int stId, int companyId, DateOnly date,
+        TimeOnly start, TimeOnly end, string key, bool isBlocking = true, bool countsTowardHours = true)
+    {
+        var st = new ShiftType
+        {
+            Id = stId, Key = key, Start = start, End = end, MoleculeId = 1, CompanyId = companyId,
+            IsBlocking = isBlocking, CountsTowardHourLimits = countsTowardHours
+        };
+        _db.ShiftTypes.Add(st);
+        var inst = new ShiftInstance { CompanyId = companyId, ShiftTypeId = st.Id, WorkDate = date, StaffingRequired = 1 };
+        _db.ShiftInstances.Add(inst);
+        await _db.SaveChangesAsync();
+        return inst.Id;
+    }
+
+    [Fact]
+    public async Task NonBlockingCandidate_OverlappingBlockingNeighbor_NoOverlapError()
+    {
+        // A non-blocking status shift can coexist with a real (blocking) shift on the same window.
+        await SeedMoleculeWithCompaniesAsync();
+        var user = await SeedUserAsync(id: 500, companyId: 100);
+        var date = new DateOnly(2026, 6, 10);
+        await SeedAssignedShiftAsync(9100, user.Id, 100, date, new TimeOnly(8, 0), new TimeOnly(16, 0), "MORNING_A", isBlocking: true);
+        var candidate = await SeedCandidateInstanceAsync(9101, 100, date, new TimeOnly(8, 0), new TimeOnly(16, 0), "BLUE", isBlocking: false);
+
+        var validation = await _service.ValidateAsync(new BusyTarget.Shift(candidate), userId: user.Id, actorUserId: 100);
+
+        validation.Errors.Should().NotContain(e => e.Key == "OVERLAP", "a non-blocking shift never conflicts on overlap");
+    }
+
+    [Fact]
+    public async Task BlockingCandidate_OverlappingNonBlockingNeighbor_NoOverlapError()
+    {
+        // The reverse: a real blocking shift ignores a non-blocking neighbor.
+        await SeedMoleculeWithCompaniesAsync();
+        var user = await SeedUserAsync(id: 502, companyId: 100);
+        var date = new DateOnly(2026, 6, 12);
+        await SeedAssignedShiftAsync(9120, user.Id, 100, date, new TimeOnly(8, 0), new TimeOnly(16, 0), "BLUE_N", isBlocking: false);
+        var candidate = await SeedCandidateInstanceAsync(9121, 100, date, new TimeOnly(8, 0), new TimeOnly(16, 0), "MORNING_C", isBlocking: true);
+
+        var validation = await _service.ValidateAsync(new BusyTarget.Shift(candidate), userId: user.Id, actorUserId: 100);
+
+        validation.Errors.Should().NotContain(e => e.Key == "OVERLAP", "a non-blocking neighbor is skipped in overlap detection");
+    }
+
+    [Fact]
+    public async Task BlockingCandidate_OverlappingBlockingNeighbor_StillErrorsOverlap()
+    {
+        // Regression: two blocking shifts on the same window still conflict.
+        await SeedMoleculeWithCompaniesAsync();
+        var user = await SeedUserAsync(id: 501, companyId: 100);
+        var date = new DateOnly(2026, 6, 11);
+        await SeedAssignedShiftAsync(9110, user.Id, 100, date, new TimeOnly(8, 0), new TimeOnly(16, 0), "MORNING_B", isBlocking: true);
+        var candidate = await SeedCandidateInstanceAsync(9111, 100, date, new TimeOnly(8, 0), new TimeOnly(16, 0), "AFT_B", isBlocking: true);
+
+        var validation = await _service.ValidateAsync(new BusyTarget.Shift(candidate), userId: user.Id, actorUserId: 100);
+
+        validation.Errors.Should().Contain(e => e.Key == "OVERLAP", "two blocking shifts still overlap");
+    }
+
+    [Fact]
+    public async Task OfflineCandidate_StaysExemptFromOverlap_EvenWithDefaultBlockingColumn()
+    {
+        // Presence types are intrinsically non-blocking even when the column defaults to true
+        // (tests build the schema from the model with no backfill). Guards the "unify" invariant.
+        await SeedMoleculeWithCompaniesAsync();
+        var user = await SeedUserAsync(id: 503, companyId: 100);
+        var date = new DateOnly(2026, 6, 13);
+        await SeedAssignedShiftAsync(9130, user.Id, 100, date, new TimeOnly(8, 0), new TimeOnly(16, 0), "MORNING_D", isBlocking: true);
+        var candidate = await SeedCandidateInstanceAsync(9131, 100, date, new TimeOnly(8, 0), new TimeOnly(16, 0), ShiftType.KEY_OFFLINE, isBlocking: true);
+
+        var validation = await _service.ValidateAsync(new BusyTarget.Shift(candidate), userId: user.Id, actorUserId: 100);
+
+        validation.Errors.Should().NotContain(e => e.Key == "OVERLAP", "OFFLINE is non-blocking regardless of the column");
+    }
+
+    [Fact]
+    public async Task NonCountingCandidate_DoesNotTriggerWeeklyCap()
+    {
+        // A non-counting shift never trips the weekly cap, even when the week is already full.
+        await SeedMoleculeWithCompaniesAsync();
+        var user = await SeedUserAsync(id: 600, companyId: 100);
+        var sunday = new DateOnly(2026, 6, 14); // config week starts Sunday
+        for (int i = 0; i < 4; i++)
+            await SeedAssignedShiftAsync(9200 + i, user.Id, 100, sunday.AddDays(i), new TimeOnly(0, 0), new TimeOnly(15, 0), $"LONG_{i}", isBlocking: true, countsTowardHours: true); // 15h x4 = 60h > 56
+        var candidate = await SeedCandidateInstanceAsync(9250, 100, sunday.AddDays(5), new TimeOnly(9, 0), new TimeOnly(17, 0), "STATUS", isBlocking: false, countsTowardHours: false);
+
+        var validation = await _service.ValidateAsync(new BusyTarget.Shift(candidate), userId: user.Id, actorUserId: 100);
+
+        validation.Warnings.Should().NotContain(w => w.Key == "EXCEEDS_WEEKLY_CAP", "a non-counting shift is exempt from the weekly cap");
+    }
+
+    [Fact]
+    public async Task NonCountingExistingShifts_ExcludedFromWeeklyCapSum()
+    {
+        // The latent double-count: existing non-counting hours must not inflate the weekly total
+        // against which a normal counting shift is checked.
+        await SeedMoleculeWithCompaniesAsync();
+        var user = await SeedUserAsync(id: 601, companyId: 100);
+        var sunday = new DateOnly(2026, 6, 14);
+        for (int i = 0; i < 4; i++)
+            await SeedAssignedShiftAsync(9300 + i, user.Id, 100, sunday.AddDays(i), new TimeOnly(0, 0), new TimeOnly(23, 0), $"NC_{i}", isBlocking: false, countsTowardHours: false); // 23h x4, non-counting
+        var candidate = await SeedCandidateInstanceAsync(9350, 100, sunday.AddDays(5), new TimeOnly(9, 0), new TimeOnly(17, 0), "NORMAL", isBlocking: true, countsTowardHours: true); // 8h
+
+        var validation = await _service.ValidateAsync(new BusyTarget.Shift(candidate), userId: user.Id, actorUserId: 100);
+
+        validation.Warnings.Should().NotContain(w => w.Key == "EXCEEDS_WEEKLY_CAP", "non-counting existing shifts are excluded from the weekly sum");
+    }
 }
