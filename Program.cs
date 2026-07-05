@@ -101,15 +101,10 @@ static bool ReadHebrewDefaultFlagFromDb(IConfiguration cfg)
 builder.Services.AddLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
-    var supportedCultures = new[] { "en-US", "he-IL" };
-    options.DefaultRequestCulture = new RequestCulture(hebrewDefaultEnabled ? "he-IL" : "en-US");
-    options.SupportedCultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
-    options.SupportedUICultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
-
-    options.RequestCultureProviders.Clear();
-    options.RequestCultureProviders.Add(new QueryStringRequestCultureProvider());
-    options.RequestCultureProviders.Add(new CookieRequestCultureProvider());
-    options.RequestCultureProviders.Add(new AcceptLanguageHeaderRequestCultureProvider());
+    // Provider ordering + Hebrew-default behaviour is centralised for unit testing.
+    // When the Hebrew default is on, the Accept-Language provider is dropped so cookieless users
+    // fall through to the he-IL DefaultRequestCulture instead of resolving en-US from the browser.
+    ShiftManager.Services.RequestLocalizationSetup.Configure(options, hebrewDefaultEnabled);
 });
 
 builder.Services.AddRazorPages(options =>
@@ -330,6 +325,7 @@ builder.Services.AddScoped<IScopeFilterService, ScopeFilterService>(); // A-018:
 builder.Services.AddScoped<IConcurrencyService, ConcurrencyService>();
 builder.Services.AddScoped<IWidgetService, WidgetService>();
 builder.Services.AddScoped<IUserCompanyTransferService, UserCompanyTransferService>();
+builder.Services.AddScoped<ICompanyMoleculeTransferService, CompanyMoleculeTransferService>();
 builder.Services.AddScoped<IStoreService, StoreService>();
 builder.Services.AddScoped<IQuickInfoConfigService, QuickInfoConfigService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();

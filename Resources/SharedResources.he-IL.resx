@@ -10557,6 +10557,12 @@
   <data name="Calendar_RowLabel_ColumnHeader" xml:space="preserve">
     <value>שם</value>
   </data>
+  <data name="Calendar_AddTrainee" xml:space="preserve">
+    <value>הוסף חניך</value>
+  </data>
+  <data name="Calendar_NoTraineesAvailable" xml:space="preserve">
+    <value>אין חניכים זמינים</value>
+  </data>
   <data name="Calendar_NextGroup" xml:space="preserve">
     <value>קבוצה הבאה</value>
   </data>
@@ -12161,6 +12167,27 @@
   </data>
   <data name="Blueprints_EditTime" xml:space="preserve">
     <value>ערוך זמן</value>
+  </data>
+  <data name="Blueprints_ShiftRules" xml:space="preserve">
+    <value>כללים</value>
+  </data>
+  <data name="Blueprints_IsBlocking" xml:space="preserve">
+    <value>חוסם</value>
+  </data>
+  <data name="Blueprints_IsBlocking_Tooltip" xml:space="preserve">
+    <value>כאשר מסומן, שיבוץ למשמרת זו חוסם את המשתמש ממשמרת חופפת או צמודה. בטל כדי לאפשר משמרת זו במקביל לאחרות (למשל משמרת סטטוס).</value>
+  </data>
+  <data name="Blueprints_CountsTowardHours" xml:space="preserve">
+    <value>נספר בשעות</value>
+  </data>
+  <data name="Blueprints_CountsTowardHours_Tooltip" xml:space="preserve">
+    <value>כאשר מסומן, שעות המשמרת נספרות במגבלת השעות השבועית ובנתוני הניתוח. בטל כדי להחריג את שעותיה בכל מקום.</value>
+  </data>
+  <data name="Blueprints_PresenceExempt" xml:space="preserve">
+    <value>סטטוס נוכחות — תמיד לא חוסם ולא נספר בשעות.</value>
+  </data>
+  <data name="Blueprints_SettingsSaved" xml:space="preserve">
+    <value>הגדרות המשמרת עודכנו</value>
   </data>
   <data name="Blueprints_CheckingUsage" xml:space="preserve">
     <value>בודק שימוש...</value>
@@ -14317,6 +14344,12 @@
   <data name="QuickEntry_DayNoteSaved" xml:space="preserve">
     <value>הערת היום נשמרה</value>
   </data>
+  <data name="QuickEntry_DeleteDayNote" xml:space="preserve">
+    <value>מחק הערת יום</value>
+  </data>
+  <data name="QuickEntry_DayNoteDeleted" xml:space="preserve">
+    <value>הערת היום נמחקה</value>
+  </data>
   <data name="QuickEntry_Tooltip" xml:space="preserve">
     <value>הקלד לשיבוץ, Tab למעבר ימינה, Escape לביטול. הקלד / לתורנויות ועוד.</value>
   </data>
@@ -15912,6 +15945,42 @@
   </data>
   <data name="Error_MoveFailed" xml:space="preserve">
     <value>לא ניתן היה להשלים את ההעברה.</value>
+  </data>
+  <data name="Error_MoveSameMolecule" xml:space="preserve">
+    <value>הדסק כבר נמצא במולקולה זו.</value>
+  </data>
+  <data name="Companies_MoveMolecule" xml:space="preserve">
+    <value>העבר מולקולה</value>
+  </data>
+  <data name="Companies_MoveSuccess" xml:space="preserve">
+    <value>הדסק הועבר למולקולה החדשה.</value>
+  </data>
+  <data name="Companies_TargetMolecule" xml:space="preserve">
+    <value>מולקולת יעד</value>
+  </data>
+  <data name="Companies_MoveConfirm_Title" xml:space="preserve">
+    <value>להעביר את הדסק למולקולה אחרת?</value>
+  </data>
+  <data name="Companies_MoveConfirm_Message" xml:space="preserve">
+    <value>כל המשמרות הקיימות של דסק זה יימחקו. חופשות, משתמשים וחשבונות יישמרו. לא ניתן לבטל פעולה זו.</value>
+  </data>
+  <data name="Companies_MoveImpact_Title" xml:space="preserve">
+    <value>העברה זו תמחק:</value>
+  </data>
+  <data name="Companies_MoveImpact_KeepsVacations" xml:space="preserve">
+    <value>חופשות וחשבונות משתמשים יישמרו.</value>
+  </data>
+  <data name="Companies_MoveImpact_Shifts" xml:space="preserve">
+    <value>משמרות (מופעים / שיבוצים)</value>
+  </data>
+  <data name="Companies_MoveImpact_Programs" xml:space="preserve">
+    <value>תוכניות משמרת</value>
+  </data>
+  <data name="Companies_MoveImpact_Chores" xml:space="preserve">
+    <value>תורנויות</value>
+  </data>
+  <data name="Companies_MoveImpact_Users" xml:space="preserve">
+    <value>משתמשים מושפעים</value>
   </data>
   <data name="Users_MoveImpact_Summary" xml:space="preserve">
     <value>ישפיע על: {0} משמרות, {1} בקשות חופשה, {2} מטלות, {3} בקשות החלפה, {4} תורנויות, {5} ניקודי משחק, {6} לוחות צוות (יועברו אליך), {7} מפתחות API יבוטלו.</value>
