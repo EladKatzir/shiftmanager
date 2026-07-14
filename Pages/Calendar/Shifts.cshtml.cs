@@ -724,6 +724,11 @@ public class ShiftsModel : PageModel
                     .OrderBy(w => w.start)
                     .ToList();
                 row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+                // #8: Total column now shows a shift COUNT, not summed hours. Same IsHome/IsOffline
+                // exclusion as WeeklyHours above (WeeklyHours retained, no longer rendered by the column).
+                row.ShiftCount = assignments.Count(a => a.UserId == user.Id
+                    && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate
+                    && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline);
                 rows.Add(row);
             }
         }
@@ -762,6 +767,11 @@ public class ShiftsModel : PageModel
                     .OrderBy(w => w.start)
                     .ToList();
                 row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+                // #8: Total column now shows a shift COUNT, not summed hours. Same IsHome/IsOffline
+                // exclusion as WeeklyHours above (WeeklyHours retained, no longer rendered by the column).
+                row.ShiftCount = assignments.Count(a => a.UserId == user.Id
+                    && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate
+                    && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline);
                 rows.Add(row);
             }
         }
@@ -774,7 +784,9 @@ public class ShiftsModel : PageModel
     /// strategy. <paramref name="groupId"/> places it under a collapsible section; <paramref name="companyName"/>
     /// drives the per-row company badge (null to suppress, e.g. inside a company group where it is redundant).
     /// </summary>
-    private ExcelCalendarRow BuildUserRow(
+    // internal (not private) so the by-user ShiftCount unit test can invoke it directly
+    // (InternalsVisibleTo configured) — same precedent as BuildChoreCategoryGroupedRowsAsync in Chores.cshtml.cs.
+    internal ExcelCalendarRow BuildUserRow(
         AppUser user,
         string? groupId,
         string? companyName,
@@ -802,6 +814,11 @@ public class ShiftsModel : PageModel
             .OrderBy(w => w.start)
             .ToList();
         row.WeeklyHours = TimeHelpers.MergeAndSumHours(userShiftWindows);
+        // #8: Total column now shows a shift COUNT, not summed hours. Same IsHome/IsOffline
+        // exclusion as WeeklyHours above (WeeklyHours retained, no longer rendered by the column).
+        row.ShiftCount = assignments.Count(a => a.UserId == user.Id
+            && a.ShiftInstance.WorkDate >= StartDate && a.ShiftInstance.WorkDate <= EndDate
+            && !a.ShiftInstance.ShiftType.IsHome && !a.ShiftInstance.ShiftType.IsOffline);
         return row;
     }
 

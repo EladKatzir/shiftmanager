@@ -13,7 +13,11 @@
     var dayNames = culture.DateTimeFormat.DayNames;
     var shortDayNames = culture.DateTimeFormat.AbbreviatedDayNames;
     var hasWeeklyHours = Model.Rows.Any(r => r.WeeklyHours.HasValue);
-    var totalColCount = days.Count + 1 + (hasWeeklyHours ? 1 : 0);
+    // #8: the rightmost per-user "Total" column now shows a shift COUNT (HasShiftCount/ShiftCount),
+    // not summed hours. hasWeeklyHours/HasWeeklyHours are retained (passed through below) but no
+    // longer drive the column or its colspan.
+    var hasShiftCount = Model.Rows.Any(r => r.ShiftCount.HasValue);
+    var totalColCount = days.Count + 1 + (hasShiftCount ? 1 : 0);
 }
 
 <div class="excel-calendar @(isCompact ? "excel-calendar--compact" : "")"
@@ -67,10 +71,10 @@
                         }
                     </th>
                 }
-                @if (hasWeeklyHours)
+                @if (hasShiftCount)
                 {
                     <th class="excel-calendar__header-total" scope="col">
-                        <span class="excel-calendar__day-name">@Localizer["Total"]</span>
+                        <span class="excel-calendar__day-name">@Localizer["TotalShifts"]</span>
                     </th>
                 }
             </tr>
@@ -125,6 +129,7 @@
                         DraftSessionId = Model.DraftSessionId,
                             IsCollapsed = group.IsCollapsed,
                             HasWeeklyHours = hasWeeklyHours,
+                            HasShiftCount = hasShiftCount,
                             RowIndex = ariaRowIndex
                         })
                         ariaRowIndex++;
@@ -143,6 +148,7 @@
                         DraftSessionId = Model.DraftSessionId,
                         IsCollapsed = false,
                         HasWeeklyHours = hasWeeklyHours,
+                        HasShiftCount = hasShiftCount,
                         RowIndex = ariaRowIndex
                     })
                     ariaRowIndex++;
@@ -161,6 +167,7 @@
                         DraftSessionId = Model.DraftSessionId,
                         IsCollapsed = false,
                         HasWeeklyHours = hasWeeklyHours,
+                        HasShiftCount = hasShiftCount,
                         RowIndex = ariaRowIndex
                     })
                     ariaRowIndex++;

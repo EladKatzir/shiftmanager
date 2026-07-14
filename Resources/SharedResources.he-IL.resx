@@ -1435,6 +1435,10 @@
   <data name="Total" xml:space="preserve">
     <value>סה"כ</value>
   </data>
+  <data name="TotalShifts" xml:space="preserve">
+    <value>סה"כ משמרות</value>
+    <comment>#8 - Week-view by-user calendar Total column header (shift count, not hours)</comment>
+  </data>
   <data name="ApprovalRate" xml:space="preserve">
     <value>שיעור אישור</value>
   </data>
