@@ -26,7 +26,6 @@ public class ShiftsModel : PageModel
     private readonly AppDbContext _db;
     private readonly IShiftCalendarService _calendarService;
     private readonly IGrantService _grantService;
-    private readonly ICompanyContext _companyContext;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ICompanyLocalizationService _companyLocalizationService;
     private readonly ITenantResolver _tenantResolver;
@@ -46,7 +45,6 @@ public class ShiftsModel : PageModel
         AppDbContext db,
         IShiftCalendarService calendarService,
         IGrantService grantService,
-        ICompanyContext companyContext,
         IStringLocalizer<SharedResources> localizer,
         ICompanyLocalizationService companyLocalizationService,
         ITenantResolver tenantResolver,
@@ -65,7 +63,6 @@ public class ShiftsModel : PageModel
         _db = db;
         _calendarService = calendarService;
         _grantService = grantService;
-        _companyContext = companyContext;
         _localizer = localizer;
         _companyLocalizationService = companyLocalizationService;
         _tenantResolver = tenantResolver;
@@ -178,9 +175,12 @@ public class ShiftsModel : PageModel
         }
         CurrentUserId = currentUserId;
 
-        // Get user's company and molecule
-        var companyId = _companyContext.CompanyId;
-        if (!companyId.HasValue)
+        // Resolve the ACTIVE company (switcher-aware) so an Owner/member who switched desks defaults
+        // to THAT company's molecule — not their home-company claim. Previously this read the raw
+        // CompanyId claim, so a switched user landed on their HOME molecule while the rest of the
+        // page (calendar body, day-notes, trainees) followed the switch.
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        if (companyId <= 0)
         {
             _logger.LogWarning("User {UserId} has no company context", currentUserId);
             return RedirectToPage("/Error");
@@ -188,11 +188,11 @@ public class ShiftsModel : PageModel
 
         var userCompany = await _db.Companies
             .Include(c => c.Molecule)
-            .FirstOrDefaultAsync(c => c.Id == companyId.Value);
+            .FirstOrDefaultAsync(c => c.Id == companyId);
 
         if (userCompany?.MoleculeId == null)
         {
-            _logger.LogWarning("User's company {CompanyId} has no molecule", companyId.Value);
+            _logger.LogWarning("User's company {CompanyId} has no molecule", companyId);
             return RedirectToPage("/Error");
         }
 
@@ -300,11 +300,10 @@ public class ShiftsModel : PageModel
             Users = await _calendarService.GetUsersForCalendarAsync(MoleculeId.Value, JobTypeId);
         }
 
-        // Load trainees for trainee assignment dropdown
-        if (companyId.HasValue)
-        {
-            Trainees = await _traineeService.GetCompanyTraineesAsync(companyId.Value);
-        }
+        // Load trainees for the inline "+" picker from the SAME switcher-aware active company as the
+        // calendar body (companyId above). Using the claim-based home company here left the picker
+        // empty for any switched/cross-company view (the + rendered but had no options).
+        Trainees = await _traineeService.GetCompanyTraineesAsync(companyId);
 
         // Load chore types and duty types for Quick Entry autocomplete
         if (MoleculeId.HasValue)

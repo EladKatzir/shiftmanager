@@ -21,7 +21,7 @@ namespace ShiftManager.Pages.Api.Calendar;
 public class GetOverviewDataModel : PageModel
 {
     private readonly ICalendarTextEntryService _textEntryService;
-    private readonly ICompanyContext _companyContext;
+    private readonly ITenantResolver _tenantResolver;
     private readonly IScopeFilterService _scopeFilterService;
     private readonly AppDbContext _db;
     private readonly ILogger<GetOverviewDataModel> _logger;
@@ -29,14 +29,14 @@ public class GetOverviewDataModel : PageModel
 
     public GetOverviewDataModel(
         ICalendarTextEntryService textEntryService,
-        ICompanyContext companyContext,
+        ITenantResolver tenantResolver,
         IScopeFilterService scopeFilterService,
         AppDbContext db,
         ILogger<GetOverviewDataModel> logger,
         IStringLocalizer<SharedResources> localizer)
     {
         _textEntryService = textEntryService;
-        _companyContext = companyContext;
+        _tenantResolver = tenantResolver;
         _scopeFilterService = scopeFilterService;
         _db = db;
         _logger = logger;
@@ -63,16 +63,21 @@ public class GetOverviewDataModel : PageModel
                 return new JsonResult(new { success = false, message = "Invalid date format" }) { StatusCode = 400 };
             }
 
-            // Use current company if not specified
-            int effectiveCompanyId = companyId ?? _companyContext.CompanyId ?? 0;
+            // Use the switcher-aware active company if not specified (the shipped Overview JS always
+            // passes companyId; this fallback previously used the home-company claim, returning the
+            // wrong company's data for a switched Owner/member when the param was omitted).
+            int effectiveCompanyId = companyId ?? _tenantResolver.GetCurrentTenantId();
             if (effectiveCompanyId <= 0)
             {
                 return new JsonResult(new { success = false, message = "Invalid company" }) { StatusCode = 400 };
             }
 
             // SECURITY: Validate user has access to the requested company
-            // User can view their own company; cross-company requires molecule or area grants
-            var currentUser = await _db.Users.FindAsync(currentUserId);
+            // User can view their own company; cross-company requires molecule or area grants.
+            // IgnoreQueryFilters: the caller's OWN record must always be findable — the tenant filter
+            // is scoped to the (possibly switched) active company, which would exclude an Owner whose
+            // home company differs from the switched tenant, wrongly yielding a 401 "User not found".
+            var currentUser = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == currentUserId);
             if (currentUser == null)
             {
                 return new JsonResult(new { success = false, message = "User not found" }) { StatusCode = 401 };

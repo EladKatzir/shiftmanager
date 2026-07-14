@@ -145,7 +145,12 @@ public partial class TableModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(string? start, string? view)
     {
-        var companyId = _companyContext.GetCompanyIdOrThrow();
+        // Switcher-aware active company: the grid's instances/employees come through the tenant query
+        // filter (= switched company), so the shift-type rows + molecule-selector seed must use the
+        // same source. Using the home-company claim here mismatched the grid for switched Owners.
+        var companyId = _tenantResolver.GetCurrentTenantId();
+        if (companyId <= 0)
+            throw new InvalidOperationException("No active company/tenant context for the calendar.");
 
         // Set view mode (week, 2weeks, month)
         ViewMode = view?.ToLowerInvariant() ?? "week";
@@ -1726,7 +1731,12 @@ public partial class TableModel : PageModel
     {
         try
         {
-            var companyId = _companyContext.GetCompanyIdOrThrow();
+            // Create the custom shift type in the ACTIVE (switcher-aware) company — the one the caller
+            // is viewing — not their home-company claim. This makes ownership + the grant-based authz
+            // below + cache invalidation all target the company the type will actually appear on.
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            if (companyId <= 0)
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidUserSession"].Value }) { StatusCode = 401 };
 
             // Validate name
             if (string.IsNullOrWhiteSpace(request.Name))
@@ -1741,10 +1751,15 @@ public partial class TableModel : PageModel
                 return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidTimeFormat"].Value });
             }
 
-            // Validate molecule access if molecule scope requested
+            // Validate molecule scope: the type is created in the active company (above), so the
+            // requested molecule must be THAT company's molecule. (The shared IsCallerInMoleculeAsync
+            // checks the caller's HOME company, which 403'd a switched Owner creating in the viewed
+            // molecule; the grant-based CanAssignForShiftScopeAsync below is the real authorization.)
             if (request.MoleculeId.HasValue)
             {
-                if (!await IsCallerInMoleculeAsync(request.MoleculeId.Value))
+                var companyInMolecule = await _db.Companies
+                    .AnyAsync(c => c.Id == companyId && c.MoleculeId == request.MoleculeId.Value);
+                if (!companyInMolecule)
                     return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UnauthorizedMolecule"].Value }) { StatusCode = 403 };
             }
 
@@ -2217,7 +2232,12 @@ public partial class TableModel : PageModel
     {
         try
         {
-            var companyId = _companyContext.GetCompanyIdOrThrow();
+            // Switcher-aware active company: the company-mode roster (else branch below) filters
+            // AppUser by CompanyId; the AppUser query filter already scopes to the active tenant, so
+            // the home-company claim here produced an empty list for switched Owners. Use the tenant.
+            var companyId = _tenantResolver.GetCurrentTenantId();
+            if (companyId <= 0)
+                throw new InvalidOperationException("No active company/tenant context for the roster.");
 
             // Use provided date range or default to current week
             var start = startDate ?? StartDate;
