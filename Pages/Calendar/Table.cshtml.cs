@@ -1752,16 +1752,11 @@ public partial class TableModel : PageModel
             }
 
             // Validate molecule scope: the type is created in the active company (above), so the
-            // requested molecule must be THAT company's molecule. (The shared IsCallerInMoleculeAsync
-            // checks the caller's HOME company, which 403'd a switched Owner creating in the viewed
-            // molecule; the grant-based CanAssignForShiftScopeAsync below is the real authorization.)
-            if (request.MoleculeId.HasValue)
-            {
-                var companyInMolecule = await _db.Companies
-                    .AnyAsync(c => c.Id == companyId && c.MoleculeId == request.MoleculeId.Value);
-                if (!companyInMolecule)
-                    return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UnauthorizedMolecule"].Value }) { StatusCode = 403 };
-            }
+            // requested molecule must be that company's molecule. IsCallerInMoleculeAsync is now
+            // switcher-aware (keys off the active company), so it is the correct shared gate here;
+            // the grant-based CanAssignForShiftScopeAsync below is the real authorization.
+            if (request.MoleculeId.HasValue && !await IsCallerInMoleculeAsync(request.MoleculeId.Value))
+                return new JsonResult(new { success = false, error = _localizer["Calendar_Error_UnauthorizedMolecule"].Value }) { StatusCode = 403 };
 
             // F7 FIX: per-handler shift-assign authorization (defense in depth with the molecule
             // access check above). Target scope = the new ShiftType's company (the caller's tenant,
@@ -2915,12 +2910,17 @@ public partial class TableModel : PageModel
             : CanAssignForShiftScopeAsync(userId, companyId: null, moleculeId: shiftType.MoleculeId, jobTypeId: shiftType.JobTypeId);
 
     /// <summary>
-    /// Validates that the caller's company belongs to the specified molecule.
-    /// Used to prevent unauthorized molecule access via crafted API calls.
+    /// Validates that the caller's ACTIVE (switcher-aware) company belongs to the specified molecule.
+    /// Used to prevent unauthorized molecule access via crafted API calls. internal for testability.
     /// </summary>
-    private async Task<bool> IsCallerInMoleculeAsync(int moleculeId)
+    internal async Task<bool> IsCallerInMoleculeAsync(int moleculeId)
     {
-        var companyId = _companyContext.GetCompanyIdOrThrow();
+        // Switcher-aware: gate on the caller's ACTIVE company (Owner-selection / member-switch), not
+        // the raw home-company claim. A switched Owner (home in one molecule, viewing another) was
+        // otherwise 403'd from every molecule-mode operation. The active company is validated by the
+        // switcher (OwnerCompanySelectorService / member-cookie-vs-claim), so this stays a sound
+        // anti-IDOR gate: molecule access requires the active company to belong to that molecule.
+        var companyId = _tenantResolver.GetCurrentTenantId();
         return await _db.Companies.AnyAsync(c => c.Id == companyId && c.MoleculeId == moleculeId);
     }
 
