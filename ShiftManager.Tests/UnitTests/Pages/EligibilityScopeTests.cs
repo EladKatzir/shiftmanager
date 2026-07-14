@@ -53,7 +53,13 @@ public class EligibilityScopeTests : IDisposable
         _db = new AppDbContext(options);
         _db.Database.EnsureCreated();
 
-        _grantService = new GrantService(_db, new Mock<IHierarchyService>().Object, new Mock<IAuditLogService>().Object);
+        // Real HierarchyService (not mocked): HasGrantWithScopeAsync's project-scope branch resolves
+        // the CALLER's own hierarchy (Path.Project.Id) to validate a project-scoped grant against an
+        // explicit moleculeId — an unconfigured/empty hierarchy mock would make that branch permanently
+        // unable to authorize a project-scoped caller (discovered via a real test failure, not assumed).
+        // A real authenticated caller always has a resolvable hierarchy in production; tests that need
+        // that branch to succeed seed a real AppUser+Company for the caller (see below).
+        _grantService = new GrantService(_db, new HierarchyService(_db), new Mock<IAuditLogService>().Object);
         _shiftCats = new ShiftCategoryService(_db);
         _choreCats = new ChoreCategoryService(_db);
         _elig = new EligibilityQueryService(_db);
@@ -203,6 +209,108 @@ public class EligibilityScopeTests : IDisposable
 
         result.Should().BeOfType<JsonResult>();
         ((JsonResult)result).StatusCode.Should().Be(403);
+    }
+
+    // ---- ALLOW-path proof: the fix must not over-block legitimate same-scope callers, and must
+    // actually deliver the feature half (an Owner editing a molecule other than their own home one) ----
+
+    private async Task<(Molecule Molecule, AppUser User, ShiftCategory Category, GrantType GrantType)> SeedSingleMoleculeSetupAsync()
+    {
+        var project = new Project { Name = "P", DisplayName = "P" };
+        _db.Projects.Add(project); await _db.SaveChangesAsync();
+        var area = new Area { ProjectId = project.Id, Name = "A", DisplayName = "A" };
+        _db.Areas.Add(area); await _db.SaveChangesAsync();
+        var molecule = new Molecule { AreaId = area.Id, Name = "M", DisplayName = "M", Type = MoleculeType.Workforce };
+        _db.Molecules.Add(molecule); await _db.SaveChangesAsync();
+
+        var company = new Company { Name = "C", DisplayName = "C", MoleculeId = molecule.Id };
+        _db.Companies.Add(company); await _db.SaveChangesAsync();
+
+        var user = new AppUser { CompanyId = company.Id, Email = "u@test.local", DisplayName = "User", DoesShifts = true, IsActive = true };
+        _db.Users.Add(user); await _db.SaveChangesAsync();
+
+        var category = new ShiftCategory { MoleculeId = molecule.Id, Name = "Cat", DisplayName = "Cat", IsActive = true };
+        _db.ShiftCategories.Add(category); await _db.SaveChangesAsync();
+
+        var gt = await SeedGrantTypeAsync();
+        return (molecule, user, category, gt);
+    }
+
+    [Fact]
+    public async Task Toggle_SameMoleculeCaller_Succeeds()
+    {
+        // Guards against an over-strict regression: a caller scoped to the SAME molecule as both
+        // the target user and the target category (the common Manager/Assigner case, unchanged by
+        // this fix) must still be able to toggle membership.
+        var (molecule, user, category, gt) = await SeedSingleMoleculeSetupAsync();
+
+        const int callerId = 604;
+        _db.Grants.Add(new Grant { UserId = callerId, GrantTypeId = gt.Id, MoleculeId = molecule.Id, CanOwn = true });
+        await _db.SaveChangesAsync();
+
+        var model = BuildModel(callerId, molecule.Id);
+        var result = await model.OnPostToggleAsync(new IndexModel.ToggleRequest
+        {
+            UserId = user.Id,
+            CategoryId = category.Id,
+            IsChore = false,
+            Add = true
+        });
+
+        result.Should().BeOfType<JsonResult>();
+        ((JsonResult)result).StatusCode.Should().NotBe(403);
+        (await _db.UserShiftCategories.CountAsync(m => m.UserId == user.Id && m.ShiftCategoryId == category.Id))
+            .Should().Be(1, "a caller scoped to the same molecule as both targets must still be able to toggle membership");
+    }
+
+    [Fact]
+    public async Task Toggle_ForOwnerAcrossMolecules_Succeeds()
+    {
+        // This is the FEATURE half of the fix (design doc: "Owner cannot edit eligibility for all
+        // users"): a project-scoped Owner whose login home molecule differs from the target must be
+        // able to toggle membership in that other, non-home molecule.
+        var project = new Project { Name = "P", DisplayName = "P" };
+        _db.Projects.Add(project); await _db.SaveChangesAsync();
+        var area = new Area { ProjectId = project.Id, Name = "A", DisplayName = "A" };
+        _db.Areas.Add(area); await _db.SaveChangesAsync();
+        var home = new Molecule { AreaId = area.Id, Name = "Home", DisplayName = "Home", Type = MoleculeType.Workforce };
+        var target = new Molecule { AreaId = area.Id, Name = "Target", DisplayName = "Target", Type = MoleculeType.Workforce };
+        _db.Molecules.AddRange(home, target); await _db.SaveChangesAsync();
+
+        var company = new Company { Name = "C", DisplayName = "C", MoleculeId = target.Id };
+        _db.Companies.Add(company); await _db.SaveChangesAsync();
+        var user = new AppUser { CompanyId = company.Id, Email = "target@test.local", DisplayName = "Target User", DoesShifts = true, IsActive = true };
+        _db.Users.Add(user); await _db.SaveChangesAsync();
+        var category = new ShiftCategory { MoleculeId = target.Id, Name = "TargetCat", DisplayName = "TargetCat", IsActive = true };
+        _db.ShiftCategories.Add(category); await _db.SaveChangesAsync();
+
+        var gt = await SeedGrantTypeAsync();
+        const int ownerId = 605;
+        _db.Grants.Add(new Grant { UserId = ownerId, GrantTypeId = gt.Id, ProjectId = project.Id, CanOwn = true });
+
+        // The Owner needs a resolvable hierarchy (real AppUser -> Company -> Molecule -> Area ->
+        // Project chain) for HasGrantWithScopeAsync's project-scope branch to validate their grant
+        // against an explicit moleculeId — a real authenticated caller always has one in production.
+        // Placed in "home" (a different molecule than the mutation target) to prove this is a genuine
+        // cross-molecule, same-project success, not a same-molecule coincidence.
+        var ownerCompany = new Company { Name = "OwnerCo", DisplayName = "OwnerCo", MoleculeId = home.Id };
+        _db.Companies.Add(ownerCompany); await _db.SaveChangesAsync();
+        _db.Users.Add(new AppUser { Id = ownerId, CompanyId = ownerCompany.Id, Email = "owner@test.local", DisplayName = "Owner", IsActive = true });
+        await _db.SaveChangesAsync();
+
+        var model = BuildModel(ownerId, home.Id);
+        var result = await model.OnPostToggleAsync(new IndexModel.ToggleRequest
+        {
+            UserId = user.Id,
+            CategoryId = category.Id,
+            IsChore = false,
+            Add = true
+        });
+
+        result.Should().BeOfType<JsonResult>();
+        ((JsonResult)result).StatusCode.Should().NotBe(403);
+        (await _db.UserShiftCategories.CountAsync(m => m.UserId == user.Id && m.ShiftCategoryId == category.Id))
+            .Should().Be(1, "a project-scoped Owner must be able to edit eligibility outside their own home molecule");
     }
 
     public void Dispose()
