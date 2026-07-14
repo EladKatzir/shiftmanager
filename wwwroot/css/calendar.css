@@ -3150,8 +3150,9 @@
     white-space: nowrap;
 }
 
-/* Desktop hover-reveal remove button */
-.excel-calendar__remove-btn {
+/* Desktop hover-reveal remove button (shared by the whole-assignment × and the trainee-cube ×) */
+.excel-calendar__remove-btn,
+.excel-calendar__trainee-remove-btn {
     display: none;
     align-items: center;
     justify-content: center;
@@ -3169,7 +3170,8 @@
     transition: background 0.15s, color 0.15s, transform 0.15s;
 }
 
-.excel-calendar__remove-btn:hover {
+.excel-calendar__remove-btn:hover,
+.excel-calendar__trainee-remove-btn:hover {
     background: var(--danger);
     color: #fff;
     transform: scale(1.1);
@@ -3216,6 +3218,7 @@
 /* Show on hover — desktop only (pointer: fine = mouse/trackpad) */
 @media (pointer: fine) {
     .excel-calendar__assignment:hover .excel-calendar__remove-btn,
+    .excel-calendar__assignment:hover .excel-calendar__trainee-remove-btn,
     .excel-calendar__assignment:hover .excel-calendar__add-trainee-btn {
         display: inline-flex;
     }
@@ -4266,6 +4269,45 @@
     padding-inline-start: var(--space-2);
     border-inline-start: 2px solid var(--info);
     margin-top: 1px;
+}
+
+/* Shadowing trainee: the assignment splits into two side-by-side cubes (worker + trainee),
+   each a mini-chip. The trainee cube uses the info palette (soft bg + strong text) so it reads
+   as a distinct block, and carries its own × to remove only the trainee. */
+.excel-calendar__assignment.has-trainee {
+    background: transparent;
+    padding: 0;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.excel-calendar__worker-cube,
+.excel-calendar__trainee-cube {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 0;
+    flex: 1 1 auto;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    position: relative;
+}
+
+.excel-calendar__worker-cube {
+    background: var(--accent-soft);
+}
+
+.excel-calendar__trainee-cube {
+    background: var(--info-soft);
+    color: var(--info);
+}
+
+.excel-calendar__trainee-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Assignment badge with role color (chore type border) */

@@ -10560,6 +10560,12 @@
   <data name="Calendar_AddTrainee" xml:space="preserve">
     <value>הוסף חניך</value>
   </data>
+  <data name="Calendar_RemoveTrainee" xml:space="preserve">
+    <value>הסר חניך</value>
+  </data>
+  <data name="Calendar_TraineeRemoved" xml:space="preserve">
+    <value>החניך הוסר</value>
+  </data>
   <data name="Calendar_NoTraineesAvailable" xml:space="preserve">
     <value>אין חניכים זמינים</value>
   </data>

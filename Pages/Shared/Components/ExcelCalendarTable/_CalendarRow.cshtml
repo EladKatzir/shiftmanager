@@ -123,7 +123,15 @@
                                 : assignment.SourceTimeOffRequestType == 1 ? "sunrise"
                                 : "repeat";
                         }
+                        // In Draft Mode the × on ANY shift chip (real or staged) routes to draft-clear,
+                        // so render it for the synthetic (negative-id) staged chips too.
+                        var isDraftShiftChip = Model.DraftSessionId != null && assignment.ShiftTypeId.HasValue && assignment.UserId.HasValue;
+                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip);
+                        // A shadowing trainee splits the chip into two cubes (worker + trainee). Requires the
+                        // Trainee navigation to be mapped to TraineeUserId (else TraineeName is always empty).
+                        var hasTrainee = !isHomeChip && !string.IsNullOrEmpty(assignment.TraineeName);
                         var chipClass = isHomeChip ? "excel-calendar__assignment chip-home" : "excel-calendar__assignment";
+                        if (hasTrainee) { chipClass += " has-trainee"; }
                         <div class="@chipClass"
                              data-assignment-id="@assignment.Id"
                              data-user-id="@assignment.UserId"
@@ -146,51 +154,81 @@
                                 {
                                     <span class="chip-time">@assignment.ShiftStart&ndash;@assignment.ShiftEnd</span>
                                 }
+                                @if (!string.IsNullOrEmpty(assignment.SubLabel))
+                                {
+                                    <span class="excel-calendar__assignment-note">@assignment.SubLabel</span>
+                                }
+                                @if (showRemove)
+                                {
+                                    <button type="button" class="excel-calendar__remove-btn"
+                                            data-assignment-id="@assignment.Id"
+                                            data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                                            data-user-id="@(assignment.UserId?.ToString() ?? "")"
+                                            aria-label="@Localizer["Remove"] @assignment.Name"
+                                            title="@Localizer["Remove"]">×</button>
+                                }
+                            }
+                            else if (hasTrainee)
+                            {
+                                @* Two cubes: the worker (keeps the whole-assignment ×) and the shadowing trainee (its own ×). *@
+                                <span class="excel-calendar__worker-cube">
+                                    <span class="excel-calendar__assignment-name">@assignment.Name</span>
+                                    @if (!string.IsNullOrEmpty(assignment.SubLabel))
+                                    {
+                                        <span class="excel-calendar__assignment-note">@assignment.SubLabel</span>
+                                    }
+                                    @if (showRemove)
+                                    {
+                                        <button type="button" class="excel-calendar__remove-btn"
+                                                data-assignment-id="@assignment.Id"
+                                                data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                                                data-user-id="@(assignment.UserId?.ToString() ?? "")"
+                                                aria-label="@Localizer["Remove"] @assignment.Name"
+                                                title="@Localizer["Remove"]">×</button>
+                                    }
+                                </span>
+                                <span class="excel-calendar__trainee-cube">
+                                    <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]"><icon name="medal" size="sm" /></span>
+                                    <span class="excel-calendar__trainee-name">@assignment.TraineeName</span>
+                                    @if (!isReadOnly && assignment.Id > 0)
+                                    {
+                                        <button type="button" class="excel-calendar__trainee-remove-btn"
+                                                data-assignment-id="@assignment.Id"
+                                                aria-label="@Localizer["Calendar_RemoveTrainee"] @assignment.TraineeName"
+                                                title="@Localizer["Calendar_RemoveTrainee"]">×</button>
+                                    }
+                                </span>
                             }
                             else
                             {
                                 <span class="excel-calendar__assignment-name">@assignment.Name</span>
-                            }
-                            @if (!string.IsNullOrEmpty(assignment.SubLabel))
-                            {
-                                <span class="excel-calendar__assignment-note">@assignment.SubLabel</span>
-                            }
-                            @if (assignment.IsTrainee || assignment.IsTraineeShift)
-                            {
-                                <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]"><icon name="medal" size="sm" /></span>
-                            }
-                            @if (!string.IsNullOrEmpty(assignment.TraineeName))
-                            {
-                                <span class="excel-calendar__trainee-sub">
+                                @if (!string.IsNullOrEmpty(assignment.SubLabel))
+                                {
+                                    <span class="excel-calendar__assignment-note">@assignment.SubLabel</span>
+                                }
+                                @if (assignment.IsTrainee || assignment.IsTraineeShift)
+                                {
                                     <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]"><icon name="medal" size="sm" /></span>
-                                    @assignment.TraineeName
-                                </span>
-                            }
-                            @{
-                                // In Draft Mode the × on ANY shift chip (real or staged) routes to draft-clear,
-                                // so render it for the synthetic (negative-id) staged chips too.
-                                var isDraftShiftChip = Model.DraftSessionId != null && assignment.ShiftTypeId.HasValue && assignment.UserId.HasValue;
-                            }
-                            @* Issue 4: add-trainee "+" for real shift chips that have a worker but no trainee yet. *@
-                            @if (!isReadOnly && assignment.Id > 0 && assignment.UserId.HasValue
-                                 && assignment.TraineeUserId == null && !assignment.IsTrainee
-                                 && !assignment.IsTraineeShift && !isHomeChip)
-                            {
-                                <button type="button"
-                                        class="excel-calendar__add-trainee-btn"
-                                        data-assignment-id="@assignment.Id"
-                                        aria-label="@Localizer["Calendar_AddTrainee"] @assignment.Name"
-                                        title="@Localizer["Calendar_AddTrainee"]">+</button>
-                            }
-                            @if (!isReadOnly && (assignment.Id > 0 || isDraftShiftChip))
-                            {
-                                <button type="button"
-                                        class="excel-calendar__remove-btn"
-                                        data-assignment-id="@assignment.Id"
-                                        data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
-                                        data-user-id="@(assignment.UserId?.ToString() ?? "")"
-                                        aria-label="@Localizer["Remove"] @assignment.Name"
-                                        title="@Localizer["Remove"]">×</button>
+                                }
+                                @* Issue 4: add-trainee "+" for real shift chips that have a worker but no trainee yet. *@
+                                @if (!isReadOnly && assignment.Id > 0 && assignment.UserId.HasValue
+                                     && assignment.TraineeUserId == null && !assignment.IsTrainee
+                                     && !assignment.IsTraineeShift)
+                                {
+                                    <button type="button" class="excel-calendar__add-trainee-btn"
+                                            data-assignment-id="@assignment.Id"
+                                            aria-label="@Localizer["Calendar_AddTrainee"] @assignment.Name"
+                                            title="@Localizer["Calendar_AddTrainee"]">+</button>
+                                }
+                                @if (showRemove)
+                                {
+                                    <button type="button" class="excel-calendar__remove-btn"
+                                            data-assignment-id="@assignment.Id"
+                                            data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                                            data-user-id="@(assignment.UserId?.ToString() ?? "")"
+                                            aria-label="@Localizer["Remove"] @assignment.Name"
+                                            title="@Localizer["Remove"]">×</button>
+                                }
                             }
                         </div>
                     }

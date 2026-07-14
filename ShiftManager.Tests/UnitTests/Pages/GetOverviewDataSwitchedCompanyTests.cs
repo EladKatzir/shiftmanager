@@ -72,7 +72,7 @@ public sealed class GetOverviewDataSwitchedCompanyTests
     // Helpers
     // ────────────────────────────────────────────────────────────────────────────
 
-    private (GetOverviewDataModel model, Data.AppDbContext db) MakeModel(int? explicitCompanyId)
+    private (GetOverviewDataModel model, ShiftManager.Data.AppDbContext db) MakeModel(int? explicitCompanyId)
     {
         var owner = _fx.UserByEmail["master.systemadmins.owner@test.com"];
         var systemAdmins = _fx.CompanyByName["SystemAdmins"];

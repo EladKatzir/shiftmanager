@@ -709,6 +709,34 @@ document.addEventListener('click', function (e) {
     openInlineTraineePicker(btn);
 });
 
+// Delegated: the trainee-cube "×" removes ONLY the shadowing trainee (leaves the worker assigned).
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.excel-calendar__trainee-remove-btn');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    removeTraineeFromAssignment(btn.dataset.assignmentId);
+});
+
+function removeTraineeFromAssignment(assignmentId) {
+    fetch('/Calendar/Table?handler=RemoveTrainee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ assignmentId: parseInt(assignmentId, 10) })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+        if (result.success) {
+            showToast(window.AppLocalizer?.Calendar_TraineeRemoved || 'Trainee removed', 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.error || getErrorMessage('serverError'), 'error');
+        }
+    })
+    .catch(function (error) { handleApiError(null, error); });
+}
+
 /**
  * Delete a text entry
  * @param {number} id - CalendarTextEntry ID

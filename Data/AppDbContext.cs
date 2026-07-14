@@ -298,6 +298,16 @@ public class AppDbContext : DbContext
             .HasForeignKey(sa => sa.SourceTimeOffRequestId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Trainee shadowing: the real FK column is TraineeUserId, NOT the EF-conventional "TraineeId".
+        // Without this explicit mapping EF bound the Trainee navigation to an auto-created shadow
+        // "TraineeId" FK that the code never writes, so Include(sa => sa.Trainee) always resolved to
+        // null and the trainee's name never rendered on the calendar. Optional FK → ClientSetNull
+        // (NO ACTION), matching the UserId relationship.
+        modelBuilder.Entity<ShiftAssignment>()
+            .HasOne(sa => sa.Trainee)
+            .WithMany()
+            .HasForeignKey(sa => sa.TraineeUserId);
+
         modelBuilder.Entity<ShiftAssignment>()
             .HasIndex(sa => sa.SourceTimeOffRequestId)
             .HasDatabaseName("IX_ShiftAssignments_SourceTimeOffRequestId")

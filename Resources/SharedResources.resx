@@ -10594,6 +10594,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Calendar_AddTrainee" xml:space="preserve">
     <value>Add trainee</value>
   </data>
+  <data name="Calendar_RemoveTrainee" xml:space="preserve">
+    <value>Remove trainee</value>
+  </data>
+  <data name="Calendar_TraineeRemoved" xml:space="preserve">
+    <value>Trainee removed</value>
+  </data>
   <data name="Calendar_NoTraineesAvailable" xml:space="preserve">
     <value>No trainees available</value>
   </data>
