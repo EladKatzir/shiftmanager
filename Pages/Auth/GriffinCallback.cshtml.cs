@@ -264,6 +264,27 @@ public class GriffinCallbackModel : LocalizedPageModel
         {
             _securityLogger.LogAuthenticationSuccess(parsedUid, email ?? "", role ?? "", ipAddress);
             parsedUidNullable = parsedUid;
+
+            // Language-persistence parity (#10): unlike Login.cshtml.cs's OnPostAsync, this path
+            // signs in with a ClaimsPrincipal built entirely by GriffinService — no AppUser
+            // entity is loaded here — so without this read a Griffin/ADFS user's stored
+            // PreferredLanguage is silently never restored on a fresh browser. Read-only lookup
+            // by the just-authenticated user's own id.
+            // SECURITY-AUDITED: SAFE — IgnoreQueryFilters() required here because tenant context
+            // (the CompanyId claim) is resolved from THIS request's HttpContext.User, which was
+            // established by authentication middleware before this request began and is NOT
+            // retroactively updated by the SignInAsync call above (that only affects the
+            // cookie/context.User on the *next* request). Mirrors the class-level
+            // IgnoreQueryFilters() pattern already documented at the top of this file; scoped by
+            // the just-validated numeric id, not by any caller-supplied value.
+            var preferredLanguage = await _db.Users
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(u => u.Id == parsedUid)
+                .Select(u => u.PreferredLanguage)
+                .FirstOrDefaultAsync();
+            if (!string.IsNullOrEmpty(preferredLanguage))
+                LoginModel.ReseedCultureCookie(HttpContext, preferredLanguage);
         }
         _sw.Stop();
         _diagnostics.Record(new GriffinAuthEvent(
