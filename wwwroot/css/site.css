@@ -7266,6 +7266,14 @@ code {
   box-shadow: 0 1px 0 var(--border);
 }
 
+/* Inside a LOCAL scroll container (.table-responsive / .table-wrapper / .results-table-wrapper),
+   that container — not the viewport — is the sticky positioning reference, so the 64px
+   app-header offset would push the thead down onto the first row (issue #4). Reset to 0 there.
+   Viewport-scrolled sticky tables (Grants/Roles, in .section-card) legitimately keep top:64px. */
+.table-responsive      .data-table--sticky-header thead th,
+.table-wrapper         .data-table--sticky-header thead th,
+.results-table-wrapper .data-table--sticky-header thead th { top: 0; }
+
 .data-table--sticky-col td:first-child,
 .data-table--sticky-col th:first-child {
   position: sticky;
