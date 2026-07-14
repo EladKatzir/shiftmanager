@@ -38,9 +38,10 @@ namespace ShiftManager.Pages.Home
         public ShiftAssignment? NextShift { get; set; }
         public int UnreadNotificationsCount { get; set; }
         public List<UserNotification> RecentNotifications { get; set; } = new();
-        public double HoursThisWeek { get; set; }
+        public int ShiftsThisWeek { get; set; }
         public int DaysWithShiftsThisWeek { get; set; }
-        public int DaysOffThisWeek { get; set; }
+        public int OfflineDaysThisWeek { get; set; }
+        public int VacationDaysThisWeek { get; set; }
 
         // Employee properties
         public int PendingRequestsCount { get; set; }
@@ -125,7 +126,7 @@ namespace ShiftManager.Pages.Home
             RecentAnnouncements = await _announcementService.GetActiveAnnouncementsAsync(userId);
         }
 
-        private async Task LoadCommonDataAsync(int userId, int companyId, DateOnly today, DateOnly startOfWeek, DateOnly endOfWeek)
+        internal async Task LoadCommonDataAsync(int userId, int companyId, DateOnly today, DateOnly startOfWeek, DateOnly endOfWeek)
         {
             // Phase 2C: Parallelize independent queries using Task.WhenAll
             var nextShiftTask = _context.ShiftAssignments
@@ -163,19 +164,45 @@ namespace ShiftManager.Pages.Home
             RecentNotifications = notifications;
             UnreadNotificationsCount = notifications.Count(n => !n.IsRead);
 
-            HoursThisWeek = weekShifts.Sum(sa =>
-            {
-                var shiftType = sa.ShiftInstance.ShiftType;
-                if (shiftType != null)
-                {
-                    var duration = shiftType.End - shiftType.Start;
-                    return duration.TotalHours;
-                }
-                return 0;
-            });
+            // Set-based classification: each of the 7 week days lands in exactly ONE disjoint
+            // bucket (real shift / vacation / offline) by precedence. A day can carry BOTH an
+            // approved vacation AND a HOME shift (HOME shifts are materialized from approved
+            // TimeOffRequests — see ShiftAssignment.SourceTimeOffRequestId), so computing offline
+            // via subtraction (7 - shifts - vacation) would double-count that day and could go
+            // negative. HOME/OFFLINE are presence statuses, not real shifts, so they never claim
+            // the shiftDay bucket.
+            var weekDays = Enumerable.Range(0, 7).Select(i => startOfWeek.AddDays(i)).ToList();
+            // Pre-computed as plain locals (not indexed inline) because EF Core compiles the
+            // .Where() below into an expression tree, and the '^'/indexer Range syntax is not
+            // legal inside an expression tree (CS8790/CS8791).
+            var weekFirstDay = weekDays[0];
+            var weekLastDay = weekDays[^1];
 
-            DaysWithShiftsThisWeek = weekShifts.Select(sa => sa.ShiftInstance.WorkDate).Distinct().Count();
-            DaysOffThisWeek = 7 - DaysWithShiftsThisWeek;
+            var shiftDays = weekShifts
+                .Where(sa => sa.ShiftInstance.ShiftType != null
+                          && !sa.ShiftInstance.ShiftType.IsHome && !sa.ShiftInstance.ShiftType.IsOffline)
+                .Select(sa => sa.ShiftInstance.WorkDate)
+                .ToHashSet();
+
+            // Approved vacation requests overlapping this week — fresh query scoped to the common
+            // path. The TimeOffRequests reference in LoadEmployeeDataAsync is employee-only and has
+            // no date filter, so it isn't reusable here.
+            var approvedVac = await _context.TimeOffRequests
+                .Where(r => r.UserId == userId && r.CompanyId == companyId && r.Status == RequestStatus.Approved
+                         && r.StartDate <= weekLastDay && r.EndDate >= weekFirstDay)
+                .Select(r => new { r.StartDate, r.EndDate })
+                .ToListAsync();
+
+            // Precedence: a real shift beats an overlapping vacation on the same day.
+            var vacationDays = weekDays
+                .Where(d => !shiftDays.Contains(d) && approvedVac.Any(v => v.StartDate <= d && v.EndDate >= d))
+                .ToHashSet();
+
+            ShiftsThisWeek = weekShifts.Count(sa => sa.ShiftInstance.ShiftType != null
+                && !sa.ShiftInstance.ShiftType.IsHome && !sa.ShiftInstance.ShiftType.IsOffline);
+            DaysWithShiftsThisWeek = shiftDays.Count;
+            VacationDaysThisWeek = vacationDays.Count;
+            OfflineDaysThisWeek = weekDays.Count(d => !shiftDays.Contains(d) && !vacationDays.Contains(d));
         }
 
         private async Task LoadEmployeeDataAsync(int userId, int companyId)

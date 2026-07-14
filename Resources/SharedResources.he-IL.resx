@@ -184,6 +184,12 @@
   <data name="DaysOff" xml:space="preserve">
     <value>ימי חופש</value>
   </data>
+  <data name="DaysOffline" xml:space="preserve">
+    <value>ימי אופליין</value>
+  </data>
+  <data name="VacationDays" xml:space="preserve">
+    <value>ימי חופש</value>
+  </data>
   <data name="ViewFullSchedule" xml:space="preserve">
     <value>הצג לוח זמנים מלא</value>
   </data>

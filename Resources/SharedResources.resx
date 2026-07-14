@@ -185,6 +185,12 @@
   <data name="DaysOff" xml:space="preserve">
     <value>Days Off</value>
   </data>
+  <data name="DaysOffline" xml:space="preserve">
+    <value>Offline Days</value>
+  </data>
+  <data name="VacationDays" xml:space="preserve">
+    <value>Vacation Days</value>
+  </data>
   <data name="ViewFullSchedule" xml:space="preserve">
     <value>View Full Schedule</value>
   </data>
