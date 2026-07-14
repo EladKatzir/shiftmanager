@@ -3680,6 +3680,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Settings_ReceiveDailyDigest_Desc" xml:space="preserve">
     <value>Get a daily email summary of your schedule and tasks</value>
   </data>
+  <data name="SuppressSuccessToasts_Label" xml:space="preserve">
+    <value>Turn Off Success Toasts</value>
+  </data>
+  <data name="SuppressSuccessToasts_Desc" xml:space="preserve">
+    <value>Hide the brief confirmation pop-up shown after successful actions. Errors and warnings still appear.</value>
+  </data>
   <data name="Settings_PreferredTime" xml:space="preserve">
     <value>Preferred Delivery Time (UTC)</value>
   </data>

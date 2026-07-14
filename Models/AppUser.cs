@@ -68,6 +68,15 @@ public class AppUser : IBelongsToCompany
     public string? ThemeMode { get; set; }
 
     /// <summary>
+    /// Per-user opt-out for success toasts (Task #6). When true, both success-toast renderers
+    /// (toast-notifications.js, calendar-inline-edit.js) suppress type==='success' toasts —
+    /// errors/warnings/info are unaffected. Global preference, not company-scoped (mirrors
+    /// ThemeMode/ThemeColor). Surfaced to the client as window.UserPrefs.suppressSuccessToasts,
+    /// server-rendered in _Layout.cshtml.
+    /// </summary>
+    public bool SuppressSuccessToasts { get; set; }
+
+    /// <summary>
     /// User's preferred UI/email language as a culture name ("he-IL" | "en-US").
     /// Passively learned: updated from the web request's resolved UI culture whenever it
     /// changes (see PreferredLanguageLearningMiddleware). Consumed by background email

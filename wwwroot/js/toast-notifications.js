@@ -261,6 +261,8 @@
     }
 
     function showToast(message, type = 'success', titleOrOptions = null) {
+        // Task 4 (#6): per-user opt-out for success toasts. Errors/warnings/info are unaffected.
+        if (type === 'success' && window.UserPrefs && window.UserPrefs.suppressSuccessToasts) return;
         const opts = normalizeOptions(titleOrOptions);
         toastQueue.push({ message, type, title: opts.title, errorId: opts.errorId });
         displayNextToast();

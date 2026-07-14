@@ -895,6 +895,8 @@ function showUndoToast(itemId, itemType) {
  * @param {string} type - 'success' or 'error'
  */
 function showToast(message, type = 'success') {
+    // Task 4 (#6): per-user opt-out for success toasts. Errors/warnings/info are unaffected.
+    if (type === 'success' && window.UserPrefs && window.UserPrefs.suppressSuccessToasts) return;
     // Remove any existing toasts
     const existingToasts = document.querySelectorAll('.toast');
     existingToasts.forEach(toast => toast.remove());

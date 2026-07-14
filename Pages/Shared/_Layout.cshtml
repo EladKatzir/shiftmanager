@@ -1,7 +1,9 @@
 @using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @using System.Globalization
+@using ShiftManager.Data
 @using ShiftManager.Services
 @using ShiftManager.Data.SeedData
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
@@ -9,6 +11,7 @@
 @inject IViewAsModeService ViewAsModeService
 @inject IFeatureFlagService FeatureFlagService
 @inject IAreaPaletteService AreaPaletteService
+@inject AppDbContext LayoutDb
 @{
     var user = HttpContextAccessor?.HttpContext?.User;
     var name = user?.FindFirst(ClaimTypes.Name)?.Value ?? "";
@@ -179,6 +182,29 @@
     @await Html.PartialAsync("_LocalizationScript")
     @* B-001-EXT: Reduced Motion Utility - Must load before animation scripts *@
     <script defer src="~/js/reduced-motion.js" asp-append-version="true"></script>
+    @{
+        // Task 4 (#6): per-user opt-out for success toasts. Small scoped read mirroring
+        // AreaPaletteService.GetPaletteForCurrentUserAsync above — resolved server-side per
+        // request so it's always correct (no cookie-loss reversion, no login re-seed needed).
+        // SECURITY-AUDITED: SAFE — IgnoreQueryFilters is required (not just permissive) here:
+        // the WHERE clause is scoped to the AUTHENTICATED user's own Id (sidebarUserId, sourced
+        // from ClaimTypes.NameIdentifier — never attacker-supplied), and only a single boolean
+        // preference on that same user's own row is echoed back to their own browser. The default
+        // AppUser query filter (CompanyId == GetCurrentTenantId()) exists to stop cross-tenant
+        // roster/list leakage; a multi-company member who has switched their active company
+        // (TenantResolver Priority 2.5) has a GetCurrentTenantId() that differs from their own
+        // AppUser.CompanyId (home company), which — without IgnoreQueryFilters — would silently
+        // filter out this self-lookup and reset the preference to false for switched users.
+        var __suppressSuccessToasts = false;
+        if (!string.IsNullOrWhiteSpace(sidebarUserId) && int.TryParse(sidebarUserId, out var __sstUserId))
+        {
+            __suppressSuccessToasts = await LayoutDb.Users.IgnoreQueryFilters().AsNoTracking()
+                .Where(u => u.Id == __sstUserId)
+                .Select(u => u.SuppressSuccessToasts)
+                .FirstOrDefaultAsync();
+        }
+    }
+    <script>window.UserPrefs = Object.assign(window.UserPrefs || {}, { suppressSuccessToasts: @(__suppressSuccessToasts ? "true" : "false") });</script>
     @* B-052: Toast Notification System - Must load before site.js for showToast compatibility *@
     <script defer src="~/js/toast-notifications.js" asp-append-version="true"></script>
     @* Feedback Consolidation: confirm() → modal interceptor *@

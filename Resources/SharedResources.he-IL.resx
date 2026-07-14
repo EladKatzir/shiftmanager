@@ -3505,6 +3505,12 @@
   <data name="Settings_ReceiveDailyDigest_Desc" xml:space="preserve">
     <value>קבל סיכום יומי בדוא״ל של לוח הזמנים והמטלות שלך</value>
   </data>
+  <data name="SuppressSuccessToasts_Label" xml:space="preserve">
+    <value>כיבוי הודעות הצלחה קופצות</value>
+  </data>
+  <data name="SuppressSuccessToasts_Desc" xml:space="preserve">
+    <value>הסתרת חיווי האישור הקופץ שמופיע לאחר פעולות מוצלחות. הודעות שגיאה ואזהרה ימשיכו להופיע.</value>
+  </data>
   <data name="Settings_PreferredTime" xml:space="preserve">
     <value>זמן משלוח מועדף (UTC)</value>
   </data>
