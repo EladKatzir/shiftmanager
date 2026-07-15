@@ -8935,6 +8935,57 @@ Are you absolutely sure you want to delete this user?</value>
     <value>No users are found in your company for the selected filter. Try changing the user filter.</value>
     <comment>Message shown when overview calendar has no users</comment>
   </data>
+
+  <!-- Team Calendar Feature (#9.3 — /Calendar/Team: Company x JobType picker + saved views) -->
+  <data name="Team" xml:space="preserve">
+    <value>Team</value>
+    <comment>Title for the /Calendar/Team page</comment>
+  </data>
+  <data name="Team_SavedViews" xml:space="preserve">
+    <value>Saved Tables</value>
+    <comment>aria-label for the Team page's saved-view tab strip</comment>
+  </data>
+  <data name="Team_NewTableNamePlaceholder" xml:space="preserve">
+    <value>Table name</value>
+    <comment>Placeholder text for the new-saved-view name input on the Team page</comment>
+  </data>
+  <data name="Team_AddTable" xml:space="preserve">
+    <value>Add table</value>
+    <comment>Button label to save the current Team picker selection as a new private table</comment>
+  </data>
+  <data name="Team_ViewNoLongerAccessible" xml:space="preserve">
+    <value>This saved table is no longer accessible — it may be outside your current permissions. Showing your own company instead.</value>
+    <comment>Shown on the Team page when a saved view's company has fallen outside the caller's ViewShifts scope</comment>
+  </data>
+  <data name="Team_Empty_NoUsersMessage" xml:space="preserve">
+    <value>No users found for the selected Company and Job Type.</value>
+    <comment>Empty-state message on the Team page when the chosen Company x JobType has no Standard users</comment>
+  </data>
+  <data name="Team_MissingSelection" xml:space="preserve">
+    <value>Select a Company and Job Type first.</value>
+    <comment>Validation error when saving a Team table without a Company/JobType selection</comment>
+  </data>
+  <data name="Team_NameRequired" xml:space="preserve">
+    <value>Please enter a name for the table.</value>
+    <comment>Validation error when saving a Team table with a blank name</comment>
+  </data>
+  <data name="Team_NameTooLong" xml:space="preserve">
+    <value>Table name must be 60 characters or fewer.</value>
+    <comment>Validation error when a Team table name exceeds the 60-character limit</comment>
+  </data>
+  <data name="Team_DuplicateName" xml:space="preserve">
+    <value>A table with this name already exists.</value>
+    <comment>Clean validation error when a Team table name collides with an existing saved view for the same owner</comment>
+  </data>
+  <data name="Team_ViewNotFound" xml:space="preserve">
+    <value>This saved table was not found.</value>
+    <comment>Error when deleting a Team saved view that no longer exists or isn't owned by the caller</comment>
+  </data>
+  <data name="Team_DeleteTableConfirm" xml:space="preserve">
+    <value>Delete this saved table?</value>
+    <comment>Confirmation prompt before deleting a Team saved view</comment>
+  </data>
+
   <data name="NoAssignments" xml:space="preserve">
     <value>No Assignments</value>
     <comment>Label for cells with no assignments</comment>
