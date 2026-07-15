@@ -403,6 +403,8 @@ builder.Services.AddScoped<IHomeMaterialiserService, HomeMaterialiserService>();
 builder.Services.AddScoped<IUserDayNoteService, UserDayNoteService>();
 builder.Services.AddScoped<ICalendarTextEntryService, CalendarTextEntryService>();
 builder.Services.AddScoped<ICalendarDayNoteService, CalendarDayNoteService>();
+// Shared Overview-shaped calendar builder (Task #9.2) — used by /Calendar/Overview and (later) /Calendar/Team
+builder.Services.AddScoped<IOverviewCalendarBuilder, OverviewCalendarBuilder>();
 
 // SignalR for real-time calendar updates
 builder.Services.AddSignalR();
