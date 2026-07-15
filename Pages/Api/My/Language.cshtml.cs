@@ -75,6 +75,13 @@ public class LanguageModel : PageModel
         user.PreferredLanguage = culture;
         await _db.SaveChangesAsync();
 
+        // This endpoint is now the authority for PreferredLanguage on this request. Without this
+        // flag, PreferredLanguageLearningMiddleware (which runs AFTER us, post-_next) would
+        // overwrite the write above with CultureInfo.CurrentUICulture — the REQUEST's resolved
+        // culture, which is still the OLD one (a new culture cookie only takes effect on the
+        // NEXT request) — silently reverting the change this endpoint just made.
+        HttpContext.Items["LanguageExplicitlySet"] = true;
+
         LoginModel.ReseedCultureCookie(HttpContext, culture);
 
         _logger.LogInformation("PreferredLanguage updated for user {UserId}: {Culture}", userId, culture);

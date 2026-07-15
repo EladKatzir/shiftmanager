@@ -39,6 +39,15 @@ public sealed class PreferredLanguageLearningMiddleware
     {
         await _next(context);
 
+        // An endpoint further down the pipeline (e.g. /Api/My/Language) may have already written
+        // PreferredLanguage explicitly on THIS request. LearnAsync persists
+        // CultureInfo.CurrentUICulture.Name, which is the REQUEST's resolved culture — still the
+        // OLD value on a request that just changed it (a new culture cookie only takes effect on
+        // the NEXT request). Running LearnAsync anyway would silently clobber the endpoint's
+        // explicit write with that stale culture, so the endpoint owns the preference this request.
+        if (context.Items.ContainsKey("LanguageExplicitlySet"))
+            return;
+
         try
         {
             await LearnAsync(context, db, context.RequestAborted);
@@ -67,9 +76,18 @@ public sealed class PreferredLanguageLearningMiddleware
         if (string.IsNullOrWhiteSpace(culture))
             return false;
 
-        // Single statement: update only the rows where the language differs (tenant query
-        // filter already scopes this to the caller's own company). Steady state writes nothing.
+        // SECURITY-AUDITED: SAFE — self-scoped to the authenticated user's own Id (from
+        // ClaimTypes.NameIdentifier), only their own PreferredLanguage is updated; IgnoreQueryFilters
+        // needed so a switched-company user still updates their own (home-company) row.
+        //
+        // Single statement: update only the rows where the language differs. Steady state writes
+        // nothing. IgnoreQueryFilters is required because db.Users otherwise carries the tenant
+        // query filter (CompanyId == GetCurrentTenantId()) — for an owner/multi-company user
+        // currently VIEWING a company other than their home one, that filter would scope this
+        // query to the viewed company and filter out the caller's own row entirely, silently
+        // matching 0 rows.
         var updated = await db.Users
+            .IgnoreQueryFilters()
             .Where(u => u.Id == userId && u.PreferredLanguage != culture)
             .ExecuteUpdateAsync(s => s.SetProperty(u => u.PreferredLanguage, culture), ct);
 
