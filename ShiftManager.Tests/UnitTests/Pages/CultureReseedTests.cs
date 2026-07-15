@@ -106,4 +106,18 @@ public class CultureReseedTests
         cultureHeader.Should().Contain("path=/");
         cultureHeader.Should().NotContain("httponly", "JS must be able to read this cookie");
     }
+
+    [Fact]
+    public void ReseedCultureCookie_HttpsRequest_SetsSecureFlag()
+    {
+        // Secure must track the request scheme (air-gapped intranet deployments may be plain
+        // HTTP, where Secure would make the browser silently refuse to store the cookie at all).
+        var ctx = new DefaultHttpContext();
+        ctx.Request.Scheme = "https";
+
+        LoginModel.ReseedCultureCookie(ctx, "he-IL");
+
+        var cultureHeader = SetCookieHeaders(ctx).First(h => h.StartsWith($"{CultureCookie}="));
+        cultureHeader.Should().Contain("secure");
+    }
 }
