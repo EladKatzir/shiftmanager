@@ -144,7 +144,7 @@ public sealed class TeamPageTests : IAsyncLifetime
     }
 
     private async Task<AppUser> SeedUserAsync(int id, int companyId, int? jobTypeId, string name,
-        AccountType accountType = AccountType.Standard)
+        AccountType accountType = AccountType.Standard, bool isActive = true)
     {
         var user = new AppUser
         {
@@ -154,7 +154,7 @@ public sealed class TeamPageTests : IAsyncLifetime
             Email = $"user{id}@test.local",
             DisplayName = name,
             Role = UserRole.Employee,
-            IsActive = true,
+            IsActive = isActive,
             AccountType = accountType
         };
         _db.Users.Add(user);
@@ -213,6 +213,37 @@ public sealed class TeamPageTests : IAsyncLifetime
         result.Should().BeOfType<PageResult>();
         model.Users.Select(u => u.Id).Should().BeEquivalentTo(new[] { alice.Id, bob.Id });
         model.CalendarData.Rows.Select(r => r.Id).Should().BeEquivalentTo(new[] { $"user-{alice.Id}", $"user-{bob.Id}" });
+    }
+
+    /// <summary>
+    /// Deactivated/locked users must never appear on Team, matching Overview's active-only
+    /// default — a deactivated Standard user of the chosen (Company × JobType) is excluded from
+    /// both the row set and the rendered calendar rows, while an active teammate still shows.
+    /// </summary>
+    [Fact]
+    public async Task Get_ExcludesInactiveUsers()
+    {
+        const int CallerId = 610, CompanyId = 5, JobTypeId = 2;
+        await SeedCompanyAsync(CompanyId, moleculeId: 1, "Tzafona");
+        await SeedUserAsync(CallerId, CompanyId, JobTypeId, "Caller");
+
+        var active = await SeedUserAsync(701, CompanyId, JobTypeId, "ActiveUser");
+        var inactive = await SeedUserAsync(702, CompanyId, JobTypeId, "InactiveUser", isActive: false);
+
+        var (model, _, jobTypeMock) = BuildModel(CallerId, CompanyId, accessibleCompanyIds: new List<int> { CompanyId });
+        jobTypeMock.Setup(j => j.GetJobTypesForMoleculeAsync(1))
+            .ReturnsAsync(new List<JobType> { new() { Id = JobTypeId, Name = "Alhut", AreaId = 1 } });
+
+        model.SelectedCompanyId = CompanyId;
+        model.SelectedJobTypeId = JobTypeId;
+
+        var result = await model.OnGetAsync();
+
+        result.Should().BeOfType<PageResult>();
+        model.Users.Select(u => u.Id).Should().Contain(active.Id);
+        model.Users.Select(u => u.Id).Should().NotContain(inactive.Id,
+            "a deactivated/locked user must never appear on Team, matching Overview's active-only default");
+        model.CalendarData.Rows.Should().NotContain(r => r.Id == $"user-{inactive.Id}");
     }
 
     // ---------------------------------------------------------------------------------------

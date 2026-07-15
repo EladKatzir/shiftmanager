@@ -253,7 +253,8 @@ public class TeamModel : PageModel
             .IgnoreQueryFilters()
             .Where(u => u.CompanyId == SelectedCompanyId!.Value
                      && u.JobTypeId == SelectedJobTypeId!.Value
-                     && u.AccountType == AccountType.Standard)
+                     && u.AccountType == AccountType.Standard
+                     && u.IsActive)
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
     }
