@@ -393,6 +393,11 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<GracefulShutdownSe
 builder.Services.AddScoped<TeamCalendarService>();
 builder.Services.AddScoped<TeamCalendarEventAggregator>();
 
+// Desk Team Views: saved dynamic (TargetCompany × JobType) table views for /Calendar/Team.
+// Deliberately a separate service from TeamCalendarService — reusing it would leak these
+// dynamic filter views into the /MyTeam page (see Models/DeskTeamView.cs).
+builder.Services.AddScoped<IDeskTeamViewService, DeskTeamViewService>();
+
 // Excel Calendars Services
 builder.Services.AddScoped<IShiftCalendarService, ShiftCalendarService>();
 builder.Services.AddScoped<IDistributionListService, DistributionListService>();
