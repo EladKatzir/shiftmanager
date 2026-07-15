@@ -437,7 +437,7 @@ public class ShiftsModel : PageModel
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);
         var assignments = await _calendarService.GetAssignmentsAsync(moleculeId, jobTypeId, StartDate, EndDate);
         // Draft Mode: overlay the viewer's private staged changes onto the live assignments for rendering.
-        assignments = await ApplyDraftOverlayAsync(assignments, moleculeId, jobTypeId);
+        assignments = await ApplyDraftOverlayAsync(assignments, instances, moleculeId, jobTypeId);
 
         // Get text entries + overview notes for overlay badges in shift-based view (cross-company via IgnoreQueryFilters)
         var assignedUserIds = assignments.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value).Distinct();
@@ -564,7 +564,7 @@ public class ShiftsModel : PageModel
         var instances = await _calendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, StartDate, EndDate);
         var assignments = await _calendarService.GetAssignmentsAsync(moleculeId, jobTypeId, StartDate, EndDate);
         // Draft Mode: overlay the viewer's private staged changes onto the live assignments for rendering.
-        assignments = await ApplyDraftOverlayAsync(assignments, moleculeId, jobTypeId);
+        assignments = await ApplyDraftOverlayAsync(assignments, instances, moleculeId, jobTypeId);
 
         // Get overlays (vacation, chores, on-duty)
         var overlays = await _calendarService.GetOverlaysAsync(moleculeId, StartDate, EndDate);
@@ -985,7 +985,7 @@ public class ShiftsModel : PageModel
     /// instead of the live ones. Sets <see cref="ActiveDraftId"/>. Returns the live list unchanged when
     /// not in draft mode or no active draft exists.
     /// </summary>
-    private async Task<List<ShiftAssignment>> ApplyDraftOverlayAsync(List<ShiftAssignment> live, int moleculeId, int? jobTypeId)
+    internal async Task<List<ShiftAssignment>> ApplyDraftOverlayAsync(List<ShiftAssignment> live, List<ShiftInstance> instances, int moleculeId, int? jobTypeId)
     {
         if (!DraftMode)
             return live;
@@ -1013,11 +1013,26 @@ public class ShiftsModel : PageModel
                 stById[s.Id] = s;
         }
 
-        // Keep live assignments for untouched cells; reuse live ShiftInstance objects where present.
+        // Resolve DisplayNames for the staged users. Shift-mode chips render a.User.DisplayName, so a
+        // synthetic assignment with no User nav would show the "Unassigned" fallback. Loaded by explicit
+        // ids (staged users may be cross-company in molecule mode).
+        // SECURITY-AUDITED: SAFE — AppUsers fetched by the exact staged ids only; the draft itself is
+        // molecule-scoped and gated by the shift-assignment grant, so no tenant boundary is widened here.
+        var stagedUserIds = touched.Values.SelectMany(ids => ids).Distinct().ToList();
+        var stagedUsersById = stagedUserIds.Count > 0
+            ? (await _db.Users.IgnoreQueryFilters().Where(u => stagedUserIds.Contains(u.Id)).ToListAsync())
+                .ToDictionary(u => u.Id)
+            : new Dictionary<int, AppUser>();
+
+        // Keep live assignments for untouched cells. For touched cells, resolve the ShiftInstance against
+        // the authoritative `instances` list — BuildCellsForShiftType looks each cell's instance up THERE
+        // (by type+date), so a staged assignment must hang off an instance that list contains or the cell
+        // renders nothing. Resolving here (instead of from live assignments) also covers a live-but-empty
+        // instance — one defined with no assignments — which the old assignment-derived map missed.
         var result = live.Where(a => !touched.ContainsKey((a.ShiftInstance.ShiftTypeId, a.ShiftInstance.WorkDate))).ToList();
-        var instanceByCell = live
-            .GroupBy(a => (a.ShiftInstance.ShiftTypeId, a.ShiftInstance.WorkDate))
-            .ToDictionary(g => g.Key, g => g.First().ShiftInstance);
+        var instanceByCell = instances
+            .GroupBy(i => (i.ShiftTypeId, i.WorkDate))
+            .ToDictionary(g => g.Key, g => g.First());
 
         int synthId = -1;
         foreach (var (key, userIds) in touched)
@@ -1027,6 +1042,9 @@ public class ShiftsModel : PageModel
 
             if (!instanceByCell.TryGetValue(key, out var instance))
             {
+                // Empty cell with no live instance: synthesize one and register it in `instances` so the
+                // shift-mode cell builder can find it. (The by-user builder reads a.ShiftInstance off each
+                // assignment directly and never consults this list, so it is unaffected.)
                 instance = new ShiftInstance
                 {
                     Id = synthId--,
@@ -1036,6 +1054,8 @@ public class ShiftsModel : PageModel
                     CompanyId = st.CompanyId ?? 0,
                     StaffingRequired = Math.Max(1, userIds.Count)
                 };
+                instances.Add(instance);
+                instanceByCell[key] = instance;
             }
             else if (instance.ShiftType == null)
             {
@@ -1049,7 +1069,8 @@ public class ShiftsModel : PageModel
                     Id = synthId--,
                     ShiftInstanceId = instance.Id,
                     ShiftInstance = instance,
-                    UserId = uid
+                    UserId = uid,
+                    User = stagedUsersById.GetValueOrDefault(uid)
                 });
             }
         }
@@ -1057,7 +1078,7 @@ public class ShiftsModel : PageModel
         return result;
     }
 
-    private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForShiftType(
+    internal Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForShiftType(
         int shiftTypeId,
         List<ShiftInstance> instances,
         List<ShiftAssignment> assignments,
