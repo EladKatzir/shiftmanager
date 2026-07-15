@@ -9,7 +9,9 @@
     DateOnly today = Model.Today;
     bool isReadOnly = Model.IsReadOnly;
     bool isCollapsed = Model.IsCollapsed;
-    bool hasWeeklyHours = Model.HasWeeklyHours;
+    // #8: the Total column is now driven by HasShiftCount/ShiftCount (a count of real shifts), not
+    // HasWeeklyHours/WeeklyHours (summed hours) — WeeklyHours is retained on the model but unused here.
+    bool hasShiftCount = Model.HasShiftCount;
 
     var style = row.Color != null ? $"--row-color: {row.Color}" : "";
     var hiddenStyle = isCollapsed ? "display: none;" : "";
@@ -268,12 +270,12 @@
             </div>
         </td>
     }
-    @if (hasWeeklyHours)
+    @if (hasShiftCount)
     {
         <td class="excel-calendar__cell excel-calendar__cell--total">
-            @if (row.WeeklyHours.HasValue)
+            @if (row.ShiftCount.HasValue)
             {
-                <span class="excel-calendar__hours">@($"{row.WeeklyHours:0.#}h")</span>
+                <span class="excel-calendar__hours">@row.ShiftCount</span>
             }
         </td>
     }

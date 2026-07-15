@@ -67,6 +67,10 @@ public class ExcelCalendarRow
     public string? GroupId { get; set; }
     public string? CompanyName { get; set; }
     public double? WeeklyHours { get; set; }
+    /// <summary>Count of real (non-home/non-offline) shifts assigned to this row's user within the
+    /// visible date range (#8). Drives the by-user week-view "Total" column; WeeklyHours is retained
+    /// but no longer rendered there.</summary>
+    public int? ShiftCount { get; set; }
     public Dictionary<DateOnly, ExcelCalendarCell> Cells { get; set; } = new();
 }
 

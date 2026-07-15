@@ -336,6 +336,12 @@
         "Elig_RequiresGender": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Elig_RequiresGender"].Value)),
         "Elig_RequiresOfficerRank": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Elig_RequiresOfficerRank"].Value)),
         "Elig_Exempt": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Elig_Exempt"].Value)),
-        "Elig_Blocked": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Elig_Blocked"].Value))
+        "Elig_Blocked": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Elig_Blocked"].Value)),
+
+        // Team saved-view tables (team.js) — client-side pre-validation / confirm dialogs; the
+        // POST handlers' own error responses are already server-localized (Team_DuplicateName etc.)
+        // and don't need a client-side counterpart here.
+        "Team_NameRequired": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Team_NameRequired"].Value)),
+        "Team_DeleteTableConfirm": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Team_DeleteTableConfirm"].Value))
     };
 </script>

@@ -75,6 +75,11 @@ public class SettingsModel : PageModel
 
     public List<SelectListItem> RankOptions { get; set; } = new();
 
+    // Task 4 (#6): per-user opt-out for success toasts. Global on AppUser (mirrors ThemeMode/ThemeColor) —
+    // not part of DailyNotificationPreference, which is company-scoped and email-only.
+    [BindProperty]
+    public bool SuppressSuccessToasts { get; set; }
+
     // SuccessMessage / ErrorMessage removed — feedback now flows through TempData → _Layout FeedbackModal bridge.
     public bool HasExistingPreference { get; set; }
 
@@ -134,11 +139,12 @@ public class SettingsModel : PageModel
 
         SelectedOnDutyRoleTypes = existingSubscriptions;
 
-        // Load user's military rank
+        // Load user's military rank + toast preference
         var user = await _db.Users.FindAsync(userId);
         if (user != null)
         {
             Rank = user.Rank;
+            SuppressSuccessToasts = user.SuppressSuccessToasts;
         }
 
         // Populate rank options
@@ -265,6 +271,7 @@ public class SettingsModel : PageModel
             }
 
             user.Rank = Rank;
+            user.SuppressSuccessToasts = SuppressSuccessToasts;
             user.ProfileLastUpdated = DateTime.UtcNow;
             user.ProfileLastUpdatedBy = userId;
 

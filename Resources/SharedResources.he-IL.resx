@@ -184,6 +184,12 @@
   <data name="DaysOff" xml:space="preserve">
     <value>ימי חופש</value>
   </data>
+  <data name="DaysOffline" xml:space="preserve">
+    <value>ימי אופליין</value>
+  </data>
+  <data name="VacationDays" xml:space="preserve">
+    <value>ימי חופש</value>
+  </data>
   <data name="ViewFullSchedule" xml:space="preserve">
     <value>הצג לוח זמנים מלא</value>
   </data>
@@ -1428,6 +1434,10 @@
   </data>
   <data name="Total" xml:space="preserve">
     <value>סה"כ</value>
+  </data>
+  <data name="TotalShifts" xml:space="preserve">
+    <value>סה"כ משמרות</value>
+    <comment>#8 - Week-view by-user calendar Total column header (shift count, not hours)</comment>
   </data>
   <data name="ApprovalRate" xml:space="preserve">
     <value>שיעור אישור</value>
@@ -3494,6 +3504,12 @@
   </data>
   <data name="Settings_ReceiveDailyDigest_Desc" xml:space="preserve">
     <value>קבל סיכום יומי בדוא״ל של לוח הזמנים והמטלות שלך</value>
+  </data>
+  <data name="SuppressSuccessToasts_Label" xml:space="preserve">
+    <value>כיבוי הודעות הצלחה קופצות</value>
+  </data>
+  <data name="SuppressSuccessToasts_Desc" xml:space="preserve">
+    <value>הסתרת חיווי האישור הקופץ שמופיע לאחר פעולות מוצלחות. הודעות שגיאה ואזהרה ימשיכו להופיע.</value>
   </data>
   <data name="Settings_PreferredTime" xml:space="preserve">
     <value>זמן משלוח מועדף (UTC)</value>
@@ -8885,6 +8901,57 @@
     <value>לא נמצאו משתמשים בדסק שלך עבור הסינון הנבחר. נסה לשנות את סינון המשתמשים.</value>
     <comment>Message shown when overview calendar has no users</comment>
   </data>
+
+  <!-- Team Calendar Feature (#9.3 — /Calendar/Team: Company x JobType picker + saved views) -->
+  <data name="Team" xml:space="preserve">
+    <value>צוות</value>
+    <comment>Title for the /Calendar/Team page</comment>
+  </data>
+  <data name="Team_SavedViews" xml:space="preserve">
+    <value>טבלאות שמורות</value>
+    <comment>aria-label for the Team page's saved-view tab strip</comment>
+  </data>
+  <data name="Team_NewTableNamePlaceholder" xml:space="preserve">
+    <value>שם הטבלה</value>
+    <comment>Placeholder text for the new-saved-view name input on the Team page</comment>
+  </data>
+  <data name="Team_AddTable" xml:space="preserve">
+    <value>הוסף טבלה</value>
+    <comment>Button label to save the current Team picker selection as a new private table</comment>
+  </data>
+  <data name="Team_ViewNoLongerAccessible" xml:space="preserve">
+    <value>טבלה שמורה זו אינה נגישה יותר — ייתכן שהיא מחוץ להרשאות הנוכחיות שלך. מוצג הדסק שלך במקום.</value>
+    <comment>Shown on the Team page when a saved view's company has fallen outside the caller's ViewShifts scope</comment>
+  </data>
+  <data name="Team_Empty_NoUsersMessage" xml:space="preserve">
+    <value>לא נמצאו משתמשים עבור הדסק וסוג העבודה שנבחרו.</value>
+    <comment>Empty-state message on the Team page when the chosen Company x JobType has no Standard users</comment>
+  </data>
+  <data name="Team_MissingSelection" xml:space="preserve">
+    <value>יש לבחור דסק וסוג עבודה תחילה.</value>
+    <comment>Validation error when saving a Team table without a Company/JobType selection</comment>
+  </data>
+  <data name="Team_NameRequired" xml:space="preserve">
+    <value>יש להזין שם לטבלה.</value>
+    <comment>Validation error when saving a Team table with a blank name</comment>
+  </data>
+  <data name="Team_NameTooLong" xml:space="preserve">
+    <value>שם הטבלה חייב להכיל עד 60 תווים.</value>
+    <comment>Validation error when a Team table name exceeds the 60-character limit</comment>
+  </data>
+  <data name="Team_DuplicateName" xml:space="preserve">
+    <value>כבר קיימת טבלה בשם זה.</value>
+    <comment>Clean validation error when a Team table name collides with an existing saved view for the same owner</comment>
+  </data>
+  <data name="Team_ViewNotFound" xml:space="preserve">
+    <value>הטבלה השמורה לא נמצאה.</value>
+    <comment>Error when deleting a Team saved view that no longer exists or isn't owned by the caller</comment>
+  </data>
+  <data name="Team_DeleteTableConfirm" xml:space="preserve">
+    <value>למחוק את הטבלה השמורה הזו?</value>
+    <comment>Confirmation prompt before deleting a Team saved view</comment>
+  </data>
+
   <data name="NoAssignments" xml:space="preserve">
     <value>אין שיבוצים</value>
     <comment>Label for cells with no assignments</comment>
@@ -13382,6 +13449,12 @@
   </data>
   <data name="CompanyOverview" xml:space="preserve">
     <value>צפייה בצוות</value>
+  </data>
+  <data name="MyDesk" xml:space="preserve">
+    <value>הדסק שלי</value>
+  </data>
+  <data name="Nav_Team" xml:space="preserve">
+    <value>צוות</value>
   </data>
   <data name="Nav_CompanyOverview" xml:space="preserve">
     <value>צפייה בצוות</value>

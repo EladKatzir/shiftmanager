@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShiftManager.Data;
 
@@ -10,9 +11,11 @@ using ShiftManager.Data;
 namespace ShiftManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715003544_AddDeskTeamView")]
+    partial class AddDeskTeamView
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -2995,6 +2998,9 @@ namespace ShiftManager.Migrations
                     b.Property<int?>("SourceTimeOffRequestId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("TraineeId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("TraineeUserId")
                         .HasColumnType("INTEGER");
 
@@ -3009,7 +3015,7 @@ namespace ShiftManager.Migrations
                         .HasDatabaseName("IX_ShiftAssignments_SourceTimeOffRequestId")
                         .HasFilter("[SourceTimeOffRequestId] IS NOT NULL");
 
-                    b.HasIndex("TraineeUserId");
+                    b.HasIndex("TraineeId");
 
                     b.HasIndex("UserId");
 
@@ -5413,7 +5419,7 @@ namespace ShiftManager.Migrations
 
                     b.HasOne("ShiftManager.Models.AppUser", "Trainee")
                         .WithMany()
-                        .HasForeignKey("TraineeUserId");
+                        .HasForeignKey("TraineeId");
 
                     b.HasOne("ShiftManager.Models.AppUser", "User")
                         .WithMany()

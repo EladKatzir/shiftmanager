@@ -33,6 +33,7 @@ public class OverviewModel : PageModel
     private readonly ITenantResolver _tenantResolver;
     private readonly IAuditLogService _auditLogService;
     private readonly ICalendarNotificationService _notificationService;
+    private readonly IOverviewCalendarBuilder _calendarBuilder;
     private readonly ILogger<OverviewModel> _logger;
 
     public OverviewModel(
@@ -45,6 +46,7 @@ public class OverviewModel : PageModel
         ITenantResolver tenantResolver,
         IAuditLogService auditLogService,
         ICalendarNotificationService notificationService,
+        IOverviewCalendarBuilder calendarBuilder,
         ILogger<OverviewModel> logger)
     {
         _db = db;
@@ -56,6 +58,7 @@ public class OverviewModel : PageModel
         _tenantResolver = tenantResolver;
         _auditLogService = auditLogService;
         _notificationService = notificationService;
+        _calendarBuilder = calendarBuilder;
         _logger = logger;
     }
 
@@ -129,8 +132,8 @@ public class OverviewModel : PageModel
         // Load users in this company
         await LoadUsersAsync();
 
-        // Build calendar data
-        await BuildOverviewCalendarAsync();
+        // Build calendar data (shared builder — Task #9.2 — also used by /Calendar/Team)
+        CalendarData = await _calendarBuilder.BuildAsync(CompanyId, Users, StartDate, EndDate, ViewMode, CanEditNotes);
 
         _logger.LogInformation(
             "Overview calendar loaded for User {UserId}, Company {CompanyId}, ViewMode {ViewMode}",
@@ -216,338 +219,6 @@ public class OverviewModel : PageModel
         {
             Users = Users.Where(u => u.Id == CurrentUserId).ToList();
         }
-    }
-
-    private async Task BuildOverviewCalendarAsync()
-    {
-        // Load all aggregated data for the date range
-        var vacations = await LoadVacationsAsync();
-        var shifts = await LoadShiftsAsync();
-        var chores = await LoadChoresAsync();
-        var onDuties = await LoadOnDutiesAsync();
-        var notes = await _textEntryService.GetOverviewNotesForCompanyAsync(CompanyId, StartDate, EndDate);
-
-        // Load quick-entry text entries for cross-visibility (📝 badge on Overview)
-        var userIds = Users.Select(u => u.Id);
-        var textEntriesWithType = await _textEntryService.GetForUsersAndDateRangeWithTypeAsync(userIds, StartDate, EndDate);
-        // Filter to QuickEntry only (OverviewNotes are already in 'notes' dict)
-        var quickEntries = textEntriesWithType.ToDictionary(
-            kvp => kvp.Key,
-            kvp => kvp.Value
-                .Where(e => e.EntryType == CalendarTextEntryType.QuickEntry)
-                .Select(e => e.Text)
-                .ToList())
-            .Where(kvp => kvp.Value.Count > 0)
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-        // Build rows - one per user
-        var rows = new List<ExcelCalendarRow>();
-        foreach (var user in Users)
-        {
-            var row = new ExcelCalendarRow
-            {
-                Id = $"user-{user.Id}",
-                Label = user.DisplayName
-            };
-
-            // Build cells for each date
-            row.Cells = BuildCellsForUser(user.Id, vacations, shifts, chores, onDuties, notes, quickEntries);
-            rows.Add(row);
-        }
-
-        CalendarData = new ExcelCalendarTableViewModel
-        {
-            StartDate = StartDate,
-            EndDate = EndDate,
-            ViewMode = ViewMode,
-            // Issue 7: Overview is no longer hard-locked to view-only. It stays read-only for
-            // ASSIGNMENTS (assignment slash-menu is gated by data-can-assign / CanEdit elsewhere and
-            // never enabled here), but note / free-text editing is opened to anyone who holds
-            // WriteOverviewNotes — Molecule Admins, קב"ר, and (Issue 3) every molecule member. Driving
-            // IsReadOnly from the same note-edit grant removes the misleading "view only" banner and
-            // makes the cells interactive for those roles instead of inert.
-            IsReadOnly = !CanEditNotes,
-            CalendarType = "overview",
-            Rows = rows
-        };
-        CalendarData.RowMode = "Shifts";
-        // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
-        CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
-        CalendarData.RowOrderContextKey = $"overview:{CompanyId}";
-    }
-
-    private async Task<Dictionary<(int UserId, DateOnly Date), (bool HasVacation, string? DayAtLabel)>> LoadVacationsAsync()
-    {
-        // Get approved time-off requests for users in date range
-        var userIds = Users.Select(u => u.Id).ToList();
-
-        var timeOffRequests = await _db.TimeOffRequests
-            .Where(t => userIds.Contains(t.UserId) &&
-                        t.StartDate <= EndDate &&
-                        t.EndDate >= StartDate &&
-                        t.Status == RequestStatus.Approved)
-            .ToListAsync();
-
-        // Expand time-off requests to per-day records. Vacation/After → HasVacation (palm-tree badge);
-        // "Day at [X]" (DayAt) → its own DayAtLabel so it renders as "יום {Label}", never the vacation
-        // symbol (Issue: day-X showed as vacation). Independent flags so a day can carry both if needed.
-        var result = new Dictionary<(int UserId, DateOnly Date), (bool HasVacation, string? DayAtLabel)>();
-        foreach (var timeOff in timeOffRequests)
-        {
-            for (var date = timeOff.StartDate; date <= timeOff.EndDate; date = date.AddDays(1))
-            {
-                if (date >= StartDate && date <= EndDate)
-                {
-                    result.TryGetValue((timeOff.UserId, date), out var existing);
-                    if (timeOff.Type == TimeOffType.DayAt)
-                        existing.DayAtLabel = timeOff.Label;
-                    else
-                        existing.HasVacation = true;
-                    result[(timeOff.UserId, date)] = existing;
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Per-user-per-date shift item used to render the Overview cell.
-    /// Carries HOME-specific fields so the shared _CalendarRow partial can
-    /// render HOME chips with source/house icons + time range (Task 23).
-    /// </summary>
-    private record OverviewShiftItem(
-        string Name,
-        bool IsHome,
-        string? ShiftStart,
-        string? ShiftEnd,
-        int? SourceTimeOffRequestId,
-        int? SourceTimeOffRequestType);
-
-    private async Task<Dictionary<(int UserId, DateOnly Date), List<OverviewShiftItem>>> LoadShiftsAsync()
-    {
-        var userIds = Users.Select(u => u.Id).ToList();
-
-        // Include SourceTimeOffRequest so the projection can expose its Type for HOME chip
-        // source-icon resolution (rotation/vacation/after) — Task 23.
-        var assignments = await _db.ShiftAssignments
-            .Include(sa => sa.ShiftInstance)
-                .ThenInclude(si => si.ShiftType)
-            .Include(sa => sa.SourceTimeOffRequest)
-            .Where(sa => ((sa.UserId.HasValue && userIds.Contains(sa.UserId.Value)) ||
-                         (sa.TraineeUserId.HasValue && userIds.Contains(sa.TraineeUserId.Value))) &&
-                        sa.ShiftInstance.WorkDate >= StartDate &&
-                        sa.ShiftInstance.WorkDate <= EndDate)
-            .ToListAsync();
-
-        var companyId = _tenantResolver.GetCurrentTenantId();
-        var culture = System.Globalization.CultureInfo.CurrentUICulture.Name;
-
-        var result = new Dictionary<(int UserId, DateOnly Date), List<OverviewShiftItem>>();
-        foreach (var assignment in assignments)
-        {
-            var date = assignment.ShiftInstance.WorkDate;
-            var shiftType = assignment.ShiftInstance.ShiftType;
-            var shiftName = shiftType != null
-                ? await _companyLocalizationService.ResolveShiftTypeNameAsync(
-                    shiftType, companyId, culture)
-                : _localizer["Shift"].Value;
-
-            // ShiftType.IsHome is [NotMapped] — safe here because the projection runs
-            // client-side after .ToListAsync(). Same pattern as Calendar/Shifts.
-            var isHome = shiftType?.IsHome == true;
-            var shiftStart = shiftType?.Start.ToString("HH:mm");
-            var shiftEnd = shiftType?.End.ToString("HH:mm");
-            var sourceId = assignment.SourceTimeOffRequestId;
-            var sourceType = assignment.SourceTimeOffRequest != null
-                ? (int?)assignment.SourceTimeOffRequest.Type
-                : null;
-
-            // Add for primary user if assigned
-            if (assignment.UserId.HasValue && userIds.Contains(assignment.UserId.Value))
-            {
-                var key = (assignment.UserId.Value, date);
-                if (!result.ContainsKey(key))
-                {
-                    result[key] = new List<OverviewShiftItem>();
-                }
-                result[key].Add(new OverviewShiftItem(shiftName, isHome, shiftStart, shiftEnd, sourceId, sourceType));
-            }
-
-            // Also add for trainee if applicable
-            if (assignment.TraineeUserId.HasValue && userIds.Contains(assignment.TraineeUserId.Value))
-            {
-                var traineeKey = (assignment.TraineeUserId.Value, date);
-                if (!result.ContainsKey(traineeKey))
-                {
-                    result[traineeKey] = new List<OverviewShiftItem>();
-                }
-                result[traineeKey].Add(new OverviewShiftItem(
-                    $"{shiftName} ({_localizer["Trainee"].Value})",
-                    isHome, shiftStart, shiftEnd, sourceId, sourceType));
-            }
-        }
-
-        return result;
-    }
-
-    private async Task<Dictionary<(int UserId, DateOnly Date), List<string>>> LoadChoresAsync()
-    {
-        var userIds = Users.Select(u => u.Id).ToList();
-
-        var chores = await _db.Chores
-            .Include(c => c.ChoreType)
-            .Where(c => userIds.Contains(c.UserId) &&
-                        c.Date >= StartDate &&
-                        c.Date <= EndDate &&
-                        c.CanceledAt == null)
-            .ToListAsync();
-
-        var isHebrew = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he");
-        var result = new Dictionary<(int UserId, DateOnly Date), List<string>>();
-        foreach (var chore in chores)
-        {
-            var key = (chore.UserId, chore.Date);
-            if (!result.ContainsKey(key))
-            {
-                result[key] = new List<string>();
-            }
-            var choreName = chore.ChoreType != null
-                ? (isHebrew && !string.IsNullOrWhiteSpace(chore.ChoreType.NameHe) ? chore.ChoreType.NameHe : chore.ChoreType.NameEn ?? chore.ChoreType.DisplayName)
-                : chore.Title;
-            result[key].Add(choreName);
-        }
-
-        return result;
-    }
-
-    private async Task<Dictionary<(int UserId, DateOnly Date), List<string>>> LoadOnDutiesAsync()
-    {
-        var userIds = Users.Select(u => u.Id).ToList();
-
-        var onDuties = await _db.OnDuties
-            .Where(od => userIds.Contains(od.UserId) &&
-                        od.Date >= StartDate &&
-                        od.Date <= EndDate &&
-                        od.CanceledAt == null)
-            .ToListAsync();
-
-        var result = new Dictionary<(int UserId, DateOnly Date), List<string>>();
-        foreach (var onDuty in onDuties)
-        {
-            var key = (onDuty.UserId, onDuty.Date);
-            if (!result.ContainsKey(key))
-            {
-                result[key] = new List<string>();
-            }
-            result[key].Add(onDuty.Type.ToString());
-        }
-
-        return result;
-    }
-
-    private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
-        int userId,
-        Dictionary<(int UserId, DateOnly Date), (bool HasVacation, string? DayAtLabel)> vacations,
-        Dictionary<(int UserId, DateOnly Date), List<OverviewShiftItem>> shifts,
-        Dictionary<(int UserId, DateOnly Date), List<string>> chores,
-        Dictionary<(int UserId, DateOnly Date), List<string>> onDuties,
-        Dictionary<(int UserId, DateOnly Date), string> notes,
-        Dictionary<(int UserId, DateOnly Date), List<string>> quickEntries)
-    {
-        var cells = new Dictionary<DateOnly, ExcelCalendarCell>();
-
-        for (var date = StartDate; date <= EndDate; date = date.AddDays(1))
-        {
-            var cell = new ExcelCalendarCell();
-            var key = (userId, date);
-            var assignments = new List<ExcelCalendarAssignment>();
-
-            // Add shifts as assignments. HOME shifts populate IsHome + source/time fields
-            // so the shared _CalendarRow partial renders the unified HOME chip (Task 23).
-            if (shifts.TryGetValue(key, out var shiftList))
-            {
-                foreach (var shift in shiftList)
-                {
-                    assignments.Add(new ExcelCalendarAssignment
-                    {
-                        Id = 0, // Not editable
-                        Name = shift.Name,
-                        Role = "shift",
-                        UserId = userId,
-                        IsHome = shift.IsHome,
-                        ShiftStart = shift.ShiftStart,
-                        ShiftEnd = shift.ShiftEnd,
-                        SourceTimeOffRequestId = shift.SourceTimeOffRequestId,
-                        SourceTimeOffRequestType = shift.SourceTimeOffRequestType
-                    });
-                }
-            }
-
-            // Add chores as assignments
-            if (chores.TryGetValue(key, out var choreList))
-            {
-                foreach (var chore in choreList)
-                {
-                    assignments.Add(new ExcelCalendarAssignment
-                    {
-                        Id = 0,
-                        Name = chore,
-                        Role = "chore",
-                        UserId = userId
-                    });
-                }
-            }
-
-            // Add on-duties as assignments
-            if (onDuties.TryGetValue(key, out var dutyList))
-            {
-                foreach (var duty in dutyList)
-                {
-                    assignments.Add(new ExcelCalendarAssignment
-                    {
-                        Id = 0,
-                        Name = duty,
-                        Role = "duty",
-                        UserId = userId
-                    });
-                }
-            }
-
-            cell.Assignments = assignments;
-
-            // Add overlay data
-            vacations.TryGetValue(key, out var timeOff);
-            var hasVacationFlag = timeOff.HasVacation;
-            var dayAtLabel = timeOff.DayAtLabel;
-            var hasTextEntries = quickEntries.TryGetValue(key, out var entryTexts) && entryTexts.Count > 0;
-
-            if (hasVacationFlag || dayAtLabel != null || hasTextEntries)
-            {
-                cell.Overlay = new ExcelCalendarOverlay
-                {
-                    HasVacation = hasVacationFlag,
-                    DayAtLabel = dayAtLabel
-                };
-
-                // Cross-visibility: show QuickEntry text entries from Shifts/Chores/OnCall as 📝 badge
-                if (hasTextEntries)
-                {
-                    cell.Overlay.HasTextEntry = true;
-                    cell.Overlay.TextEntryTexts = entryTexts!;
-                }
-            }
-
-            // Add overview note (renders as plain text in cell)
-            if (notes.TryGetValue(key, out var note))
-            {
-                cell.Note = note;
-            }
-
-            cells[date] = cell;
-        }
-
-        return cells;
     }
 
     // API endpoint for saving notes (AJAX)

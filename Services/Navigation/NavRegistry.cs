@@ -42,8 +42,13 @@ public static class NavRegistry
                 Link("Schedule", "/Calendar/Shifts", icon: "calendar", activeMatch: "/Calendar/Shifts"),
                 Link("Chores", "/Calendar/Chores", policy: G("ViewChores"), icon: "brush", activeMatch: "/Calendar/Chores"),
                 Link("OnDuty", "/Calendar/OnCall", policy: G("ViewDuties"), icon: "pin", activeMatch: "/Calendar/OnCall"),
-                Link("Calendar_ShiftsManagement", "/Calendar/Table", policy: G("ManagerHomeAccess"), icon: "table"),
-                Link("CompanyOverview", "/Calendar/Overview", icon: "eye")),
+                // #9: the old "Scheduled Shifts" (/Calendar/Table, manager-only roster grid) nav
+                // leaf is REPLACED by the everyone-visible Team page. /Calendar/Table still works by
+                // URL; it just loses its sidebar shortcut (approved). null policy = any authenticated
+                // user (Team page is [Authorize] with no policy — nav parity requires the match).
+                Link("Nav_Team", "/Calendar/Team", icon: "users", activeMatch: "/Calendar/Team"),
+                // #9: renamed from "Company Overview" — this whole-company view IS the user's "desk".
+                Link("MyDesk", "/Calendar/Overview", icon: "eye")),
             SubGroup("Nav2_Sched_Planning",
                 Link("Nav2_ShiftPlans", "/Owner/Programs", policy: G("ManagerHomeAccess"), icon: "clipboard-list", activeMatch: "/Owner/Programs"),
                 Link("Nav2_MasterPlans", "/Owner/MasterPrograms", policy: G("ManagerHomeAccess"), icon: "layers-3"),

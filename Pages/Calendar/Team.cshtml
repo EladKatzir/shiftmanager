@@ -1,0 +1,317 @@
+@page
+@model ShiftManager.Pages.Calendar.TeamModel
+@using ShiftManager.ViewComponents
+@using ShiftManager.Pages.Shared
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@inject ShiftManager.Services.ILocalizationService Localization
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Team"];
+}
+
+@* Breadcrumb *@
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Calendars"], Url = "/Calendar/Month" },
+    new BreadcrumbItem { Label = Localizer["Team"], IsActive = true }
+})
+
+<div class="cal-page team-page" data-ui-version="v2">
+    @* Toolbar — Row 1: Company + JobType picker, ViewMode, Date nav, Print *@
+    <div class="cal-toolbar">
+        <div class="cal-toolbar__row">
+            <div class="cal-toolbar__selector cal-toolbar__primary">
+                <label for="companySelect">@Localizer["Company"]</label>
+                <select id="companySelect" class="form-select" onchange="updateTeamSelection()">
+                    @foreach (var company in Model.AccessibleCompanies)
+                    {
+                        <option value="@company.Id" selected="@(company.Id == Model.SelectedCompanyId)">@company.LocalizedName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="cal-toolbar__selector cal-toolbar__primary">
+                <label for="jobTypeSelect">@Localizer["JobType"]</label>
+                <select id="jobTypeSelect" class="form-select" onchange="updateTeamSelection()">
+                    @foreach (var jobType in Model.AvailableJobTypes)
+                    {
+                        <option value="@jobType.Id" selected="@(jobType.Id == Model.SelectedJobTypeId)">@jobType.DisplayName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="cal-toolbar__selector">
+                <label for="viewModeSelect">@Localizer["ViewMode"]</label>
+                <select id="viewModeSelect" class="form-select" onchange="updateViewMode()">
+                    <option value="week" selected="@(Model.ViewMode == "week")">@Localizer["Week"]</option>
+                    <option value="next7" selected="@(Model.ViewMode == "next7")">@Localizer["Next7Days"]</option>
+                    <option value="2weeks" selected="@(Model.ViewMode == "2weeks")">@Localizer["TwoWeeks"]</option>
+                    <option value="month" selected="@(Model.ViewMode == "month")">@Localizer["Month"]</option>
+                </select>
+            </div>
+
+            <div class="cal-toolbar__date-nav cal-toolbar__primary">
+                <button type="button" class="btn btn-ghost cal-toolbar__nav-btn" onclick="navigateToDate('@Model.PreviousStart')" title="@Localizer["Previous"]">
+                    <span class="nav-icon">&larr;</span>
+                    <span class="nav-text">@Localizer["Previous"]</span>
+                </button>
+
+                <div class="cal-toolbar__date-display">
+                    <input type="date"
+                           id="datePickerInput"
+                           value="@Model.StartDate.ToString("yyyy-MM-dd")"
+                           onclick="if(this.showPicker)this.showPicker()"
+                           onchange="navigateToDate(this.value)"
+                           class="cal-toolbar__date-picker" />
+                    <span class="cal-toolbar__date-label">
+                        @Localization.FormatMediumDate(Model.StartDate) - @Localization.FormatMediumDate(Model.EndDate)
+                    </span>
+                </div>
+
+                <button type="button" class="btn btn-ghost cal-toolbar__nav-btn" onclick="navigateToDate('@Model.NextStart')" title="@Localizer["Next"]">
+                    <span class="nav-text">@Localizer["Next"]</span>
+                    <span class="nav-icon">&rarr;</span>
+                </button>
+            </div>
+
+            <button type="button" class="btn btn-secondary cal-toolbar__print" onclick="window.print()" title="@Localizer["Print"]">
+                <span class="btn-icon"><icon name="printer" /></span>
+                <span class="btn-text">@Localizer["Print"]</span>
+            </button>
+
+            @* Mobile-only Tools overflow trigger — surfaces controls hidden at <768px. *@
+            <button type="button"
+                    class="btn btn-ghost cal-toolbar__overflow-trigger"
+                    loc-aria-label="Calendar_Tools_Overflow_AriaLabel"
+                    onclick="window.CalendarToolsOverflow && window.CalendarToolsOverflow.open()">
+                <loc key="Calendar_Tools_Overflow_Label" />
+                <span aria-hidden="true">▾</span>
+            </button>
+        </div>
+
+        @* Row 2: Saved (private) team tables *@
+        <div class="cal-toolbar__controls team-page__saved-views" role="tablist" aria-label="@Localizer["Team_SavedViews"]">
+            <a href="?SelectedCompanyId=@Model.SelectedCompanyId&SelectedJobTypeId=@Model.SelectedJobTypeId&ViewMode=@Model.ViewMode&Start=@Model.StartDate.ToString("yyyy-MM-dd")"
+               class="team-view-tab @(Model.ActiveViewId.HasValue ? "" : "team-view-tab--active")"
+               role="tab" aria-selected="@(!Model.ActiveViewId.HasValue)">
+                @Localizer["Team"]
+            </a>
+            @foreach (var view in Model.SavedViews)
+            {
+                <span class="team-view-tab-wrapper" data-view-name="@view.Name">
+                    <a href="?ViewId=@view.Id"
+                       class="team-view-tab @(Model.ActiveViewId == view.Id ? "team-view-tab--active" : "")"
+                       role="tab" aria-selected="@(Model.ActiveViewId == view.Id)">
+                        @view.Name
+                    </a>
+                    <button type="button" class="team-view-tab__delete" data-view-id="@view.Id"
+                            loc-aria-label="Delete" loc-title="Delete"
+                            onclick="deleteTeamTable(this)">&times;</button>
+                </span>
+            }
+
+            <span class="team-view-add">
+                <input type="text" id="newTableName" class="form-control team-view-add__input"
+                       maxlength="60" placeholder="@Localizer["Team_NewTableNamePlaceholder"]" />
+                <button type="button" class="btn btn-ghost btn-sm" onclick="addTeamTable()">@Localizer["Team_AddTable"]</button>
+            </span>
+        </div>
+    </div>
+
+    @* Sticky readonly banner — Team v1 is read-only (no per-cell note editing yet). *@
+    <partial name="_CalendarReadonlyBanner" model="@(new CalendarReadonlyBannerModel
+    {
+        IsReadOnly = Model.CalendarData.IsReadOnly,
+        RequiredGrantNameKeys = Model.CalendarData.RequiredGrantNameKeys
+    })" />
+
+    @if (Model.RequestedViewInaccessible)
+    {
+        <div class="team-page__inaccessible-banner" role="alert">
+            <span aria-hidden="true">&#9888;</span>
+            @Localizer["Team_ViewNoLongerAccessible"]
+        </div>
+    }
+
+    @* Calendar Table — same ExcelCalendarTable component + ViewModel shape as /Calendar/Overview *@
+    @if (Model.CalendarData.Rows.Any())
+    {
+        @await Component.InvokeAsync("ExcelCalendarTable", Model.CalendarData)
+    }
+    else
+    {
+        <div class="cal-empty">
+            <div class="cal-empty__icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <h3 class="cal-empty__title">@Localizer["NoUsersFound"]</h3>
+            <p class="cal-empty__message">@Localizer["Team_Empty_NoUsersMessage"]</p>
+        </div>
+    }
+
+    @* Mobile Tools overflow sheet — clones of the hidden toolbar controls are injected at open() time. *@
+    <div id="calendarToolsSheet" class="bottom-sheet calendar-tools-sheet" hidden aria-modal="true" role="dialog">
+        <div class="bottom-sheet__content">
+            <div class="bottom-sheet__header">
+                <h3><loc key="Calendar_Tools_Overflow_Label" /></h3>
+                <button type="button" class="bottom-sheet__close"
+                        loc-aria-label="Aria_CloseDialog"
+                        onclick="window.CalendarToolsOverflow && window.CalendarToolsOverflow.close()">×</button>
+            </div>
+            <div class="bottom-sheet__body" id="calendarToolsSheetBody">
+                @* Cloned controls are injected here at open() time so server state stays source of truth *@
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-sticky-shadows.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-tools-overflow.js" asp-append-version="true"></script>
+    <script src="~/js/calendar-row-reorder.js" asp-append-version="true"></script>
+    <script src="~/js/team.js" asp-append-version="true"></script>
+    <script>
+        // Company/JobType picker — an explicit ad-hoc selection always leaves whichever saved
+        // view was active (ViewId is dropped), even though ViewMode/date navigation preserve it.
+        function updateTeamSelection() {
+            const params = new URLSearchParams(window.location.search);
+            params.set('SelectedCompanyId', document.getElementById('companySelect').value);
+            params.set('SelectedJobTypeId', document.getElementById('jobTypeSelect').value);
+            params.delete('ViewId');
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+
+        // ViewMode/date navigation preserve whatever selection mode (ad-hoc or saved-view) is
+        // already in the URL — neither function touches SelectedCompanyId/SelectedJobTypeId/ViewId.
+        function updateViewMode() {
+            const params = new URLSearchParams(window.location.search);
+            params.set('ViewMode', document.getElementById('viewModeSelect').value);
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+
+        function navigateToDate(dateStr) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('Start', dateStr);
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+
+        // Keyboard navigation — mirrors Overview/Shifts.
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowLeft' && e.altKey) {
+                document.querySelector('.cal-toolbar__nav-btn')?.click();
+            }
+            if (e.key === 'ArrowRight' && e.altKey) {
+                var btns = document.querySelectorAll('.cal-toolbar__nav-btn');
+                btns[btns.length - 1]?.click();
+            }
+            if (e.key === 'p' && e.ctrlKey) {
+                e.preventDefault();
+                window.print();
+            }
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .team-page__saved-views {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .team-view-tab-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+        }
+
+        .team-view-tab {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 999px;
+            background: var(--surface-soft);
+            color: var(--text);
+            font-size: 0.85rem;
+            text-decoration: none;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .team-view-tab:hover {
+            border-color: var(--border);
+        }
+
+        .team-view-tab--active {
+            background: var(--primary);
+            color: var(--primary-contrast);
+            font-weight: 600;
+        }
+
+        .team-view-tab__delete {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0.25rem 0.375rem;
+            border-radius: 999px;
+        }
+
+        .team-view-tab__delete:hover {
+            color: var(--danger, #dc2626);
+            background: var(--surface-soft);
+        }
+
+        .team-view-add {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            margin-inline-start: auto;
+        }
+
+        .team-view-add__input {
+            min-width: 140px;
+            padding: 0.375rem 0.625rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            font-size: 0.85rem;
+        }
+
+        .team-page__inaccessible-banner {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--warning, #f59e0b) 15%, var(--surface));
+            border: 1px solid var(--warning, #f59e0b);
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        @@media (max-width: 768px) {
+            .team-view-add {
+                margin-inline-start: 0;
+                width: 100%;
+            }
+
+            .team-view-add__input {
+                flex: 1;
+            }
+        }
+    </style>
+}

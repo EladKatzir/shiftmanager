@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShiftManager.Data;
 
@@ -10,9 +11,11 @@ using ShiftManager.Data;
 namespace ShiftManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714224320_AddSuppressSuccessToasts")]
+    partial class AddSuppressSuccessToasts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -1260,52 +1263,6 @@ namespace ShiftManager.Migrations
                     b.HasIndex("MoleculeId");
 
                     b.ToTable("Departments");
-                });
-
-            modelBuilder.Entity("ShiftManager.Models.DeskTeamView", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("JobTypeId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(60)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("OwnerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("SortOrder")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TargetCompanyId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OwnerId");
-
-                    b.HasIndex("CompanyId", "OwnerId", "Name")
-                        .IsUnique()
-                        .HasFilter("IsDeleted = 0");
-
-                    b.ToTable("DeskTeamViews");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.DirectorCompany", b =>
@@ -2995,6 +2952,9 @@ namespace ShiftManager.Migrations
                     b.Property<int?>("SourceTimeOffRequestId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("TraineeId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("TraineeUserId")
                         .HasColumnType("INTEGER");
 
@@ -3009,7 +2969,7 @@ namespace ShiftManager.Migrations
                         .HasDatabaseName("IX_ShiftAssignments_SourceTimeOffRequestId")
                         .HasFilter("[SourceTimeOffRequestId] IS NOT NULL");
 
-                    b.HasIndex("TraineeUserId");
+                    b.HasIndex("TraineeId");
 
                     b.HasIndex("UserId");
 
@@ -4693,25 +4653,6 @@ namespace ShiftManager.Migrations
                     b.Navigation("Molecule");
                 });
 
-            modelBuilder.Entity("ShiftManager.Models.DeskTeamView", b =>
-                {
-                    b.HasOne("ShiftManager.Models.Company", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ShiftManager.Models.AppUser", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-
-                    b.Navigation("Owner");
-                });
-
             modelBuilder.Entity("ShiftManager.Models.DirectorCompany", b =>
                 {
                     b.HasOne("ShiftManager.Models.Company", "Company")
@@ -5413,7 +5354,7 @@ namespace ShiftManager.Migrations
 
                     b.HasOne("ShiftManager.Models.AppUser", "Trainee")
                         .WithMany()
-                        .HasForeignKey("TraineeUserId");
+                        .HasForeignKey("TraineeId");
 
                     b.HasOne("ShiftManager.Models.AppUser", "User")
                         .WithMany()

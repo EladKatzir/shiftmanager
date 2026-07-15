@@ -9,7 +9,7 @@
 </div>
 
 <script>
-function toggleLanguage(currentLang, defaultCulture, alternateCulture) {
+async function toggleLanguage(currentLang, defaultCulture, alternateCulture) {
     // Determine the target language based on company settings
     // If current is default, switch to alternate. Otherwise, switch to default.
     const newLang = currentLang === defaultCulture ? alternateCulture : defaultCulture;
@@ -22,6 +22,25 @@ function toggleLanguage(currentLang, defaultCulture, alternateCulture) {
     // won't treat the culture cookie as auto-placed. MUST be kept in sync with Login.cshtml's
     // own language toggle — both writer sites must set both cookies together.
     document.cookie = `.culture_explicit=v2; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+
+    // Persist synchronously (#10) so the choice survives even if the user leaves before the
+    // next request would have let PreferredLanguageLearningMiddleware passively learn it —
+    // otherwise a fresh/cookieless browser later would never see it re-seeded at login.
+    try {
+        await fetch('/Api/My/Language', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Server-side CSRF gate for /Api/* — rejects 403 without this header.
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ culture: newLang })
+        });
+    } catch (err) {
+        // Non-fatal: the cookie write above already applies the language for this browser;
+        // a failed sync just means the next-login re-seed won't have it yet.
+        if (window.Logger) window.Logger.error('LanguageToggle', 'Persist failed', err);
+    }
 
     // Reload the page to apply the new language
     window.location.reload();

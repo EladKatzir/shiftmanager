@@ -115,17 +115,24 @@
             <div class="card-body">
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span class="text-subtle"><loc key="HoursThisWeek" /></span>
-                        <span class="text-title" style="color: var(--primary);">@Model.HoursThisWeek.ToString("F1")</span>
+                        <span class="text-subtle"><loc key="ShiftCount" /></span>
+                        <span class="text-title" style="color: var(--primary);">@Model.ShiftsThisWeek</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="text-subtle"><loc key="DaysWithShifts" /></span>
                         <span class="text-body" style="font-weight: 500;">@Model.DaysWithShiftsThisWeek</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span class="text-subtle"><loc key="DaysOff" /></span>
-                        <span class="text-body" style="font-weight: 500;">@Model.DaysOffThisWeek</span>
+                        <span class="text-subtle"><loc key="DaysOffline" /></span>
+                        <span class="text-body" style="font-weight: 500;">@Model.OfflineDaysThisWeek</span>
                     </div>
+                    @if (Model.VacationDaysThisWeek > 0)
+                    {
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="text-subtle"><loc key="VacationDays" /></span>
+                            <span class="text-body" style="font-weight: 500;">@Model.VacationDaysThisWeek</span>
+                        </div>
+                    }
                 </div>
                 <span class="btn" style="margin-top: 1rem; display: inline-block; text-align: center; width: 100%;">
                     @Localizer["ViewFullSchedule"]

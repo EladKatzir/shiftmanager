@@ -207,7 +207,7 @@
         (function() {
             const langToggle = document.getElementById('authLanguageToggle');
             if (langToggle) {
-                langToggle.addEventListener('click', function() {
+                langToggle.addEventListener('click', async function() {
                     const currentLang = document.documentElement.lang;
                     const newLang = currentLang.startsWith('he') ? 'en-US' : 'he-IL';
                     const expires = new Date();
@@ -216,6 +216,24 @@
                     // Dual-write marker: records deliberate intent. Mirror of the write in
                     // Pages/Shared/Components/LanguageToggle/Default.cshtml — keep both in sync.
                     document.cookie = `.culture_explicit=v2; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+
+                    // Persist synchronously (#10) when a session already exists (e.g. an
+                    // authenticated user who lands back on /Auth/Login). [Authorize] rejects this
+                    // for the common signed-out visitor case — expected and harmless, since the
+                    // cookie write above already applies the language for this browser either way.
+                    try {
+                        await fetch('/Api/My/Language', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({ culture: newLang })
+                        });
+                    } catch (err) {
+                        // Ignore — see comment above.
+                    }
+
                     window.location.reload();
                 });
             }

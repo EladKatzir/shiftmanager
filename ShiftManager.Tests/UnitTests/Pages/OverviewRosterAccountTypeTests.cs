@@ -92,6 +92,7 @@ public sealed class OverviewRosterAccountTypeTests : IAsyncLifetime
             tenantResolver: Mock.Of<ITenantResolver>(),
             auditLogService: Mock.Of<IAuditLogService>(),
             notificationService: Mock.Of<ICalendarNotificationService>(),
+            calendarBuilder: Mock.Of<IOverviewCalendarBuilder>(),
             logger: NullLogger<OverviewModel>.Instance);
 
         // Wire up a minimal HttpContext with a dummy user (not used by LoadUsersAsync,

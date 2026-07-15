@@ -8,6 +8,22 @@
 
 <p class="lead" style="max-width:64ch;">@L["Nav2_EligibilityHome_Intro"]</p>
 
+@* Molecule selector (Issue #3) — only shown when the caller's ManageShiftCategories grant reaches
+   more than one molecule (project-scoped Owner, area-scoped AreaAdmin). A molecule-scoped role
+   only ever has its own molecule, so the selector would be a redundant single-option control. *@
+@if (Model.AvailableMolecules.Count > 1)
+{
+    <form method="get" style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+        <label for="MoleculeId" style="white-space:nowrap; font-weight:600;">@L["Molecule"]:</label>
+        <select name="MoleculeId" id="MoleculeId" class="form-select" style="max-width:320px;" onchange="this.form.submit()">
+            @foreach (var m in Model.AvailableMolecules)
+            {
+                <option value="@m.Id" selected="@(Model.MoleculeId == m.Id)">@m.Name</option>
+            }
+        </select>
+    </form>
+}
+
 <div class="elig-tabs" role="tablist">
     <button type="button" class="elig-tab is-active" data-tab="category" role="tab">@L["Elig_Editor_ByCategory"]</button>
     <button type="button" class="elig-tab" data-tab="person" role="tab">@L["Elig_Editor_ByPerson"]</button>

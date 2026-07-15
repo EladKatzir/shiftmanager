@@ -50,6 +50,7 @@ public class AppDbContext : DbContext
     public DbSet<CalendarDayNote> CalendarDayNotes => Set<CalendarDayNote>();
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
+    public DbSet<DeskTeamView> DeskTeamViews => Set<DeskTeamView>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
     public DbSet<EmailApiLog> EmailApiLogs => Set<EmailApiLog>();
     public DbSet<EmailTemplateCustomization> EmailTemplateCustomizations => Set<EmailTemplateCustomization>();
@@ -885,6 +886,12 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<TeamCalendar>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            // DeskTeamView: saved dynamic (TargetCompany × JobType) views for /Calendar/Team.
+            // Unlike TeamCalendar's filter, IsDeleted is included here so soft-deleted rows are
+            // never visible through a normal query (defense in depth; services also filter explicitly).
+            modelBuilder.Entity<DeskTeamView>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId() && !e.IsDeleted);
+
             // DistributionList: standard tenant filter for provenance/interceptor consistency.
             // NOTE: real visibility scope is the molecule — DistributionListService deliberately bypasses
             // this filter with IgnoreQueryFilters() + MoleculeId so lists are shared across all companies
@@ -1129,6 +1136,26 @@ public class AppDbContext : DbContext
             .HasOne(tc => tc.Owner)
             .WithMany()
             .HasForeignKey(tc => tc.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure DeskTeamView (saved dynamic Company×JobType team-table views; deliberately
+        // separate from TeamCalendar so these never leak into /MyTeam — see
+        // docs/superpowers/specs/2026-07-14-ui-batch-and-team-page-design.md #9.4)
+        modelBuilder.Entity<DeskTeamView>()
+            .HasIndex(v => new { v.CompanyId, v.OwnerId, v.Name })
+            .IsUnique()
+            .HasFilter("IsDeleted = 0"); // Unique name per owner when not deleted
+
+        modelBuilder.Entity<DeskTeamView>()
+            .HasOne(v => v.Company)
+            .WithMany()
+            .HasForeignKey(v => v.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<DeskTeamView>()
+            .HasOne(v => v.Owner)
+            .WithMany()
+            .HasForeignKey(v => v.OwnerId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Configure TeamCalendarMember

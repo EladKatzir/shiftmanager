@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -414,6 +416,16 @@ public partial class LoginModel : LocalizedPageModel
                 });
             }
 
+            // Re-seed .AspNetCore.Culture from the stored language preference (#10) so a fresh
+            // browser (no culture cookie yet) renders in the user's last-known language on the
+            // very next request instead of falling back to the site default — root cause of
+            // "switched UI to Hebrew, later it reverted to English". Mirrors the theme re-seed
+            // above; the same gap is closed for the Griffin/ADFS path in GriffinCallback.cshtml.cs.
+            if (!string.IsNullOrEmpty(user.PreferredLanguage))
+            {
+                ReseedCultureCookie(HttpContext, user.PreferredLanguage);
+            }
+
             LogSignedInSuccessfully(_logger, user.Id, ShiftManager.Services.PiiMasker.MaskEmail(user.Email), user.Role);
 
             // A-07: Force redirect to password change page if MustChangePassword flag is set
@@ -606,4 +618,61 @@ public partial class LoginModel : LocalizedPageModel
     /// </summary>
     private static string MapUserRoleToRoleTemplateKey(UserRole role, string? jobTypeName)
         => Helpers.RoleTemplateMapper.MapUserRoleToRoleTemplateKey(role, jobTypeName);
+
+    /// <summary>
+    /// Re-seeds the <c>.AspNetCore.Culture</c> cookie (+ the <c>.culture_explicit</c> marker)
+    /// from a stored <c>AppUser.PreferredLanguage</c> value (#10). Called right after sign-in on
+    /// both auth paths — from <see cref="OnPostAsync"/> above (local login) and from
+    /// <c>GriffinCallback.cshtml.cs</c> (ADFS) — so a fresh/cookieless browser renders in the
+    /// user's last-known language on the very next request instead of falling back to the site
+    /// default. Also called synchronously from <c>Pages/Api/My/Language.cshtml.cs</c> after a
+    /// toggle persists, so the server-set cookie attributes (notably <c>Secure</c>) stay correct
+    /// even though the client-side toggle scripts also write the cookie directly.
+    ///
+    /// Public static and parameterized on <see cref="HttpContext"/> (rather than an instance
+    /// method) specifically so it is a plain, directly-testable unit and is callable from the
+    /// other page model without instantiating <see cref="LoginModel"/>.
+    ///
+    /// Writing <c>.culture_explicit</c> alongside the culture cookie is load-bearing:
+    /// <c>LegacyCultureCookieResetMiddleware</c> (FF_HEBREW_DEFAULT only) strips an *unmarked*
+    /// <c>en-US</c> culture cookie because it cannot distinguish a re-seeded preference from a
+    /// stale pre-Hebrew-default artifact. Without the marker, a re-seeded <c>en-US</c> preference
+    /// would be wiped again on the very next request. Must be kept in sync with the two
+    /// client-side writers: <c>LanguageToggle/Default.cshtml</c> and <c>Login.cshtml</c>'s own
+    /// toggle script — all writer sites set both cookies together.
+    ///
+    /// Validates <paramref name="culture"/> against <see cref="RequestLocalizationSetup.SupportedCultures"/>
+    /// (not just non-empty) because <c>PreferredLanguage</c> is a loosely-typed persisted string;
+    /// <c>new RequestCulture(culture)</c> throws <see cref="CultureNotFoundException"/> for
+    /// anything else, which would otherwise fail sign-in outright for a user with a stale or
+    /// corrupted value.
+    /// </summary>
+    public static void ReseedCultureCookie(HttpContext httpContext, string? culture)
+    {
+        if (string.IsNullOrEmpty(culture) || !RequestLocalizationSetup.SupportedCultures.Contains(culture))
+            return;
+
+        httpContext.Response.Cookies.Append(
+            CookieRequestCultureProvider.DefaultCookieName,
+            CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+            new CookieOptions
+            {
+                Path = "/",
+                Expires = DateTimeOffset.UtcNow.AddYears(1),
+                HttpOnly = false, // localization-api.js + both JS toggles read this cookie directly
+                SameSite = SameSiteMode.Lax,
+                Secure = httpContext.Request.IsHttps
+            });
+
+        // Dual-write marker — see remarks above. Matches the client-side toggles' own
+        // ".culture_explicit=v2" value; any non-empty value satisfies
+        // LegacyCultureCookieResetMiddleware's branch-1 check, but "v2" keeps all writer sites
+        // byte-identical.
+        httpContext.Response.Cookies.Append(".culture_explicit", "v2", new CookieOptions
+        {
+            Path = "/",
+            Expires = DateTimeOffset.UtcNow.AddYears(1),
+            SameSite = SameSiteMode.Lax
+        });
+    }
 }
