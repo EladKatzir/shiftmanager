@@ -13478,6 +13478,14 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="CompanyOverview" xml:space="preserve">
     <value>Company Overview</value>
   </data>
+  <data name="MyDesk" xml:space="preserve">
+    <value>My Desk</value>
+    <comment>#9 - nav leaf for /Calendar/Overview, renamed from Company Overview (the whole-company "desk" view)</comment>
+  </data>
+  <data name="Nav_Team" xml:space="preserve">
+    <value>Team</value>
+    <comment>#9 - nav leaf for /Calendar/Team (JobType x Company team calendar)</comment>
+  </data>
   <data name="Nav_CompanyOverview" xml:space="preserve">
     <value>Company Overview</value>
   </data>

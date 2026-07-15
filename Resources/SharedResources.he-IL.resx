@@ -13444,6 +13444,12 @@
   <data name="CompanyOverview" xml:space="preserve">
     <value>צפייה בצוות</value>
   </data>
+  <data name="MyDesk" xml:space="preserve">
+    <value>הדסק שלי</value>
+  </data>
+  <data name="Nav_Team" xml:space="preserve">
+    <value>צוות</value>
+  </data>
   <data name="Nav_CompanyOverview" xml:space="preserve">
     <value>צפייה בצוות</value>
   </data>
