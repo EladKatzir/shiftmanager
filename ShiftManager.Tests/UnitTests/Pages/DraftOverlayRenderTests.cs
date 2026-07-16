@@ -96,6 +96,7 @@ public sealed class DraftOverlayRenderTests : IAsyncLifetime
             justiceService: Mock.Of<IJusticeService>(),
             distributionListService: Mock.Of<IDistributionListService>(),
             categoryService: Mock.Of<IShiftCategoryService>(),
+            tabService: new ShiftTabService(_db),
             draftService: draftService,
             featureFlags: Mock.Of<IFeatureFlagService>());
 
