@@ -232,4 +232,83 @@ public sealed class OverviewCalendarBuilderTests : IAsyncLifetime
         var row = vm.Rows.Single(r => r.Id == $"user-{UserId}");
         row.Cells[requestedDate].Overlay.Should().BeNull("the request is still Pending, not Approved");
     }
+
+    /// <summary>
+    /// Regression (cross-company HOME chip): HOME ShiftTypes are molecule-scoped, so ONE
+    /// ShiftInstance is shared by every company in the molecule and carries whichever company first
+    /// materialised it. A viewed-company user's HOME assignment (its own CompanyId) can point at an
+    /// instance stamped with a DIFFERENT company. With the tenant query filter ACTIVE, referencing
+    /// the required ShiftInstance nav must NOT drop that row — the per-user tenant axis is the
+    /// assignment's CompanyId, not the shared instance's. Before the render-side fix, LoadShiftsAsync
+    /// INNER-JOINed on the instance's company and the HOME busy-chip vanished on Overview/Team.
+    /// This test constructs the context WITH a tenant resolver (filters on) — the other tests here
+    /// use a null resolver, so they never exercised this path.
+    /// </summary>
+    [Fact]
+    public async Task BuildAsync_HomeAssignment_SharedInstanceStampedOtherCompany_StillRenders()
+    {
+        const int ViewedCompany = 2;   // the board's (validated) company
+        const int OtherCompany = 1;    // the company that first stamped the shared molecule instance
+        const int UserId = 200;
+        var start = new DateOnly(2026, 7, 5);
+        var end = start.AddDays(6);
+        var homeDate = start.AddDays(2);
+
+        var tenant = new Mock<ITenantResolver>();
+        tenant.Setup(t => t.GetCurrentTenantId()).Returns(ViewedCompany);
+
+        using var connection = new SqliteConnection("DataSource=:memory:;Foreign Keys=False");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+        using var db = new AppDbContext(options, tenant.Object);
+        await db.Database.EnsureCreatedAsync();
+
+        db.Companies.AddRange(
+            new Company { Id = OtherCompany, Name = "C1", Slug = "c1", MoleculeId = 1 },
+            new Company { Id = ViewedCompany, Name = "C2", Slug = "c2", MoleculeId = 1 });
+        var user = new AppUser
+        {
+            Id = UserId, CompanyId = ViewedCompany, Email = "u200@test.com",
+            DisplayName = "Cross User", Role = UserRole.Employee, IsActive = true, AccountType = AccountType.Standard
+        };
+        db.Users.Add(user);
+        db.ShiftTypes.Add(new ShiftType
+        {
+            Id = 500, Key = ShiftType.KEY_HOME, MoleculeId = 1, Scope = ShiftScope.Molecule,
+            Start = new TimeOnly(0, 0), End = new TimeOnly(23, 59), NameEn = "Home", NameHe = "בית"
+        });
+        // Shared molecule instance stamped with the OTHER company (as the materialiser/rotation do).
+        db.ShiftInstances.Add(new ShiftInstance
+        {
+            Id = 600, CompanyId = OtherCompany, WorkDate = homeDate, ShiftTypeId = 500, StaffingRequired = 99
+        });
+        // The viewed-company user's HOME assignment points at that shared instance.
+        db.ShiftAssignments.Add(new ShiftAssignment
+        {
+            Id = 700, CompanyId = ViewedCompany, UserId = UserId, ShiftInstanceId = 600
+        });
+        await db.SaveChangesAsync();
+
+        var localizer = new Mock<IStringLocalizer<SharedResources>>();
+        localizer.Setup(l => l[It.IsAny<string>()]).Returns<string>(k => new LocalizedString(k, k));
+        var companyLocalization = new Mock<ICompanyLocalizationService>();
+        companyLocalization
+            .Setup(s => s.ResolveShiftTypeNameAsync(It.IsAny<ShiftType>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync((ShiftType st, int _, string __) => st.Key);
+        var textEntryService = new Mock<ICalendarTextEntryService>();
+        textEntryService
+            .Setup(s => s.GetOverviewNotesForCompanyAsync(It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
+            .ReturnsAsync(new Dictionary<(int UserId, DateOnly Date), string>());
+        textEntryService
+            .Setup(s => s.GetForUsersAndDateRangeWithTypeAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
+            .ReturnsAsync(new Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text, CalendarTextEntryType EntryType, int CompanyId)>>());
+
+        var builder = new OverviewCalendarBuilder(db, textEntryService.Object, companyLocalization.Object, localizer.Object);
+
+        var vm = await builder.BuildAsync(ViewedCompany, new[] { user }, start, end, "week", canEditNotes: false);
+
+        var row = vm.Rows.Single(r => r.Id == $"user-{UserId}");
+        row.Cells[homeDate].Assignments.Should().Contain(a => a.IsHome,
+            "the HOME assignment's tenant is its own CompanyId (viewed company), even though the shared molecule instance is stamped with another company");
+    }
 }
