@@ -107,6 +107,11 @@ public class ExcelCalendarAssignment
     /// <summary>Owning shift type — set ONLY for real shift assignments (not text/chore/overlay chips).
     /// Drives Draft Mode removal (× → stage-clear by shiftType+date+user) and is null elsewhere.</summary>
     public int? ShiftTypeId { get; set; }
+
+    /// <summary>Chores Draft Mode (Spec C): the staged chore descriptor's stable key. Set ONLY on chore chips
+    /// while a chores draft is active; the × then stages a draft-clear by (user, date, descriptorKey) since a
+    /// staged chore has no <c>Chore.Id</c>. Null on live/non-draft chips.</summary>
+    public string? DraftChoreKey { get; set; }
     public string? AssignmentTooltip { get; set; }  // e.g. "Assigned by X on Y" — set by oncall calendar
 
     // HOME unification (Task 22) — let the renderer compose chips with source-icon prefix.
