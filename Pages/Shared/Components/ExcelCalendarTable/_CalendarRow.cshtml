@@ -128,7 +128,10 @@
                         // In Draft Mode the × on ANY shift chip (real or staged) routes to draft-clear,
                         // so render it for the synthetic (negative-id) staged chips too.
                         var isDraftShiftChip = Model.DraftSessionId != null && assignment.ShiftTypeId.HasValue && assignment.UserId.HasValue;
-                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip);
+                        // Chores Draft Mode (Spec C): a staged chore chip carries a descriptorKey (no Chore.Id);
+                        // its × stages a draft-clear by (user, date, key).
+                        var isDraftChoreChip = Model.DraftSessionId != null && !string.IsNullOrEmpty(assignment.DraftChoreKey);
+                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip || isDraftChoreChip);
                         // A shadowing trainee splits the chip into two cubes (worker + trainee). Requires the
                         // Trainee navigation to be mapped to TraineeUserId (else TraineeName is always empty).
                         var hasTrainee = !isHomeChip && !string.IsNullOrEmpty(assignment.TraineeName);
@@ -138,6 +141,7 @@
                              data-assignment-id="@assignment.Id"
                              data-user-id="@assignment.UserId"
                              data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                             data-draft-chore-key="@(assignment.DraftChoreKey ?? "")"
                              data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
                              data-trainee-name="@(assignment.TraineeName ?? "")"
                              data-role-color="@roleColor"

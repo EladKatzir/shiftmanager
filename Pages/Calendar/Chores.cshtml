@@ -21,7 +21,7 @@
     new BreadcrumbItem { Label = Localizer["ChoresCalendar"], IsActive = true }
 })
 
-<div class="cal-page" data-ui-version="v2" data-justice-molecule-id="@Model.MoleculeId">
+<div class="cal-page @(Model.DraftMode && Model.ActiveDraftId != null ? "cal-page--draft" : "")" data-ui-version="v2" data-justice-molecule-id="@Model.MoleculeId">
     @* Toolbar — Row 1: Selectors + Date Nav + Print *@
     <div class="cal-toolbar">
         <div class="cal-toolbar__row">
@@ -157,6 +157,33 @@
                 </a>
             </div>
 
+            @* Draft Mode controls (Spec C) — assigners can stage chore changes privately, then commit. *@
+            @if (Model.CanEdit && Model.MoleculeId.HasValue)
+            {
+                <span class="cal-toolbar__separator"></span>
+                <div class="cal-toolbar__toggle-group">
+                    @if (!Model.DraftMode || Model.ActiveDraftId == null)
+                    {
+                        <button type="button" class="btn btn-ghost" id="enterDraftBtn"
+                                data-molecule-id="@Model.MoleculeId"
+                                data-week-start="@Model.StartDate.ToString("yyyy-MM-dd")" data-week-end="@Model.EndDate.ToString("yyyy-MM-dd")">
+                            <span class="btn-icon"><icon name="pencil" /></span>
+                            @Localizer["Draft_Enter"]
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-primary" id="commitDraftBtn" data-draft-id="@Model.ActiveDraftId">
+                            <span class="btn-icon"><icon name="check" /></span>
+                            @Localizer["Draft_Commit"]
+                        </button>
+                        <button type="button" class="btn btn-ghost" id="discardDraftBtn" data-draft-id="@Model.ActiveDraftId">
+                            @Localizer["Draft_Discard"]
+                        </button>
+                    }
+                </div>
+            }
+
             @if (Model.CanWriteNote)
             {
                 <button type="button" id="quickEntryToggle" class="btn btn-ghost quick-entry-toggle"
@@ -200,6 +227,15 @@
         IsReadOnly = Model.CalendarData.IsReadOnly,
         RequiredGrantNameKeys = Model.CalendarData.RequiredGrantNameKeys
     })" />
+
+    @* Draft Mode sandbox banner (Spec C) — makes the sandbox state unmistakable. *@
+    @if (Model.DraftMode && Model.ActiveDraftId != null)
+    {
+        <div class="cal-draft-banner" role="status">
+            <span class="cal-draft-banner__icon" aria-hidden="true"><icon name="pencil" /></span>
+            <span class="cal-draft-banner__text">@Localizer["Draft_BannerText"]</span>
+        </div>
+    }
 
     @* Calendar Table *@
     @if (Model.CalendarData.Rows.Any())
@@ -414,6 +450,83 @@
             closeFilterModal();
             window.updateGroupCounts && window.updateGroupCounts();
         }
+
+        // --- Draft Mode (Spec C): the active sandbox id (read by calendar-inline-edit.js to stage chores) ---
+        window.__draftSessionId = @(Model.DraftMode && Model.ActiveDraftId != null ? Model.ActiveDraftId.Value.ToString() : "null");
+
+        (function () {
+            function draftToken() {
+                var t = document.querySelector('input[name="__RequestVerificationToken"]');
+                return t ? t.value : '';
+            }
+            function draftPost(handler, body) {
+                return fetch('/Calendar/Chores?handler=' + handler, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': draftToken() },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(body)
+                });
+            }
+            function exitDraftUrl() {
+                var p = new URLSearchParams(window.location.search);
+                p.delete('DraftMode');
+                return window.location.pathname + '?' + p.toString();
+            }
+            var fail = '@(Localizer["Error_FailedToUpdate"].Value.Trim())';
+
+            var enterBtn = document.getElementById('enterDraftBtn');
+            if (enterBtn) enterBtn.addEventListener('click', async function () {
+                enterBtn.disabled = true;
+                try {
+                    var resp = await draftPost('EnterChoreDraft', {
+                        moleculeId: parseInt(enterBtn.dataset.moleculeId),
+                        weekStart: enterBtn.dataset.weekStart,
+                        weekEnd: enterBtn.dataset.weekEnd
+                    });
+                    var data = await resp.json();
+                    if (data.success) {
+                        var p = new URLSearchParams(window.location.search);
+                        p.set('DraftMode', 'true');
+                        window.location.href = window.location.pathname + '?' + p.toString();
+                    } else { window.FeedbackModal.show('error', fail); enterBtn.disabled = false; }
+                } catch (e) { console.error(e); enterBtn.disabled = false; }
+            });
+
+            var commitBtn = document.getElementById('commitDraftBtn');
+            if (commitBtn) commitBtn.addEventListener('click', async function () {
+                commitBtn.disabled = true;
+                try {
+                    var resp = await draftPost('CommitChoreDraft', { draftSessionId: parseInt(commitBtn.dataset.draftId) });
+                    var data = await resp.json();
+                    if (!data.success) { window.FeedbackModal.show('error', fail); commitBtn.disabled = false; return; }
+                    var skipped = data.skipped || [], unauthorized = data.unauthorized || [], issues = data.issues || [];
+                    if (skipped.length === 0 && unauthorized.length === 0 && issues.length === 0) {
+                        window.location.href = exitDraftUrl(); return;
+                    }
+                    var coord = function (c) { return c.label || (c.rowId + ' @@ ' + c.date); };
+                    var lines = [];
+                    skipped.forEach(function (c) { lines.push('@(Localizer["Draft_CommitSkippedLabel"].Value.Trim()) ' + coord(c)); });
+                    unauthorized.forEach(function (c) { lines.push('@(Localizer["Draft_CommitUnauthorizedLabel"].Value.Trim()) ' + coord(c)); });
+                    issues.forEach(function (i) { lines.push('@(Localizer["Draft_CommitIssueLabel"].Value.Trim()) ' + coord(i) + ' — ' + i.message); });
+                    window.FeedbackModal.show('warning', '@(Localizer["Draft_CommitPartialMessage"].Value.Trim())', {
+                        detail: lines.join('\n'),
+                        action: { label: '@(Localizer["Draft_ReturnToLive"].Value.Trim())', url: exitDraftUrl() }
+                    });
+                    commitBtn.disabled = false;
+                } catch (e) { console.error(e); commitBtn.disabled = false; }
+            });
+
+            var discardBtn = document.getElementById('discardDraftBtn');
+            if (discardBtn) discardBtn.addEventListener('click', async function () {
+                discardBtn.disabled = true;
+                try {
+                    var resp = await draftPost('DiscardChoreDraft', { draftSessionId: parseInt(discardBtn.dataset.draftId) });
+                    var data = await resp.json();
+                    if (data.success) { window.location.href = exitDraftUrl(); return; }
+                    discardBtn.disabled = false;
+                } catch (e) { console.error(e); discardBtn.disabled = false; }
+            });
+        })();
 
         // Keyboard navigation
         document.addEventListener('keydown', function(e) {

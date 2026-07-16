@@ -227,12 +227,81 @@ async function showServerErrorAsync(response, fallbackMessage) {
 }
 
 /**
+ * Draft Mode (Spec C) — POST a chores draft handler on the Chores page with the CSRF token.
+ */
+function draftChorePost(handler, body) {
+    return fetch('/Calendar/Chores?handler=' + handler, {
+        method: 'POST',
+        headers: getTablePostHeaders(),
+        credentials: 'same-origin',
+        body: JSON.stringify(body)
+    });
+}
+
+/**
+ * Draft Mode (Spec C) — stage a chore into the caller's private sandbox instead of writing live (no SignalR).
+ * Reloads so the server-rendered staged overlay reflects the change. Called by quickAddChore when a draft is active.
+ */
+async function stageDraftChore(date, assigneeId, title, choreTypeId) {
+    try {
+        var resp = await draftChorePost('DraftChoreStage', {
+            draftSessionId: parseInt(window.__draftSessionId, 10),
+            userId: parseInt(assigneeId, 10),
+            date: date,
+            title: (title || '').trim(),
+            choreTypeId: (choreTypeId != null && choreTypeId !== '') ? parseInt(choreTypeId, 10) : null
+        });
+        if (!resp.ok) {
+            if (resp.status === 401 || resp.status === 403) { handleApiError(resp); return; }
+            await showServerErrorAsync(resp, window.AppLocalizer.ErrorCreatingChore);
+            return;
+        }
+        var result = await resp.json();
+        if (result.success) { window.location.reload(); }
+        else { showAcknowledgedError(result.error || window.AppLocalizer.ErrorCreatingChore); }
+    } catch (e) { handleApiError(null, e); }
+}
+
+/**
+ * Draft Mode (Spec C) — stage a draft-clear of one staged chore descriptor (its × was clicked). Keyed by
+ * (user, date, descriptorKey) since a staged chore has no Chore.Id.
+ */
+async function stageDraftChoreClear(assignmentEl, draftId, choreKey) {
+    var cellEl = assignmentEl ? assignmentEl.closest('.excel-calendar__cell') : null;
+    var dateAttr = cellEl ? cellEl.dataset.date : null;
+    var userIdAttr = assignmentEl ? assignmentEl.dataset.userId : null;
+    if (!dateAttr || !userIdAttr) return;
+    try {
+        var resp = await draftChorePost('DraftChoreClear', {
+            draftSessionId: parseInt(draftId, 10),
+            userId: parseInt(userIdAttr, 10),
+            date: dateAttr,
+            descriptorKey: choreKey
+        });
+        if (!resp.ok) {
+            if (resp.status === 401 || resp.status === 403) { handleApiError(resp); return; }
+            showToast(window.AppLocalizer?.ErrorDeletingItem || 'Error deleting item', 'error');
+            return;
+        }
+        var result = await resp.json();
+        if (result.success) { window.location.reload(); }
+        else { showToast(result.error || 'Error', 'error'); }
+    } catch (e) { handleApiError(null, e); }
+}
+
+/**
  * Quick-add a chore. Uses the unified busy-validation envelope:
  *   - success:true                                          → toast + refresh
  *   - success:false, requiresOverride, warnings[], token    → show FeedbackModal.confirm; on OK retry with token
  *   - success:false, message                                → blocking error modal
  */
 async function quickAddChore(date, assigneeId, title, choreTypeId = null, confirmHandler = defaultConfirm) {
+    // Draft Mode (Spec C): stage into the private sandbox instead of writing live. Covers BOTH the bottom-sheet
+    // quick-add and the quick-entry direct-chore path (both call window.quickAddChore).
+    if (window.__draftSessionId) {
+        await stageDraftChore(date, assigneeId, title, choreTypeId);
+        return;
+    }
     async function postChore(body) {
         return fetch('/Api/Calendar/QuickAddChore', {
             method: 'POST',
@@ -1179,6 +1248,14 @@ async function submitQuickAdd(date) {
         var calendarType = detectCalendarTypeForRemoval();
 
         if (calendarType === 'chores') {
+            // Draft Mode (Spec C): if a chores draft is active and this is a staged chip, the × stages a
+            // draft-clear (by user+date+descriptorKey) instead of a live delete.
+            var choreDraftId = window.__draftSessionId;
+            var choreKey = assignmentEl ? assignmentEl.dataset.draftChoreKey : '';
+            if (choreDraftId && choreKey) {
+                stageDraftChoreClear(assignmentEl, choreDraftId, choreKey);
+                return;
+            }
             deleteItem('chore', assignmentId);
         } else if (calendarType === 'oncall') {
             deleteItem('onduty', assignmentId);

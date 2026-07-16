@@ -99,7 +99,9 @@ public sealed class ChoresRosterAccountTypeTests : IAsyncLifetime
             logger: NullLogger<ChoresModel>.Instance,
             textEntryService: Mock.Of<ICalendarTextEntryService>(),
             calendarService: Mock.Of<IShiftCalendarService>(),
-            justiceService: Mock.Of<IJusticeService>());
+            justiceService: Mock.Of<IJusticeService>(),
+            draftChoreService: Mock.Of<IDraftChoreService>(),
+            draftLifecycle: Mock.Of<IDraftLifecycle>());
 
         // Wire up a minimal HttpContext (PageModel requires a non-null PageContext).
         var httpContext = new DefaultHttpContext

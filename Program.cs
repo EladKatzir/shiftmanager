@@ -338,6 +338,12 @@ builder.Services.AddScoped<IChoreCategoryService, ChoreCategoryService>();
 builder.Services.AddScoped<DraftModeService>();
 builder.Services.AddScoped<IDraftModeService>(sp => sp.GetRequiredService<DraftModeService>());
 builder.Services.AddScoped<IDraftReconciler>(sp => sp.GetRequiredService<DraftModeService>());
+// Draft Mode — Sub-project C (Spec C): one DraftChoreService serves BOTH the chores staging/overlay surface
+// (IDraftChoreService) and the chores commit reconciler (IDraftReconciler). The shared DraftLifecycle receives
+// every IDraftReconciler (shifts + chores) and dispatches by DraftSession.Surface.
+builder.Services.AddScoped<DraftChoreService>();
+builder.Services.AddScoped<IDraftChoreService>(sp => sp.GetRequiredService<DraftChoreService>());
+builder.Services.AddScoped<IDraftReconciler>(sp => sp.GetRequiredService<DraftChoreService>());
 builder.Services.AddScoped<IDraftLifecycle, DraftLifecycle>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 

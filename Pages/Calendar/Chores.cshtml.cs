@@ -33,6 +33,8 @@ public class ChoresModel : PageModel
     private readonly ICalendarTextEntryService _textEntryService;
     private readonly IShiftCalendarService _calendarService;
     private readonly IJusticeService _justiceService;
+    private readonly IDraftChoreService _draftChoreService;
+    private readonly IDraftLifecycle _draftLifecycle;
 
     public ChoresModel(
         AppDbContext db,
@@ -45,7 +47,9 @@ public class ChoresModel : PageModel
         ILogger<ChoresModel> logger,
         ICalendarTextEntryService textEntryService,
         IShiftCalendarService calendarService,
-        IJusticeService justiceService)
+        IJusticeService justiceService,
+        IDraftChoreService draftChoreService,
+        IDraftLifecycle draftLifecycle)
     {
         _db = db;
         _choreService = choreService;
@@ -58,6 +62,8 @@ public class ChoresModel : PageModel
         _textEntryService = textEntryService;
         _calendarService = calendarService;
         _justiceService = justiceService;
+        _draftChoreService = draftChoreService;
+        _draftLifecycle = draftLifecycle;
     }
 
     // Query parameters
@@ -79,6 +85,17 @@ public class ChoresModel : PageModel
 
     [BindProperty(SupportsGet = true)]
     public bool JustMine { get; set; }
+
+    // Draft Mode (Spec C): when true (and the caller has an Active chores draft for this molecule+week), the
+    // grid renders the viewer's private staged descriptor overlay instead of the live chores.
+    [BindProperty(SupportsGet = true)]
+    public bool DraftMode { get; set; }
+
+    // The resolved Active chores draft id for (CurrentUser, MoleculeId, StartDate); null when not drafting.
+    public int? ActiveDraftId { get; set; }
+
+    // Touched cells for the active draft (staged descriptor sets), keyed by (userId, date). Null off draft mode.
+    private Dictionary<(int UserId, DateOnly Date), List<ShiftManager.Models.DraftChoreDescriptor>>? _draftTouchedCells;
 
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
@@ -166,6 +183,19 @@ public class ChoresModel : PageModel
         RequiredGrantNameKeys = CanEdit
             ? new List<string>()
             : await _grantService.GetGrantNameKeysAsync("AssignChores");
+
+        // Draft Mode (Spec C): resolve the caller's Active chores draft for this molecule+week and load its
+        // staged descriptor overlay so BuildCellsForUser renders the private sandbox instead of the live chores.
+        if (DraftMode && CanEdit && MoleculeId.HasValue)
+        {
+            var draft = await _draftChoreService.GetActiveChoreDraftAsync(currentUserId, MoleculeId.Value, StartDate);
+            if (draft != null)
+            {
+                ActiveDraftId = draft.Id;
+                var overlay = await _draftChoreService.GetChoreOverlayAsync(draft.Id);
+                _draftTouchedCells = overlay.ToDictionary(o => (o.UserId, o.WorkDate), o => o.Descriptors);
+            }
+        }
 
         // Build calendar data
         if (MoleculeId.HasValue)
@@ -323,7 +353,8 @@ public class ChoresModel : PageModel
             CalendarType = "chores",
             Rows = rows,
             Groups = groups.Any() ? groups : null,
-            RequiredGrantNameKeys = RequiredGrantNameKeys
+            RequiredGrantNameKeys = RequiredGrantNameKeys,
+            DraftSessionId = ActiveDraftId
         };
         CalendarData.RowMode = "Chores";
         // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
@@ -550,13 +581,23 @@ public class ChoresModel : PageModel
                 .Where(c => c.UserId == userId && c.Date == date)
                 .ToList();
 
-            cell.Assignments = userChores.Select(c => new ExcelCalendarAssignment
+            // Draft Mode (Spec C): render the private staged descriptor set (touched cell) or the live chores
+            // as staged descriptors (untouched cell) — each chip carries its stable descriptorKey so the ×
+            // stages a draft-clear (a staged chore has no Chore.Id). Live rendering is unchanged off draft mode.
+            if (_draftTouchedCells != null)
             {
-                Id = c.Id,
-                Name = c.ChoreType != null ? LocalizeChoreTypeName(c.ChoreType, isHebrew) : c.Title,
-                Role = c.ChoreType?.Color, // Use color as role for styling
-                UserId = c.UserId
-            }).ToList();
+                cell.Assignments = BuildDraftChoreChips(userId, date, userChores, isHebrew);
+            }
+            else
+            {
+                cell.Assignments = userChores.Select(c => new ExcelCalendarAssignment
+                {
+                    Id = c.Id,
+                    Name = c.ChoreType != null ? LocalizeChoreTypeName(c.ChoreType, isHebrew) : c.Title,
+                    Role = c.ChoreType?.Color, // Use color as role for styling
+                    UserId = c.UserId
+                }).ToList();
+            }
 
             // Task 24: HOME shifts as read-only overlay chips. Id=0 makes them
             // non-removable (no × button). Renders via shared partial as full chip
@@ -634,6 +675,45 @@ public class ChoresModel : PageModel
 
         return cells;
     }
+
+    /// <summary>
+    /// Draft Mode (Spec C): build a (user, date) cell's chore chips from the effective descriptor set — the
+    /// staged set for a touched cell, else the live chores mapped to descriptors. Each chip carries its stable
+    /// <see cref="ExcelCalendarAssignment.DraftChoreKey"/> (the descriptor's canonical Encode()) so the × can
+    /// stage a draft-clear of exactly that descriptor. Id=0 (no persisted row); removal is key-driven.
+    /// </summary>
+    private List<ExcelCalendarAssignment> BuildDraftChoreChips(
+        int userId, DateOnly date, List<Chore> liveUserChores, bool isHebrew)
+    {
+        _draftChoreTypeById ??= ChoreTypes.ToDictionary(ct => ct.Id);
+
+        IEnumerable<ShiftManager.Models.DraftChoreDescriptor> descriptors =
+            _draftTouchedCells != null && _draftTouchedCells.TryGetValue((userId, date), out var staged)
+                ? staged
+                : liveUserChores.Select(ShiftManager.Models.DraftChoreDescriptor.FromChore);
+
+        return descriptors.Select(d =>
+        {
+            string name = d.Title;
+            string? color = null;
+            if (d.ChoreTypeId.HasValue && _draftChoreTypeById.TryGetValue(d.ChoreTypeId.Value, out var ct))
+            {
+                name = LocalizeChoreTypeName(ct, isHebrew);
+                color = ct.Color;
+            }
+            return new ExcelCalendarAssignment
+            {
+                Id = 0,
+                Name = name,
+                Role = color,
+                UserId = userId,
+                DraftChoreKey = d.Encode()
+            };
+        }).ToList();
+    }
+
+    // ChoreType lookup for resolving draft descriptor chip names/colors (built once per request).
+    private Dictionary<int, ChoreType>? _draftChoreTypeById;
 
     private static string LocalizeChoreTypeName(ChoreType ct, bool isHebrew) =>
         isHebrew && !string.IsNullOrWhiteSpace(ct.NameHe) ? ct.NameHe : ct.NameEn ?? ct.DisplayName;
@@ -898,4 +978,125 @@ public class ChoresModel : PageModel
         candidateDeviationBefore = p.CandidateDeviationBefore,
         candidateDeviationAfter = p.CandidateDeviationAfter
     };
+
+    // ===================== Draft Mode (Spec C) — chores draft handlers =====================
+    // These mirror the shifts draft handlers on Table.cshtml.cs but are keyed by (userId, date) coordinates and
+    // scoped to Surface=Chores. Antiforgery is enforced (the JS sends the RequestVerificationToken header from
+    // the layout-rendered token). Commit re-authorizes every touched cell per-surface inside the lifecycle tx.
+
+    private int? CurrentUserIdOrNull()
+        => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : (int?)null;
+
+    private Task<bool> OwnsActiveChoreDraftAsync(int draftSessionId, int userId)
+        => _db.DraftSessions.AnyAsync(d => d.Id == draftSessionId && d.OwnerUserId == userId
+            && d.Surface == DraftSurface.Chores && d.Status == DraftSessionStatus.Active);
+
+    public async Task<IActionResult> OnPostEnterChoreDraftAsync([FromBody] EnterChoreDraftRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        // Draft entry requires the chore-assignment grant (the page hides the button otherwise; re-check here).
+        if (!await _grantService.HasGrantAsync(userId, "AssignChores"))
+            return new JsonResult(new { success = false }) { StatusCode = 403 };
+
+        var scope = new DraftScope(DraftSurface.Chores, request.MoleculeId, JobTypeId: null,
+            AreaId: null, request.WeekStart, request.WeekEnd);
+        var draft = await _draftLifecycle.EnterAsync(userId, scope);
+        return new JsonResult(new { success = true, draftSessionId = draft.Id });
+    }
+
+    public async Task<IActionResult> OnPostDraftChoreStageAsync([FromBody] DraftChoreStageRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveChoreDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+        if (!DateOnly.TryParse(request.Date, out var date))
+            return new JsonResult(new { success = false }) { StatusCode = 400 };
+        if (string.IsNullOrWhiteSpace(request.Title))
+            return new JsonResult(new { success = false }) { StatusCode = 400 };
+
+        var descriptor = ShiftManager.Models.DraftChoreDescriptor.Create(
+            request.ChoreTypeId, request.Title, ParseTime(request.StartTime), ParseTime(request.EndTime), request.Notes);
+        await _draftChoreService.StageChoreAsync(request.DraftSessionId, request.UserId, date, descriptor);
+        return new JsonResult(new { success = true, draft = true });
+    }
+
+    public async Task<IActionResult> OnPostDraftChoreClearAsync([FromBody] DraftChoreClearRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveChoreDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+        if (!DateOnly.TryParse(request.Date, out var date))
+            return new JsonResult(new { success = false }) { StatusCode = 400 };
+        if (string.IsNullOrEmpty(request.DescriptorKey))
+            return new JsonResult(new { success = false }) { StatusCode = 400 };
+
+        await _draftChoreService.ClearChoreAsync(request.DraftSessionId, request.UserId, date, request.DescriptorKey);
+        return new JsonResult(new { success = true, draft = true });
+    }
+
+    public async Task<IActionResult> OnPostCommitChoreDraftAsync([FromBody] DraftChoreActionRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveChoreDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+
+        var result = await _draftLifecycle.CommitAsync(request.DraftSessionId, userId);
+        // Per-cell policy (Spec F §5): the session commits; some cells may be Skipped (drifted) or Unauthorized.
+        return new JsonResult(new
+        {
+            success = result.Committed,
+            applied = result.Applied.Select(c => new { rowId = c.RowId, date = c.WorkDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), label = c.Label }),
+            appliedCount = result.Applied.Count,
+            skipped = result.Skipped.Select(c => new { rowId = c.RowId, date = c.WorkDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), label = c.Label }),
+            unauthorized = result.Unauthorized.Select(c => new { rowId = c.RowId, date = c.WorkDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), label = c.Label }),
+            issues = result.ValidationIssues.Select(i => new { rowId = i.RowId, date = i.WorkDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), i.UserId, i.Message }),
+            notifiedGroups = result.NotifiedGroups
+        });
+    }
+
+    public async Task<IActionResult> OnPostDiscardChoreDraftAsync([FromBody] DraftChoreActionRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        // Allow discarding any of your own chores sessions (active or stale), not others'.
+        var owns = await _db.DraftSessions.AnyAsync(d => d.Id == request.DraftSessionId
+            && d.OwnerUserId == userId && d.Surface == DraftSurface.Chores);
+        if (!owns)
+            return new JsonResult(new { success = false }) { StatusCode = 403 };
+        await _draftLifecycle.DiscardAsync(request.DraftSessionId, userId);
+        return new JsonResult(new { success = true });
+    }
+
+    private static TimeOnly? ParseTime(string? s)
+        => TimeOnly.TryParseExact(s, "HH:mm", CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var t) ? t : (TimeOnly?)null;
+
+    public class EnterChoreDraftRequest
+    {
+        public int MoleculeId { get; set; }
+        public DateOnly WeekStart { get; set; }
+        public DateOnly WeekEnd { get; set; }
+    }
+    public class DraftChoreActionRequest { public int DraftSessionId { get; set; } }
+    public class DraftChoreStageRequest
+    {
+        public int DraftSessionId { get; set; }
+        public int UserId { get; set; }
+        public string Date { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public int? ChoreTypeId { get; set; }
+        public string? StartTime { get; set; }
+        public string? EndTime { get; set; }
+        public string? Notes { get; set; }
+    }
+    public class DraftChoreClearRequest
+    {
+        public int DraftSessionId { get; set; }
+        public int UserId { get; set; }
+        public string Date { get; set; } = string.Empty;
+        public string DescriptorKey { get; set; } = string.Empty;
+    }
 }

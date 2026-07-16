@@ -67,7 +67,9 @@ public sealed class ChoresCategoryGroupingTests : IAsyncLifetime
             logger: NullLogger<ChoresModel>.Instance,
             textEntryService: Mock.Of<ICalendarTextEntryService>(),
             calendarService: Mock.Of<IShiftCalendarService>(),
-            justiceService: Mock.Of<IJusticeService>());
+            justiceService: Mock.Of<IJusticeService>(),
+            draftChoreService: Mock.Of<IDraftChoreService>(),
+            draftLifecycle: Mock.Of<IDraftLifecycle>());
 
         var httpContext = new DefaultHttpContext
         {
