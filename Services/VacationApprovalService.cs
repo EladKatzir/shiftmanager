@@ -1096,28 +1096,29 @@ public class VacationApprovalService : IVacationApprovalService
     }
 
     public async Task<(bool Success, int? RequestId, string? ErrorKey)> CreateApprovedManualTimeOffAsync(
-        int targetUserId, int companyId, TimeOffType type,
+        int targetUserId, TimeOffType type,
         DateOnly startDate, DateOnly endDate, string? label, int actorUserId)
     {
         // 1. Authorization — identical gate to user-targeted note entry (QuickAddTextEntry):
         //    the actor must hold calendar-note permission AND be able to reach the target user.
+        //    CanReachUserForNoteAsync is company-aware (checks the target's company against the
+        //    actor's grant scope), so it IS the anti-IDOR guard.
         if (!await _grantService.HasCalendarNotePermissionAsync(actorUserId))
             return (false, null, "Error_TimeOff_NoPermission");
         if (!await _grantService.CanReachUserForNoteAsync(actorUserId, targetUserId))
             return (false, null, "Error_TimeOff_NoPermission");
 
-        // 2. Anti-IDOR: the record is tied to the resolved (viewed) company, so the target
-        //    must belong to it. IsMemberAsync covers multi-company users; single-company users
-        //    may not have a CompanyMembership row, so fall back to their home CompanyId.
-        if (!await _membershipService.IsMemberAsync(targetUserId, companyId))
-        {
-            var homeCompanyId = await _context.Users.IgnoreQueryFilters()
-                .Where(u => u.Id == targetUserId)
-                .Select(u => (int?)u.CompanyId)
-                .FirstOrDefaultAsync();
-            if (homeCompanyId != companyId)
-                return (false, null, "Error_TimeOff_UserNotInCompany");
-        }
+        // 2. The leave belongs to the TARGET USER's own company — NOT the actor's active tenant.
+        //    On a molecule-scoped Shifts board (or a switched-company Team view) the users shown
+        //    span multiple companies, so the viewed/tenant company would be the wrong home for the
+        //    record. Resolve it from the user (reach was already verified above).
+        var targetCompanyId = await _context.Users.IgnoreQueryFilters()
+            .Where(u => u.Id == targetUserId && u.IsActive)
+            .Select(u => (int?)u.CompanyId)
+            .FirstOrDefaultAsync();
+        if (targetCompanyId == null)
+            return (false, null, "Error_TimeOff_UserNotInCompany");
+        var companyId = targetCompanyId.Value;
 
         // 3. Normalize per type (mirrors Pages/My/Requests OnPostTimeOffAsync):
         //    After and DayAt are single-day; DayAt requires a free-text location label.

@@ -24,18 +24,15 @@ namespace ShiftManager.Pages.Api.Calendar;
 public class QuickAddTimeOffModel : PageModel
 {
     private readonly IVacationApprovalService _vacationService;
-    private readonly ITenantResolver _tenantResolver;
     private readonly IStringLocalizer<SharedResources> _localizer;
     private readonly ILogger<QuickAddTimeOffModel> _logger;
 
     public QuickAddTimeOffModel(
         IVacationApprovalService vacationService,
-        ITenantResolver tenantResolver,
         IStringLocalizer<SharedResources> localizer,
         ILogger<QuickAddTimeOffModel> logger)
     {
         _vacationService = vacationService;
-        _tenantResolver = tenantResolver;
         _localizer = localizer;
         _logger = logger;
     }
@@ -73,12 +70,8 @@ public class QuickAddTimeOffModel : PageModel
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var currentUserId))
                 return new JsonResult(new { success = false, message = "User not authenticated" }) { StatusCode = 401 };
 
-            var companyId = _tenantResolver.GetCurrentTenantId();
-            if (companyId <= 0)
-                return new JsonResult(new { success = false, message = "No active company" }) { StatusCode = 400 };
-
             var (success, requestId, errorKey) = await _vacationService.CreateApprovedManualTimeOffAsync(
-                data.UserId, companyId, timeOffType, entryDate, entryDate, data.Label, currentUserId);
+                data.UserId, timeOffType, entryDate, entryDate, data.Label, currentUserId);
 
             if (!success)
             {

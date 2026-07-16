@@ -125,7 +125,7 @@ public class ManualTimeOffEntryTests : IDisposable
         await SeedShiftOnAsync(day);
 
         var (success, requestId, errorKey) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.Vacation, day, day, null, ActorUserId);
+            TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
 
         success.Should().BeTrue(errorKey);
         requestId.Should().NotBeNull();
@@ -152,7 +152,7 @@ public class ManualTimeOffEntryTests : IDisposable
         await SeedTargetAsync();
 
         var (success, requestId, _) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.After, start, laterEnd, null, ActorUserId);
+            TargetUserId, TimeOffType.After, start, laterEnd, null, ActorUserId);
 
         success.Should().BeTrue();
         var req = await _db.TimeOffRequests.FindAsync(requestId!.Value);
@@ -167,7 +167,7 @@ public class ManualTimeOffEntryTests : IDisposable
         await SeedTargetAsync();
 
         var (success, requestId, _) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.DayAt, start, start.AddDays(4), "clinic", ActorUserId);
+            TargetUserId, TimeOffType.DayAt, start, start.AddDays(4), "clinic", ActorUserId);
 
         success.Should().BeTrue();
         var req = await _db.TimeOffRequests.FindAsync(requestId!.Value);
@@ -183,7 +183,7 @@ public class ManualTimeOffEntryTests : IDisposable
         await SeedTargetAsync();
 
         var (success, requestId, errorKey) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.DayAt, start, start, "   ", ActorUserId);
+            TargetUserId, TimeOffType.DayAt, start, start, "   ", ActorUserId);
 
         success.Should().BeFalse();
         requestId.Should().BeNull();
@@ -199,7 +199,7 @@ public class ManualTimeOffEntryTests : IDisposable
         _grantServiceMock.Setup(g => g.HasCalendarNotePermissionAsync(ActorUserId)).ReturnsAsync(false);
 
         var (success, _, errorKey) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.Vacation, day, day, null, ActorUserId);
+            TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
 
         success.Should().BeFalse();
         errorKey.Should().Be("Error_TimeOff_NoPermission");
@@ -214,25 +214,38 @@ public class ManualTimeOffEntryTests : IDisposable
         _grantServiceMock.Setup(g => g.CanReachUserForNoteAsync(ActorUserId, TargetUserId)).ReturnsAsync(false);
 
         var (success, _, errorKey) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.Vacation, day, day, null, ActorUserId);
+            TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
 
         success.Should().BeFalse();
         errorKey.Should().Be("Error_TimeOff_NoPermission");
     }
 
     [Fact]
-    public async Task TargetNotInResolvedCompany_ReturnsUserNotInCompany()
+    public async Task NonexistentTarget_ReturnsUserNotInCompany()
     {
         var day = new DateOnly(2026, 8, 3);
-        // Target's home company is OtherCompanyId, and membership check says not a member of TestCompanyId.
-        await SeedTargetAsync(companyId: OtherCompanyId);
-        _membershipServiceMock.Setup(m => m.IsMemberAsync(TargetUserId, TestCompanyId)).ReturnsAsync(false);
-
+        // Do NOT seed the target user. Reach is mocked true (default), so the guard that trips is
+        // the company resolution: no active user row -> no company to attach the leave to.
         var (success, _, errorKey) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.Vacation, day, day, null, ActorUserId);
+            TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
 
         success.Should().BeFalse();
         errorKey.Should().Be("Error_TimeOff_UserNotInCompany");
+    }
+
+    [Fact]
+    public async Task LeaveIsCreatedInTargetsOwnCompany_NotActorTenant()
+    {
+        var day = new DateOnly(2026, 8, 3);
+        // Target lives in a DIFFERENT company than the acting tenant would imply (molecule board case).
+        await SeedTargetAsync(companyId: OtherCompanyId);
+
+        var (success, requestId, _) = await _service.CreateApprovedManualTimeOffAsync(
+            TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
+
+        success.Should().BeTrue();
+        var req = await _db.TimeOffRequests.FindAsync(requestId!.Value);
+        req!.CompanyId.Should().Be(OtherCompanyId, "the leave belongs to the target user's own company");
     }
 
     [Fact]
@@ -249,7 +262,7 @@ public class ManualTimeOffEntryTests : IDisposable
         await _db.SaveChangesAsync();
 
         var (success, _, errorKey) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.Vacation, day, day, null, ActorUserId);
+            TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
 
         success.Should().BeFalse();
         errorKey.Should().Be("Error_TimeOff_OverlapExists");
@@ -264,7 +277,7 @@ public class ManualTimeOffEntryTests : IDisposable
             .ReturnsAsync(false);
 
         var (success, requestId, _) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.Vacation, day, day, null, ActorUserId);
+            TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
 
         success.Should().BeTrue();
         var req = await _db.TimeOffRequests.FindAsync(requestId!.Value);
@@ -279,7 +292,7 @@ public class ManualTimeOffEntryTests : IDisposable
         await SeedTargetAsync(role: UserRole.Trainee);
 
         var (success, _, _) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TestCompanyId, TimeOffType.Vacation, day, day, null, ActorUserId);
+            TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
 
         success.Should().BeTrue();
         _traineeServiceMock.Verify(
