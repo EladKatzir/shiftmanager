@@ -461,7 +461,7 @@
     @if (Model.CanManageTabs && Model.SelectedMoleculeId.HasValue)
     {
         <div class="feature-category" id="shiftTabsSection" data-molecule-id="@Model.SelectedMoleculeId">
-            <h2><icon name="columns" /> <loc key="Blueprints_Tabs_Section">Calendar Tabs</loc></h2>
+            <h2><icon name="layers" /> <loc key="Blueprints_Tabs_Section">Calendar Tabs</loc></h2>
             <p class="page-subtitle"><loc key="Blueprints_Tabs_Description">Split this molecule's Shifts calendar into separate sub-calendars. Assign shift types and companies to each tab; everything else stays on the "Main" tab.</loc></p>
 
             <form method="post" asp-page-handler="CreateTab"
