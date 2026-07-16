@@ -128,7 +128,8 @@
                         // In Draft Mode the × on ANY shift chip (real or staged) routes to draft-clear,
                         // so render it for the synthetic (negative-id) staged chips too.
                         var isDraftShiftChip = Model.DraftSessionId != null && assignment.ShiftTypeId.HasValue && assignment.UserId.HasValue;
-                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip);
+                        // A "busy elsewhere" ghost (a shift on another tab) is view-only: never removable from here.
+                        var showRemove = !isReadOnly && !assignment.IsBusyElsewhere && (assignment.Id > 0 || isDraftShiftChip);
                         // A shadowing trainee splits the chip into two cubes (worker + trainee). Requires the
                         // Trainee navigation to be mapped to TraineeUserId (else TraineeName is always empty).
                         var hasTrainee = !isHomeChip && !string.IsNullOrEmpty(assignment.TraineeName);

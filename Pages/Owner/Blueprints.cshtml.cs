@@ -29,6 +29,7 @@ public class BlueprintsModel : PageModel
     private readonly IShiftTypeCacheService _shiftTypeCache;
     private readonly IGrantService _grantService;
     private readonly IShiftCategoryService _categoryService;
+    private readonly IShiftTabService _tabService;
 
     public BlueprintsModel(
         AppDbContext db,
@@ -40,7 +41,8 @@ public class BlueprintsModel : PageModel
         IJobTypeService jobTypeService,
         IShiftTypeCacheService shiftTypeCache,
         IGrantService grantService,
-        IShiftCategoryService categoryService)
+        IShiftCategoryService categoryService,
+        IShiftTabService tabService)
     {
         _db = db;
         _localizationService = localizationService;
@@ -52,6 +54,7 @@ public class BlueprintsModel : PageModel
         _shiftTypeCache = shiftTypeCache;
         _grantService = grantService;
         _categoryService = categoryService;
+        _tabService = tabService;
     }
 
     public List<ShiftType> ShiftTypes { get; set; } = new();
@@ -87,10 +90,22 @@ public class BlueprintsModel : PageModel
     [BindProperty] public string NewCategoryName { get; set; } = string.Empty;
     [BindProperty] public string? NewCategoryColor { get; set; }
 
+    // Shift tabs (לשונית — molecule sub-calendars) for the selected molecule.
+    public List<ShiftTab> Tabs { get; set; } = new();
+    // Companies (in the selected molecule) available to assign to tabs.
+    public List<Company> MoleculeCompanies { get; set; } = new();
+    // Current company assignment per tab (tabId → set of companyIds) for rendering the editor.
+    public Dictionary<int, HashSet<int>> TabCompanyIds { get; set; } = new();
+
+    // Create-tab form
+    [BindProperty] public string NewTabName { get; set; } = string.Empty;
+    [BindProperty] public string? NewTabColor { get; set; }
+
     // Permission helpers
     public bool CanCreateAreaScope { get; set; }
     public bool CanCreateMoleculeScope { get; set; }
     public bool CanManageCategories { get; set; }
+    public bool CanManageTabs { get; set; }
 
     public async Task OnGetAsync()
     {
@@ -152,6 +167,17 @@ public class BlueprintsModel : PageModel
             Categories = await _categoryService.GetCategoriesForMoleculeAsync(SelectedMoleculeId.Value);
             CanManageCategories = userId > 0 &&
                 await _grantService.HasGrantWithScopeAsync(userId, "ManageShiftCategories", moleculeId: SelectedMoleculeId);
+
+            // Shift tabs (לשונית) + their company membership. Tab management reuses the
+            // ManageShiftCategories grant (no new GrantType). Companies list feeds the per-tab editor.
+            Tabs = await _tabService.GetTabsForMoleculeAsync(SelectedMoleculeId.Value);
+            CanManageTabs = CanManageCategories;
+            MoleculeCompanies = await _db.Companies.IgnoreQueryFilters()
+                .Where(c => c.MoleculeId == SelectedMoleculeId)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+            foreach (var tab in Tabs)
+                TabCompanyIds[tab.Id] = await _tabService.GetCompanyIdsForTabAsync(SelectedMoleculeId.Value, tab.Id);
         }
 
         // Determine create permissions
@@ -664,6 +690,176 @@ public class BlueprintsModel : PageModel
             ? Task.FromResult(false)
             : _grantService.HasGrantWithScopeAsync(userId, "ManageShiftCategories", moleculeId: moleculeId);
 
+    // --- Shift Tab handlers (לשונית — molecule sub-calendars; gated by ManageShiftCategories) ---
+
+    // Tab management reuses ManageShiftCategories (no new GrantType) — tabs and categories are sibling
+    // molecule-scoped shift groupings both managed from Blueprints.
+    private Task<bool> CanManageTabsAsync(int userId, int moleculeId) => CanManageCategoriesAsync(userId, moleculeId);
+
+    public async Task<IActionResult> OnPostCreateTabAsync(int moleculeId)
+    {
+        var userId = GetCurrentUserId();
+        if (!await CanManageTabsAsync(userId, moleculeId))
+        {
+            TempData["ErrorMessage"] = InsufficientPermissionsMessage();
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        var name = (NewTabName ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = IsHebrewUi() ? "יש להזין שם לשונית" : "Tab name is required";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        var created = await _tabService.CreateAsync(moleculeId, name, name, NewTabColor);
+        if (created == null)
+        {
+            TempData["ErrorMessage"] = IsHebrewUi()
+                ? $"כבר קיימת לשונית בשם '{name}' במולקולה זו"
+                : $"A tab named '{name}' already exists in this molecule";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        await _auditLogService.LogAsync("ShiftTabCreated", "ShiftTab", created.Id,
+            $"Created shift tab '{created.Name}' in molecule {moleculeId}.");
+        _logger.LogInformation("Created ShiftTab {Id} '{Name}' in molecule {MoleculeId} by User {UserId}",
+            created.Id, created.Name, moleculeId, userId);
+        TempData["SuccessMessage"] = IsHebrewUi() ? $"הלשונית '{name}' נוצרה" : $"Tab '{name}' created";
+        return RedirectToPage(new { selectedMoleculeId = moleculeId });
+    }
+
+    public async Task<IActionResult> OnPostRenameTabAsync([FromBody] RenameTabRequest request)
+    {
+        var userId = GetCurrentUserId();
+        var tab = await _tabService.GetTabAsync(request.TabId);
+        if (tab == null)
+            return new JsonResult(new { success = false, error = "Tab not found" });
+        if (!await CanManageTabsAsync(userId, tab.MoleculeId))
+            return new JsonResult(new { success = false, error = InsufficientPermissionsMessage() }) { StatusCode = 403 };
+
+        var name = (request.Name ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return new JsonResult(new { success = false, error = "Tab name is required" });
+
+        var ok = await _tabService.RenameAsync(tab.Id, name, name, request.Color);
+        if (!ok)
+            return new JsonResult(new { success = false, error = "Rename failed (duplicate name?)" }) { StatusCode = 409 };
+
+        await _auditLogService.LogAsync("ShiftTabRenamed", "ShiftTab", tab.Id, $"Renamed shift tab {tab.Id} to '{name}'.");
+        return new JsonResult(new { success = true });
+    }
+
+    public async Task<IActionResult> OnGetCheckTabUsageAsync(int tabId)
+    {
+        var tab = await _tabService.GetTabAsync(tabId);
+        if (tab == null)
+            return new JsonResult(new { error = "Tab not found" });
+
+        var (shiftTypeCount, companyCount) = await _tabService.GetUsageAsync(tabId);
+        return new JsonResult(new { tabName = tab.DisplayName, shiftTypeCount, companyCount });
+    }
+
+    public async Task<IActionResult> OnPostDeleteTabAsync(int tabId, bool confirmed = false)
+    {
+        var userId = GetCurrentUserId();
+        var tab = await _tabService.GetTabAsync(tabId);
+        if (tab == null)
+        {
+            TempData["ErrorMessage"] = IsHebrewUi() ? "הלשונית לא נמצאה" : "Tab not found";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage();
+        }
+
+        var moleculeId = tab.MoleculeId;
+        if (!await CanManageTabsAsync(userId, moleculeId))
+        {
+            TempData["ErrorMessage"] = InsufficientPermissionsMessage();
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        var (shiftTypeCount, companyCount) = await _tabService.GetUsageAsync(tabId);
+        if ((shiftTypeCount > 0 || companyCount > 0) && !confirmed)
+        {
+            TempData["ErrorMessage"] = IsHebrewUi()
+                ? $"מחיקת '{tab.DisplayName}' תחזיר {shiftTypeCount} משמרות ו-{companyCount} דסקים ללשונית הראשית. יש לאשר."
+                : $"Deleting '{tab.DisplayName}' moves {shiftTypeCount} shift types and {companyCount} companies back to Main. Please confirm.";
+            TempData["ErrorId"] = HttpContext.TraceIdentifier;
+            return RedirectToPage(new { selectedMoleculeId = moleculeId });
+        }
+
+        await _tabService.DeleteAsync(tabId);
+        // Shift types (TabId → SetNull) revert to Main; the calendar shift-type cache may hold stale TabId.
+        _shiftTypeCache.InvalidateMoleculeCache(moleculeId, null);
+        await _auditLogService.LogAsync("ShiftTabDeleted", "ShiftTab", tabId,
+            $"Deleted shift tab '{tab.Name}' (reverted {shiftTypeCount} shifts, {companyCount} companies to Main).");
+        _logger.LogInformation("Deleted ShiftTab {Id} '{Name}' by User {UserId}", tabId, tab.Name, userId);
+        TempData["SuccessMessage"] = IsHebrewUi() ? $"הלשונית '{tab.DisplayName}' נמחקה" : $"Tab '{tab.DisplayName}' deleted";
+        return RedirectToPage(new { selectedMoleculeId = moleculeId });
+    }
+
+    public async Task<IActionResult> OnPostAssignShiftTabAsync([FromBody] AssignShiftTabRequest request)
+    {
+        var userId = GetCurrentUserId();
+        var shiftType = await _db.ShiftTypes.IgnoreQueryFilters() // SECURITY-AUDITED: shift types are not tenant-filtered
+            .FirstOrDefaultAsync(st => st.Id == request.ShiftId);
+        if (shiftType == null)
+            return new JsonResult(new { success = false, error = "Shift type not found" });
+
+        // The molecule the shift resolves to gates the grant (direct, or via its company).
+        var shiftMoleculeId = shiftType.MoleculeId
+            ?? await _db.Companies.IgnoreQueryFilters()
+                .Where(c => c.Id == shiftType.CompanyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+        if (shiftMoleculeId == null || !await CanManageTabsAsync(userId, shiftMoleculeId.Value))
+            return new JsonResult(new { success = false, error = InsufficientPermissionsMessage() }) { StatusCode = 403 };
+
+        var ok = await _tabService.AssignShiftTypeToTabAsync(request.ShiftId, request.TabId);
+        if (!ok)
+            return new JsonResult(new { success = false, error = "Tab must belong to the shift's molecule (area shifts can't be tabbed)" }) { StatusCode = 400 };
+
+        if (shiftType.MoleculeId.HasValue)
+            _shiftTypeCache.InvalidateMoleculeCache(shiftType.MoleculeId.Value, shiftType.JobTypeId);
+        await _auditLogService.LogAsync("ShiftTypeTabAssigned", "ShiftType", request.ShiftId,
+            $"Set ShiftType {request.ShiftId} tab to {(request.TabId?.ToString() ?? "none")}.");
+        return new JsonResult(new { success = true });
+    }
+
+    public async Task<IActionResult> OnPostAssignCompanyToTabAsync([FromBody] AssignCompanyToTabRequest request)
+    {
+        var userId = GetCurrentUserId();
+        // Resolve the company's molecule; it gates the grant (and the service enforces same-molecule C1).
+        var companyMoleculeId = await _db.Companies.IgnoreQueryFilters()
+            .Where(c => c.Id == request.CompanyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+        if (companyMoleculeId == null || !await CanManageTabsAsync(userId, companyMoleculeId.Value))
+            return new JsonResult(new { success = false, error = InsufficientPermissionsMessage() }) { StatusCode = 403 };
+
+        var ok = await _tabService.AssignCompanyToTabAsync(request.CompanyId, request.TabId);
+        if (!ok)
+            return new JsonResult(new { success = false, error = "Company must belong to the tab's molecule" }) { StatusCode = 400 };
+
+        _shiftTypeCache.InvalidateMoleculeCache(companyMoleculeId.Value, null);
+        await _auditLogService.LogAsync("ShiftTabCompanyAssigned", "ShiftTabCompany", request.CompanyId,
+            $"Set company {request.CompanyId} tab to {(request.TabId?.ToString() ?? "none")}.");
+        return new JsonResult(new { success = true });
+    }
+
+    public async Task<IActionResult> OnPostReorderTabsAsync([FromBody] ReorderTabsRequest request)
+    {
+        var userId = GetCurrentUserId();
+        if (!await CanManageTabsAsync(userId, request.MoleculeId))
+            return new JsonResult(new { success = false, error = InsufficientPermissionsMessage() }) { StatusCode = 403 };
+
+        var ok = await _tabService.ReorderTabsAsync(request.MoleculeId, request.TabIds ?? Array.Empty<int>());
+        if (!ok)
+            return new JsonResult(new { success = false, error = "Reorder failed (an id is not in this molecule)" }) { StatusCode = 400 };
+
+        return new JsonResult(new { success = true });
+    }
+
     // --- Helpers ---
 
     private int GetCurrentUserId()
@@ -774,5 +970,30 @@ public class BlueprintsModel : PageModel
     {
         public int ShiftTypeId { get; set; }
         public int? CategoryId { get; set; }
+    }
+
+    public class RenameTabRequest
+    {
+        public int TabId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Color { get; set; }
+    }
+
+    public class AssignShiftTabRequest
+    {
+        public int ShiftId { get; set; }
+        public int? TabId { get; set; }
+    }
+
+    public class AssignCompanyToTabRequest
+    {
+        public int CompanyId { get; set; }
+        public int? TabId { get; set; }
+    }
+
+    public class ReorderTabsRequest
+    {
+        public int MoleculeId { get; set; }
+        public int[]? TabIds { get; set; }
     }
 }

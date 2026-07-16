@@ -42,6 +42,10 @@ public class ShiftsModel : PageModel
     private readonly IDraftModeService _draftService;
     private readonly IFeatureFlagService _featureFlags;
 
+    // Per-request: shiftTypeId → TabId for the current molecule, used to ghost a user's non-active-tab
+    // shifts in by-user mode. Populated in BuildUserBasedCalendarAsync; empty when the molecule has no tabs.
+    private Dictionary<int, int?> _tabOfShiftType = new();
+
     public ShiftsModel(
         AppDbContext db,
         IShiftCalendarService calendarService,
@@ -634,14 +638,15 @@ public class ShiftsModel : PageModel
             bool TabMatches(int? shiftTabId) => Tab.HasValue ? shiftTabId == Tab.Value : shiftTabId == null;
 
             var tabCompanies = await _tabService.GetCompanyIdsForTabAsync(moleculeId, Tab);
-            // shiftTypeId → TabId for the WHOLE molecule (not tab-filtered) so cross-over resolves for any shift.
-            var tabOfShiftType = await _db.ShiftTypes
+            // shiftTypeId → TabId for the WHOLE molecule (not tab-filtered) so cross-over — and per-cell
+            // ghosting (ShiftIsOnActiveTab) — resolve for any shift, including other tabs' shifts.
+            _tabOfShiftType = await _db.ShiftTypes
                 .Where(st => st.MoleculeId == moleculeId || (st.Scope == ShiftScope.Area && st.AreaId == userAreaId))
                 .Select(st => new { st.Id, st.TabId })
                 .ToDictionaryAsync(x => x.Id, x => x.TabId);
             var crossOver = assignments
                 .Where(a => a.UserId.HasValue && a.ShiftInstance != null
-                    && tabOfShiftType.TryGetValue(a.ShiftInstance.ShiftTypeId, out var tid) && TabMatches(tid))
+                    && _tabOfShiftType.TryGetValue(a.ShiftInstance.ShiftTypeId, out var tid) && TabMatches(tid))
                 .Select(a => a.UserId!.Value)
                 .ToHashSet();
             users = users.Where(u => tabCompanies.Contains(u.CompanyId) || crossOver.Contains(u.Id)).ToList();
@@ -1247,6 +1252,18 @@ public class ShiftsModel : PageModel
         return cells;
     }
 
+    /// <summary>
+    /// True if a shift type is on the active tab (or the molecule has no tabs). Main (Tab == null) matches
+    /// untagged shifts. Drives by-user "busy elsewhere" ghosting: a shift on a DIFFERENT tab is shown greyed
+    /// and non-interactive, but is NEVER hidden from conflict/rest/hours — those see the full shift set.
+    /// </summary>
+    private bool ShiftIsOnActiveTab(int shiftTypeId)
+    {
+        if (AvailableTabs.Count == 0) return true;
+        var tid = _tabOfShiftType.TryGetValue(shiftTypeId, out var t) ? t : null;
+        return Tab.HasValue ? tid == Tab.Value : tid == null;
+    }
+
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
         int userId,
         List<ShiftInstance> instances,
@@ -1278,6 +1295,8 @@ public class ShiftsModel : PageModel
                 IsTraineeShift = a.IsTraineeShift,
                 UserId = a.UserId,
                 ShiftTypeId = a.ShiftInstance.ShiftTypeId,
+                // Ghost this chip when it's a shift on another tab (view-only; still counts for conflicts/hours).
+                IsBusyElsewhere = !ShiftIsOnActiveTab(a.ShiftInstance.ShiftTypeId),
                 TraineeUserId = a.TraineeUserId,
                 TraineeName = a.Trainee?.DisplayName,
                 // HOME unification (Task 22): user-mode chips render with source icons

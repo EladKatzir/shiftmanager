@@ -183,6 +183,7 @@
                         <th><loc key="Type" /></th>
                         <th><loc key="Blueprints_Scope" /></th>
                         <th><loc key="Blueprints_Category" /></th>
+                        <th><loc key="Blueprints_Tab" /></th>
                         <th><loc key="Blueprints_ShiftRules" /></th>
                         <th><loc key="Actions" /></th>
                     </tr>
@@ -299,6 +300,37 @@
                                 else if (currentCat != null)
                                 {
                                     <span>@currentCat.DisplayName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                @{
+                                    var isAreaShift = shiftType.Scope == ShiftManager.Models.Support.ShiftScope.Area;
+                                    var currentTab = Model.Tabs.FirstOrDefault(t => t.Id == shiftType.TabId);
+                                }
+                                @if (Model.CanManageTabs && inSelectedMolecule && !isAreaShift)
+                                {
+                                    <select class="form-control form-control-sm js-shift-tab"
+                                            data-shift-id="@shiftType.Id"
+                                            data-company-id="@(shiftType.CompanyId?.ToString() ?? "")"
+                                            style="min-width: 130px;">
+                                        <option value="">@Localizer["Blueprints_NoTab"]</option>
+                                        @foreach (var tab in Model.Tabs)
+                                        {
+                                            <option value="@tab.Id" selected="@(shiftType.TabId == tab.Id)">@tab.DisplayName</option>
+                                        }
+                                    </select>
+                                }
+                                else if (isAreaShift)
+                                {
+                                    <span class="text-muted" title="@Localizer["Blueprints_AreaShiftNoTab"]">—</span>
+                                }
+                                else if (currentTab != null)
+                                {
+                                    <span>@currentTab.DisplayName</span>
                                 }
                                 else
                                 {
@@ -424,6 +456,101 @@
             </form>
         </div>
     }
+
+    @* Shift Tabs Section (לשונית) — molecule sub-calendars: a shift-type partition + a company roster *@
+    @if (Model.CanManageTabs && Model.SelectedMoleculeId.HasValue)
+    {
+        <div class="feature-category" id="shiftTabsSection" data-molecule-id="@Model.SelectedMoleculeId">
+            <h2><icon name="columns" /> <loc key="Blueprints_Tabs_Section">Calendar Tabs</loc></h2>
+            <p class="page-subtitle"><loc key="Blueprints_Tabs_Description">Split this molecule's Shifts calendar into separate sub-calendars. Assign shift types and companies to each tab; everything else stays on the "Main" tab.</loc></p>
+
+            <form method="post" asp-page-handler="CreateTab"
+                  style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem;">
+                <input type="hidden" name="moleculeId" value="@Model.SelectedMoleculeId" />
+                <div class="form-group" style="margin: 0;">
+                    <label asp-for="NewTabName"><loc key="Blueprints_TabName">Tab Name</loc></label>
+                    <input asp-for="NewTabName" class="form-control" maxlength="100" autocomplete="off" />
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label asp-for="NewTabColor"><loc key="Blueprints_CategoryColor">Color</loc></label>
+                    <input asp-for="NewTabColor" type="color" class="form-control" value="#3B82F6" style="width: 56px; padding: 2px;" />
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <icon name="plus" /> <loc key="Blueprints_NewTab">Add Tab</loc>
+                </button>
+            </form>
+
+            @if (Model.Tabs.Any())
+            {
+                <table class="table table-hover" id="shiftTabsTable">
+                    <thead>
+                        <tr>
+                            <th><loc key="Blueprints_TabName" /></th>
+                            <th><loc key="Blueprints_TabShiftTypes" /></th>
+                            <th><loc key="Blueprints_TabCompanies" /></th>
+                            <th><loc key="Actions" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tab in Model.Tabs)
+                        {
+                            var tabCompanyIds = Model.TabCompanyIds.TryGetValue(tab.Id, out var ids) ? ids : new HashSet<int>();
+                            var tabShiftCount = Model.ShiftTypes.Count(st => st.TabId == tab.Id);
+                            var halfConfigured = (tabShiftCount > 0) != (tabCompanyIds.Count > 0);
+                            <tr data-tab-id="@tab.Id" draggable="true" class="js-tab-row">
+                                <td>
+                                    <span class="drag-handle" aria-hidden="true" style="cursor:grab; margin-inline-end:6px;">⋮⋮</span>
+                                    <span class="cat-color-dot" aria-hidden="true"
+                                          style="display:inline-block; width:12px; height:12px; border-radius:50%; margin-inline-end:6px; vertical-align:middle; background:@(string.IsNullOrWhiteSpace(tab.Color) ? "#888" : tab.Color);"></span>
+                                    <span class="js-tab-name">@tab.DisplayName</span>
+                                    @if (halfConfigured)
+                                    {
+                                        <span class="badge badge-warning js-tab-halfwarn" title="@Localizer["Blueprints_TabHalfConfigured"]">
+                                            <loc key="Blueprints_TabHalfConfiguredBadge" />
+                                        </span>
+                                    }
+                                </td>
+                                <td><small class="text-muted">@tabShiftCount</small></td>
+                                <td>
+                                    <div class="js-tab-companies" style="display:flex; flex-wrap:wrap; gap:6px;">
+                                        @foreach (var co in Model.MoleculeCompanies)
+                                        {
+                                            <label class="checkbox-inline" style="margin:0; white-space:nowrap;">
+                                                <input type="checkbox" class="js-tab-company"
+                                                       data-tab-id="@tab.Id" data-company-id="@co.Id"
+                                                       checked="@tabCompanyIds.Contains(co.Id)" />
+                                                @co.DisplayName
+                                            </label>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-secondary js-rename-tab"
+                                            data-id="@tab.Id" data-name="@tab.DisplayName" data-color="@tab.Color">
+                                        <icon name="pencil" /> <loc key="Rename">Rename</loc>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger js-delete-tab"
+                                            data-id="@tab.Id" data-name="@tab.DisplayName">
+                                        <icon name="trash-2" /> <loc key="Delete" />
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-info"><loc key="Blueprints_NoTabs">No tabs yet. Create one above to split this molecule's calendar.</loc></div>
+            }
+
+            @* Hidden form used to POST a confirmed tab deletion *@
+            <form method="post" asp-page-handler="DeleteTab" id="deleteTabForm" style="display: none;">
+                <input type="hidden" name="tabId" id="deleteTabId" />
+                <input type="hidden" name="confirmed" id="deleteTabConfirmed" value="false" />
+            </form>
+        </div>
+    }
 </div>
 
 @* Rename Category Modal *@
@@ -472,6 +599,57 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeDeleteCategoryModal()"><loc key="Button_Cancel">Cancel</loc></button>
                 <button type="button" class="btn btn-danger" onclick="proceedDeleteCategory()"><loc key="Button_ConfirmDelete">Confirm Delete</loc></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Rename Tab Modal *@
+<div id="renameTabModal" class="blueprint-modal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><loc key="Blueprints_RenameTab">Rename Tab</loc></h3>
+                <button type="button" class="close-modal" onclick="closeRenameTabModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="renameTabId" />
+                <div class="form-group">
+                    <label for="renameTabName"><loc key="Blueprints_TabName">Tab Name</loc></label>
+                    <input type="text" id="renameTabName" class="form-control" maxlength="100" required />
+                </div>
+                <div class="form-group">
+                    <label for="renameTabColor"><loc key="Blueprints_CategoryColor">Color</loc></label>
+                    <input type="color" id="renameTabColor" class="form-control" style="width: 56px; padding: 2px;" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeRenameTabModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                <button type="button" class="btn btn-primary" onclick="saveTabName()"><loc key="Button_Save">Save</loc></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Delete Tab Confirmation Modal *@
+<div id="deleteTabModal" class="blueprint-modal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><loc key="Blueprints_DeleteTab">Delete Tab</loc></h3>
+                <button type="button" class="close-modal" onclick="closeDeleteTabModal()" loc-aria-label="Aria_CloseDialog">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong><loc key="Blueprints_Tab">Tab</loc>:</strong> <span id="deleteTabDisplayName"></span></p>
+                <div id="deleteTabUsage" style="display:none; background: var(--warning-soft); padding: 12px; margin: 12px 0; border-radius: 5px; border-inline-start: 4px solid var(--warning);" role="alert">
+                    <p id="deleteTabUsageText"></p>
+                    <p><loc key="Blueprints_DeleteTabUsageNote">Those shift types and companies move back to the Main tab. Shifts and assignments are not deleted.</loc></p>
+                </div>
+                <p style="margin-top: 12px;"><strong><loc key="Blueprints_ConfirmDeleteQuestion">Are you sure you want to delete this?</loc></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteTabModal()"><loc key="Button_Cancel">Cancel</loc></button>
+                <button type="button" class="btn btn-danger" onclick="proceedDeleteTab()"><loc key="Button_ConfirmDelete">Confirm Delete</loc></button>
             </div>
         </div>
     </div>
@@ -1274,6 +1452,230 @@
             const m = document.getElementById(idv);
             if (m) m.addEventListener('click', function (e) { if (e.target === this) { this.classList.remove('is-open'); this.style.display = 'none'; } });
         });
+
+        // ---------------------------------------------------------------------------
+        // Shift Tabs (לשונית): assign-to-shift, company membership + auto-suggest, rename, delete, reorder
+        // ---------------------------------------------------------------------------
+
+        // Assign a shift type to a tab (or clear → Main) on dropdown change.
+        document.querySelectorAll('.js-shift-tab').forEach(sel => {
+            sel.addEventListener('change', async function () {
+                const shiftId = parseInt(this.dataset.shiftId, 10);
+                const raw = this.value;
+                const tabId = raw === '' ? null : parseInt(raw, 10);
+                this.disabled = true;
+                try {
+                    const ok = await assignShiftToTab(shiftId, tabId);
+                    if (ok) {
+                        window.Toast && window.Toast.success
+                            ? window.Toast.success('@Localizer["Blueprints_SettingsSaved"].Value.Trim()') : null;
+                    }
+                } finally { this.disabled = false; }
+            });
+        });
+
+        async function assignShiftToTab(shiftId, tabId) {
+            try {
+                const resp = await fetch('/Owner/Blueprints?handler=AssignShiftTab', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': blueprintsToken() },
+                    body: JSON.stringify({ shiftId, tabId })
+                });
+                let result = null;
+                try { result = await resp.json(); } catch (e) { /* non-JSON */ }
+                if (resp.ok && result && result.success) return true;
+                window.FeedbackModal.show('error', (result && result.error) || '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+                return false;
+            } catch (err) {
+                console.error('Failed to assign tab', err);
+                window.FeedbackModal.show('error', '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+                return false;
+            }
+        }
+
+        // Assign/remove a company on a tab; on assign, auto-suggest tagging that company's untagged shift types.
+        document.querySelectorAll('.js-tab-company').forEach(cb => {
+            cb.addEventListener('change', async function () {
+                const companyId = parseInt(this.dataset.companyId, 10);
+                const tabId = this.checked ? parseInt(this.dataset.tabId, 10) : null;
+                // A company is on at most one tab: unchecking sibling boxes for the same company when checking.
+                if (this.checked) {
+                    document.querySelectorAll(`.js-tab-company[data-company-id="${companyId}"]`).forEach(other => {
+                        if (other !== this) other.checked = false;
+                    });
+                }
+                this.disabled = true;
+                try {
+                    const resp = await fetch('/Owner/Blueprints?handler=AssignCompanyToTab', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': blueprintsToken() },
+                        body: JSON.stringify({ companyId, tabId })
+                    });
+                    let result = null;
+                    try { result = await resp.json(); } catch (e) { /* non-JSON */ }
+                    if (!(resp.ok && result && result.success)) {
+                        this.checked = !this.checked; // revert
+                        window.FeedbackModal.show('error', (result && result.error) || '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+                        return;
+                    }
+                    // Auto-suggest: offer to tag this company's own (Scope=Company) untagged shift types to the tab.
+                    if (tabId !== null) {
+                        const untagged = Array.from(document.querySelectorAll(`.js-shift-tab[data-company-id="${companyId}"]`))
+                            .filter(sel => sel.value === '');
+                        if (untagged.length > 0 && confirm('@Localizer["Blueprints_AutoSuggestConfirm"].Value.Trim()'.replace('{0}', untagged.length))) {
+                            for (const sel of untagged) {
+                                const ok = await assignShiftToTab(parseInt(sel.dataset.shiftId, 10), tabId);
+                                if (ok) sel.value = String(tabId);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    this.checked = !this.checked;
+                    console.error('Failed to assign company to tab', err);
+                    window.FeedbackModal.show('error', '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+                } finally { this.disabled = false; }
+            });
+        });
+
+        // Rename tab modal
+        document.querySelectorAll('.js-rename-tab').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.getElementById('renameTabId').value = this.dataset.id;
+                document.getElementById('renameTabName').value = this.dataset.name || '';
+                document.getElementById('renameTabColor').value = this.dataset.color || '#3B82F6';
+                const m = document.getElementById('renameTabModal');
+                m.style.display = 'flex';
+                m.classList.add('is-open');
+            });
+        });
+
+        function closeRenameTabModal() {
+            const m = document.getElementById('renameTabModal');
+            m.classList.remove('is-open');
+            m.style.display = 'none';
+        }
+        window.closeRenameTabModal = closeRenameTabModal;
+
+        async function saveTabName() {
+            const tabId = parseInt(document.getElementById('renameTabId').value, 10);
+            const name = document.getElementById('renameTabName').value.trim();
+            const color = document.getElementById('renameTabColor').value;
+            if (!name) {
+                window.FeedbackModal.show('warning', '@Localizer["Blueprints_TabNameRequired"].Value.Trim()');
+                return;
+            }
+            try {
+                const resp = await fetch('/Owner/Blueprints?handler=RenameTab', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': blueprintsToken() },
+                    body: JSON.stringify({ tabId, name, color })
+                });
+                let result = null;
+                try { result = await resp.json(); } catch (e) { /* non-JSON */ }
+                if (resp.ok && result && result.success) { closeRenameTabModal(); location.reload(); return; }
+                window.FeedbackModal.show('error', (result && result.error) || '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+            } catch (err) {
+                console.error('Failed to rename tab', err);
+                window.FeedbackModal.show('error', '@Localizer["Error_FailedToUpdate"].Value.Trim()');
+            }
+        }
+        window.saveTabName = saveTabName;
+
+        // Delete tab — fetch usage, confirm, then submit the hidden form with confirmed=true.
+        document.querySelectorAll('.js-delete-tab').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const id = this.dataset.id;
+                const name = this.dataset.name || '';
+                document.getElementById('deleteTabDisplayName').textContent = name;
+                const usageBox = document.getElementById('deleteTabUsage');
+                const usageText = document.getElementById('deleteTabUsageText');
+                usageBox.style.display = 'none';
+                usageText.textContent = '';
+                document.getElementById('deleteTabId').value = id;
+
+                const m = document.getElementById('deleteTabModal');
+                m.style.display = 'flex';
+                m.classList.add('is-open');
+
+                try {
+                    const resp = await fetch(`/Owner/Blueprints?handler=CheckTabUsage&tabId=${id}`);
+                    const result = await resp.json();
+                    if (result && !result.error && (result.shiftTypeCount > 0 || result.companyCount > 0)) {
+                        usageText.textContent =
+                            '@Localizer["Blueprints_TabInUsePrefix"].Value.Trim() ' +
+                            result.shiftTypeCount + ' @Localizer["Blueprints_ShiftsWord"].Value.Trim(), ' +
+                            result.companyCount + ' @Localizer["Blueprints_CompaniesWord"].Value.Trim().';
+                        usageBox.style.display = 'block';
+                    }
+                } catch (e) { console.error('tab usage check failed', e); }
+            });
+        });
+
+        function closeDeleteTabModal() {
+            const m = document.getElementById('deleteTabModal');
+            m.classList.remove('is-open');
+            m.style.display = 'none';
+        }
+        window.closeDeleteTabModal = closeDeleteTabModal;
+
+        function proceedDeleteTab() {
+            document.getElementById('deleteTabConfirmed').value = 'true';
+            document.getElementById('deleteTabForm').submit();
+        }
+        window.proceedDeleteTab = proceedDeleteTab;
+
+        ['renameTabModal', 'deleteTabModal'].forEach(idv => {
+            const m = document.getElementById(idv);
+            if (m) m.addEventListener('click', function (e) { if (e.target === this) { this.classList.remove('is-open'); this.style.display = 'none'; } });
+        });
+
+        // Drag + Alt-arrow reorder of the tab list → POST the new id order to ReorderTabs.
+        (function () {
+            const table = document.getElementById('shiftTabsTable');
+            const section = document.getElementById('shiftTabsSection');
+            if (!table || !section) return;
+            const tbody = table.querySelector('tbody');
+            const moleculeId = parseInt(section.dataset.moleculeId, 10);
+            let dragEl = null;
+
+            function currentOrder() {
+                return Array.from(tbody.querySelectorAll('.js-tab-row')).map(r => parseInt(r.dataset.tabId, 10));
+            }
+            async function persistOrder() {
+                try {
+                    await fetch('/Owner/Blueprints?handler=ReorderTabs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': blueprintsToken() },
+                        body: JSON.stringify({ moleculeId, tabIds: currentOrder() })
+                    });
+                } catch (e) { console.error('reorder failed', e); }
+            }
+
+            tbody.querySelectorAll('.js-tab-row').forEach(row => {
+                row.addEventListener('dragstart', function () { dragEl = this; this.style.opacity = '0.5'; });
+                row.addEventListener('dragend', function () { this.style.opacity = ''; });
+                row.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                    if (!dragEl || dragEl === this) return;
+                    const rect = this.getBoundingClientRect();
+                    const after = (e.clientY - rect.top) > rect.height / 2;
+                    tbody.insertBefore(dragEl, after ? this.nextSibling : this);
+                });
+                row.addEventListener('drop', function (e) { e.preventDefault(); persistOrder(); });
+
+                // Keyboard: Alt+ArrowUp / Alt+ArrowDown moves the focused row.
+                row.addEventListener('keydown', function (e) {
+                    if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+                    e.preventDefault();
+                    if (e.key === 'ArrowUp' && this.previousElementSibling) {
+                        tbody.insertBefore(this, this.previousElementSibling); this.focus(); persistOrder();
+                    } else if (e.key === 'ArrowDown' && this.nextElementSibling) {
+                        tbody.insertBefore(this.nextElementSibling, this); this.focus(); persistOrder();
+                    }
+                });
+                row.tabIndex = 0;
+            });
+        })();
     </script>
 }
 
