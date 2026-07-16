@@ -128,7 +128,11 @@
                         // In Draft Mode the × on ANY shift chip (real or staged) routes to draft-clear,
                         // so render it for the synthetic (negative-id) staged chips too.
                         var isDraftShiftChip = Model.DraftSessionId != null && assignment.ShiftTypeId.HasValue && assignment.UserId.HasValue;
-                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip);
+                        // On-call draft: staged duty chips are synthetic (Id=0) and carry no ShiftTypeId; the ×
+                        // routes to draft-clear by (dutytype row-id, cell date, chip user). Render it for both the
+                        // real baseline chips (Id>0) and the staged ones so either can be un-staged.
+                        var isDraftOnDutyChip = Model.DraftSessionId != null && rowKind == "onduty" && assignment.UserId.HasValue;
+                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip || isDraftOnDutyChip);
                         // A shadowing trainee splits the chip into two cubes (worker + trainee). Requires the
                         // Trainee navigation to be mapped to TraineeUserId (else TraineeName is always empty).
                         var hasTrainee = !isHomeChip && !string.IsNullOrEmpty(assignment.TraineeName);
