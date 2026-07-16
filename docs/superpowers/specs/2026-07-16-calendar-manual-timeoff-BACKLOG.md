@@ -30,3 +30,27 @@ Format: `- [ ] <question> — <context / my provisional choice so nothing is blo
   an out-of-scope attempt fails with a clear localized error rather than silently succeeding.
 - **Morning-after boundary kept at 13:00** (your explicit choice) — matches the shared `HOME_AM`
   shift-type used by every existing vacation; no shift-type re-seeding.
+- **Cross-company HOME-chip render bug — FIXED (Fix B, render-side).** Browser E2E surfaced that
+  HOME shift-types are molecule-scoped, so one `ShiftInstance` is shared across companies in a
+  molecule and carries whichever company first materialised it. `OverviewCalendarBuilder.LoadShiftsAsync`
+  referenced the required `ShiftInstance` nav under the global query filter, INNER-JOINing on the
+  instance's company and dropping a cross-company-same-molecule-same-day HOME row (palm-tree still
+  showed; the busy-chip vanished). A decision-maker agent researched this (no unique index on
+  ShiftInstances; the alternative "per-company instances" fix would break the rotation generator +
+  need a migration) and recommended the render-side fix: `IgnoreQueryFilters()` + explicit
+  `sa.CompanyId == companyId` (the assignment's company is the true per-user tenant axis, not the
+  shared instance's stamp). One method, no migration, fixes existing data, zero risk to the
+  approval/rotation flows, provably equivalent for normal shifts. Added a regression test that runs
+  with the tenant filter active. Browser-verified: the previously-missing HOME chips now render on
+  both Overview and Team.
+
+## Pre-existing follow-ups noticed (NOT fixed — out of this feature's scope; your call)
+
+- The **Week/Month/Day personal calendars** filter HOME by the instance's company
+  (`si.CompanyId IN companyIds`), so a collision user can miss their own HOME chip there too — same
+  root cause, different (out-of-scope) surface.
+- **Cross-company Team**: only shifts got the assignment-company fix here; vacations/chores/on-duties
+  on a switched-company Team view still scope by the caller's ambient tenant (Team v1 cross-company
+  parity is a separate pre-existing gap).
+- Optional data-hygiene: consider making `HomeMaterialiserService` / `HomeTypeService` stop stamping
+  molecule-scoped HOME instances with a company (or standardise the stamp). Not required for the fix.
