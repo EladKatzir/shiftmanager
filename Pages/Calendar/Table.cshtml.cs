@@ -1894,6 +1894,27 @@ public partial class TableModel : PageModel
         return new JsonResult(new { success = true, draft = true });
     }
 
+    public async Task<IActionResult> OnPostDraftAddTraineeAsync([FromBody] DraftAddTraineeRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+        // Coordinate-keyed (never assignmentId): a staged primary has no persisted row.
+        await _draftService.StageTraineeAsync(request.DraftSessionId, request.ShiftTypeId, request.Date, request.PrimaryUserId, request.TraineeUserId);
+        return new JsonResult(new { success = true, draft = true });
+    }
+
+    public async Task<IActionResult> OnPostDraftRemoveTraineeAsync([FromBody] DraftRemoveTraineeRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+        await _draftService.StageTraineeClearAsync(request.DraftSessionId, request.ShiftTypeId, request.Date, request.PrimaryUserId);
+        return new JsonResult(new { success = true, draft = true });
+    }
+
     public async Task<IActionResult> OnPostCommitDraftAsync([FromBody] DraftActionRequest request)
     {
         if (CurrentUserIdOrNull() is not int userId)
@@ -1942,6 +1963,23 @@ public partial class TableModel : PageModel
         public int ShiftTypeId { get; set; }
         public DateOnly Date { get; set; }
         public int UserId { get; set; }
+    }
+
+    public class DraftAddTraineeRequest
+    {
+        public int DraftSessionId { get; set; }
+        public int ShiftTypeId { get; set; }
+        public DateOnly Date { get; set; }
+        public int PrimaryUserId { get; set; }
+        public int TraineeUserId { get; set; }
+    }
+
+    public class DraftRemoveTraineeRequest
+    {
+        public int DraftSessionId { get; set; }
+        public int ShiftTypeId { get; set; }
+        public DateOnly Date { get; set; }
+        public int PrimaryUserId { get; set; }
     }
 
     public class AssignEmployeeRequest

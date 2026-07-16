@@ -44,6 +44,19 @@ public class DraftModeService : IDraftModeService, IDraftReconciler
             .Select(a => a.UserId!.Value)
             .ToListAsync();
 
+    // Live primary→trainee pairings for a cell (both non-null). Companion of GetLiveCellUsersAsync so the
+    // baseline/drift string carries trainees too (sub-project A — a trainee-only change must register as
+    // "changed", and a live trainee removed by another user is caught as drift).
+    private async Task<Dictionary<int, int>> GetLiveCellTraineesAsync(int shiftTypeId, DateOnly date)
+        => (await _db.ShiftAssignments.IgnoreQueryFilters()
+                .Where(a => a.UserId != null && a.TraineeUserId != null
+                            && a.ShiftInstance.ShiftTypeId == shiftTypeId && a.ShiftInstance.WorkDate == date)
+                .Select(a => new { Primary = a.UserId!.Value, Trainee = a.TraineeUserId!.Value })
+                .ToListAsync())
+            // A primary occupies a single slot, so one trainee per primary; guard duplicates defensively.
+            .GroupBy(x => x.Primary)
+            .ToDictionary(g => g.Key, g => g.Last().Trainee);
+
     private async Task<DraftCell> GetOrCreateCellAsync(int draftSessionId, int shiftTypeId, DateOnly date)
     {
         var cell = await _db.DraftCells.FirstOrDefaultAsync(c =>
@@ -51,13 +64,18 @@ public class DraftModeService : IDraftModeService, IDraftReconciler
         if (cell != null) return cell;
 
         var baseline = DraftCell.Encode(await GetLiveCellUsersAsync(shiftTypeId, date));
+        // Capture the trainee baseline on the SAME first touch so an untouched live trainee is mirrored into
+        // Staged (preserved at commit) and any later live trainee change reads as drift.
+        var traineeBaseline = DraftCell.EncodePairs(await GetLiveCellTraineesAsync(shiftTypeId, date));
         cell = new DraftCell
         {
             DraftSessionId = draftSessionId,
             ShiftTypeId = shiftTypeId,
             WorkDate = date,
             BaselineUserIds = baseline,
-            StagedUserIds = baseline
+            StagedUserIds = baseline,
+            BaselineTrainees = traineeBaseline,
+            StagedTrainees = traineeBaseline
         };
         _db.DraftCells.Add(cell);
         return cell;
@@ -81,13 +99,42 @@ public class DraftModeService : IDraftModeService, IDraftReconciler
         var staged = DraftCell.Decode(cell.StagedUserIds);
         staged.Remove(userId);
         cell.StagedUserIds = DraftCell.Encode(staged);
+        // A trainee cannot outlive its primary (edge-case ruling 1): clearing the primary drops its staged trainee.
+        var trainees = DraftCell.DecodePairs(cell.StagedTrainees);
+        if (trainees.Remove(userId))
+            cell.StagedTrainees = DraftCell.EncodePairs(trainees);
         await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> StageTraineeAsync(int draftSessionId, int shiftTypeId, DateOnly date, int primaryUserId, int traineeUserId)
+    {
+        if (!await IsActiveAsync(draftSessionId)) return false;
+        var cell = await GetOrCreateCellAsync(draftSessionId, shiftTypeId, date);
+        var trainees = DraftCell.DecodePairs(cell.StagedTrainees);
+        trainees[primaryUserId] = traineeUserId; // one trainee per primary — last write wins
+        cell.StagedTrainees = DraftCell.EncodePairs(trainees);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> StageTraineeClearAsync(int draftSessionId, int shiftTypeId, DateOnly date, int primaryUserId)
+    {
+        if (!await IsActiveAsync(draftSessionId)) return false;
+        var cell = await GetOrCreateCellAsync(draftSessionId, shiftTypeId, date);
+        var trainees = DraftCell.DecodePairs(cell.StagedTrainees);
+        if (trainees.Remove(primaryUserId))
+        {
+            cell.StagedTrainees = DraftCell.EncodePairs(trainees);
+            await _db.SaveChangesAsync();
+        }
         return true;
     }
 
     public async Task<List<DraftOverlayCell>> GetOverlayAsync(int draftSessionId)
         => (await _db.DraftCells.Where(c => c.DraftSessionId == draftSessionId).ToListAsync())
-            .Select(c => new DraftOverlayCell(c.ShiftTypeId, c.WorkDate, DraftCell.Decode(c.StagedUserIds)))
+            .Select(c => new DraftOverlayCell(
+                c.ShiftTypeId, c.WorkDate, DraftCell.Decode(c.StagedUserIds), DraftCell.DecodePairs(c.StagedTrainees)))
             .ToList();
 
     private Task<bool> IsActiveAsync(int draftSessionId)
@@ -97,14 +144,25 @@ public class DraftModeService : IDraftModeService, IDraftReconciler
 
     public DraftSurface Surface => DraftSurface.Shifts;
 
+    // Canonical shift-cell serialization (sub-project A): primaries CSV, then trainees pair-CSV, joined by a
+    // separator neither part can contain (ids are digits; pairs are "p:t"). Folding trainees in makes the
+    // Foundation's plain string equality (no-op skip + drift check) trainee-aware for free.
+    private const char CanonicalSeparator = '|';
+    private static string Canonical(string primaries, string trainees)
+        => string.Concat(primaries, CanonicalSeparator.ToString(), trainees);
+
     public async Task<string> CaptureBaselineAsync(DraftScope scope, CellKey cell)
-        => DraftCell.Encode(await GetLiveCellUsersAsync(cell.RowId, cell.Date));
+        => Canonical(
+            DraftCell.Encode(await GetLiveCellUsersAsync(cell.RowId, cell.Date)),
+            DraftCell.EncodePairs(await GetLiveCellTraineesAsync(cell.RowId, cell.Date)));
 
     public async Task<IReadOnlyList<DraftCellState>> LoadTouchedCellsAsync(int draftSessionId)
         => (await _db.DraftCells.Where(c => c.DraftSessionId == draftSessionId).ToListAsync())
-            // Foundation canonical = primaries only. Sub-project A folds trainees into this string so a
-            // trainee-only change also registers as "changed" (its columns already exist on DraftCell).
-            .Select(c => new DraftCellState(new CellKey(c.ShiftTypeId, c.WorkDate), c.BaselineUserIds, c.StagedUserIds))
+            // Fold trainees into the canonical string so a trainee-only change registers as "changed" (G1) and
+            // trainee drift is caught by the Foundation per-cell drift check (edge-case ruling 4).
+            .Select(c => new DraftCellState(new CellKey(c.ShiftTypeId, c.WorkDate),
+                Canonical(c.BaselineUserIds, c.BaselineTrainees),
+                Canonical(c.StagedUserIds, c.StagedTrainees)))
             .ToList();
 
     public Task<string> ReadLiveAsync(DraftScope scope, CellKey cell)
@@ -136,7 +194,10 @@ public class DraftModeService : IDraftModeService, IDraftReconciler
     {
         var shiftTypeId = cell.Cell.RowId;
         var date = cell.Cell.Date;
-        var staged = DraftCell.Decode(cell.Staged).ToHashSet();
+        // Canonical staged string = "primaries|trainees"; split once and decode each half.
+        var parts = cell.Staged.Split(CanonicalSeparator, 2);
+        var staged = DraftCell.Decode(parts[0]).ToHashSet();
+        var stagedTrainees = DraftCell.DecodePairs(parts.Length > 1 ? parts[1] : string.Empty);
         var issues = new List<DraftValidationIssue>();
 
         // Fallback company for a molecule-scoped shift type that needs a fresh ShiftInstance.
@@ -159,13 +220,20 @@ public class DraftModeService : IDraftModeService, IDraftReconciler
             _db.ShiftInstances.Add(instance);
             await _db.SaveChangesAsync();
         }
+        else if (staged.Count > instance.StaffingRequired)
+        {
+            // Sub-project B (capacity): the staged assignee count IS the intended capacity. Widen an EXISTING
+            // instance to fit at COMMIT — never live (staging never touched capacity). The reconcile already
+            // sizes a freshly created instance the same way above.
+            instance.StaffingRequired = staged.Count;
+        }
 
         var slots = await _db.ShiftAssignments.IgnoreQueryFilters()
             .Where(a => a.ShiftInstanceId == instance.Id).ToListAsync();
         var currentlyAssigned = slots.Where(s => s.UserId != null).ToList();
         var currentUserIds = currentlyAssigned.Select(s => s.UserId!.Value).ToHashSet();
 
-        // Remove users no longer staged.
+        // Remove users no longer staged (their trainee goes with them — trainees cannot outlive their primary).
         foreach (var slot in currentlyAssigned.Where(s => !staged.Contains(s.UserId!.Value)))
         {
             slot.UserId = null;
@@ -194,6 +262,40 @@ public class DraftModeService : IDraftModeService, IDraftReconciler
                 _db.ShiftAssignments.Add(newSlot);
                 slots.Add(newSlot);
             }
+        }
+
+        // Third pass (sub-project A) — trainee shadows, applied ONLY on primaries that assigned successfully
+        // (G3/G5). A slot with a user reconciles its trainee to the staged desire: set the staged trainee
+        // (validated), or clear when nothing is staged for that primary. StagedTrainees mirrors the baseline
+        // for an untouched cell, so a live trainee the draft never touched is preserved here (F Risk #4).
+        var assignedPrimaries = slots.Where(s => s.UserId != null).Select(s => s.UserId!.Value).ToHashSet();
+        foreach (var slot in slots.Where(s => s.UserId != null))
+        {
+            var primary = slot.UserId!.Value;
+            if (stagedTrainees.TryGetValue(primary, out var traineeId))
+            {
+                if (slot.TraineeUserId == traineeId) continue; // no-op (fast path: preserves untouched trainee)
+                var tv = await _assignmentService.ValidateTraineeAssignmentAsync(traineeId, primary, instance.Id);
+                if (!tv.CanAssign)
+                {
+                    issues.Add(new DraftValidationIssue(shiftTypeId, date, traineeId,
+                        tv.Errors.FirstOrDefault()?.Message ?? "trainee validation failed"));
+                    continue; // skip the trainee; the primary still applied
+                }
+                slot.TraineeUserId = traineeId;
+            }
+            else
+            {
+                slot.TraineeUserId = null; // staged intent: this primary shadows no trainee
+            }
+        }
+
+        // Gate on primary success (G5): a staged trainee whose primary did NOT make it into a slot is skipped
+        // and reported (e.g. the primary hard-errored above, or was never staged into this cell).
+        foreach (var kv in stagedTrainees.Where(kv => !assignedPrimaries.Contains(kv.Key)))
+        {
+            issues.Add(new DraftValidationIssue(shiftTypeId, date, kv.Value,
+                "trainee skipped — its primary was not assigned"));
         }
 
         return issues;
