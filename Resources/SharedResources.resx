@@ -8823,6 +8823,21 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Draft_ConflictMessage" xml:space="preserve">
     <value>The live schedule changed while you were drafting. Nothing was committed — refresh to review the conflicts.</value>
   </data>
+  <data name="Draft_CommitPartialMessage" xml:space="preserve">
+    <value>Your draft was committed. Some cells were skipped and are listed below — re-draft them if you still want the change.</value>
+  </data>
+  <data name="Draft_CommitSkippedLabel" xml:space="preserve">
+    <value>Changed underneath you:</value>
+  </data>
+  <data name="Draft_CommitUnauthorizedLabel" xml:space="preserve">
+    <value>Not permitted:</value>
+  </data>
+  <data name="Draft_CommitIssueLabel" xml:space="preserve">
+    <value>Validation issue:</value>
+  </data>
+  <data name="Draft_ReturnToLive" xml:space="preserve">
+    <value>Return to live board</value>
+  </data>
   <data name="JustMine" xml:space="preserve">
     <value>Just Mine</value>
     <comment>Toggle to show only current user's assignments</comment>

@@ -124,8 +124,12 @@ public sealed class DraftOverlayRenderTests : IAsyncLifetime
     public async Task StagedAssignments_RenderWithName_InBothEmptyAndLiveCells()
     {
         // --- Arrange: enter a draft and stage into an empty cell (shift 2) and a live cell (shift 1) ---
-        var draftService = new DraftModeService(_db, CleanValidator().Object);
-        var session = await draftService.EnterDraftAsync(OwnerUserId, MoleculeId, jobTypeId: null, weekStart: D, weekEnd: D);
+        // Post-Foundation: the shift service is the reconciler (staging + overlay); entering goes through the
+        // shared lifecycle.
+        var draftService = new DraftModeService(_db, CleanValidator().Object, Mock.Of<IGrantService>());
+        var lifecycle = new DraftLifecycle(_db, new IDraftReconciler[] { draftService });
+        var session = await lifecycle.EnterAsync(OwnerUserId,
+            new DraftScope(DraftSurface.Shifts, MoleculeId, JobTypeId: null, AreaId: null, WeekStart: D, WeekEnd: D));
         await draftService.StageAssignAsync(session.Id, EmptyShiftTypeId, D, BobId);   // empty cell → Bob
         await draftService.StageAssignAsync(session.Id, LiveShiftTypeId, D, CarolId);  // live cell (has Alice) → +Carol
         _db.ChangeTracker.Clear();

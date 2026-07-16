@@ -333,7 +333,12 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IShiftGroupingService, ShiftGroupingService>();
 builder.Services.AddScoped<IShiftCategoryService, ShiftCategoryService>();
 builder.Services.AddScoped<IChoreCategoryService, ChoreCategoryService>();
-builder.Services.AddScoped<IDraftModeService, DraftModeService>();
+// Draft Mode (Spec F): one DraftModeService instance per scope serves BOTH the shifts staging/overlay surface
+// (IDraftModeService) and the shifts commit reconciler (IDraftReconciler) that the shared lifecycle drives.
+builder.Services.AddScoped<DraftModeService>();
+builder.Services.AddScoped<IDraftModeService>(sp => sp.GetRequiredService<DraftModeService>());
+builder.Services.AddScoped<IDraftReconciler>(sp => sp.GetRequiredService<DraftModeService>());
+builder.Services.AddScoped<IDraftLifecycle, DraftLifecycle>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Domain-hub navigation (Model B redesign) — policy-derived visibility behind FF_NEW_NAV.
