@@ -8,6 +8,21 @@ Format: `- [ ] <question> — <context / my provisional choice so nothing is blo
 
 ## Open decisions
 
+- [ ] **Permission tier was TIGHTENED from your literal D2 choice — please confirm.** You chose
+  "anyone who can edit the calendar," which I described as `WriteOverviewNotes OR AssignShifts/...`.
+  A final security review found that `WriteOverviewNotes` (and `EditOnCallCalendar`) are held by the
+  **base Employee/Trainee role** (the grant service's own docstring says WriteOverviewNotes is one
+  "which every role has"). So that gate effectively meant **every authenticated employee could
+  create an already-*Approved* vacation for themselves (self-approval — which the normal flow
+  forbids) or any molecule colleague, removing shifts with no manager**. That is almost certainly not
+  what "shift managers mark people off" intended, so I made the **safe** choice: the server now
+  requires the **assign/manager tier** — `AdminAccess / AssignShifts / AssignChores / ManageOnDuty`,
+  scoped to the target's company — and **blocks self-entry** (enter your own via /My/Requests),
+  matching `ApproveAsync`. Browser-verified: a base Employee (test.member) is blocked (no toggle,
+  403); a manager (molecule-scoped AssignShifts) still works for colleagues; self-entry is blocked.
+  **If you truly want the broader note-tier (every employee) gate, tell me and I'll loosen it — but
+  I'd advise against it.** Impl: `IGrantService.HasCalendarAssignPermissionForCompanyAsync`.
+
 - [ ] **Past-date entry is currently blocked.** The endpoint rejects entering time-off on a date
   before today (mirrors the existing `QuickAddTextEntry` endpoint, and Quick-Entry already blocks
   `--past` cells in the UI). If you want managers to be able to mark a *retroactive* absence
@@ -43,6 +58,11 @@ Format: `- [ ] <question> — <context / my provisional choice so nothing is blo
   approval/rotation flows, provably equivalent for normal shifts. Added a regression test that runs
   with the tenant filter active. Browser-verified: the previously-missing HOME chips now render on
   both Overview and Team.
+
+- **Self-approval blocked + TOCTOU closed (final review).** `CreateApprovedManualTimeOffAsync` now
+  rejects `actor == target` up front (consistent with `ApproveAsync`), and wraps the overlap-check +
+  insert in a transaction with a re-check so two concurrent entries can't double-book the same day.
+  New tests: `SelfTarget_ReturnsCannotSelfApprove`, `NoEditPermissionInTargetCompany_ReturnsNoPermission`.
 
 ## Pre-existing follow-ups noticed (NOT fixed — out of this feature's scope; your call)
 
