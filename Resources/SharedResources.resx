@@ -14465,6 +14465,48 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="QuickEntry_DayNoteDeleted" xml:space="preserve">
     <value>Day note deleted</value>
   </data>
+  <data name="QuickEntry_TimeOff_Vacation" xml:space="preserve">
+    <value>Vacation</value>
+  </data>
+  <data name="QuickEntry_TimeOff_DayAt" xml:space="preserve">
+    <value>Day at…</value>
+  </data>
+  <data name="QuickEntry_TimeOff_After" xml:space="preserve">
+    <value>After</value>
+  </data>
+  <data name="QuickEntry_TimeOff_DayAtLocationPrompt" xml:space="preserve">
+    <value>Where? (e.g. course, clinic)</value>
+  </data>
+  <data name="QuickEntry_TimeOff_Saved" xml:space="preserve">
+    <value>Time off added</value>
+  </data>
+  <data name="QuickEntry_TimeOff_Failed" xml:space="preserve">
+    <value>Could not add time off</value>
+  </data>
+  <data name="QuickEntry_TimeOff_Hint" xml:space="preserve">
+    <value>Type: vacation · after · day at &lt;place&gt;</value>
+  </data>
+  <data name="TimeOff_Section_Title" xml:space="preserve">
+    <value>Add time off</value>
+  </data>
+  <data name="Error_TimeOff_DayAtLabelRequired" xml:space="preserve">
+    <value>A location is required for "Day at".</value>
+  </data>
+  <data name="Error_TimeOff_OverlapExists" xml:space="preserve">
+    <value>This person already has approved time off on that day.</value>
+  </data>
+  <data name="Error_TimeOff_NoPermission" xml:space="preserve">
+    <value>You don't have permission to add time off here.</value>
+  </data>
+  <data name="Error_TimeOff_UserNotInCompany" xml:space="preserve">
+    <value>That person is not in this company.</value>
+  </data>
+  <data name="Error_TimeOff_InvalidType" xml:space="preserve">
+    <value>Unknown time-off type.</value>
+  </data>
+  <data name="Error_CalendarApi_TimeOffFailed" xml:space="preserve">
+    <value>Failed to add time off.</value>
+  </data>
   <data name="QuickEntry_Tooltip" xml:space="preserve">
     <value>Type to assign, Tab to move right, Escape to cancel. Use / for chores and more.</value>
   </data>

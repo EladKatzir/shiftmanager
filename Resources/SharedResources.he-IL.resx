@@ -14429,6 +14429,48 @@
   <data name="QuickEntry_DayNoteDeleted" xml:space="preserve">
     <value>הערת היום נמחקה</value>
   </data>
+  <data name="QuickEntry_TimeOff_Vacation" xml:space="preserve">
+    <value>חופש</value>
+  </data>
+  <data name="QuickEntry_TimeOff_DayAt" xml:space="preserve">
+    <value>…יום ב</value>
+  </data>
+  <data name="QuickEntry_TimeOff_After" xml:space="preserve">
+    <value>אפטר</value>
+  </data>
+  <data name="QuickEntry_TimeOff_DayAtLocationPrompt" xml:space="preserve">
+    <value>?היכן (למשל קורס, מרפאה)</value>
+  </data>
+  <data name="QuickEntry_TimeOff_Saved" xml:space="preserve">
+    <value>חופשה נוספה</value>
+  </data>
+  <data name="QuickEntry_TimeOff_Failed" xml:space="preserve">
+    <value>הוספת החופשה נכשלה</value>
+  </data>
+  <data name="QuickEntry_TimeOff_Hint" xml:space="preserve">
+    <value>הקלד: חופש · אפטר · יום ב &lt;מקום&gt;</value>
+  </data>
+  <data name="TimeOff_Section_Title" xml:space="preserve">
+    <value>הוספת חופשה</value>
+  </data>
+  <data name="Error_TimeOff_DayAtLabelRequired" xml:space="preserve">
+    <value>.יש להזין מיקום עבור "יום ב"</value>
+  </data>
+  <data name="Error_TimeOff_OverlapExists" xml:space="preserve">
+    <value>.לאדם זה כבר יש חופשה מאושרת ביום זה</value>
+  </data>
+  <data name="Error_TimeOff_NoPermission" xml:space="preserve">
+    <value>.אין לך הרשאה להוסיף חופשה כאן</value>
+  </data>
+  <data name="Error_TimeOff_UserNotInCompany" xml:space="preserve">
+    <value>.אדם זה אינו שייך לחברה זו</value>
+  </data>
+  <data name="Error_TimeOff_InvalidType" xml:space="preserve">
+    <value>.סוג חופשה לא מוכר</value>
+  </data>
+  <data name="Error_CalendarApi_TimeOffFailed" xml:space="preserve">
+    <value>.הוספת החופשה נכשלה</value>
+  </data>
   <data name="QuickEntry_Tooltip" xml:space="preserve">
     <value>הקלד לשיבוץ, Tab למעבר ימינה, Escape לביטול. הקלד / לתורנויות ועוד.</value>
   </data>
