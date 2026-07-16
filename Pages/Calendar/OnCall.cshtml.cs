@@ -483,7 +483,7 @@ public class OnCallModel : PageModel
     /// private sandbox. The staged set is GLOBAL (Spec D §3) — staged users are shown regardless of the area
     /// view. Returns the input unchanged when not drafting or no active draft exists.
     /// </summary>
-    private async Task<List<OnDuty>> ApplyDraftOverlayAsync(List<OnDuty> live)
+    internal async Task<List<OnDuty>> ApplyDraftOverlayAsync(List<OnDuty> live)
     {
         if (!DraftMode)
             return live;
@@ -532,7 +532,7 @@ public class OnCallModel : PageModel
         return result;
     }
 
-    private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForDutyType(
+    internal Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForDutyType(
         int dutyTypeValue,
         List<OnDuty> onDuties,
         Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
