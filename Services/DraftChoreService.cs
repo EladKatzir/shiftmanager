@@ -172,70 +172,85 @@ public class DraftChoreService : IDraftChoreService, IDraftReconciler
             }
         }
 
-        // ADD: each staged descriptor not live → create (re-validate via BusyService, freeze weight, insert).
-        foreach (var (key, desc) in stagedKeys)
+        // Additions need the (cell-constant) assignee + effective molecule. Resolve once — skip the whole ADD
+        // pass if either is unresolvable (report one issue per staged descriptor that would have been created).
+        var toAdd = stagedKeys.Where(kv => !liveKeys.ContainsKey(kv.Key)).Select(kv => kv.Value).ToList();
+        if (toAdd.Count > 0)
         {
-            if (liveKeys.ContainsKey(key)) continue; // present in both — nothing to add
-
             var assignee = await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
-            if (assignee == null)
-            {
-                issues.Add(new DraftValidationIssue(userId, date, userId, "assignee not found"));
-                continue;
-            }
+            // Effective molecule: the draft's molecule (chores are molecule-scoped); fall back to the assignee's
+            // company molecule so a fresh chore is never left molecule-less.
+            var effectiveMoleculeId = assignee == null
+                ? null
+                : scope.MoleculeId
+                  ?? await _db.Companies.IgnoreQueryFilters()
+                        .Where(co => co.Id == assignee.CompanyId).Select(co => co.MoleculeId).FirstOrDefaultAsync();
 
-            // Effective molecule: the draft's molecule (chores are molecule-scoped); fall back to the
-            // assignee's company molecule so a fresh chore is never left molecule-less.
-            var effectiveMoleculeId = scope.MoleculeId
-                ?? await _db.Companies.IgnoreQueryFilters()
-                    .Where(co => co.Id == assignee.CompanyId).Select(co => co.MoleculeId).FirstOrDefaultAsync();
-            if (!effectiveMoleculeId.HasValue)
+            foreach (var desc in toAdd)
             {
-                issues.Add(new DraftValidationIssue(userId, date, userId, "unable to resolve molecule"));
-                continue;
-            }
+                if (assignee == null)
+                {
+                    issues.Add(new DraftValidationIssue(userId, date, userId, "assignee not found"));
+                    continue;
+                }
+                if (!effectiveMoleculeId.HasValue)
+                {
+                    issues.Add(new DraftValidationIssue(userId, date, userId, "unable to resolve molecule"));
+                    continue;
+                }
 
-            // Re-validate exactly like the live create. Hard errors (e.g. the user now has a live shift that
-            // day) SKIP just this descriptor + report; warnings are the assigner's committed intent → proceed.
-            var target = new BusyTarget.Chore(date, effectiveMoleculeId.Value, desc.ChoreTypeId);
-            var validation = await _busyService.ValidateAsync(target, userId, actingUserId, overrideToken: null);
-            if (!validation.CanProceed)
-            {
-                var firstErr = validation.Errors.FirstOrDefault();
-                issues.Add(new DraftValidationIssue(userId, date, userId, firstErr?.Message ?? firstErr?.Key ?? "validation failed"));
-                continue;
+                await AddStagedChoreAsync(actingUserId, userId, date, desc, assignee.CompanyId, effectiveMoleculeId.Value, issues);
             }
-
-            int? typeDefaultWeight = null;
-            if (desc.ChoreTypeId.HasValue)
-            {
-                typeDefaultWeight = await _db.ChoreTypes.IgnoreQueryFilters()
-                    .Where(ct => ct.Id == desc.ChoreTypeId.Value)
-                    .Select(ct => ct.DefaultWeightMinutes)
-                    .FirstOrDefaultAsync();
-            }
-            var weightMinutes = ChoreService.ResolveWeightMinutes(desc.StartTime, desc.EndTime, typeDefaultWeight);
-
-            var chore = new Chore
-            {
-                CompanyId = assignee.CompanyId,     // Risk #7: stamp CompanyId explicitly (interceptor won't override)
-                MoleculeId = effectiveMoleculeId,
-                ChoreTypeId = desc.ChoreTypeId,
-                UserId = userId,
-                Date = date,
-                Title = desc.Title,
-                Notes = desc.Notes,
-                StartTime = desc.StartTime,
-                EndTime = desc.EndTime,
-                WeightMinutes = weightMinutes,
-                CreatedBy = actingUserId,
-                CreatedAt = DateTime.UtcNow
-            };
-            _db.Chores.Add(chore);
-            _pendingAssigned.Add(chore); // Id populated by the lifecycle's SaveChanges before BroadcastAsync runs
         }
 
         return issues;
+    }
+
+    // ADD one staged descriptor as a fresh live chore (inline — NOT ChoreService.CreateChoreAsync, which opens
+    // its OWN transaction and would throw inside the lifecycle's ambient tx). Mirrors CreateChoreAsync's core:
+    // re-validate via BusyService, freeze the fairness weight, insert with an explicit CompanyId.
+    private async Task AddStagedChoreAsync(
+        int actingUserId, int userId, DateOnly date, DraftChoreDescriptor desc,
+        int companyId, int moleculeId, List<DraftValidationIssue> issues)
+    {
+        // Re-validate exactly like the live create. Hard errors (e.g. the user now has a live shift that
+        // day) SKIP just this descriptor + report; warnings are the assigner's committed intent → proceed.
+        var target = new BusyTarget.Chore(date, moleculeId, desc.ChoreTypeId);
+        var validation = await _busyService.ValidateAsync(target, userId, actingUserId, overrideToken: null);
+        if (!validation.CanProceed)
+        {
+            var firstErr = validation.Errors.FirstOrDefault();
+            issues.Add(new DraftValidationIssue(userId, date, userId, firstErr?.Message ?? firstErr?.Key ?? "validation failed"));
+            return;
+        }
+
+        int? typeDefaultWeight = null;
+        if (desc.ChoreTypeId.HasValue)
+        {
+            typeDefaultWeight = await _db.ChoreTypes.IgnoreQueryFilters()
+                .Where(ct => ct.Id == desc.ChoreTypeId.Value)
+                .Select(ct => ct.DefaultWeightMinutes)
+                .FirstOrDefaultAsync();
+        }
+        var weightMinutes = ChoreService.ResolveWeightMinutes(desc.StartTime, desc.EndTime, typeDefaultWeight);
+
+        var chore = new Chore
+        {
+            CompanyId = companyId,      // Risk #7: stamp CompanyId explicitly (interceptor won't override)
+            MoleculeId = moleculeId,
+            ChoreTypeId = desc.ChoreTypeId,
+            UserId = userId,
+            Date = date,
+            Title = desc.Title,
+            Notes = desc.Notes,
+            StartTime = desc.StartTime,
+            EndTime = desc.EndTime,
+            WeightMinutes = weightMinutes,
+            CreatedBy = actingUserId,
+            CreatedAt = DateTime.UtcNow
+        };
+        _db.Chores.Add(chore);
+        _pendingAssigned.Add(chore); // Id populated by the lifecycle's SaveChanges before BroadcastAsync runs
     }
 
     public IEnumerable<string> NotifyGroupsFor(DraftScope scope, CellKey cell)
