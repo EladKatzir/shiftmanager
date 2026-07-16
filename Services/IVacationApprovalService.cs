@@ -42,6 +42,19 @@ public interface IVacationApprovalService
     Task ProcessApprovalSideEffectsAsync(int requestId);
 
     /// <summary>
+    /// Creates an already-Approved time-off record directly from a calendar (manual entry by an
+    /// editor), bypassing the request/approval queue. Authorizes the actor (calendar-note permission
+    /// + reach to the target user), ties the record to <paramref name="companyId"/>, normalizes dates
+    /// per type (After/DayAt = single day; DayAt requires a label), guards against overlapping approved
+    /// leave, then runs the same side-effects a real approval runs (removes conflicting shift
+    /// assignments, cancels trainee shadowing, notifies) and the HOME materialiser (flag-gated).
+    /// Returns an ErrorKey (a SharedResources key) on failure so the caller can localize.
+    /// </summary>
+    Task<(bool Success, int? RequestId, string? ErrorKey)> CreateApprovedManualTimeOffAsync(
+        int targetUserId, int companyId, TimeOffType type,
+        DateOnly startDate, DateOnly endDate, string? label, int actorUserId);
+
+    /// <summary>
     /// Shorten an approved Vacation request's date range. Only narrowing is allowed
     /// (newStart >= original StartDate AND newEnd <= original EndDate). Triggers the
     /// materialiser to remove HOME rows for days now outside the range, and restores
