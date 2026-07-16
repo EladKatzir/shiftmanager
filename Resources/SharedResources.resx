@@ -14498,6 +14498,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_TimeOff_NoPermission" xml:space="preserve">
     <value>You don't have permission to add time off here.</value>
   </data>
+  <data name="Error_TimeOff_CannotSelfApprove" xml:space="preserve">
+    <value>You can't enter your own time off here — submit a request instead.</value>
+  </data>
   <data name="Error_TimeOff_UserNotInCompany" xml:space="preserve">
     <value>That person is not in this company.</value>
   </data>

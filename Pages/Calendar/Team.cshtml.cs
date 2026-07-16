@@ -222,7 +222,7 @@ public class TeamModel : PageModel
 
             // Shared builder (Task #9.2) — same pipeline Overview uses, so the calendar renders
             // identically by construction. v1 is read-only (no per-cell note editing yet).
-            CanEnterTimeOff = await _grantService.HasCalendarNotePermissionAsync(currentUserId);
+            CanEnterTimeOff = await _grantService.HasCalendarAssignPermissionForCompanyAsync(currentUserId, SelectedCompanyId.Value);
             CalendarData = await _calendarBuilder.BuildAsync(
                 SelectedCompanyId.Value, Users, StartDate, EndDate, ViewMode, canEditNotes: false, canEnterTimeOff: CanEnterTimeOff);
 

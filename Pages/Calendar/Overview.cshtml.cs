@@ -129,7 +129,7 @@ public class OverviewModel : PageModel
 
         // Check note editing permission
         CanEditNotes = await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
-        CanEnterTimeOff = await _grantService.HasCalendarNotePermissionAsync(currentUserId);
+        CanEnterTimeOff = await _grantService.HasCalendarAssignPermissionForCompanyAsync(currentUserId, CompanyId);
 
         // Load users in this company
         await LoadUsersAsync();

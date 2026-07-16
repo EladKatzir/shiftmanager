@@ -78,6 +78,7 @@ public class QuickAddTimeOffModel : PageModel
                 var status = errorKey switch
                 {
                     "Error_TimeOff_NoPermission" => 403,
+                    "Error_TimeOff_CannotSelfApprove" => 403,
                     "Error_TimeOff_UserNotInCompany" => 403,
                     "Error_TimeOff_OverlapExists" => 409,
                     _ => 400

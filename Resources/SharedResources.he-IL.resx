@@ -14462,6 +14462,9 @@
   <data name="Error_TimeOff_NoPermission" xml:space="preserve">
     <value>.אין לך הרשאה להוסיף חופשה כאן</value>
   </data>
+  <data name="Error_TimeOff_CannotSelfApprove" xml:space="preserve">
+    <value>.לא ניתן להזין חופשה לעצמך כאן — הגש בקשה במקום</value>
+  </data>
   <data name="Error_TimeOff_UserNotInCompany" xml:space="preserve">
     <value>.אדם זה אינו שייך לחברה זו</value>
   </data>

@@ -62,6 +62,18 @@ public class GrantService : IGrantService
             || await HasCalendarEditPermissionAsync(userId);
     }
 
+    public async Task<bool> HasCalendarAssignPermissionForCompanyAsync(int userId, int companyId)
+    {
+        // Assign/MANAGER tier scoped to companyId. Deliberately excludes BOTH the universal
+        // WriteOverviewNotes note tier AND EditOnCallCalendar — the latter is a narrow on-call-editing
+        // grant held by base Employees/Trainees, so it must NOT gate an approval-level action like
+        // creating an already-Approved leave that frees shifts. Mirrors HasAnyAssignGrantAsync.
+        return await HasGrantForCompanyAsync(userId, "AdminAccess", companyId)
+            || await HasGrantForCompanyAsync(userId, "AssignShifts", companyId)
+            || await HasGrantForCompanyAsync(userId, "AssignChores", companyId)
+            || await HasGrantForCompanyAsync(userId, "ManageOnDuty", companyId);
+    }
+
     public async Task<bool> CanReachUserForNoteAsync(int callerId, int targetUserId)
     {
         // Self-target is always allowed — every user can note their own row.

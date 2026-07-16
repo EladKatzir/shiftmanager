@@ -675,6 +675,7 @@
         } else if (query.trim().length > 0 &&
             activeInput._cellData && activeInput._cellData.rowId &&
             activeInput._cellData.rowId.indexOf('user-') === 0 &&
+            activeInput._cellData.canEnterTimeOff &&
             parseTimeOffQuery(query)) {
             // Manual time-off entry — people rows only (Overview/Team/Shifts-user). Intercepts the
             // typed keyword BEFORE the day-note fallback; by-shift rows (shift-) fall through to day-note.

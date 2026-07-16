@@ -57,9 +57,8 @@ public class ManualTimeOffEntryTests : IDisposable
         localizerMock.Setup(l => l[It.IsAny<string>()])
             .Returns((string name) => new LocalizedString(name, name));
 
-        // Default happy-path authorization: actor has note permission and can reach any target.
-        _grantServiceMock.Setup(g => g.HasCalendarNotePermissionAsync(ActorUserId)).ReturnsAsync(true);
-        _grantServiceMock.Setup(g => g.CanReachUserForNoteAsync(ActorUserId, It.IsAny<int>())).ReturnsAsync(true);
+        // Default happy-path authorization: actor holds company-scoped calendar-EDIT permission.
+        _grantServiceMock.Setup(g => g.HasCalendarAssignPermissionForCompanyAsync(ActorUserId, It.IsAny<int>())).ReturnsAsync(true);
         // Default: target is a member of any company asked about.
         _membershipServiceMock.Setup(m => m.IsMemberAsync(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(true);
         // Default: HOME unification enabled.
@@ -192,11 +191,12 @@ public class ManualTimeOffEntryTests : IDisposable
     }
 
     [Fact]
-    public async Task NoNotePermission_ReturnsNoPermission()
+    public async Task NoEditPermissionInTargetCompany_ReturnsNoPermission()
     {
         var day = new DateOnly(2026, 8, 3);
         await SeedTargetAsync();
-        _grantServiceMock.Setup(g => g.HasCalendarNotePermissionAsync(ActorUserId)).ReturnsAsync(false);
+        // Actor lacks calendar-edit permission scoped to the target's company (e.g. a note-only user).
+        _grantServiceMock.Setup(g => g.HasCalendarAssignPermissionForCompanyAsync(ActorUserId, It.IsAny<int>())).ReturnsAsync(false);
 
         var (success, _, errorKey) = await _service.CreateApprovedManualTimeOffAsync(
             TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
@@ -207,17 +207,17 @@ public class ManualTimeOffEntryTests : IDisposable
     }
 
     [Fact]
-    public async Task CannotReachTargetUser_ReturnsNoPermission()
+    public async Task SelfTarget_ReturnsCannotSelfApprove()
     {
         var day = new DateOnly(2026, 8, 3);
-        await SeedTargetAsync();
-        _grantServiceMock.Setup(g => g.CanReachUserForNoteAsync(ActorUserId, TargetUserId)).ReturnsAsync(false);
-
+        // Actor entering their OWN time-off (actor == target) is self-approval — blocked up front,
+        // consistent with ApproveAsync. (No DB/permission work needed; the guard is first.)
         var (success, _, errorKey) = await _service.CreateApprovedManualTimeOffAsync(
-            TargetUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
+            ActorUserId, TimeOffType.Vacation, day, day, null, ActorUserId);
 
         success.Should().BeFalse();
-        errorKey.Should().Be("Error_TimeOff_NoPermission");
+        errorKey.Should().Be("Error_TimeOff_CannotSelfApprove");
+        (await _db.TimeOffRequests.AnyAsync()).Should().BeFalse();
     }
 
     [Fact]
