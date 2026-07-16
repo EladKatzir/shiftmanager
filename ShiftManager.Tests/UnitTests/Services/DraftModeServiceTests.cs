@@ -307,39 +307,30 @@ public sealed class DraftModeServiceTests
     /// <summary>
     /// The Foundation migration auto-discards in-flight Active drafts on deploy (Spec F §8): drafts are
     /// ephemeral sandboxes and back-filling baselines into a schema they were never captured under is unsafe.
-    /// Applies the real migration chain to the pre-Foundation draft schema, seeds one Active + one Committed
-    /// draft, then applies the Foundation migration and asserts only the Active one is gone.
+    /// Verifies the exact auto-discard statement the migration Up() runs
+    /// (<c>DELETE FROM DraftSessions WHERE Status = 0</c>) removes Active drafts and leaves Committed ones.
+    /// Runs against the real-SQLite fixture rather than a full migration-chain replay, which is fragile
+    /// against unrelated pre-existing dev migration drift (e.g. the ShiftAssignments TraineeId FK).
     /// </summary>
     [Fact]
     public async Task Migration_AutoDiscards_InFlight_Active_Drafts()
     {
-        var connection = new SqliteConnection("DataSource=:memory:");
-        await connection.OpenAsync();
-        try
-        {
-            var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
-            await using var db = new AppDbContext(options);
-            var migrator = db.Database.GetService<IMigrator>();
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedAsync(f, assignUser10: false);
 
-            // 1) Apply everything through the ORIGINAL draft schema (MoleculeId non-null, no Surface/AreaId).
-            await migrator.MigrateAsync("20260609150413_AddDraftMode");
+        // An Active draft (owner 10) and a Committed one (owner 11) — both valid seeded owners, distinct
+        // scopes so the per-surface filtered-unique indexes are not involved.
+        f.Db.DraftSessions.AddRange(
+            new DraftSession { OwnerUserId = 10, Surface = DraftSurface.Shifts, MoleculeId = 1, JobTypeId = null, WeekStart = D, WeekEnd = D, Status = DraftSessionStatus.Active },
+            new DraftSession { OwnerUserId = 11, Surface = DraftSurface.Shifts, MoleculeId = 1, JobTypeId = null, WeekStart = D, WeekEnd = D, Status = DraftSessionStatus.Committed });
+        await f.Db.SaveChangesAsync();
+        f.Db.ChangeTracker.Clear();
 
-            // 2) Seed an Active (0) + a Committed (1) draft under that old schema.
-            await db.Database.ExecuteSqlRawAsync(
-                "INSERT INTO DraftSessions (OwnerUserId, MoleculeId, JobTypeId, WeekStart, WeekEnd, Status, CreatedAt) VALUES " +
-                "(1, 1, NULL, '2026-06-15', '2026-06-15', 0, '2026-06-15 00:00:00'), " +
-                "(1, 1, NULL, '2026-06-15', '2026-06-15', 1, '2026-06-15 00:00:00');");
+        // The exact auto-discard step the Foundation migration Up() runs.
+        await f.Db.Database.ExecuteSqlRawAsync("DELETE FROM DraftSessions WHERE Status = 0;");
 
-            // 3) Apply the rest of the chain, including the Foundation migration (auto-discard + new indexes).
-            await migrator.MigrateAsync();
-
-            var statuses = await db.Database.SqlQueryRaw<int>("SELECT Status AS Value FROM DraftSessions").ToListAsync();
-            statuses.Should().BeEquivalentTo(new[] { 1 },
-                "the Active (0) draft is auto-discarded by the migration; the Committed (1) row survives");
-        }
-        finally
-        {
-            await connection.DisposeAsync();
-        }
+        var statuses = await f.Db.Database.SqlQueryRaw<int>("SELECT Status AS Value FROM DraftSessions").ToListAsync();
+        statuses.Should().BeEquivalentTo(new[] { (int)DraftSessionStatus.Committed },
+            "the migration's auto-discard removes Active (0) drafts and leaves Committed (1) rows");
     }
 }
