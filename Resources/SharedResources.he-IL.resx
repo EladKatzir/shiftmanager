@@ -16655,4 +16655,24 @@
   <data name="Fix_ManageUser" xml:space="preserve"><value>נהל משתמש</value></data>
   <data name="Fix_Eligibility" xml:space="preserve"><value>נהל זכאות</value></data>
   <data name="Fix_ButtonAria" xml:space="preserve"><value>עבור למקום לתיקון</value></data>
+  <data name="Calendar_Tab_Main" xml:space="preserve"><value>ראשי</value></data>
+  <data name="Blueprints_Tab" xml:space="preserve"><value>לשונית</value></data>
+  <data name="Blueprints_NoTab" xml:space="preserve"><value>(ללא לשונית / ראשי)</value></data>
+  <data name="Blueprints_AreaShiftNoTab" xml:space="preserve"><value>משמרות ברמת אזור נשארות תמיד בלשונית הראשית</value></data>
+  <data name="Blueprints_Tabs_Section" xml:space="preserve"><value>לשוניות לוח</value></data>
+  <data name="Blueprints_Tabs_Description" xml:space="preserve"><value>פיצול לוח המשמרות של המולקולה ללוחות משנה נפרדים. שייכו סוגי משמרות ודסקים לכל לשונית; כל השאר נשאר בלשונית "ראשי".</value></data>
+  <data name="Blueprints_TabName" xml:space="preserve"><value>שם לשונית</value></data>
+  <data name="Blueprints_NewTab" xml:space="preserve"><value>הוסף לשונית</value></data>
+  <data name="Blueprints_TabShiftTypes" xml:space="preserve"><value>סוגי משמרות</value></data>
+  <data name="Blueprints_TabCompanies" xml:space="preserve"><value>דסקים</value></data>
+  <data name="Blueprints_TabHalfConfigured" xml:space="preserve"><value>ללשונית זו יש סוגי משמרות אך אין דסקים (או להפך). שייכו את שניהם כדי שתופיע בשתי תצוגות הלוח.</value></data>
+  <data name="Blueprints_TabHalfConfiguredBadge" xml:space="preserve"><value>מוגדר חלקית</value></data>
+  <data name="Blueprints_NoTabs" xml:space="preserve"><value>אין עדיין לשוניות. צרו אחת למעלה כדי לפצל את לוח המולקולה.</value></data>
+  <data name="Blueprints_RenameTab" xml:space="preserve"><value>שנה שם לשונית</value></data>
+  <data name="Blueprints_DeleteTab" xml:space="preserve"><value>מחק לשונית</value></data>
+  <data name="Blueprints_DeleteTabUsageNote" xml:space="preserve"><value>סוגי המשמרות והדסקים יחזרו ללשונית הראשית. המשמרות והשיבוצים לא יימחקו.</value></data>
+  <data name="Blueprints_TabNameRequired" xml:space="preserve"><value>יש להזין שם לשונית</value></data>
+  <data name="Blueprints_TabInUsePrefix" xml:space="preserve"><value>לשונית זו בשימוש על ידי</value></data>
+  <data name="Blueprints_CompaniesWord" xml:space="preserve"><value>דסקים</value></data>
+  <data name="Blueprints_AutoSuggestConfirm" xml:space="preserve"><value>לשייך גם את {0} סוגי המשמרות הלא-משויכים של דסק זה ללשונית זו?</value></data>
 </root>

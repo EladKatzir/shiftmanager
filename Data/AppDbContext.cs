@@ -113,6 +113,11 @@ public class AppDbContext : DbContext
     public DbSet<ShiftCategory> ShiftCategories => Set<ShiftCategory>();
     public DbSet<UserShiftCategory> UserShiftCategories => Set<UserShiftCategory>();
 
+    // Shift Tabs / לשונית (molecule-scoped sub-calendars: shift-type partition + company roster + per-user last-tab)
+    public DbSet<ShiftTab> ShiftTabs => Set<ShiftTab>();
+    public DbSet<ShiftTabCompany> ShiftTabCompanies => Set<ShiftTabCompany>();
+    public DbSet<UserShiftTabPreference> UserShiftTabPreferences => Set<UserShiftTabPreference>();
+
     // Draft Mode (per-assigner sandbox over a scope+week of a calendar surface — shifts/chores/on-call)
     public DbSet<DraftSession> DraftSessions => Set<DraftSession>();
     public DbSet<DraftCell> DraftCells => Set<DraftCell>();
@@ -1445,6 +1450,63 @@ public class AppDbContext : DbContext
             .WithMany(sc => sc.Members)
             .HasForeignKey(usc => usc.ShiftCategoryId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // ========================================
+        // ShiftTab Configurations (לשונית — molecule sub-calendars)
+        // ShiftTab / ShiftTabCompany: NO query filter — molecule-scoped visibility (like ShiftCategory),
+        // not tenant-based. Isolation rests on explicit MoleculeId checks at every call site.
+        // ========================================
+
+        modelBuilder.Entity<ShiftTab>()
+            .HasOne(t => t.Molecule)
+            .WithMany()
+            .HasForeignKey(t => t.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Lookup index + unique tab name within a molecule
+        modelBuilder.Entity<ShiftTab>()
+            .HasIndex(t => t.MoleculeId);
+        modelBuilder.Entity<ShiftTab>()
+            .HasIndex(t => new { t.MoleculeId, t.Name })
+            .IsUnique();
+
+        // ShiftType → ShiftTab: a shift type belongs to at most one tab. SetNull so deleting a tab
+        // reverts its shift types to the implicit "Main" tab rather than deleting them.
+        modelBuilder.Entity<ShiftType>()
+            .HasOne(st => st.Tab)
+            .WithMany(t => t.ShiftTypes)
+            .HasForeignKey(st => st.TabId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ShiftType>()
+            .HasIndex(st => st.TabId);
+
+        // ShiftTabCompany: a company is on AT MOST ONE tab (unique CompanyId) → disjoint rosters,
+        // Main = molecule companies with no assignment. Both FKs cascade: deleting a tab or a company
+        // drops the link.
+        modelBuilder.Entity<ShiftTabCompany>()
+            .HasIndex(tc => tc.CompanyId)
+            .IsUnique();
+        modelBuilder.Entity<ShiftTabCompany>()
+            .HasOne(tc => tc.ShiftTab)
+            .WithMany(t => t.Companies)
+            .HasForeignKey(tc => tc.ShiftTabId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ShiftTabCompany>()
+            .HasOne(tc => tc.Company)
+            .WithMany()
+            .HasForeignKey(tc => tc.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // UserShiftTabPreference: per-user remembered tab per molecule (not tenant-filtered).
+        // TabId → ShiftTab SetNull so a deleted tab's remembered preference reverts to Main.
+        modelBuilder.Entity<UserShiftTabPreference>()
+            .HasIndex(p => new { p.UserId, p.MoleculeId })
+            .IsUnique();
+        modelBuilder.Entity<UserShiftTabPreference>()
+            .HasOne(p => p.Tab)
+            .WithMany()
+            .HasForeignKey(p => p.TabId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // ========================================
         // Draft Mode Configurations

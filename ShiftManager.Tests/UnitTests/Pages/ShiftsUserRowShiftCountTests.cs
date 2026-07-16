@@ -73,6 +73,7 @@ public sealed class ShiftsUserRowShiftCountTests : IAsyncLifetime
             justiceService: Mock.Of<IJusticeService>(),
             distributionListService: Mock.Of<IDistributionListService>(),
             categoryService: Mock.Of<IShiftCategoryService>(),
+            tabService: new ShiftTabService(_db),
             draftService: Mock.Of<IDraftModeService>(),
             featureFlags: Mock.Of<IFeatureFlagService>());
 

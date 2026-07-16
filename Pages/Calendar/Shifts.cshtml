@@ -14,6 +14,9 @@
     var dlParam = string.IsNullOrEmpty(Model.DistributionListIds)
         ? ""
         : $"&DistributionListIds={Uri.EscapeDataString(Model.DistributionListIds)}";
+    // Calendar tab (לשונית) param, appended to hand-built nav links so the active tab persists across
+    // week navigation / mode toggles. Only emitted when the molecule actually has tabs; Tab=0 = "Main".
+    var tabParam = Model.AvailableTabs.Any() ? $"&Tab={Model.Tab ?? 0}" : "";
 }
 
 @* Breadcrumb *@
@@ -63,7 +66,7 @@
             </div>
 
             <div class="cal-toolbar__date-nav cal-toolbar__primary">
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode@dlParam"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.PreviousStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode@dlParam@(tabParam)"
                    class="btn btn-ghost cal-toolbar__nav-btn"
                    data-cal-nav="prev"
                    title="@Localizer["Previous"]">
@@ -83,7 +86,7 @@
                     </span>
                 </div>
 
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.NextStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode@dlParam"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.NextStart&ViewMode=@Model.ViewMode&Mode=@Model.Mode@dlParam@(tabParam)"
                    class="btn btn-ghost cal-toolbar__nav-btn"
                    data-cal-nav="next"
                    title="@Localizer["Next"]">
@@ -129,11 +132,11 @@
                    (alphanumeric@alphanumeric), so @dlParam would render literally and Mode would bind as
                    "shift@dlParam"/"user@dlParam" — matching neither branch and leaving the calendar stuck on
                    by-shift. The parenthesised form forces a code transition. (Issue 2) *@
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=shift@(dlParam)"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=shift@(dlParam)@(tabParam)"
                    class="btn @(Model.Mode == "shift" ? "btn-primary" : "btn-ghost")">
                     @Localizer["ByShift"]
                 </a>
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=user@(dlParam)"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=user@(dlParam)@(tabParam)"
                    class="btn @(Model.Mode == "user" ? "btn-primary" : "btn-ghost")">
                     @Localizer["ByUser"]
                 </a>
@@ -154,7 +157,7 @@
             @if (Model.CanEdit)
             {
                 <div class="cal-toolbar__toggle-group">
-                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&CapacityMode=@(!Model.CapacityMode)@dlParam"
+                    <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&CapacityMode=@(!Model.CapacityMode)@dlParam@(tabParam)"
                        class="btn @(Model.CapacityMode ? "btn-primary" : "btn-ghost")">
                         @Localizer["CapacityMode"]
                     </a>
@@ -168,7 +171,7 @@
                     <span class="btn-icon"><icon name="search" /></span>
                     @Localizer["Filter"]
                 </button>
-                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@(!Model.JustMine)@dlParam"
+                <a href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@(!Model.JustMine)@dlParam@(tabParam)"
                    class="btn @(Model.JustMine ? "btn-primary" : "btn-ghost")">
                     @Localizer["JustMine"]
                 </a>
@@ -300,6 +303,32 @@
         </div>
     }
 
+    @* Calendar tabs (לשונית) — molecule sub-calendars, admin-defined in Blueprints. Switching is a
+       view filter (everyone in the molecule sees all tabs). Own row above the grid; hidden when the
+       molecule has no tabs. Tab=0 = "Main" (untagged shifts). *@
+    @if (Model.AvailableTabs.Any())
+    {
+        var tabBaseQ = $"?MoleculeId={Model.MoleculeId}&JobTypeId={Model.JobTypeId}&Start={Model.StartDate:yyyy-MM-dd}&ViewMode={Model.ViewMode}&Mode={Model.Mode}{dlParam}";
+        <div class="cal-tabs" role="tablist" aria-label="@Localizer["ShiftsCalendar"]">
+            <a href="@(tabBaseQ)&Tab=0" role="tab"
+               aria-selected="@((!Model.Tab.HasValue).ToString().ToLowerInvariant())"
+               class="cal-tab @(!Model.Tab.HasValue ? "cal-tab--active" : "")">@Localizer["Calendar_Tab_Main"]</a>
+            @foreach (var t in Model.AvailableTabs)
+            {
+                var active = Model.Tab == t.Id;
+                <a href="@(tabBaseQ)&Tab=@t.Id" role="tab"
+                   aria-selected="@active.ToString().ToLowerInvariant()"
+                   class="cal-tab @(active ? "cal-tab--active" : "")">
+                    @if (!string.IsNullOrEmpty(t.Color))
+                    {
+                        <span class="cal-tab__dot" style="background:@t.Color"></span>
+                    }
+                    @t.DisplayName
+                </a>
+            }
+        </div>
+    }
+
     @* Calendar Table *@
     @if (Model.CalendarData.Rows.Any())
     {
@@ -370,7 +399,7 @@
                    oninput="applyFilter()"
                    onkeydown="if(event.key==='Enter'){event.preventDefault(); applyFilter();}" />
             <a id="filterOnlyMeBtn"
-               href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@((!Model.JustMine).ToString().ToLowerInvariant())@dlParam"
+               href="?MoleculeId=@Model.MoleculeId&JobTypeId=@Model.JobTypeId&Start=@Model.StartDate.ToString("yyyy-MM-dd")&ViewMode=@Model.ViewMode&Mode=@Model.Mode&JustMine=@((!Model.JustMine).ToString().ToLowerInvariant())@dlParam@(tabParam)"
                class="btn btn-sm @(Model.JustMine ? "btn-primary" : "btn-ghost")">
                 <span class="btn-icon"><icon name="user" /></span> @Localizer["JustMine"]
             </a>
@@ -449,6 +478,59 @@ else
     </select>
 }
 
+@section Styles {
+    <style>
+        /* Calendar tabs (לשונית) — Excel-style sub-calendar strip above the grid. Reuses the Team-page
+           pill tokens: contrast-safe active (--primary-contrast on --primary), RTL-safe (flexbox +
+           logical margins), theme-aware via design tokens, horizontal-scroll past the viewport. */
+        .cal-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.375rem;
+            margin: 0.5rem 0 0;
+            padding-bottom: 0.5rem;
+            overflow-x: auto;
+        }
+        .cal-tab {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.375rem 0.85rem;
+            border-radius: 999px;
+            background: var(--surface-soft);
+            color: var(--text);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+        .cal-tab:hover { border-color: var(--border); }
+        .cal-tab--active {
+            background: var(--primary);
+            color: var(--primary-contrast);
+            font-weight: 600;
+        }
+        .cal-tab__dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            display: inline-block;
+            margin-inline-end: 0.375rem;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+        }
+
+        /* "Busy elsewhere" ghost: a by-user chip for a shift that lives on ANOTHER tab. Greyed and
+           non-interactive (view-only) so the tab reads as a separate calendar, while the person's
+           cross-tab commitment stays visible. Conflict/rest/hours still count it (server-side). */
+        .excel-calendar__assignment.is-busy-elsewhere {
+            opacity: 0.45;
+            filter: grayscale(0.75);
+            pointer-events: none;
+        }
+    </style>
+}
+
 @section Scripts {
     <script>
         window.CalendarPageConfig = {
@@ -510,10 +592,12 @@ else
             const endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
             const moleculeId = @Model.MoleculeId;
             const jobTypeId = @(Model.JobTypeId?.ToString() ?? "0");
+            const tabParam = @(Model.AvailableTabs.Any() ? (Model.Tab ?? 0).ToString() : "null");
 
             try {
                 let url = `/Api/Calendar/GetShiftsData?moleculeId=${moleculeId}&startDate=${startDate}&endDate=${endDate}`;
                 if (jobTypeId) url += `&jobTypeId=${jobTypeId}`;
+                if (tabParam !== null) url += `&tab=${tabParam}`;
                 const response = await fetch(url, { credentials: 'same-origin' });
 
                 if (!response.ok) throw new Error('Failed to refresh');
@@ -579,6 +663,11 @@ else
             const viewMode = document.getElementById('viewModeSelect').value;
 
             const params = new URLSearchParams(window.location.search);
+            // Switching molecule → drop the tab so the new molecule falls back to its OWN remembered tab
+            // (an old molecule's tab id is meaningless here; the server would ignore it anyway).
+            if (String(moleculeId) !== '@(Model.MoleculeId ?? 0)') {
+                params.delete('Tab');
+            }
             params.set('MoleculeId', moleculeId);
             if (jobTypeId) {
                 params.set('JobTypeId', jobTypeId);

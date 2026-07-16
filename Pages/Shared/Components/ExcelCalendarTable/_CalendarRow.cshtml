@@ -135,12 +135,15 @@
                         // routes to draft-clear by (dutytype row-id, cell date, chip user). Render it for both the
                         // real baseline chips (Id>0) and the staged ones so either can be un-staged.
                         var isDraftOnDutyChip = Model.DraftSessionId != null && rowKind == "onduty" && assignment.UserId.HasValue;
-                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip || isDraftChoreChip || isDraftOnDutyChip);
+                        // A "busy elsewhere" ghost (a shift on another tab) is view-only: never removable from here.
+                        var showRemove = !isReadOnly && !assignment.IsBusyElsewhere && (assignment.Id > 0 || isDraftShiftChip || isDraftChoreChip || isDraftOnDutyChip);
                         // A shadowing trainee splits the chip into two cubes (worker + trainee). Requires the
                         // Trainee navigation to be mapped to TraineeUserId (else TraineeName is always empty).
                         var hasTrainee = !isHomeChip && !string.IsNullOrEmpty(assignment.TraineeName);
                         var chipClass = isHomeChip ? "excel-calendar__assignment chip-home" : "excel-calendar__assignment";
                         if (hasTrainee) { chipClass += " has-trainee"; }
+                        // Tab (לשונית): a shift on another tab renders greyed + non-interactive ("busy elsewhere").
+                        if (assignment.IsBusyElsewhere) { chipClass += " is-busy-elsewhere"; }
                         <div class="@chipClass"
                              data-assignment-id="@assignment.Id"
                              data-user-id="@assignment.UserId"

@@ -16695,4 +16695,24 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Fix_ManageUser" xml:space="preserve"><value>Manage user</value></data>
   <data name="Fix_Eligibility" xml:space="preserve"><value>Manage eligibility</value></data>
   <data name="Fix_ButtonAria" xml:space="preserve"><value>Go to the place to fix this</value></data>
+  <data name="Calendar_Tab_Main" xml:space="preserve"><value>Main</value></data>
+  <data name="Blueprints_Tab" xml:space="preserve"><value>Tab</value></data>
+  <data name="Blueprints_NoTab" xml:space="preserve"><value>(No tab / Main)</value></data>
+  <data name="Blueprints_AreaShiftNoTab" xml:space="preserve"><value>Area-scoped shifts always stay on the Main tab</value></data>
+  <data name="Blueprints_Tabs_Section" xml:space="preserve"><value>Calendar Tabs</value></data>
+  <data name="Blueprints_Tabs_Description" xml:space="preserve"><value>Split this molecule's Shifts calendar into separate sub-calendars. Assign shift types and companies to each tab; everything else stays on the "Main" tab.</value></data>
+  <data name="Blueprints_TabName" xml:space="preserve"><value>Tab Name</value></data>
+  <data name="Blueprints_NewTab" xml:space="preserve"><value>Add Tab</value></data>
+  <data name="Blueprints_TabShiftTypes" xml:space="preserve"><value>Shift types</value></data>
+  <data name="Blueprints_TabCompanies" xml:space="preserve"><value>Companies</value></data>
+  <data name="Blueprints_TabHalfConfigured" xml:space="preserve"><value>This tab has shift types but no companies (or vice-versa). Assign both so it appears in both calendar views.</value></data>
+  <data name="Blueprints_TabHalfConfiguredBadge" xml:space="preserve"><value>Half-configured</value></data>
+  <data name="Blueprints_NoTabs" xml:space="preserve"><value>No tabs yet. Create one above to split this molecule's calendar.</value></data>
+  <data name="Blueprints_RenameTab" xml:space="preserve"><value>Rename Tab</value></data>
+  <data name="Blueprints_DeleteTab" xml:space="preserve"><value>Delete Tab</value></data>
+  <data name="Blueprints_DeleteTabUsageNote" xml:space="preserve"><value>Those shift types and companies move back to the Main tab. Shifts and assignments are not deleted.</value></data>
+  <data name="Blueprints_TabNameRequired" xml:space="preserve"><value>Tab name is required</value></data>
+  <data name="Blueprints_TabInUsePrefix" xml:space="preserve"><value>This tab is used by</value></data>
+  <data name="Blueprints_CompaniesWord" xml:space="preserve"><value>companies</value></data>
+  <data name="Blueprints_AutoSuggestConfirm" xml:space="preserve"><value>Also assign this company's {0} untagged shift type(s) to this tab?</value></data>
 </root>

@@ -332,6 +332,7 @@ builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IShiftGroupingService, ShiftGroupingService>();
 builder.Services.AddScoped<IShiftCategoryService, ShiftCategoryService>();
+builder.Services.AddScoped<IShiftTabService, ShiftTabService>();
 builder.Services.AddScoped<IChoreCategoryService, ChoreCategoryService>();
 // Draft Mode (Spec F): one DraftModeService instance per scope serves BOTH the shifts staging/overlay surface
 // (IDraftModeService) and the shifts commit reconciler (IDraftReconciler) that the shared lifecycle drives.

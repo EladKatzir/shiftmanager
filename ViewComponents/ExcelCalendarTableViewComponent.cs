@@ -119,6 +119,10 @@ public class ExcelCalendarAssignment
     public bool IsHome { get; set; }
     public string? ShiftStart { get; set; }  // pre-formatted "HH:mm" for chip time label
     public string? ShiftEnd { get; set; }    // pre-formatted "HH:mm" for chip time label
+    // Tab (לשונית) ghosting: true when this shift belongs to a DIFFERENT tab than the one being viewed.
+    // Rendered greyed + non-interactive ("busy elsewhere") in by-user mode so the tab reads as a separate
+    // calendar while the person's cross-tab commitments stay visible (and conflict/hours still count them).
+    public bool IsBusyElsewhere { get; set; }
 
     // Source-of-truth for HOME chip's source icon (Task 22):
     //   null → rotation HOME (icon = repeat)

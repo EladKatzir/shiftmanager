@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShiftManager.Data;
 
@@ -10,9 +11,11 @@ using ShiftManager.Data;
 namespace ShiftManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260716001410_AddShiftTabs")]
+    partial class AddShiftTabs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -1417,10 +1420,6 @@ namespace ShiftManager.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("BaselineTrainees")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("BaselineUserIds")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -1430,10 +1429,6 @@ namespace ShiftManager.Migrations
 
                     b.Property<int>("ShiftTypeId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("StagedTrainees")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("StagedUserIds")
                         .IsRequired()
@@ -1450,75 +1445,10 @@ namespace ShiftManager.Migrations
                     b.ToTable("DraftCells");
                 });
 
-            modelBuilder.Entity("ShiftManager.Models.DraftChoreCell", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("BaselineChores")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("DraftSessionId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("StagedChores")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateOnly>("WorkDate")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DraftSessionId", "UserId", "WorkDate")
-                        .IsUnique();
-
-                    b.ToTable("DraftChoreCells");
-                });
-
-            modelBuilder.Entity("ShiftManager.Models.DraftDutyCell", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("BaselineUserIds")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("DraftSessionId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DutyTypeValue")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("StagedUserIds")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateOnly>("WorkDate")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DraftSessionId", "DutyTypeValue", "WorkDate")
-                        .IsUnique();
-
-                    b.ToTable("DraftDutyCells");
-                });
-
             modelBuilder.Entity("ShiftManager.Models.DraftSession", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("AreaId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1527,16 +1457,13 @@ namespace ShiftManager.Migrations
                     b.Property<int?>("JobTypeId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("MoleculeId")
+                    b.Property<int>("MoleculeId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("OwnerUserId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Surface")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateOnly>("WeekEnd")
@@ -1547,25 +1474,7 @@ namespace ShiftManager.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "OwnerUserId", "Surface", "MoleculeId", "WeekStart" }, "UX_DraftSessions_Active_Chores")
-                        .IsUnique()
-                        .HasFilter("\"Status\" = 0 AND \"Surface\" = 1");
-
-                    b.HasIndex(new[] { "OwnerUserId", "Surface", "AreaId", "WeekStart" }, "UX_DraftSessions_Active_OnCall")
-                        .IsUnique()
-                        .HasFilter("\"Status\" = 0 AND \"Surface\" = 2 AND \"AreaId\" IS NOT NULL");
-
-                    b.HasIndex(new[] { "OwnerUserId", "Surface", "WeekStart" }, "UX_DraftSessions_Active_OnCall_AllAreas")
-                        .IsUnique()
-                        .HasFilter("\"Status\" = 0 AND \"Surface\" = 2 AND \"AreaId\" IS NULL");
-
-                    b.HasIndex(new[] { "OwnerUserId", "Surface", "MoleculeId", "JobTypeId", "WeekStart" }, "UX_DraftSessions_Active_Shifts")
-                        .IsUnique()
-                        .HasFilter("\"Status\" = 0 AND \"Surface\" = 0 AND \"JobTypeId\" IS NOT NULL");
-
-                    b.HasIndex(new[] { "OwnerUserId", "Surface", "MoleculeId", "WeekStart" }, "UX_DraftSessions_Active_Shifts_NullJob")
-                        .IsUnique()
-                        .HasFilter("\"Status\" = 0 AND \"Surface\" = 0 AND \"JobTypeId\" IS NULL");
+                    b.HasIndex("OwnerUserId", "MoleculeId", "Status");
 
                     b.ToTable("DraftSessions");
                 });
@@ -4981,28 +4890,6 @@ namespace ShiftManager.Migrations
                     b.Navigation("DraftSession");
                 });
 
-            modelBuilder.Entity("ShiftManager.Models.DraftChoreCell", b =>
-                {
-                    b.HasOne("ShiftManager.Models.DraftSession", "DraftSession")
-                        .WithMany("ChoreCells")
-                        .HasForeignKey("DraftSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DraftSession");
-                });
-
-            modelBuilder.Entity("ShiftManager.Models.DraftDutyCell", b =>
-                {
-                    b.HasOne("ShiftManager.Models.DraftSession", "DraftSession")
-                        .WithMany("DutyCells")
-                        .HasForeignKey("DraftSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DraftSession");
-                });
-
             modelBuilder.Entity("ShiftManager.Models.DraftSession", b =>
                 {
                     b.HasOne("ShiftManager.Models.AppUser", "Owner")
@@ -6287,10 +6174,6 @@ namespace ShiftManager.Migrations
             modelBuilder.Entity("ShiftManager.Models.DraftSession", b =>
                 {
                     b.Navigation("Cells");
-
-                    b.Navigation("ChoreCells");
-
-                    b.Navigation("DutyCells");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.DutyRotation", b =>
