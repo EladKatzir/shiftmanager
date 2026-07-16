@@ -79,6 +79,9 @@ public class TeamModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int? SelectedCompanyId { get; set; }
 
+    /// <summary>True when the caller may enter time-off on this (otherwise read-only) Team grid.</summary>
+    public bool CanEnterTimeOff { get; set; }
+
     [BindProperty(SupportsGet = true)]
     public int? SelectedJobTypeId { get; set; }
 
@@ -219,8 +222,9 @@ public class TeamModel : PageModel
 
             // Shared builder (Task #9.2) — same pipeline Overview uses, so the calendar renders
             // identically by construction. v1 is read-only (no per-cell note editing yet).
+            CanEnterTimeOff = await _grantService.HasCalendarAssignPermissionForCompanyAsync(currentUserId, SelectedCompanyId.Value);
             CalendarData = await _calendarBuilder.BuildAsync(
-                SelectedCompanyId.Value, Users, StartDate, EndDate, ViewMode, canEditNotes: false);
+                SelectedCompanyId.Value, Users, StartDate, EndDate, ViewMode, canEditNotes: false, canEnterTimeOff: CanEnterTimeOff);
 
             // Task #7 left RowOrderContextKey as "overview:{companyId}" — Team ordering must be
             // independent from Overview's, or dragging rows on one page would silently reorder

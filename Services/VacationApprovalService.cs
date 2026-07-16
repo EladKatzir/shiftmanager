@@ -1095,6 +1095,110 @@ public class VacationApprovalService : IVacationApprovalService
             request.StartDate, request.EndDate, request.Id);
     }
 
+    public async Task<(bool Success, int? RequestId, string? ErrorKey)> CreateApprovedManualTimeOffAsync(
+        int targetUserId, TimeOffType type,
+        DateOnly startDate, DateOnly endDate, string? label, int actorUserId)
+    {
+        // 1. No self-approval: manual entry creates an ALREADY-Approved leave that frees the
+        //    subject's shifts, so — exactly like ApproveAsync's self-approval block — the actor may
+        //    not be the subject. Users request their own leave via /My/Requests (routes to an approver).
+        if (actorUserId == targetUserId)
+            return (false, null, "Error_TimeOff_CannotSelfApprove");
+
+        // 2. The leave belongs to the TARGET USER's own company — NOT the actor's active tenant.
+        //    On a molecule-scoped Shifts board (or a switched-company Team view) the users shown
+        //    span multiple companies, so the viewed/tenant company would be the wrong home for the
+        //    record. Resolve it from the user; it also anchors the authorization scope below.
+        var targetCompanyId = await _context.Users.IgnoreQueryFilters()
+            .Where(u => u.Id == targetUserId && u.IsActive)
+            .Select(u => (int?)u.CompanyId)
+            .FirstOrDefaultAsync();
+        if (targetCompanyId == null)
+            return (false, null, "Error_TimeOff_UserNotInCompany");
+        var companyId = targetCompanyId.Value;
+
+        // 3. Authorization: creating an already-Approved leave that removes shifts is an APPROVAL-level
+        //    action, so require real calendar-EDIT authority (assign/admin) SCOPED to the target's
+        //    company — NOT the universal WriteOverviewNotes note tier that every employee holds. This
+        //    both enforces the manager-tier bar and is the anti-IDOR guard (the actor must manage the
+        //    target's company).
+        if (!await _grantService.HasCalendarAssignPermissionForCompanyAsync(actorUserId, companyId))
+            return (false, null, "Error_TimeOff_NoPermission");
+
+        // 4. Normalize per type (mirrors Pages/My/Requests OnPostTimeOffAsync):
+        //    After and DayAt are single-day; DayAt requires a free-text location label.
+        if (type == TimeOffType.After || type == TimeOffType.DayAt)
+            endDate = startDate;
+        if (type == TimeOffType.DayAt && string.IsNullOrWhiteSpace(label))
+            return (false, null, "Error_TimeOff_DayAtLabelRequired");
+        if (endDate < startDate)
+            return (false, null, "Error_EndDateBeforeStartDate");
+
+        // 5. Create the already-Approved record inside a transaction, re-checking the overlap guard
+        //    under the transaction (mirrors ApproveAsync's concurrency guard) so two near-simultaneous
+        //    entries can't both pass the guard and double-book the same day.
+        var now = DateTime.UtcNow;
+        TimeOffRequest request;
+        await using (var tx = await _context.Database.BeginTransactionAsync())
+        {
+            // SECURITY-AUDITED: IgnoreQueryFilters SAFE — scoped by targetUserId + date range.
+            var hasOverlap = await _context.TimeOffRequests.IgnoreQueryFilters()
+                .AnyAsync(r => r.UserId == targetUserId
+                            && r.Status == RequestStatus.Approved
+                            && r.StartDate <= endDate && r.EndDate >= startDate);
+            if (hasOverlap)
+            {
+                await tx.RollbackAsync();
+                return (false, null, "Error_TimeOff_OverlapExists");
+            }
+
+            request = new TimeOffRequest
+            {
+                CompanyId = companyId,
+                UserId = targetUserId,
+                StartDate = startDate,
+                EndDate = endDate,
+                Type = type,
+                Label = type == TimeOffType.DayAt ? label!.Trim() : null,
+                Reason = "Entered on calendar",
+                Status = RequestStatus.Approved,
+                ApproverId = actorUserId,
+                FirstApprovalActorId = actorUserId,
+                FirstApprovalActedAt = now,
+                CreatedAt = now
+            };
+            _context.TimeOffRequests.Add(request);
+            await _context.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+
+        // 6. Same side-effects a real approval runs — best-effort (mirrors ApproveAsync): the
+        //    Approved record is the source of truth; the idempotent materialiser reconciles HOME rows.
+        try
+        {
+            await ProcessApprovalSideEffectsAsync(request.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Side effects failed for manual time-off {RequestId}. Manual remediation may be needed.", request.Id);
+        }
+
+        try
+        {
+            if (await _featureFlagService.IsEnabledAsync(FeatureFlagSeed.Flags.HomeUnification))
+                await _materialiser.SyncMaterialisedHomeRowsAsync(request.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Materialiser failed for manual time-off {RequestId}", request.Id);
+        }
+
+        await _auditLogService.LogAsync("TimeOffEnteredOnCalendar", "TimeOffRequest", request.Id,
+            $"Manual {type} for user {targetUserId} on {startDate:yyyy-MM-dd}..{endDate:yyyy-MM-dd} by user {actorUserId}");
+
+        return (true, request.Id, null);
+    }
+
     /// <summary>
     /// Cascades a terminal approval decision (Approved or Declined) to every non-terminal
     /// sibling in the same LeaveGroup.

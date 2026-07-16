@@ -51,7 +51,8 @@ public class OverviewCalendarBuilder : IOverviewCalendarBuilder
         DateOnly startDate,
         DateOnly endDate,
         string viewMode,
-        bool canEditNotes)
+        bool canEditNotes,
+        bool canEnterTimeOff = false)
     {
         // Load all aggregated data for the date range
         var vacations = await LoadVacationsAsync(users, startDate, endDate);
@@ -100,6 +101,7 @@ public class OverviewCalendarBuilder : IOverviewCalendarBuilder
             // IsReadOnly from the same note-edit grant removes the misleading "view only" banner and
             // makes the cells interactive for those roles instead of inert.
             IsReadOnly = !canEditNotes,
+            CanEnterTimeOff = canEnterTimeOff,
             CalendarType = "overview",
             Rows = rows
         };
@@ -167,11 +169,26 @@ public class OverviewCalendarBuilder : IOverviewCalendarBuilder
 
         // Include SourceTimeOffRequest so the projection can expose its Type for HOME chip
         // source-icon resolution (rotation/vacation/after) — Task 23.
+        //
+        // HOME/HOME_AM/HOME_PM ShiftTypes are MOLECULE-scoped: one ShiftInstance is shared by every
+        // company in the molecule and carries whichever company first materialised it (see
+        // HomeMaterialiserService.EnsureInstanceAsync / HomeTypeService.GenerateHomeShiftsAsync). The
+        // per-user tenant boundary is therefore the ShiftAssignment's CompanyId, NOT the shared
+        // instance's. Referencing the required ShiftInstance nav under the global query filter would
+        // INNER-JOIN on the instance's CompanyId and drop a cross-company-same-molecule-same-day HOME
+        // row whose shared instance carries a different company's stamp, hiding the HOME busy-chip.
+        // SECURITY-AUDITED: IgnoreQueryFilters SAFE — `companyId` is the already-resolved/validated
+        // viewed company (Overview: caller's own tenant; Team: SelectedCompanyId, pre-checked against
+        // the caller's ViewShifts scope). The explicit `sa.CompanyId == companyId` re-scope preserves
+        // tenant isolation and is identical to the old filter for company-scoped shifts (assignment
+        // company == instance company there).
         var assignments = await _db.ShiftAssignments
+            .IgnoreQueryFilters()
             .Include(sa => sa.ShiftInstance)
                 .ThenInclude(si => si.ShiftType)
             .Include(sa => sa.SourceTimeOffRequest)
-            .Where(sa => ((sa.UserId.HasValue && userIds.Contains(sa.UserId.Value)) ||
+            .Where(sa => sa.CompanyId == companyId &&
+                        ((sa.UserId.HasValue && userIds.Contains(sa.UserId.Value)) ||
                          (sa.TraineeUserId.HasValue && userIds.Contains(sa.TraineeUserId.Value))) &&
                         sa.ShiftInstance.WorkDate >= startDate &&
                         sa.ShiftInstance.WorkDate <= endDate)

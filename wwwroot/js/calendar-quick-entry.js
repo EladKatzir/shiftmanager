@@ -90,6 +90,18 @@
         return sel.dataset.itemType === 'user' ? 'shift' : 'user';
     }
 
+    // Recognizes typed time-off keywords (English + Hebrew) on people rows.
+    // "vacation"/"חופש"/"חופשה" -> Vacation; "after"/"אפטר" -> After;
+    // "day at X"/"יום ב X" -> DayAt with label X. Returns {type,label} or null.
+    function parseTimeOffQuery(q) {
+        var s = (q || '').trim();
+        if (/^(vacation|חופש|חופשה)$/i.test(s)) return { type: 'vacation', label: null };
+        if (/^(after|אפטר)$/i.test(s)) return { type: 'after', label: null };
+        var m = /^(?:day at|יום ב)\s+(.+)$/i.exec(s);
+        if (m && m[1].trim()) return { type: 'dayat', label: m[1].trim() };
+        return null;
+    }
+
     function isChoresCalendar() {
         return !!document.querySelector('.excel-calendar[data-calendar-type="chores"]');
     }
@@ -687,7 +699,50 @@
             activeInput._cellData && activeInput._cellData.date) {
             // Sub-project B: day-notes are not part of a shifts draft — show a greyed hint, no actionable
             // option (direct submission is also blocked in selectItem).
+            // Merge note (draft × manual-timeoff): manual time-off is likewise a non-shift quick-add that
+            // performs a LIVE write, so it stays suppressed while a shifts draft is active — this branch
+            // is ordered BEFORE the time-off branch below so the draft's staging contract wins.
             if (totalItems === 0) appendDraftDisabledHint();
+        } else if (query.trim().length > 0 &&
+            activeInput._cellData && activeInput._cellData.rowId &&
+            activeInput._cellData.rowId.indexOf('user-') === 0 &&
+            activeInput._cellData.canEnterTimeOff &&
+            parseTimeOffQuery(query)) {
+            // Manual time-off entry — people rows only (Overview/Team/Shifts-user). Intercepts the
+            // typed keyword BEFORE the day-note fallback; by-shift rows (shift-) fall through to day-note.
+            var toParsed = parseTimeOffQuery(query);
+            var toItem = { type: 'time-off', timeOffType: toParsed.type, label: toParsed.label,
+                           text: query.trim(), date: activeInput._cellData.date };
+            var toIdx = filteredItems.length;
+            filteredItems.push(toItem);
+
+            var toEl = document.createElement('div');
+            toEl.className = 'quick-entry-item quick-entry-item--text-entry quick-entry-item--time-off';
+            toEl.setAttribute('role', 'option');
+            toEl.id = dropdown.id + '-item-' + toIdx;
+            toEl.dataset.index = toIdx;
+
+            var toIcon = document.createElement('span');
+            toIcon.className = 'quick-entry-text-icon';
+            toIcon.textContent = toParsed.type === 'after' ? '🌅' : (toParsed.type === 'dayat' ? '📍' : '🌴');
+            toEl.appendChild(toIcon);
+
+            var toLabelKey = toParsed.type === 'after' ? 'QuickEntry_TimeOff_After'
+                : toParsed.type === 'dayat' ? 'QuickEntry_TimeOff_DayAt' : 'QuickEntry_TimeOff_Vacation';
+            var toLabel = document.createElement('span');
+            toLabel.textContent = getLocalizedLabel(toLabelKey) + (toParsed.label ? (': "' + toParsed.label + '"') : '');
+            toEl.appendChild(toLabel);
+
+            (function (capturedIdx) {
+                toEl.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    selectedIndex = capturedIdx;
+                    selectItem(filteredItems[capturedIdx]);
+                });
+            })(toIdx);
+
+            dropdown.appendChild(toEl);
+            selectedIndex = toIdx; // explicit keyword -> auto-select so Enter commits
         } else if (query.trim().length > 0 && isShiftsCalendar() &&
             activeInput._cellData && activeInput._cellData.date) {
             // Day-note option — Shifts calendar, ANY mode/row (shift-mode where rows are shift types, or
@@ -1250,6 +1305,24 @@
             } else {
                 closeInput();
                 if (doAdvanceDN) advanceToNextCell(currentCellDN);
+            }
+            return;
+        }
+
+        if (item.type === 'time-off') {
+            // Manual time-off — creates an approved TimeOffRequest for the user on that day.
+            var toUserId = parseInt(rowId.replace('user-', ''), 10);
+            var currentCellTO = activeCell;
+            var doAdvanceTO = !!advance;
+            var toPromise = window.quickAddTimeOff(date, toUserId, item.timeOffType, item.label);
+            if (toPromise && typeof toPromise.then === 'function') {
+                toPromise.then(function () {
+                    closeInput();
+                    if (doAdvanceTO) advanceToNextCell(currentCellTO);
+                });
+            } else {
+                closeInput();
+                if (doAdvanceTO) advanceToNextCell(currentCellTO);
             }
             return;
         }

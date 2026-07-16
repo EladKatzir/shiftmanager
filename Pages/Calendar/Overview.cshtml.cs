@@ -78,6 +78,7 @@ public class OverviewModel : PageModel
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
     public bool CanEditNotes { get; set; }
+    public bool CanEnterTimeOff { get; set; }
     public List<AppUser> Users { get; set; } = new();
     public int CurrentUserId { get; set; }
     public int CompanyId { get; set; }
@@ -128,12 +129,13 @@ public class OverviewModel : PageModel
 
         // Check note editing permission
         CanEditNotes = await _grantService.HasGrantAsync(currentUserId, "WriteOverviewNotes");
+        CanEnterTimeOff = await _grantService.HasCalendarAssignPermissionForCompanyAsync(currentUserId, CompanyId);
 
         // Load users in this company
         await LoadUsersAsync();
 
         // Build calendar data (shared builder — Task #9.2 — also used by /Calendar/Team)
-        CalendarData = await _calendarBuilder.BuildAsync(CompanyId, Users, StartDate, EndDate, ViewMode, CanEditNotes);
+        CalendarData = await _calendarBuilder.BuildAsync(CompanyId, Users, StartDate, EndDate, ViewMode, CanEditNotes, CanEnterTimeOff);
 
         _logger.LogInformation(
             "Overview calendar loaded for User {UserId}, Company {CompanyId}, ViewMode {ViewMode}",

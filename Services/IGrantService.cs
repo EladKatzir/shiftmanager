@@ -57,6 +57,15 @@ public interface IGrantService
 
     Task<bool> HasGrantForCompanyAsync(int userId, string grantKey, int targetCompanyId);
 
+    /// <summary>
+    /// Company-scoped assign/MANAGER-tier permission (AdminAccess / AssignShifts / AssignChores /
+    /// ManageOnDuty) resolved against <paramref name="companyId"/>. Excludes the universal
+    /// WriteOverviewNotes note tier AND EditOnCallCalendar (a narrow on-call grant held by base
+    /// employees) — used to gate approval-level actions (manual approved time-off entry) that must
+    /// NOT be self-servable by every employee.
+    /// </summary>
+    Task<bool> HasCalendarAssignPermissionForCompanyAsync(int userId, int companyId);
+
     // Grant management
     Task<Grant?> GrantAsync(int userId, int grantTypeId, GrantScope scope, int? grantedByUserId = null, string? notes = null);
     Task<bool> RevokeAsync(int grantId, int? revokedByUserId = null);
