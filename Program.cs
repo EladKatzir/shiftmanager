@@ -344,6 +344,13 @@ builder.Services.AddScoped<IDraftReconciler>(sp => sp.GetRequiredService<DraftMo
 builder.Services.AddScoped<DraftChoreService>();
 builder.Services.AddScoped<IDraftChoreService>(sp => sp.GetRequiredService<DraftChoreService>());
 builder.Services.AddScoped<IDraftReconciler>(sp => sp.GetRequiredService<DraftChoreService>());
+// Draft Mode (sub-project D): DraftDutyService is the on-call analog — one instance serves BOTH the on-call
+// staging/overlay surface (IDraftDutyService) and the on-call commit reconciler (IDraftReconciler). The
+// shared lifecycle selects a reconciler by DraftSurface, so registering it as an additional IDraftReconciler
+// is all the wiring needed.
+builder.Services.AddScoped<DraftDutyService>();
+builder.Services.AddScoped<IDraftDutyService>(sp => sp.GetRequiredService<DraftDutyService>());
+builder.Services.AddScoped<IDraftReconciler>(sp => sp.GetRequiredService<DraftDutyService>());
 builder.Services.AddScoped<IDraftLifecycle, DraftLifecycle>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 

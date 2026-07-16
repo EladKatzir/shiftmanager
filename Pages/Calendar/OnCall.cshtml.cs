@@ -31,6 +31,8 @@ public class OnCallModel : PageModel
     private readonly ILogger<OnCallModel> _logger;
     private readonly ICalendarTextEntryService _textEntryService;
     private readonly IJusticeService _justiceService;
+    private readonly IDraftDutyService _draftDutyService;
+    private readonly IDraftLifecycle _draftLifecycle;
 
     public OnCallModel(
         AppDbContext db,
@@ -40,7 +42,9 @@ public class OnCallModel : PageModel
         IStringLocalizer<SharedResources> localizer,
         ILogger<OnCallModel> logger,
         ICalendarTextEntryService textEntryService,
-        IJusticeService justiceService)
+        IJusticeService justiceService,
+        IDraftDutyService draftDutyService,
+        IDraftLifecycle draftLifecycle)
     {
         _db = db;
         _onDutyService = onDutyService;
@@ -50,6 +54,8 @@ public class OnCallModel : PageModel
         _logger = logger;
         _textEntryService = textEntryService;
         _justiceService = justiceService;
+        _draftDutyService = draftDutyService;
+        _draftLifecycle = draftLifecycle;
     }
 
     // Query parameters
@@ -67,6 +73,13 @@ public class OnCallModel : PageModel
 
     [BindProperty(SupportsGet = true)]
     public bool JustMine { get; set; }
+
+    /// <summary>When true, the on-call calendar renders the viewer's private draft overlay (sub-project D).</summary>
+    [BindProperty(SupportsGet = true)]
+    public bool DraftMode { get; set; }
+
+    /// <summary>The active on-call draft session id for the current viewer + area + week (null when not drafting).</summary>
+    public int? ActiveDraftId { get; set; }
 
     // Page properties
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
@@ -395,6 +408,11 @@ public class OnCallModel : PageModel
             onDuties = onDuties.Where(o => (int)o.Type == DutyTypeFilter.Value).ToList();
         }
 
+        // Draft Mode (sub-project D): overlay the viewer's private staged cells onto the live set. Applied
+        // AFTER the area filter so staged users the assigner picked (globally) are never hidden by the area
+        // view. Sets ActiveDraftId.
+        onDuties = await ApplyDraftOverlayAsync(onDuties);
+
         // Load text entries for overlay badges (cross-company via IgnoreQueryFilters)
         var assignedOnDutyUserIds = onDuties.Select(o => o.UserId).Distinct();
         var allEntriesWithType = await _textEntryService.GetForUsersAndDateRangeWithTypeAsync(
@@ -451,12 +469,70 @@ public class OnCallModel : PageModel
             RequiredGrantNameKeys = RequiredGrantNameKeys
         };
         CalendarData.RowMode = "Duty";
+        // Draft Mode (sub-project D): when set, the shared row template routes every × on a duty chip
+        // (real baseline OR synthetic staged) to the coordinate-keyed draft-clear handler.
+        CalendarData.DraftSessionId = ActiveDraftId;
         // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
         CalendarData.RowOrderContextKey = AreaId.HasValue ? $"oncall:{AreaId.Value}" : "oncall:all";
     }
 
-    private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForDutyType(
+    /// <summary>
+    /// Draft Mode (sub-project D): replace the live users of each TOUCHED (dutyType, date) cell with the
+    /// draft's staged set, rendered as synthetic (Id=0) <see cref="OnDuty"/> rows so the assigner sees their
+    /// private sandbox. The staged set is GLOBAL (Spec D §3) — staged users are shown regardless of the area
+    /// view. Returns the input unchanged when not drafting or no active draft exists.
+    /// </summary>
+    internal async Task<List<OnDuty>> ApplyDraftOverlayAsync(List<OnDuty> live)
+    {
+        if (!DraftMode)
+            return live;
+
+        var draft = await _draftDutyService.GetActiveDraftAsync(CurrentUserId, AreaId, StartDate);
+        if (draft == null)
+            return live;
+        ActiveDraftId = draft.Id;
+
+        var overlay = (await _draftDutyService.GetDutyOverlayAsync(draft.Id))
+            .Where(o => o.WorkDate >= StartDate && o.WorkDate <= EndDate
+                        && (!DutyTypeFilter.HasValue || o.DutyTypeValue == DutyTypeFilter.Value))
+            .ToList();
+        if (overlay.Count == 0)
+            return live;
+
+        var touched = overlay.ToDictionary(o => (o.DutyTypeValue, o.WorkDate), o => o.UserIds);
+
+        // Drop the live rows of touched cells; keep everything else (untouched cells render live).
+        var result = live.Where(o => !touched.ContainsKey(((int)o.Type, o.Date))).ToList();
+
+        // Load display names for the staged users (cross-company/global — IgnoreQueryFilters).
+        var stagedIds = touched.Values.SelectMany(x => x).Distinct().ToList();
+        var nameMap = stagedIds.Count == 0
+            ? new Dictionary<int, string>()
+            : await _db.Users.IgnoreQueryFilters()
+                .Where(u => stagedIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.DisplayName })
+                .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
+
+        foreach (var ((dutyTypeValue, date), userIds) in touched)
+        {
+            foreach (var uid in userIds)
+            {
+                result.Add(new OnDuty
+                {
+                    Id = 0, // synthetic — not a persisted row; the chip's × routes to draft-clear by coordinate
+                    UserId = uid,
+                    Type = (OnDutyType)dutyTypeValue,
+                    Date = date,
+                    User = new AppUser { Id = uid, DisplayName = nameMap.GetValueOrDefault(uid, _localizer["Unknown"]) }
+                });
+            }
+        }
+
+        return result;
+    }
+
+    internal Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForDutyType(
         int dutyTypeValue,
         List<OnDuty> onDuties,
         Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>> textEntries,
@@ -769,4 +845,102 @@ public class OnCallModel : PageModel
         candidateDeviationBefore = p.CandidateDeviationBefore,
         candidateDeviationAfter = p.CandidateDeviationAfter
     };
+
+    // ===============================================================================
+    // Draft Mode (sub-project D) — on-call staging + commit page handlers.
+    // On-call writes go to /Api/ today (no page-handler write host), so the draft handlers live HERE and the
+    // JS branches to them BEFORE the live /Api call when window.__draftSessionId is set (Spec D §4).
+    // ===============================================================================
+
+    private int? CurrentUserIdOrNull()
+        => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : (int?)null;
+
+    private Task<bool> OwnsActiveDraftAsync(int draftSessionId, int userId)
+        => _db.DraftSessions.AnyAsync(d => d.Id == draftSessionId && d.OwnerUserId == userId && d.Status == DraftSessionStatus.Active);
+
+    public async Task<IActionResult> OnPostEnterDraftAsync([FromBody] EnterOnCallDraftRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        // Draft-entry auth gate = the on-call OR-chain (ManageOnDuty || AssignHakamDuties ||
+        // AssignKatzinDuties || EditOnCallCalendar). Commit RE-authorizes per cell (Spec D §4-5).
+        if (!await _onDutyService.CanUserManageOnDutyAsync(userId))
+            return new JsonResult(new { success = false }) { StatusCode = 403 };
+
+        var scope = new DraftScope(DraftSurface.OnCall, MoleculeId: null, JobTypeId: null,
+            AreaId: request.AreaId, request.WeekStart, request.WeekEnd);
+        var draft = await _draftLifecycle.EnterAsync(userId, scope);
+        return new JsonResult(new { success = true, draftSessionId = draft.Id });
+    }
+
+    public async Task<IActionResult> OnPostDraftDutyAssignAsync([FromBody] DraftDutyRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+        await _draftDutyService.StageDutyAssignAsync(request.DraftSessionId, request.DutyTypeValue, request.Date, request.UserId);
+        return new JsonResult(new { success = true, draft = true });
+    }
+
+    public async Task<IActionResult> OnPostDraftDutyClearAsync([FromBody] DraftDutyRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+        await _draftDutyService.StageDutyClearAsync(request.DraftSessionId, request.DutyTypeValue, request.Date, request.UserId);
+        return new JsonResult(new { success = true, draft = true });
+    }
+
+    public async Task<IActionResult> OnPostCommitDraftAsync([FromBody] DraftActionRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+
+        var result = await _draftLifecycle.CommitAsync(request.DraftSessionId, userId);
+        // Per-cell policy (Spec F §5): the session commits; some cells may be Skipped (drifted) or Unauthorized
+        // (grant revoked), and per-user hard errors surface as issues. The UI renders this per-cell report.
+        return new JsonResult(new
+        {
+            success = result.Committed,
+            applied = result.Applied.Select(c => new { rowId = c.RowId, date = c.WorkDate.ToString("yyyy-MM-dd"), label = c.Label }),
+            appliedCount = result.Applied.Count,
+            skipped = result.Skipped.Select(c => new { rowId = c.RowId, date = c.WorkDate.ToString("yyyy-MM-dd"), label = c.Label }),
+            unauthorized = result.Unauthorized.Select(c => new { rowId = c.RowId, date = c.WorkDate.ToString("yyyy-MM-dd"), label = c.Label }),
+            issues = result.ValidationIssues.Select(i => new { rowId = i.RowId, date = i.WorkDate.ToString("yyyy-MM-dd"), i.UserId, i.Message }),
+            notifiedGroups = result.NotifiedGroups
+        });
+    }
+
+    public async Task<IActionResult> OnPostDiscardDraftAsync([FromBody] DraftActionRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        // Allow discarding any of your OWN sessions (active or stale), not others'.
+        var owns = await _db.DraftSessions.AnyAsync(d => d.Id == request.DraftSessionId && d.OwnerUserId == userId);
+        if (!owns)
+            return new JsonResult(new { success = false }) { StatusCode = 403 };
+        await _draftLifecycle.DiscardAsync(request.DraftSessionId, userId);
+        return new JsonResult(new { success = true });
+    }
+
+    public class EnterOnCallDraftRequest
+    {
+        public int? AreaId { get; set; }
+        public DateOnly WeekStart { get; set; }
+        public DateOnly WeekEnd { get; set; }
+    }
+
+    public class DraftActionRequest { public int DraftSessionId { get; set; } }
+
+    public class DraftDutyRequest
+    {
+        public int DraftSessionId { get; set; }
+        public int DutyTypeValue { get; set; }
+        public DateOnly Date { get; set; }
+        public int UserId { get; set; }
+    }
 }

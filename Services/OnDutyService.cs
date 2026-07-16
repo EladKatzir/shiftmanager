@@ -16,6 +16,20 @@ public interface IOnDutyService
 {
     Task<(bool Success, string Message, OnDuty? OnDuty, BusyValidation? Validation, string? OverrideToken)> CreateOnDutyAsync(int assigneeId, DateOnly date, OnDutyType type, string? notes = null, bool forceAssign = false, int? moleculeId = null, string? overrideToken = null);
     Task<(bool Success, string Message)> CancelOnDutyAsync(int onDutyId, string? reason = null);
+
+    /// <summary>
+    /// Commit-path overload of <see cref="CreateOnDutyAsync"/>: the acting user is passed EXPLICITLY
+    /// instead of read from the HttpContext claim. Draft Mode commit (sub-project D) reconciles staged
+    /// on-duty rows outside the per-cell request pipeline, so it must supply the actor itself. Same
+    /// grant/officer-rank/BusyService validation as the interactive path.
+    /// </summary>
+    Task<(bool Success, string Message, OnDuty? OnDuty, BusyValidation? Validation, string? OverrideToken)> CreateForActorAsync(int actingUserId, int assigneeId, DateOnly date, OnDutyType type, string? notes = null, bool forceAssign = false, int? moleculeId = null, string? overrideToken = null);
+
+    /// <summary>
+    /// Commit-path overload of <see cref="CancelOnDutyAsync"/> with an explicit acting user
+    /// (see <see cref="CreateForActorAsync"/>).
+    /// </summary>
+    Task<(bool Success, string Message)> CancelForActorAsync(int actingUserId, int onDutyId, string? reason = null);
     Task<List<OnDuty>> GetOnDutiesAsync(DateOnly? startDate = null, DateOnly? endDate = null, int? userId = null, OnDutyType? type = null, bool? includeCanceled = false);
     Task<OnDuty?> GetOnDutyByIdAsync(int onDutyId);
     Task<bool> HasActiveOnDutyOnDateAsync(int userId, DateOnly date, OnDutyType type);
@@ -111,13 +125,15 @@ public class OnDutyService : IOnDutyService
         return int.TryParse(userIdClaim, out var userId) ? userId : 0;
     }
 
-    private async Task<AppUser?> GetCurrentUserAsync()
+    private Task<AppUser?> GetCurrentUserAsync() => GetUserByIdAsync(GetCurrentUserId());
+
+    private async Task<AppUser?> GetUserByIdAsync(int userId)
     {
-        var userId = GetCurrentUserId();
         if (userId <= 0) return null;
 
         // Must use IgnoreQueryFilters since we need to access users across all companies
-        // SECURITY-AUDITED: SAFE — scoped by authenticated userId from claims; returns only current user's record
+        // SECURITY-AUDITED: SAFE — scoped by an explicit userId (authenticated claim OR an actingUserId the
+        // Draft commit engine passes); returns only that one user's record. OnDuty is cross-company by design.
         return await _db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
     }
 
@@ -246,7 +262,19 @@ public class OnDutyService : IOnDutyService
     /// <summary>
     /// Create a new on-duty assignment
     /// </summary>
-    public async Task<(bool Success, string Message, OnDuty? OnDuty, BusyValidation? Validation, string? OverrideToken)> CreateOnDutyAsync(
+    public Task<(bool Success, string Message, OnDuty? OnDuty, BusyValidation? Validation, string? OverrideToken)> CreateOnDutyAsync(
+        int assigneeId,
+        DateOnly date,
+        OnDutyType type,
+        string? notes = null,
+        bool forceAssign = false,
+        int? moleculeId = null,
+        string? overrideToken = null)
+        => CreateForActorAsync(GetCurrentUserId(), assigneeId, date, type, notes, forceAssign, moleculeId, overrideToken);
+
+    /// <inheritdoc/>
+    public async Task<(bool Success, string Message, OnDuty? OnDuty, BusyValidation? Validation, string? OverrideToken)> CreateForActorAsync(
+        int actingUserId,
         int assigneeId,
         DateOnly date,
         OnDutyType type,
@@ -255,11 +283,11 @@ public class OnDutyService : IOnDutyService
         int? moleculeId = null,
         string? overrideToken = null)
     {
-        var currentUserId = GetCurrentUserId();
+        var currentUserId = actingUserId;
         int? companyId = null;
         try
         {
-            var currentUser = await GetCurrentUserAsync();
+            var currentUser = await GetUserByIdAsync(currentUserId);
             companyId = currentUser?.CompanyId;
 
             if (currentUser == null)
@@ -342,13 +370,17 @@ public class OnDutyService : IOnDutyService
     /// <summary>
     /// Cancel (soft delete) an on-duty assignment
     /// </summary>
-    public async Task<(bool Success, string Message)> CancelOnDutyAsync(int onDutyId, string? reason = null)
+    public Task<(bool Success, string Message)> CancelOnDutyAsync(int onDutyId, string? reason = null)
+        => CancelForActorAsync(GetCurrentUserId(), onDutyId, reason);
+
+    /// <inheritdoc/>
+    public async Task<(bool Success, string Message)> CancelForActorAsync(int actingUserId, int onDutyId, string? reason = null)
     {
-        var currentUserId = GetCurrentUserId();
+        var currentUserId = actingUserId;
         int? companyId = null;
         try
         {
-            var currentUser = await GetCurrentUserAsync();
+            var currentUser = await GetUserByIdAsync(currentUserId);
             companyId = currentUser?.CompanyId;
 
             if (currentUser == null)

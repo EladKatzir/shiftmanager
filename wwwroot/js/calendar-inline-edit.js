@@ -363,6 +363,41 @@ async function quickAddChore(date, assigneeId, title, choreTypeId = null, confir
 }
 
 /**
+ * Draft Mode (sub-project D): stage an on-call assign/clear by natural coordinates
+ * (dutyTypeValue, date, user) into the private sandbox via the OnCall page handler,
+ * then in-place refresh so the staged overlay renders. Never touches the live board.
+ * @param {string} handler - 'DraftDutyAssign' | 'DraftDutyClear'
+ */
+async function draftStageOnDuty(handler, draftSessionId, dutyTypeValue, date, userId) {
+    try {
+        const response = await fetch('/Calendar/OnCall?handler=' + handler, {
+            method: 'POST',
+            headers: getTablePostHeaders(),
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                draftSessionId: parseInt(draftSessionId, 10),
+                dutyTypeValue: parseInt(dutyTypeValue, 10),
+                date: date,
+                userId: parseInt(userId, 10)
+            })
+        });
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) { handleApiError(response); return; }
+            showToast(getErrorMessage('serverError'), 'error');
+            return;
+        }
+        const result = await response.json();
+        if (result.success) {
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.error || getErrorMessage('serverError'), 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+/**
  * Quick-add an on-duty assignment.
  * @param {string} date - Date in yyyy-MM-dd format
  * @param {number} assigneeId - User ID to assign
@@ -374,6 +409,12 @@ async function quickAddChore(date, assigneeId, title, choreTypeId = null, confir
  * @param {Function|undefined} confirmHandler - Override confirmation handler.
  */
 async function quickAddOnDuty(date, assigneeId, onDutyType, moleculeId, confirmHandler = defaultConfirm) {
+    // Draft Mode (sub-project D): when a private sandbox is active, stage the assignment by coordinate
+    // BEFORE any live /Api call. The staged overlay renders on the in-place refresh.
+    if (window.__draftSessionId) {
+        await draftStageOnDuty('DraftDutyAssign', window.__draftSessionId, onDutyType, date, assigneeId);
+        return;
+    }
     try {
         async function postOnDuty(body) {
             return fetch('/Api/Calendar/QuickAddOnDuty', {
@@ -1258,7 +1299,21 @@ async function submitQuickAdd(date) {
             }
             deleteItem('chore', assignmentId);
         } else if (calendarType === 'oncall') {
-            deleteItem('onduty', assignmentId);
+            // Draft Mode (sub-project D): the × on a duty chip (real baseline OR synthetic staged) stages a
+            // clear by coordinate (dutytype row-id + cell date + chip user) instead of deleting the live row.
+            var onDutyDraftId = window.__draftSessionId;
+            var cellEl = assignmentEl ? assignmentEl.closest('.excel-calendar__cell') : null;
+            var dutyRowRaw = cellEl ? cellEl.dataset.rowId : '';
+            var dutyDate = cellEl ? cellEl.dataset.date : '';
+            var dutyUserId = btn.dataset.userId || (assignmentEl && assignmentEl.dataset.userId) || '';
+            var dutyTypeValue = (dutyRowRaw && dutyRowRaw.indexOf('dutytype-') === 0)
+                ? dutyRowRaw.substring('dutytype-'.length) : '';
+            if (onDutyDraftId && dutyTypeValue && dutyDate && dutyUserId) {
+                if (assignmentEl) { assignmentEl.style.opacity = '0.3'; assignmentEl.style.pointerEvents = 'none'; }
+                draftStageOnDuty('DraftDutyClear', onDutyDraftId, dutyTypeValue, dutyDate, dutyUserId);
+            } else {
+                deleteItem('onduty', assignmentId);
+            }
         } else {
             // Shifts — in Draft Mode (Epic 4) the × stages a clear into the sandbox (by shiftType+date+user);
             // in live mode it clears the slot by assignment id.

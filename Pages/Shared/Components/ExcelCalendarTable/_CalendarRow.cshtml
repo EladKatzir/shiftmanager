@@ -131,7 +131,11 @@
                         // Chores Draft Mode (Spec C): a staged chore chip carries a descriptorKey (no Chore.Id);
                         // its × stages a draft-clear by (user, date, key).
                         var isDraftChoreChip = Model.DraftSessionId != null && !string.IsNullOrEmpty(assignment.DraftChoreKey);
-                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip || isDraftChoreChip);
+                        // On-call draft: staged duty chips are synthetic (Id=0) and carry no ShiftTypeId; the ×
+                        // routes to draft-clear by (dutytype row-id, cell date, chip user). Render it for both the
+                        // real baseline chips (Id>0) and the staged ones so either can be un-staged.
+                        var isDraftOnDutyChip = Model.DraftSessionId != null && rowKind == "onduty" && assignment.UserId.HasValue;
+                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip || isDraftChoreChip || isDraftOnDutyChip);
                         // A shadowing trainee splits the chip into two cubes (worker + trainee). Requires the
                         // Trainee navigation to be mapped to TraineeUserId (else TraineeName is always empty).
                         var hasTrainee = !isHomeChip && !string.IsNullOrEmpty(assignment.TraineeName);
