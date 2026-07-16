@@ -414,9 +414,12 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
             const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
             showToast(result.message || successMsg, 'success');
             triggerCalendarRefresh();
-        } else if (!shiftInstanceId && (
+        } else if (!window.__draftSessionId && !shiftInstanceId && (
                    (result.error && result.error.indexOf('SHIFT_FULLY_STAFFED') !== -1) ||
                    (result.errorKey === 'SHIFT_FULLY_STAFFED' && !_retried))) {
+            // Sub-project B: Draft Mode NEVER writes live capacity — the draft branch stages regardless of
+            // capacity (server returns success), and commit widens StaffingRequired to fit. So the "shift
+            // full — expand & assign?" live handshake is suppressed while a draft is active.
             // Only auto-expand capacity on the legacy ShiftType+Date path. When a specific
             // instance was named (Justice make-it-real), don't grow an arbitrary re-resolved
             // instance — surface the error instead (a "hole" shouldn't be fully staffed anyway).
@@ -625,6 +628,61 @@ document.addEventListener('click', function (e) {
 });
 
 /**
+ * Draft Mode: harvest the natural coordinates a trainee stage/clear needs from a chip button.
+ * primary user id + shift type id come off the button (or its chip), the date off the enclosing cell.
+ * Returns null if any coordinate is missing (so callers fall back to the live assignmentId path).
+ */
+function harvestTraineeDraftCoords(btn) {
+    var chip = btn.closest('.excel-calendar__assignment');
+    var cell = btn.closest('.excel-calendar__cell');
+    var shiftTypeId = btn.dataset.shiftTypeId || (chip && chip.dataset.shiftTypeId) || '';
+    var primaryUserId = btn.dataset.userId || (chip && chip.dataset.userId) || '';
+    var date = cell ? cell.dataset.date : '';
+    if (!shiftTypeId || !primaryUserId || !date) return null;
+    return { shiftTypeId: parseInt(shiftTypeId, 10), date: date, primaryUserId: parseInt(primaryUserId, 10) };
+}
+
+/** Draft Mode: stage a trainee onto a (staged or live) primary — no live write, no SignalR. */
+function stageDraftAddTrainee(shiftTypeId, date, primaryUserId, traineeUserId) {
+    fetch('/Calendar/Table?handler=DraftAddTrainee', {
+        method: 'POST',
+        headers: getTablePostHeaders(),
+        credentials: 'same-origin',
+        body: JSON.stringify({ draftSessionId: parseInt(window.__draftSessionId, 10), shiftTypeId: shiftTypeId, date: date, primaryUserId: primaryUserId, traineeUserId: traineeUserId })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+        if (result.success) {
+            showToast(window.AppLocalizer?.BottomSheet_TraineeAssigned || 'Trainee assigned', 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.error || getErrorMessage('serverError'), 'error');
+        }
+    })
+    .catch(function (error) { handleApiError(null, error); });
+}
+
+/** Draft Mode: stage clearing the trainee shadowing a primary. */
+function stageDraftRemoveTrainee(shiftTypeId, date, primaryUserId) {
+    fetch('/Calendar/Table?handler=DraftRemoveTrainee', {
+        method: 'POST',
+        headers: getTablePostHeaders(),
+        credentials: 'same-origin',
+        body: JSON.stringify({ draftSessionId: parseInt(window.__draftSessionId, 10), shiftTypeId: shiftTypeId, date: date, primaryUserId: primaryUserId })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+        if (result.success) {
+            showToast(window.AppLocalizer?.Calendar_TraineeRemoved || 'Trainee removed', 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.error || getErrorMessage('serverError'), 'error');
+        }
+    })
+    .catch(function (error) { handleApiError(null, error); });
+}
+
+/**
  * Issue 4: inline "+" trainee picker on a shift chip. Reuses the page's hidden #traineeSelect
  * (the same source the mobile bottom-sheet uses) and the /Calendar/Table?handler=AddTrainee endpoint.
  */
@@ -642,7 +700,11 @@ function openInlineTraineePicker(btn) {
     }
 
     var assignmentId = parseInt(btn.dataset.assignmentId, 10);
-    if (isNaN(assignmentId)) return;
+    // Draft Mode routes by natural coordinates (shiftType+date+primary), not assignmentId — a staged
+    // primary chip has a negative synthetic id and no persisted row.
+    var draftId = window.__draftSessionId;
+    var draftCoords = draftId ? harvestTraineeDraftCoords(btn) : null;
+    if (!draftCoords && isNaN(assignmentId)) return;
 
     var select = document.createElement('select');
     select.className = 'excel-calendar__trainee-picker';
@@ -660,7 +722,12 @@ function openInlineTraineePicker(btn) {
         var traineeId = parseInt(select.value, 10);
         if (select.value && !isNaN(traineeId)) {
             select.disabled = true;
-            addTraineeToAssignment(assignmentId, traineeId);
+            if (draftCoords) {
+                stageDraftAddTrainee(draftCoords.shiftTypeId, draftCoords.date, draftCoords.primaryUserId, traineeId);
+                select.remove();
+            } else {
+                addTraineeToAssignment(assignmentId, traineeId);
+            }
         }
     });
     // Dismiss on Escape or when focus leaves.
@@ -715,7 +782,13 @@ document.addEventListener('click', function (e) {
     if (!btn) return;
     e.preventDefault();
     e.stopPropagation();
-    removeTraineeFromAssignment(btn.dataset.assignmentId);
+    // Draft Mode: stage a trainee-clear by natural coordinates; live mode removes by assignment id.
+    var draftCoords = window.__draftSessionId ? harvestTraineeDraftCoords(btn) : null;
+    if (draftCoords) {
+        stageDraftRemoveTrainee(draftCoords.shiftTypeId, draftCoords.date, draftCoords.primaryUserId);
+    } else {
+        removeTraineeFromAssignment(btn.dataset.assignmentId);
+    }
 });
 
 function removeTraineeFromAssignment(assignmentId) {

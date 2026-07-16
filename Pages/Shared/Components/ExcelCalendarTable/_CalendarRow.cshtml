@@ -192,10 +192,15 @@
                                 <span class="excel-calendar__trainee-cube">
                                     <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]"><icon name="medal" size="sm" /></span>
                                     <span class="excel-calendar__trainee-name">@assignment.TraineeName</span>
-                                    @if (!isReadOnly && assignment.Id > 0)
+                                    @* Draft Mode: the trainee × stages a trainee-clear (keyed by shiftType+date+primary),
+                                       so render it for synthetic (negative-id) staged chips too. *@
+                                    @if (!isReadOnly && (assignment.Id > 0 || isDraftShiftChip))
                                     {
                                         <button type="button" class="excel-calendar__trainee-remove-btn"
                                                 data-assignment-id="@assignment.Id"
+                                                data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                                                data-user-id="@(assignment.UserId?.ToString() ?? "")"
+                                                data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
                                                 aria-label="@Localizer["Calendar_RemoveTrainee"] @assignment.TraineeName"
                                                 title="@Localizer["Calendar_RemoveTrainee"]">×</button>
                                     }
@@ -212,13 +217,16 @@
                                 {
                                     <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]"><icon name="medal" size="sm" /></span>
                                 }
-                                @* Issue 4: add-trainee "+" for real shift chips that have a worker but no trainee yet. *@
-                                @if (!isReadOnly && assignment.Id > 0 && assignment.UserId.HasValue
+                                @* Issue 4: add-trainee "+" for shift chips that have a worker but no trainee yet.
+                                   Draft Mode: also render it on synthetic (negative-id) staged primary chips. *@
+                                @if (!isReadOnly && (assignment.Id > 0 || isDraftShiftChip) && assignment.UserId.HasValue
                                      && assignment.TraineeUserId == null && !assignment.IsTrainee
                                      && !assignment.IsTraineeShift)
                                 {
                                     <button type="button" class="excel-calendar__add-trainee-btn"
                                             data-assignment-id="@assignment.Id"
+                                            data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                                            data-user-id="@(assignment.UserId?.ToString() ?? "")"
                                             aria-label="@Localizer["Calendar_AddTrainee"] @assignment.Name"
                                             title="@Localizer["Calendar_AddTrainee"]">+</button>
                                 }

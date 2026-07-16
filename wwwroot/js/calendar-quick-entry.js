@@ -98,6 +98,29 @@
         return !!document.querySelector('.excel-calendar[data-calendar-type="shifts"]');
     }
 
+    // Sub-project B: while a SHIFTS draft is active, the shifts board disables non-shift quick-adds (chore,
+    // duty, day-note, text-entry). A chore/on-duty belongs in its OWN draft (C/D), not staged into the
+    // shifts sandbox; the user drafts those on the Chores/On-Call calendar instead.
+    function isShiftsDraftActive() {
+        return isShiftsCalendar() && !!window.__draftSessionId;
+    }
+
+    function draftNonShiftHint() {
+        return getCulture() === 'he-IL'
+            ? 'תורנויות והערות אינן חלק מטיוטת משמרות — השתמשו בטיוטה של לוח התורנויות/כוננויות'
+            : "Chores and day-notes aren't part of a shift draft — use the Chores/On-Call calendar's draft";
+    }
+
+    // Render a non-selectable, greyed hint row (used when a non-shift quick-add is disabled in shifts draft).
+    function appendDraftDisabledHint() {
+        if (!dropdown) return;
+        var hint = document.createElement('div');
+        hint.className = 'quick-entry-no-matches quick-entry-draft-disabled';
+        hint.setAttribute('aria-disabled', 'true');
+        hint.textContent = draftNonShiftHint();
+        dropdown.appendChild(hint);
+    }
+
     function isJustMineActive() {
         return window.location.search.indexOf('JustMine=True') !== -1;
     }
@@ -660,6 +683,11 @@
             dropdown.appendChild(choreEl);
             if (totalItems === 0) selectedIndex = choreIdx; // Auto-select when no chore type matches
             totalItems++;
+        } else if (query.trim().length > 0 && isShiftsDraftActive() &&
+            activeInput._cellData && activeInput._cellData.date) {
+            // Sub-project B: day-notes are not part of a shifts draft — show a greyed hint, no actionable
+            // option (direct submission is also blocked in selectItem).
+            if (totalItems === 0) appendDraftDisabledHint();
         } else if (query.trim().length > 0 && isShiftsCalendar() &&
             activeInput._cellData && activeInput._cellData.date) {
             // Day-note option — Shifts calendar, ANY mode/row (shift-mode where rows are shift types, or
@@ -751,9 +779,12 @@
         var mode = getCurrentMode();
         var matchText = partial.substring(1).toLowerCase(); // strip leading /
 
+        var draftBlocked = isShiftsDraftActive();
         for (var i = 0; i < SLASH_COMMANDS.length; i++) {
             var cmd = SLASH_COMMANDS[i];
             if (cmd.modes.indexOf(mode) === -1) continue;
+            // Sub-project B: /chore and /duty are not part of a shifts draft — hide them from the palette.
+            if (draftBlocked && (cmd.key === 'chore' || cmd.key === 'duty')) continue;
             if (matchText && cmd.key.indexOf(matchText) !== 0 && !(cmd.label && cmd.label.toLowerCase().indexOf(matchText) === 0)) continue;
 
             var idx = filteredItems.length;
@@ -1121,6 +1152,16 @@
 
     function selectItem(item, advance) {
         if (!activeInput || !activeCell) return;
+
+        // Sub-project B: in shifts draft mode, non-shift quick-adds are disabled. Guard direct submission
+        // (Enter on an auto-selected item) — no-op with a hint. Shift/user/HOME assignments still stage.
+        if (isShiftsDraftActive() && item &&
+            (item.type === 'chore' || item.type === 'direct-chore' || item.type === 'duty'
+             || item.type === 'day-note' || item.type === 'text-entry')) {
+            if (window.showToast) window.showToast(draftNonShiftHint(), 'info');
+            closeInput();
+            return;
+        }
 
         var cellData = activeInput._cellData;
         var rowId = cellData.rowId;
