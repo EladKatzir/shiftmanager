@@ -6,6 +6,7 @@ public class ExcelCalendarRowViewModel
     public List<DateOnly> Days { get; set; } = new();
     public DateOnly Today { get; set; }
     public bool IsReadOnly { get; set; }
+    public bool CanEnterTimeOff { get; set; }
     public bool IsCollapsed { get; set; }
     public bool HasWeeklyHours { get; set; }
     public bool HasShiftCount { get; set; }

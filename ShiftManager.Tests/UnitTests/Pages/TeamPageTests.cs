@@ -97,8 +97,8 @@ public sealed class TeamPageTests : IAsyncLifetime
         // OverviewCalendarBuilderTests).
         var builderMock = new Mock<IOverviewCalendarBuilder>();
         builderMock
-            .Setup(b => b.BuildAsync(It.IsAny<int>(), It.IsAny<IReadOnlyList<AppUser>>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<bool>()))
-            .ReturnsAsync((int companyId, IReadOnlyList<AppUser> users, DateOnly start, DateOnly end, string viewMode, bool canEditNotes) =>
+            .Setup(b => b.BuildAsync(It.IsAny<int>(), It.IsAny<IReadOnlyList<AppUser>>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
+            .ReturnsAsync((int companyId, IReadOnlyList<AppUser> users, DateOnly start, DateOnly end, string viewMode, bool canEditNotes, bool canEnterTimeOff) =>
                 new ExcelCalendarTableViewModel
                 {
                     StartDate = start,

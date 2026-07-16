@@ -8,6 +8,7 @@
     List<DateOnly> days = Model.Days;
     DateOnly today = Model.Today;
     bool isReadOnly = Model.IsReadOnly;
+    bool canEnterTimeOff = Model.CanEnterTimeOff;
     bool isCollapsed = Model.IsCollapsed;
     // #8: the Total column is now driven by HasShiftCount/ShiftCount (a count of real shifts), not
     // HasWeeklyHours/WeeklyHours (summed hours) — WeeklyHours is retained on the model but unused here.
@@ -84,13 +85,14 @@
         <td class="excel-calendar__cell @(isTodayCell ? "excel-calendar__cell--today" : "") @(isPastCell ? "excel-calendar__cell--past" : "") @(isReadOnly ? "excel-calendar__cell--readonly" : "")"
             data-row-id="@row.Id"
             data-date="@day.ToString("yyyy-MM-dd")"
+            data-can-enter-timeoff="@(canEnterTimeOff ? "true" : "false")"
             data-justice-hole="@(isJusticeHole ? "1" : "0")"
             data-justice-row-kind="@rowKind"
             data-justice-cell-eligible="@(isJusticeEligible ? "1" : "0")"
             role="gridcell"
             tabindex="0">
 
-            @if (!isReadOnly)
+            @if (!isReadOnly || canEnterTimeOff)
             {
                 <button type="button" class="excel-calendar__add-btn" aria-label="@Localizer["AddAssignment"]">+</button>
             }

@@ -29,11 +29,13 @@ public interface IOverviewCalendarBuilder
     /// <param name="endDate">Last date column (inclusive).</param>
     /// <param name="viewMode">"week" | "next7" | "2weeks" | "month" — passed through to the ViewModel, not interpreted here (the caller already resolved start/end from it).</param>
     /// <param name="canEditNotes">Drives <c>IsReadOnly</c> (<c>= !canEditNotes</c>) on the returned ViewModel.</param>
+    /// <param name="canEnterTimeOff">Sets <c>CanEnterTimeOff</c> on the returned ViewModel — lets editors enter time-off on people rows even on a read-only grid (Team).</param>
     Task<ExcelCalendarTableViewModel> BuildAsync(
         int companyId,
         IReadOnlyList<AppUser> users,
         DateOnly startDate,
         DateOnly endDate,
         string viewMode,
-        bool canEditNotes);
+        bool canEditNotes,
+        bool canEnterTimeOff = false);
 }

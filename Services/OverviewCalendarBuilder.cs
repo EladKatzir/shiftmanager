@@ -51,7 +51,8 @@ public class OverviewCalendarBuilder : IOverviewCalendarBuilder
         DateOnly startDate,
         DateOnly endDate,
         string viewMode,
-        bool canEditNotes)
+        bool canEditNotes,
+        bool canEnterTimeOff = false)
     {
         // Load all aggregated data for the date range
         var vacations = await LoadVacationsAsync(users, startDate, endDate);
@@ -100,6 +101,7 @@ public class OverviewCalendarBuilder : IOverviewCalendarBuilder
             // IsReadOnly from the same note-edit grant removes the misleading "view only" banner and
             // makes the cells interactive for those roles instead of inert.
             IsReadOnly = !canEditNotes,
+            CanEnterTimeOff = canEnterTimeOff,
             CalendarType = "overview",
             Rows = rows
         };

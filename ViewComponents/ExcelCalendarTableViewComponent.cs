@@ -8,6 +8,12 @@ public class ExcelCalendarTableViewModel
     public DateOnly EndDate { get; set; }
     public string ViewMode { get; set; } = "week"; // week, 2weeks, month
     public bool IsReadOnly { get; set; }
+
+    /// <summary>When true, calendar-editors may enter time-off (Vacation/DayAt/After) on people
+    /// rows even on an otherwise read-only grid (e.g. Team). Independent of IsReadOnly, which stays
+    /// the gate for shift-chip editing.</summary>
+    public bool CanEnterTimeOff { get; set; }
+
     public string CalendarType { get; set; } = "shifts"; // shifts, chores, oncall, overview
     public List<ExcelCalendarRow> Rows { get; set; } = new();
     public List<ExcelCalendarGroup>? Groups { get; set; }

@@ -92,6 +92,16 @@
 
             @* Action buttons *@
             <div class="overview-calendar__actions">
+                @if (Model.CanEnterTimeOff)
+                {
+                    <button type="button" id="quickEntryToggle" class="btn btn-ghost quick-entry-toggle"
+                            data-can-assign="false"
+                            onclick="window.CalendarQuickEntry && window.CalendarQuickEntry.toggle()"
+                            title="@Localizer["QuickEntry_Toggle"]">
+                        <span class="btn-icon"><icon name="zap" /></span>
+                        <loc key="QuickEntry_Toggle" />
+                    </button>
+                }
                 <button type="button" class="btn btn-secondary cal-toolbar__print" onclick="window.print()" title="@Localizer["Print"]">
                     <span class="btn-icon"><icon name="printer" /></span>
                     <span class="btn-text">@Localizer["Print"]</span>
@@ -222,6 +232,13 @@
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-sticky-shadows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
+    <script>
+        // Quick-Entry needs a page config even on Overview (company-scoped, no molecule/eligibility).
+        window.CalendarPageConfig = { isTechMolecule: false, categoryEligibilityEnabled: false, moleculeId: 0 };
+    </script>
+    <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
+    <link rel="stylesheet" href="~/css/calendar-quick-entry.css" asp-append-version="true" />
+    <script src="~/js/calendar-quick-entry.js" asp-append-version="true"></script>
     <script src="~/js/calendar-tools-overflow.js" asp-append-version="true"></script>
     <script src="~/js/calendar-row-reorder.js" asp-append-version="true"></script>
     <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
