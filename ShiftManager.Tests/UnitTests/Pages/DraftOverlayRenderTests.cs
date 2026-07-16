@@ -46,6 +46,8 @@ public sealed class DraftOverlayRenderTests : IAsyncLifetime
 
     // Users: Alice is the live assignee (baseline), Carol is staged into the live cell, Bob into the empty cell.
     private const int AliceId = 10, BobId = 11, CarolId = 12;
+    // Dana is a trainee staged to shadow a primary (sub-project A — 2nd-cube render).
+    private const int DanaId = 13;
 
     public async Task InitializeAsync()
     {
@@ -61,7 +63,8 @@ public sealed class DraftOverlayRenderTests : IAsyncLifetime
         _db.Users.AddRange(
             new AppUser { Id = AliceId, CompanyId = CompanyId, Email = "alice@x.mil", DisplayName = "Alice" },
             new AppUser { Id = BobId, CompanyId = CompanyId, Email = "bob@x.mil", DisplayName = "Bob" },
-            new AppUser { Id = CarolId, CompanyId = CompanyId, Email = "carol@x.mil", DisplayName = "Carol" });
+            new AppUser { Id = CarolId, CompanyId = CompanyId, Email = "carol@x.mil", DisplayName = "Carol" },
+            new AppUser { Id = DanaId, CompanyId = CompanyId, Email = "dana@x.mil", DisplayName = "Dana", Role = UserRole.Trainee });
         // Live instance for shift type 1 on D, with Alice assigned. Shift type 2 has no instance at all.
         _db.ShiftInstances.Add(new ShiftInstance { Id = 1000, CompanyId = CompanyId, ShiftTypeId = LiveShiftTypeId, WorkDate = D, StaffingRequired = 1 });
         _db.ShiftAssignments.Add(new ShiftAssignment { Id = 5000, CompanyId = CompanyId, ShiftInstanceId = 1000, UserId = AliceId });
@@ -124,8 +127,12 @@ public sealed class DraftOverlayRenderTests : IAsyncLifetime
     public async Task StagedAssignments_RenderWithName_InBothEmptyAndLiveCells()
     {
         // --- Arrange: enter a draft and stage into an empty cell (shift 2) and a live cell (shift 1) ---
-        var draftService = new DraftModeService(_db, CleanValidator().Object);
-        var session = await draftService.EnterDraftAsync(OwnerUserId, MoleculeId, jobTypeId: null, weekStart: D, weekEnd: D);
+        // Post-Foundation: the shift service is the reconciler (staging + overlay); entering goes through the
+        // shared lifecycle.
+        var draftService = new DraftModeService(_db, CleanValidator().Object, Mock.Of<IGrantService>());
+        var lifecycle = new DraftLifecycle(_db, new IDraftReconciler[] { draftService });
+        var session = await lifecycle.EnterAsync(OwnerUserId,
+            new DraftScope(DraftSurface.Shifts, MoleculeId, JobTypeId: null, AreaId: null, WeekStart: D, WeekEnd: D));
         await draftService.StageAssignAsync(session.Id, EmptyShiftTypeId, D, BobId);   // empty cell → Bob
         await draftService.StageAssignAsync(session.Id, LiveShiftTypeId, D, CarolId);  // live cell (has Alice) → +Carol
         _db.ChangeTracker.Clear();
@@ -160,5 +167,38 @@ public sealed class DraftOverlayRenderTests : IAsyncLifetime
         var liveCellNames = liveCellRow[D].Assignments.Select(a => a.Name).ToList();
         liveCellNames.Should().BeEquivalentTo(new[] { "Alice", "Carol" });
         liveCellNames.Should().NotContain("Unassigned");
+    }
+
+    [Fact]
+    public async Task StagedTrainee_RendersAsSecondCube_OnItsPrimary()
+    {
+        // Sub-project A: staging a trainee onto a primary must render a 2nd cube — the synthetic assignment
+        // carries TraineeUserId + Trainee nav so BuildCellsForShiftType emits TraineeUserId/TraineeName.
+        var draftService = new DraftModeService(_db, CleanValidator().Object, Mock.Of<IGrantService>());
+        var lifecycle = new DraftLifecycle(_db, new IDraftReconciler[] { draftService });
+        var session = await lifecycle.EnterAsync(OwnerUserId,
+            new DraftScope(DraftSurface.Shifts, MoleculeId, JobTypeId: null, AreaId: null, WeekStart: D, WeekEnd: D));
+        // Shadow Dana (trainee) onto the live primary Alice in the live cell.
+        await draftService.StageTraineeAsync(session.Id, LiveShiftTypeId, D, primaryUserId: AliceId, traineeUserId: DanaId);
+        _db.ChangeTracker.Clear();
+
+        var model = BuildModel(draftService);
+        model.ShiftTypes = await _db.ShiftTypes.ToListAsync();
+
+        var instances = await _db.ShiftInstances.ToListAsync();
+        var assignments = await _db.ShiftAssignments
+            .Include(a => a.ShiftInstance).ThenInclude(si => si.ShiftType)
+            .Include(a => a.User)
+            .ToListAsync();
+
+        var overlaid = await model.ApplyDraftOverlayAsync(assignments, instances, MoleculeId, jobTypeId: null);
+
+        var empty = new Dictionary<(int UserId, DateOnly Date), List<(int Id, string Text)>>();
+        var notes = new Dictionary<(int UserId, DateOnly Date), string>();
+        var liveCellRow = model.BuildCellsForShiftType(LiveShiftTypeId, instances, overlaid, empty, notes);
+
+        var aliceCube = liveCellRow[D].Assignments.Single(a => a.Name == "Alice");
+        aliceCube.TraineeUserId.Should().Be(DanaId, "the staged trainee hangs off its primary");
+        aliceCube.TraineeName.Should().Be("Dana", "the trainee cube renders the trainee's DisplayName");
     }
 }

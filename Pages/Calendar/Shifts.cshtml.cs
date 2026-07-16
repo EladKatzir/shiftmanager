@@ -1000,6 +1000,8 @@ public class ShiftsModel : PageModel
             return live;
 
         var touched = overlay.ToDictionary(o => (o.ShiftTypeId, o.WorkDate), o => o.UserIds);
+        // Sub-project A: the staged primary→trainee map per cell, so synthetic assignments render a 2nd cube.
+        var touchedTrainees = overlay.ToDictionary(o => (o.ShiftTypeId, o.WorkDate), o => o.Trainees);
         var stById = ShiftTypes.ToDictionary(s => s.Id);
 
         // A staged cell may reference a shift type not in this view's ShiftTypes set (e.g. company-scoped).
@@ -1018,7 +1020,11 @@ public class ShiftsModel : PageModel
         // ids (staged users may be cross-company in molecule mode).
         // SECURITY-AUDITED: SAFE — AppUsers fetched by the exact staged ids only; the draft itself is
         // molecule-scoped and gated by the shift-assignment grant, so no tenant boundary is widened here.
-        var stagedUserIds = touched.Values.SelectMany(ids => ids).Distinct().ToList();
+        // Resolve both staged primaries AND staged trainees in one query — the 2nd cube renders the trainee's
+        // DisplayName off the Trainee nav (BuildCellsForShiftType reads a.Trainee?.DisplayName).
+        var stagedUserIds = touched.Values.SelectMany(ids => ids)
+            .Concat(touchedTrainees.Values.SelectMany(m => m.Values))
+            .Distinct().ToList();
         var stagedUsersById = stagedUserIds.Count > 0
             ? (await _db.Users.IgnoreQueryFilters().Where(u => stagedUserIds.Contains(u.Id)).ToListAsync())
                 .ToDictionary(u => u.Id)
@@ -1062,16 +1068,24 @@ public class ShiftsModel : PageModel
                 instance.ShiftType = st;
             }
 
+            touchedTrainees.TryGetValue(key, out var cellTrainees);
             foreach (var uid in userIds)
             {
-                result.Add(new ShiftAssignment
+                var synthetic = new ShiftAssignment
                 {
                     Id = synthId--,
                     ShiftInstanceId = instance.Id,
                     ShiftInstance = instance,
                     UserId = uid,
                     User = stagedUsersById.GetValueOrDefault(uid)
-                });
+                };
+                // Sub-project A: a staged trainee shadowing this primary renders as the 2nd cube.
+                if (cellTrainees != null && cellTrainees.TryGetValue(uid, out var traineeId))
+                {
+                    synthetic.TraineeUserId = traineeId;
+                    synthetic.Trainee = stagedUsersById.GetValueOrDefault(traineeId);
+                }
+                result.Add(synthetic);
             }
         }
 

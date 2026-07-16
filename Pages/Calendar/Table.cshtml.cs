@@ -52,6 +52,7 @@ public partial class TableModel : PageModel
         IStringLocalizer<SharedResources> localizer,
         IAuditLogService auditLogService,
         IDraftModeService draftService,
+        IDraftLifecycle draftLifecycle,
         IFailureRemediationService remediation)
     {
         _db = db;
@@ -71,9 +72,11 @@ public partial class TableModel : PageModel
         _localizer = localizer;
         _auditLogService = auditLogService;
         _draftService = draftService;
+        _draftLifecycle = draftLifecycle;
     }
 
     private readonly IDraftModeService _draftService;
+    private readonly IDraftLifecycle _draftLifecycle;
     private readonly IFailureRemediationService _remediation;
 
     /// <summary>Builds the "go fix it" remediation payload for a failure key, or null if none.</summary>
@@ -1875,7 +1878,9 @@ public partial class TableModel : PageModel
     {
         if (CurrentUserIdOrNull() is not int userId)
             return new JsonResult(new { success = false }) { StatusCode = 401 };
-        var draft = await _draftService.EnterDraftAsync(userId, request.MoleculeId, request.JobTypeId, request.WeekStart, request.WeekEnd);
+        var scope = new DraftScope(DraftSurface.Shifts, request.MoleculeId, request.JobTypeId,
+            AreaId: null, request.WeekStart, request.WeekEnd);
+        var draft = await _draftLifecycle.EnterAsync(userId, scope);
         return new JsonResult(new { success = true, draftSessionId = draft.Id });
     }
 
@@ -1889,6 +1894,27 @@ public partial class TableModel : PageModel
         return new JsonResult(new { success = true, draft = true });
     }
 
+    public async Task<IActionResult> OnPostDraftAddTraineeAsync([FromBody] DraftAddTraineeRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+        // Coordinate-keyed (never assignmentId): a staged primary has no persisted row.
+        await _draftService.StageTraineeAsync(request.DraftSessionId, request.ShiftTypeId, request.Date, request.PrimaryUserId, request.TraineeUserId);
+        return new JsonResult(new { success = true, draft = true });
+    }
+
+    public async Task<IActionResult> OnPostDraftRemoveTraineeAsync([FromBody] DraftRemoveTraineeRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+        await _draftService.StageTraineeClearAsync(request.DraftSessionId, request.ShiftTypeId, request.Date, request.PrimaryUserId);
+        return new JsonResult(new { success = true, draft = true });
+    }
+
     public async Task<IActionResult> OnPostCommitDraftAsync([FromBody] DraftActionRequest request)
     {
         if (CurrentUserIdOrNull() is not int userId)
@@ -1896,13 +1922,18 @@ public partial class TableModel : PageModel
         if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
 
-        var result = await _draftService.CommitAsync(request.DraftSessionId, userId);
+        var result = await _draftLifecycle.CommitAsync(request.DraftSessionId, userId);
+        // Per-cell policy (Spec F §5): the session commits; some cells may be Skipped (drifted) or Unauthorized
+        // (grant revoked). The UI shows this per-cell report instead of a single all-or-nothing "conflict".
         return new JsonResult(new
         {
             success = result.Committed,
-            appliedCells = result.AppliedCells,
-            conflicts = result.Conflicts.Select(c => new { c.ShiftTypeId, date = c.WorkDate.ToString("yyyy-MM-dd") }),
-            issues = result.ValidationIssues.Select(i => new { i.ShiftTypeId, date = i.WorkDate.ToString("yyyy-MM-dd"), i.UserId, i.Message })
+            applied = result.Applied.Select(c => new { rowId = c.RowId, date = c.WorkDate.ToString("yyyy-MM-dd"), label = c.Label }),
+            appliedCount = result.Applied.Count,
+            skipped = result.Skipped.Select(c => new { rowId = c.RowId, date = c.WorkDate.ToString("yyyy-MM-dd"), label = c.Label }),
+            unauthorized = result.Unauthorized.Select(c => new { rowId = c.RowId, date = c.WorkDate.ToString("yyyy-MM-dd"), label = c.Label }),
+            issues = result.ValidationIssues.Select(i => new { rowId = i.RowId, date = i.WorkDate.ToString("yyyy-MM-dd"), i.UserId, i.Message }),
+            notifiedGroups = result.NotifiedGroups
         });
     }
 
@@ -1914,7 +1945,7 @@ public partial class TableModel : PageModel
         var owns = await _db.DraftSessions.AnyAsync(d => d.Id == request.DraftSessionId && d.OwnerUserId == userId);
         if (!owns)
             return new JsonResult(new { success = false }) { StatusCode = 403 };
-        await _draftService.DiscardAsync(request.DraftSessionId);
+        await _draftLifecycle.DiscardAsync(request.DraftSessionId, userId);
         return new JsonResult(new { success = true });
     }
 
@@ -1932,6 +1963,23 @@ public partial class TableModel : PageModel
         public int ShiftTypeId { get; set; }
         public DateOnly Date { get; set; }
         public int UserId { get; set; }
+    }
+
+    public class DraftAddTraineeRequest
+    {
+        public int DraftSessionId { get; set; }
+        public int ShiftTypeId { get; set; }
+        public DateOnly Date { get; set; }
+        public int PrimaryUserId { get; set; }
+        public int TraineeUserId { get; set; }
+    }
+
+    public class DraftRemoveTraineeRequest
+    {
+        public int DraftSessionId { get; set; }
+        public int ShiftTypeId { get; set; }
+        public DateOnly Date { get; set; }
+        public int PrimaryUserId { get; set; }
     }
 
     public class AssignEmployeeRequest

@@ -331,14 +331,17 @@
                         removeTraineeBtn.type = 'button';
                         removeTraineeBtn.className = 'bottom-sheet__remove-btn bottom-sheet__remove-btn--small';
                         removeTraineeBtn.innerHTML = '&times;';
-                        removeTraineeBtn.addEventListener('click', function () {
-                            handleRemoveTrainee(assignment.id);
-                        });
+                        (function (cd, asg) {
+                            removeTraineeBtn.addEventListener('click', function () {
+                                handleRemoveTrainee(cd, asg);
+                            });
+                        })(cellData, assignment);
                         traineeRow.appendChild(removeTraineeBtn);
                         list.appendChild(traineeRow);
-                    } else if (assignment.id && !assignment.isTrainee) {
-                        // Show "Add Trainee" dropdown for assignments without a trainee
-                        var traineeAddRow = buildTraineeAddRow(assignment.id);
+                    } else if ((assignment.id || window.__draftSessionId) && !assignment.isTrainee) {
+                        // Show "Add Trainee" dropdown for assignments without a trainee (staged chips have no id
+                        // but ARE trainee-eligible in Draft Mode, keyed by coordinates).
+                        var traineeAddRow = buildTraineeAddRow(cellData, assignment);
                         if (traineeAddRow) {
                             list.appendChild(traineeAddRow);
                         }
@@ -628,7 +631,29 @@
     }
 
     // --- Build trainee add row for a shift assignment ---
-    function buildTraineeAddRow(assignmentId) {
+    // POST headers for Table handlers, including the antiforgery token (mirrors getTablePostHeaders).
+    function bottomSheetPostHeaders() {
+        var headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
+        var csrf = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        if (csrf) headers['RequestVerificationToken'] = csrf;
+        return headers;
+    }
+
+    // Draft Mode: build the natural coordinates a trainee stage/clear needs from cellData + a chip assignment.
+    // rowId is "shift-{id}" in shift-mode; primary user id comes off the chip (G7). Returns null if incomplete.
+    function draftTraineeCoords(cellData, assignment) {
+        if (!window.__draftSessionId) return null;
+        var shiftTypeId = assignment.shiftTypeId;
+        if (!shiftTypeId && cellData.rowId && cellData.rowId.indexOf('shift-') === 0) {
+            shiftTypeId = parseInt(cellData.rowId.replace('shift-', ''), 10);
+        }
+        var primaryUserId = assignment.userId;
+        if (!shiftTypeId || !primaryUserId || !cellData.date) return null;
+        return { draftSessionId: parseInt(window.__draftSessionId, 10), shiftTypeId: shiftTypeId, date: cellData.date, primaryUserId: primaryUserId };
+    }
+
+    function buildTraineeAddRow(cellData, assignment) {
+        var assignmentId = assignment.id;
         var traineeSelect = document.getElementById('traineeSelect');
         if (!traineeSelect || traineeSelect.options.length === 0) return null;
 
@@ -661,7 +686,7 @@
         addBtn.addEventListener('click', function () {
             var traineeId = parseInt(select.value, 10);
             if (select.value && !isNaN(traineeId)) {
-                handleAddTrainee(assignmentId, traineeId);
+                handleAddTrainee(cellData, assignment, traineeId);
             }
         });
         row.appendChild(addBtn);
@@ -670,7 +695,30 @@
     }
 
     // --- Handle add trainee ---
-    function handleAddTrainee(assignmentId, traineeUserId) {
+    function handleAddTrainee(cellData, assignment, traineeUserId) {
+        // Draft Mode: stage by coordinates instead of the live AddTrainee handler.
+        var dc = draftTraineeCoords(cellData, assignment);
+        if (dc) {
+            fetch('/Calendar/Table?handler=DraftAddTrainee', {
+                method: 'POST',
+                headers: bottomSheetPostHeaders(),
+                credentials: 'same-origin',
+                body: JSON.stringify({ draftSessionId: dc.draftSessionId, shiftTypeId: dc.shiftTypeId, date: dc.date, primaryUserId: dc.primaryUserId, traineeUserId: traineeUserId })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (result) {
+                if (result.success) {
+                    if (window.showToast) window.showToast((window.AppLocalizer?.BottomSheet_TraineeAssigned || 'Trainee assigned'), 'success');
+                    close();
+                    if (typeof triggerCalendarRefresh === 'function') { triggerCalendarRefresh(); } else { location.reload(); }
+                } else {
+                    showErrorMsg(result.error || 'Error');
+                }
+            })
+            .catch(function () { showNetworkError(); });
+            return;
+        }
+        var assignmentId = assignment.id;
         fetch('/Calendar/Table?handler=AddTrainee', {
             method: 'POST',
             headers: {
@@ -726,15 +774,18 @@
     }
 
     // --- Handle remove trainee ---
-    function handleRemoveTrainee(assignmentId) {
-        fetch('/Calendar/Table?handler=RemoveTrainee', {
+    function handleRemoveTrainee(cellData, assignment) {
+        // Draft Mode: stage a trainee-clear by coordinates instead of the live RemoveTrainee handler.
+        var dc = draftTraineeCoords(cellData, assignment);
+        var url = dc ? '/Calendar/Table?handler=DraftRemoveTrainee' : '/Calendar/Table?handler=RemoveTrainee';
+        var body = dc
+            ? { draftSessionId: dc.draftSessionId, shiftTypeId: dc.shiftTypeId, date: dc.date, primaryUserId: dc.primaryUserId }
+            : { assignmentId: assignment.id };
+        fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: bottomSheetPostHeaders(),
             credentials: 'same-origin',
-            body: JSON.stringify({ assignmentId: assignmentId })
+            body: JSON.stringify(body)
         })
         .then(function (r) { return r.json(); })
         .then(function (result) {
@@ -1040,19 +1091,19 @@
             window.deleteItem('onduty', assignment.id);
             close();
         } else if (calendarType === 'shifts') {
-            // Shift removal via ClearAssignment handler on Calendar/Table
-            var bsHeaders = {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            };
-            var bsCsrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-            if (bsCsrfToken) bsHeaders['RequestVerificationToken'] = bsCsrfToken;
+            // Draft Mode: stage a clear by natural coordinates (shiftType+date+primary); live mode clears by id.
+            // A staged chip has a negative synthetic id and no persisted row, so it MUST take the draft path.
+            var dcClear = draftTraineeCoords(cellData, assignment); // same coords: shiftType + date + primary user
+            var clearUrl = dcClear ? '/Calendar/Table?handler=DraftClear' : '/Calendar/Table?handler=ClearAssignment';
+            var clearBody = dcClear
+                ? { draftSessionId: dcClear.draftSessionId, shiftTypeId: dcClear.shiftTypeId, date: dcClear.date, userId: dcClear.primaryUserId }
+                : { assignmentId: assignment.id };
 
-            fetch('/Calendar/Table?handler=ClearAssignment', {
+            fetch(clearUrl, {
                 method: 'POST',
-                headers: bsHeaders,
+                headers: bottomSheetPostHeaders(),
                 credentials: 'same-origin',
-                body: JSON.stringify({ assignmentId: assignment.id })
+                body: JSON.stringify(clearBody)
             })
             .then(function (r) { return r.json(); })
             .then(function (result) {
@@ -1127,6 +1178,10 @@
             var isTrainee = !!assignEl.querySelector(':scope > .excel-calendar__badge--trainee');
             var traineeId = assignEl.dataset.traineeId || '';
             var traineeName = assignEl.dataset.traineeName || '';
+            // G7: harvest the primary user id + shift type id so Draft Mode can key trainee/clear
+            // actions by natural coordinates (a staged chip has no persisted assignment id).
+            var chipUserId = assignEl.dataset.userId || '';
+            var chipShiftTypeId = assignEl.dataset.shiftTypeId || '';
 
             var entryType = assignEl.dataset.entryType || '';
 
@@ -1136,6 +1191,8 @@
                 isTrainee: isTrainee,
                 traineeId: traineeId ? parseInt(traineeId, 10) : null,
                 traineeName: traineeName || null,
+                userId: chipUserId ? parseInt(chipUserId, 10) : null,
+                shiftTypeId: chipShiftTypeId ? parseInt(chipShiftTypeId, 10) : null,
                 entryType: entryType
             });
         });

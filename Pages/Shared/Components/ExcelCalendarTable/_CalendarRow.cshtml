@@ -128,7 +128,14 @@
                         // In Draft Mode the × on ANY shift chip (real or staged) routes to draft-clear,
                         // so render it for the synthetic (negative-id) staged chips too.
                         var isDraftShiftChip = Model.DraftSessionId != null && assignment.ShiftTypeId.HasValue && assignment.UserId.HasValue;
-                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip);
+                        // Chores Draft Mode (Spec C): a staged chore chip carries a descriptorKey (no Chore.Id);
+                        // its × stages a draft-clear by (user, date, key).
+                        var isDraftChoreChip = Model.DraftSessionId != null && !string.IsNullOrEmpty(assignment.DraftChoreKey);
+                        // On-call draft: staged duty chips are synthetic (Id=0) and carry no ShiftTypeId; the ×
+                        // routes to draft-clear by (dutytype row-id, cell date, chip user). Render it for both the
+                        // real baseline chips (Id>0) and the staged ones so either can be un-staged.
+                        var isDraftOnDutyChip = Model.DraftSessionId != null && rowKind == "onduty" && assignment.UserId.HasValue;
+                        var showRemove = !isReadOnly && (assignment.Id > 0 || isDraftShiftChip || isDraftChoreChip || isDraftOnDutyChip);
                         // A shadowing trainee splits the chip into two cubes (worker + trainee). Requires the
                         // Trainee navigation to be mapped to TraineeUserId (else TraineeName is always empty).
                         var hasTrainee = !isHomeChip && !string.IsNullOrEmpty(assignment.TraineeName);
@@ -138,6 +145,7 @@
                              data-assignment-id="@assignment.Id"
                              data-user-id="@assignment.UserId"
                              data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                             data-draft-chore-key="@(assignment.DraftChoreKey ?? "")"
                              data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
                              data-trainee-name="@(assignment.TraineeName ?? "")"
                              data-role-color="@roleColor"
@@ -192,10 +200,15 @@
                                 <span class="excel-calendar__trainee-cube">
                                     <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]"><icon name="medal" size="sm" /></span>
                                     <span class="excel-calendar__trainee-name">@assignment.TraineeName</span>
-                                    @if (!isReadOnly && assignment.Id > 0)
+                                    @* Draft Mode: the trainee × stages a trainee-clear (keyed by shiftType+date+primary),
+                                       so render it for synthetic (negative-id) staged chips too. *@
+                                    @if (!isReadOnly && (assignment.Id > 0 || isDraftShiftChip))
                                     {
                                         <button type="button" class="excel-calendar__trainee-remove-btn"
                                                 data-assignment-id="@assignment.Id"
+                                                data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                                                data-user-id="@(assignment.UserId?.ToString() ?? "")"
+                                                data-trainee-id="@(assignment.TraineeUserId?.ToString() ?? "")"
                                                 aria-label="@Localizer["Calendar_RemoveTrainee"] @assignment.TraineeName"
                                                 title="@Localizer["Calendar_RemoveTrainee"]">×</button>
                                     }
@@ -212,13 +225,16 @@
                                 {
                                     <span class="excel-calendar__badge excel-calendar__badge--trainee" title="@Localizer["Trainee"]"><icon name="medal" size="sm" /></span>
                                 }
-                                @* Issue 4: add-trainee "+" for real shift chips that have a worker but no trainee yet. *@
-                                @if (!isReadOnly && assignment.Id > 0 && assignment.UserId.HasValue
+                                @* Issue 4: add-trainee "+" for shift chips that have a worker but no trainee yet.
+                                   Draft Mode: also render it on synthetic (negative-id) staged primary chips. *@
+                                @if (!isReadOnly && (assignment.Id > 0 || isDraftShiftChip) && assignment.UserId.HasValue
                                      && assignment.TraineeUserId == null && !assignment.IsTrainee
                                      && !assignment.IsTraineeShift)
                                 {
                                     <button type="button" class="excel-calendar__add-trainee-btn"
                                             data-assignment-id="@assignment.Id"
+                                            data-shift-type-id="@(assignment.ShiftTypeId?.ToString() ?? "")"
+                                            data-user-id="@(assignment.UserId?.ToString() ?? "")"
                                             aria-label="@Localizer["Calendar_AddTrainee"] @assignment.Name"
                                             title="@Localizer["Calendar_AddTrainee"]">+</button>
                                 }

@@ -113,9 +113,11 @@ public class AppDbContext : DbContext
     public DbSet<ShiftCategory> ShiftCategories => Set<ShiftCategory>();
     public DbSet<UserShiftCategory> UserShiftCategories => Set<UserShiftCategory>();
 
-    // Draft Mode (per-assigner sandbox over a molecule+week of the shift calendar)
+    // Draft Mode (per-assigner sandbox over a scope+week of a calendar surface — shifts/chores/on-call)
     public DbSet<DraftSession> DraftSessions => Set<DraftSession>();
     public DbSet<DraftCell> DraftCells => Set<DraftCell>();
+    public DbSet<DraftChoreCell> DraftChoreCells => Set<DraftChoreCell>();
+    public DbSet<DraftDutyCell> DraftDutyCells => Set<DraftDutyCell>();
 
     // Grant System (135 built-in grants as of 2026-05-23, 12 role templates)
     public DbSet<GrantType> GrantTypes => Set<GrantType>();
@@ -1446,11 +1448,47 @@ public class AppDbContext : DbContext
 
         // ========================================
         // Draft Mode Configurations
-        // DraftSession/DraftCell: NO query filter — molecule-scoped private sandboxes keyed by OwnerUserId.
+        // DraftSession + per-surface cell tables: NO query filter — private sandboxes keyed by OwnerUserId,
+        // scoped by molecule (shifts/chores) or global (on-call). Draft Mode spans all three calendars (Spec F).
         // ========================================
 
+        // Single-active invariant (Spec F §3) — per-surface FILTERED-UNIQUE indexes over each surface's full
+        // scope tuple, filtered to Status = 0 (Active). Two tabs can no longer open two Active sessions for
+        // the same scope (which made GetActiveDraft FirstOrDefault an arbitrary one). SQLite supports these.
+        // Committed/Discarded rows are exempt (the filter), so a scope can be re-drafted after commit/discard.
+        // Shifts: one Active draft per (owner, molecule, jobType, week). Split into two filtered-unique
+        // indexes because SQLite treats NULL as DISTINCT in a UNIQUE index — a single index over the
+        // nullable JobTypeId would NOT block two molecule-mode (JobTypeId IS NULL) drafts for the same scope.
+        // NOTE: several of these partial indexes share the same column tuple (e.g. Shifts_NullJob and
+        // Chores are both {Owner,Surface,MoleculeId,WeekStart}). EF Core keys an index by its columns, so
+        // HasIndex(expr).HasDatabaseName(name) would COLLAPSE same-column indexes into one. Use the
+        // HasIndex(expr, name) overload, which keys each index by name and allows multiple over the same
+        // columns with different filters.
         modelBuilder.Entity<DraftSession>()
-            .HasIndex(d => new { d.OwnerUserId, d.MoleculeId, d.Status });
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.MoleculeId, d.JobTypeId, d.WeekStart }, "UX_DraftSessions_Active_Shifts")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 0 AND \"JobTypeId\" IS NOT NULL");
+
+        modelBuilder.Entity<DraftSession>()
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.MoleculeId, d.WeekStart }, "UX_DraftSessions_Active_Shifts_NullJob")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 0 AND \"JobTypeId\" IS NULL");
+
+        modelBuilder.Entity<DraftSession>()
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.MoleculeId, d.WeekStart }, "UX_DraftSessions_Active_Chores")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 1");
+
+        // On-Call: same NULL-distinctness split for the nullable AreaId (AreaId IS NULL = the all-areas draft).
+        modelBuilder.Entity<DraftSession>()
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.AreaId, d.WeekStart }, "UX_DraftSessions_Active_OnCall")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 2 AND \"AreaId\" IS NOT NULL");
+
+        modelBuilder.Entity<DraftSession>()
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.WeekStart }, "UX_DraftSessions_Active_OnCall_AllAreas")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 2 AND \"AreaId\" IS NULL");
 
         modelBuilder.Entity<DraftSession>()
             .HasOne(d => d.Owner)
@@ -1466,6 +1504,26 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<DraftCell>()
             .HasIndex(c => new { c.DraftSessionId, c.ShiftTypeId, c.WorkDate })
+            .IsUnique();
+
+        modelBuilder.Entity<DraftChoreCell>()
+            .HasOne(c => c.DraftSession)
+            .WithMany(d => d.ChoreCells)
+            .HasForeignKey(c => c.DraftSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DraftChoreCell>()
+            .HasIndex(c => new { c.DraftSessionId, c.UserId, c.WorkDate })
+            .IsUnique();
+
+        modelBuilder.Entity<DraftDutyCell>()
+            .HasOne(c => c.DraftSession)
+            .WithMany(d => d.DutyCells)
+            .HasForeignKey(c => c.DraftSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DraftDutyCell>()
+            .HasIndex(c => new { c.DraftSessionId, c.DutyTypeValue, c.WorkDate })
             .IsUnique();
 
         // ========================================

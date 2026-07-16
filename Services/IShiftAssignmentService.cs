@@ -47,6 +47,12 @@ public interface IShiftAssignmentService
     Task<ShiftAssignmentValidation> ValidateTraineeAssignmentAsync(int traineeUserId, int assignmentId);
 
     /// <summary>
+    /// Draft Mode overload (sub-project A): validates a trainee against a primary + shift instance directly,
+    /// without needing a persisted assignment row — a freshly reconciled slot may still be unsaved at commit.
+    /// </summary>
+    Task<ShiftAssignmentValidation> ValidateTraineeAssignmentAsync(int traineeUserId, int primaryUserId, int shiftInstanceId);
+
+    /// <summary>
     /// Assigns a user to a shift instance. Validates first unless a valid override token is provided.
     /// </summary>
     Task<ShiftAssignmentResult> AssignShiftAsync(int userId, int shiftInstanceId, int assignedByUserId, string? overrideToken = null, string? notes = null);

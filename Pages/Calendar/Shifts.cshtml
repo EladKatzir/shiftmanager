@@ -750,12 +750,22 @@ else
                 try {
                     var resp = await draftPost('CommitDraft', { draftSessionId: parseInt(commitBtn.dataset.draftId) });
                     var data = await resp.json();
-                    if (data.success) { window.location.href = exitDraftUrl(); return; }
-                    if (data.conflicts && data.conflicts.length > 0) {
-                        window.FeedbackModal.show('error', '@(Localizer["Draft_ConflictMessage"].Value.Trim())');
-                    } else {
-                        window.FeedbackModal.show('error', fail);
+                    // Per-cell policy (Spec F): the session commits even when some cells are skipped. Clean
+                    // commit → return to live. Partial commit → report which cells were skipped/unauthorized.
+                    if (!data.success) { window.FeedbackModal.show('error', fail); commitBtn.disabled = false; return; }
+                    var skipped = data.skipped || [], unauthorized = data.unauthorized || [], issues = data.issues || [];
+                    if (skipped.length === 0 && unauthorized.length === 0 && issues.length === 0) {
+                        window.location.href = exitDraftUrl(); return;
                     }
+                    var coord = function (c) { return c.label || (c.rowId + ' @@ ' + c.date); };
+                    var lines = [];
+                    skipped.forEach(function (c) { lines.push('@(Localizer["Draft_CommitSkippedLabel"].Value.Trim()) ' + coord(c)); });
+                    unauthorized.forEach(function (c) { lines.push('@(Localizer["Draft_CommitUnauthorizedLabel"].Value.Trim()) ' + coord(c)); });
+                    issues.forEach(function (i) { lines.push('@(Localizer["Draft_CommitIssueLabel"].Value.Trim()) ' + coord(i) + ' — ' + i.message); });
+                    window.FeedbackModal.show('warning', '@(Localizer["Draft_CommitPartialMessage"].Value.Trim())', {
+                        detail: lines.join('\n'),
+                        action: { label: '@(Localizer["Draft_ReturnToLive"].Value.Trim())', url: exitDraftUrl() }
+                    });
                     commitBtn.disabled = false;
                 } catch (e) { console.error(e); commitBtn.disabled = false; }
             });

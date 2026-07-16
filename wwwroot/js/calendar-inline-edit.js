@@ -227,12 +227,81 @@ async function showServerErrorAsync(response, fallbackMessage) {
 }
 
 /**
+ * Draft Mode (Spec C) — POST a chores draft handler on the Chores page with the CSRF token.
+ */
+function draftChorePost(handler, body) {
+    return fetch('/Calendar/Chores?handler=' + handler, {
+        method: 'POST',
+        headers: getTablePostHeaders(),
+        credentials: 'same-origin',
+        body: JSON.stringify(body)
+    });
+}
+
+/**
+ * Draft Mode (Spec C) — stage a chore into the caller's private sandbox instead of writing live (no SignalR).
+ * Reloads so the server-rendered staged overlay reflects the change. Called by quickAddChore when a draft is active.
+ */
+async function stageDraftChore(date, assigneeId, title, choreTypeId) {
+    try {
+        var resp = await draftChorePost('DraftChoreStage', {
+            draftSessionId: parseInt(window.__draftSessionId, 10),
+            userId: parseInt(assigneeId, 10),
+            date: date,
+            title: (title || '').trim(),
+            choreTypeId: (choreTypeId != null && choreTypeId !== '') ? parseInt(choreTypeId, 10) : null
+        });
+        if (!resp.ok) {
+            if (resp.status === 401 || resp.status === 403) { handleApiError(resp); return; }
+            await showServerErrorAsync(resp, window.AppLocalizer.ErrorCreatingChore);
+            return;
+        }
+        var result = await resp.json();
+        if (result.success) { window.location.reload(); }
+        else { showAcknowledgedError(result.error || window.AppLocalizer.ErrorCreatingChore); }
+    } catch (e) { handleApiError(null, e); }
+}
+
+/**
+ * Draft Mode (Spec C) — stage a draft-clear of one staged chore descriptor (its × was clicked). Keyed by
+ * (user, date, descriptorKey) since a staged chore has no Chore.Id.
+ */
+async function stageDraftChoreClear(assignmentEl, draftId, choreKey) {
+    var cellEl = assignmentEl ? assignmentEl.closest('.excel-calendar__cell') : null;
+    var dateAttr = cellEl ? cellEl.dataset.date : null;
+    var userIdAttr = assignmentEl ? assignmentEl.dataset.userId : null;
+    if (!dateAttr || !userIdAttr) return;
+    try {
+        var resp = await draftChorePost('DraftChoreClear', {
+            draftSessionId: parseInt(draftId, 10),
+            userId: parseInt(userIdAttr, 10),
+            date: dateAttr,
+            descriptorKey: choreKey
+        });
+        if (!resp.ok) {
+            if (resp.status === 401 || resp.status === 403) { handleApiError(resp); return; }
+            showToast(window.AppLocalizer?.ErrorDeletingItem || 'Error deleting item', 'error');
+            return;
+        }
+        var result = await resp.json();
+        if (result.success) { window.location.reload(); }
+        else { showToast(result.error || 'Error', 'error'); }
+    } catch (e) { handleApiError(null, e); }
+}
+
+/**
  * Quick-add a chore. Uses the unified busy-validation envelope:
  *   - success:true                                          → toast + refresh
  *   - success:false, requiresOverride, warnings[], token    → show FeedbackModal.confirm; on OK retry with token
  *   - success:false, message                                → blocking error modal
  */
 async function quickAddChore(date, assigneeId, title, choreTypeId = null, confirmHandler = defaultConfirm) {
+    // Draft Mode (Spec C): stage into the private sandbox instead of writing live. Covers BOTH the bottom-sheet
+    // quick-add and the quick-entry direct-chore path (both call window.quickAddChore).
+    if (window.__draftSessionId) {
+        await stageDraftChore(date, assigneeId, title, choreTypeId);
+        return;
+    }
     async function postChore(body) {
         return fetch('/Api/Calendar/QuickAddChore', {
             method: 'POST',
@@ -294,6 +363,41 @@ async function quickAddChore(date, assigneeId, title, choreTypeId = null, confir
 }
 
 /**
+ * Draft Mode (sub-project D): stage an on-call assign/clear by natural coordinates
+ * (dutyTypeValue, date, user) into the private sandbox via the OnCall page handler,
+ * then in-place refresh so the staged overlay renders. Never touches the live board.
+ * @param {string} handler - 'DraftDutyAssign' | 'DraftDutyClear'
+ */
+async function draftStageOnDuty(handler, draftSessionId, dutyTypeValue, date, userId) {
+    try {
+        const response = await fetch('/Calendar/OnCall?handler=' + handler, {
+            method: 'POST',
+            headers: getTablePostHeaders(),
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                draftSessionId: parseInt(draftSessionId, 10),
+                dutyTypeValue: parseInt(dutyTypeValue, 10),
+                date: date,
+                userId: parseInt(userId, 10)
+            })
+        });
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) { handleApiError(response); return; }
+            showToast(getErrorMessage('serverError'), 'error');
+            return;
+        }
+        const result = await response.json();
+        if (result.success) {
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.error || getErrorMessage('serverError'), 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+/**
  * Quick-add an on-duty assignment.
  * @param {string} date - Date in yyyy-MM-dd format
  * @param {number} assigneeId - User ID to assign
@@ -305,6 +409,12 @@ async function quickAddChore(date, assigneeId, title, choreTypeId = null, confir
  * @param {Function|undefined} confirmHandler - Override confirmation handler.
  */
 async function quickAddOnDuty(date, assigneeId, onDutyType, moleculeId, confirmHandler = defaultConfirm) {
+    // Draft Mode (sub-project D): when a private sandbox is active, stage the assignment by coordinate
+    // BEFORE any live /Api call. The staged overlay renders on the in-place refresh.
+    if (window.__draftSessionId) {
+        await draftStageOnDuty('DraftDutyAssign', window.__draftSessionId, onDutyType, date, assigneeId);
+        return;
+    }
     try {
         async function postOnDuty(body) {
             return fetch('/Api/Calendar/QuickAddOnDuty', {
@@ -414,9 +524,12 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
             const successMsg = culture === 'he-IL' ? 'שיבוץ בוצע בהצלחה' : 'Assignment created successfully';
             showToast(result.message || successMsg, 'success');
             triggerCalendarRefresh();
-        } else if (!shiftInstanceId && (
+        } else if (!window.__draftSessionId && !shiftInstanceId && (
                    (result.error && result.error.indexOf('SHIFT_FULLY_STAFFED') !== -1) ||
                    (result.errorKey === 'SHIFT_FULLY_STAFFED' && !_retried))) {
+            // Sub-project B: Draft Mode NEVER writes live capacity — the draft branch stages regardless of
+            // capacity (server returns success), and commit widens StaffingRequired to fit. So the "shift
+            // full — expand & assign?" live handshake is suppressed while a draft is active.
             // Only auto-expand capacity on the legacy ShiftType+Date path. When a specific
             // instance was named (Justice make-it-real), don't grow an arbitrary re-resolved
             // instance — surface the error instead (a "hole" shouldn't be fully staffed anyway).
@@ -625,6 +738,61 @@ document.addEventListener('click', function (e) {
 });
 
 /**
+ * Draft Mode: harvest the natural coordinates a trainee stage/clear needs from a chip button.
+ * primary user id + shift type id come off the button (or its chip), the date off the enclosing cell.
+ * Returns null if any coordinate is missing (so callers fall back to the live assignmentId path).
+ */
+function harvestTraineeDraftCoords(btn) {
+    var chip = btn.closest('.excel-calendar__assignment');
+    var cell = btn.closest('.excel-calendar__cell');
+    var shiftTypeId = btn.dataset.shiftTypeId || (chip && chip.dataset.shiftTypeId) || '';
+    var primaryUserId = btn.dataset.userId || (chip && chip.dataset.userId) || '';
+    var date = cell ? cell.dataset.date : '';
+    if (!shiftTypeId || !primaryUserId || !date) return null;
+    return { shiftTypeId: parseInt(shiftTypeId, 10), date: date, primaryUserId: parseInt(primaryUserId, 10) };
+}
+
+/** Draft Mode: stage a trainee onto a (staged or live) primary — no live write, no SignalR. */
+function stageDraftAddTrainee(shiftTypeId, date, primaryUserId, traineeUserId) {
+    fetch('/Calendar/Table?handler=DraftAddTrainee', {
+        method: 'POST',
+        headers: getTablePostHeaders(),
+        credentials: 'same-origin',
+        body: JSON.stringify({ draftSessionId: parseInt(window.__draftSessionId, 10), shiftTypeId: shiftTypeId, date: date, primaryUserId: primaryUserId, traineeUserId: traineeUserId })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+        if (result.success) {
+            showToast(window.AppLocalizer?.BottomSheet_TraineeAssigned || 'Trainee assigned', 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.error || getErrorMessage('serverError'), 'error');
+        }
+    })
+    .catch(function (error) { handleApiError(null, error); });
+}
+
+/** Draft Mode: stage clearing the trainee shadowing a primary. */
+function stageDraftRemoveTrainee(shiftTypeId, date, primaryUserId) {
+    fetch('/Calendar/Table?handler=DraftRemoveTrainee', {
+        method: 'POST',
+        headers: getTablePostHeaders(),
+        credentials: 'same-origin',
+        body: JSON.stringify({ draftSessionId: parseInt(window.__draftSessionId, 10), shiftTypeId: shiftTypeId, date: date, primaryUserId: primaryUserId })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (result) {
+        if (result.success) {
+            showToast(window.AppLocalizer?.Calendar_TraineeRemoved || 'Trainee removed', 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.error || getErrorMessage('serverError'), 'error');
+        }
+    })
+    .catch(function (error) { handleApiError(null, error); });
+}
+
+/**
  * Issue 4: inline "+" trainee picker on a shift chip. Reuses the page's hidden #traineeSelect
  * (the same source the mobile bottom-sheet uses) and the /Calendar/Table?handler=AddTrainee endpoint.
  */
@@ -642,7 +810,11 @@ function openInlineTraineePicker(btn) {
     }
 
     var assignmentId = parseInt(btn.dataset.assignmentId, 10);
-    if (isNaN(assignmentId)) return;
+    // Draft Mode routes by natural coordinates (shiftType+date+primary), not assignmentId — a staged
+    // primary chip has a negative synthetic id and no persisted row.
+    var draftId = window.__draftSessionId;
+    var draftCoords = draftId ? harvestTraineeDraftCoords(btn) : null;
+    if (!draftCoords && isNaN(assignmentId)) return;
 
     var select = document.createElement('select');
     select.className = 'excel-calendar__trainee-picker';
@@ -660,7 +832,12 @@ function openInlineTraineePicker(btn) {
         var traineeId = parseInt(select.value, 10);
         if (select.value && !isNaN(traineeId)) {
             select.disabled = true;
-            addTraineeToAssignment(assignmentId, traineeId);
+            if (draftCoords) {
+                stageDraftAddTrainee(draftCoords.shiftTypeId, draftCoords.date, draftCoords.primaryUserId, traineeId);
+                select.remove();
+            } else {
+                addTraineeToAssignment(assignmentId, traineeId);
+            }
         }
     });
     // Dismiss on Escape or when focus leaves.
@@ -715,7 +892,13 @@ document.addEventListener('click', function (e) {
     if (!btn) return;
     e.preventDefault();
     e.stopPropagation();
-    removeTraineeFromAssignment(btn.dataset.assignmentId);
+    // Draft Mode: stage a trainee-clear by natural coordinates; live mode removes by assignment id.
+    var draftCoords = window.__draftSessionId ? harvestTraineeDraftCoords(btn) : null;
+    if (draftCoords) {
+        stageDraftRemoveTrainee(draftCoords.shiftTypeId, draftCoords.date, draftCoords.primaryUserId);
+    } else {
+        removeTraineeFromAssignment(btn.dataset.assignmentId);
+    }
 });
 
 function removeTraineeFromAssignment(assignmentId) {
@@ -1106,9 +1289,31 @@ async function submitQuickAdd(date) {
         var calendarType = detectCalendarTypeForRemoval();
 
         if (calendarType === 'chores') {
+            // Draft Mode (Spec C): if a chores draft is active and this is a staged chip, the × stages a
+            // draft-clear (by user+date+descriptorKey) instead of a live delete.
+            var choreDraftId = window.__draftSessionId;
+            var choreKey = assignmentEl ? assignmentEl.dataset.draftChoreKey : '';
+            if (choreDraftId && choreKey) {
+                stageDraftChoreClear(assignmentEl, choreDraftId, choreKey);
+                return;
+            }
             deleteItem('chore', assignmentId);
         } else if (calendarType === 'oncall') {
-            deleteItem('onduty', assignmentId);
+            // Draft Mode (sub-project D): the × on a duty chip (real baseline OR synthetic staged) stages a
+            // clear by coordinate (dutytype row-id + cell date + chip user) instead of deleting the live row.
+            var onDutyDraftId = window.__draftSessionId;
+            var cellEl = assignmentEl ? assignmentEl.closest('.excel-calendar__cell') : null;
+            var dutyRowRaw = cellEl ? cellEl.dataset.rowId : '';
+            var dutyDate = cellEl ? cellEl.dataset.date : '';
+            var dutyUserId = btn.dataset.userId || (assignmentEl && assignmentEl.dataset.userId) || '';
+            var dutyTypeValue = (dutyRowRaw && dutyRowRaw.indexOf('dutytype-') === 0)
+                ? dutyRowRaw.substring('dutytype-'.length) : '';
+            if (onDutyDraftId && dutyTypeValue && dutyDate && dutyUserId) {
+                if (assignmentEl) { assignmentEl.style.opacity = '0.3'; assignmentEl.style.pointerEvents = 'none'; }
+                draftStageOnDuty('DraftDutyClear', onDutyDraftId, dutyTypeValue, dutyDate, dutyUserId);
+            } else {
+                deleteItem('onduty', assignmentId);
+            }
         } else {
             // Shifts — in Draft Mode (Epic 4) the × stages a clear into the sandbox (by shiftType+date+user);
             // in live mode it clears the slot by assignment id.

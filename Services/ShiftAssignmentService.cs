@@ -231,9 +231,6 @@ public class ShiftAssignmentService : IShiftAssignmentService
 
     public async Task<ShiftAssignmentValidation> ValidateTraineeAssignmentAsync(int traineeUserId, int assignmentId)
     {
-        var errors = new List<ValidationIssue>();
-        var warnings = new List<ValidationIssue>();
-
         // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed for cross-company assignment lookup within molecule
         var assignment = await _db.ShiftAssignments
             .IgnoreQueryFilters()
@@ -243,13 +240,55 @@ public class ShiftAssignmentService : IShiftAssignmentService
 
         if (assignment == null)
         {
-            errors.Add(new ValidationIssue(
-                "ASSIGNMENT_NOT_FOUND",
-                _localizer["Error_ShiftNotFound"],
-                ValidationSeverity.Error,
-                ValidationCategory.Trainee));
-            return new ShiftAssignmentValidation(false, errors, warnings);
+            return new ShiftAssignmentValidation(false, new List<ValidationIssue>
+            {
+                new("ASSIGNMENT_NOT_FOUND", _localizer["Error_ShiftNotFound"],
+                    ValidationSeverity.Error, ValidationCategory.Trainee)
+            }, Array.Empty<ValidationIssue>());
         }
+
+        return await ValidateTraineeCoreAsync(
+            traineeUserId,
+            primaryUserId: assignment.UserId,
+            cellCompanyId: assignment.CompanyId,
+            cellMoleculeId: assignment.ShiftInstance?.ShiftType?.MoleculeId);
+    }
+
+    public async Task<ShiftAssignmentValidation> ValidateTraineeAssignmentAsync(int traineeUserId, int primaryUserId, int shiftInstanceId)
+    {
+        // Overload for Draft Mode commit (sub-project A, G4): a freshly reconciled slot may be UNSAVED, so we
+        // key off the ShiftInstance + primary rather than a persisted assignmentId.
+        // SECURITY-AUDITED: SAFE — lookup by unique id; IgnoreQueryFilters needed for cross-company within molecule.
+        var instance = await _db.ShiftInstances
+            .IgnoreQueryFilters()
+            .Include(si => si.ShiftType)
+            .FirstOrDefaultAsync(si => si.Id == shiftInstanceId);
+
+        if (instance == null)
+        {
+            return new ShiftAssignmentValidation(false, new List<ValidationIssue>
+            {
+                new("ASSIGNMENT_NOT_FOUND", _localizer["Error_ShiftNotFound"],
+                    ValidationSeverity.Error, ValidationCategory.Trainee)
+            }, Array.Empty<ValidationIssue>());
+        }
+
+        return await ValidateTraineeCoreAsync(
+            traineeUserId,
+            primaryUserId: primaryUserId,
+            cellCompanyId: instance.CompanyId,
+            cellMoleculeId: instance.ShiftType?.MoleculeId);
+    }
+
+    /// <summary>
+    /// Shared trainee-validation rules (self-training / role / molecule-or-company). Both public overloads
+    /// resolve the cell's company + molecule and the primary, then delegate here.
+    /// </summary>
+    private async Task<ShiftAssignmentValidation> ValidateTraineeCoreAsync(
+        int traineeUserId, int? primaryUserId, int cellCompanyId, int? cellMoleculeId)
+    {
+        var errors = new List<ValidationIssue>();
+        var warnings = new List<ValidationIssue>();
 
         // SECURITY-AUDITED: SAFE — IgnoreQueryFilters needed for cross-company trainee within molecule
         var trainee = await _db.Users
@@ -266,7 +305,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
         }
 
         // Prevent self-training
-        if (assignment.UserId == traineeUserId)
+        if (primaryUserId == traineeUserId)
         {
             warnings.Add(new ValidationIssue(
                 "TRAINEE_SELF_TRAINING",
@@ -286,7 +325,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
         }
 
         // Verify same molecule (not same company — trainees can shadow cross-company within molecule)
-        if (assignment.ShiftInstance?.ShiftType?.MoleculeId is int moleculeId)
+        if (cellMoleculeId is int moleculeId)
         {
             if (!await IsUserInMoleculeAsync(trainee.CompanyId, moleculeId))
             {
@@ -297,7 +336,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
                     ValidationCategory.Trainee));
             }
         }
-        else if (assignment.CompanyId != trainee.CompanyId)
+        else if (cellCompanyId != trainee.CompanyId)
         {
             // Fallback for shifts without MoleculeId — use original company check
             warnings.Add(new ValidationIssue(

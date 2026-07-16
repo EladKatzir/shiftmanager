@@ -8789,6 +8789,21 @@
   <data name="Draft_ConflictMessage" xml:space="preserve">
     <value>הלוח החי השתנה בזמן עריכת הטיוטה. דבר לא נשמר — רענן כדי לבדוק את ההתנגשויות.</value>
   </data>
+  <data name="Draft_CommitPartialMessage" xml:space="preserve">
+    <value>הטיוטה נשמרה. חלק מהתאים דולגו ומופיעים למטה — ערוך אותם מחדש אם עדיין ברצונך לבצע את השינוי.</value>
+  </data>
+  <data name="Draft_CommitSkippedLabel" xml:space="preserve">
+    <value>השתנה בזמן העריכה:</value>
+  </data>
+  <data name="Draft_CommitUnauthorizedLabel" xml:space="preserve">
+    <value>אין הרשאה:</value>
+  </data>
+  <data name="Draft_CommitIssueLabel" xml:space="preserve">
+    <value>בעיית אימות:</value>
+  </data>
+  <data name="Draft_ReturnToLive" xml:space="preserve">
+    <value>חזרה ללוח החי</value>
+  </data>
   <data name="JustMine" xml:space="preserve">
     <value>רק שלי</value>
     <comment>Toggle to show only current user's assignments</comment>
