@@ -43,6 +43,7 @@ public class ShiftType
     public int? JobTypeId { get; set; }        // For workforce shifts (Alhut, Text)
     public int? ShiftGroupingId { get; set; }  // For grouped shifts (Tzafon, Darom) — geographic axis
     public int? CategoryId { get; set; }       // Functional shift category (e.g. Yekev) — see ShiftCategory
+    public int? TabId { get; set; }            // Calendar tab / לשונית (molecule sub-calendar) — see ShiftTab; null = "Main"
     public string? TechShiftType { get; set; } // For tech shifts (Hanava, Delta, Support)
 
     /// <summary>
@@ -219,4 +220,5 @@ public class ShiftType
     public JobType? JobType { get; set; }
     public ShiftGrouping? ShiftGrouping { get; set; }
     public ShiftCategory? Category { get; set; }
+    public ShiftTab? Tab { get; set; }
 }

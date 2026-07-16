@@ -332,6 +332,7 @@ builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IShiftGroupingService, ShiftGroupingService>();
 builder.Services.AddScoped<IShiftCategoryService, ShiftCategoryService>();
+builder.Services.AddScoped<IShiftTabService, ShiftTabService>();
 builder.Services.AddScoped<IChoreCategoryService, ChoreCategoryService>();
 builder.Services.AddScoped<IDraftModeService, DraftModeService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
