@@ -552,6 +552,12 @@
             }
         }
 
+        // Time-off entry (Vacation / Day at / After) — available to calendar-editors on people
+        // rows even on a read-only grid (Team). Independent of the shift-assign section above.
+        if (cellData.rowId && cellData.rowId.indexOf('user-') === 0 && cellData.canEnterTimeOff) {
+            addTimeOffSection(bodyEl, cellData);
+        }
+
         // Cancel button
         var cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
@@ -966,6 +972,63 @@
         return users;
     }
 
+    // --- Time-off entry section (manual Vacation / Day at / After) ---
+    function addTimeOffSection(bodyEl, cellData) {
+        var uid = cellData.rowId.replace('user-', '');
+        var sec = document.createElement('div');
+        sec.className = 'bottom-sheet__section';
+
+        var h = document.createElement('h4');
+        h.className = 'bottom-sheet__section-title';
+        h.textContent = (window.AppLocalizer && window.AppLocalizer.TimeOff_Section_Title) || 'Add time off';
+        sec.appendChild(h);
+
+        function mkBtn(labelKey, fallback, onClick) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn btn-ghost bottom-sheet__action-btn';
+            b.textContent = (window.AppLocalizer && window.AppLocalizer[labelKey]) || fallback;
+            b.addEventListener('click', onClick);
+            sec.appendChild(b);
+            return b;
+        }
+
+        mkBtn('QuickEntry_TimeOff_Vacation', 'Vacation', function () {
+            window.quickAddTimeOff(cellData.date, uid, 'vacation', null);
+            close();
+        });
+        mkBtn('QuickEntry_TimeOff_After', 'After', function () {
+            window.quickAddTimeOff(cellData.date, uid, 'after', null);
+            close();
+        });
+
+        // "Day at X" needs a location; first click reveals the input, second confirms.
+        var locWrap = document.createElement('div');
+        locWrap.className = 'bottom-sheet__field';
+        locWrap.style.display = 'none';
+        var locInput = document.createElement('input');
+        locInput.type = 'text';
+        locInput.className = 'bottom-sheet__input';
+        locInput.maxLength = 50;
+        locInput.placeholder = (window.AppLocalizer && window.AppLocalizer.QuickEntry_TimeOff_DayAtLocationPrompt) || 'Where?';
+        locWrap.appendChild(locInput);
+
+        mkBtn('QuickEntry_TimeOff_DayAt', 'Day at…', function () {
+            if (locWrap.style.display === 'none') {
+                locWrap.style.display = '';
+                locInput.focus();
+                return;
+            }
+            var v = locInput.value.trim();
+            if (!v) { locInput.focus(); return; }
+            window.quickAddTimeOff(cellData.date, uid, 'dayat', v);
+            close();
+        });
+        sec.appendChild(locWrap);
+
+        bodyEl.appendChild(sec);
+    }
+
     // --- Handle assign action ---
     function handleAssign(cellData, userId) {
         if (!userId) {
@@ -1154,6 +1217,7 @@
             date: date,
             rowLabel: rowLabel,
             isReadOnly: isReadOnly,
+            canEnterTimeOff: cellEl.dataset.canEnterTimeoff === 'true',
             assignments: assignments,
             hasVacation: hasVacation,
             hasChore: hasChore,

@@ -615,6 +615,58 @@ async function deleteDayNote(date) {
 
 window.deleteDayNote = deleteDayNote;
 
+/**
+ * Quick-add manual time-off (Vacation / DayAt / After) for a user on a given day.
+ * Creates an already-approved TimeOffRequest server-side (removes conflicting shifts +
+ * materialises HOME rows). Mirrors quickAddTextEntry's transport contract.
+ * @param {string} date - ISO date (YYYY-MM-DD)
+ * @param {number} userId - target user
+ * @param {string} type - 'vacation' | 'after' | 'dayat'
+ * @param {string|null} label - location label for 'dayat', else null
+ */
+async function quickAddTimeOff(date, userId, type, label) {
+    try {
+        const response = await fetch('/Api/Calendar/QuickAddTimeOff', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                date: date,
+                userId: parseInt(userId),
+                type: type,
+                label: label || null
+            })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                handleApiError(response);
+                return;
+            }
+            var errJson = null;
+            try { errJson = await response.json(); } catch (e) { /* ignore */ }
+            showToast((errJson && errJson.message) || (window.AppLocalizer && window.AppLocalizer.QuickEntry_TimeOff_Failed) || 'Could not add time off', 'error');
+            return;
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            var okMsg = (window.AppLocalizer && window.AppLocalizer.QuickEntry_TimeOff_Saved) || 'Time off added';
+            showToast(okMsg, 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.message || (window.AppLocalizer && window.AppLocalizer.QuickEntry_TimeOff_Failed) || 'Error', 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    }
+}
+
+window.quickAddTimeOff = quickAddTimeOff;
+
 // Delegated so it survives calendar re-renders: the header day-note × removes the note.
 document.addEventListener('click', function (e) {
     var btn = e.target.closest('.excel-calendar__day-note-delete');
