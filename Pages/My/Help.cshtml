@@ -200,6 +200,64 @@
             </div>
         </div>
 
+        @* Calendar Tabs *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">&#x1F4D1;</span>
+                <loc key="Help_Section_Tabs" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_WhatAreTabs_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_WhatAreTabs_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_SwitchTabs_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_SwitchTabs_A" /></div>
+                </details>
+            </div>
+        </div>
+
+        @* Eligibility & Shift Categories *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">&#x1F3AF;</span>
+                <loc key="Help_Section_Eligibility" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_MyEligibility_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_MyEligibility_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ShiftCategories_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ShiftCategories_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_WhyNotEligible_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_WhyNotEligible_A" /></div>
+                </details>
+            </div>
+        </div>
+
+        @* Companies & Account Types *@
+        <div class="help-section">
+            <h2 class="help-section__title">
+                <span class="help-section__icon">&#x1F504;</span>
+                <loc key="Help_Section_MultiCompany" />
+            </h2>
+            <div class="help-faq-list">
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_CompanySwitcher_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_CompanySwitcher_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_AccountTypes_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_AccountTypes_A" /></div>
+                </details>
+            </div>
+        </div>
+
         @* Management (Managers/Directors/AreaAdmins/Owners) *@
         @if (User.IsInRole("Manager") || User.IsInRole("Owner") || User.IsInRole("Director") || User.IsInRole("AreaAdmin"))
         {
@@ -232,6 +290,22 @@
                 <details class="help-faq">
                     <summary class="help-faq__question"><loc key="Help_FAQ_ScheduleTable_Q" /></summary>
                     <div class="help-faq__answer"><loc key="Help_FAQ_ScheduleTable_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_DraftMode_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_DraftMode_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ManualTimeOff_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ManualTimeOff_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ManageTabs_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ManageTabs_A" /></div>
+                </details>
+                <details class="help-faq">
+                    <summary class="help-faq__question"><loc key="Help_FAQ_ManageEligibility_Q" /></summary>
+                    <div class="help-faq__answer"><loc key="Help_FAQ_ManageEligibility_A" /></div>
                 </details>
             </div>
         </div>

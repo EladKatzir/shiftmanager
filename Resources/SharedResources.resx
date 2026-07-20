@@ -9620,6 +9620,81 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Help_FAQ_CommandPalette_A" xml:space="preserve">
     <value>The Command Palette (Ctrl+J) provides quick access to all pages and actions. Start typing to search for any page, feature, or action. Press Enter to navigate directly to the selected item.</value>
   </data>
+  <data name="Help_Section_Tabs" xml:space="preserve">
+    <value>Calendar Tabs</value>
+  </data>
+  <data name="Help_FAQ_WhatAreTabs_Q" xml:space="preserve">
+    <value>What are the tabs above the Schedule?</value>
+  </data>
+  <data name="Help_FAQ_WhatAreTabs_A" xml:space="preserve">
+    <value>Tabs are named sub-calendars inside a molecule on the Schedule, like separate sheets in a workbook. A strip of tab pills appears above the grid; clicking one filters the calendar to just that tab's shifts and the companies (desks) assigned to it. Anything not placed on a specific tab lives on the Main tab. A tab is only a view filter: it never changes who is eligible, rest and hours limits, or fairness, which always consider your full schedule across every tab.</value>
+  </data>
+  <data name="Help_FAQ_SwitchTabs_Q" xml:space="preserve">
+    <value>How do I switch between tabs?</value>
+  </data>
+  <data name="Help_FAQ_SwitchTabs_A" xml:space="preserve">
+    <value>Click a tab pill in the strip above the calendar. The Schedule remembers your last-used tab for each molecule, so it reopens where you left off. If a molecule has no tabs configured, the strip is hidden and you simply see the whole molecule.</value>
+  </data>
+  <data name="Help_Section_Eligibility" xml:space="preserve">
+    <value>Eligibility &amp; Shift Categories</value>
+  </data>
+  <data name="Help_FAQ_MyEligibility_Q" xml:space="preserve">
+    <value>How do I see which shifts and chores I can be assigned to?</value>
+  </data>
+  <data name="Help_FAQ_MyEligibility_A" xml:space="preserve">
+    <value>Open My Eligibility from the Personal menu. It lists every shift and chore category and shows whether you are eligible for each. Where you are not, it explains why in plain terms (for example your account type is not allowed, shifts or chores are turned off for you, or you are not a member of that group) and suggests talking to your manager. The page is view-only; your manager makes the changes.</value>
+  </data>
+  <data name="Help_FAQ_ShiftCategories_Q" xml:space="preserve">
+    <value>What are shift categories?</value>
+  </data>
+  <data name="Help_FAQ_ShiftCategories_A" xml:space="preserve">
+    <value>A shift category groups related shift types within a molecule, for example a category that owns a morning and a night shift. The by-person calendar groups people under the categories they belong to, so one person can appear under more than one. Whether you take part in shifts at all is controlled by the "participates in shifts" setting on your profile; your manager maps you to categories from the Eligibility editor.</value>
+  </data>
+  <data name="Help_FAQ_WhyNotEligible_Q" xml:space="preserve">
+    <value>Why can't I be assigned to a certain shift or chore?</value>
+  </data>
+  <data name="Help_FAQ_WhyNotEligible_A" xml:space="preserve">
+    <value>Eligibility is decided in layers: your account type (some shared accounts cannot do shifts or chores), whether shifts or chores are turned on for you, and whether you belong to the relevant category. Chores add rules per type, such as a required gender (a warning your manager can override) or a required officer rank (a hard block), plus personal exemptions. My Eligibility shows the exact reason in each case.</value>
+  </data>
+  <data name="Help_Section_MultiCompany" xml:space="preserve">
+    <value>Companies &amp; Account Types</value>
+  </data>
+  <data name="Help_FAQ_CompanySwitcher_Q" xml:space="preserve">
+    <value>I belong to more than one company (desk) — how do I switch?</value>
+  </data>
+  <data name="Help_FAQ_CompanySwitcher_A" xml:space="preserve">
+    <value>If you are a member of several companies, a company switcher appears in the navigation. Pick a company to make it your active context; operational pages such as the roster and settings then show that company, while your personal pages (My Shifts, requests, notifications) stay merged across all of them. Owners see every company and directors switch at the molecule level using the same control.</value>
+  </data>
+  <data name="Help_FAQ_AccountTypes_Q" xml:space="preserve">
+    <value>What are "Mil" and "Group" accounts?</value>
+  </data>
+  <data name="Help_FAQ_AccountTypes_A" xml:space="preserve">
+    <value>Besides a normal (Standard) account there are two shared archetypes. A Mil (reserves) account takes shifts but has no chores, cannot submit requests, and is hidden from the Overview. A Group account is an administrative shared login that takes no shifts or chores, cannot be assigned, cannot submit requests, and is hidden from all calendars and analytics. Both keep their role-based permissions and email notifications.</value>
+  </data>
+  <data name="Help_FAQ_DraftMode_Q" xml:space="preserve">
+    <value>What is Draft Mode?</value>
+  </data>
+  <data name="Help_FAQ_DraftMode_A" xml:space="preserve">
+    <value>Draft Mode lets an assigner plan a whole week privately before publishing. Click Enter Draft Mode on the Schedule, Chores, or On-Duty calendar; your changes are staged only for you and send no notifications. When you are ready, Commit applies them all at once (each cell is re-checked against the live board, and anything someone else changed meanwhile is skipped and reported), or Discard throws the draft away with no effect on the live schedule.</value>
+  </data>
+  <data name="Help_FAQ_ManualTimeOff_Q" xml:space="preserve">
+    <value>How do I record time off for someone directly?</value>
+  </data>
+  <data name="Help_FAQ_ManualTimeOff_A" xml:space="preserve">
+    <value>On the My Desk, Team, or Schedule calendars, use quick entry on a cell in that person's row and choose the time-off type: vacation, "Day at" a location, or after-duty. It creates an already-approved entry and frees their shifts for those days, without the request and approval round trip. You cannot enter it in the past, for yourself (request your own leave from My Requests), or where it overlaps existing approved leave.</value>
+  </data>
+  <data name="Help_FAQ_ManageTabs_Q" xml:space="preserve">
+    <value>How do I set up calendar tabs?</value>
+  </data>
+  <data name="Help_FAQ_ManageTabs_A" xml:space="preserve">
+    <value>In Blueprints, pick a molecule and use the Tabs manager to create, rename, recolor, and reorder tabs. Assign a shift type to a tab from the tab dropdown on its row, and assign a company (desk) to a tab with the company checkboxes. A company belongs to at most one tab, and unassigned companies stay on Main; area-wide shifts always stay on Main.</value>
+  </data>
+  <data name="Help_FAQ_ManageEligibility_Q" xml:space="preserve">
+    <value>How do I manage shift categories and eligibility?</value>
+  </data>
+  <data name="Help_FAQ_ManageEligibility_A" xml:space="preserve">
+    <value>Create and edit shift categories in Blueprints, and manage who belongs to them from the Eligibility editor (Scheduling, then Eligibility). There you can work by category (see every candidate marked eligible or not, with the reason, and toggle membership) or by person (see every category they can and cannot do). Turning a person's "participates in shifts" or "participates in chores" on or off is done there and on the Users page.</value>
+  </data>
   <data name="FillHandle_DragToCopy" xml:space="preserve">
     <value>Drag to copy across days</value>
   </data>
