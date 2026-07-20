@@ -50,6 +50,7 @@ public class AppDbContext : DbContext
     public DbSet<CalendarDayNote> CalendarDayNotes => Set<CalendarDayNote>();
     public DbSet<TeamCalendar> TeamCalendars => Set<TeamCalendar>();
     public DbSet<TeamCalendarMember> TeamCalendarMembers => Set<TeamCalendarMember>();
+    public DbSet<DeskTeamView> DeskTeamViews => Set<DeskTeamView>();
     public DbSet<EmailConfig> EmailConfigs => Set<EmailConfig>();
     public DbSet<EmailApiLog> EmailApiLogs => Set<EmailApiLog>();
     public DbSet<EmailTemplateCustomization> EmailTemplateCustomizations => Set<EmailTemplateCustomization>();
@@ -112,9 +113,16 @@ public class AppDbContext : DbContext
     public DbSet<ShiftCategory> ShiftCategories => Set<ShiftCategory>();
     public DbSet<UserShiftCategory> UserShiftCategories => Set<UserShiftCategory>();
 
-    // Draft Mode (per-assigner sandbox over a molecule+week of the shift calendar)
+    // Shift Tabs / לשונית (molecule-scoped sub-calendars: shift-type partition + company roster + per-user last-tab)
+    public DbSet<ShiftTab> ShiftTabs => Set<ShiftTab>();
+    public DbSet<ShiftTabCompany> ShiftTabCompanies => Set<ShiftTabCompany>();
+    public DbSet<UserShiftTabPreference> UserShiftTabPreferences => Set<UserShiftTabPreference>();
+
+    // Draft Mode (per-assigner sandbox over a scope+week of a calendar surface — shifts/chores/on-call)
     public DbSet<DraftSession> DraftSessions => Set<DraftSession>();
     public DbSet<DraftCell> DraftCells => Set<DraftCell>();
+    public DbSet<DraftChoreCell> DraftChoreCells => Set<DraftChoreCell>();
+    public DbSet<DraftDutyCell> DraftDutyCells => Set<DraftDutyCell>();
 
     // Grant System (135 built-in grants as of 2026-05-23, 12 role templates)
     public DbSet<GrantType> GrantTypes => Set<GrantType>();
@@ -297,6 +305,16 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(sa => sa.SourceTimeOffRequestId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Trainee shadowing: the real FK column is TraineeUserId, NOT the EF-conventional "TraineeId".
+        // Without this explicit mapping EF bound the Trainee navigation to an auto-created shadow
+        // "TraineeId" FK that the code never writes, so Include(sa => sa.Trainee) always resolved to
+        // null and the trainee's name never rendered on the calendar. Optional FK → ClientSetNull
+        // (NO ACTION), matching the UserId relationship.
+        modelBuilder.Entity<ShiftAssignment>()
+            .HasOne(sa => sa.Trainee)
+            .WithMany()
+            .HasForeignKey(sa => sa.TraineeUserId);
 
         modelBuilder.Entity<ShiftAssignment>()
             .HasIndex(sa => sa.SourceTimeOffRequestId)
@@ -875,6 +893,12 @@ public class AppDbContext : DbContext
             modelBuilder.Entity<TeamCalendar>()
                 .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId());
 
+            // DeskTeamView: saved dynamic (TargetCompany × JobType) views for /Calendar/Team.
+            // Unlike TeamCalendar's filter, IsDeleted is included here so soft-deleted rows are
+            // never visible through a normal query (defense in depth; services also filter explicitly).
+            modelBuilder.Entity<DeskTeamView>()
+                .HasQueryFilter(e => e.CompanyId == _tenantResolver.GetCurrentTenantId() && !e.IsDeleted);
+
             // DistributionList: standard tenant filter for provenance/interceptor consistency.
             // NOTE: real visibility scope is the molecule — DistributionListService deliberately bypasses
             // this filter with IgnoreQueryFilters() + MoleculeId so lists are shared across all companies
@@ -1119,6 +1143,26 @@ public class AppDbContext : DbContext
             .HasOne(tc => tc.Owner)
             .WithMany()
             .HasForeignKey(tc => tc.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure DeskTeamView (saved dynamic Company×JobType team-table views; deliberately
+        // separate from TeamCalendar so these never leak into /MyTeam — see
+        // docs/superpowers/specs/2026-07-14-ui-batch-and-team-page-design.md #9.4)
+        modelBuilder.Entity<DeskTeamView>()
+            .HasIndex(v => new { v.CompanyId, v.OwnerId, v.Name })
+            .IsUnique()
+            .HasFilter("IsDeleted = 0"); // Unique name per owner when not deleted
+
+        modelBuilder.Entity<DeskTeamView>()
+            .HasOne(v => v.Company)
+            .WithMany()
+            .HasForeignKey(v => v.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<DeskTeamView>()
+            .HasOne(v => v.Owner)
+            .WithMany()
+            .HasForeignKey(v => v.OwnerId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Configure TeamCalendarMember
@@ -1408,12 +1452,105 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         // ========================================
-        // Draft Mode Configurations
-        // DraftSession/DraftCell: NO query filter — molecule-scoped private sandboxes keyed by OwnerUserId.
+        // ShiftTab Configurations (לשונית — molecule sub-calendars)
+        // ShiftTab / ShiftTabCompany: NO query filter — molecule-scoped visibility (like ShiftCategory),
+        // not tenant-based. Isolation rests on explicit MoleculeId checks at every call site.
         // ========================================
 
+        modelBuilder.Entity<ShiftTab>()
+            .HasOne(t => t.Molecule)
+            .WithMany()
+            .HasForeignKey(t => t.MoleculeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Lookup index + unique tab name within a molecule
+        modelBuilder.Entity<ShiftTab>()
+            .HasIndex(t => t.MoleculeId);
+        modelBuilder.Entity<ShiftTab>()
+            .HasIndex(t => new { t.MoleculeId, t.Name })
+            .IsUnique();
+
+        // ShiftType → ShiftTab: a shift type belongs to at most one tab. SetNull so deleting a tab
+        // reverts its shift types to the implicit "Main" tab rather than deleting them.
+        modelBuilder.Entity<ShiftType>()
+            .HasOne(st => st.Tab)
+            .WithMany(t => t.ShiftTypes)
+            .HasForeignKey(st => st.TabId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ShiftType>()
+            .HasIndex(st => st.TabId);
+
+        // ShiftTabCompany: a company is on AT MOST ONE tab (unique CompanyId) → disjoint rosters,
+        // Main = molecule companies with no assignment. Both FKs cascade: deleting a tab or a company
+        // drops the link.
+        modelBuilder.Entity<ShiftTabCompany>()
+            .HasIndex(tc => tc.CompanyId)
+            .IsUnique();
+        modelBuilder.Entity<ShiftTabCompany>()
+            .HasOne(tc => tc.ShiftTab)
+            .WithMany(t => t.Companies)
+            .HasForeignKey(tc => tc.ShiftTabId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ShiftTabCompany>()
+            .HasOne(tc => tc.Company)
+            .WithMany()
+            .HasForeignKey(tc => tc.CompanyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // UserShiftTabPreference: per-user remembered tab per molecule (not tenant-filtered).
+        // TabId → ShiftTab SetNull so a deleted tab's remembered preference reverts to Main.
+        modelBuilder.Entity<UserShiftTabPreference>()
+            .HasIndex(p => new { p.UserId, p.MoleculeId })
+            .IsUnique();
+        modelBuilder.Entity<UserShiftTabPreference>()
+            .HasOne(p => p.Tab)
+            .WithMany()
+            .HasForeignKey(p => p.TabId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // ========================================
+        // Draft Mode Configurations
+        // DraftSession + per-surface cell tables: NO query filter — private sandboxes keyed by OwnerUserId,
+        // scoped by molecule (shifts/chores) or global (on-call). Draft Mode spans all three calendars (Spec F).
+        // ========================================
+
+        // Single-active invariant (Spec F §3) — per-surface FILTERED-UNIQUE indexes over each surface's full
+        // scope tuple, filtered to Status = 0 (Active). Two tabs can no longer open two Active sessions for
+        // the same scope (which made GetActiveDraft FirstOrDefault an arbitrary one). SQLite supports these.
+        // Committed/Discarded rows are exempt (the filter), so a scope can be re-drafted after commit/discard.
+        // Shifts: one Active draft per (owner, molecule, jobType, week). Split into two filtered-unique
+        // indexes because SQLite treats NULL as DISTINCT in a UNIQUE index — a single index over the
+        // nullable JobTypeId would NOT block two molecule-mode (JobTypeId IS NULL) drafts for the same scope.
+        // NOTE: several of these partial indexes share the same column tuple (e.g. Shifts_NullJob and
+        // Chores are both {Owner,Surface,MoleculeId,WeekStart}). EF Core keys an index by its columns, so
+        // HasIndex(expr).HasDatabaseName(name) would COLLAPSE same-column indexes into one. Use the
+        // HasIndex(expr, name) overload, which keys each index by name and allows multiple over the same
+        // columns with different filters.
         modelBuilder.Entity<DraftSession>()
-            .HasIndex(d => new { d.OwnerUserId, d.MoleculeId, d.Status });
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.MoleculeId, d.JobTypeId, d.WeekStart }, "UX_DraftSessions_Active_Shifts")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 0 AND \"JobTypeId\" IS NOT NULL");
+
+        modelBuilder.Entity<DraftSession>()
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.MoleculeId, d.WeekStart }, "UX_DraftSessions_Active_Shifts_NullJob")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 0 AND \"JobTypeId\" IS NULL");
+
+        modelBuilder.Entity<DraftSession>()
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.MoleculeId, d.WeekStart }, "UX_DraftSessions_Active_Chores")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 1");
+
+        // On-Call: same NULL-distinctness split for the nullable AreaId (AreaId IS NULL = the all-areas draft).
+        modelBuilder.Entity<DraftSession>()
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.AreaId, d.WeekStart }, "UX_DraftSessions_Active_OnCall")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 2 AND \"AreaId\" IS NOT NULL");
+
+        modelBuilder.Entity<DraftSession>()
+            .HasIndex(d => new { d.OwnerUserId, d.Surface, d.WeekStart }, "UX_DraftSessions_Active_OnCall_AllAreas")
+            .IsUnique()
+            .HasFilter("\"Status\" = 0 AND \"Surface\" = 2 AND \"AreaId\" IS NULL");
 
         modelBuilder.Entity<DraftSession>()
             .HasOne(d => d.Owner)
@@ -1429,6 +1566,26 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<DraftCell>()
             .HasIndex(c => new { c.DraftSessionId, c.ShiftTypeId, c.WorkDate })
+            .IsUnique();
+
+        modelBuilder.Entity<DraftChoreCell>()
+            .HasOne(c => c.DraftSession)
+            .WithMany(d => d.ChoreCells)
+            .HasForeignKey(c => c.DraftSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DraftChoreCell>()
+            .HasIndex(c => new { c.DraftSessionId, c.UserId, c.WorkDate })
+            .IsUnique();
+
+        modelBuilder.Entity<DraftDutyCell>()
+            .HasOne(c => c.DraftSession)
+            .WithMany(d => d.DutyCells)
+            .HasForeignKey(c => c.DraftSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DraftDutyCell>()
+            .HasIndex(c => new { c.DraftSessionId, c.DutyTypeValue, c.WorkDate })
             .IsUnique();
 
         // ========================================

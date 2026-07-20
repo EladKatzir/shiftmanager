@@ -850,6 +850,17 @@ select.form-field__input {
   pointer-events: none;
 }
 
+/* toast-notifications.js toasts (`.toast-undo`) are placed by .toast-container's flex column.
+   Neutralize the LEGACY standalone `.toast { position: fixed; bottom: 2rem }` rule (site.css,
+   for body-level calendar toasts) which otherwise bled in here: pinned against the container's
+   top offset it stretched the toast to full viewport height (a white column over the calendar)
+   and the oversized shadowed layer stalled the compositor. Static → the container owns placement. */
+.toast-container > .toast.toast-undo {
+  position: static;
+  top: auto;
+  bottom: auto;
+}
+
 [dir="rtl"] .toast-container {
   right: auto;
   left: var(--space-4);

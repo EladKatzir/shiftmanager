@@ -90,12 +90,47 @@
         return sel.dataset.itemType === 'user' ? 'shift' : 'user';
     }
 
+    // Recognizes typed time-off keywords (English + Hebrew) on people rows.
+    // "vacation"/"חופש"/"חופשה" -> Vacation; "after"/"אפטר" -> After;
+    // "day at X"/"יום ב X" -> DayAt with label X. Returns {type,label} or null.
+    function parseTimeOffQuery(q) {
+        var s = (q || '').trim();
+        if (/^(vacation|חופש|חופשה)$/i.test(s)) return { type: 'vacation', label: null };
+        if (/^(after|אפטר)$/i.test(s)) return { type: 'after', label: null };
+        var m = /^(?:day at|יום ב)\s+(.+)$/i.exec(s);
+        if (m && m[1].trim()) return { type: 'dayat', label: m[1].trim() };
+        return null;
+    }
+
     function isChoresCalendar() {
         return !!document.querySelector('.excel-calendar[data-calendar-type="chores"]');
     }
 
     function isShiftsCalendar() {
         return !!document.querySelector('.excel-calendar[data-calendar-type="shifts"]');
+    }
+
+    // Sub-project B: while a SHIFTS draft is active, the shifts board disables non-shift quick-adds (chore,
+    // duty, day-note, text-entry). A chore/on-duty belongs in its OWN draft (C/D), not staged into the
+    // shifts sandbox; the user drafts those on the Chores/On-Call calendar instead.
+    function isShiftsDraftActive() {
+        return isShiftsCalendar() && !!window.__draftSessionId;
+    }
+
+    function draftNonShiftHint() {
+        return getCulture() === 'he-IL'
+            ? 'תורנויות והערות אינן חלק מטיוטת משמרות — השתמשו בטיוטה של לוח התורנויות/כוננויות'
+            : "Chores and day-notes aren't part of a shift draft — use the Chores/On-Call calendar's draft";
+    }
+
+    // Render a non-selectable, greyed hint row (used when a non-shift quick-add is disabled in shifts draft).
+    function appendDraftDisabledHint() {
+        if (!dropdown) return;
+        var hint = document.createElement('div');
+        hint.className = 'quick-entry-no-matches quick-entry-draft-disabled';
+        hint.setAttribute('aria-disabled', 'true');
+        hint.textContent = draftNonShiftHint();
+        dropdown.appendChild(hint);
     }
 
     function isJustMineActive() {
@@ -394,6 +429,8 @@
                     allItems.push({
                         id: opt.value,
                         text: opt.textContent.trim(),
+                        // Company suffix disambiguates duplicate names in the area-wide on-call pool.
+                        companyName: opt.dataset.company || null,
                         type: itemType === 'user' ? 'user' : 'shift',
                         key: opt.dataset.key || null,
                         color: null
@@ -607,6 +644,14 @@
                 textSpan.textContent = entry.item.text;
                 el.appendChild(textSpan);
 
+                // Company suffix (e.g. area-wide on-call pool) disambiguates duplicate names.
+                if (entry.item.companyName) {
+                    var companySpan = document.createElement('span');
+                    companySpan.className = 'quick-entry-item__company';
+                    companySpan.textContent = ' — ' + entry.item.companyName;
+                    el.appendChild(companySpan);
+                }
+
                 (function (capturedIdx) {
                     el.addEventListener('mousedown', function (e) {
                         e.preventDefault();
@@ -660,6 +705,54 @@
             dropdown.appendChild(choreEl);
             if (totalItems === 0) selectedIndex = choreIdx; // Auto-select when no chore type matches
             totalItems++;
+        } else if (query.trim().length > 0 && isShiftsDraftActive() &&
+            activeInput._cellData && activeInput._cellData.date) {
+            // Sub-project B: day-notes are not part of a shifts draft — show a greyed hint, no actionable
+            // option (direct submission is also blocked in selectItem).
+            // Merge note (draft × manual-timeoff): manual time-off is likewise a non-shift quick-add that
+            // performs a LIVE write, so it stays suppressed while a shifts draft is active — this branch
+            // is ordered BEFORE the time-off branch below so the draft's staging contract wins.
+            if (totalItems === 0) appendDraftDisabledHint();
+        } else if (query.trim().length > 0 &&
+            activeInput._cellData && activeInput._cellData.rowId &&
+            activeInput._cellData.rowId.indexOf('user-') === 0 &&
+            activeInput._cellData.canEnterTimeOff &&
+            parseTimeOffQuery(query)) {
+            // Manual time-off entry — people rows only (Overview/Team/Shifts-user). Intercepts the
+            // typed keyword BEFORE the day-note fallback; by-shift rows (shift-) fall through to day-note.
+            var toParsed = parseTimeOffQuery(query);
+            var toItem = { type: 'time-off', timeOffType: toParsed.type, label: toParsed.label,
+                           text: query.trim(), date: activeInput._cellData.date };
+            var toIdx = filteredItems.length;
+            filteredItems.push(toItem);
+
+            var toEl = document.createElement('div');
+            toEl.className = 'quick-entry-item quick-entry-item--text-entry quick-entry-item--time-off';
+            toEl.setAttribute('role', 'option');
+            toEl.id = dropdown.id + '-item-' + toIdx;
+            toEl.dataset.index = toIdx;
+
+            var toIcon = document.createElement('span');
+            toIcon.className = 'quick-entry-text-icon';
+            toIcon.textContent = toParsed.type === 'after' ? '🌅' : (toParsed.type === 'dayat' ? '📍' : '🌴');
+            toEl.appendChild(toIcon);
+
+            var toLabelKey = toParsed.type === 'after' ? 'QuickEntry_TimeOff_After'
+                : toParsed.type === 'dayat' ? 'QuickEntry_TimeOff_DayAt' : 'QuickEntry_TimeOff_Vacation';
+            var toLabel = document.createElement('span');
+            toLabel.textContent = getLocalizedLabel(toLabelKey) + (toParsed.label ? (': "' + toParsed.label + '"') : '');
+            toEl.appendChild(toLabel);
+
+            (function (capturedIdx) {
+                toEl.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    selectedIndex = capturedIdx;
+                    selectItem(filteredItems[capturedIdx]);
+                });
+            })(toIdx);
+
+            dropdown.appendChild(toEl);
+            selectedIndex = toIdx; // explicit keyword -> auto-select so Enter commits
         } else if (query.trim().length > 0 && isShiftsCalendar() &&
             activeInput._cellData && activeInput._cellData.date) {
             // Day-note option — Shifts calendar, ANY mode/row (shift-mode where rows are shift types, or
@@ -751,9 +844,12 @@
         var mode = getCurrentMode();
         var matchText = partial.substring(1).toLowerCase(); // strip leading /
 
+        var draftBlocked = isShiftsDraftActive();
         for (var i = 0; i < SLASH_COMMANDS.length; i++) {
             var cmd = SLASH_COMMANDS[i];
             if (cmd.modes.indexOf(mode) === -1) continue;
+            // Sub-project B: /chore and /duty are not part of a shifts draft — hide them from the palette.
+            if (draftBlocked && (cmd.key === 'chore' || cmd.key === 'duty')) continue;
             if (matchText && cmd.key.indexOf(matchText) !== 0 && !(cmd.label && cmd.label.toLowerCase().indexOf(matchText) === 0)) continue;
 
             var idx = filteredItems.length;
@@ -1122,6 +1218,16 @@
     function selectItem(item, advance) {
         if (!activeInput || !activeCell) return;
 
+        // Sub-project B: in shifts draft mode, non-shift quick-adds are disabled. Guard direct submission
+        // (Enter on an auto-selected item) — no-op with a hint. Shift/user/HOME assignments still stage.
+        if (isShiftsDraftActive() && item &&
+            (item.type === 'chore' || item.type === 'direct-chore' || item.type === 'duty'
+             || item.type === 'day-note' || item.type === 'text-entry')) {
+            if (window.showToast) window.showToast(draftNonShiftHint(), 'info');
+            closeInput();
+            return;
+        }
+
         var cellData = activeInput._cellData;
         var rowId = cellData.rowId;
         var date = cellData.date;
@@ -1213,12 +1319,39 @@
             return;
         }
 
+        if (item.type === 'time-off') {
+            // Manual time-off — creates an approved TimeOffRequest for the user on that day.
+            var toUserId = parseInt(rowId.replace('user-', ''), 10);
+            var currentCellTO = activeCell;
+            var doAdvanceTO = !!advance;
+            var toPromise = window.quickAddTimeOff(date, toUserId, item.timeOffType, item.label);
+            if (toPromise && typeof toPromise.then === 'function') {
+                toPromise.then(function () {
+                    closeInput();
+                    if (doAdvanceTO) advanceToNextCell(currentCellTO);
+                });
+            } else {
+                closeInput();
+                if (doAdvanceTO) advanceToNextCell(currentCellTO);
+            }
+            return;
+        }
+
         // Capture cell reference before async work
         var currentCell = activeCell;
         var doAdvance = !!advance;
 
         var promise;
-        if (item.type === 'user') {
+        // On-Call By-Duty calendar: the ROW is a duty type and the picked item is the assignee.
+        // Route by row identity, NOT item.type: the on-call assignee <select> carries no
+        // data-item-type, so its user items load as type 'shift' (not 'user'). Keying off the
+        // row's `dutytype-` prefix is the reliable signal — otherwise the pick fell through to
+        // quickAddShift (NaN/duty-id args → failed assign, and previously an NRE at Table:818).
+        if (rowId.indexOf('dutytype-') === 0) {
+            var qeDutyTypeValue = rowId.substring('dutytype-'.length);
+            promise = window.quickAddOnDuty(date, parseInt(item.id, 10), parseInt(qeDutyTypeValue, 10), undefined, qeConfirm);
+        } else if (item.type === 'user') {
+            // Shifts By-Shift: row is a ShiftType (shift-{id}), the pick is the assignee.
             var shiftTypeId = rowId.replace('shift-', '');
             promise = window.quickAddShift(parseInt(shiftTypeId, 10), date, parseInt(item.id, 10), qeConfirm);
         } else if (item.type === 'shift') {
@@ -1278,9 +1411,15 @@
 
         var title = activeInput.value.trim();
         if (!title) {
-            // If empty, cancel chore entry
-            choreTypeForTitle = null;
-            closeInput();
+            // The server requires a title for a typed chore (QuickAddChore_TitleRequired). Rather than
+            // silently discarding the chosen chore type on an empty-Enter, keep the editor open and hint
+            // that a title is needed — the user can type one, or press Esc to abort.
+            if (window.showToast) {
+                var titleHint = getCulture() === 'he-IL'
+                    ? 'יש להזין כותרת למטלה' : 'Enter a title for the chore';
+                window.showToast(titleHint, 'info');
+            }
+            activeInput.focus();
             return;
         }
 

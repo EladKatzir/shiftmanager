@@ -646,6 +646,27 @@
             dropped — two job-type-pinned grants at the same molecule collapse to one).
             </summary>
         </member>
+        <member name="T:ShiftManager.Data.SeedData.BulkTestUserSeed">
+             <summary>
+             Bulk test-population seeder: fills every real company with a full soldier roster so all
+             features (shifts, chores, on-call, drafts, multi-company, Mil/GroupUser capabilities)
+             have realistic data to play with. Only runs in Development/Test environments.
+            
+             Per workforce company: 10 Alhut + 5 Text + 3 BR + 2 Hakam soldiers, 1 Lead-Alhut,
+             1 Lead-Text, 1 Kabar (BRDirector) and 1 trainee. Shikma tech companies swap Alhut/Text
+             for ProjectManager (פרויקטור) / Techno. One MoleculeAdmin per molecule. A handful of
+             Mil (מילואים) and GroupUser accounts spread across multiple companies via
+             CompanyMembership rows (capped at Kabar level — never MoleculeAdmin).
+            
+             Idempotent — existing users (matched by email) are SKIPPED, not reset, so anything you
+             change on them while playing survives an app restart. All emails end in "@test" so the
+             Program.cs startup sweep provisions role-template grants via RepairUserGrantsAsync.
+             Deterministic — no Random/DateTime.Now in the data path; re-runs build the same list.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Data.SeedData.BulkTestUserSeed.MakeDef(System.Int32,System.String,System.Int32,ShiftManager.Models.RoleTemplate,System.Nullable{System.Int32},ShiftManager.Models.Support.MilitaryRank,System.Boolean,System.Boolean)">
+            <summary>Builds one deterministic user definition from the global running index.</summary>
+        </member>
         <member name="T:ShiftManager.Data.SeedData.DataMigrationHelper">
             <summary>
             Helps migrate existing data to the v3.0 organizational hierarchy.
@@ -3149,6 +3170,78 @@
         <member name="M:ShiftManager.Migrations.AddCalendarDayNote.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.AddShiftBlockingAndHourCounting">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShiftBlockingAndHourCounting.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShiftBlockingAndHourCounting.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShiftBlockingAndHourCounting.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.FixTraineeForeignKey">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.FixTraineeForeignKey.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.FixTraineeForeignKey.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.FixTraineeForeignKey.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddSuppressSuccessToasts">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddSuppressSuccessToasts.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddSuppressSuccessToasts.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddSuppressSuccessToasts.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddDeskTeamView">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDeskTeamView.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDeskTeamView.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddDeskTeamView.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddShiftTabs">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShiftTabs.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShiftTabs.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddShiftTabs.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.DraftAllCalendarsFoundation">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.DraftAllCalendarsFoundation.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.DraftAllCalendarsFoundation.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.DraftAllCalendarsFoundation.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:ShiftManager.Migrations.ChoreFoundationBackfillSql">
             <summary>
             Raw SQLite statements that seed the chore-parity foundation onto an existing database. Held as
@@ -3916,6 +4009,15 @@
             Defaults to Turai (lowest enlisted rank) for backward compatibility.
             </summary>
         </member>
+        <member name="P:ShiftManager.Models.AppUser.SuppressSuccessToasts">
+            <summary>
+            Per-user opt-out for success toasts (Task #6). When true, both success-toast renderers
+            (toast-notifications.js, calendar-inline-edit.js) suppress type==='success' toasts —
+            errors/warnings/info are unaffected. Global preference, not company-scoped (mirrors
+            ThemeMode/ThemeColor). Surfaced to the client as window.UserPrefs.suppressSuccessToasts,
+            server-rendered in _Layout.cshtml.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.AppUser.PreferredLanguage">
             <summary>
             User's preferred UI/email language as a culture name ("he-IL" | "en-US").
@@ -4407,6 +4509,42 @@
             Soft delete flag
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.DeskTeamView">
+             <summary>
+             A private, owner-scoped saved "team table" view: a (TargetCompany × JobType) filter used to
+             render a dynamic roster on the /Calendar/Team page.
+            
+             Deliberately a SEPARATE entity from <see cref="T:ShiftManager.Models.TeamCalendar"/>: TeamCalendar's list endpoint
+             (api/team-calendars) returns ALL of an owner's calendars, so extending it here would leak these
+             dynamic filter views into the /MyTeam page. /MyTeam, TeamCalendar and TeamCalendarService are not
+             modified by this feature.
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DeskTeamView.CompanyId">
+            <summary>Tenant — the owner's current company at creation time.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DeskTeamView.OwnerId">
+            <summary>Owner of this saved view. Private and unshareable, like TeamCalendar.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DeskTeamView.TargetCompanyId">
+            <summary>The company whose users this view filters to.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DeskTeamView.JobTypeId">
+            <summary>The job-type filter for this view.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DeskTeamView.Name">
+            <summary>
+            View name (1-60 characters). Must be unique per owner among non-deleted views.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DeskTeamView.SortOrder">
+            <summary>Optional manual sort order among the owner's saved views.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DeskTeamView.IsDeleted">
+            <summary>
+            Soft delete flag. When true, the view is hidden from the owner's list.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.DirectorCompany">
             <summary>
             Maps Directors to Companies they oversee.
@@ -4504,13 +4642,18 @@
             </summary>
         </member>
         <member name="T:ShiftManager.Models.DraftCell">
-            <summary>
-            A single touched shift-cell within a <see cref="P:ShiftManager.Models.DraftCell.DraftSession"/> — identified by (ShiftTypeId, WorkDate).
-            <see cref="P:ShiftManager.Models.DraftCell.BaselineUserIds"/> is the snapshot of the live assignees captured the first time the assigner
-            touched the cell; <see cref="P:ShiftManager.Models.DraftCell.StagedUserIds"/> is the draft's desired set. At commit, if the live cell's
-            current assignees still equal the baseline the staged set is applied; otherwise the cell is a conflict.
-            User ids are stored as a sorted, comma-separated string so equality is a plain string compare.
-            </summary>
+             <summary>
+             A single touched shift-cell within a <see cref="P:ShiftManager.Models.DraftCell.DraftSession"/> — identified by (ShiftTypeId, WorkDate).
+             <see cref="P:ShiftManager.Models.DraftCell.BaselineUserIds"/> is the snapshot of the live assignees captured the first time the assigner
+             touched the cell; <see cref="P:ShiftManager.Models.DraftCell.StagedUserIds"/> is the draft's desired set. At commit, if the live cell's
+             current assignees still equal the baseline the staged set is applied; otherwise the cell drifted and is
+             skipped + reported. User ids are stored as a sorted, comma-separated string so equality is a plain string
+             compare.
+            
+             Primary→trainee shadowing (sub-project A) is staged in the parallel <see cref="P:ShiftManager.Models.DraftCell.BaselineTrainees"/> /
+             <see cref="P:ShiftManager.Models.DraftCell.StagedTrainees"/> columns as a sorted CSV of "primaryUserId:traineeUserId" tokens — created
+             here in the Foundation so A ships without a migration.
+             </summary>
         </member>
         <member name="P:ShiftManager.Models.DraftCell.BaselineUserIds">
             <summary>Sorted CSV of live user ids when the cell was first touched (the optimistic baseline).</summary>
@@ -4518,14 +4661,144 @@
         <member name="P:ShiftManager.Models.DraftCell.StagedUserIds">
             <summary>Sorted CSV of the draft's desired user ids for this cell.</summary>
         </member>
-        <member name="T:ShiftManager.Models.DraftSession">
+        <member name="P:ShiftManager.Models.DraftCell.BaselineTrainees">
+            <summary>Sorted CSV of "primaryUserId:traineeUserId" pairs for the cell's live trainee shadows at first touch.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftCell.StagedTrainees">
+            <summary>Sorted CSV of "primaryUserId:traineeUserId" pairs the draft desires for this cell.</summary>
+        </member>
+        <member name="T:ShiftManager.Models.DraftChoreCell">
+             <summary>
+             A single touched chore-cell within a <see cref="P:ShiftManager.Models.DraftChoreCell.DraftSession"/> (surface = Chores) — identified by
+             (UserId row, WorkDate column). A chore cell holds 0..N chores, so the payload is a canonical
+             serialization of a SET of chore descriptors (not an int-CSV): sub-project C serializes each descriptor
+             (ChoreTypeId, Title, StartTime, EndTime, Notes) to a stable string, sorts the set, and joins — keeping
+             the Foundation's conflict primitive (staged==baseline no-op; live==baseline safe; else drift → skip).
+            
+             Created in the Foundation (Spec F) so sub-project C ships without its own migration.
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftChoreCell.UserId">
+            <summary>Row coordinate — the user whose chore column this cell belongs to.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftChoreCell.WorkDate">
+            <summary>Column coordinate.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftChoreCell.BaselineChores">
+            <summary>Canonical serialization of the live chore-descriptor set captured at first touch.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftChoreCell.StagedChores">
+            <summary>Canonical serialization of the draft's desired chore-descriptor set.</summary>
+        </member>
+        <member name="T:ShiftManager.Models.DraftChoreDescriptor">
+             <summary>
+             The user-authored IDENTITY of a chore inside a chores Draft-Mode cell (sub-project C) — deliberately
+             EXCLUDES the volatile/derived fields (<c>Id</c>, <c>CreatedAt</c>, <c>CreatedBy</c>, <c>WeightMinutes</c>).
+             A chore cell holds 0..N of these, so the cell's <see cref="P:ShiftManager.Models.DraftChoreCell.BaselineChores"/> /
+             <see cref="P:ShiftManager.Models.DraftChoreCell.StagedChores"/> payload is a canonical serialization of a SET of descriptors:
+             each descriptor → a reversible, delimiter-safe string; the set is de-duplicated, sorted ordinal, and
+             joined with '\n'. That keeps the Foundation's conflict primitive a plain string compare
+             (<c>staged == baseline</c> no-op; <c>live == baseline</c> safe; else drift → skip), the analog of
+             <see cref="M:ShiftManager.Models.DraftCell.Encode(System.Collections.Generic.IEnumerable{System.Int32})"/> for the richer chore cell.
+            
+             The per-descriptor <see cref="M:ShiftManager.Models.DraftChoreDescriptor.Encode"/> string is ALSO the stable "descriptorKey" the overlay emits per
+             staged chip so the chore × can clear exactly one descriptor (staged chores have no <c>Chore.Id</c>).
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Models.DraftChoreDescriptor.#ctor(System.Nullable{System.Int32},System.String,System.Nullable{System.TimeOnly},System.Nullable{System.TimeOnly},System.String)">
+             <summary>
+             The user-authored IDENTITY of a chore inside a chores Draft-Mode cell (sub-project C) — deliberately
+             EXCLUDES the volatile/derived fields (<c>Id</c>, <c>CreatedAt</c>, <c>CreatedBy</c>, <c>WeightMinutes</c>).
+             A chore cell holds 0..N of these, so the cell's <see cref="P:ShiftManager.Models.DraftChoreCell.BaselineChores"/> /
+             <see cref="P:ShiftManager.Models.DraftChoreCell.StagedChores"/> payload is a canonical serialization of a SET of descriptors:
+             each descriptor → a reversible, delimiter-safe string; the set is de-duplicated, sorted ordinal, and
+             joined with '\n'. That keeps the Foundation's conflict primitive a plain string compare
+             (<c>staged == baseline</c> no-op; <c>live == baseline</c> safe; else drift → skip), the analog of
+             <see cref="M:ShiftManager.Models.DraftCell.Encode(System.Collections.Generic.IEnumerable{System.Int32})"/> for the richer chore cell.
+            
+             The per-descriptor <see cref="M:ShiftManager.Models.DraftChoreDescriptor.Encode"/> string is ALSO the stable "descriptorKey" the overlay emits per
+             staged chip so the chore × can clear exactly one descriptor (staged chores have no <c>Chore.Id</c>).
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Models.DraftChoreDescriptor.FromChore(ShiftManager.Models.Chore)">
+            <summary>Descriptor of an existing live chore (trims exactly like <c>ChoreService.CreateChoreAsync</c> stores).</summary>
+        </member>
+        <member name="M:ShiftManager.Models.DraftChoreDescriptor.Create(System.Nullable{System.Int32},System.String,System.Nullable{System.TimeOnly},System.Nullable{System.TimeOnly},System.String)">
+            <summary>Normalizing factory — trims Title/Notes and folds a blank Notes to null (matches create-time storage).</summary>
+        </member>
+        <member name="M:ShiftManager.Models.DraftChoreDescriptor.Encode">
             <summary>
-            A private, per-assigner sandbox over one molecule+week of the shift calendar (Epic 4 — Draft Mode).
-            Edits made while a session is Active are staged in <see cref="T:ShiftManager.Models.DraftCell"/> rows and never touch the
-            live board or fire SignalR; committing reconciles only the touched cells into the live schedule with
-            optimistic, per-cell conflict detection. Molecule-scoped (no tenant filter) so an assigner can stage
-            changes across the companies of their molecule, exactly like the live calendar.
+            Reversible, delimiter-safe single-descriptor string. Title/Notes are URL-escaped so the field
+            separator '|', the key/value '=', and the set separator '\n' can never appear inside a value.
             </summary>
+        </member>
+        <member name="M:ShiftManager.Models.DraftChoreDescriptor.Decode(System.String)">
+            <summary>Inverse of <see cref="M:ShiftManager.Models.DraftChoreDescriptor.Encode"/>. Unknown/malformed fields fall back to their defaults.</summary>
+        </member>
+        <member name="M:ShiftManager.Models.DraftChoreDescriptor.EncodeSet(System.Collections.Generic.IEnumerable{ShiftManager.Models.DraftChoreDescriptor})">
+            <summary>Canonical SET serialization: de-dup by <see cref="M:ShiftManager.Models.DraftChoreDescriptor.Encode"/>, sort ordinal, join with '\n'.</summary>
+        </member>
+        <member name="M:ShiftManager.Models.DraftChoreDescriptor.DecodeSet(System.String)">
+            <summary>Inverse of <see cref="M:ShiftManager.Models.DraftChoreDescriptor.EncodeSet(System.Collections.Generic.IEnumerable{ShiftManager.Models.DraftChoreDescriptor})"/>.</summary>
+        </member>
+        <member name="T:ShiftManager.Models.DraftDutyCell">
+             <summary>
+             A single touched on-call cell within a <see cref="P:ShiftManager.Models.DraftDutyCell.DraftSession"/> (surface = OnCall) — identified by
+             (DutyTypeValue, WorkDate). <see cref="P:ShiftManager.Models.DraftDutyCell.DutyTypeValue"/> is the int the calendar already keys on and covers
+             the built-in <c>OnDutyType</c> enum plus custom <c>OnDutyTypeConfig</c> (TypeValue &gt; 1) uniformly.
+             The user set reuses the same sorted-CSV convention as <see cref="T:ShiftManager.Models.DraftCell"/> (Encode/Decode verbatim).
+            
+             SCOPE LANDMINE (sub-project D): baseline / staged-target / live-now are computed over the GLOBAL active
+             set for (DutyTypeValue, WorkDate) — on-call has no company/molecule/area data boundary. The session's
+             AreaId is a UI hint only. Created in the Foundation (Spec F) so sub-project D ships without a migration.
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftDutyCell.DutyTypeValue">
+            <summary>Row coordinate — the duty type (built-in enum value or custom config TypeValue).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftDutyCell.WorkDate">
+            <summary>Column coordinate.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftDutyCell.BaselineUserIds">
+            <summary>Sorted CSV of the live (global) on-duty user ids captured at first touch.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftDutyCell.StagedUserIds">
+            <summary>Sorted CSV of the draft's desired (global) on-duty user ids for this cell.</summary>
+        </member>
+        <member name="T:ShiftManager.Models.DraftSurface">
+            <summary>
+            Which calendar surface a <see cref="T:ShiftManager.Models.DraftSession"/> sandboxes. Draft Mode spans all three calendars
+            (Foundation Spec F); each surface has its own cell table + reconciler but shares this session + the
+            lifecycle/commit engine. Persisted as an int — DO NOT renumber (existing rows default to 0=Shifts).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.DraftSession">
+             <summary>
+             A private, per-assigner sandbox over one calendar surface + scope + week (Epic 4 — Draft Mode).
+             Edits made while a session is Active are staged in per-surface cell rows (<see cref="T:ShiftManager.Models.DraftCell"/> for
+             shifts, <see cref="T:ShiftManager.Models.DraftChoreCell"/> for chores, <see cref="T:ShiftManager.Models.DraftDutyCell"/> for on-call) and never
+             touch the live board or fire SignalR; committing reconciles only the touched cells into the live
+             schedule with per-cell conflict detection + per-cell re-authorization. Scoped without a tenant filter
+             so an assigner can stage across the companies of their molecule (or the global on-call space), exactly
+             like the live calendar.
+            
+             Scope tuple per surface (the "one active draft per …" key, enforced by filtered-unique indexes):
+              - Shifts: (OwnerUserId, Surface, MoleculeId, JobTypeId, WeekStart)
+              - Chores: (OwnerUserId, Surface, MoleculeId, WeekStart)              (JobTypeId null)
+              - OnCall: (OwnerUserId, Surface, AreaId, WeekStart)                   (MoleculeId null; AreaId is a UI hint only)
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftSession.Surface">
+            <summary>Which calendar surface this sandbox covers.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftSession.MoleculeId">
+            <summary>Shifts/chores scope. Null for on-call (which is global, keyed by <see cref="P:ShiftManager.Models.DraftSession.AreaId"/> for the UI only).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftSession.JobTypeId">
+            <summary>Shifts-only scope axis. Null for chores/on-call.</summary>
+        </member>
+        <member name="P:ShiftManager.Models.DraftSession.AreaId">
+            <summary>On-call presentation hint (which area's rows/pickers to show). NEVER a data boundary — on-call is global. Null for shifts/chores.</summary>
         </member>
         <member name="T:ShiftManager.Models.DTOs.GriffinClaimsDto">
              <summary>
@@ -5634,6 +5907,30 @@
             A Program defines WHEN a specific shift type runs (weekly mask) and DEFAULT staffing.
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.ShiftTab">
+             <summary>
+             A molecule-scoped "tab" (Hebrew: לשונית) — a named sub-calendar within a molecule, like a separate
+             Excel sheet in the legacy system. A <see cref="T:ShiftManager.Models.ShiftType"/> belongs to at most one tab via
+             <see cref="P:ShiftManager.Models.ShiftType.TabId"/> (untagged = the implicit "Main" tab). Companies are assigned to a tab via
+             <see cref="T:ShiftManager.Models.ShiftTabCompany"/>, which drives the by-user roster base.
+            
+             A tab is purely a VIEW partition: it filters what the Shifts calendar renders but NEVER narrows
+             eligibility, overlap/rest/weekly-hours (<c>IBusyService</c>), or fairness/Justice — those always reason
+             over a user's full, cross-tab shift set.
+            
+             Like <see cref="T:ShiftManager.Models.ShiftCategory"/>, this entity is NOT tenant-filtered (no IBelongsToCompany);
+             visibility is molecule-scoped via MoleculeId, and isolation rests on explicit MoleculeId checks at
+             every call site.
+             </summary>
+        </member>
+        <member name="T:ShiftManager.Models.ShiftTabCompany">
+            <summary>
+            Assigns a <see cref="P:ShiftManager.Models.ShiftTabCompany.Company"/> to a <see cref="P:ShiftManager.Models.ShiftTabCompany.ShiftTab"/> — the tab's people-view roster base.
+            A company belongs to AT MOST ONE tab (unique <see cref="P:ShiftManager.Models.ShiftTabCompany.CompanyId"/>), so tabs are disjoint and the
+            implicit "Main" tab = the molecule's companies with no assignment. Both FKs cascade-delete: removing a
+            tab (or a company) drops the link automatically.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Models.ShiftType.CompanyId">
             <summary>
             Owning company for company-scoped shifts. Null for molecule/area-scoped shifts.
@@ -5660,6 +5957,21 @@
             <summary>
             If true, only users with officer rank (>= SegenMishne) can be assigned.
             Follows existing pattern from OnDutyTypeConfig.RequiresOfficerRank.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftType.IsBlocking">
+            <summary>
+            If true (default), holding this shift blocks the user from overlapping/back-to-back shifts
+            (overlap + rest-period checks). If false, the shift can coexist with others — e.g. a status
+            shift held alongside a morning shift. Presence statuses (Offline/Home) are intrinsically
+            non-blocking regardless of this column; see <see cref="P:ShiftManager.Models.ShiftType.BlocksConcurrentShifts"/>.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftType.CountsTowardHourLimits">
+            <summary>
+            If true (default), this shift's hours count toward the weekly-hours cap and analytics totals.
+            If false, its hours are ignored everywhere hours are summed. Presence statuses (Offline/Home)
+            never count regardless of this column; see <see cref="P:ShiftManager.Models.ShiftType.CountsTowardHours"/>.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.ShiftType.NameEn">
@@ -5699,6 +6011,21 @@
             <summary>
             Returns true if this is the special "Home" shift type (rotation day off).
             HOME shifts are exempt from overlap, rest period, and weekly cap checks.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftType.BlocksConcurrentShifts">
+            <summary>
+            True if this shift participates in overlap / rest-period conflict detection. Driven by the
+            configurable <see cref="P:ShiftManager.Models.ShiftType.IsBlocking"/> column, except presence statuses (Offline/Home) which
+            are intrinsically non-blocking regardless of the column (they model "available for other work").
+            A conflict fires only when BOTH the candidate and the neighbouring shift block.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftType.CountsTowardHours">
+            <summary>
+            True if this shift's hours count toward the weekly cap and analytics totals. Driven by the
+            configurable <see cref="P:ShiftManager.Models.ShiftType.CountsTowardHourLimits"/> column, except presence statuses (Offline/Home)
+            which never count regardless of the column.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.ShiftType.SortOrder">
@@ -6490,6 +6817,15 @@
             shape is what lets one user belong to several categories at once (e.g. Yekev AND Hazon).
             </summary>
         </member>
+        <member name="T:ShiftManager.Models.UserShiftTabPreference">
+            <summary>
+            A single user's remembered tab selection per molecule on the Shifts calendar. NOT IBelongsToCompany —
+            a per-user UI preference read only for its owner (like <see cref="T:ShiftManager.Models.UserCalendarRowOrder"/>), so there is
+            no cross-tenant read path. <see cref="P:ShiftManager.Models.UserShiftTabPreference.TabId"/> null = the user explicitly chose "Main". The FK
+            TabId → ShiftTab is SET NULL, so deleting a tab reverts anyone's remembered preference to Main. Unique
+            per (UserId, MoleculeId).
+            </summary>
+        </member>
         <member name="T:ShiftManager.Models.Validation.ChoreAssignmentValidation">
              <summary>
              Result of <see cref="M:ShiftManager.Services.IChoreService.ValidateChoreAssignmentAsync(System.Int32,System.DateOnly,System.Int32,System.Nullable{System.Int32},System.String,System.Threading.CancellationToken)"/> — mirrors the
@@ -6836,6 +7172,12 @@
             Generates a URL-safe slug from a name: lowercase, non-alphanumeric chars → hyphens, trimmed.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Admin.CompaniesModel.OnGetMoveImpactAsync(System.Int32,System.Int32)">
+            <summary>AJAX preview: what moving a company to another molecule would delete/affect.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.CompaniesModel.OnPostMoveCompanyAsync">
+            <summary>Move a company (with its users) to another molecule. Deletes shifts; keeps vacations.</summary>
+        </member>
         <member name="M:ShiftManager.Pages.Admin.EditProfileModel.CanEditTargetAsync(System.Int32,System.Int32,System.Int32)">
             <summary>
             True when <paramref name="editorUserId"/> may edit the user in <paramref name="targetCompanyId"/>.
@@ -7125,6 +7467,16 @@
             ✅ PHASE 20: API endpoint to quickly create on-duty assignments from calendar views
             </summary>
         </member>
+        <member name="T:ShiftManager.Pages.Api.Calendar.QuickAddTimeOffModel">
+            <summary>
+            Manual time-off entry from a people-row calendar cell (Vacation / DayAt / After).
+            Thin adapter over <see cref="M:ShiftManager.Services.IVacationApprovalService.CreateApprovedManualTimeOffAsync(System.Int32,ShiftManager.Models.Support.TimeOffType,System.DateOnly,System.DateOnly,System.String,System.Int32)"/>:
+            parses the JSON body, resolves the actor + viewed company, maps the type string, and
+            localizes the service's ErrorKey. CSRF is enforced by ApiAuthenticationMiddleware's
+            X-Requested-With requirement (hence [IgnoreAntiforgeryToken]); the /Api/Calendar prefix
+            is already whitelisted, so no Program.cs / middleware registration is needed.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.ShiftHistoryModel">
             <summary>
             Returns shift assignment history for a specific user or shift instance.
@@ -7204,6 +7556,28 @@
             <summary>
             API endpoint for client-side JavaScript localization
             Fetches localized strings for given keys, respecting current culture and company overrides
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Api.My.LanguageModel">
+             <summary>
+             Per-user UI-language sync endpoint (#10 — "switched UI to Hebrew, later it reverted to
+             English"). Scope: the authenticated user only — reads
+             <c>User.FindFirst(ClaimTypes.NameIdentifier)</c> and never accepts a userId from the request
+             body. Persists <c>AppUser.PreferredLanguage</c> synchronously so a toggle-then-navigate-away
+             (before <c>PreferredLanguageLearningMiddleware</c> would have passively learned it on the next
+             request) still sticks. Mirrors <see cref="T:ShiftManager.Pages.Api.My.ThemeModel"/>'s shape.
+            
+             Also re-seeds the <c>.AspNetCore.Culture</c> cookie via
+             <see cref="M:ShiftManager.Pages.Auth.LoginModel.ReseedCultureCookie(Microsoft.AspNetCore.Http.HttpContext,System.String)"/> after the DB write, for parity with the
+             login-time re-seed — the client-side toggles already write the cookie directly before
+             calling this endpoint, but doing it here too keeps the server the single source of truth for
+             correct cookie attributes (notably <c>Secure</c>) once the DB write has succeeded.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Api.My.LanguageModel.CurrentUserId">
+            <summary>
+            Self-scoping: userId always comes from the authenticated principal's own claim, never
+            from the request body. Mirrors <see cref="T:ShiftManager.Pages.Api.My.ThemeModel"/>'s identical private helper.
             </summary>
         </member>
         <member name="T:ShiftManager.Pages.Api.My.ThemeModel">
@@ -7517,6 +7891,36 @@
             Delegates to centralized RoleTemplateMapper to ensure consistency across codebase.
             </summary>
         </member>
+        <member name="M:ShiftManager.Pages.Auth.LoginModel.ReseedCultureCookie(Microsoft.AspNetCore.Http.HttpContext,System.String)">
+             <summary>
+             Re-seeds the <c>.AspNetCore.Culture</c> cookie (+ the <c>.culture_explicit</c> marker)
+             from a stored <c>AppUser.PreferredLanguage</c> value (#10). Called right after sign-in on
+             both auth paths — from <see cref="M:ShiftManager.Pages.Auth.LoginModel.OnPostAsync(System.String)"/> above (local login) and from
+             <c>GriffinCallback.cshtml.cs</c> (ADFS) — so a fresh/cookieless browser renders in the
+             user's last-known language on the very next request instead of falling back to the site
+             default. Also called synchronously from <c>Pages/Api/My/Language.cshtml.cs</c> after a
+             toggle persists, so the server-set cookie attributes (notably <c>Secure</c>) stay correct
+             even though the client-side toggle scripts also write the cookie directly.
+            
+             Public static and parameterized on <see cref="T:Microsoft.AspNetCore.Http.HttpContext"/> (rather than an instance
+             method) specifically so it is a plain, directly-testable unit and is callable from the
+             other page model without instantiating <see cref="T:ShiftManager.Pages.Auth.LoginModel"/>.
+            
+             Writing <c>.culture_explicit</c> alongside the culture cookie is load-bearing:
+             <c>LegacyCultureCookieResetMiddleware</c> (FF_HEBREW_DEFAULT only) strips an *unmarked*
+             <c>en-US</c> culture cookie because it cannot distinguish a re-seeded preference from a
+             stale pre-Hebrew-default artifact. Without the marker, a re-seeded <c>en-US</c> preference
+             would be wiped again on the very next request. Must be kept in sync with the two
+             client-side writers: <c>LanguageToggle/Default.cshtml</c> and <c>Login.cshtml</c>'s own
+             toggle script — all writer sites set both cookies together.
+            
+             Validates <paramref name="culture"/> against <see cref="F:ShiftManager.Services.RequestLocalizationSetup.SupportedCultures"/>
+             (not just non-empty) because <c>PreferredLanguage</c> is a loosely-typed persisted string;
+             <c>new RequestCulture(culture)</c> throws <see cref="!:CultureNotFoundException"/> for
+             anything else, which would otherwise fail sign-in outright for a user with a stale or
+             corrupted value.
+             </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Calendar.ChoresModel">
             <summary>
             Excel-style Chores Calendar page - Shows chore assignments by user across dates.
@@ -7543,6 +7947,14 @@
             <summary>
             Per-user-per-date HOME shift item used to render the read-only HOME overlay
             chip on Chores/OnCall calendars (Task 24). Carries source-icon + time fields.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ChoresModel.BuildDraftChoreChips(System.Int32,System.DateOnly,System.Collections.Generic.List{ShiftManager.Models.Chore},System.Boolean)">
+            <summary>
+            Draft Mode (Spec C): build a (user, date) cell's chore chips from the effective descriptor set — the
+            staged set for a touched cell, else the live chores mapped to descriptors. Each chip carries its stable
+            <see cref="P:ShiftManager.ViewComponents.ExcelCalendarAssignment.DraftChoreKey"/> (the descriptor's canonical Encode()) so the × can
+            stage a draft-clear of exactly that descriptor. Id=0 (no persisted row); removal is key-driven.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.ChoresModel.OnGetJusticeEligibilityAsync(System.String,System.String,System.Threading.CancellationToken)">
@@ -7670,9 +8082,30 @@
             On-Duty assignments are global (cross-company), optionally filtered by area.
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Calendar.OnCallModel.DraftMode">
+            <summary>When true, the on-call calendar renders the viewer's private draft overlay (sub-project D).</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.OnCallModel.ActiveDraftId">
+            <summary>The active on-call draft session id for the current viewer + area + week (null when not drafting).</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.OnCallModel.CompanyNamesById">
+            <summary>
+            Company display name per company id, for the assignee picker. The on-call pool is area-wide
+            (many companies), so identical display names collide; the picker appends the company to
+            disambiguate (e.g. "רועי שלום — חמסה").
+            </summary>
+        </member>
         <member name="T:ShiftManager.Pages.Calendar.OnCallModel.DutyTypeInfo">
             <summary>
             Info about a duty type (built-in or custom)
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.OnCallModel.ApplyDraftOverlayAsync(System.Collections.Generic.List{ShiftManager.Models.OnDuty})">
+            <summary>
+            Draft Mode (sub-project D): replace the live users of each TOUCHED (dutyType, date) cell with the
+            draft's staged set, rendered as synthetic (Id=0) <see cref="T:ShiftManager.Models.OnDuty"/> rows so the assigner sees their
+            private sandbox. The staged set is GLOBAL (Spec D §3) — staged users are shown regardless of the area
+            view. Returns the input unchanged when not drafting or no active draft exists.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.OnCallModel.OnGetJusticeEligibilityAsync(System.String,System.String,System.Threading.CancellationToken)">
@@ -7695,20 +8128,6 @@
             Each cell shows aggregated status (vacations, shifts, chores, on-duty) plus notes.
             </summary>
         </member>
-        <member name="T:ShiftManager.Pages.Calendar.OverviewModel.OverviewShiftItem">
-            <summary>
-            Per-user-per-date shift item used to render the Overview cell.
-            Carries HOME-specific fields so the shared _CalendarRow partial can
-            render HOME chips with source/house icons + time range (Task 23).
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Pages.Calendar.OverviewModel.OverviewShiftItem.#ctor(System.String,System.Boolean,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
-            <summary>
-            Per-user-per-date shift item used to render the Overview cell.
-            Carries HOME-specific fields so the shared _CalendarRow partial can
-            render HOME chips with source/house icons + time range (Task 23).
-            </summary>
-        </member>
         <member name="T:ShiftManager.Pages.Calendar.ShiftsModel">
             <summary>
             Excel-style Shifts Calendar page - Primary deliverable for Excel Calendars feature.
@@ -7727,8 +8146,18 @@
             to those lists' members and grouped into one collapsible section per list. Persists across navigation.
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.Tab">
+            <summary>
+            Selected calendar tab (לשונית). Bound from ?Tab=. Absent from the query = resolve the user's
+            remembered tab; <c>0</c> = explicit "Main". After OnGet resolution this holds the EFFECTIVE tab:
+            null = Main, otherwise a real tab id in the current molecule. Downstream filters key off it.
+            </summary>
+        </member>
         <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.SelectedDistributionListIds">
             <summary>Parsed, de-duplicated selected distribution-list IDs (defensive int.TryParse per item).</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.AvailableTabs">
+            <summary>The molecule's admin-defined tabs (לשונית) for the calendar tab strip. Empty = no strip.</summary>
         </member>
         <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.CategoryEligibilityEnabled">
             <summary>3b: when true (per-company flag), the assign user-picker filters by DoesShifts + ShiftCategory.
@@ -7766,12 +8195,19 @@
             already carry their GroupId ("category-{id}" or null); uncategorized rows collect under an "Other" group.
             </summary>
         </member>
-        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.ApplyDraftOverlayAsync(System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Int32,System.Nullable{System.Int32})">
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.ApplyDraftOverlayAsync(System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Collections.Generic.List{ShiftManager.Models.ShiftInstance},System.Int32,System.Nullable{System.Int32})">
             <summary>
             Draft Mode (Epic 4): overlays the viewer's active draft onto the live assignments for rendering —
             touched cells show their STAGED assignees (synthetic, in-memory <see cref="T:ShiftManager.Models.ShiftAssignment"/>s)
             instead of the live ones. Sets <see cref="P:ShiftManager.Pages.Calendar.ShiftsModel.ActiveDraftId"/>. Returns the live list unchanged when
             not in draft mode or no active draft exists.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.ShiftIsOnActiveTab(System.Int32)">
+            <summary>
+            True if a shift type is on the active tab (or the molecule has no tabs). Main (Tab == null) matches
+            untagged shifts. Drives by-user "busy elsewhere" ghosting: a shift on a DIFFERENT tab is shown greyed
+            and non-interactive, but is NEVER hidden from conflict/rest/hours — those see the full shift set.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.OnGetJusticeAsync(System.Threading.CancellationToken)">
@@ -7871,9 +8307,58 @@
         </member>
         <member name="M:ShiftManager.Pages.Calendar.TableModel.IsCallerInMoleculeAsync(System.Int32)">
             <summary>
-            Validates that the caller's company belongs to the specified molecule.
-            Used to prevent unauthorized molecule access via crafted API calls.
+            Validates that the caller's ACTIVE (switcher-aware) company belongs to the specified molecule.
+            Used to prevent unauthorized molecule access via crafted API calls. internal for testability.
             </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Calendar.TeamModel">
+             <summary>
+             "Team" = the users of a chosen (Company × JobType), rendered IDENTICALLY to /Calendar/Overview
+             (same <see cref="T:ShiftManager.Services.IOverviewCalendarBuilder"/>, same ExcelCalendarTable component) — design doc
+             docs/superpowers/specs/2026-07-14-ui-batch-and-team-page-design.md #9.3/#9.4.
+            
+             Visible to EVERY authenticated user ([Authorize], no policy — required for the Task #10 nav
+             leaf's null-policy parity check); the picker itself is scope-limited to the companies the
+             caller holds "ViewShifts" for (+ their own company). Real use case: an Alhut lead in Tzafona
+             sees all Alhut soldiers in Tzafona by default, and can switch Company to see Alhut in another
+             company within their ViewShifts scope (JobType is area-scoped — the same JobType id spans
+             companies in the area, which is what makes the cross-company switch meaningful).
+            
+             v1 is READ-ONLY: BuildAsync is always called with canEditNotes:false. Overview's per-cell note
+             editing is deliberately not wired here for v1 (see task-9-report.md).
+            
+             Saved views: private per-owner <see cref="T:ShiftManager.Models.DeskTeamView"/> rows (a (TargetCompany, JobType, Name)
+             tuple) — deliberately a separate entity/service from TeamCalendar so /MyTeam stays untouched.
+             </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.TeamModel.CanEnterTimeOff">
+            <summary>True when the caller may enter time-off on this (otherwise read-only) Team grid.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.TeamModel.ViewId">
+            <summary>When set, opens a saved DeskTeamView (re-validated against current scope — #9.4).</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.TeamModel.ActiveViewId">
+            <summary>Id of the saved view currently being displayed (highlights its tab), if any.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.TeamModel.RequestedViewInaccessible">
+            <summary>
+            True when a ?ViewId= was supplied but either doesn't exist / isn't owned by the caller, or
+            its TargetCompanyId has fallen outside the caller's CURRENT ViewShifts scope (grant revoked
+            since the view was saved). The view is never rendered in this case — the page instead falls
+            back to the caller's own company/job type and surfaces this flag for the UI.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.TeamModel.LoadUsersAsync">
+            <summary>
+            Loads the row set: Standard-account users of the resolved (Company × JobType). Internal
+            (not private) so tests can call it directly, mirroring OverviewModel.LoadUsersAsync.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.TeamModel.OnPostAddViewAsync(System.String)">
+            <summary>Creates a new saved view from the current picker selection.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.TeamModel.OnPostDeleteViewAsync(System.Int32)">
+            <summary>Deletes (soft) a saved view. The service itself is owner-scoped (throws if not found/owned).</summary>
         </member>
         <member name="T:ShiftManager.Pages.Calendar.WeekModel">
             <summary>
@@ -8085,6 +8570,13 @@
             Shift types (within the current molecule view) whose NameKey is missing. Surfaced so the
             banner can list exactly which items are affected and the inline "Add name keys" modal can
             preview the keys that will be assigned.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostUpdateShiftFlagsAsync(ShiftManager.Pages.Owner.BlueprintsModel.UpdateShiftFlagsRequest)">
+            <summary>
+            Issue 1: toggle whether a shift type blocks overlapping/back-to-back shifts and whether its
+            hours count toward the weekly cap and analytics. Presence statuses (Offline/Home) are
+            intrinsically exempt regardless of these columns, so the view disables the toggles for them.
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Owner.BlueprintsModel.OnPostAddNamekeysAsync">
@@ -8456,7 +8948,51 @@
              every category they can/can't do and why. Replaces the old three-page scavenger hunt.
             
              Policy MUST match the NavRegistry node policy for this route (P2: visibility == access).
+            
+             Issue #3 (2026-07): the page used to pin all data to the caller's login home-molecule claim
+             with no selector, so a project-scoped Owner (or area-scoped AreaAdmin) could never reach users
+             outside their own home molecule. It also had a latent cross-molecule IDOR — the mutating/detail
+             handlers performed no caller-scope check against the target's molecule at all. Both are fixed
+             here: a scope-aware molecule selector (mirrors Pages/Owner/Blueprints.cshtml.cs, minus its
+             area filter — that would wrongly confine a project-scoped Owner to one area) plus an explicit
+             ManageShiftCategories-for-the-target's-molecule re-check in every handler that reads or writes
+             a specific user/category. The MoleculeId query parameter is never trusted as proof of
+             authorization by itself — every handler re-derives the TARGET's molecule server-side and
+             checks the caller's grant against that resolved value.
              </summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Scheduling.Eligibility.IndexModel.MoleculeOption">
+            <summary>A molecule the caller may select in the scope picker.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Scheduling.Eligibility.IndexModel.MoleculeOption.#ctor(System.Int32,System.String)">
+            <summary>A molecule the caller may select in the scope picker.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Scheduling.Eligibility.IndexModel.MoleculeId">
+            <summary>
+            The molecule whose categories/users are displayed. Bound from the querystring so the
+            selector can auto-submit a GET — but NEVER trusted as-is: <see cref="M:ShiftManager.Pages.Scheduling.Eligibility.IndexModel.OnGetAsync"/> clamps
+            it to the caller's own <c>GetAccessibleMoleculeIdsForGrantAsync</c> set below.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Scheduling.Eligibility.IndexModel.AvailableMolecules">
+            <summary>Molecules the caller may pick from (their ManageShiftCategories scope, cascaded: project -> every molecule in it, area -> the area's, molecule -> just their own).</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Scheduling.Eligibility.IndexModel.GetUserMoleculeIdAsync(System.Int32)">
+            <summary>
+            Resolves a user's molecule via their company (mirrors the molecule resolution in
+            Pages/Admin/Users.cshtml.cs OnPostUserCategoriesAsync). Null when the user or their
+            company/molecule can't be resolved — callers must treat that as "deny", never as "no
+            scope requested" (passing a null moleculeId into HasGrantWithScopeAsync/GetAccessible*
+            falls back to the CALLER's own ambient hierarchy for some scope shapes, which would wrongly
+            authorize an unresolvable target instead of rejecting it).
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Shared.CalendarReadonlyBannerModel.CanEnterTimeOff">
+            <summary>
+            When true, the grid is read-only for shift/note edits but the caller may still enter time-off
+            on people rows (Team page, or any editor-viewer). Drives an accurate "time-off entry only"
+            banner instead of the stark "Read-Only Mode" — which otherwise hides a working capability.
+            </summary>
         </member>
         <member name="T:ShiftManager.Pages.Shared.JusticePanelModel">
              <summary>
@@ -9192,6 +9728,15 @@
         <member name="M:ShiftManager.Services.CompanyMembershipService.RemoveMembershipWithCleanupAsync(System.Int32,System.Int32,System.Int32)">
             <inheritdoc/>
         </member>
+        <member name="T:ShiftManager.Services.CompanyMoleculeTransferService">
+            <summary>
+            Moves a whole company from one molecule to another. Modeled on <see cref="T:ShiftManager.Services.UserCompanyTransferService"/>:
+            the company keeps its Id (so CompanyId foreign keys — users, vacations — stay valid automatically),
+            but everything molecule-scoped (shift scheduling, chores, per-user job-type/department/home-type and
+            category memberships, molecule-scoped grants) belongs to the OLD molecule and is cleared/rebuilt.
+            Vacations (TimeOffRequest) and accounts survive.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.ConcurrencyService">
             <summary>
             Service for handling optimistic concurrency conflicts (B-018).
@@ -9283,6 +9828,16 @@
             folders next to the export path; deletes the rest by LastWriteTime ascending.
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.DeskTeamViewService">
+            <summary>
+            Owner-scoped CRUD for <see cref="T:ShiftManager.Models.DeskTeamView"/> — saved dynamic (TargetCompany × JobType)
+            team-table views for the /Calendar/Team page. See <see cref="T:ShiftManager.Services.IDeskTeamViewService"/> for the
+            rationale for keeping this separate from TeamCalendar/TeamCalendarService.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DeskTeamViewService.FindOwnedAsync(System.Int32)">
+            <summary>Looks up a view by Id, scoped to the current user as owner. Throws if not found/not owned.</summary>
+        </member>
         <member name="M:ShiftManager.Services.DirectorService.CanAssignRoleAsync(ShiftManager.Models.Support.UserRole)">
             <remarks>
             This method checks role TYPE permission only. Scope validation (whether the target user
@@ -9291,6 +9846,20 @@
         </member>
         <member name="M:ShiftManager.Services.DistributionListService.ValidateAsync(System.Int32,System.String,System.Collections.Generic.IReadOnlyCollection{System.Int32},System.Nullable{System.Int32})">
             <summary>Validates name presence/uniqueness and that every member belongs to the molecule (cross-company OK).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftDutyService.GetLiveCellUsersAsync(System.Int32,System.DateOnly)">
+            <summary>
+            GLOBAL live user set for (dutyTypeValue, date) — the active (non-canceled) OnDuty rows. IgnoreQueryFilters
+            is a documented no-op (OnDuty is un-filtered); the area filter is deliberately NOT applied (Spec D §3).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftDutyService.AuthorizeCellAsync(System.Int32,ShiftManager.Services.DraftScope,ShiftManager.Services.CellKey)">
+            <summary>
+            Commit-time re-authorization (Spec D §5, F §5b/§7). Each on-call cell IS a duty type (RowId =
+            DutyTypeValue), so re-checking per cell IS re-checking per duty type. Parity with the live edit gate:
+            the OR-chain <c>ManageOnDuty || AssignHakamDuties || AssignKatzinDuties || EditOnCallCalendar</c> is
+            undifferentiated by duty type there too, so we call the same authority.
+            </summary>
         </member>
         <member name="T:ShiftManager.Services.DurationFormat">
             <summary>
@@ -10500,6 +11069,18 @@
             Returns the old RoleTemplateId so the handler can do a company-scoped grant reconcile.
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.ICompanyMoleculeTransferService.GetMoveImpactAsync(System.Int32,System.Int32)">
+            <summary>Read-only: counts of what moving <paramref name="companyId"/> to
+            <paramref name="targetMoleculeId"/> would delete/affect. Does not mutate anything.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICompanyMoleculeTransferService.MoveCompanyToMoleculeAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Transactional molecule re-scope of a whole company. Deletes the company's shift scheduling
+            data and chores, resets its users' molecule-scoped config, rebuilds their grants for the new
+            hierarchy, and repoints Company.MoleculeId. Vacations (TimeOffRequest) and accounts are kept.
+            Assumes the caller has already authorized the move.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Services.IConcurrencyService">
             <summary>
             Service interface for handling optimistic concurrency conflicts (B-018).
@@ -10543,6 +11124,33 @@
             <summary>
             A general database error occurred.
             </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IDeskTeamViewService">
+             <summary>
+             Manages owner-scoped <see cref="T:ShiftManager.Models.DeskTeamView"/> saved dynamic team-table views: a
+             (TargetCompany × JobType) filter rendered on the /Calendar/Team page.
+            
+             Deliberately SEPARATE from <see cref="T:ShiftManager.Services.TeamCalendarService"/> — TeamCalendar's list endpoint
+             (api/team-calendars) returns ALL of an owner's calendars, so reusing it here would leak these
+             dynamic filter views into the /MyTeam page. /MyTeam, TeamCalendar and TeamCalendarService are
+             not touched by this service.
+            
+             All methods resolve the acting user from the current request (ClaimTypes.NameIdentifier) and the
+             current tenant from <see cref="T:ShiftManager.Services.ITenantResolver"/> — mirrors the claim-resolution pattern used by
+             ChoreService, not TeamCalendarService's explicit-ownerId-parameter style.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDeskTeamViewService.ListForOwnerAsync">
+            <summary>The current user's non-deleted saved views, ordered by SortOrder then CreatedAt.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDeskTeamViewService.CreateAsync(System.Int32,System.Int32,System.String)">
+            <summary>Creates a new saved view owned by the current user in their current tenant company.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDeskTeamViewService.RenameAsync(System.Int32,System.String)">
+            <summary>Renames a saved view. Throws <see cref="T:System.InvalidOperationException"/> if not found or not owned by the current user.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDeskTeamViewService.DeleteAsync(System.Int32)">
+            <summary>Soft-deletes a saved view. Throws <see cref="T:System.InvalidOperationException"/> if not found or not owned by the current user.</summary>
         </member>
         <member name="T:ShiftManager.Services.IDirectorService">
             <summary>
@@ -10646,53 +11254,242 @@
         <member name="M:ShiftManager.Services.IDistributionListService.DeleteAsync(System.Int32,System.Int32)">
             <summary>Delete a list (molecule derived from the persisted list). Re-checks grant. Cascades members.</summary>
         </member>
-        <member name="T:ShiftManager.Services.DraftOverlayCell">
-            <summary>One staged shift-cell in a draft: the desired assignees for (ShiftTypeId, WorkDate).</summary>
+        <member name="T:ShiftManager.Services.DraftChoreOverlayCell">
+            <summary>One touched chore cell's staged descriptor set, for the render overlay (sub-project C).</summary>
         </member>
-        <member name="M:ShiftManager.Services.DraftOverlayCell.#ctor(System.Int32,System.DateOnly,System.Collections.Generic.List{System.Int32})">
-            <summary>One staged shift-cell in a draft: the desired assignees for (ShiftTypeId, WorkDate).</summary>
+        <member name="M:ShiftManager.Services.DraftChoreOverlayCell.#ctor(System.Int32,System.DateOnly,System.Collections.Generic.List{ShiftManager.Models.DraftChoreDescriptor})">
+            <summary>One touched chore cell's staged descriptor set, for the render overlay (sub-project C).</summary>
         </member>
-        <member name="T:ShiftManager.Services.DraftConflict">
-            <summary>A touched cell whose live state drifted from the draft baseline (optimistic conflict).</summary>
-        </member>
-        <member name="M:ShiftManager.Services.DraftConflict.#ctor(System.Int32,System.DateOnly)">
-            <summary>A touched cell whose live state drifted from the draft baseline (optimistic conflict).</summary>
-        </member>
-        <member name="T:ShiftManager.Services.DraftValidationIssue">
-            <summary>A staged assignment a validation pass rejected at commit (e.g. a double-booking).</summary>
-        </member>
-        <member name="M:ShiftManager.Services.DraftValidationIssue.#ctor(System.Int32,System.DateOnly,System.Int32,System.String)">
-            <summary>A staged assignment a validation pass rejected at commit (e.g. a double-booking).</summary>
-        </member>
-        <member name="T:ShiftManager.Services.DraftCommitResult">
+        <member name="T:ShiftManager.Services.IDraftChoreService">
             <summary>
-            Outcome of committing a draft. When <see cref="P:ShiftManager.Services.DraftCommitResult.Conflicts"/> is non-empty NOTHING is applied
-            (resolve-and-retry). <see cref="P:ShiftManager.Services.DraftCommitResult.ValidationIssues"/> lists staged assignments that were skipped
-            because they failed validation; everything else in those cells still applied.
+            The chores-surface staging + overlay API (analog of <see cref="T:ShiftManager.Services.IDraftModeService"/> for shifts). The
+            commit reconciliation lives in the <see cref="T:ShiftManager.Services.IDraftReconciler"/> half of the same implementation, driven
+            by the shared <see cref="T:ShiftManager.Services.IDraftLifecycle"/>. Staging never touches the live board or fires SignalR.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.DraftCommitResult.#ctor(System.Boolean,System.Int32,System.Collections.Generic.List{ShiftManager.Services.DraftConflict},System.Collections.Generic.List{ShiftManager.Services.DraftValidationIssue})">
+        <member name="M:ShiftManager.Services.IDraftChoreService.GetActiveChoreDraftAsync(System.Int32,System.Int32,System.DateOnly)">
+            <summary>The caller's Active chores draft for (molecule, week), or null.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftChoreService.StageChoreAsync(System.Int32,System.Int32,System.DateOnly,ShiftManager.Models.DraftChoreDescriptor)">
+            <summary>Stage a chore descriptor into the (user, date) cell (adds to the desired set; set-deduplicated).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftChoreService.ClearChoreAsync(System.Int32,System.Int32,System.DateOnly,System.String)">
+            <summary>Remove one staged descriptor from the (user, date) cell, keyed by its canonical <c>Encode()</c> string.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftChoreService.GetChoreOverlayAsync(System.Int32)">
+            <summary>All touched cells for the session as staged descriptor lists (for the render overlay).</summary>
+        </member>
+        <member name="T:ShiftManager.Services.DraftDutyOverlayCell">
             <summary>
-            Outcome of committing a draft. When <see cref="P:ShiftManager.Services.DraftCommitResult.Conflicts"/> is non-empty NOTHING is applied
-            (resolve-and-retry). <see cref="P:ShiftManager.Services.DraftCommitResult.ValidationIssues"/> lists staged assignments that were skipped
-            because they failed validation; everything else in those cells still applied.
+            A staged on-call cell for the private draft overlay: the desired (global) on-duty user set for a
+            (dutyTypeValue, date) coordinate. Mirrors <see cref="T:ShiftManager.Services.DraftOverlayCell"/> for shifts.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftDutyOverlayCell.#ctor(System.Int32,System.DateOnly,System.Collections.Generic.List{System.Int32})">
+            <summary>
+            A staged on-call cell for the private draft overlay: the desired (global) on-duty user set for a
+            (dutyTypeValue, date) coordinate. Mirrors <see cref="T:ShiftManager.Services.DraftOverlayCell"/> for shifts.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IDraftDutyService">
+            <summary>
+            On-call Draft Mode staging + overlay surface (sub-project D), the analog of <see cref="T:ShiftManager.Services.IDraftModeService"/>
+            for shifts. A cell is (dutyTypeValue, WorkDate) → a set of user ids, and the baseline / staged / live sets
+            are ALWAYS computed over the GLOBAL active <see cref="T:ShiftManager.Models.OnDuty"/> set — on-call has no company/molecule/area
+            data boundary, and the session's AreaId is a UI hint only (see Spec D §3). The commit reconciler half of
+            on-call draft lives on the same class via <see cref="T:ShiftManager.Services.IDraftReconciler"/>.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftDutyService.GetActiveDraftAsync(System.Int32,System.Nullable{System.Int32},System.DateOnly)">
+            <summary>Return the caller's Active on-call draft for this (area, week) UI scope, or null.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftDutyService.StageDutyAssignAsync(System.Int32,System.Int32,System.DateOnly,System.Int32)">
+            <summary>Stage a user INTO the (dutyTypeValue, date) cell (captures the global baseline on first touch).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftDutyService.StageDutyClearAsync(System.Int32,System.Int32,System.DateOnly,System.Int32)">
+            <summary>Stage a user OUT of the (dutyTypeValue, date) cell (captures the global baseline on first touch).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftDutyService.GetDutyOverlayAsync(System.Int32)">
+            <summary>The session's touched cells with their staged (desired) user sets, for the private page overlay.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.IDraftLifecycle">
+            <summary>
+            The shared, surface-agnostic Draft Mode orchestrator (Spec F §4). Owns entering (idempotent, one Active
+            session per scope), discarding, and the hardened commit engine (§5) — per-cell drift detection + per-cell
+            re-authorization inside one transaction, per-cell skip (never an all-or-nothing abort), and per-surface
+            SignalR after commit. Everything surface-specific is delegated to the matching <see cref="T:ShiftManager.Services.IDraftReconciler"/>.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftLifecycle.GetActiveAsync(System.Int32,ShiftManager.Services.DraftScope)">
+            <summary>Return the caller's Active session for this scope, or null.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftLifecycle.EnterAsync(System.Int32,ShiftManager.Services.DraftScope)">
+            <summary>Enter a draft for this scope — idempotent (returns the existing Active session if one exists).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftLifecycle.DiscardAsync(System.Int32,System.Int32)">
+            <summary>Throw the sandbox away (cells cascade). Owner-checked by the caller.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftLifecycle.CommitAsync(System.Int32,System.Int32)">
+            <summary>Reconcile the session's touched cells into live with per-cell drift/skip + re-auth, then notify.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.DraftOverlayCell">
+            <summary>
+            One staged shift-cell in a draft: the desired assignees for (ShiftTypeId, WorkDate) plus the desired
+            primary→trainee shadow pairings (sub-project A). <see cref="P:ShiftManager.Services.DraftOverlayCell.Trainees"/> maps a staged primaryUserId to
+            the traineeUserId shadowing it; a primary absent from the map has no staged trainee.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftOverlayCell.#ctor(System.Int32,System.DateOnly,System.Collections.Generic.List{System.Int32},System.Collections.Generic.Dictionary{System.Int32,System.Int32})">
+            <summary>
+            One staged shift-cell in a draft: the desired assignees for (ShiftTypeId, WorkDate) plus the desired
+            primary→trainee shadow pairings (sub-project A). <see cref="P:ShiftManager.Services.DraftOverlayCell.Trainees"/> maps a staged primaryUserId to
+            the traineeUserId shadowing it; a primary absent from the map has no staged trainee.
             </summary>
         </member>
         <member name="T:ShiftManager.Services.IDraftModeService">
             <summary>
-            Draft Mode (Epic 4): a private, per-assigner sandbox over one molecule+week of the shift calendar.
-            Staging never touches the live board or fires SignalR; committing reconciles only the touched cells
-            into live with optimistic, per-cell conflict detection plus a final validation pass.
+            Draft Mode (Epic 4) — the SHIFTS staging + overlay surface. Staging never touches the live board or fires
+            SignalR. Entering/discarding/committing a draft is handled by the shared <see cref="T:ShiftManager.Services.IDraftLifecycle"/>
+            (the shift commit reconciler is <see cref="T:ShiftManager.Services.IDraftReconciler"/> implemented by <c>DraftModeService</c>);
+            this interface is just the shifts-board write path (stage assign/clear) + the render overlay read path.
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftModeService.GetActiveDraftAsync(System.Int32,System.Int32,System.Nullable{System.Int32},System.DateOnly)">
+            <summary>The caller's Active shift draft for (molecule, jobType, week), or null.</summary>
         </member>
         <member name="M:ShiftManager.Services.IDraftModeService.StageAssignAsync(System.Int32,System.Int32,System.DateOnly,System.Int32)">
             <summary>Stages adding a user to a shift-cell. Captures the live baseline on first touch.</summary>
         </member>
         <member name="M:ShiftManager.Services.IDraftModeService.StageClearAsync(System.Int32,System.Int32,System.DateOnly,System.Int32)">
-            <summary>Stages removing a user from a shift-cell. Captures the live baseline on first touch.</summary>
+            <summary>
+            Stages removing a user from a shift-cell. Captures the live baseline on first touch. Also drops any
+            staged trainee shadowing that primary — a trainee cannot outlive its primary (edge-case ruling 1).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftModeService.StageTraineeAsync(System.Int32,System.Int32,System.DateOnly,System.Int32,System.Int32)">
+            <summary>
+            Stages a trainee shadowing a (staged or live) primary on a shift-cell (sub-project A). Coordinate-keyed
+            — never an assignmentId — because a staged primary has no persisted row. Captures the live baseline
+            (primaries + trainees) on first touch. A primary shadows at most one trainee (last write wins).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftModeService.StageTraineeClearAsync(System.Int32,System.Int32,System.DateOnly,System.Int32)">
+            <summary>Stages clearing the trainee shadowing <paramref name="primaryUserId"/> on a shift-cell.</summary>
         </member>
         <member name="M:ShiftManager.Services.IDraftModeService.GetOverlayAsync(System.Int32)">
             <summary>The staged assignees for every touched cell — used to overlay the calendar render.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.DraftScope">
+            <summary>
+            The scope a draft session covers. Carries every scope axis across all three surfaces; the axes not used
+            by a given surface are null (shifts: MoleculeId+JobTypeId; chores: MoleculeId; on-call: AreaId as a UI
+            hint only — on-call data is global). See <see cref="T:ShiftManager.Models.DraftSession"/> for the per-surface scope tuple.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftScope.#ctor(ShiftManager.Models.DraftSurface,System.Nullable{System.Int32},System.Nullable{System.Int32},System.Nullable{System.Int32},System.DateOnly,System.DateOnly)">
+            <summary>
+            The scope a draft session covers. Carries every scope axis across all three surfaces; the axes not used
+            by a given surface are null (shifts: MoleculeId+JobTypeId; chores: MoleculeId; on-call: AreaId as a UI
+            hint only — on-call data is global). See <see cref="T:ShiftManager.Models.DraftSession"/> for the per-surface scope tuple.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.CellKey">
+            <summary>
+            A surface's cell coordinate. All three surfaces key on (int row, date): shifts = (shiftTypeId, date);
+            chores = (userId, date); on-call = (dutyTypeValue, date).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.CellKey.#ctor(System.Int32,System.DateOnly)">
+            <summary>
+            A surface's cell coordinate. All three surfaces key on (int row, date): shifts = (shiftTypeId, date);
+            chores = (userId, date); on-call = (dutyTypeValue, date).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.DraftCellState">
+            <summary>
+            One touched cell's canonical state. <see cref="P:ShiftManager.Services.DraftCellState.Baseline"/> is the surface's canonical serialization of
+            the live state captured at first touch; <see cref="P:ShiftManager.Services.DraftCellState.Staged"/> is the desired state. The lifecycle does
+            plain string equality: <c>Staged == Baseline</c> ⇒ no-op (skip); a live re-read <c>!= Baseline</c> ⇒
+            drift (skip + report). The reconciler owns the serialization format for its surface.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftCellState.#ctor(ShiftManager.Services.CellKey,System.String,System.String)">
+            <summary>
+            One touched cell's canonical state. <see cref="P:ShiftManager.Services.DraftCellState.Baseline"/> is the surface's canonical serialization of
+            the live state captured at first touch; <see cref="P:ShiftManager.Services.DraftCellState.Staged"/> is the desired state. The lifecycle does
+            plain string equality: <c>Staged == Baseline</c> ⇒ no-op (skip); a live re-read <c>!= Baseline</c> ⇒
+            drift (skip + report). The reconciler owns the serialization format for its surface.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.CellRef">
+            <summary>A cell reference for the commit report (Applied / Skipped / Unauthorized), with a display label.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.CellRef.#ctor(ShiftManager.Models.DraftSurface,System.Int32,System.DateOnly,System.String)">
+            <summary>A cell reference for the commit report (Applied / Skipped / Unauthorized), with a display label.</summary>
+        </member>
+        <member name="T:ShiftManager.Services.DraftValidationIssue">
+            <summary>
+            A staged change a validation pass rejected at commit (e.g. a double-booking / rank-ineligible). Its cell
+            still applied the rest of its changes. <see cref="P:ShiftManager.Services.DraftValidationIssue.RowId"/> is the surface's row coordinate (shiftTypeId
+            for shifts, userId for chores, dutyTypeValue for on-call).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftValidationIssue.#ctor(System.Int32,System.DateOnly,System.Int32,System.String)">
+            <summary>
+            A staged change a validation pass rejected at commit (e.g. a double-booking / rank-ineligible). Its cell
+            still applied the rest of its changes. <see cref="P:ShiftManager.Services.DraftValidationIssue.RowId"/> is the surface's row coordinate (shiftTypeId
+            for shifts, userId for chores, dutyTypeValue for on-call).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.DraftCommitResult">
+            <summary>
+            Outcome of committing a draft (Spec F §5). Under the locked per-cell policy, the session moves to
+            Committed and every conflict-free, authorized cell is applied; drifted cells go to <see cref="P:ShiftManager.Services.DraftCommitResult.Skipped"/>
+            (re-stage them) and revoked-grant cells to <see cref="P:ShiftManager.Services.DraftCommitResult.Unauthorized"/>. <see cref="P:ShiftManager.Services.DraftCommitResult.ValidationIssues"/>
+            lists per-user staged changes skipped inside an otherwise-applied cell. <see cref="P:ShiftManager.Services.DraftCommitResult.NotifiedGroups"/> is
+            the distinct union of applied cells' SignalR groups (also surfaced for tests/diagnostics).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.DraftCommitResult.#ctor(System.Boolean,System.Collections.Generic.IReadOnlyList{ShiftManager.Services.CellRef},System.Collections.Generic.IReadOnlyList{ShiftManager.Services.CellRef},System.Collections.Generic.IReadOnlyList{ShiftManager.Services.CellRef},System.Collections.Generic.IReadOnlyList{ShiftManager.Services.DraftValidationIssue},System.Collections.Generic.IReadOnlyList{System.String})">
+            <summary>
+            Outcome of committing a draft (Spec F §5). Under the locked per-cell policy, the session moves to
+            Committed and every conflict-free, authorized cell is applied; drifted cells go to <see cref="P:ShiftManager.Services.DraftCommitResult.Skipped"/>
+            (re-stage them) and revoked-grant cells to <see cref="P:ShiftManager.Services.DraftCommitResult.Unauthorized"/>. <see cref="P:ShiftManager.Services.DraftCommitResult.ValidationIssues"/>
+            lists per-user staged changes skipped inside an otherwise-applied cell. <see cref="P:ShiftManager.Services.DraftCommitResult.NotifiedGroups"/> is
+            the distinct union of applied cells' SignalR groups (also surfaced for tests/diagnostics).
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Services.IDraftReconciler">
+            <summary>
+            A per-surface plug-in for the shared <see cref="T:ShiftManager.Services.IDraftLifecycle"/> commit engine (Spec F §4). The
+            lifecycle owns the enter/discard/commit orchestration and transaction; the reconciler owns everything
+            surface-specific: how a cell's live state is serialized, how drift is read, how a cell is authorized at
+            commit, how staged→live is applied, and which SignalR groups a commit notifies.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Services.IDraftReconciler.Surface">
+            <summary>Which surface this reconciler serves. The lifecycle selects a reconciler by session surface.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftReconciler.CaptureBaselineAsync(ShiftManager.Services.DraftScope,ShiftManager.Services.CellKey)">
+            <summary>Capture the live baseline for a cell (surface-specific canonical string) — used at staging first-touch.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftReconciler.LoadTouchedCellsAsync(System.Int32)">
+            <summary>Load every touched cell for the session from this surface's cell table, as canonical states.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftReconciler.ReadLiveAsync(ShiftManager.Services.DraftScope,ShiftManager.Services.CellKey)">
+            <summary>Read the CURRENT live canonical string for drift detection (called again inside the commit tx).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftReconciler.AuthorizeCellAsync(System.Int32,ShiftManager.Services.DraftScope,ShiftManager.Services.CellKey)">
+            <summary>Re-authorize this specific cell for the acting user AT COMMIT (a grant may have been revoked).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftReconciler.ReconcileCellAsync(System.Int32,ShiftManager.Services.DraftScope,ShiftManager.Services.DraftCellState)">
+            <summary>Apply staged→live for one cell inside the shared transaction; return per-user hard-error issues.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftReconciler.NotifyGroupsFor(ShiftManager.Services.DraftScope,ShiftManager.Services.CellKey)">
+            <summary>The SignalR group(s) this cell's commit must notify.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IDraftReconciler.BroadcastAsync(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>Broadcast this surface's real-time "reload" event to each group once (after commit succeeds).</summary>
         </member>
         <member name="T:ShiftManager.Services.EligibilityViolation">
             <summary>
@@ -11145,6 +11942,15 @@
             holds an Area/Project-scoped grant covering it (so an area with no molecules is still
             reported when an explicit area/project grant covers it). Mirrors the IgnoreQueryFilters
             cross-tenant semantics of <see cref="M:ShiftManager.Services.IGrantService.GetAccessibleMoleculeIdsForGrantAsync(System.Int32,System.String)"/>.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGrantService.HasCalendarAssignPermissionForCompanyAsync(System.Int32,System.Int32)">
+            <summary>
+            Company-scoped assign/MANAGER-tier permission (AdminAccess / AssignShifts / AssignChores /
+            ManageOnDuty) resolved against <paramref name="companyId"/>. Excludes the universal
+            WriteOverviewNotes note tier AND EditOnCallCalendar (a narrow on-call grant held by base
+            employees) — used to gate approval-level actions (manual approved time-off entry) that must
+            NOT be self-servable by every employee.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGrantService.BuildRoleTemplateScopeAsync(System.String,System.Int32,System.Nullable{System.Int32})">
@@ -11867,6 +12673,35 @@
             threshold, the guard is cleared so a future accumulation cycle can fire again.
             </summary>
         </member>
+        <member name="T:ShiftManager.Services.IOverviewCalendarBuilder">
+             <summary>
+             Builds the shared "user rows x date columns" Overview-shaped calendar ViewModel from a
+             given user set + date range. Extracted from <c>OverviewModel</c> (Task #9.2 — see
+             docs/superpowers/specs/2026-07-14-ui-batch-and-team-page-design.md) so both
+             <c>/Calendar/Overview</c> and the future <c>/Calendar/Team</c> page can render an identical
+             calendar by construction — both call this same service.
+            
+             User SELECTION (which users go into <paramref name="users"/>) stays page-specific — callers
+             resolve their own user set (Overview by company+filter, Team by company+jobType) and pass it
+             in. This service only turns an already-resolved user set + date range into the
+             <see cref="T:ShiftManager.ViewComponents.ExcelCalendarTableViewModel"/> the ExcelCalendarTable view component renders.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IOverviewCalendarBuilder.BuildAsync(System.Int32,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.AppUser},System.DateOnly,System.DateOnly,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Builds the Overview-shaped calendar ViewModel: one <see cref="T:ShiftManager.ViewComponents.ExcelCalendarRow"/> per user
+            in <paramref name="users"/>, with vacations/shifts/chores/on-duties/notes aggregated into
+            each date cell for the given range. Produces <c>CalendarType == "overview"</c>,
+            <c>RowMode == "Shifts"</c>, and <c>RowOrderContextKey == $"overview:{companyId}"</c>.
+            </summary>
+            <param name="companyId">Tenant/company scope — used for shift-name localization overrides and the row-order context key.</param>
+            <param name="users">The already-resolved user set to render as rows (order is preserved into row order).</param>
+            <param name="startDate">First date column (inclusive).</param>
+            <param name="endDate">Last date column (inclusive).</param>
+            <param name="viewMode">"week" | "next7" | "2weeks" | "month" — passed through to the ViewModel, not interpreted here (the caller already resolved start/end from it).</param>
+            <param name="canEditNotes">Drives <c>IsReadOnly</c> (<c>= !canEditNotes</c>) on the returned ViewModel.</param>
+            <param name="canEnterTimeOff">Sets <c>CanEnterTimeOff</c> on the returned ViewModel — lets editors enter time-off on people rows even on a read-only grid (Team).</param>
+        </member>
         <member name="T:ShiftManager.Services.IOwnerCompanySelectorService">
             <summary>
             Service for Owner role to select which company to manage.
@@ -12223,6 +13058,12 @@
             Validates a trainee assignment (self-training, same company, trainee role).
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.IShiftAssignmentService.ValidateTraineeAssignmentAsync(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Draft Mode overload (sub-project A): validates a trainee against a primary + shift instance directly,
+            without needing a persisted assignment row — a freshly reconciled slot may still be unsaved at commit.
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.IShiftAssignmentService.AssignShiftAsync(System.Int32,System.Int32,System.Int32,System.String,System.String)">
             <summary>
             Assigns a user to a shift instance. Validates first unless a valid override token is provided.
@@ -12347,6 +13188,60 @@
              not the value is captured.
              </summary>
         </member>
+        <member name="T:ShiftManager.Services.IShiftTabService">
+             <summary>
+             Manages molecule-scoped <see cref="T:ShiftManager.Models.ShiftTab"/> entities (Hebrew: לשונית) — named sub-calendars within a
+             molecule. A tab has two admin-set memberships: shift types (<see cref="P:ShiftManager.Models.ShiftType.TabId"/>, drives the
+             shift-view) and companies (<see cref="T:ShiftManager.Models.ShiftTabCompany"/>, drives the by-user roster base). Untagged shift
+             types + unassigned companies form the implicit "Main" tab. Also owns per-user "last tab" memory
+             (<see cref="T:ShiftManager.Models.UserShiftTabPreference"/>).
+            
+             A tab is a VIEW partition only — it never affects eligibility, overlap/rest/hours, or fairness.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.CreateAsync(System.Int32,System.String,System.String,System.String)">
+            <summary>Creates a tab. Returns null if the (molecule, name) pair already exists or name is blank.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.RenameAsync(System.Int32,System.String,System.String,System.String)">
+            <summary>Renames/recolors a tab. Returns false on not-found or a (molecule, name) collision.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.DeleteAsync(System.Int32)">
+            <summary>
+            Hard-deletes a tab: its shift types' TabId is nulled (FK SetNull → back to Main), its company links
+            cascade away, and any remembered preference pointing at it reverts to Main (FK SetNull).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.ReorderTabsAsync(System.Int32,System.Collections.Generic.IReadOnlyList{System.Int32})">
+            <summary>Rewrites tab SortOrder from the given order. Returns false if any id is not in the molecule.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.GetUsageAsync(System.Int32)">
+            <summary>Counts the shift types tagged to, and companies assigned to, a tab (for delete-impact preview).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.AssignShiftTypeToTabAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Sets (or clears, when tabId is null) a shift type's tab. Rejects area-scoped shifts (they span
+            molecules → always Main) and any tab that isn't in the shift's molecule. Returns false on those.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.AssignCompanyToTabAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Assigns a company to a tab (upsert — moves it off any prior tab), or clears it when tabId is null.
+            Rejects a company whose molecule differs from the tab's (cross-molecule stitching guard). A company
+            is on at most one tab (unique CompanyId).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.GetCompanyIdsForTabAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            The company set that defines a tab's people-view roster base. For a specific tab: the companies
+            assigned to it. For Main (tabId null): the molecule's companies with no tab assignment.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.GetLastTabAsync(System.Int32,System.Int32)">
+            <summary>The user's remembered tab for a molecule (null = Main, or no preference yet).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.SetLastTabAsync(System.Int32,System.Int32,System.Nullable{System.Int32})">
+            <summary>Upserts the user's remembered tab for a molecule (null = explicitly Main).</summary>
+        </member>
         <member name="T:ShiftManager.Services.IShiftTypeSeedService">
             <summary>
             Seeds standard shift types when a new molecule is created.
@@ -12465,6 +13360,18 @@
             <summary>
             Processes post-approval side effects: removes overlapping shifts, cancels trainee shadowing, sends notification.
             Call this after setting request status to Approved.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IVacationApprovalService.CreateApprovedManualTimeOffAsync(System.Int32,ShiftManager.Models.Support.TimeOffType,System.DateOnly,System.DateOnly,System.String,System.Int32)">
+            <summary>
+            Creates an already-Approved time-off record directly from a calendar (manual entry by an
+            editor), bypassing the request/approval queue. Authorizes the actor (calendar-note permission
+            + reach to the target user), ties the record to the TARGET USER's own company (which — on a
+            molecule/cross-company board — differs from the actor's active tenant), normalizes dates per
+            type (After/DayAt = single day; DayAt requires a label), guards against overlapping approved
+            leave, then runs the same side-effects a real approval runs (removes conflicting shift
+            assignments, cancels trainee shadowing, notifies) and the HOME materialiser (flag-gated).
+            Returns an ErrorKey (a SharedResources key) on failure so the caller can localize.
             </summary>
         </member>
         <!-- Badly formed XML comment ignored for member "M:ShiftManager.Services.IVacationApprovalService.UpdateRequestDatesAsync(System.Int32,System.DateOnly,System.DateOnly,System.Int32)" -->
@@ -13516,6 +14423,20 @@
              See TERMINOLOGY.md for UI vs. code terminology mapping.
              </summary>
         </member>
+        <member name="M:ShiftManager.Services.IOnDutyService.CreateForActorAsync(System.Int32,System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.String,System.Boolean,System.Nullable{System.Int32},System.String)">
+            <summary>
+            Commit-path overload of <see cref="M:ShiftManager.Services.IOnDutyService.CreateOnDutyAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.String,System.Boolean,System.Nullable{System.Int32},System.String)"/>: the acting user is passed EXPLICITLY
+            instead of read from the HttpContext claim. Draft Mode commit (sub-project D) reconciles staged
+            on-duty rows outside the per-cell request pipeline, so it must supply the actor itself. Same
+            grant/officer-rank/BusyService validation as the interactive path.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IOnDutyService.CancelForActorAsync(System.Int32,System.Int32,System.String)">
+            <summary>
+            Commit-path overload of <see cref="M:ShiftManager.Services.IOnDutyService.CancelOnDutyAsync(System.Int32,System.String)"/> with an explicit acting user
+            (see <see cref="M:ShiftManager.Services.IOnDutyService.CreateForActorAsync(System.Int32,System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.String,System.Boolean,System.Nullable{System.Int32},System.String)"/>).
+            </summary>
+        </member>
         <member name="M:ShiftManager.Services.IOnDutyService.GetEligibleUsersForDutyAsync(ShiftManager.Models.Support.OnDutyType,System.Boolean)">
             <summary>
             Get users eligible for a specific duty type, optionally requiring officer rank.
@@ -13598,10 +14519,16 @@
             Create a new on-duty assignment
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.OnDutyService.CreateForActorAsync(System.Int32,System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.String,System.Boolean,System.Nullable{System.Int32},System.String)">
+            <inheritdoc/>
+        </member>
         <member name="M:ShiftManager.Services.OnDutyService.CancelOnDutyAsync(System.Int32,System.String)">
             <summary>
             Cancel (soft delete) an on-duty assignment
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.OnDutyService.CancelForActorAsync(System.Int32,System.Int32,System.String)">
+            <inheritdoc/>
         </member>
         <member name="M:ShiftManager.Services.OnDutyService.GetOnDutiesAsync(System.Nullable{System.DateOnly},System.Nullable{System.DateOnly},System.Nullable{System.Int32},System.Nullable{ShiftManager.Models.Support.OnDutyType},System.Nullable{System.Boolean})">
             <summary>
@@ -13630,6 +14557,40 @@
         </member>
         <member name="M:ShiftManager.Services.OnDutyService.ValidateOnDutyAssignmentAsync(System.Int32,System.DateOnly,ShiftManager.Models.Support.OnDutyType,System.Int32,System.String,System.Threading.CancellationToken)">
             <inheritdoc/>
+        </member>
+        <member name="T:ShiftManager.Services.OverviewCalendarBuilder">
+             <summary>
+             Implements <see cref="T:ShiftManager.Services.IOverviewCalendarBuilder"/>. Extracted verbatim (Task #9.2) from
+             <c>OverviewModel</c>'s former private <c>BuildOverviewCalendarAsync</c> +
+             <c>LoadVacationsAsync</c>/<c>LoadShiftsAsync</c>/<c>LoadChoresAsync</c>/<c>LoadOnDutiesAsync</c>/
+             <c>BuildCellsForUser</c> pipeline, parameterized by (companyId, users, range, viewMode,
+             canEditNotes) instead of reading page (<c>this.</c>) state. Behavior is byte-for-byte
+             equivalent to the original: same queries, same HOME/vacation/chore/on-duty/notes aggregation,
+             same output shape (CalendarType="overview", RowMode="Shifts", RowOrderContextKey
+             "overview:{companyId}", IsReadOnly=!canEditNotes).
+            
+             One intentional simplification: the original <c>LoadShiftsAsync</c> re-resolved
+             <c>_tenantResolver.GetCurrentTenantId()</c> internally even though the page had already
+             resolved and cached the identical value as <c>CompanyId</c> earlier in the same request (no
+             intervening <c>SetCurrentTenantId</c> call). Since the caller now passes that same value in
+             as the companyId parameter of <see cref="M:ShiftManager.Services.OverviewCalendarBuilder.BuildAsync(System.Int32,System.Collections.Generic.IReadOnlyList{ShiftManager.Models.AppUser},System.DateOnly,System.DateOnly,System.String,System.Boolean,System.Boolean)"/>, this service reuses the parameter
+             instead of taking an <c>ITenantResolver</c> dependency and re-deriving it — same value, one
+             fewer dependency.
+             </summary>
+        </member>
+        <member name="T:ShiftManager.Services.OverviewCalendarBuilder.OverviewShiftItem">
+            <summary>
+            Per-user-per-date shift item used to render the Overview cell.
+            Carries HOME-specific fields so the shared _CalendarRow partial can
+            render HOME chips with source/house icons + time range (Task 23).
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.OverviewCalendarBuilder.OverviewShiftItem.#ctor(System.String,System.Boolean,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <summary>
+            Per-user-per-date shift item used to render the Overview cell.
+            Carries HOME-specific fields so the shared _CalendarRow partial can
+            render HOME chips with source/house icons + time range (Task 23).
+            </summary>
         </member>
         <member name="T:ShiftManager.Services.OwnerCompanySelectorService">
             <summary>
@@ -13766,6 +14727,28 @@
         <member name="M:ShiftManager.Services.Remediation.IFailureRemediationService.For(System.String,System.Nullable{System.Int32},System.Nullable{System.Int32})">
             <summary>The remediation for a failure key, or null if there's no self-service fix.</summary>
         </member>
+        <member name="T:ShiftManager.Services.RequestLocalizationSetup">
+            <summary>
+            Centralises request-localization (culture) configuration so the provider ordering can be unit
+            tested. See <see cref="!:RequestLocalizationSetupTests"/> for the behaviour this guarantees.
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Services.RequestLocalizationSetup.SupportedCultures">
+            <summary>Cultures the application ships translations for.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.RequestLocalizationSetup.Configure(Microsoft.AspNetCore.Builder.RequestLocalizationOptions,System.Boolean)">
+            <summary>
+            Configures <paramref name="options"/> for the given Hebrew-default state.
+            </summary>
+            <param name="options">The options to mutate.</param>
+            <param name="hebrewDefaultEnabled">
+            When true (FF_HEBREW_DEFAULT on) the default culture is he-IL and the browser's
+            Accept-Language header is intentionally NOT consulted, so a user without an explicit
+            query-string/cookie choice falls through to the Hebrew default instead of resolving en-US
+            from an English browser. When false the default is en-US and the Accept-Language provider is
+            registered as before.
+            </param>
+        </member>
         <member name="T:ShiftManager.Services.ScheduleExportService">
             <summary>
             Service for exporting schedule data to PDF, Excel, and CSV formats.
@@ -13835,6 +14818,12 @@
             <summary>
             Implementation of structured security event logging service.
             Provides consistent, structured logging for security-related events.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ShiftAssignmentService.ValidateTraineeCoreAsync(System.Int32,System.Nullable{System.Int32},System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            Shared trainee-validation rules (self-training / role / molecule-or-company). Both public overloads
+            resolve the cell's company + molecule and the primary, then delegate here.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.ShiftAssignmentService.MergeAndSumHours(System.Collections.Generic.List{System.ValueTuple{System.DateTime,System.DateTime}})">
@@ -14783,6 +15772,11 @@
         <member name="P:ShiftManager.ViewComponents.ExcelCalendarRowViewModel.DraftSessionId">
             <summary>Active Draft Mode session id (Epic 4); non-null → render shift-chip × as a draft-clear.</summary>
         </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.CanEnterTimeOff">
+            <summary>When true, calendar-editors may enter time-off (Vacation/DayAt/After) on people
+            rows even on an otherwise read-only grid (e.g. Team). Independent of IsReadOnly, which stays
+            the gate for shift-chip editing.</summary>
+        </member>
         <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.DraftSessionId">
             <summary>Active Draft Mode session id (Epic 4). When set, the grid renders the sandbox overlay and
             the remove (×) on shift chips stages a draft-clear instead of a live delete.</summary>
@@ -14827,9 +15821,19 @@
             shift-mode and user-mode. Populated only by calendars that support day notes (Shifts); empty elsewhere.
             </summary>
         </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarRow.ShiftCount">
+            <summary>Count of real (non-home/non-offline) shifts assigned to this row's user within the
+            visible date range (#8). Drives the by-user week-view "Total" column; WeeklyHours is retained
+            but no longer rendered there.</summary>
+        </member>
         <member name="P:ShiftManager.ViewComponents.ExcelCalendarAssignment.ShiftTypeId">
             <summary>Owning shift type — set ONLY for real shift assignments (not text/chore/overlay chips).
             Drives Draft Mode removal (× → stage-clear by shiftType+date+user) and is null elsewhere.</summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarAssignment.DraftChoreKey">
+            <summary>Chores Draft Mode (Spec C): the staged chore descriptor's stable key. Set ONLY on chore chips
+            while a chores draft is active; the × then stages a draft-clear by (user, date, descriptorKey) since a
+            staged chore has no <c>Chore.Id</c>. Null on live/non-draft chips.</summary>
         </member>
         <member name="M:ShiftManager.ViewComponents.CalendarOrderApplier.Apply(System.Collections.Generic.List{ShiftManager.ViewComponents.ExcelCalendarRow},System.Collections.Generic.List{ShiftManager.ViewComponents.ExcelCalendarGroup},System.Collections.Generic.Dictionary{System.ValueTuple{System.String,System.String},System.Int32})">
             <summary>In-place stable reorder of groups (by "" namespace) and rows (by their group namespace).

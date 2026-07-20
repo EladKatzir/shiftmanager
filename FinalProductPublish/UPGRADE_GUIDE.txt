@@ -1,9 +1,9 @@
 ﻿================================================================================
                     SHIFTMANAGER UPGRADE GUIDE
-                           Version 5.2.6
+                           Version 5.2.7
 ================================================================================
 
-This guide explains how to upgrade ShiftManager from an older version to 5.2.6.
+This guide explains how to upgrade ShiftManager from an older version to 5.2.7.
 
 ================================================================================
 BEFORE YOU START
@@ -15,8 +15,8 @@ BEFORE YOU START
 âœ“ Have backup procedures ready
 âœ“ Note your current version number
 
-Current Version: 5.2.6
-Release Date: 2026-06-19
+Current Version: 5.2.7
+Release Date: 2026-07-20
 
 ================================================================================
 UPGRADE SCENARIOS
@@ -55,7 +55,7 @@ Step 4: Backup Current Installation (Optional but Recommended)
   - Or copy the entire folder to another location
 
 Step 5: Extract New Version
-  - Extract ShiftManager-v5.2.6-win-x64.zip
+  - Extract ShiftManager-v5.2.7-win-x64.zip
   - Extract to the same location as the old version
   - Overwrite files when prompted
 
@@ -105,7 +105,7 @@ Step 2: Backup Your Data
   - Copy the entire folder as backup (recommended)
 
 Step 3: Extract New Version
-  - Extract ShiftManager-v5.2.6-win-x64.zip
+  - Extract ShiftManager-v5.2.7-win-x64.zip
   - Extract to the same location as the old version
   - Overwrite all files when prompted
 
@@ -149,7 +149,7 @@ Step 2: Backup Your Data
   - Copy the entire folder as backup (recommended)
 
 Step 3: Extract New Version
-  - Extract ShiftManager-v5.2.6-win-x64.zip
+  - Extract ShiftManager-v5.2.7-win-x64.zip
   - Extract to the same location
   - Overwrite all files EXCEPT web.config (if you customized it)
 
@@ -245,7 +245,7 @@ Strategy:
   3. Merge your custom settings into the new file
   4. Check for new optional settings you may want to configure
 
-New Settings in 5.2.6:
+New Settings in 5.2.7:
   [List any new settings here]
 
 ================================================================================
@@ -320,9 +320,9 @@ For each issue, the guide provides step-by-step solutions.
 VERSION-SPECIFIC NOTES
 ================================================================================
 
-Version 5.2.6:
-  - Built: 2026-06-19 02:40:55 UTC
-  - Git Commit: 9955283
+Version 5.2.7:
+  - Built: 2026-07-20 13:11:20 UTC
+  - Git Commit: 333136c
   - Changes: See VERSION.txt for full changelog
 
 Breaking Changes: None
@@ -341,7 +341,7 @@ If you encounter issues during upgrade:
 4. Review application logs for error messages
 5. Contact support with:
    - Old version number
-   - New version number (5.2.6)
+   - New version number (5.2.7)
    - Error messages
    - Steps taken so far
 
