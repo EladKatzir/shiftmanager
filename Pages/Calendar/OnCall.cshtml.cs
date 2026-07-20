@@ -94,6 +94,13 @@ public class OnCallModel : PageModel
     public int CurrentUserId { get; set; }
     public List<AppUser> Users { get; set; } = new();
 
+    /// <summary>
+    /// Company display name per company id, for the assignee picker. The on-call pool is area-wide
+    /// (many companies), so identical display names collide; the picker appends the company to
+    /// disambiguate (e.g. "רועי שלום — חמסה").
+    /// </summary>
+    public Dictionary<int, string> CompanyNamesById { get; set; } = new();
+
     // Navigation
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
@@ -395,6 +402,14 @@ public class OnCallModel : PageModel
                 .Select(u => new AppUser { Id = u.Id, DisplayName = u.DisplayName, CompanyId = u.CompanyId })
                 .ToListAsync();
         }
+
+        // Company display names for the assignee picker (disambiguates duplicate names across the area).
+        var pickerCompanyIds = Users.Select(u => u.CompanyId).Distinct().ToList();
+        CompanyNamesById = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => pickerCompanyIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.DisplayName })
+            .ToDictionaryAsync(c => c.Id, c => c.DisplayName);
 
         // If "Just Mine" filter is set, filter by current user
         if (JustMine)

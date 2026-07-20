@@ -246,7 +246,7 @@
     <select id="assigneeSelect-oncall" data-role="assignee-select" style="display:none">
         @foreach (var user in Model.Users)
         {
-            <option value="@user.Id">@user.DisplayName</option>
+            <option value="@user.Id" data-company="@Model.CompanyNamesById.GetValueOrDefault(user.CompanyId, "")">@user.DisplayName</option>
         }
     </select>
 

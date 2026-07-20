@@ -429,6 +429,8 @@
                     allItems.push({
                         id: opt.value,
                         text: opt.textContent.trim(),
+                        // Company suffix disambiguates duplicate names in the area-wide on-call pool.
+                        companyName: opt.dataset.company || null,
                         type: itemType === 'user' ? 'user' : 'shift',
                         key: opt.dataset.key || null,
                         color: null
@@ -641,6 +643,14 @@
                 var textSpan = document.createElement('span');
                 textSpan.textContent = entry.item.text;
                 el.appendChild(textSpan);
+
+                // Company suffix (e.g. area-wide on-call pool) disambiguates duplicate names.
+                if (entry.item.companyName) {
+                    var companySpan = document.createElement('span');
+                    companySpan.className = 'quick-entry-item__company';
+                    companySpan.textContent = ' — ' + entry.item.companyName;
+                    el.appendChild(companySpan);
+                }
 
                 (function (capturedIdx) {
                     el.addEventListener('mousedown', function (e) {
@@ -1333,8 +1343,19 @@
 
         var promise;
         if (item.type === 'user') {
-            var shiftTypeId = rowId.replace('shift-', '');
-            promise = window.quickAddShift(parseInt(shiftTypeId, 10), date, parseInt(item.id, 10), qeConfirm);
+            // A user selection means different things per calendar, keyed by the row's id prefix:
+            //   shift-{id}    → Shifts By-Shift: row is a ShiftType, pick a user   → quickAddShift
+            //   dutytype-{v}  → On-Call By-Duty: row is a duty type, pick a user   → quickAddOnDuty
+            // Without this branch, an on-call user pick fell through to quickAddShift with
+            // parseInt('dutytype-0'.replace('shift-','')) === NaN, which serialized to a null
+            // shiftTypeId and NRE'd the AssignEmployee handler (non-nullable int bind failure).
+            if (rowId.indexOf('dutytype-') === 0) {
+                var qeDutyTypeValue = rowId.substring('dutytype-'.length);
+                promise = window.quickAddOnDuty(date, parseInt(item.id, 10), parseInt(qeDutyTypeValue, 10), undefined, qeConfirm);
+            } else {
+                var shiftTypeId = rowId.replace('shift-', '');
+                promise = window.quickAddShift(parseInt(shiftTypeId, 10), date, parseInt(item.id, 10), qeConfirm);
+            }
         } else if (item.type === 'shift') {
             var userId = rowId.replace('user-', '');
             promise = window.quickAddShift(parseInt(item.id, 10), date, parseInt(userId, 10), qeConfirm);
@@ -1392,9 +1413,15 @@
 
         var title = activeInput.value.trim();
         if (!title) {
-            // If empty, cancel chore entry
-            choreTypeForTitle = null;
-            closeInput();
+            // The server requires a title for a typed chore (QuickAddChore_TitleRequired). Rather than
+            // silently discarding the chosen chore type on an empty-Enter, keep the editor open and hint
+            // that a title is needed — the user can type one, or press Esc to abort.
+            if (window.showToast) {
+                var titleHint = getCulture() === 'he-IL'
+                    ? 'יש להזין כותרת למטלה' : 'Enter a title for the chore';
+                window.showToast(titleHint, 'info');
+            }
+            activeInput.focus();
             return;
         }
 

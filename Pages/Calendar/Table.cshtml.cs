@@ -797,6 +797,12 @@ public partial class TableModel : PageModel
 
     public async Task<IActionResult> OnPostAssignEmployeeAsync([FromBody] AssignEmployeeRequest request)
     {
+        // Input validation: an empty/malformed body — or a non-nullable field (e.g. ShiftTypeId)
+        // posted as null — makes model binding yield a null request. Return a clean 400 rather than
+        // dereferencing null downstream (which surfaced as a misleading "Error assigning employee").
+        if (request == null)
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InvalidRequest"].Value }) { StatusCode = 400 };
+
         try
         {
             var companyId = _companyContext.GetCompanyIdOrThrow();

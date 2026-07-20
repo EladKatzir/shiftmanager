@@ -35,6 +35,7 @@ public class IconTagHelper : TagHelper
         ["check"] = "<path d=\"M5 13l4 4L19 7\"/>",
         ["x"] = "<path d=\"M6 18L18 6M6 6l12 12\"/>",
         ["plus"] = "<path d=\"M12 4v16m8-8H4\"/>",
+        ["plus-circle"] = "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M8 12h8\"/><path d=\"M12 8v8\"/>",
         ["minus"] = "<path d=\"M20 12H4\"/>",
         ["edit"] = "<path d=\"M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z\"/>",
         ["pencil"] = "<path d=\"M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z\"/>",

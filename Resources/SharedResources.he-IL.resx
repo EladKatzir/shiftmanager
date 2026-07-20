@@ -10618,6 +10618,9 @@
   <data name="Calendar_ReadOnlyMode" xml:space="preserve">
     <value>מצב קריאה בלבד</value>
   </data>
+  <data name="Calendar_TimeOffEntryOnlyMode" xml:space="preserve">
+    <value>הזנת חופשות בלבד — שיבוץ משמרות והערות מנוהלים בלוחות אחרים</value>
+  </data>
   <data name="Calendar_ReadOnlyHelp_AriaLabel" xml:space="preserve">
     <value>מדוע לוח השנה הוא לקריאה בלבד?</value>
   </data>
@@ -13873,6 +13876,9 @@
   </data>
   <data name="Calendar_Error_InvalidUserSession" xml:space="preserve">
     <value>הפעלת משתמש לא תקינה</value>
+  </data>
+  <data name="Calendar_Error_InvalidRequest" xml:space="preserve">
+    <value>בקשה לא תקינה</value>
   </data>
   <data name="Calendar_Error_InsufficientPermissions" xml:space="preserve">
     <value>אין הרשאות מספיקות לשיבוץ משמרות</value>

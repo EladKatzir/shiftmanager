@@ -291,7 +291,8 @@
     <partial name="_CalendarReadonlyBanner" model="@(new CalendarReadonlyBannerModel
     {
         IsReadOnly = Model.CalendarData.IsReadOnly,
-        RequiredGrantNameKeys = Model.CalendarData.RequiredGrantNameKeys
+        RequiredGrantNameKeys = Model.CalendarData.RequiredGrantNameKeys,
+        CanEnterTimeOff = Model.CalendarData.CanEnterTimeOff
     })" />
 
     @* Draft Mode sandbox banner (Epic 4) — makes the sandbox state unmistakable. *@

@@ -179,6 +179,13 @@
     color: var(--text-muted);
 }
 
+/* Inline company suffix on single-line user rows (disambiguates duplicate names,
+   e.g. the area-wide on-call pool). Muted so the name stays the focus. */
+.quick-entry-item__company {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+}
+
 /* Hard scheduling conflict: still clickable, but de-emphasized + a danger accent.
    Excluded from Enter auto-commit in JS (the server re-validates on assign regardless). */
 .quick-entry-item--conflict {

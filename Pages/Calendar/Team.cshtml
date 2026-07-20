@@ -135,7 +135,8 @@
     <partial name="_CalendarReadonlyBanner" model="@(new CalendarReadonlyBannerModel
     {
         IsReadOnly = Model.CalendarData.IsReadOnly,
-        RequiredGrantNameKeys = Model.CalendarData.RequiredGrantNameKeys
+        RequiredGrantNameKeys = Model.CalendarData.RequiredGrantNameKeys,
+        CanEnterTimeOff = Model.CalendarData.CanEnterTimeOff
     })" />
 
     @if (Model.RequestedViewInaccessible)

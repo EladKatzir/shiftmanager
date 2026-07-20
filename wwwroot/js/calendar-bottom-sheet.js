@@ -511,7 +511,9 @@
                 availableUsers.forEach(function (user) {
                     var opt = document.createElement('option');
                     opt.value = user.id;
-                    opt.textContent = user.name;
+                    // Disambiguate duplicate names across the area by suffixing the company (same
+                    // "name — company" convention the eligibility path uses above).
+                    opt.textContent = user.companyName ? (user.name + ' — ' + user.companyName) : user.name;
                     opt.dataset.userName = user.name;
                     userSelect.appendChild(opt);
                 });
@@ -996,7 +998,7 @@
             for (var i = 0; i < select.options.length; i++) {
                 var option = select.options[i];
                 if (option.value) {
-                    users.push({ id: option.value, name: option.textContent });
+                    users.push({ id: option.value, name: option.textContent, companyName: option.dataset.company || null });
                 }
             }
         }
@@ -1225,7 +1227,11 @@
         var date = cellEl.dataset.date || '';
         var rowLabel = '';
         if (rowEl) {
-            var labelEl = rowEl.querySelector('.excel-calendar__row-label');
+            // Read the inner name element, not the whole label cell: the row-reorder grip
+            // (`.excel-calendar__row-grip`, glyph "⋮⋮") is injected as the label cell's first
+            // child, so scraping the cell leaked "⋮⋮ Hakam" into the sheet title.
+            var labelEl = rowEl.querySelector('.excel-calendar__row-label-name')
+                       || rowEl.querySelector('.excel-calendar__row-label');
             if (labelEl) {
                 rowLabel = labelEl.textContent.trim();
             }
