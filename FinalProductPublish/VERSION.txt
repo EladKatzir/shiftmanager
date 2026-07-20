@@ -1,12 +1,12 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 5.2.8
+                           Version 5.2.9
 ================================================================================
 
-VERSION: 5.2.8
+VERSION: 5.2.9
 RELEASE DATE: 2026-07-20
-BUILD DATE: 2026-07-20 17:52:43 UTC
-GIT COMMIT: af8fabb
+BUILD DATE: 2026-07-20 22:52:06 UTC
+GIT COMMIT: 5a0d9c3
 GIT BRANCH: dev
 
 PACKAGE INFORMATION:
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-07-20 17:52:43 UTC
+Build Date:     2026-07-20 22:52:06 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v5.2.8
+  âœ“ Git tagged: v5.2.9
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -260,14 +260,14 @@ This package has been:
   âœ… Tested automatically with comprehensive checks
   âœ… Verified for completeness (537 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v5.2.8)
+  âœ… Tagged in version control (v5.2.9)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-07-20 17:52:43 UTC
-Git Commit: af8fabb
+Date: 2026-07-20 22:52:06 UTC
+Git Commit: 5a0d9c3
 
 ================================================================================
 LICENSE

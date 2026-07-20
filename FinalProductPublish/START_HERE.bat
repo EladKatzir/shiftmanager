@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 REM ===============================================================================
 REM                     SHIFTMANAGER STARTUP ASSISTANT
-REM                               Version 5.2.8
+REM                               Version 5.2.9
 REM ===============================================================================
 REM
 REM This script performs basic safety checks before starting ShiftManager.exe:
@@ -22,7 +22,7 @@ cls
 echo.
 echo ===============================================================================
 echo                     SHIFTMANAGER STARTUP ASSISTANT
-echo                               Version 5.2.8
+echo                               Version 5.2.9
 echo ===============================================================================
 echo.
 
