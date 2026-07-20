@@ -1342,20 +1342,18 @@
         var doAdvance = !!advance;
 
         var promise;
-        if (item.type === 'user') {
-            // A user selection means different things per calendar, keyed by the row's id prefix:
-            //   shift-{id}    → Shifts By-Shift: row is a ShiftType, pick a user   → quickAddShift
-            //   dutytype-{v}  → On-Call By-Duty: row is a duty type, pick a user   → quickAddOnDuty
-            // Without this branch, an on-call user pick fell through to quickAddShift with
-            // parseInt('dutytype-0'.replace('shift-','')) === NaN, which serialized to a null
-            // shiftTypeId and NRE'd the AssignEmployee handler (non-nullable int bind failure).
-            if (rowId.indexOf('dutytype-') === 0) {
-                var qeDutyTypeValue = rowId.substring('dutytype-'.length);
-                promise = window.quickAddOnDuty(date, parseInt(item.id, 10), parseInt(qeDutyTypeValue, 10), undefined, qeConfirm);
-            } else {
-                var shiftTypeId = rowId.replace('shift-', '');
-                promise = window.quickAddShift(parseInt(shiftTypeId, 10), date, parseInt(item.id, 10), qeConfirm);
-            }
+        // On-Call By-Duty calendar: the ROW is a duty type and the picked item is the assignee.
+        // Route by row identity, NOT item.type: the on-call assignee <select> carries no
+        // data-item-type, so its user items load as type 'shift' (not 'user'). Keying off the
+        // row's `dutytype-` prefix is the reliable signal — otherwise the pick fell through to
+        // quickAddShift (NaN/duty-id args → failed assign, and previously an NRE at Table:818).
+        if (rowId.indexOf('dutytype-') === 0) {
+            var qeDutyTypeValue = rowId.substring('dutytype-'.length);
+            promise = window.quickAddOnDuty(date, parseInt(item.id, 10), parseInt(qeDutyTypeValue, 10), undefined, qeConfirm);
+        } else if (item.type === 'user') {
+            // Shifts By-Shift: row is a ShiftType (shift-{id}), the pick is the assignee.
+            var shiftTypeId = rowId.replace('shift-', '');
+            promise = window.quickAddShift(parseInt(shiftTypeId, 10), date, parseInt(item.id, 10), qeConfirm);
         } else if (item.type === 'shift') {
             var userId = rowId.replace('user-', '');
             promise = window.quickAddShift(parseInt(item.id, 10), date, parseInt(userId, 10), qeConfirm);
