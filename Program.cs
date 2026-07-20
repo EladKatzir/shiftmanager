@@ -1548,6 +1548,19 @@ using (var scope = app.Services.CreateScope())
         LogSeedQaTestUsersError(logger, ex);
     }
 
+    // Bulk test-population seeder — fills every real company with a full soldier roster
+    // (dev/test only, idempotent). Must run BEFORE the @test grant-repair sweep below so
+    // newly created users get their role-template grants provisioned on the same startup.
+    try
+    {
+        var bulkGrantService = scope.ServiceProvider.GetRequiredService<IGrantService>();
+        await ShiftManager.Data.SeedData.BulkTestUserSeed.SeedAsync(db, bulkGrantService, logger);
+    }
+    catch (Exception ex)
+    {
+        LogSeedBulkTestUsersError(logger, ex);
+    }
+
     // Repair grants for all test users with RoleTemplates (seeder creates users but doesn't assign role template grants)
     try
     {

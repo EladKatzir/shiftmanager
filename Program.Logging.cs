@@ -232,6 +232,10 @@ public partial class Program
         Message = "An error occurred while seeding QA test users")]
     private static partial void LogSeedQaTestUsersError(ILogger logger, System.Exception ex);
 
+    [LoggerMessage(EventId = 90813, Level = LogLevel.Error,
+        Message = "An error occurred while seeding bulk test users")]
+    private static partial void LogSeedBulkTestUsersError(ILogger logger, System.Exception ex);
+
     [LoggerMessage(EventId = 90820, Level = LogLevel.Information,
         Message = "Repaired {Count} grants for test user {Email}")]
     private static partial void LogTestUserGrantsRepaired(ILogger logger, int count, string email);
