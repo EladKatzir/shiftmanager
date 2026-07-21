@@ -208,4 +208,19 @@ public sealed class ShiftTabServiceTests
         (await svc.GetLastTabAsync(10, 1, 10)).Should().BeNull();
         (await svc.GetLastTabAsync(11, 1, 10)).Should().BeNull("different user");
     }
+
+    [Fact]
+    public void Coverage_Lists_ShiftTypes_In_No_Tab_And_Ignores_EmptyTabs()
+    {
+        // allShiftTypeIds = {1,2,3}; tabA covers {1}; nothing else → {2,3} uncovered.
+        var allIds = new[] { 1, 2, 3 };
+        var tabSets = new List<HashSet<int>> { new() { 1 } };            // one configured tab
+        var uncovered = ShiftManager.Pages.Admin.Organization.Tabs.IndexModel.ComputeUncovered(allIds, tabSets);
+        uncovered.Should().BeEquivalentTo(new[] { 2, 3 });
+
+        // If ANY tab is empty (= all), coverage is complete → no warning.
+        var withEmpty = new List<HashSet<int>> { new() { 1 }, new HashSet<int>() };
+        ShiftManager.Pages.Admin.Organization.Tabs.IndexModel.ComputeUncovered(allIds, withEmpty)
+            .Should().BeEmpty();
+    }
 }

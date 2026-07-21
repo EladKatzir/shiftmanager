@@ -16031,6 +16031,91 @@
   <data name="Grant_ManageCalendarTabs_Desc" xml:space="preserve">
     <value>יצירה, עריכה ומחיקה של לשוניות (תת-לוחות) בלוח לפי סוג תפקיד במולקולה.</value>
   </data>
+  <!-- דף ניהול לשוניות לוח + פריט ניווט -->
+  <data name="Nav2_Tabs" xml:space="preserve">
+    <value>לשוניות</value>
+  </data>
+  <data name="Tabs_PageTitle" xml:space="preserve">
+    <value>לשוניות לוח</value>
+  </data>
+  <data name="Tabs_PageSubtitle" xml:space="preserve">
+    <value>פיצול לוח לפי סוג תפקיד במולקולה לתת-לוחות בעלי שם. שיוך דסקים וסוגי משמרת לכל לשונית; בחירה ריקה = ללא הגבלה.</value>
+  </data>
+  <data name="Tabs_Molecule" xml:space="preserve">
+    <value>מולקולה</value>
+  </data>
+  <data name="Tabs_JobType" xml:space="preserve">
+    <value>סוג תפקיד</value>
+  </data>
+  <data name="Tabs_JobTypeNone" xml:space="preserve">
+    <value>(ללא סוג תפקיד — טכני)</value>
+  </data>
+  <data name="Tabs_AddTab" xml:space="preserve">
+    <value>הוספת לשונית</value>
+  </data>
+  <data name="Tabs_NameEn" xml:space="preserve">
+    <value>שם (אנגלית)</value>
+  </data>
+  <data name="Tabs_NameHe" xml:space="preserve">
+    <value>שם (עברית)</value>
+  </data>
+  <data name="Tabs_Color" xml:space="preserve">
+    <value>צבע</value>
+  </data>
+  <data name="Tabs_Companies" xml:space="preserve">
+    <value>דסקים</value>
+  </data>
+  <data name="Tabs_ShiftTypes" xml:space="preserve">
+    <value>סוגי משמרת</value>
+  </data>
+  <data name="Tabs_PrioritizeCompanyUsers" xml:space="preserve">
+    <value>תעדוף משתמשים מהדסקים האלה בשיבוץ</value>
+  </data>
+  <data name="Tabs_EmptyMeansAll" xml:space="preserve">
+    <value>ללא בחירה = ללא הגבלה (כל הדסקים / כל סוגי המשמרת).</value>
+  </data>
+  <data name="Tabs_Save" xml:space="preserve">
+    <value>שמירה</value>
+  </data>
+  <data name="Tabs_Delete" xml:space="preserve">
+    <value>מחיקה</value>
+  </data>
+  <data name="Tabs_Edit" xml:space="preserve">
+    <value>עריכה</value>
+  </data>
+  <data name="Tabs_NoTabs" xml:space="preserve">
+    <value>אין עדיין לשוניות לסוג תפקיד זה. הוסיפו למעלה.</value>
+  </data>
+  <data name="Tabs_Error_NamesRequired" xml:space="preserve">
+    <value>נדרש שם באנגלית ובעברית.</value>
+  </data>
+  <data name="Tabs_Error_NameExists" xml:space="preserve">
+    <value>כבר קיימת לשונית עם שם זהה (אנגלית או עברית) לסוג תפקיד זה.</value>
+  </data>
+  <data name="Tabs_Error_MoleculeRequired" xml:space="preserve">
+    <value>יש לבחור מולקולה תחילה.</value>
+  </data>
+  <data name="Tabs_Error_NotAuthorized" xml:space="preserve">
+    <value>אין לך הרשאה לנהל לשוניות במולקולה זו.</value>
+  </data>
+  <data name="Tabs_Error_InvalidSelection" xml:space="preserve">
+    <value>דסק או סוג משמרת שנבחרו הם מחוץ למולקולה זו.</value>
+  </data>
+  <data name="Tabs_Success_Created" xml:space="preserve">
+    <value>הלשונית '{0}' נוצרה.</value>
+  </data>
+  <data name="Tabs_Success_Updated" xml:space="preserve">
+    <value>הלשונית '{0}' עודכנה.</value>
+  </data>
+  <data name="Tabs_Success_Deleted" xml:space="preserve">
+    <value>הלשונית '{0}' נמחקה.</value>
+  </data>
+  <data name="Tabs_DeleteConfirm" xml:space="preserve">
+    <value>למחוק את '{0}'? משויכים אליה {1} סוגי משמרת ו-{2} דסקים, והיא הלשונית השמורה של {3} משתמשים.</value>
+  </data>
+  <data name="Tabs_CoverageWarning" xml:space="preserve">
+    <value>{0} סוגי משמרת אינם באף לשונית ויופיעו רק בתצוגת "הכול": {1}</value>
+  </data>
   <data name="DistributionLists" xml:space="preserve">
     <value>תפוצות</value>
   </data>

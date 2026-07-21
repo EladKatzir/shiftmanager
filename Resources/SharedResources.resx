@@ -16071,6 +16071,91 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Grant_ManageCalendarTabs_Desc" xml:space="preserve">
     <value>Create, edit, and delete calendar tabs (sub-calendars) for a molecule's job-type calendar.</value>
   </data>
+  <!-- Calendar Tabs admin page (/Admin/Organization/Tabs) + nav leaf -->
+  <data name="Nav2_Tabs" xml:space="preserve">
+    <value>Tabs</value>
+  </data>
+  <data name="Tabs_PageTitle" xml:space="preserve">
+    <value>Calendar Tabs</value>
+  </data>
+  <data name="Tabs_PageSubtitle" xml:space="preserve">
+    <value>Split a molecule's job-type calendar into named sub-calendars. Assign companies and shift types to each tab; empty selections mean no restriction.</value>
+  </data>
+  <data name="Tabs_Molecule" xml:space="preserve">
+    <value>Molecule</value>
+  </data>
+  <data name="Tabs_JobType" xml:space="preserve">
+    <value>Job type</value>
+  </data>
+  <data name="Tabs_JobTypeNone" xml:space="preserve">
+    <value>(No job type — Tech)</value>
+  </data>
+  <data name="Tabs_AddTab" xml:space="preserve">
+    <value>Add tab</value>
+  </data>
+  <data name="Tabs_NameEn" xml:space="preserve">
+    <value>Name (English)</value>
+  </data>
+  <data name="Tabs_NameHe" xml:space="preserve">
+    <value>Name (Hebrew)</value>
+  </data>
+  <data name="Tabs_Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Tabs_Companies" xml:space="preserve">
+    <value>Companies</value>
+  </data>
+  <data name="Tabs_ShiftTypes" xml:space="preserve">
+    <value>Shift types</value>
+  </data>
+  <data name="Tabs_PrioritizeCompanyUsers" xml:space="preserve">
+    <value>Prioritize users from these companies when assigning</value>
+  </data>
+  <data name="Tabs_EmptyMeansAll" xml:space="preserve">
+    <value>Nothing selected = no restriction (all companies / all shift types).</value>
+  </data>
+  <data name="Tabs_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Tabs_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Tabs_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Tabs_NoTabs" xml:space="preserve">
+    <value>No tabs yet for this job type. Add one above.</value>
+  </data>
+  <data name="Tabs_Error_NamesRequired" xml:space="preserve">
+    <value>Both an English and a Hebrew name are required.</value>
+  </data>
+  <data name="Tabs_Error_NameExists" xml:space="preserve">
+    <value>A tab with that English or Hebrew name already exists for this job type.</value>
+  </data>
+  <data name="Tabs_Error_MoleculeRequired" xml:space="preserve">
+    <value>Select a molecule first.</value>
+  </data>
+  <data name="Tabs_Error_NotAuthorized" xml:space="preserve">
+    <value>You don't have permission to manage tabs for this molecule.</value>
+  </data>
+  <data name="Tabs_Error_InvalidSelection" xml:space="preserve">
+    <value>One or more selected companies or shift types are outside this molecule's scope.</value>
+  </data>
+  <data name="Tabs_Success_Created" xml:space="preserve">
+    <value>Tab '{0}' created.</value>
+  </data>
+  <data name="Tabs_Success_Updated" xml:space="preserve">
+    <value>Tab '{0}' updated.</value>
+  </data>
+  <data name="Tabs_Success_Deleted" xml:space="preserve">
+    <value>Tab '{0}' deleted.</value>
+  </data>
+  <data name="Tabs_DeleteConfirm" xml:space="preserve">
+    <value>Delete '{0}'? It has {1} shift type(s) and {2} company/ies assigned, and is the remembered tab of {3} user(s).</value>
+  </data>
+  <data name="Tabs_CoverageWarning" xml:space="preserve">
+    <value>{0} shift type(s) are in no tab and will appear only on the "All" view: {1}</value>
+  </data>
   <data name="DistributionLists" xml:space="preserve">
     <value>Lists</value>
   </data>

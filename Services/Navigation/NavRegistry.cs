@@ -60,7 +60,8 @@ public static class NavRegistry
                 // Chore-type defs belong with shift Blueprints / DutyTypes (parity spine), not the
                 // Organization route they happen to be filed under — same call DutyTypes made above.
                 Link("Nav2_ChoreTypes", "/Admin/Organization/ChoreTypes", policy: G("EditChoreTypes"), icon: "list-checks"),
-                Link("Nav2_DutyTypes", "/Admin/Organization/DutyTypes", policy: G("ManageOnDutyTypes"), icon: "shield")),
+                Link("Nav2_DutyTypes", "/Admin/Organization/DutyTypes", policy: G("ManageOnDutyTypes"), icon: "shield"),
+                Link("Nav2_Tabs", "/Admin/Organization/Tabs", policy: G("ManageCalendarTabs"), icon: "layers")),
             Link("Nav2_Eligibility", "/Scheduling/Eligibility", policy: G("ManageShiftCategories"), icon: "user-check"),
             Link("Nav2_Rules", "/Admin/Settings", policy: G("ViewSettings"), icon: "sliders-horizontal", activeMatch: "/Admin/Settings")),
 

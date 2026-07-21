@@ -1,0 +1,215 @@
+@page
+@model ShiftManager.Pages.Admin.Organization.Tabs.IndexModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Localizer["Tabs_PageTitle"].Value;
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Label = Localizer["Admin"], Url = "/Admin/Users" },
+    new BreadcrumbItem { Label = Localizer["Organization"], Url = "/Admin/Organization" },
+    new BreadcrumbItem { Label = Localizer["Tabs_PageTitle"], IsActive = true }
+})
+
+<div class="page-header">
+    <h1><icon name="layers" /> <loc key="Tabs_PageTitle" /></h1>
+    <p class="page-subtitle"><loc key="Tabs_PageSubtitle" /></p>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@* Molecule + job-type selectors (GET-round-trip; auto-selected when only one is accessible) *@
+<form method="get" class="feature-category">
+    <div class="form-row" style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="form-group">
+            <label asp-for="MoleculeId"><loc key="Tabs_Molecule" /></label>
+            <select asp-for="MoleculeId" class="form-control" onchange="this.form.submit()" data-searchable>
+                <option value=""></option>
+                @foreach (var m in Model.AvailableMolecules)
+                {
+                    <option value="@m.Id" selected="@(Model.MoleculeId == m.Id)">@m.Name</option>
+                }
+            </select>
+        </div>
+        @if (Model.MoleculeId.HasValue && !Model.IsTechMolecule)
+        {
+            <div class="form-group">
+                <label asp-for="JobTypeId"><loc key="Tabs_JobType" /></label>
+                <select asp-for="JobTypeId" class="form-control" onchange="this.form.submit()" data-searchable>
+                    <option value=""></option>
+                    @foreach (var jt in Model.AvailableJobTypes)
+                    {
+                        <option value="@jt.Id" selected="@(Model.JobTypeId == jt.Id)">@jt.Name</option>
+                    }
+                </select>
+            </div>
+        }
+        else if (Model.MoleculeId.HasValue && Model.IsTechMolecule)
+        {
+            <div class="form-group"><span class="text-muted"><loc key="Tabs_JobTypeNone" /></span></div>
+        }
+    </div>
+</form>
+
+@{ var scopeReady = Model.MoleculeId.HasValue && (Model.IsTechMolecule || Model.JobTypeId.HasValue); }
+@if (scopeReady)
+{
+    @if (Model.UncoveredShiftTypeNames.Any())
+    {
+        <div class="alert alert-warning">
+            @string.Format(Localizer["Tabs_CoverageWarning"].Value, Model.UncoveredShiftTypeNames.Count,
+                string.Join(", ", Model.UncoveredShiftTypeNames))
+        </div>
+    }
+
+    @* Existing tabs *@
+    <div class="feature-category">
+        @if (Model.Tabs.Any())
+        {
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th><loc key="Tabs_NameEn" /> / <loc key="Tabs_NameHe" /></th>
+                        <th><loc key="Tabs_Companies" /></th>
+                        <th><loc key="Tabs_ShiftTypes" /></th>
+                        <th><loc key="Tabs_PrioritizeCompanyUsers" /></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.Tabs)
+                    {
+                        <tr>
+                            <td>
+                                <span style="display:inline-block; width:12px; height:12px; border-radius:50%; margin-inline-end:6px; vertical-align:middle; background:@(string.IsNullOrWhiteSpace(t.Color) ? "#888" : t.Color);"></span>
+                                <bdi>@t.NameEn</bdi> / <bdi>@t.NameHe</bdi>
+                            </td>
+                            <td><small class="text-muted">@(t.CompanyCount == 0 ? Localizer["Tabs_EmptyMeansAll"].Value : t.CompanyCount.ToString())</small></td>
+                            <td><small class="text-muted">@(t.ShiftTypeCount == 0 ? Localizer["Tabs_EmptyMeansAll"].Value : t.ShiftTypeCount.ToString())</small></td>
+                            <td>@(t.PrioritizeCompanyUsers ? "✓" : "—")</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-secondary js-edit-tab"
+                                        data-id="@t.Id" data-name-en="@t.NameEn" data-name-he="@t.NameHe"
+                                        data-color="@t.Color" data-priority="@t.PrioritizeCompanyUsers.ToString().ToLowerInvariant()"
+                                        data-company-ids="@string.Join(",", t.CompanyIds)"
+                                        data-shift-type-ids="@string.Join(",", t.ShiftTypeIds)">
+                                    <loc key="Tabs_Edit" />
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger js-delete-tab" data-id="@t.Id">
+                                    <loc key="Tabs_Delete" />
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-info"><loc key="Tabs_NoTabs" /></div>
+        }
+    </div>
+
+    @* Create / edit form (JS toggles handler + fills fields for edit) *@
+    <form method="post" id="tabForm" class="feature-category" asp-page-handler="Create">
+        <input type="hidden" asp-for="MoleculeId" />
+        <input type="hidden" asp-for="JobTypeId" />
+        <input type="hidden" asp-for="EditTabId" />
+        <h2 id="tabFormTitle"><icon name="plus" /> <loc key="Tabs_AddTab" /></h2>
+        <div class="form-row" style="display:flex; gap:16px; flex-wrap:wrap;">
+            <div class="form-group"><label asp-for="NameEn"><loc key="Tabs_NameEn" /></label>
+                <input asp-for="NameEn" class="form-control" maxlength="100" autocomplete="off" /></div>
+            <div class="form-group"><label asp-for="NameHe"><loc key="Tabs_NameHe" /></label>
+                <input asp-for="NameHe" class="form-control" maxlength="100" autocomplete="off" dir="rtl" /></div>
+            <div class="form-group"><label asp-for="Color"><loc key="Tabs_Color" /></label>
+                <input asp-for="Color" type="color" class="form-control" value="#3B82F6" style="width:56px; padding:2px;" /></div>
+        </div>
+        <div class="form-group">
+            <label class="checkbox">
+                <input asp-for="PrioritizeCompanyUsers" type="checkbox" /> <loc key="Tabs_PrioritizeCompanyUsers" />
+            </label>
+        </div>
+        <p class="text-muted"><small><loc key="Tabs_EmptyMeansAll" /></small></p>
+        <div class="form-row" style="display:flex; gap:32px; flex-wrap:wrap;">
+            <fieldset class="form-group">
+                <legend><loc key="Tabs_Companies" /></legend>
+                @foreach (var c in Model.MoleculeCompanies)
+                {
+                    <label class="checkbox" style="display:block;">
+                        <input type="checkbox" name="SelectedCompanyIds" value="@c.Id" class="js-company-chk" /> @c.Name
+                    </label>
+                }
+            </fieldset>
+            <fieldset class="form-group">
+                <legend><loc key="Tabs_ShiftTypes" /></legend>
+                @foreach (var st in Model.ScopeShiftTypes)
+                {
+                    <label class="checkbox" style="display:block;">
+                        <input type="checkbox" name="SelectedShiftTypeIds" value="@st.Id" class="js-shifttype-chk" /> @st.Name
+                    </label>
+                }
+            </fieldset>
+        </div>
+        <button type="submit" class="btn btn-primary"><loc key="Tabs_Save" /></button>
+    </form>
+
+    @* Hidden delete form (confirmed via the impact-preview fetch) *@
+    <form method="post" id="deleteTabForm" asp-page-handler="Delete" style="display:none;">
+        <input type="hidden" asp-for="MoleculeId" />
+        <input type="hidden" asp-for="JobTypeId" />
+        <input type="hidden" name="tabId" id="deleteTabId" />
+    </form>
+}
+
+@section Scripts {
+<script>
+(function () {
+    // Edit → switch the form to Update and pre-fill fields + checklists.
+    document.querySelectorAll('.js-edit-tab').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var f = document.getElementById('tabForm');
+            f.querySelector('[name="EditTabId"]').value = btn.dataset.id;
+            f.action = f.action.replace(/handler=Create/, 'handler=Update');
+            if (!/handler=/.test(f.action)) { f.action += (f.action.indexOf('?') < 0 ? '?' : '&') + 'handler=Update'; }
+            f.querySelector('[name="NameEn"]').value = btn.dataset.nameEn || '';
+            f.querySelector('[name="NameHe"]').value = btn.dataset.nameHe || '';
+            f.querySelector('[name="Color"]').value = btn.dataset.color || '#3B82F6';
+            f.querySelector('[name="PrioritizeCompanyUsers"]').checked = (btn.dataset.priority === 'true');
+            var cids = (btn.dataset.companyIds || '').split(',').filter(Boolean);
+            var sids = (btn.dataset.shiftTypeIds || '').split(',').filter(Boolean);
+            f.querySelectorAll('.js-company-chk').forEach(function (c) { c.checked = cids.indexOf(c.value) >= 0; });
+            f.querySelectorAll('.js-shifttype-chk').forEach(function (c) { c.checked = sids.indexOf(c.value) >= 0; });
+            document.getElementById('tabFormTitle').textContent = btn.dataset.nameEn;
+            f.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+    // Delete → fetch impact preview then confirm.
+    document.querySelectorAll('.js-delete-tab').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            var id = btn.dataset.id;
+            try {
+                var res = await fetch('?handler=CheckTabUsage&tabId=' + encodeURIComponent(id), { credentials: 'same-origin' });
+                var data = await res.json();
+                if (!data.ok) { return; }
+                if (window.confirm(data.message)) {
+                    document.getElementById('deleteTabId').value = id;
+                    document.getElementById('deleteTabForm').submit();
+                }
+            } catch (e) { /* network — do nothing */ }
+        });
+    });
+})();
+</script>
+}
