@@ -878,6 +878,8 @@ function openInlineTraineePicker(btn) {
     var draftCoords = draftId ? harvestTraineeDraftCoords(btn) : null;
     if (!draftCoords && isNaN(assignmentId)) return;
 
+    // NOTE: intentionally NOT searchable-enhanced in Phase B — see QE-3/PF9; enhanced in Phase E
+    // with data-company/data-jobtype + blur-dismiss guard (the 150ms blur self-remove below).
     var select = document.createElement('select');
     select.className = 'excel-calendar__trainee-picker';
     var def = document.createElement('option');

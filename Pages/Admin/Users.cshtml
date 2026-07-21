@@ -516,7 +516,7 @@
 
             <div class="filter-group">
                 <label for="filterCompanyId">@Localizer["Company"]</label>
-                <select class="filter-select" name="FilterCompanyId" id="filterCompanyId" onchange="this.form.submit()">
+                <select class="filter-select" name="FilterCompanyId" id="filterCompanyId" data-searchable onchange="this.form.submit()">
                     <option value="">@Localizer["AllCompanies"]</option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
@@ -781,7 +781,7 @@
                 </div>
                 <div class="filter-group">
                     <label>@Localizer["Role"]</label>
-                    <select class="form-input" asp-for="NewRoleTemplateId">
+                    <select class="form-input" asp-for="NewRoleTemplateId" data-searchable>
                         @foreach (var rt in Model.AssignableRoleTemplates)
                         {
                             <option value="@rt.Id" data-derived-role="@rt.DerivedUserRole">@RoleDisplayHelper.GetRoleDisplayName(Localizer, rt)</option>
@@ -792,7 +792,7 @@
                 {
                     <div class="filter-group" id="addUserCompanyField">
                         <label>@Localizer["Company"]</label>
-                        <select asp-for="NewUserCompanyId" class="form-input" required>
+                        <select asp-for="NewUserCompanyId" class="form-input" data-searchable required>
                             @if (Model.Companies.Count > 1)
                             {
                                 <option value="">-- @Localizer["SelectCompany"] --</option>
@@ -808,7 +808,7 @@
                 {
                     <div class="filter-group" id="addUserMoleculeField" style="display:none;">
                         <label>@Localizer["Molecule"]</label>
-                        <select asp-for="NewMoleculeId" class="form-input">
+                        <select asp-for="NewMoleculeId" class="form-input" data-searchable>
                             <option value="">-- @Localizer["SelectMolecule"] --</option>
                             @foreach (var mol in Model.AvailableMolecules)
                             {
@@ -819,7 +819,7 @@
                 }
                 <div class="filter-group">
                     <label>@Localizer["JobType"]</label>
-                    <select asp-for="NewJobTypeId" class="form-input" id="addUserJobType">
+                    <select asp-for="NewJobTypeId" class="form-input" id="addUserJobType" data-searchable>
                         <option value="">-- @Localizer["SelectJobType"] --</option>
                         @foreach (var jobType in Model.AvailableJobTypes)
                         {
@@ -856,7 +856,7 @@
         <div class="filters-grid">
             <div class="filter-group">
                 <label>@Localizer["Company"]</label>
-                <select class="filter-select" name="UserFilterCompanyId" onchange="this.form.submit()">
+                <select class="filter-select" name="UserFilterCompanyId" data-searchable onchange="this.form.submit()">
                     <option value="">@Localizer["AllCompanies"]</option>
                     @foreach (var company in Model.AvailableCompanies)
                     {
@@ -878,7 +878,7 @@
 
             <div class="filter-group">
                 <label>@Localizer["Molecule"]</label>
-                <select class="filter-select" name="UserFilterMoleculeId" onchange="this.form.submit()">
+                <select class="filter-select" name="UserFilterMoleculeId" data-searchable onchange="this.form.submit()">
                     <option value="">@Localizer["AllMolecules"]</option>
                     @foreach (var molecule in Model.AvailableMolecules)
                     {
@@ -889,7 +889,7 @@
 
             <div class="filter-group">
                 <label>@Localizer["JobType"]</label>
-                <select class="filter-select" name="UserFilterJobTypeId" onchange="this.form.submit()">
+                <select class="filter-select" name="UserFilterJobTypeId" data-searchable onchange="this.form.submit()">
                     <option value="">@Localizer["AllJobTypes"]</option>
                     @foreach (var jobType in Model.AvailableJobTypes)
                     {
@@ -1383,7 +1383,7 @@
         <input type="hidden" name="userId" id="moveUserId" />
 
         <label for="moveDestCompany" style="display:block; margin-bottom:0.35rem;">@Localizer["Users_MoveDestination"]</label>
-        <select id="moveDestCompany" name="destCompanyId" class="form-input" style="width:100%; margin-bottom:1rem;" required>
+        <select id="moveDestCompany" name="destCompanyId" class="form-input" data-searchable style="width:100%; margin-bottom:1rem;" required>
             <option value="">@Localizer["Users_MoveSelectCompany"]</option>
             @foreach (var company in Model.AvailableCompanies)
             {
@@ -1409,7 +1409,7 @@
         <input type="hidden" name="userId" id="addMembershipUserId" />
 
         <label for="addMembershipCompany" style="display:block; margin-bottom:0.35rem;">@Localizer["Users_Membership_Company"]</label>
-        <select id="addMembershipCompany" name="companyId" class="form-input" style="width:100%; margin-bottom:1rem;" required>
+        <select id="addMembershipCompany" name="companyId" class="form-input" data-searchable style="width:100%; margin-bottom:1rem;" required>
             <option value="">@Localizer["Users_Membership_SelectCompany"]</option>
             @foreach (var company in Model.AvailableCompanies)
             {
@@ -1418,7 +1418,7 @@
         </select>
 
         <label for="addMembershipRole" style="display:block; margin-bottom:0.35rem;">@Localizer["Users_Membership_Role"]</label>
-        <select id="addMembershipRole" name="roleTemplateId" class="form-input" style="width:100%; margin-bottom:1rem;">
+        <select id="addMembershipRole" name="roleTemplateId" class="form-input" data-searchable style="width:100%; margin-bottom:1rem;">
             <option value="">@Localizer["Users_Membership_SelectRole"]</option>
             @foreach (var rt in Model.AssignableRoleTemplates)
             {

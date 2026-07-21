@@ -96,7 +96,7 @@
             </div>
             <div>
                 <label class="form-label" for="auditUserId">@Localizer["User"]</label>
-                <select name="UserId" id="auditUserId" class="form-input">
+                <select name="UserId" id="auditUserId" class="form-input" data-searchable>
                     <option value="">@Localizer["AllUsers"]</option>
                     @foreach (var user in Model.Users)
                     {

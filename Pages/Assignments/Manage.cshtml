@@ -63,7 +63,7 @@
                             <input type="hidden" asp-for="Date" />
                             <input type="hidden" asp-for="ShiftTypeId" />
                             <input type="hidden" asp-for="ReturnUrl" />
-                            <select name="traineeUserId" class="input" style="max-width: 300px;" required>
+                            <select name="traineeUserId" class="input" data-searchable style="max-width: 300px;" required>
                                 <option value="">@Localizer["AttachTrainee"]</option>
                                 @foreach (var trainee in Model.Trainees)
                                 {
