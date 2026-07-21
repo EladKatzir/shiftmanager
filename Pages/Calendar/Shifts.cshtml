@@ -580,7 +580,7 @@ else
                     moleculeId: @Model.MoleculeId,
                     jobTypeId: @(Model.JobTypeId?.ToString() ?? "null")
                 },
-                onRefresh: refreshCalendarData,
+                onRefresh: triggerCalendarRefresh,
                 handlers: {
                     onAssignmentChanged: handleAssignmentChanged,
                     onCapacityChanged: handleCapacityChanged
@@ -652,17 +652,18 @@ else
             }
         }
 
-        // Handle real-time assignment change
+        // Handle real-time assignment change (Bug 4 / PF3): ALWAYS refresh — even when the broadcast
+        // instance id isn't yet in this peer's DOM (User A filled an empty hole → a brand-new instance).
+        // triggerCalendarRefresh() (calendar-inline-edit.js) does a server-rendered, tab-filtered full-grid
+        // swap that materializes the new cell with full chip markup; the old JSON cell-patch could not, and
+        // its if(cell) guard skipped the refresh in exactly the collision case that produced the desync.
         function handleAssignmentChanged(evt) {
-            const cell = document.querySelector(`[data-shift-instance-id="${evt.shiftInstanceId}"]`);
-            if (cell) {
-                refreshCalendarData(); // Full refresh for now
-            }
+            triggerCalendarRefresh();
         }
 
         // Handle real-time capacity change
         function handleCapacityChanged(evt) {
-            refreshCalendarData(); // Full refresh for now
+            triggerCalendarRefresh();
         }
 
         // Update calendar with new filter selections

@@ -575,9 +575,10 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
             // phase; until then, guide the user to refresh so the wording stays honest.)
             const culture = getCurrentCulture();
             const msg = culture === 'he-IL'
-                ? 'המשתמש כבר משובץ למשמרת זו. יש לרענן את הדף כדי לראות את השינויים האחרונים.'
-                : 'The user is already assigned to this shift. Please refresh the page to see the latest changes.';
+                ? 'המשתמש כבר משובץ למשמרת זו. לוח השנה עודכן.'
+                : 'The user is already assigned to this shift. The calendar has been refreshed.';
             showToast(msg, 'warning');
+            triggerCalendarRefresh();
         } else {
             showToast(result.message || result.error || 'Error', 'error');
         }
