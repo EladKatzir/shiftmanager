@@ -172,6 +172,14 @@
   }
   function optByValue(w, v) { for (var i = 0; i < w.options.length; i++) if (w.options[i].value === v) return w.options[i]; return null; }
 
+  function attachSelectObserver(w) {
+    // Re-sync when options are appended (async populate) or mutate (busy decoration
+    // rewrites text + toggles `disabled`). w.syncing guards our own programmatic writes.
+    w.mo = new MutationObserver(function () { if (w.syncing) return; refresh(w.select); });
+    w.mo.observe(w.select, { childList: true, subtree: true, characterData: true,
+      attributes: true, attributeFilter: ['disabled'] });
+  }
+
   function enhance(select) {
     if (!select || select.tagName !== 'SELECT') return;
     if (select._ssWidget) return;                 // idempotent
@@ -203,12 +211,15 @@
     var w = { select: select, root: root, control: control, value: value, panel: panel, search: search,
       list: list, multi: multi, uid: uid, open: false, activeIndex: -1, options: [], _rows: [], syncing: false, mo: null };
     select._ssWidget = w;
-    buildOptions(w); wireEvents(w); renderChips(w);
-    // attachSelectObserver(w) added in B3.
+    buildOptions(w); wireEvents(w); renderChips(w); attachSelectObserver(w);
     return w;
   }
 
-  function refresh(select) { /* B3 */ }
+  function refresh(select) {
+    var w = select && select._ssWidget; if (!w) return;
+    buildOptions(w); renderChips(w);
+    if (w.open) renderList(w, w.search.value);
+  }
   function enhanceWithin(root) { if (!root) return; var s = root.querySelectorAll('select[data-searchable]'); for (var i = 0; i < s.length; i++) enhance(s[i]); }
   function observe(container) { /* B4 */ }
   function init() { enhanceWithin(document); }
