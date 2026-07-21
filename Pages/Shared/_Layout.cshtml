@@ -126,6 +126,8 @@
         <link rel="stylesheet" href="~/css/rtl.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/shift-swap-game.css" asp-append-version="true" />
+    @* Searchable-select widget (global — used on admin, assignment & calendar pages) *@
+    <link rel="stylesheet" href="~/css/searchable-select.css" asp-append-version="true" />
     @if (Context.Request.Cookies["language_edit_mode"] == "true")
     {
         <link rel="stylesheet" href="~/css/language-edit-mode.css" asp-append-version="true" />
@@ -237,6 +239,8 @@
     <script defer src="~/js/modal-focus.js" asp-append-version="true"></script>
     @* Keyboard Navigation (B-037) - Comprehensive keyboard accessibility *@
     <script defer src="~/js/keyboard-nav.js" asp-append-version="true"></script>
+    @* Searchable/type-to-filter <select> enhancer (opt-in via data-searchable) *@
+    <script defer src="~/js/searchable-select.js" asp-append-version="true"></script>
     @* Accessibility Enhancements (Task 17) - aria-describedby, landmarks, aria-busy utilities *@
     <script defer src="~/js/a11y-enhancements.js" asp-append-version="true"></script>
     @* Mobile Navigation (B-011) - Hamburger menu with focus trap *@

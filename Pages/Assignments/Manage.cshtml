@@ -119,7 +119,7 @@
             </div>
         }
 
-        <select class="input" asp-for="SelectedUserId" style="font-family: var(--font-sans);">
+        <select class="input" asp-for="SelectedUserId" data-searchable style="font-family: var(--font-sans);">
             <option value="">@Localizer["ChooseActiveUser"]</option>
             @foreach (var u in Model.ActiveUsers)
             {
