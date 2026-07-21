@@ -97,15 +97,8 @@ public class GetShiftsDataModel : PageModel
             var instances = await _shiftCalendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, start, end);
             var overlays = await _shiftCalendarService.GetOverlaysAsync(moleculeId, start, end);
 
-            // Tab (לשונית): keep the shadow refresh aligned with the server render. The client sends
-            // tab=<Tab ?? 0>: 0 = "Main" (untagged shifts), a real id = that tab. Instances are already
-            // molecule-scoped, so a foreign/invalid tab id simply matches nothing (no cross-tenant leak).
-            if (tab.HasValue)
-            {
-                instances = tab.Value == 0
-                    ? instances.Where(i => i.ShiftType != null && i.ShiftType.TabId == null).ToList()
-                    : instances.Where(i => i.ShiftType != null && i.ShiftType.TabId == tab.Value).ToList();
-            }
+            // Tab-filtered refresh is Phase E (PF3/PF4). Interim: no tab filter (returns all molecule+jobtype
+            // instances — the "All" view). The `tab` query param is accepted but ignored until Phase E.
 
             // C-07 OPTIMIZED: Batch-load all capacities in 2 queries instead of N+1 per instance
             var capacities = await _shiftCalendarService.GetCapacitiesBatchAsync(moleculeId, jobTypeId, start, end);

@@ -9,15 +9,14 @@ using Xunit;
 namespace ShiftManager.Tests.UnitTests.Services;
 
 /// <summary>
-/// Real-SQLite coverage for <see cref="ShiftTabService"/> (calendar "tabs" / לשונית): tab CRUD + uniqueness,
-/// shift-type assignment (molecule boundary + area-scope rejection), company assignment (cross-molecule
-/// rejection C1 + reassignment-is-move M1), the tab→company roster set incl. the Main complement, FK behavior
-/// on delete (shift types → Main, company links cascade, remembered pref reverts), per-user last-tab memory,
-/// and reorder (SortOrder rewrite + cross-molecule id rejection).
+/// Real-SQLite coverage for the reshaped <see cref="ShiftTabService"/> (calendar "tabs" / לשונית):
+/// (molecule, jobtype)-scoped CRUD + dual NameEn/NameHe uniqueness, many-to-many company + shift-type
+/// membership (replace-set + cross-molecule/scope rejection), usage counts, per-(user,molecule,jobtype)
+/// last-tab memory, and delete cascade (company + shift-type join rows drop, remembered pref → SetNull).
 /// </summary>
 public sealed class ShiftTabServiceTests
 {
-    // Molecule 1 owns companies 1,2,3; molecule 2 owns company 4.
+    // Molecule 1 (jobtypes 10,11) owns companies 1,2,3; molecule 2 owns company 4.
     private static async Task SeedHierarchyAsync(SqliteDbContextFixture f)
     {
         f.Db.Projects.Add(new Project { Id = 1, Name = "P", DisplayName = "P" });
@@ -25,6 +24,9 @@ public sealed class ShiftTabServiceTests
         f.Db.Molecules.AddRange(
             new Molecule { Id = 1, AreaId = 1, Name = "M1", DisplayName = "M1" },
             new Molecule { Id = 2, AreaId = 1, Name = "M2", DisplayName = "M2" });
+        f.Db.JobTypes.AddRange(
+            new JobType { Id = 10, AreaId = 1, Name = "Alhut" },
+            new JobType { Id = 11, AreaId = 1, Name = "Text" });
         f.Db.Companies.AddRange(
             new Company { Id = 1, Name = "Co1", Slug = "co1", MoleculeId = 1 },
             new Company { Id = 2, Name = "Co2", Slug = "co2", MoleculeId = 1 },
@@ -34,156 +36,176 @@ public sealed class ShiftTabServiceTests
     }
 
     [Fact]
-    public async Task Create_Enforces_Name_Uniqueness_Within_Molecule_But_Allows_Reuse_Across_Molecules()
+    public async Task Create_Is_Unique_Per_MoleculeJobtype_Over_Both_Names_But_Reusable_Across_Scope()
     {
         await using var f = await SqliteDbContextFixture.CreateAsync();
         await SeedHierarchyAsync(f);
         var svc = new ShiftTabService(f.Db);
 
-        (await svc.CreateAsync(1, "Radio", "Radio")).Should().NotBeNull();
-        (await svc.CreateAsync(1, "Radio", "Radio")).Should().BeNull("name already used in molecule 1");
-        (await svc.CreateAsync(2, "Radio", "Radio")).Should().NotBeNull("free in a different molecule");
+        (await svc.CreateAsync(1, 10, "Geo", "גאו")).Should().NotBeNull();
+        (await svc.CreateAsync(1, 10, "Geo", "אחר")).Should().BeNull("NameEn already used in (mol1, Alhut)");
+        (await svc.CreateAsync(1, 10, "Other", "גאו")).Should().BeNull("NameHe already used in (mol1, Alhut)");
+        (await svc.CreateAsync(1, 11, "Geo", "גאו")).Should().NotBeNull("free in a different jobtype");
+        (await svc.CreateAsync(2, 10, "Geo", "גאו")).Should().NotBeNull("free in a different molecule");
+        (await svc.CreateAsync(1, null, "Tech", "טכני")).Should().NotBeNull("null jobtype (Tech) is allowed");
     }
 
     [Fact]
-    public async Task Rename_Rejects_A_Colliding_Name()
+    public async Task GetTabsForMolecule_Is_Scoped_To_Jobtype_And_Ordered()
     {
         await using var f = await SqliteDbContextFixture.CreateAsync();
         await SeedHierarchyAsync(f);
         var svc = new ShiftTabService(f.Db);
+        await svc.CreateAsync(1, 10, "Bravo", "ב");
+        await svc.CreateAsync(1, 10, "Alpha", "א");
+        await svc.CreateAsync(1, 11, "TextTab", "טקסט");
 
-        await svc.CreateAsync(1, "Radio", "Radio");
-        var b = await svc.CreateAsync(1, "Element", "Element");
-
-        (await svc.RenameAsync(b!.Id, "Radio", "Radio", null)).Should().BeFalse("collides within the molecule");
-        (await svc.RenameAsync(b.Id, "Element 2", "Element 2", "#ff0000")).Should().BeTrue();
+        var alhut = await svc.GetTabsForMoleculeAsync(1, 10);
+        alhut.Select(t => t.NameEn).Should().ContainInOrder("Bravo", "Alpha"); // SortOrder (insertion) then NameEn
+        alhut.Should().OnlyContain(t => t.JobTypeId == 10);
+        (await svc.GetTabsForMoleculeAsync(1, 11)).Should().ContainSingle(t => t.NameEn == "TextTab");
+        (await svc.GetTabsForMoleculeAsync(1, null)).Should().BeEmpty("no null-jobtype tabs in mol1");
     }
 
     [Fact]
-    public async Task AssignShiftTypeToTab_Honors_Molecule_Boundary_And_Rejects_Area_Scoped()
+    public async Task Rename_Updates_Names_Color_Priority_And_Rejects_Collision()
+    {
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        var svc = new ShiftTabService(f.Db);
+        await svc.CreateAsync(1, 10, "Geo", "גאו");
+        var b = await svc.CreateAsync(1, 10, "Tacti", "טקטי");
+
+        (await svc.RenameAsync(b!.Id, "Geo", "טקטי", null, true)).Should().BeFalse("NameEn collides in scope");
+        (await svc.RenameAsync(b.Id, "Tacti", "גאו", null, true)).Should().BeFalse("NameHe collides in scope");
+        (await svc.RenameAsync(b.Id, "Tacti2", "טקטי2", "#ff0000", false)).Should().BeTrue();
+
+        f.Db.ChangeTracker.Clear();
+        var reloaded = await svc.GetTabAsync(b.Id);
+        reloaded!.NameEn.Should().Be("Tacti2");
+        reloaded.NameHe.Should().Be("טקטי2");
+        reloaded.Color.Should().Be("#ff0000");
+        reloaded.PrioritizeCompanyUsers.Should().BeFalse();
+        reloaded.UpdatedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task NewTab_Defaults_PrioritizeCompanyUsers_On_And_Stamps_Audit()
+    {
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        var svc = new ShiftTabService(f.Db);
+        var tab = await svc.CreateAsync(1, 10, "Geo", "גאו", createdByUserId: 42);
+        tab!.PrioritizeCompanyUsers.Should().BeTrue("UD3 default ON");
+        tab.CreatedByUserId.Should().Be(42);
+    }
+
+    [Fact]
+    public async Task SetCompanies_Replaces_Membership_Allows_ManyTabs_And_Rejects_CrossMolecule()
+    {
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        var svc = new ShiftTabService(f.Db);
+        var geo = await svc.CreateAsync(1, 10, "Geo", "גאו");
+        var tacti = await svc.CreateAsync(1, 10, "Tacti", "טקטי");
+
+        (await svc.SetCompaniesForTabAsync(geo!.Id, new[] { 1, 2 })).Should().BeTrue();
+        (await svc.SetCompaniesForTabAsync(tacti!.Id, new[] { 1 })).Should().BeTrue("a company may be on many tabs now");
+        (await svc.GetCompanyIdsForTabAsync(geo.Id)).Should().BeEquivalentTo(new[] { 1, 2 });
+        (await svc.GetCompanyIdsForTabAsync(tacti.Id)).Should().BeEquivalentTo(new[] { 1 });
+
+        (await svc.SetCompaniesForTabAsync(geo.Id, new[] { 2, 3 })).Should().BeTrue("replace-set");
+        (await svc.GetCompanyIdsForTabAsync(geo.Id)).Should().BeEquivalentTo(new[] { 2, 3 });
+
+        (await svc.SetCompaniesForTabAsync(geo.Id, new[] { 4 })).Should().BeFalse("company 4 is in molecule 2 (IDOR)");
+        (await svc.GetCompanyIdsForTabAsync(geo.Id)).Should().BeEquivalentTo(new[] { 2, 3 }, "rejected — membership unchanged");
+
+        (await svc.SetCompaniesForTabAsync(geo.Id, System.Array.Empty<int>())).Should().BeTrue("empty = no restriction");
+        (await svc.GetCompanyIdsForTabAsync(geo.Id)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SetShiftTypes_Replaces_Membership_And_Rejects_OutOfScope()
     {
         await using var f = await SqliteDbContextFixture.CreateAsync();
         await SeedHierarchyAsync(f);
         f.Db.ShiftTypes.AddRange(
-            new ShiftType { Id = 100, Scope = ShiftScope.Molecule, MoleculeId = 1, Key = "MORNING" },
-            new ShiftType { Id = 200, Scope = ShiftScope.Area, AreaId = 1, Key = "AREA_DUTY" });
+            new ShiftType { Id = 100, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = 10, Key = "MORNING" },
+            new ShiftType { Id = 101, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = null, Key = "OFFLINE" },
+            new ShiftType { Id = 200, Scope = ShiftScope.Molecule, MoleculeId = 2, JobTypeId = 10, Key = "MORNING" },
+            new ShiftType { Id = 300, Scope = ShiftScope.Area, AreaId = 1, Key = "AREA_DUTY" });
         await f.Db.SaveChangesAsync();
         var svc = new ShiftTabService(f.Db);
+        var geo = await svc.CreateAsync(1, 10, "Geo", "גאו");
 
-        var tabM1 = await svc.CreateAsync(1, "Radio", "Radio");
-        var tabM2 = await svc.CreateAsync(2, "Other", "Other");
+        (await svc.SetShiftTypesForTabAsync(geo!.Id, new[] { 100, 101 })).Should().BeTrue("in molecule; jobtype match or null");
+        (await svc.GetShiftTypeIdsForTabAsync(geo.Id)).Should().BeEquivalentTo(new[] { 100, 101 });
 
-        (await svc.AssignShiftTypeToTabAsync(100, tabM2!.Id)).Should().BeFalse("tab in molecule 2 can't own a molecule-1 shift");
-        (await svc.AssignShiftTypeToTabAsync(100, tabM1!.Id)).Should().BeTrue();
-        (await f.Db.ShiftTypes.FindAsync(100))!.TabId.Should().Be(tabM1.Id);
-
-        (await svc.AssignShiftTypeToTabAsync(200, tabM1.Id)).Should().BeFalse("area-scoped shifts span molecules → never tabbed");
-
-        (await svc.AssignShiftTypeToTabAsync(100, null)).Should().BeTrue("clearing is always allowed");
-        (await f.Db.ShiftTypes.FindAsync(100))!.TabId.Should().BeNull();
+        (await svc.SetShiftTypesForTabAsync(geo.Id, new[] { 200 })).Should().BeFalse("shift type in molecule 2");
+        (await svc.SetShiftTypesForTabAsync(geo.Id, new[] { 300 })).Should().BeFalse("area-scoped shift is never molecule-tabbed");
+        (await svc.GetShiftTypeIdsForTabAsync(geo.Id)).Should().BeEquivalentTo(new[] { 100, 101 }, "rejected — unchanged");
     }
 
     [Fact]
-    public async Task AssignCompanyToTab_Rejects_CrossMolecule_And_Reassignment_Is_A_Move()
+    public async Task GetUsage_Counts_ShiftType_And_Company_Join_Rows()
     {
         await using var f = await SqliteDbContextFixture.CreateAsync();
         await SeedHierarchyAsync(f);
-        var svc = new ShiftTabService(f.Db);
-        var tab1 = await svc.CreateAsync(1, "Radio", "Radio");
-        var tab2 = await svc.CreateAsync(1, "Element", "Element");
-        var tabM2 = await svc.CreateAsync(2, "Other", "Other");
-
-        // C1: a molecule-1 company cannot join a molecule-2 tab.
-        (await svc.AssignCompanyToTabAsync(1, tabM2!.Id)).Should().BeFalse("cross-molecule stitching is blocked");
-
-        (await svc.AssignCompanyToTabAsync(1, tab1!.Id)).Should().BeTrue();
-        // M1: reassigning is a MOVE, not a second row (UNIQUE(CompanyId)).
-        (await svc.AssignCompanyToTabAsync(1, tab2!.Id)).Should().BeTrue();
-
-        f.Db.ChangeTracker.Clear();
-        var rows = await f.Db.ShiftTabCompanies.Where(tc => tc.CompanyId == 1).ToListAsync();
-        rows.Should().ContainSingle("a company is on at most one tab");
-        rows[0].ShiftTabId.Should().Be(tab2.Id, "the company moved to the second tab");
-
-        (await svc.AssignCompanyToTabAsync(1, null)).Should().BeTrue("clearing returns the company to Main");
-        (await f.Db.ShiftTabCompanies.CountAsync(tc => tc.CompanyId == 1)).Should().Be(0);
-    }
-
-    [Fact]
-    public async Task GetCompanyIdsForTab_Returns_Tab_Companies_And_Main_Complement()
-    {
-        await using var f = await SqliteDbContextFixture.CreateAsync();
-        await SeedHierarchyAsync(f);
-        var svc = new ShiftTabService(f.Db);
-        var tab1 = await svc.CreateAsync(1, "Radio", "Radio");
-        var tab2 = await svc.CreateAsync(1, "Element", "Element");
-        await svc.AssignCompanyToTabAsync(1, tab1!.Id);
-        await svc.AssignCompanyToTabAsync(2, tab2!.Id);
-
-        (await svc.GetCompanyIdsForTabAsync(1, tab1.Id)).Should().BeEquivalentTo(new[] { 1 });
-        (await svc.GetCompanyIdsForTabAsync(1, tab2.Id)).Should().BeEquivalentTo(new[] { 2 });
-        // Main = molecule-1 companies with no assignment: company 3 only (1 and 2 are claimed).
-        (await svc.GetCompanyIdsForTabAsync(1, null)).Should().BeEquivalentTo(new[] { 3 });
-    }
-
-    [Fact]
-    public async Task Delete_RevertsShiftTypesToMain_CascadesCompanies_And_ClearsRememberedPref()
-    {
-        await using var f = await SqliteDbContextFixture.CreateAsync();
-        await SeedHierarchyAsync(f);
-        var svc = new ShiftTabService(f.Db);
-        var tab = await svc.CreateAsync(1, "Radio", "Radio");
-        f.Db.ShiftTypes.Add(new ShiftType { Id = 100, Scope = ShiftScope.Molecule, MoleculeId = 1, Key = "MORNING", TabId = tab!.Id });
+        f.Db.ShiftTypes.Add(new ShiftType { Id = 100, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = 10, Key = "MORNING" });
         await f.Db.SaveChangesAsync();
-        await svc.AssignCompanyToTabAsync(1, tab.Id);
-        await svc.SetLastTabAsync(10, 1, tab.Id);
+        var svc = new ShiftTabService(f.Db);
+        var geo = await svc.CreateAsync(1, 10, "Geo", "גאו");
+        await svc.SetCompaniesForTabAsync(geo!.Id, new[] { 1, 2 });
+        await svc.SetShiftTypesForTabAsync(geo.Id, new[] { 100 });
 
-        (await svc.DeleteAsync(tab.Id)).Should().BeTrue();
-
-        f.Db.ChangeTracker.Clear();
-        (await f.Db.ShiftTypes.FindAsync(100))!.TabId.Should().BeNull("FK SetNull → shift returns to Main");
-        (await f.Db.ShiftTabCompanies.CountAsync(tc => tc.ShiftTabId == tab.Id)).Should().Be(0, "company links cascade");
-        (await svc.GetLastTabAsync(10, 1)).Should().BeNull("remembered pref reverts to Main (FK SetNull)");
+        var (shiftTypeCount, companyCount) = await svc.GetUsageAsync(geo.Id);
+        shiftTypeCount.Should().Be(1);
+        companyCount.Should().Be(2);
     }
 
     [Fact]
-    public async Task LastTab_Memory_Saves_Loads_And_Distinguishes_Explicit_Main()
+    public async Task Delete_Cascades_Company_And_ShiftType_Joins_And_Clears_RememberedPref()
+    {
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        f.Db.ShiftTypes.Add(new ShiftType { Id = 100, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = 10, Key = "MORNING" });
+        await f.Db.SaveChangesAsync();
+        var svc = new ShiftTabService(f.Db);
+        var geo = await svc.CreateAsync(1, 10, "Geo", "גאו");
+        await svc.SetCompaniesForTabAsync(geo!.Id, new[] { 1 });
+        await svc.SetShiftTypesForTabAsync(geo.Id, new[] { 100 });
+        await svc.SetLastTabAsync(userId: 10, moleculeId: 1, jobTypeId: 10, tabId: geo.Id);
+
+        (await svc.DeleteAsync(geo.Id)).Should().BeTrue();
+
+        f.Db.ChangeTracker.Clear();
+        (await f.Db.ShiftTabCompanies.CountAsync(tc => tc.ShiftTabId == geo.Id)).Should().Be(0, "company links cascade");
+        (await f.Db.ShiftTabShiftTypes.CountAsync(x => x.ShiftTabId == geo.Id)).Should().Be(0, "shift-type links cascade");
+        (await f.Db.ShiftTypes.FindAsync(100)).Should().NotBeNull("the shift type itself is untouched");
+        (await svc.GetLastTabAsync(10, 1, 10)).Should().BeNull("remembered pref reverts (FK SetNull)");
+    }
+
+    [Fact]
+    public async Task LastTab_Memory_Is_Isolated_Per_UserMoleculeJobtype_Including_NullJobtype()
     {
         await using var f = await SqliteDbContextFixture.CreateAsync();
         await SeedHierarchyAsync(f);
         var svc = new ShiftTabService(f.Db);
-        var tab = await svc.CreateAsync(1, "Radio", "Radio");
+        var geo = await svc.CreateAsync(1, 10, "Geo", "גאו");
+        var tech = await svc.CreateAsync(1, null, "Tech", "טכני");
 
-        (await svc.GetLastTabAsync(10, 1)).Should().BeNull("no preference yet");
+        (await svc.GetLastTabAsync(10, 1, 10)).Should().BeNull("no preference yet");
 
-        await svc.SetLastTabAsync(10, 1, tab!.Id);
-        (await svc.GetLastTabAsync(10, 1)).Should().Be(tab.Id);
+        await svc.SetLastTabAsync(10, 1, 10, geo!.Id);
+        (await svc.GetLastTabAsync(10, 1, 10)).Should().Be(geo.Id);
+        (await svc.GetLastTabAsync(10, 1, 11)).Should().BeNull("different jobtype");
+        (await svc.GetLastTabAsync(10, 1, null)).Should().BeNull("different (null) jobtype");
 
-        await svc.SetLastTabAsync(10, 1, null);   // explicit Main
-        (await svc.GetLastTabAsync(10, 1)).Should().BeNull();
+        await svc.SetLastTabAsync(10, 1, null, tech!.Id); // null-jobtype (Tech) scope
+        (await svc.GetLastTabAsync(10, 1, null)).Should().Be(tech.Id);
 
-        // Isolated per (user, molecule).
-        (await svc.GetLastTabAsync(11, 1)).Should().BeNull();
-    }
-
-    [Fact]
-    public async Task Reorder_Rewrites_SortOrder_And_Rejects_CrossMolecule_Ids()
-    {
-        await using var f = await SqliteDbContextFixture.CreateAsync();
-        await SeedHierarchyAsync(f);
-        var svc = new ShiftTabService(f.Db);
-        var a = await svc.CreateAsync(1, "A", "A");
-        var b = await svc.CreateAsync(1, "B", "B");
-        var c = await svc.CreateAsync(1, "C", "C");
-        var m2 = await svc.CreateAsync(2, "M2Tab", "M2Tab");
-
-        (await svc.ReorderTabsAsync(1, new[] { c!.Id, a!.Id, b!.Id })).Should().BeTrue();
-
-        f.Db.ChangeTracker.Clear();
-        var ordered = await svc.GetTabsForMoleculeAsync(1);
-        ordered.Select(t => t.Id).Should().ContainInOrder(c.Id, a.Id, b.Id);
-
-        (await svc.ReorderTabsAsync(1, new[] { c.Id, m2!.Id })).Should().BeFalse("a molecule-2 tab id is not reorderable in molecule 1");
-        (await svc.ReorderTabsAsync(1, new[] { c.Id, 9999 })).Should().BeFalse("unknown id rejected");
+        await svc.SetLastTabAsync(10, 1, 10, null); // explicit clear
+        (await svc.GetLastTabAsync(10, 1, 10)).Should().BeNull();
+        (await svc.GetLastTabAsync(11, 1, 10)).Should().BeNull("different user");
     }
 }

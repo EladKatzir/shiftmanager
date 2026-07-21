@@ -1,14 +1,12 @@
 namespace ShiftManager.Models;
 
 /// <summary>
-/// Assigns a <see cref="Company"/> to a <see cref="ShiftTab"/> — the tab's people-view roster base.
-/// A company belongs to AT MOST ONE tab (unique <see cref="CompanyId"/>), so tabs are disjoint and the
-/// implicit "Main" tab = the molecule's companies with no assignment. Both FKs cascade-delete: removing a
-/// tab (or a company) drops the link automatically.
+/// Assigns a <see cref="Company"/> to a <see cref="ShiftTab"/> — the tab's people-view roster base +
+/// selector prioritization set. A company may now belong to MULTIPLE tabs (across job types and within a
+/// job type's tab set). Composite key <c>(ShiftTabId, CompanyId)</c>; both FKs cascade-delete.
 /// </summary>
 public class ShiftTabCompany
 {
-    public int Id { get; set; }
     public int ShiftTabId { get; set; }
     public int CompanyId { get; set; }
 

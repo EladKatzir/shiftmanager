@@ -304,31 +304,9 @@
         </div>
     }
 
-    @* Calendar tabs (לשונית) — molecule sub-calendars, admin-defined in Blueprints. Switching is a
-       view filter (everyone in the molecule sees all tabs). Own row above the grid; hidden when the
-       molecule has no tabs. Tab=0 = "Main" (untagged shifts). *@
-    @if (Model.AvailableTabs.Any())
-    {
-        var tabBaseQ = $"?MoleculeId={Model.MoleculeId}&JobTypeId={Model.JobTypeId}&Start={Model.StartDate:yyyy-MM-dd}&ViewMode={Model.ViewMode}&Mode={Model.Mode}{dlParam}";
-        <div class="cal-tabs" role="tablist" aria-label="@Localizer["ShiftsCalendar"]">
-            <a href="@(tabBaseQ)&Tab=0" role="tab"
-               aria-selected="@((!Model.Tab.HasValue).ToString().ToLowerInvariant())"
-               class="cal-tab @(!Model.Tab.HasValue ? "cal-tab--active" : "")">@Localizer["Calendar_Tab_Main"]</a>
-            @foreach (var t in Model.AvailableTabs)
-            {
-                var active = Model.Tab == t.Id;
-                <a href="@(tabBaseQ)&Tab=@t.Id" role="tab"
-                   aria-selected="@active.ToString().ToLowerInvariant()"
-                   class="cal-tab @(active ? "cal-tab--active" : "")">
-                    @if (!string.IsNullOrEmpty(t.Color))
-                    {
-                        <span class="cal-tab__dot" style="background:@t.Color"></span>
-                    }
-                    @t.DisplayName
-                </a>
-            }
-        </div>
-    }
+    @* Calendar tabs (לשונית) strip is Phase E (STR/PF10). Phase D reshaped the schema + admin surface;
+       the interim calendar is the synthetic "All" view (no strip, no tab filter). Model.AvailableTabs is
+       loaded for Phase E to consume; the strip markup is (re)built there against NameEn/NameHe. *@
 
     @* Calendar Table *@
     @if (Model.CalendarData.Rows.Any())

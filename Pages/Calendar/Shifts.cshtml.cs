@@ -42,10 +42,6 @@ public class ShiftsModel : PageModel
     private readonly IDraftModeService _draftService;
     private readonly IFeatureFlagService _featureFlags;
 
-    // Per-request: shiftTypeId → TabId for the current molecule, used to ghost a user's non-active-tab
-    // shifts in by-user mode. Populated in BuildUserBasedCalendarAsync; empty when the molecule has no tabs.
-    private Dictionary<int, int?> _tabOfShiftType = new();
-
     public ShiftsModel(
         AppDbContext db,
         IShiftCalendarService calendarService,
@@ -265,37 +261,13 @@ public class ShiftsModel : PageModel
 
         SelectedJobType = AvailableJobTypes.FirstOrDefault(jt => jt.Id == JobTypeId);
 
-        // Calendar tabs (לשונית): load the molecule's tabs, resolve the active tab, and remember the choice.
-        // Absent ?Tab= → the user's last tab for this molecule; ?Tab=0 (or an invalid/foreign id) → Main.
-        // After this block, Tab is the EFFECTIVE tab (null = Main; otherwise a real tab id in this molecule).
+        // Calendar tabs (לשונית): Phase D loads the strip data (molecule + jobtype scoped) but does NOT
+        // filter/prioritize — the strip, view-filter, prioritization and last-tab UX are Phase E (PF10).
+        // Interim behavior == the synthetic "All" view (no restriction). Tab stays null.
         if (MoleculeId.HasValue)
         {
-            AvailableTabs = await _tabService.GetTabsForMoleculeAsync(MoleculeId.Value);
-            if (AvailableTabs.Count > 0)
-            {
-                int? resolvedTab;
-                if (Request.Query.ContainsKey("Tab"))
-                {
-                    // Explicit selection. Validate the id belongs to this molecule (H1); 0/invalid → Main.
-                    resolvedTab = (Tab.HasValue && Tab.Value != 0 && AvailableTabs.Any(t => t.Id == Tab.Value))
-                        ? Tab.Value
-                        : (int?)null;
-                    await _tabService.SetLastTabAsync(currentUserId, MoleculeId.Value, resolvedTab);
-                }
-                else
-                {
-                    // No explicit choice → remembered preference, validated against this molecule's tabs.
-                    var remembered = await _tabService.GetLastTabAsync(currentUserId, MoleculeId.Value);
-                    resolvedTab = (remembered.HasValue && AvailableTabs.Any(t => t.Id == remembered.Value))
-                        ? remembered
-                        : (int?)null;
-                }
-                Tab = resolvedTab;
-            }
-            else
-            {
-                Tab = null; // molecule has no tabs → always Main, no strip
-            }
+            AvailableTabs = await _tabService.GetTabsForMoleculeAsync(MoleculeId.Value, JobTypeId);
+            Tab = null; // Phase E resolves the active tab + last-tab memory
         }
 
         // Calculate date range
@@ -474,12 +446,7 @@ public class ShiftsModel : PageModel
         else
             shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
 
-        // Tab (לשונית): a specific tab shows only its shift types; "Main" shows untagged shifts.
-        // No tabs in the molecule → no filter (every shift is untagged anyway).
-        if (Tab.HasValue)
-            shiftTypeQuery = shiftTypeQuery.Where(st => st.TabId == Tab.Value);
-        else if (AvailableTabs.Count > 0)
-            shiftTypeQuery = shiftTypeQuery.Where(st => st.TabId == null);
+        // Tab view-filter (by-shift) is Phase E (PF4). Interim: no tab filter (the "All" view).
 
         var shiftTypes = (await shiftTypeQuery
             .OrderBy(st => st.Start)
@@ -603,11 +570,7 @@ public class ShiftsModel : PageModel
         else
             shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
 
-        // Tab (לשונית): scope the assign bottom-sheet's shift-type list to the active tab (Main = untagged).
-        if (Tab.HasValue)
-            shiftTypeQuery = shiftTypeQuery.Where(st => st.TabId == Tab.Value);
-        else if (AvailableTabs.Count > 0)
-            shiftTypeQuery = shiftTypeQuery.Where(st => st.TabId == null);
+        // Tab view-filter (by-user shift-type list) is Phase E (PF4). Interim: no tab filter.
 
         ShiftTypes = (await shiftTypeQuery
             .OrderBy(st => st.Start)
@@ -631,28 +594,7 @@ public class ShiftsModel : PageModel
         // Draft Mode: overlay the viewer's private staged changes onto the live assignments for rendering.
         assignments = await ApplyDraftOverlayAsync(assignments, instances, moleculeId, jobTypeId);
 
-        // Tab (לשונית) roster: company base (companies assigned to the tab; Main = unassigned companies)
-        // ∪ cross-over (anyone assigned to one of this tab's shifts in view, INCLUDING staged draft
-        // assignments — hence computed AFTER the draft overlay). A person can appear on multiple tabs
-        // (mirrored rows). The tab NEVER narrows conflict/rest/hours/fairness — those see the full shift set.
-        if (AvailableTabs.Count > 0)
-        {
-            bool TabMatches(int? shiftTabId) => Tab.HasValue ? shiftTabId == Tab.Value : shiftTabId == null;
-
-            var tabCompanies = await _tabService.GetCompanyIdsForTabAsync(moleculeId, Tab);
-            // shiftTypeId → TabId for the WHOLE molecule (not tab-filtered) so cross-over — and per-cell
-            // ghosting (ShiftIsOnActiveTab) — resolve for any shift, including other tabs' shifts.
-            _tabOfShiftType = await _db.ShiftTypes
-                .Where(st => st.MoleculeId == moleculeId || (st.Scope == ShiftScope.Area && st.AreaId == userAreaId))
-                .Select(st => new { st.Id, st.TabId })
-                .ToDictionaryAsync(x => x.Id, x => x.TabId);
-            var crossOver = assignments
-                .Where(a => a.UserId.HasValue && a.ShiftInstance != null
-                    && _tabOfShiftType.TryGetValue(a.ShiftInstance.ShiftTypeId, out var tid) && TabMatches(tid))
-                .Select(a => a.UserId!.Value)
-                .ToHashSet();
-            users = users.Where(u => tabCompanies.Contains(u.CompanyId) || crossOver.Contains(u.Id)).ToList();
-        }
+        // Tab roster narrowing + cross-over is Phase E (PF4/PF5). Interim: full molecule+jobtype roster.
 
         // Get overlays (vacation, chores, on-duty)
         var overlays = await _calendarService.GetOverlaysAsync(moleculeId, StartDate, EndDate);
@@ -1269,17 +1211,8 @@ public class ShiftsModel : PageModel
         return cells;
     }
 
-    /// <summary>
-    /// True if a shift type is on the active tab (or the molecule has no tabs). Main (Tab == null) matches
-    /// untagged shifts. Drives by-user "busy elsewhere" ghosting: a shift on a DIFFERENT tab is shown greyed
-    /// and non-interactive, but is NEVER hidden from conflict/rest/hours — those see the full shift set.
-    /// </summary>
-    private bool ShiftIsOnActiveTab(int shiftTypeId)
-    {
-        if (AvailableTabs.Count == 0) return true;
-        var tid = _tabOfShiftType.TryGetValue(shiftTypeId, out var t) ? t : null;
-        return Tab.HasValue ? tid == Tab.Value : tid == null;
-    }
+    // Tab ghosting is Phase E (PF4). Interim: nothing is ghosted (every shift renders as on-view).
+    private bool ShiftIsOnActiveTab(int shiftTypeId) => true;
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
         int userId,
