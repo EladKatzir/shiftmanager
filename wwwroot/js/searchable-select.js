@@ -53,12 +53,27 @@
   // Paint the control face: single label, or multi chips.
   function renderChips(w) {
     w.value.innerHTML = '';
-    if (w.multi) { return; } // multi implemented in B2
+    if (w.multi) {
+      var selected = w.options.filter(function (o) { return o.el.selected && !o.isPlaceholder; });
+      if (selected.length === 0) { w.value.appendChild(placeholderSpan(w)); return; }
+      selected.forEach(function (o) {
+        var chip = document.createElement('span'); chip.className = 'ss-chip';
+        var cl = document.createElement('span'); cl.className = 'ss-chip__label'; cl.textContent = o.label; chip.appendChild(cl);
+        var x = document.createElement('button'); x.type = 'button'; x.className = 'ss-chip__remove';
+        x.setAttribute('aria-label', loc('Remove', 'Remove') + ': ' + o.label); x.textContent = '×';
+        x.addEventListener('mousedown', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          w.syncing = true; o.el.selected = false; fire(w); renderChips(w);
+          if (w.open) renderList(w, w.search.value); w.syncing = false;
+        });
+        chip.appendChild(x); w.value.appendChild(chip);
+      });
+      return;
+    }
     var sel = w.select.options[w.select.selectedIndex];
     if (!sel || sel.value === '') { w.value.appendChild(placeholderSpan(w)); return; }
     var s = document.createElement('span'); s.className = 'ss-single-label';
-    s.textContent = (sel.dataset.ssLabel || sel.textContent || '').trim();
-    w.value.appendChild(s);
+    s.textContent = (sel.dataset.ssLabel || sel.textContent || '').trim(); w.value.appendChild(s);
   }
 
   function renderList(w, query) {
@@ -101,8 +116,12 @@
 
   function choose(w, o) {
     w.syncing = true;
-    if (w.multi) { /* B2 */ }
-    else { w.select.value = o.value; fire(w); renderChips(w); closePanel(w); w.control.focus(); }
+    if (w.multi) {
+      o.el.selected = !o.el.selected; fire(w); renderChips(w);
+      renderList(w, w.search.value); w.search.focus();
+    } else {
+      w.select.value = o.value; fire(w); renderChips(w); closePanel(w); w.control.focus();
+    }
     w.syncing = false;
   }
 
@@ -136,8 +155,18 @@
         case 'Enter': e.preventDefault();
           if (w._rows && w._rows[w.activeIndex]) { var o = optByValue(w, w._rows[w.activeIndex].dataset.value);
             if (o && !o.disabled) choose(w, o); } break;
+        case ' ':
+          if (w.multi && w._rows && w._rows[w.activeIndex]) {
+            e.preventDefault(); var o2 = optByValue(w, w._rows[w.activeIndex].dataset.value);
+            if (o2 && !o2.disabled) choose(w, o2);
+          } break;
+        case 'Backspace':
+          if (w.multi && w.search.value === '') {
+            var sel = w.options.filter(function (o) { return o.el.selected && !o.isPlaceholder; });
+            if (sel.length) { e.preventDefault(); w.syncing = true; sel[sel.length - 1].el.selected = false;
+              fire(w); renderChips(w); renderList(w, ''); w.syncing = false; }
+          } break;
         case 'Escape': e.preventDefault(); closePanel(w); w.control.focus(); break;
-        // Space/Backspace multi cases added in B2.
       }
     });
   }
