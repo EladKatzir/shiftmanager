@@ -446,7 +446,7 @@ else
     <select id="assigneeSelect-shifts" data-role="assignee-select" data-item-type="user" style="display:none">
         @foreach (var user in Model.Users)
         {
-            <option value="@user.Id">@user.DisplayName</option>
+            <option value="@user.Id" data-in-tab="@(Model.InTabUserIds.Contains(user.Id) ? "1" : "0")">@user.DisplayName</option>
         }
     </select>
 }
@@ -457,7 +457,10 @@ else
     <select id="traineeSelect" data-role="trainee-select" style="display:none">
         @foreach (var trainee in Model.Trainees)
         {
-            <option value="@trainee.Id">@trainee.DisplayName</option>
+            <option value="@trainee.Id"
+                    data-in-tab="@(Model.InTabUserIds.Contains(trainee.Id) ? "1" : "0")"
+                    data-company="@trainee.CompanyId"
+                    data-jobtype="@(trainee.JobTypeId?.ToString() ?? "")">@trainee.DisplayName</option>
         }
     </select>
 }

@@ -49,6 +49,13 @@ public interface IShiftTabService
     /// </summary>
     Task<Dictionary<int, HashSet<int>>> GetShiftTypeTabMapAsync(int moleculeId, int? jobTypeId);
 
+    /// <summary>
+    /// The subset of <paramref name="userIds"/> that belong — via ANY CompanyMembership — to the tab's
+    /// company set. Multi-company aware (a user in-tab through a non-primary membership counts). null tab,
+    /// or a tab with no companies, → empty (no prioritization). SECURITY: caller gates molecule access.
+    /// </summary>
+    Task<HashSet<int>> GetInTabUserIdsAsync(int? tabId, IReadOnlyCollection<int> userIds);
+
     // ---- Per-user last-tab memory ----
     /// <summary>The user's remembered tab for a (molecule, jobtype) (null = none / the "All" view).</summary>
     Task<int?> GetLastTabAsync(int userId, int moleculeId, int? jobTypeId);

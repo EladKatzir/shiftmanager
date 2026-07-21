@@ -239,6 +239,33 @@ public sealed class ShiftTabServiceTests
     }
 
     [Fact]
+    public async Task GetInTabUserIds_MembershipAware_IncludesMultiCompanyUser()
+    {
+        // Tab companies = {City=1}. User U primary company = Tzafona(2) but has a CompanyMembership in City(1).
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        f.Db.Users.Add(new AppUser { Id = 500, CompanyId = 2, Email = "u@test.com", DisplayName = "U", Role = UserRole.Employee, IsActive = true });
+        f.Db.CompanyMemberships.Add(new CompanyMembership { UserId = 500, CompanyId = 1 }); // DoesShifts membership in City
+        await f.Db.SaveChangesAsync();
+        var svc = new ShiftTabService(f.Db);
+        var tab = await svc.CreateAsync(1, 10, "Geo", "גאו");
+        (await svc.SetCompaniesForTabAsync(tab!.Id, new[] { 1 })).Should().BeTrue();
+
+        var inTab = await svc.GetInTabUserIdsAsync(tab.Id, new[] { 500 });
+
+        inTab.Should().Contain(500);   // in-tab via membership, NOT primary company (PRI-2)
+    }
+
+    [Fact]
+    public async Task GetInTabUserIds_NullTab_ReturnsEmpty()
+    {
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        var svc = new ShiftTabService(f.Db);
+        (await svc.GetInTabUserIdsAsync(null, new[] { 1, 2, 3 })).Should().BeEmpty();
+    }
+
+    [Fact]
     public void Coverage_Lists_ShiftTypes_In_No_Tab_And_Ignores_EmptyTabs()
     {
         // allShiftTypeIds = {1,2,3}; tabA covers {1}; nothing else → {2,3} uncovered.

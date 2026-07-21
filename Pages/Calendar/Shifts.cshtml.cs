@@ -361,6 +361,17 @@ public class ShiftsModel : PageModel
             ? await _traineeService.GetMoleculeTraineesAsync(MoleculeId.Value, JobTypeId)
             : new List<AppUser>();
 
+        // Membership-aware "in this tab's companies" set for the trainee/assignee picker grouping (PF5).
+        // Only computed when the active tab actually prioritizes (else every list is flat).
+        if (TabPrioritizeActive && Tab.HasValue)
+        {
+            var pickerUserIds = Users.Select(u => u.Id)
+                .Concat(Trainees.Select(t => t.Id))
+                .Distinct()
+                .ToList();
+            InTabUserIds = await _tabService.GetInTabUserIdsAsync(Tab.Value, pickerUserIds);
+        }
+
         // Load chore types and duty types for Quick Entry autocomplete
         if (MoleculeId.HasValue)
         {

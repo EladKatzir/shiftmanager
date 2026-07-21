@@ -26,24 +26,28 @@ public class GetEligibleUsersForShiftModel : PageModel
     private readonly AppDbContext _db;
     private readonly ILogger<GetEligibleUsersForShiftModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IShiftTabService _tabService;
 
     public GetEligibleUsersForShiftModel(
         IShiftCandidateService candidateService,
         IScopeFilterService scopeFilterService,
         AppDbContext db,
         ILogger<GetEligibleUsersForShiftModel> logger,
-        IStringLocalizer<SharedResources> localizer)
+        IStringLocalizer<SharedResources> localizer,
+        IShiftTabService tabService)
     {
         _candidateService = candidateService;
         _scopeFilterService = scopeFilterService;
         _db = db;
         _logger = logger;
         _localizer = localizer;
+        _tabService = tabService;
     }
 
     public async Task<IActionResult> OnGetAsync(
         [FromQuery] int moleculeId,
         [FromQuery] int shiftTypeId,
+        [FromQuery] int? tab,
         [FromQuery] bool allowFallback = false)
     {
         try
@@ -83,11 +87,29 @@ public class GetEligibleUsersForShiftModel : PageModel
             var result = await _candidateService.GetEligibleCandidatesAsync(
                 moleculeId, shiftTypeId, currentCompanyId, allowFallback);
 
+            // Tab (לשונית) prioritization: tag each candidate inTab (membership-aware) so the client groups
+            // "this tab" first. SEC-4: a foreign-molecule tab id is ignored (treated as no prioritization) —
+            // never leak cross-molecule tab config, and results stay molecule-scoped either way.
+            var inTabUserIds = new HashSet<int>();
+            if (tab.HasValue && tab.Value != 0)
+            {
+                var t = await _tabService.GetTabAsync(tab.Value);
+                if (t != null && t.MoleculeId == moleculeId)
+                    inTabUserIds = await _tabService.GetInTabUserIdsAsync(
+                        tab.Value, result.Users.Select(u => u.Id).ToList());
+            }
+
             return new JsonResult(new
             {
                 success = true,
                 reason = result.Reason,
-                users = result.Users.Select(u => new { id = u.Id, name = u.Name, companyName = u.CompanyName }).ToList()
+                users = result.Users.Select(u => new
+                {
+                    id = u.Id,
+                    name = u.Name,
+                    companyName = u.CompanyName,
+                    inTab = inTabUserIds.Contains(u.Id)
+                }).ToList()
             });
         }
         catch (Exception ex)

@@ -215,6 +215,22 @@ public class ShiftTabService : IShiftTabService
         return map;
     }
 
+    // SECURITY-AUDITED: SAFE — membership read scoped to the tab's companies + the supplied candidate ids;
+    // the calling page/endpoint gates molecule access before this runs.
+    public async Task<HashSet<int>> GetInTabUserIdsAsync(int? tabId, IReadOnlyCollection<int> userIds)
+    {
+        if (tabId is null || userIds.Count == 0) return new HashSet<int>();
+        var tabCompanies = await GetCompanyIdsForTabAsync(tabId.Value);
+        if (tabCompanies.Count == 0) return new HashSet<int>();
+        var ids = userIds.ToList();
+        var inTab = await _db.CompanyMemberships.IgnoreQueryFilters()
+            .Where(m => tabCompanies.Contains(m.CompanyId) && ids.Contains(m.UserId))
+            .Select(m => m.UserId)
+            .Distinct()
+            .ToListAsync();
+        return inTab.ToHashSet();
+    }
+
     // ---- Per-user last-tab memory ----
 
     public async Task<int?> GetLastTabAsync(int userId, int moleculeId, int? jobTypeId)
