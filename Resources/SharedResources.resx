@@ -8838,6 +8838,9 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Draft_CommitPartialMessage" xml:space="preserve">
     <value>Your draft was committed. Some cells were skipped and are listed below — re-draft them if you still want the change.</value>
   </data>
+  <data name="Draft_CommitOffTabWarning" xml:space="preserve">
+    <value>{0} of {1} staged changes are on rows not shown in this tab. Commit anyway?</value>
+  </data>
   <data name="Draft_CommitSkippedLabel" xml:space="preserve">
     <value>Changed underneath you:</value>
   </data>

@@ -53,6 +53,7 @@ public partial class TableModel : PageModel
         IAuditLogService auditLogService,
         IDraftModeService draftService,
         IDraftLifecycle draftLifecycle,
+        IShiftTabService shiftTabService,
         IFailureRemediationService remediation)
     {
         _db = db;
@@ -73,10 +74,12 @@ public partial class TableModel : PageModel
         _auditLogService = auditLogService;
         _draftService = draftService;
         _draftLifecycle = draftLifecycle;
+        _shiftTabService = shiftTabService;
     }
 
     private readonly IDraftModeService _draftService;
     private readonly IDraftLifecycle _draftLifecycle;
+    private readonly IShiftTabService _shiftTabService;
     private readonly IFailureRemediationService _remediation;
 
     /// <summary>Builds the "go fix it" remediation payload for a failure key, or null if none.</summary>
@@ -1941,6 +1944,36 @@ public partial class TableModel : PageModel
             issues = result.ValidationIssues.Select(i => new { rowId = i.RowId, date = i.WorkDate.ToString("yyyy-MM-dd"), i.UserId, i.Message }),
             notifiedGroups = result.NotifiedGroups
         });
+    }
+
+    /// <summary>
+    /// PF15 disclosure (read-only): how many of a draft's staged cells sit on shift types NOT shown by the
+    /// active tab, so the commit UI can warn before applying off-view changes. Commit is molecule+jobtype-scoped
+    /// and always applies ALL staged cells — this only surfaces a count. tabId null/0 (the "All" tab) or a tab
+    /// with no shift-type restriction (empty = all shift types) means nothing is off-view.
+    /// </summary>
+    public async Task<IActionResult> OnPostDraftOffTabCountAsync([FromBody] DraftOffTabCountRequest request)
+    {
+        if (CurrentUserIdOrNull() is not int userId)
+            return new JsonResult(new { success = false }) { StatusCode = 401 };
+        if (!await OwnsActiveDraftAsync(request.DraftSessionId, userId))
+            return new JsonResult(new { success = false, error = _localizer["Calendar_Error_DraftInactive"].Value }) { StatusCode = 409 };
+
+        var overlay = await _draftService.GetOverlayAsync(request.DraftSessionId);
+        var offView = 0;
+        if (request.TabId is int tabId && tabId > 0)
+        {
+            var tabShiftTypeIds = await _shiftTabService.GetShiftTypeIdsForTabAsync(tabId);
+            if (tabShiftTypeIds.Count > 0) // empty selection = all shift types (no restriction) → nothing off-view
+                offView = overlay.Count(c => !tabShiftTypeIds.Contains(c.ShiftTypeId));
+        }
+        return new JsonResult(new { success = true, total = overlay.Count, offView });
+    }
+
+    public class DraftOffTabCountRequest
+    {
+        public int DraftSessionId { get; set; }
+        public int? TabId { get; set; }
     }
 
     public async Task<IActionResult> OnPostDiscardDraftAsync([FromBody] DraftActionRequest request)

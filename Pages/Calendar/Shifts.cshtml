@@ -851,6 +851,24 @@ else
             if (commitBtn) commitBtn.addEventListener('click', async function () {
                 commitBtn.disabled = true;
                 try {
+                    // PF15: if staged cells sit on rows the active tab doesn't show, disclose that before
+                    // committing (commit applies ALL staged cells regardless of the current tab view).
+                    var activeTab = (window.CalendarPageConfig && window.CalendarPageConfig.activeTabId != null)
+                        ? window.CalendarPageConfig.activeTabId : null;
+                    if (activeTab != null) {
+                        try {
+                            var cResp = await draftPost('DraftOffTabCount', {
+                                draftSessionId: parseInt(commitBtn.dataset.draftId), tabId: activeTab });
+                            var cData = await cResp.json();
+                            if (cData && cData.success && cData.offView > 0) {
+                                var warn = '@(Localizer["Draft_CommitOffTabWarning"].Value.Trim())'
+                                    .replace('{0}', cData.offView).replace('{1}', cData.total);
+                                if (!(await window.FeedbackModal.confirm('warning', { message: warn }))) {
+                                    commitBtn.disabled = false; return;
+                                }
+                            }
+                        } catch (ignore) { /* best-effort disclosure — never block the commit on it */ }
+                    }
                     var resp = await draftPost('CommitDraft', { draftSessionId: parseInt(commitBtn.dataset.draftId) });
                     var data = await resp.json();
                     // Per-cell policy (Spec F): the session commits even when some cells are skipped. Clean

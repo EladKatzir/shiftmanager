@@ -8804,6 +8804,9 @@
   <data name="Draft_CommitPartialMessage" xml:space="preserve">
     <value>הטיוטה נשמרה. חלק מהתאים דולגו ומופיעים למטה — ערוך אותם מחדש אם עדיין ברצונך לבצע את השינוי.</value>
   </data>
+  <data name="Draft_CommitOffTabWarning" xml:space="preserve">
+    <value>{0} מתוך {1} שינויים מוכנים נמצאים בשורות שאינן מוצגות בלשונית זו. לבצע בכל זאת?</value>
+  </data>
   <data name="Draft_CommitSkippedLabel" xml:space="preserve">
     <value>השתנה בזמן העריכה:</value>
   </data>
