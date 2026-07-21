@@ -119,9 +119,10 @@ public class ShiftsModel : PageModel
     public string? DistributionListIds { get; set; }
 
     /// <summary>
-    /// Selected calendar tab (לשונית). Bound from ?Tab=. Absent from the query = resolve the user's
-    /// remembered tab; <c>0</c> = explicit "Main". After OnGet resolution this holds the EFFECTIVE tab:
-    /// null = Main, otherwise a real tab id in the current molecule. Downstream filters key off it.
+    /// Selected calendar tab (לשונית). Bound from ?Tab=. After OnGet resolution this holds the EFFECTIVE
+    /// tab: <c>null</c> = the synthetic "All" pseudo-tab (all molecule+jobtype shift types, all companies,
+    /// no prioritization); otherwise a real ShiftTab id in this (molecule, jobtype). <c>?Tab=0</c> or a
+    /// deleted/foreign id resolves to All. Downstream view filters + prioritization key off it.
     /// </summary>
     [BindProperty(SupportsGet = true)]
     public int? Tab { get; set; }
@@ -155,6 +156,15 @@ public class ShiftsModel : PageModel
     public List<JobType> AvailableJobTypes { get; set; } = new();
     /// <summary>The molecule's admin-defined tabs (לשונית) for the calendar tab strip. Empty = no strip.</summary>
     public List<ShiftTab> AvailableTabs { get; set; } = new();
+
+    /// <summary>True when the active tab is a real tab whose PrioritizeCompanyUsers is on AND it has ≥1
+    /// company. Drives client picker prioritization + off-tab warnings. False for "All"/zero-company tabs.</summary>
+    public bool TabPrioritizeActive { get; set; }
+
+    /// <summary>Membership-aware set of picker-candidate user ids that belong to the active tab's companies.
+    /// Emitted as data-in-tab on the hidden trainee/assignee selects for client grouping. Empty unless
+    /// <see cref="TabPrioritizeActive"/>.</summary>
+    public HashSet<int> InTabUserIds { get; set; } = new();
     public Molecule? SelectedMolecule { get; set; }
     public JobType? SelectedJobType { get; set; }
     public int CurrentUserId { get; set; }
@@ -261,13 +271,32 @@ public class ShiftsModel : PageModel
 
         SelectedJobType = AvailableJobTypes.FirstOrDefault(jt => jt.Id == JobTypeId);
 
-        // Calendar tabs (לשונית): Phase D loads the strip data (molecule + jobtype scoped) but does NOT
-        // filter/prioritize — the strip, view-filter, prioritization and last-tab UX are Phase E (PF10).
-        // Interim behavior == the synthetic "All" view (no restriction). Tab stays null.
+        // Calendar tabs (לשונית): (molecule, jobtype)-scoped strip + synthetic "All" pseudo-tab.
+        // After this block, Tab is the EFFECTIVE tab (null = All; otherwise a real tab id in this scope).
         if (MoleculeId.HasValue)
         {
             AvailableTabs = await _tabService.GetTabsForMoleculeAsync(MoleculeId.Value, JobTypeId);
-            Tab = null; // Phase E resolves the active tab + last-tab memory
+            var tabParamPresent = Request.Query.ContainsKey("Tab");
+            var remembered = tabParamPresent
+                ? (int?)null
+                : await _tabService.GetLastTabAsync(currentUserId, MoleculeId.Value, JobTypeId);
+            Tab = ResolveActiveTab(AvailableTabs, tabParamPresent, Tab, remembered);
+            // Persist ONLY an explicit choice (incl. explicit All = null) so the strip remembers it.
+            if (tabParamPresent)
+                await _tabService.SetLastTabAsync(currentUserId, MoleculeId.Value, JobTypeId, Tab);
+
+            // Prioritization is active only for a real tab that opts in AND has ≥1 company.
+            if (Tab.HasValue)
+            {
+                var activeTab = AvailableTabs.FirstOrDefault(t => t.Id == Tab.Value);
+                var tabCompanies = await _tabService.GetCompanyIdsForTabAsync(Tab.Value);
+                TabPrioritizeActive = activeTab?.PrioritizeCompanyUsers == true && tabCompanies.Count > 0;
+            }
+        }
+        else
+        {
+            AvailableTabs = new List<ShiftTab>();
+            Tab = null;
         }
 
         // Calculate date range
@@ -343,6 +372,28 @@ public class ShiftsModel : PageModel
             currentUserId, MoleculeId, JobTypeId, Mode, ViewMode);
 
         return Page();
+    }
+
+    /// <summary>
+    /// Resolves the effective active tab. Pure + static so it is unit-testable without the DB (PF10).
+    /// null = the synthetic "All" pseudo-tab. Rules:
+    ///   • no tabs in scope            → All (no strip).
+    ///   • ?Tab= present: real id      → that tab; 0 / deleted / foreign id → All.
+    ///   • ?Tab= absent: remembered valid → restore; else (no pref / dangling / deleted) → All (UD2 default).
+    /// (LTM-2's literal "first-available" is reconciled to "All" per UD2 — All is always valid + non-empty.)
+    /// </summary>
+    internal static int? ResolveActiveTab(
+        IReadOnlyList<ShiftTab> availableTabs, bool tabParamPresent, int? requestedTab, int? rememberedTab)
+    {
+        if (availableTabs.Count == 0) return null;
+        if (tabParamPresent)
+            return (requestedTab.HasValue && requestedTab.Value != 0
+                    && availableTabs.Any(t => t.Id == requestedTab.Value))
+                ? requestedTab
+                : (int?)null;
+        return (rememberedTab.HasValue && availableTabs.Any(t => t.Id == rememberedTab.Value))
+            ? rememberedTab
+            : (int?)null;
     }
 
     private void CalculateDateRange()

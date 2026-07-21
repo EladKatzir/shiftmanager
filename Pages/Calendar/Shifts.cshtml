@@ -15,8 +15,9 @@
         ? ""
         : $"&DistributionListIds={Uri.EscapeDataString(Model.DistributionListIds)}";
     // Calendar tab (לשונית) param, appended to hand-built nav links so the active tab persists across
-    // week navigation / mode toggles. Only emitted when the molecule actually has tabs; Tab=0 = "Main".
+    // week navigation / mode toggles. Tab=0 = the synthetic "All" pill; a real id = that tab.
     var tabParam = Model.AvailableTabs.Any() ? $"&Tab={Model.Tab ?? 0}" : "";
+    var isHeStrip = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he");
 }
 
 @* Breadcrumb *@
@@ -304,9 +305,33 @@
         </div>
     }
 
-    @* Calendar tabs (לשונית) strip is Phase E (STR/PF10). Phase D reshaped the schema + admin surface;
-       the interim calendar is the synthetic "All" view (no strip, no tab filter). Model.AvailableTabs is
-       loaded for Phase E to consume; the strip markup is (re)built there against NameEn/NameHe. *@
+    @* Calendar tabs (לשונית) — molecule+jobtype sub-calendars. The always-present "All" pill (Tab=0,
+       no DB row) shows everything with no prioritization. Selecting a real tab filters the views and
+       (if it opts in) prioritizes pickers. Hidden entirely when this (molecule, jobtype) has no tabs. *@
+    @if (Model.AvailableTabs.Any())
+    {
+        var tabBaseQ = $"?MoleculeId={Model.MoleculeId}&JobTypeId={Model.JobTypeId}&Start={Model.StartDate:yyyy-MM-dd}&ViewMode={Model.ViewMode}&Mode={Model.Mode}{dlParam}";
+        <div class="cal-tabs" role="tablist" aria-label="@Localizer["ShiftsCalendar"]">
+            <a href="@(tabBaseQ)&Tab=0" role="tab"
+               aria-selected="@((!Model.Tab.HasValue).ToString().ToLowerInvariant())"
+               class="cal-tab @(!Model.Tab.HasValue ? "cal-tab--active" : "")">@Localizer["Calendar_Tab_All"]</a>
+            @foreach (var t in Model.AvailableTabs)
+            {
+                var active = Model.Tab == t.Id;
+                var tabName = isHeStrip ? t.NameHe : t.NameEn;
+                <a href="@(tabBaseQ)&Tab=@t.Id" role="tab"
+                   aria-selected="@active.ToString().ToLowerInvariant()"
+                   class="cal-tab @(active ? "cal-tab--active" : "")">
+                    @if (!string.IsNullOrEmpty(t.Color))
+                    {
+                        <span class="cal-tab__dot" style="background:@t.Color"></span>
+                    }
+                    @* bidi-isolate the (possibly Latin) tab name so it renders unscrambled in the RTL strip (PF16/LOC-2). *@
+                    <bdi>@tabName</bdi>
+                </a>
+            }
+        </div>
+    }
 
     @* Calendar Table *@
     @if (Model.CalendarData.Rows.Any())
@@ -515,7 +540,9 @@ else
         window.CalendarPageConfig = {
             isTechMolecule: @(Model.IsTechMolecule ? "true" : "false"),
             categoryEligibilityEnabled: @(Model.CategoryEligibilityEnabled ? "true" : "false"),
-            moleculeId: @(Model.MoleculeId ?? 0)
+            moleculeId: @(Model.MoleculeId ?? 0),
+            activeTabId: @(Model.Tab?.ToString() ?? "null"),
+            tabPrioritize: @(Model.TabPrioritizeActive ? "true" : "false")
         };
     </script>
     <script src="~/js/calendar-lazy-rows.js" asp-append-version="true"></script>
@@ -642,9 +669,12 @@ else
             const viewMode = document.getElementById('viewModeSelect').value;
 
             const params = new URLSearchParams(window.location.search);
-            // Switching molecule → drop the tab so the new molecule falls back to its OWN remembered tab
-            // (an old molecule's tab id is meaningless here; the server would ignore it anyway).
-            if (String(moleculeId) !== '@(Model.MoleculeId ?? 0)') {
+            // Drop the tab when EITHER molecule or job type changes — a tab id is scoped to one
+            // (molecule, jobtype); the server would ignore a stale id anyway, and the new scope must
+            // resolve its OWN remembered tab (LTM-3).
+            const currentMolecule = '@(Model.MoleculeId ?? 0)';
+            const currentJobType = '@(Model.JobTypeId?.ToString() ?? "")';
+            if (String(moleculeId) !== currentMolecule || String(jobTypeId) !== currentJobType) {
                 params.delete('Tab');
             }
             params.set('MoleculeId', moleculeId);

@@ -8758,6 +8758,9 @@
     <value>לוח משמרות</value>
     <comment>Title for the Excel-style shifts calendar page</comment>
   </data>
+  <data name="Calendar_Tab_All" xml:space="preserve">
+    <value>הכל</value>
+  </data>
   <data name="Print" xml:space="preserve">
     <value>הדפסה</value>
     <comment>Button to print the calendar</comment>
