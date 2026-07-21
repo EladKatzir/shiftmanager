@@ -143,6 +143,10 @@
 
         document.body.appendChild(sheetElement);
 
+        // Phase B: auto-enhance [data-searchable] selects rendered into the sheet (rebuilt
+        // per open). Scoped to the sheet element only — NOT document-wide (SEL-5/PF9).
+        if (window.SearchableSelect) window.SearchableSelect.observe(sheetElement);
+
         // Touch gesture events on the content area
         contentElement.addEventListener('touchstart', onTouchStart, { passive: true });
         contentElement.addEventListener('touchmove', onTouchMove, { passive: false });
@@ -473,6 +477,7 @@
             var userSelect = document.createElement('select');
             userSelect.className = 'bottom-sheet__select';
             userSelect.id = 'bottom-sheet-user-select';
+            userSelect.setAttribute('data-searchable', '');
 
             // Default empty option
             var defaultOpt = document.createElement('option');
@@ -533,6 +538,10 @@
             fieldGroup.appendChild(userSelect);
             addSection.appendChild(fieldGroup);
             bodyEl.appendChild(addSection);
+
+            // Creation-time hook: enhance now; async-populated options + busy decoration
+            // re-sync via the per-select observer (SEL-3/SEL-4). Width is measured on open.
+            if (window.SearchableSelect) window.SearchableSelect.enhance(userSelect);
 
             // Action buttons
             var assignBtn = document.createElement('button');
@@ -675,6 +684,7 @@
 
         var select = document.createElement('select');
         select.className = 'bottom-sheet__select bottom-sheet__select--small';
+        select.setAttribute('data-searchable', '');
         var defOpt = document.createElement('option');
         defOpt.value = '';
         defOpt.textContent = (window.AppLocalizer?.BottomSheet_AddTrainee || 'Add trainee...');

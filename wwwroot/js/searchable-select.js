@@ -221,7 +221,21 @@
     if (w.open) renderList(w, w.search.value);
   }
   function enhanceWithin(root) { if (!root) return; var s = root.querySelectorAll('select[data-searchable]'); for (var i = 0; i < s.length; i++) enhance(s[i]); }
-  function observe(container) { /* B4 */ }
+  function observe(container) {
+    if (!container || container._ssObserved) return; container._ssObserved = true;
+    var mo = new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var added = muts[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          var n = added[j]; if (n.nodeType !== 1) continue;
+          if (n.tagName === 'SELECT' && n.hasAttribute('data-searchable')) enhance(n);
+          else if (n.querySelectorAll) enhanceWithin(n);
+        }
+      }
+    });
+    mo.observe(container, { childList: true, subtree: true });
+    return mo;
+  }
   function init() { enhanceWithin(document); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
