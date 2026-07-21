@@ -391,6 +391,65 @@ public class ShiftCalendarServiceTests : IDisposable
         result.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task GetEligibleUsersForShiftType_TechNoEligibilityList_ReturnsAllMoleculeCompanies()
+    {
+        // Arrange: Tech molecule, two companies, one user each, a shift type with no company eligibility list.
+        var (moleculeId, shiftTypeId, userA, userB) = await SeedTechTwoCompanyMoleculeAsync();
+
+        // Act
+        var result = await _service.GetEligibleUsersForShiftTypeAsync(moleculeId, shiftTypeId);
+
+        // Assert — molecule-wide base is preserved across companies (ORG-5).
+        result.Select(u => u.Id).Should().Contain(new[] { userA.Id, userB.Id });
+    }
+
+    // Seeds a Tech molecule with two companies (one user each) and a Hanava shift type that has NO
+    // EligibleCompanyIds and does NOT require officer rank — i.e. only the molecule-wide base applies.
+    private async Task<(int MoleculeId, int ShiftTypeId, AppUser UserA, AppUser UserB)> SeedTechTwoCompanyMoleculeAsync()
+    {
+        var area = new Area { ProjectId = 1, Name = "TechArea", DisplayName = "Tech Area" };
+        _db.Areas.Add(area);
+        await _db.SaveChangesAsync();
+
+        var molecule = new Molecule { AreaId = area.Id, Name = "TechMolecule", Type = MoleculeType.Tech };
+        _db.Molecules.Add(molecule);
+        await _db.SaveChangesAsync();
+
+        var companyA = new Company { MoleculeId = molecule.Id, Name = "TechCompanyA", DisplayName = "Tech Company A" };
+        var companyB = new Company { MoleculeId = molecule.Id, Name = "TechCompanyB", DisplayName = "Tech Company B" };
+        _db.Companies.AddRange(companyA, companyB);
+        await _db.SaveChangesAsync();
+
+        var userA = new AppUser
+        {
+            Email = "techA@test.com", DisplayName = "Tech User A",
+            CompanyId = companyA.Id, IsActive = true, Role = UserRole.Employee
+        };
+        var userB = new AppUser
+        {
+            Email = "techB@test.com", DisplayName = "Tech User B",
+            CompanyId = companyB.Id, IsActive = true, Role = UserRole.Employee
+        };
+        _db.Users.AddRange(userA, userB);
+        await _db.SaveChangesAsync();
+
+        var shiftType = new ShiftType
+        {
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule,
+            MoleculeId = molecule.Id,
+            TechShiftType = ShiftType.TECH_HANAVA,
+            RequiresOfficerRank = false,
+            Key = ShiftType.TECH_HANAVA,
+            Start = new TimeOnly(8, 0),
+            End = new TimeOnly(16, 0)
+        };
+        _db.ShiftTypes.Add(shiftType);
+        await _db.SaveChangesAsync();
+
+        return (molecule.Id, shiftType.Id, userA, userB);
+    }
+
     // --- UnassignUserAsync ---
 
     [Fact]

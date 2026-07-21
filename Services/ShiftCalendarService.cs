@@ -239,6 +239,12 @@ public class ShiftCalendarService : IShiftCalendarService
         }
     }
 
+    // PF2 (Tech, ORG-5): the candidate base is ALREADY molecule-wide (the Companies.Any(MoleculeId==moleculeId)
+    // subquery below). Unlike the workforce path, the Tech path is intentionally NOT widened further: its only
+    // company narrowing is the shift type's explicit EligibleCompanyIds list plus the officer-rank filter, both
+    // of which are deliberate eligibility config (not the incidental grouping/single-company narrowing that
+    // caused the origin bug). Tabs/job-type prioritization don't apply to null-jobtype Tech. See guard test
+    // ShiftCalendarServiceTests.GetEligibleUsersForShiftType_TechNoEligibilityList_ReturnsAllMoleculeCompanies.
     public async Task<List<AppUser>> GetEligibleUsersForShiftTypeAsync(int moleculeId, int shiftTypeId, bool categoryFilter = false)
     {
         // SECURITY-AUDITED: SAFE — scoped by moleculeId + shiftTypeId; eligibility filters applied
