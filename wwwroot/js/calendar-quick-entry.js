@@ -952,12 +952,17 @@
             return;
         }
 
-        // Don't intercept clicks on existing assignments or buttons
+        // Don't intercept clicks on existing assignments or buttons.
+        // The trainee picker is a runtime-injected <select> inserted as a sibling of the chip,
+        // still inside .excel-calendar__cell — it matches none of the other guards, so name it
+        // explicitly (plus a defensive bare `select`) or Quick Entry swallows its clicks (Bug 2).
         if (e.target.closest('.excel-calendar__assignment') ||
             e.target.closest('.excel-calendar__add-btn') ||
+            e.target.closest('.excel-calendar__trainee-picker') ||
             e.target.closest('.fill-handle') ||
             e.target.closest('button') ||
-            e.target.closest('a')) {
+            e.target.closest('a') ||
+            e.target.closest('select')) {
             return;
         }
 
