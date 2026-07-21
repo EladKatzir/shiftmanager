@@ -355,6 +355,11 @@ public static class GrantTypeSeed
         // is gated by org scope only; job-type relevance lives in candidate filtering (sub-project 3b).
         grants.Add(new GrantType { Id = id++, Key = "AssignShifts", NameKey = "Grant_AssignShifts", DescriptionKey = "Grant_AssignShifts_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
 
+        // Id 138 — ManageCalendarTabs: molecule-scoped management of calendar tabs (לשונית) on
+        // /Admin/Organization/Tabs. Floor = Lead (מפ"צ) and above. Distinct from ManageShiftCategories —
+        // tabs are a separate lead-managed surface. Append-only per the Grant Change Checklist.
+        grants.Add(new GrantType { Id = id++, Key = "ManageCalendarTabs", NameKey = "Grant_ManageCalendarTabs", DescriptionKey = "Grant_ManageCalendarTabs_Desc", Category = GrantCategory.Shift, DefaultScope = GrantScopeLevel.Molecule, IsSystem = true });
+
         return grants;
     }
 }

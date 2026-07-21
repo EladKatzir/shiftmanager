@@ -187,15 +187,17 @@ public class RoleTemplateAutoGrantTests : MasterTestBase
     // EditJusticeTargets (#134) granted to AreaAdmin + Owner. Total grants: 136.
     // 2026-06-16: AssignShifts collapse (8 Assign*Shifts → 1 AssignShifts) reduces each affected
     // template by (K-1) where K = the number of Assign*Shifts grants it held.
-    [InlineData("Tzafona", "Employee", 21)]      // F2: -1 ViewGrants removed from base template
-    [InlineData("Tzafona", "Lead", 57)]          // -1 AssignShifts collapse (K=2)
-    [InlineData("Tzafona", "BRDirector", 70)]    // unchanged (K=1: AssignBRShifts → AssignShifts)
-    [InlineData("Tzafona", "Director", 65)]      // -1 AssignShifts collapse (K=2)
-    [InlineData("Tzafona", "Assigner", 26)]      // ViewJusticeTable retained — Assigner keeps Analytics access (2026-06-15 product decision)
-    [InlineData("Hitazmut", "MoleculeAdmin", 101)]// -7 AssignShifts collapse (K=8)
-    [InlineData("Yekev", "DepartmentLead", 56)]  // -4 AssignShifts collapse (K=5)
-    [InlineData("Tzafona", "AreaAdmin", 118)]    // -7 AssignShifts collapse (K=8)
-    [InlineData("SystemAdmins", "Owner", 129)]   // -7 AssignShifts collapse (K=8)
+    // 2026-07-21: ManageCalendarTabs (#138) granted to Lead/BRDirector/Director/MoleculeAdmin/Assigner/
+    // DepartmentLead/AreaAdmin/Owner → +1 each (Employee unchanged).
+    [InlineData("Tzafona", "Employee", 21)]      // unchanged (not a Lead-and-above template)
+    [InlineData("Tzafona", "Lead", 58)]          // +1 ManageCalendarTabs (138)
+    [InlineData("Tzafona", "BRDirector", 71)]    // +1 ManageCalendarTabs
+    [InlineData("Tzafona", "Director", 66)]      // +1 ManageCalendarTabs
+    [InlineData("Tzafona", "Assigner", 27)]      // +1 ManageCalendarTabs
+    [InlineData("Hitazmut", "MoleculeAdmin", 102)]// +1 ManageCalendarTabs
+    [InlineData("Yekev", "DepartmentLead", 57)]  // +1 ManageCalendarTabs
+    [InlineData("Tzafona", "AreaAdmin", 119)]    // +1 ManageCalendarTabs
+    [InlineData("SystemAdmins", "Owner", 130)]   // +1 ManageCalendarTabs
     public async Task User_Has_ExpectedAutoGrantCount(string company, string template, int expectedCount)
     {
         var user = GetTestUser(company, template);

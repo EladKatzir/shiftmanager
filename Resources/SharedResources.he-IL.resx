@@ -16024,6 +16024,13 @@
   <data name="Grant_ManageShiftCategories_Desc" xml:space="preserve">
     <value>מאפשר יצירה, עריכה ומחיקה של קטגוריות שיבוץ ברמת המולקולה (קבוצות פונקציונליות כגון "יקב" שמכילות סוגי משמרות), ושיוך סוגי משמרות ומשתמשים אליהן. זמין למשבץ ומעלה.</value>
   </data>
+  <!-- לשוניות לוח -->
+  <data name="Grant_ManageCalendarTabs" xml:space="preserve">
+    <value>ניהול לשוניות לוח</value>
+  </data>
+  <data name="Grant_ManageCalendarTabs_Desc" xml:space="preserve">
+    <value>יצירה, עריכה ומחיקה של לשוניות (תת-לוחות) בלוח לפי סוג תפקיד במולקולה.</value>
+  </data>
   <data name="DistributionLists" xml:space="preserve">
     <value>תפוצות</value>
   </data>

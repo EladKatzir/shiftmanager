@@ -1039,13 +1039,14 @@ public class AssignerRoleTests : IDisposable
         employeeGrantTypeIds.Should().BeSubsetOf(assignerGrantTypeIds,
             "Assigner should have all Employee grants");
 
-        // Assigner = Employee + AssignChores(17) + ViewAllUsers(34) + ViewJusticeTable(133) + ManageDistributionLists(135) + ManageShiftCategories(136)
-        // (5 extras — ViewAllUsers added 2026-04-18 to give molecule-wide AssignChores its user visibility;
+        // Assigner = Employee + AssignChores(17) + ViewAllUsers(34) + ViewJusticeTable(133) + ManageDistributionLists(135) + ManageShiftCategories(136) + ManageCalendarTabs(138)
+        // (6 extras — ViewAllUsers added 2026-04-18 to give molecule-wide AssignChores its user visibility;
         //  ViewJusticeTable added 2026-05-03 for Justice analytics page access at Assigner's molecule scope (Assigner retains this — 2026-06-15 product decision);
         //  ManageDistributionLists added 2026-05-23 — Assigner manages calendar distribution lists at its molecule scope;
-        //  ManageShiftCategories added 2026-06-09 — Assigner manages shift categories at its molecule scope)
-        assignerGrants.Should().HaveCount(employeeGrants.Count + 5,
-            "Assigner = Employee + AssignChores + ViewAllUsers + ViewJusticeTable + ManageDistributionLists + ManageShiftCategories");
+        //  ManageShiftCategories added 2026-06-09 — Assigner manages shift categories at its molecule scope;
+        //  ManageCalendarTabs added 2026-07-21 — Assigner manages calendar tabs at its molecule scope)
+        assignerGrants.Should().HaveCount(employeeGrants.Count + 6,
+            "Assigner = Employee + AssignChores + ViewAllUsers + ViewJusticeTable + ManageDistributionLists + ManageShiftCategories + ManageCalendarTabs");
 
         // AssignChores (grant ID 17) should be area-scoped (2026-04-25 policy expansion:
         // Assigner reaches across the whole area to assign chores; other Assigner grants stay SAR)
@@ -1092,8 +1093,9 @@ public class GrantTypeSeedTests
         // Arrange & Act
         var grantTypes = Data.SeedData.GrantTypeSeed.GetGrantTypes();
 
-        // Assert - 137 grant types (added AssignShifts on 2026-06-16, collapsing the 8 per-type assign grants)
-        grantTypes.Should().HaveCount(137, "Should have exactly 137 grant types including the unified AssignShifts grant");
+        // Assert - 138 grant types (added AssignShifts on 2026-06-16 collapsing the 8 per-type assign grants;
+        // added ManageCalendarTabs (#138) on 2026-07-21)
+        grantTypes.Should().HaveCount(138, "Should have exactly 138 grant types including AssignShifts and ManageCalendarTabs");
     }
 
     [Fact]
