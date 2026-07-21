@@ -698,4 +698,45 @@ public class TraineeServiceTests : IDisposable
         var result = await _service.GetMoleculeTraineesAsync(mol, jobTypeId: null);
         result.Should().BeEmpty();
     }
+
+    // --- ValidateTraineeAssignmentAsync (PF14 extended — molecule check) ---
+
+    [Fact]
+    public async Task ValidateTraineeAssignment_CrossCompanySameMolecule_IsValid()
+    {
+        var (mol, cA, cB) = await SeedMoleculeTwoCompaniesAsync();
+        var shiftType = CreateShiftType();               // MoleculeId = 1 == mol (fixture uses molecule id 1)
+        await SeedShiftTypeAsync(shiftType);
+        await SeedUserAsync(10, UserRole.Employee);       // primary, company cA
+        await SeedTraineeAsync(20, cB, jobTypeId: null, "Cross Trainee");   // same molecule, other company
+
+        var (_, assignment) = await SeedShiftWithAssignmentAsync(employeeId: 10);   // instance company == cA
+
+        var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(assignment.Id, 20);
+
+        isValid.Should().BeTrue(error);
+    }
+
+    [Fact]
+    public async Task ValidateTraineeAssignment_DifferentMolecule_ReturnsInvalid()
+    {
+        var (mol, cA, _) = await SeedMoleculeTwoCompaniesAsync();
+        // A second molecule + company, foreign to the shift's molecule.
+        var area2 = _db.Areas.First();
+        var mol2 = new Molecule { AreaId = area2.Id, Name = "M2", Type = MoleculeType.Workforce };
+        _db.Molecules.Add(mol2); await _db.SaveChangesAsync();
+        var cForeign = new Company { Id = 77, MoleculeId = mol2.Id, Name = "CF", DisplayName = "CF" };
+        _db.Companies.Add(cForeign); await _db.SaveChangesAsync();
+
+        var shiftType = CreateShiftType();
+        await SeedShiftTypeAsync(shiftType);
+        await SeedUserAsync(10, UserRole.Employee);
+        await SeedTraineeAsync(30, cForeign.Id, jobTypeId: null, "Foreign Trainee");
+        var (_, assignment) = await SeedShiftWithAssignmentAsync(employeeId: 10);
+
+        var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(assignment.Id, 30);
+
+        isValid.Should().BeFalse();
+        error.Should().Contain("Error_TraineeAssignment_DifferentCompany");   // reused localized key
+    }
 }
