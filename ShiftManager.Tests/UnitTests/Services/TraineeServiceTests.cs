@@ -136,6 +136,32 @@ public class TraineeServiceTests : IDisposable
         return user;
     }
 
+    // Seeds one molecule with two companies; returns (moleculeId, companyA, companyB).
+    private async Task<(int MoleculeId, int CompanyA, int CompanyB)> SeedMoleculeTwoCompaniesAsync()
+    {
+        var project = new Project { Name = "P", DisplayName = "P" };
+        _db.Projects.Add(project); await _db.SaveChangesAsync();
+        var area = new Area { ProjectId = project.Id, Name = "A", DisplayName = "A" };
+        _db.Areas.Add(area); await _db.SaveChangesAsync();
+        var molecule = new Molecule { AreaId = area.Id, Name = "M", Type = MoleculeType.Workforce };
+        _db.Molecules.Add(molecule); await _db.SaveChangesAsync();
+        var cA = new Company { Id = CompanyId, MoleculeId = molecule.Id, Name = "CA", DisplayName = "CA" };
+        var cB = new Company { Id = 2, MoleculeId = molecule.Id, Name = "CB", DisplayName = "CB" };
+        _db.Companies.AddRange(cA, cB); await _db.SaveChangesAsync();
+        return (molecule.Id, cA.Id, cB.Id);
+    }
+
+    private async Task<AppUser> SeedTraineeAsync(int id, int companyId, int? jobTypeId, string name)
+    {
+        var u = new AppUser
+        {
+            Id = id, CompanyId = companyId, JobTypeId = jobTypeId,
+            Email = $"t{id}@test.com", DisplayName = name, Role = UserRole.Trainee, IsActive = true
+        };
+        _db.Users.Add(u); await _db.SaveChangesAsync();
+        return u;
+    }
+
     // --- ValidateTraineeAssignmentAsync ---
 
     [Fact]
@@ -591,65 +617,85 @@ public class TraineeServiceTests : IDisposable
         result.Should().Be(0);
     }
 
-    // --- GetCompanyTraineesAsync ---
+    // --- GetMoleculeTraineesAsync ---
 
     [Fact]
-    public async Task GetCompanyTrainees_ReturnsOnlyTraineeRole()
+    public async Task GetMoleculeTrainees_ReturnsOnlyTraineeRole()
     {
-        await SeedUserAsync(1, UserRole.Employee);
-        await SeedUserAsync(2, UserRole.Trainee, "Trainee A");
-        await SeedUserAsync(3, UserRole.Trainee, "Trainee B");
+        var (mol, cA, _) = await SeedMoleculeTwoCompaniesAsync();
+        await SeedUserAsync(1, UserRole.Employee);           // CompanyId == cA
+        await SeedTraineeAsync(2, cA, jobTypeId: null, "Trainee A");
+        await SeedTraineeAsync(3, cA, jobTypeId: null, "Trainee B");
         await SeedUserAsync(4, UserRole.Manager);
 
-        var result = await _service.GetCompanyTraineesAsync(CompanyId);
+        var result = await _service.GetMoleculeTraineesAsync(mol, jobTypeId: null);
 
-        result.Should().HaveCount(2);
         result.Should().OnlyContain(u => u.Role == UserRole.Trainee);
+        result.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task GetCompanyTrainees_ReturnsOnlyFromCorrectCompany()
+    public async Task GetMoleculeTrainees_ReturnsAllMoleculeCompanies_ExcludesOtherMolecule()
     {
-        await SeedUserAsync(1, UserRole.Trainee);
+        var (mol, cA, cB) = await SeedMoleculeTwoCompaniesAsync();
+        var inA = await SeedTraineeAsync(1, cA, jobTypeId: null, "In A");
+        var inB = await SeedTraineeAsync(2, cB, jobTypeId: null, "In B");   // same molecule, other company
 
-        // Trainee in different company
-        _db.Users.Add(new AppUser
-        {
-            Id = 2,
-            CompanyId = 999,
-            Email = "other@test.com",
-            DisplayName = "Other Company Trainee",
-            Role = UserRole.Trainee,
-            IsActive = true
-        });
-        await _db.SaveChangesAsync();
+        // Trainee in a company that belongs to NO molecule row (foreign) — must be excluded.
+        var foreign = await SeedTraineeAsync(3, companyId: 999, jobTypeId: null, "Foreign");
 
-        var result = await _service.GetCompanyTraineesAsync(CompanyId);
+        var result = await _service.GetMoleculeTraineesAsync(mol, jobTypeId: null);
 
-        result.Should().HaveCount(1);
-        result.First().CompanyId.Should().Be(CompanyId);
+        result.Select(u => u.Id).Should().BeEquivalentTo(new[] { inA.Id, inB.Id });
+        result.Should().NotContain(u => u.Id == foreign.Id);
     }
 
     [Fact]
-    public async Task GetCompanyTrainees_ReturnsSortedByDisplayName()
+    public async Task GetMoleculeTrainees_JobTypeScoped_IncludesMatchingAndNull_ExcludesOtherJobType()
     {
-        await SeedUserAsync(1, UserRole.Trainee, "Zara");
-        await SeedUserAsync(2, UserRole.Trainee, "Alice");
-        await SeedUserAsync(3, UserRole.Trainee, "Moe");
+        var (mol, cA, cB) = await SeedMoleculeTwoCompaniesAsync();
+        var alhut = 10; var other = 20;   // JobType ids; the method never joins JobType, only compares the fk
+        var matching = await SeedTraineeAsync(1, cA, jobTypeId: alhut, "Matching");
+        var nullJob  = await SeedTraineeAsync(2, cB, jobTypeId: null,  "Null Job");   // ORG-6 safety net
+        var otherJob = await SeedTraineeAsync(3, cA, jobTypeId: other, "Other Job");
 
-        var result = await _service.GetCompanyTraineesAsync(CompanyId);
+        var result = await _service.GetMoleculeTraineesAsync(mol, jobTypeId: alhut);
 
-        result.Should().HaveCount(3);
-        result[0].DisplayName.Should().Be("Alice");
-        result[1].DisplayName.Should().Be("Moe");
-        result[2].DisplayName.Should().Be("Zara");
+        result.Select(u => u.Id).Should().BeEquivalentTo(new[] { matching.Id, nullJob.Id });
+        result.Should().NotContain(u => u.Id == otherJob.Id);
     }
 
     [Fact]
-    public async Task GetCompanyTrainees_EmptyCompany_ReturnsEmpty()
+    public async Task GetMoleculeTrainees_NullJobTypeCalendar_ReturnsAllMoleculeTrainees()
     {
-        var result = await _service.GetCompanyTraineesAsync(999);
+        // Tech / null-jobtype calendar context ⇒ no job-type restriction (ORG-5 parity for trainees).
+        var (mol, cA, cB) = await SeedMoleculeTwoCompaniesAsync();
+        var t1 = await SeedTraineeAsync(1, cA, jobTypeId: 10, "T1");
+        var t2 = await SeedTraineeAsync(2, cB, jobTypeId: null, "T2");
 
+        var result = await _service.GetMoleculeTraineesAsync(mol, jobTypeId: null);
+
+        result.Select(u => u.Id).Should().BeEquivalentTo(new[] { t1.Id, t2.Id });
+    }
+
+    [Fact]
+    public async Task GetMoleculeTrainees_ReturnsSortedByDisplayName()
+    {
+        var (mol, cA, cB) = await SeedMoleculeTwoCompaniesAsync();
+        await SeedTraineeAsync(1, cA, jobTypeId: null, "Zara");
+        await SeedTraineeAsync(2, cB, jobTypeId: null, "Alice");
+        await SeedTraineeAsync(3, cA, jobTypeId: null, "Moe");
+
+        var result = await _service.GetMoleculeTraineesAsync(mol, jobTypeId: null);
+
+        result.Select(u => u.DisplayName).Should().ContainInOrder("Alice", "Moe", "Zara");
+    }
+
+    [Fact]
+    public async Task GetMoleculeTrainees_EmptyMolecule_ReturnsEmpty()
+    {
+        var (mol, _, _) = await SeedMoleculeTwoCompaniesAsync();
+        var result = await _service.GetMoleculeTraineesAsync(mol, jobTypeId: null);
         result.Should().BeEmpty();
     }
 }

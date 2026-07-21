@@ -350,10 +350,11 @@ public class ShiftsModel : PageModel
             Users = await _calendarService.GetUsersForCalendarAsync(MoleculeId.Value, JobTypeId);
         }
 
-        // Load trainees for the inline "+" picker from the SAME switcher-aware active company as the
-        // calendar body (companyId above). Using the claim-based home company here left the picker
-        // empty for any switched/cross-company view (the + rendered but had no options).
-        Trainees = await _traineeService.GetCompanyTraineesAsync(companyId);
+        // Trainee picker is molecule + jobtype wide (PF12 / origin-bug fix), gated by the same molecule access
+        // the calendar body already validated. Null jobtype (Tech) ⇒ every molecule trainee.
+        Trainees = MoleculeId.HasValue
+            ? await _traineeService.GetMoleculeTraineesAsync(MoleculeId.Value, JobTypeId)
+            : new List<AppUser>();
 
         // Load chore types and duty types for Quick Entry autocomplete
         if (MoleculeId.HasValue)

@@ -156,8 +156,15 @@ public class ManageModel : LocalizedPageModel
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
 
-        // Load trainees for this company
-        Trainees = await _traineeService.GetCompanyTraineesAsync(companyId);
+        // Trainee list is molecule + jobtype wide (PF12). Molecule resolved from the shift's company; page
+        // access is already gated above (hasAccess). IgnoreQueryFilters: the company may be cross-tenant.
+        var moleculeId = await _db.Companies.IgnoreQueryFilters()
+            .Where(c => c.Id == companyId)
+            .Select(c => c.MoleculeId)
+            .FirstOrDefaultAsync();
+        Trainees = moleculeId.HasValue
+            ? await _traineeService.GetMoleculeTraineesAsync(moleculeId.Value, Type.JobTypeId)
+            : new List<AppUser>();
 
         // Check which users have approved time off on this date (from same company)
         UsersOnTimeOff = (await _db.TimeOffRequests

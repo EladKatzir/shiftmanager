@@ -36,7 +36,8 @@ public interface ITraineeService
     Task<int> CancelShadowingForTimeOffAsync(int traineeUserId, DateTime startDate, DateTime endDate);
 
     /// <summary>
-    /// Get all trainees in a company
+    /// Get all trainees across a molecule, optionally scoped to a job type (a null JobTypeId trainee is
+    /// always included as a universal-relevance safety net). Pass jobTypeId = null for no job-type filter.
     /// </summary>
-    Task<List<Models.AppUser>> GetCompanyTraineesAsync(int companyId);
+    Task<List<Models.AppUser>> GetMoleculeTraineesAsync(int moleculeId, int? jobTypeId);
 }

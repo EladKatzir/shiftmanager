@@ -458,10 +458,20 @@ public class TraineeService : ITraineeService
         }
     }
 
-    public async Task<List<AppUser>> GetCompanyTraineesAsync(int companyId)
+    public async Task<List<AppUser>> GetMoleculeTraineesAsync(int moleculeId, int? jobTypeId)
     {
+        // PF12 (D1/D6): trainees are molecule-wide — the origin bug was a City lead unable to pick a Tzafona
+        // trainee. Job-type scoped with a NULL-inclusion safety net: a trainee whose JobTypeId is null (mis-
+        // seeded, or pre-backfill on an existing DB — ORG-8) is universally relevant so it is never hidden,
+        // the exact origin-bug failure. When there is no job-type context (jobTypeId == null, e.g. Tech),
+        // show every molecule trainee.
+        // SECURITY-AUDITED: SAFE — molecule-scoped (Company.MoleculeId == moleculeId). The calling page gates
+        // molecule access before this runs (IDOR); only trainees inside the requested molecule are returned.
         return await _db.Users
-            .Where(u => u.CompanyId == companyId && u.Role == UserRole.Trainee)
+            .IgnoreQueryFilters()
+            .Where(u => u.Role == UserRole.Trainee
+                        && _db.Companies.Any(c => c.Id == u.CompanyId && c.MoleculeId == moleculeId)
+                        && (jobTypeId == null || u.JobTypeId == jobTypeId || u.JobTypeId == null))
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
     }
