@@ -350,6 +350,10 @@
         // POST handlers' own error responses are already server-localized (Team_DuplicateName etc.)
         // and don't need a client-side counterpart here.
         "Team_NameRequired": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Team_NameRequired"].Value)),
-        "Team_DeleteTableConfirm": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Team_DeleteTableConfirm"].Value))
+        "Team_DeleteTableConfirm": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["Team_DeleteTableConfirm"].Value)),
+        // Calendar tab prioritization (calendar-tab-prioritization.js)
+        "CalendarTab_Group_ThisTab": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["CalendarTab_Group_ThisTab"].Value)),
+        "CalendarTab_Group_Other": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["CalendarTab_Group_Other"].Value)),
+        "CalendarTab_OffTabWarning": @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["CalendarTab_OffTabWarning"].Value))
     };
 </script>

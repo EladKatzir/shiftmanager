@@ -8795,6 +8795,15 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Calendar_Tab_All" xml:space="preserve">
     <value>All</value>
   </data>
+  <data name="CalendarTab_Group_ThisTab" xml:space="preserve">
+    <value>This tab</value>
+  </data>
+  <data name="CalendarTab_Group_Other" xml:space="preserve">
+    <value>Other in molecule</value>
+  </data>
+  <data name="CalendarTab_OffTabWarning" xml:space="preserve">
+    <value>This user isn't from this tab's companies.</value>
+  </data>
   <data name="Print" xml:space="preserve">
     <value>Print</value>
     <comment>Button to print the calendar</comment>

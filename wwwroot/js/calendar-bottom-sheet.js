@@ -513,15 +513,10 @@
             } else {
                 // Populate from available users (read from page data or cell context)
                 var availableUsers = getAvailableUsers(cellData);
-                availableUsers.forEach(function (user) {
-                    var opt = document.createElement('option');
-                    opt.value = user.id;
-                    // Disambiguate duplicate names across the area by suffixing the company (same
-                    // "name — company" convention the eligibility path uses above).
-                    opt.textContent = user.companyName ? (user.name + ' — ' + user.companyName) : user.name;
-                    opt.dataset.userName = user.name;
-                    userSelect.appendChild(opt);
-                });
+                // PF8: group "this tab" first when prioritization is active (shift-mode); flat otherwise.
+                appendUsersGrouped(userSelect, availableUsers.map(function (u) {
+                    return { id: u.id, name: u.name, companyName: u.companyName, inTab: !!u.inTab };
+                }));
 
                 // Busy decoration for chore/onduty modes (where rowId is user-N or dutytype-N)
                 if (cellData.date && calPageConfig && calPageConfig.moleculeId > 0 && availableUsers.length > 0) {
@@ -857,6 +852,35 @@
         selectEl.appendChild(opt);
     }
 
+    // Append user options, split into "this tab" / "other" native <optgroup>s when prioritization is
+    // active; otherwise a flat option list. Each option keeps data-in-tab so a later resync knows the group.
+    function appendUsersGrouped(selectEl, users) {
+        function opt(u) {
+            var o = document.createElement('option');
+            o.value = u.id;
+            o.dataset.userName = u.name;
+            o.dataset.inTab = u.inTab ? '1' : '0';
+            o.textContent = u.companyName ? (u.name + ' — ' + u.companyName) : u.name;
+            return o;
+        }
+        var P = window.CalendarTabPrioritization;
+        if (P && P.isActive()) {
+            var parts = P.partition(users);
+            if (parts.thisTab.length) {
+                var g1 = document.createElement('optgroup'); g1.label = P.label('this');
+                parts.thisTab.forEach(function (u) { g1.appendChild(opt(u)); });
+                selectEl.appendChild(g1);
+            }
+            if (parts.other.length) {
+                var g2 = document.createElement('optgroup'); g2.label = P.label('other');
+                parts.other.forEach(function (u) { g2.appendChild(opt(u)); });
+                selectEl.appendChild(g2);
+            }
+        } else {
+            users.forEach(function (u) { selectEl.appendChild(opt(u)); });
+        }
+    }
+
     // Remove every option EXCEPT a leading non-disabled empty default (the "-- Select --" placeholder).
     function clearRealOptions(selectEl) {
         Array.prototype.slice.call(selectEl.options).forEach(function (opt) {
@@ -891,8 +915,10 @@
         selectEl.appendChild(loadingOpt);
         selectEl.setAttribute('aria-busy', 'true');
         try {
+            var tParam = (window.CalendarPageConfig && window.CalendarPageConfig.activeTabId != null)
+                ? window.CalendarPageConfig.activeTabId : 0;
             var url = '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + moleculeId + '&shiftTypeId=' + shiftTypeId
-                + (allowFallback ? '&allowFallback=true' : '');
+                + '&tab=' + tParam + (allowFallback ? '&allowFallback=true' : '');
             var response = await fetch(url, { credentials: 'same-origin' });
             if (!response.ok) throw new Error('Server returned ' + response.status);
             var data = await response.json();
@@ -901,15 +927,7 @@
             if (!data.success) throw new Error('unsuccessful');
 
             if (Array.isArray(data.users) && data.users.length > 0) {
-                data.users.forEach(function (user) {
-                    var opt = document.createElement('option');
-                    opt.value = user.id;
-                    opt.dataset.userName = user.name;
-                    // Native <select>: append company as a " — {company}" suffix (3b disambiguation).
-                    opt.textContent = user.companyName ? (user.name + ' — ' + user.companyName) : user.name;
-                    selectEl.appendChild(opt);
-                });
-
+                appendUsersGrouped(selectEl, data.users);   // PF8 optgroup grouping (this tab / other)
                 if (date && moleculeId) {
                     // Decorate with busy badges (best-effort — failure is non-fatal)
                     decorateOptionsWithBusyAsync(selectEl, data.users.map(function (u) { return u.id; }), date, moleculeId, null)
@@ -1008,7 +1026,9 @@
             for (var i = 0; i < select.options.length; i++) {
                 var option = select.options[i];
                 if (option.value) {
-                    users.push({ id: option.value, name: option.textContent, companyName: option.dataset.company || null });
+                    users.push({ id: option.value, name: option.textContent,
+                                 companyName: option.dataset.company || null,
+                                 inTab: option.dataset.inTab === '1' });
                 }
             }
         }
@@ -1121,6 +1141,14 @@
             window.quickAddOnDuty(cellData.date, userId, onDutyType);
             close();
         } else if (calendarType === 'shifts' && typeof window.quickAddShift === 'function') {
+            // PF8: off-tab warning (once per tab/session) when the chosen user isn't from the tab's companies.
+            var sheetSelect = document.getElementById('bottom-sheet-user-select');
+            var chosenOpt = sheetSelect ? sheetSelect.options[sheetSelect.selectedIndex] : null;
+            if (window.CalendarTabPrioritization && chosenOpt && cellData.rowId
+                && cellData.rowId.indexOf('shift-') === 0) {
+                window.CalendarTabPrioritization.maybeWarnOffTab(
+                    { id: userId, inTab: chosenOpt.dataset.inTab === '1' });
+            }
             // Detect mode from row ID prefix
             if (cellData.rowId && cellData.rowId.indexOf('user-') === 0) {
                 // User-mode: row is a user, dropdown value is the shift type

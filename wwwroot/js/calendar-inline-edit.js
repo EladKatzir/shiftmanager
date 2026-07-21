@@ -886,15 +886,42 @@ function openInlineTraineePicker(btn) {
     def.value = '';
     def.textContent = window.AppLocalizer?.BottomSheet_AddTrainee || 'Add trainee...';
     select.appendChild(def);
-    for (var i = 0; i < source.options.length; i++) {
+
+    // PF8/PF9: clone options, PRESERVING data-company/data-jobtype/data-in-tab, into two <optgroup>s
+    // ("this tab" first) when prioritization is active; otherwise a flat list.
+    function cloneOpt(src) {
         var o = document.createElement('option');
-        o.value = source.options[i].value;
-        o.textContent = source.options[i].textContent;
-        select.appendChild(o);
+        o.value = src.value;
+        o.textContent = src.textContent;
+        o.dataset.company = src.dataset.company || '';
+        o.dataset.jobtype = src.dataset.jobtype || '';
+        o.dataset.inTab = src.dataset.inTab || '0';
+        return o;
     }
+    var srcOpts = Array.prototype.slice.call(source.options).filter(function (o) { return o.value; });
+    var P = window.CalendarTabPrioritization;
+    if (P && P.isActive()) {
+        var norm = srcOpts.map(function (o) { return { opt: o, inTab: o.dataset.inTab === '1' }; });
+        var parts = P.partition(norm);
+        if (parts.thisTab.length) {
+            var g1 = document.createElement('optgroup'); g1.label = P.label('this');
+            parts.thisTab.forEach(function (n) { g1.appendChild(cloneOpt(n.opt)); });
+            select.appendChild(g1);
+        }
+        if (parts.other.length) {
+            var g2 = document.createElement('optgroup'); g2.label = P.label('other');
+            parts.other.forEach(function (n) { g2.appendChild(cloneOpt(n.opt)); });
+            select.appendChild(g2);
+        }
+    } else {
+        srcOpts.forEach(function (o) { select.appendChild(cloneOpt(o)); });
+    }
+
     select.addEventListener('change', function () {
         var traineeId = parseInt(select.value, 10);
         if (select.value && !isNaN(traineeId)) {
+            var chosen = select.options[select.selectedIndex];
+            if (P) P.maybeWarnOffTab({ id: traineeId, inTab: chosen && chosen.dataset.inTab === '1' });
             select.disabled = true;
             if (draftCoords) {
                 stageDraftAddTrainee(draftCoords.shiftTypeId, draftCoords.date, draftCoords.primaryUserId, traineeId);
@@ -904,9 +931,15 @@ function openInlineTraineePicker(btn) {
             }
         }
     });
-    // Dismiss on Escape or when focus leaves.
+    // Dismiss on Escape or when focus leaves — BUT when the searchable-select widget (Phase B) has
+    // enhanced this <select>, its own listbox steals focus; do NOT self-destruct then (PF9).
     select.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') select.remove(); });
-    select.addEventListener('blur', function () { setTimeout(function () { if (select.parentNode) select.remove(); }, 150); });
+    select.addEventListener('blur', function () {
+        setTimeout(function () {
+            if (select.dataset.searchableEnhanced === '1') return; // enhanced widget owns dismissal
+            if (select.parentNode) select.remove();
+        }, 150);
+    });
 
     // Insert after the chip (not inside — keeps the chip layout intact).
     chip.insertAdjacentElement('afterend', select);

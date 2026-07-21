@@ -8761,6 +8761,15 @@
   <data name="Calendar_Tab_All" xml:space="preserve">
     <value>הכל</value>
   </data>
+  <data name="CalendarTab_Group_ThisTab" xml:space="preserve">
+    <value>לשונית זו</value>
+  </data>
+  <data name="CalendarTab_Group_Other" xml:space="preserve">
+    <value>אחרים במולקולה</value>
+  </data>
+  <data name="CalendarTab_OffTabWarning" xml:space="preserve">
+    <value>משתמש זה אינו מהחברות של לשונית זו.</value>
+  </data>
   <data name="Print" xml:space="preserve">
     <value>הדפסה</value>
     <comment>Button to print the calendar</comment>
