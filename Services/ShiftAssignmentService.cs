@@ -79,32 +79,18 @@ public class ShiftAssignmentService : IShiftAssignmentService
         var effectiveGroupingId = shiftGroupingId ?? shiftType.ShiftGroupingId;
         var effectiveJobTypeId = jobTypeId ?? shiftType.JobTypeId;
 
-        // Determine which companies to include
-        List<int> companyIds;
-
-        if (effectiveGroupingId.HasValue)
-        {
-            // ShiftGrouping specified: get all companies in the grouping (cross-company query)
-            companyIds = await _db.ShiftGroupingCompanies
-                .Where(sgc => sgc.ShiftGroupingId == effectiveGroupingId.Value)
-                .Select(sgc => sgc.CompanyId)
-                .ToListAsync();
-
-            // Fall back to shift type's company or all companies in molecule
-            if (!companyIds.Any())
-            {
-                companyIds = shiftType.CompanyId.HasValue
-                    ? new List<int> { shiftType.CompanyId.Value }
-                    : await _db.Companies.Where(c => c.MoleculeId == shiftType.MoleculeId).Select(c => c.Id).ToListAsync();
-            }
-        }
-        else
-        {
-            // No grouping: use shift type's company or all companies in molecule
-            companyIds = shiftType.CompanyId.HasValue
-                ? new List<int> { shiftType.CompanyId.Value }
-                : await _db.Companies.Where(c => c.MoleculeId == shiftType.MoleculeId).Select(c => c.Id).ToListAsync();
-        }
+        // PF2 (D1): the candidate universe is the WHOLE molecule, unconditionally. The origin bug was that
+        // ShiftGrouping / single-company narrowing hid same-molecule + same-jobtype users (a City lead could
+        // not see a Tzafona user). ShiftGroupings keep their OTHER roles — calendar row-banding and the
+        // IsInShiftGrouping flag below — but no longer restrict who is ELIGIBLE.
+        // SECURITY-AUDITED: SAFE — molecule-scoped (shiftType.MoleculeId); the calling endpoint gates molecule
+        // access (ValidateScopeAccessAsync + shiftType-belongs-to-molecule) before this runs. IgnoreQueryFilters
+        // is required so molecule companies outside the caller's own tenant are included (the whole point).
+        var companyIds = await _db.Companies
+            .IgnoreQueryFilters()
+            .Where(c => c.MoleculeId == shiftType.MoleculeId)
+            .Select(c => c.Id)
+            .ToListAsync();
 
         List<int> participantUserIds;
         if (categoryFilter)

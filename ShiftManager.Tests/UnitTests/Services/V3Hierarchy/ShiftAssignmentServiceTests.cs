@@ -200,12 +200,12 @@ public class ShiftAssignmentServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetEligibleUsersForShiftType_WithShiftGrouping_ReturnsOnlyGroupingCompanies()
+    public async Task GetEligibleUsersForShiftType_OutsideGroupingCompany_NowMoleculeWide_ButFlaggedNotInGrouping()
     {
         // Arrange
         var hierarchy = await SetupTestHierarchyAsync();
 
-        // Create a user in a company NOT in the shift grouping
+        // Company inside the molecule but NOT in the shift grouping.
         var company3 = new Company { MoleculeId = hierarchy.Molecule.Id, Name = "Company3" };
         _db.Companies.Add(company3);
         await _db.SaveChangesAsync();
@@ -226,12 +226,45 @@ public class ShiftAssignmentServiceTests : IDisposable
         var result = await _service.GetEligibleUsersForShiftTypeAsync(
             hierarchy.ShiftType.Id,
             hierarchy.JobTypes["Alhut"].Id,
-            hierarchy.ShiftGrouping.Id
-        );
+            hierarchy.ShiftGrouping.Id);
 
-        // Assert
-        result.Should().NotContain(u => u.UserId == outsideUser.Id,
-            "User from company not in shift grouping should not be eligible");
+        // Assert — PF2/D1: molecule-wide eligibility (origin-bug fix)…
+        result.Should().Contain(u => u.UserId == outsideUser.Id,
+            "a same-molecule + same-jobtype user is now eligible even outside the grouping");
+        // …but REG-1: the grouping still drives the display flag.
+        result.Single(u => u.UserId == outsideUser.Id).IsInShiftGrouping.Should().BeFalse();
+        result.Single(u => u.UserId == hierarchy.Users["alhut1"].Id).IsInShiftGrouping.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetEligibleUsersForShiftType_SingleCompanyShiftType_ReturnsMoleculeWide()
+    {
+        // Arrange
+        var hierarchy = await SetupTestHierarchyAsync();
+
+        // A shift type with NO grouping but a concrete CompanyId (company1) — the :104-106 branch.
+        var cityShiftType = new ShiftType
+        {
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule,
+            MoleculeId = hierarchy.Molecule.Id,
+            CompanyId = hierarchy.Companies[0].Id,   // "City"
+            JobTypeId = hierarchy.JobTypes["Alhut"].Id,
+            ShiftGroupingId = null,
+            // KEY_EVENING (not MORNING) so this doesn't collide with the fixture's Alhut/MORNING type on the
+            // unique index (MoleculeId, JobTypeId, Key). The Key is irrelevant to what this test proves.
+            Key = ShiftType.KEY_EVENING,
+            Start = new TimeOnly(8, 0),
+            End = new TimeOnly(16, 0)
+        };
+        _db.ShiftTypes.Add(cityShiftType);
+        await _db.SaveChangesAsync();
+
+        // Act — alhut2 lives in company2 ("Tzafona"), same molecule + same jobtype.
+        var result = await _service.GetEligibleUsersForShiftTypeAsync(
+            cityShiftType.Id, hierarchy.JobTypes["Alhut"].Id, null);
+
+        // Assert — the Tzafona user is eligible on a City-owned shift type.
+        result.Should().Contain(u => u.UserId == hierarchy.Users["alhut2"].Id);
     }
 
     [Fact]
