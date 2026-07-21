@@ -142,6 +142,7 @@ public sealed class TableAssignEmployeeInstanceResolutionTests : IAsyncLifetime
             auditLogService: Mock.Of<IAuditLogService>(),
             draftService: Mock.Of<IDraftModeService>(),
             draftLifecycle: Mock.Of<IDraftLifecycle>(),
+            shiftTabService: Mock.Of<IShiftTabService>(),
             remediation: Mock.Of<IFailureRemediationService>());
 
         var httpContext = new DefaultHttpContext

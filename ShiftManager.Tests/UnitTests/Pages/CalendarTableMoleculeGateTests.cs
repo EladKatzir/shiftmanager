@@ -116,6 +116,7 @@ public sealed class CalendarTableMoleculeGateTests
             null!,              // auditLogService
             null!,              // draftService
             null!,              // draftLifecycle
+            null!,              // shiftTabService
             null!);             // remediation
     }
 
