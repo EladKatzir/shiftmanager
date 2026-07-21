@@ -40,6 +40,15 @@ public interface IShiftTabService
     /// <summary>The shift types assigned to a tab (empty = no restriction).</summary>
     Task<HashSet<int>> GetShiftTypeIdsForTabAsync(int tabId);
 
+    // ---- Phase E: calendar-integration projections ----
+    /// <summary>
+    /// shiftTypeId → the set of tab ids whose EFFECTIVE shift-type set contains it, for one (molecule,
+    /// jobtype). A tab with an explicit selection contributes those ids; a tab with NO selection expands
+    /// to every molecule+jobtype shift type ("empty = all"); HOME/OFFLINE + null-jobtype shared shift
+    /// types map to EVERY tab (PF7 — never ghosted / never hidden). Powers by-user cross-over + ghosting.
+    /// </summary>
+    Task<Dictionary<int, HashSet<int>>> GetShiftTypeTabMapAsync(int moleculeId, int? jobTypeId);
+
     // ---- Per-user last-tab memory ----
     /// <summary>The user's remembered tab for a (molecule, jobtype) (null = none / the "All" view).</summary>
     Task<int?> GetLastTabAsync(int userId, int moleculeId, int? jobTypeId);

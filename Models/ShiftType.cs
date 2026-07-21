@@ -17,6 +17,14 @@ public class ShiftType
     public const string KEY_HOME_PM = "HOME_PM";    // 16:00-23:59 partial-day HOME (After day-1 evening)
     public const string KEY_HOME_AM = "HOME_AM";    // 00:00-13:00 partial-day HOME (After day-2 / vacation-end morning)
 
+    /// <summary>
+    /// True when a raw shift-type Key is any HOME variant (full-day / PM / AM). Static so it can be
+    /// evaluated in-memory over a projected <c>Key</c> string — <see cref="IsHome"/> is <c>[NotMapped]</c>
+    /// and cannot be used inside an EF IQueryable projection.
+    /// </summary>
+    public static bool IsHomeKey(string? key) =>
+        key == KEY_HOME || key == KEY_HOME_PM || key == KEY_HOME_AM;
+
     // Tech shift type keys
     public const string TECH_HANAVA = "HANAVA";
     public const string TECH_DELTA = "DELTA";
@@ -153,7 +161,7 @@ public class ShiftType
     /// HOME shifts are exempt from overlap, rest period, and weekly cap checks.
     /// </summary>
     [NotMapped]
-    public bool IsHome => Key == KEY_HOME || Key == KEY_HOME_PM || Key == KEY_HOME_AM;
+    public bool IsHome => IsHomeKey(Key);
 
     /// <summary>
     /// True if this shift participates in overlap / rest-period conflict detection. Driven by the

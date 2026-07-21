@@ -210,6 +210,35 @@ public sealed class ShiftTabServiceTests
     }
 
     [Fact]
+    public async Task GetShiftTypeTabMap_EmptySelectionTab_MapsAllMoleculeJobtypeShiftTypes()
+    {
+        // molecule 1, jobtype 10: shift types A(100),B(101) jobtype 10 + shared S(102, jobtype null) + home H(103).
+        // Tab "Geo" selects only A; tab "Wide" selects nothing (empty = all).
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        f.Db.ShiftTypes.AddRange(
+            new ShiftType { Id = 100, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = 10, Key = "MORNING" },       // A
+            new ShiftType { Id = 101, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = 10, Key = "NIGHT" },         // B
+            new ShiftType { Id = 102, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = null, Key = "CUSTOM_SHARED" },// S (shared, null jobtype)
+            new ShiftType { Id = 103, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = 10, Key = "HOME" });         // H
+        await f.Db.SaveChangesAsync();
+        var svc = new ShiftTabService(f.Db);
+
+        var geo = await svc.CreateAsync(1, 10, "Geo", "גאו");
+        var wide = await svc.CreateAsync(1, 10, "Wide", "רחב");
+        (await svc.SetShiftTypesForTabAsync(geo!.Id, new[] { 100 })).Should().BeTrue();
+        // wide: leave empty (= all)
+
+        var map = await svc.GetShiftTypeTabMapAsync(1, 10);
+
+        map[100].Should().BeEquivalentTo(new[] { geo.Id, wide!.Id });  // A on Geo (explicit) + Wide (empty=all)
+        map[101].Should().Contain(wide.Id);                            // B only on Wide (empty=all), NOT Geo
+        map[101].Should().NotContain(geo.Id);
+        map[102].Should().BeEquivalentTo(new[] { geo.Id, wide.Id });   // shared null-jobtype maps to EVERY tab (PF7)
+        map[103].Should().BeEquivalentTo(new[] { geo.Id, wide.Id });   // HOME maps to EVERY tab (PF7)
+    }
+
+    [Fact]
     public void Coverage_Lists_ShiftTypes_In_No_Tab_And_Ignores_EmptyTabs()
     {
         // allShiftTypeIds = {1,2,3}; tabA covers {1}; nothing else → {2,3} uncovered.

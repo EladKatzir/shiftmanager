@@ -27,6 +27,7 @@ public class GetShiftsDataModel : PageModel
     private readonly ICompanyLocalizationService _companyLocalizationService;
     private readonly ITenantResolver _tenantResolver;
     private readonly IStringLocalizer<SharedResources> _localizer;
+    private readonly IShiftTabService _tabService;
 
     public GetShiftsDataModel(
         IShiftCalendarService shiftCalendarService,
@@ -35,7 +36,8 @@ public class GetShiftsDataModel : PageModel
         ILogger<GetShiftsDataModel> logger,
         ICompanyLocalizationService companyLocalizationService,
         ITenantResolver tenantResolver,
-        IStringLocalizer<SharedResources> localizer)
+        IStringLocalizer<SharedResources> localizer,
+        IShiftTabService tabService)
     {
         _shiftCalendarService = shiftCalendarService;
         _scopeFilterService = scopeFilterService;
@@ -44,6 +46,7 @@ public class GetShiftsDataModel : PageModel
         _companyLocalizationService = companyLocalizationService;
         _tenantResolver = tenantResolver;
         _localizer = localizer;
+        _tabService = tabService;
     }
 
     public async Task<IActionResult> OnGetAsync(
@@ -97,8 +100,31 @@ public class GetShiftsDataModel : PageModel
             var instances = await _shiftCalendarService.GetShiftInstancesAsync(moleculeId, jobTypeId, start, end);
             var overlays = await _shiftCalendarService.GetOverlaysAsync(moleculeId, start, end);
 
-            // Tab-filtered refresh is Phase E (PF3/PF4). Interim: no tab filter (returns all molecule+jobtype
-            // instances — the "All" view). The `tab` query param is accepted but ignored until Phase E.
+            // Tab (לשונית): keep the shadow refresh aligned with the server render — filter instances to the
+            // active tab's effective shift-type set via the ShiftTabShiftType join. Semantics match the page:
+            //   tab omitted / tab==0            → "All": no restriction.
+            //   real tab with selection         → its shift types ∪ shared/HOME/OFFLINE (PF7).
+            //   real tab with empty selection   → all job-type shifts (no restriction).
+            //   UNKNOWN / deleted / foreign id  → graceful fallback: return ALL data (never match-nothing) so a
+            //                                     peer whose tab was deleted mid-session doesn't blank (CON-4).
+            // NOTE: `instances` is already materialized above, so i.ShiftType.IsHome/IsOffline are LINQ-to-objects
+            // here (not an EF projection) — safe to use directly.
+            if (tab.HasValue && tab.Value != 0)
+            {
+                var tabExists = await _db.ShiftTabs.IgnoreQueryFilters()
+                    .AnyAsync(t => t.Id == tab.Value && t.MoleculeId == moleculeId);
+                if (tabExists)
+                {
+                    var tabShiftTypeIds = await _tabService.GetShiftTypeIdsForTabAsync(tab.Value);
+                    if (tabShiftTypeIds.Count > 0)
+                        instances = instances.Where(i => i.ShiftType != null &&
+                            (tabShiftTypeIds.Contains(i.ShiftTypeId)
+                             || i.ShiftType.JobTypeId == null || i.ShiftType.IsHome || i.ShiftType.IsOffline))
+                            .ToList();
+                    // empty selection → no filter (all)
+                }
+                // unknown tab → no filter (graceful fallback)
+            }
 
             // C-07 OPTIMIZED: Batch-load all capacities in 2 queries instead of N+1 per instance
             var capacities = await _shiftCalendarService.GetCapacitiesBatchAsync(moleculeId, jobTypeId, start, end);

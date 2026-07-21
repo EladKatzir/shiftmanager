@@ -172,6 +172,49 @@ public class ShiftTabService : IShiftTabService
         => (await _db.ShiftTabShiftTypes.Where(x => x.ShiftTabId == tabId)
             .Select(x => x.ShiftTypeId).ToListAsync()).ToHashSet();
 
+    // ---- Phase E: calendar-integration projections ----
+
+    // SECURITY-AUDITED: SAFE — molecule-scoped read; callers gate molecule access before this runs.
+    public async Task<Dictionary<int, HashSet<int>>> GetShiftTypeTabMapAsync(int moleculeId, int? jobTypeId)
+    {
+        var areaId = await _db.Molecules.IgnoreQueryFilters()
+            .Where(m => m.Id == moleculeId).Select(m => m.AreaId).FirstOrDefaultAsync();
+
+        // The shift-type universe the "All" grid shows for this (molecule, jobtype).
+        var universe = _db.ShiftTypes.IgnoreQueryFilters()
+            .Where(st => st.MoleculeId == moleculeId
+                      || (st.Scope == ShiftScope.Area && st.AreaId == areaId));
+        universe = jobTypeId.HasValue
+            ? universe.Where(st => st.JobTypeId == jobTypeId.Value || st.JobTypeId == null)
+            : universe.Where(st => st.JobTypeId == null);
+        // S1: IsHome/IsOffline are [NotMapped] — project the mapped Key column and evaluate the presence-
+        // status predicate in memory (an IsHome/IsOffline IQueryable projection would fail to translate).
+        var allTypes = await universe
+            .Select(st => new { st.Id, st.JobTypeId, st.Key })
+            .ToListAsync();
+
+        var tabs = await GetTabsForMoleculeAsync(moleculeId, jobTypeId);
+        var explicitByTab = new Dictionary<int, HashSet<int>>();
+        foreach (var t in tabs)
+            explicitByTab[t.Id] = await GetShiftTypeIdsForTabAsync(t.Id);
+
+        var map = new Dictionary<int, HashSet<int>>();
+        foreach (var st in allTypes)
+        {
+            var set = new HashSet<int>();
+            var alwaysEverywhere = st.JobTypeId == null
+                || ShiftType.IsHomeKey(st.Key) || st.Key == ShiftType.KEY_OFFLINE; // PF7
+            foreach (var t in tabs)
+            {
+                var chosen = explicitByTab[t.Id];
+                if (alwaysEverywhere || chosen.Count == 0 || chosen.Contains(st.Id))
+                    set.Add(t.Id);
+            }
+            map[st.Id] = set;
+        }
+        return map;
+    }
+
     // ---- Per-user last-tab memory ----
 
     public async Task<int?> GetLastTabAsync(int userId, int moleculeId, int? jobTypeId)

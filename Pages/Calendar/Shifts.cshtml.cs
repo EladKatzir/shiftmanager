@@ -42,6 +42,10 @@ public class ShiftsModel : PageModel
     private readonly IDraftModeService _draftService;
     private readonly IFeatureFlagService _featureFlags;
 
+    // Per-request: shiftTypeId → set of tab ids whose effective set contains it (empty = all; shared/home/
+    // offline on every tab). Populated in BuildUserBasedCalendarAsync; drives cross-over + per-cell ghosting.
+    private Dictionary<int, HashSet<int>> _tabOfShiftType = new();
+
     public ShiftsModel(
         AppDbContext db,
         IShiftCalendarService calendarService,
@@ -497,7 +501,20 @@ public class ShiftsModel : PageModel
         else
             shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
 
-        // Tab view-filter (by-shift) is Phase E (PF4). Interim: no tab filter (the "All" view).
+        // Tab (לשונית): a real tab shows its selected shift types; empty selection = all job-type shifts.
+        // "All" (Tab == null) applies no restriction. HOME/OFFLINE presence + null-jobtype shared shift
+        // types ALWAYS render on every tab (PF7) so a tab can never hide a reachable shift.
+        // S1: IsHome/IsOffline are [NotMapped] — compare the mapped Key column against the const keys so the
+        // predicate translates to SQL (a NotMapped member or IsHomeKey() call would fail EF translation).
+        if (Tab.HasValue)
+        {
+            var tabShiftTypeIds = await _tabService.GetShiftTypeIdsForTabAsync(Tab.Value);
+            if (tabShiftTypeIds.Count > 0)
+                shiftTypeQuery = shiftTypeQuery.Where(st =>
+                    tabShiftTypeIds.Contains(st.Id) || st.JobTypeId == null
+                    || st.Key == ShiftType.KEY_HOME || st.Key == ShiftType.KEY_HOME_PM
+                    || st.Key == ShiftType.KEY_HOME_AM || st.Key == ShiftType.KEY_OFFLINE);
+        }
 
         var shiftTypes = (await shiftTypeQuery
             .OrderBy(st => st.Start)
@@ -621,7 +638,17 @@ public class ShiftsModel : PageModel
         else
             shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
 
-        // Tab view-filter (by-user shift-type list) is Phase E (PF4). Interim: no tab filter.
+        // Tab (לשונית): the assign bottom-sheet's shift-type dropdown offers the tab's + shared/HOME/OFFLINE
+        // shifts (empty selection = all). Same PF7 union as by-shift; S1: compare mapped Key, not IsHome/IsOffline.
+        if (Tab.HasValue)
+        {
+            var tabShiftTypeIds = await _tabService.GetShiftTypeIdsForTabAsync(Tab.Value);
+            if (tabShiftTypeIds.Count > 0)
+                shiftTypeQuery = shiftTypeQuery.Where(st =>
+                    tabShiftTypeIds.Contains(st.Id) || st.JobTypeId == null
+                    || st.Key == ShiftType.KEY_HOME || st.Key == ShiftType.KEY_HOME_PM
+                    || st.Key == ShiftType.KEY_HOME_AM || st.Key == ShiftType.KEY_OFFLINE);
+        }
 
         ShiftTypes = (await shiftTypeQuery
             .OrderBy(st => st.Start)
@@ -645,7 +672,25 @@ public class ShiftsModel : PageModel
         // Draft Mode: overlay the viewer's private staged changes onto the live assignments for rendering.
         assignments = await ApplyDraftOverlayAsync(assignments, instances, moleculeId, jobTypeId);
 
-        // Tab roster narrowing + cross-over is Phase E (PF4/PF5). Interim: full molecule+jobtype roster.
+        // Tab (לשונית) roster: base = the tab's companies (empty selection = whole molecule) ∪ cross-over
+        // (anyone assigned to a shift type whose tab set contains the active tab, INCLUDING staged draft
+        // assignments — computed AFTER the draft overlay). A person can appear on multiple tabs. The tab
+        // NEVER narrows conflict/rest/hours/fairness — those see the full shift set. The map is always built
+        // so per-cell ghosting resolves; when Tab is null/All, ShiftIsOnActiveTab short-circuits to true.
+        _tabOfShiftType = await _tabService.GetShiftTypeTabMapAsync(moleculeId, jobTypeId);
+        if (Tab.HasValue)
+        {
+            var tabCompanies = await _tabService.GetCompanyIdsForTabAsync(Tab.Value);
+            var crossOver = assignments
+                .Where(a => a.UserId.HasValue && a.ShiftInstance != null
+                    && _tabOfShiftType.TryGetValue(a.ShiftInstance.ShiftTypeId, out var tset)
+                    && tset.Contains(Tab.Value))
+                .Select(a => a.UserId!.Value)
+                .ToHashSet();
+            // Empty company selection = no restriction (whole molecule) — only filter when the tab names companies.
+            if (tabCompanies.Count > 0)
+                users = users.Where(u => tabCompanies.Contains(u.CompanyId) || crossOver.Contains(u.Id)).ToList();
+        }
 
         // Get overlays (vacation, chores, on-duty)
         var overlays = await _calendarService.GetOverlaysAsync(moleculeId, StartDate, EndDate);
@@ -1262,8 +1307,16 @@ public class ShiftsModel : PageModel
         return cells;
     }
 
-    // Tab ghosting is Phase E (PF4). Interim: nothing is ghosted (every shift renders as on-view).
-    private bool ShiftIsOnActiveTab(int shiftTypeId) => true;
+    /// <summary>
+    /// True if a shift type is on the active tab (or "All"/no tabs). Drives by-user "busy elsewhere"
+    /// ghosting: a shift NOT on the active tab shows greyed + non-interactive, but is NEVER hidden from
+    /// conflict/rest/hours (those see the full shift set). A shift type can be on multiple tabs (STR-3).
+    /// </summary>
+    private bool ShiftIsOnActiveTab(int shiftTypeId)
+    {
+        if (!Tab.HasValue) return true; // "All" (or no tabs) → nothing is "elsewhere"
+        return _tabOfShiftType.TryGetValue(shiftTypeId, out var tset) && tset.Contains(Tab.Value);
+    }
 
     private Dictionary<DateOnly, ExcelCalendarCell> BuildCellsForUser(
         int userId,
