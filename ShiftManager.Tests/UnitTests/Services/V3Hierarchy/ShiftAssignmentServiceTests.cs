@@ -398,6 +398,52 @@ public class ShiftAssignmentServiceTests : IDisposable
         result.Should().OnlyContain(u => u.JobTypeName == "BR" || u.JobTypeName == "ב\"ר");
     }
 
+    [Fact]
+    public async Task AssignShift_CrossCompanyWithinMolecule_SameJobType_Succeeds()
+    {
+        // Arrange
+        var hierarchy = await SetupTestHierarchyAsync();
+
+        // City-owned shift type, no grouping, Alhut jobtype (no grouping ⇒ no NOT_IN_SHIFT_GROUPING warning).
+        var cityShift = new ShiftType
+        {
+            Scope = ShiftManager.Models.Support.ShiftScope.Molecule,
+            MoleculeId = hierarchy.Molecule.Id,
+            CompanyId = hierarchy.Companies[0].Id,   // City
+            JobTypeId = hierarchy.JobTypes["Alhut"].Id,
+            ShiftGroupingId = null,
+            // KEY_EVENING (not MORNING) to avoid colliding with the fixture's Alhut/MORNING type on the
+            // unique index (MoleculeId, JobTypeId, Key). (Capacity lives on the ShiftInstance below —
+            // ShiftType has no StaffingRequired column.)
+            Key = ShiftType.KEY_EVENING,
+            Start = new TimeOnly(8, 0),
+            End = new TimeOnly(16, 0)
+        };
+        _db.ShiftTypes.Add(cityShift);
+        await _db.SaveChangesAsync();
+
+        var instance = new ShiftInstance
+        {
+            CompanyId = hierarchy.Companies[0].Id,   // City-owned instance
+            ShiftTypeId = cityShift.Id,
+            WorkDate = DateOnly.FromDateTime(DateTime.Today.AddDays(1)),
+            StaffingRequired = 2,
+            Name = "City Morning"
+        };
+        _db.ShiftInstances.Add(instance);
+        await _db.SaveChangesAsync();
+
+        // Act — assign the Tzafona (company2) Alhut user onto the City-owned instance.
+        var result = await _service.AssignShiftAsync(
+            userId: hierarchy.Users["alhut2"].Id,
+            shiftInstanceId: instance.Id,
+            assignedByUserId: hierarchy.Users["alhut1"].Id);
+
+        // Assert — no hard block; the cross-company-within-molecule assignment persists.
+        result.Success.Should().BeTrue(result.ErrorKey);
+        result.AssignmentId.Should().NotBeNull();
+    }
+
     private record TestHierarchy(
         Project Project,
         Area Area,
