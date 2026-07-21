@@ -1555,6 +1555,10 @@ using (var scope = app.Services.CreateScope())
     {
         var bulkGrantService = scope.ServiceProvider.GetRequiredService<IGrantService>();
         await ShiftManager.Data.SeedData.BulkTestUserSeed.SeedAsync(db, bulkGrantService, logger);
+
+        // Example calendar tabs for (Oren, Alhut) — dev/test only, idempotent.
+        var tabService = scope.ServiceProvider.GetRequiredService<ShiftManager.Services.IShiftTabService>();
+        await ShiftManager.Data.SeedData.ShiftTabSeed.SeedAsync(db, tabService, logger);
     }
     catch (Exception ex)
     {

@@ -199,9 +199,12 @@ public static class BulkTestUserSeed
         var membershipsCreated = await EnsureMembershipsAsync(db, grantService, templates,
             defs.Where(d => d.ExtraCompanyIds.Count > 0).ToList(), existingUsers, logger);
 
+        // Backfill trainee JobTypeId for any trainees seeded before this feature (skip-if-exists leaves them alone).
+        var traineesFixed = await EnsureTraineeJobTypesAsync(db, companyMap, alhut, projectManager, logger);
+
         logger.LogInformation(
-            "[BulkTestUserSeed] Done — users created: {Created}, already present: {Skipped}, memberships created: {Memberships}, QA shift types created: {ShiftTypes}",
-            created, skipped, membershipsCreated, shiftTypesCreated);
+            "[BulkTestUserSeed] Done — users created: {Created}, already present: {Skipped}, memberships created: {Memberships}, QA shift types created: {ShiftTypes}, trainees backfilled: {Trainees}",
+            created, skipped, membershipsCreated, shiftTypesCreated, traineesFixed);
     }
 
     // ================================================================
@@ -537,6 +540,29 @@ public static class BulkTestUserSeed
         await db.SaveChangesAsync();
         logger.LogInformation("[BulkTestUserSeed] Created {Count} shift types for QA molecule", candidates.Count);
         return candidates.Count;
+    }
+
+    /// <summary>
+    /// Backfill: existing trainees (@test) with a null JobTypeId get their company's primary job type
+    /// (Alhut for workforce companies, ProjectManager for tech). The skip-if-exists seeder won't touch
+    /// already-seeded users, so this closes the origin-bug gap where a null-jobtype trainee is hidden.
+    /// </summary>
+    // SECURITY-AUDITED: IgnoreQueryFilters() is SAFE — dev/test-only backfill, scoped to @test trainees.
+    private static async Task<int> EnsureTraineeJobTypesAsync(
+        AppDbContext db, Dictionary<string, Company> companies, JobType alhut, JobType projectManager, ILogger logger)
+    {
+        var techCompanyIds = TechCompanies.Where(companies.ContainsKey).Select(n => companies[n].Id).ToHashSet();
+        var trainees = await db.Users.IgnoreQueryFilters()
+            .Where(u => u.Role == UserRole.Trainee && u.JobTypeId == null && u.Email.EndsWith("@test"))
+            .ToListAsync();
+        foreach (var t in trainees)
+            t.JobTypeId = techCompanyIds.Contains(t.CompanyId) ? projectManager.Id : alhut.Id;
+        if (trainees.Count > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("[BulkTestUserSeed] Backfilled JobTypeId on {Count} trainees", trainees.Count);
+        }
+        return trainees.Count;
     }
 
     private static bool IsTestEnvironment()
