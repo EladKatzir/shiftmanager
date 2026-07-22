@@ -1041,7 +1041,11 @@
         input._eligState = 'idle';
         input._eligShiftTypeId = 0;
         var eligStId = shiftTypeIdForCell(cellData);
-        if (categoryEligibilityOn() && getCurrentMode() === 'shift' && !isChoresCalendar()
+        // Tab prioritization (PF8) must group "this tab"/"other" in quick-entry too — the eligible path is
+        // what carries the server inTab flags + grouping. Activate it whenever a prioritizing tab is active,
+        // not only when the category-eligibility flag is on (E2E BUG #3). No prioritizing tab → legacy path.
+        var _tabPrioActive = window.CalendarTabPrioritization && window.CalendarTabPrioritization.isActive();
+        if ((categoryEligibilityOn() || _tabPrioActive) && getCurrentMode() === 'shift' && !isChoresCalendar()
             && eligStId > 0 && window.CalendarPageConfig && window.CalendarPageConfig.moleculeId > 0) {
             input._eligActive = true;
             input._eligState = 'loading';
