@@ -1963,9 +1963,17 @@ public partial class TableModel : PageModel
         var offView = 0;
         if (request.TabId is int tabId && tabId > 0)
         {
-            var tabShiftTypeIds = await _shiftTabService.GetShiftTypeIdsForTabAsync(tabId);
-            if (tabShiftTypeIds.Count > 0) // empty selection = all shift types (no restriction) → nothing off-view
-                offView = overlay.Count(c => !tabShiftTypeIds.Contains(c.ShiftTypeId));
+            // Count cells the active tab actually HIDES, using the SAME effective shown-set the render + ghosting
+            // use (GetShiftTypeTabMapAsync): tab selection ∪ HOME/OFFLINE ∪ (workforce) shared null-jobtype. The
+            // old `!tabShiftTypeIds.Contains(...)` over-counted staged HOME/OFFLINE/shared cells that DO render
+            // (and was maximally wrong for Tech). An empty selection maps every shift type → nothing off-view.
+            var draft = await _db.DraftSessions.AsNoTracking()
+                .FirstOrDefaultAsync(d => d.Id == request.DraftSessionId);
+            if (draft?.MoleculeId is int moleculeId)
+            {
+                var tabMap = await _shiftTabService.GetShiftTypeTabMapAsync(moleculeId, draft.JobTypeId);
+                offView = overlay.Count(c => !(tabMap.TryGetValue(c.ShiftTypeId, out var tset) && tset.Contains(tabId)));
+            }
         }
         return new JsonResult(new { success = true, total = overlay.Count, offView });
     }

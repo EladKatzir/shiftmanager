@@ -20,6 +20,11 @@
     // --- Configuration ---
     var SWIPE_THRESHOLD = 80; // px to swipe down before dismissing
     var ANIMATION_DURATION = 300; // ms
+    // Non-empty sentinel value for "state" <option>s (Loading / no-category / no-eligible / error). The
+    // searchable-select widget treats value='' as a placeholder and SKIPS it in single mode, which would
+    // hide these status rows (user just sees the generic "No matches"); a non-empty value makes the widget
+    // render them as disabled rows instead. They stay unselectable via the option's disabled flag (SEL-4).
+    var STATE_OPTION_VALUE = '__ss_state__';
 
     // --- State ---
     var sheetElement = null;
@@ -513,10 +518,22 @@
             } else {
                 // Populate from available users (read from page data or cell context)
                 var availableUsers = getAvailableUsers(cellData);
-                // PF8: group "this tab" first when prioritization is active (shift-mode); flat otherwise.
-                appendUsersGrouped(userSelect, availableUsers.map(function (u) {
-                    return { id: u.id, name: u.name, companyName: u.companyName, inTab: !!u.inTab };
-                }));
+                // PF8: group "this tab" first ONLY when the options are USERS (shift-mode). In BY-USER mode
+                // the options are shift TYPES (itemType === 'shifttype', no data-in-tab), so partition would
+                // dump them ALL under an "Other in molecule" header — render those as a flat list instead.
+                if (itemType === 'user') {
+                    appendUsersGrouped(userSelect, availableUsers.map(function (u) {
+                        return { id: u.id, name: u.name, companyName: u.companyName, inTab: !!u.inTab };
+                    }));
+                } else {
+                    availableUsers.forEach(function (u) {
+                        var flatOpt = document.createElement('option');
+                        flatOpt.value = u.id;
+                        flatOpt.dataset.userName = u.name;
+                        flatOpt.textContent = u.companyName ? (u.name + ' — ' + u.companyName) : u.name;
+                        userSelect.appendChild(flatOpt);
+                    });
+                }
 
                 // Busy decoration for chore/onduty modes (where rowId is user-N or dutytype-N)
                 if (cellData.date && calPageConfig && calPageConfig.moleculeId > 0 && availableUsers.length > 0) {
@@ -684,11 +701,37 @@
         defOpt.value = '';
         defOpt.textContent = (window.AppLocalizer?.BottomSheet_AddTrainee || 'Add trainee...');
         select.appendChild(defOpt);
-        for (var i = 0; i < traineeSelect.options.length; i++) {
-            var opt = document.createElement('option');
-            opt.value = traineeSelect.options[i].value;
-            opt.textContent = traineeSelect.options[i].textContent;
-            select.appendChild(opt);
+
+        // PF8/PF9: clone options PRESERVING data-in-tab/data-company/data-jobtype (the mobile clone used to
+        // copy only value+text, dropping them — so grouping + the off-tab warning never fired here). Split
+        // into "this tab"/"other" <optgroup>s when prioritization is active; flat otherwise. Mirrors the
+        // desktop inline picker (openInlineTraineePicker in calendar-inline-edit.js).
+        function cloneTraineeOpt(src) {
+            var o = document.createElement('option');
+            o.value = src.value;
+            o.textContent = src.textContent;
+            o.dataset.company = src.dataset.company || '';
+            o.dataset.jobtype = src.dataset.jobtype || '';
+            o.dataset.inTab = src.dataset.inTab || '0';
+            return o;
+        }
+        var srcOpts = Array.prototype.slice.call(traineeSelect.options).filter(function (o) { return o.value; });
+        var P = window.CalendarTabPrioritization;
+        if (P && P.isActive()) {
+            var norm = srcOpts.map(function (o) { return { opt: o, inTab: o.dataset.inTab === '1' }; });
+            var parts = P.partition(norm);
+            if (parts.thisTab.length) {
+                var g1 = document.createElement('optgroup'); g1.label = P.label('this');
+                parts.thisTab.forEach(function (n) { g1.appendChild(cloneTraineeOpt(n.opt)); });
+                select.appendChild(g1);
+            }
+            if (parts.other.length) {
+                var g2 = document.createElement('optgroup'); g2.label = P.label('other');
+                parts.other.forEach(function (n) { g2.appendChild(cloneTraineeOpt(n.opt)); });
+                select.appendChild(g2);
+            }
+        } else {
+            srcOpts.forEach(function (o) { select.appendChild(cloneTraineeOpt(o)); });
         }
         row.appendChild(select);
 
@@ -699,6 +742,10 @@
         addBtn.addEventListener('click', function () {
             var traineeId = parseInt(select.value, 10);
             if (select.value && !isNaN(traineeId)) {
+                // Off-tab warning (once per tab/session) when the chosen trainee isn't from the tab's
+                // companies — mirrors the desktop inline picker and the shift-assign path.
+                var chosen = select.options[select.selectedIndex];
+                if (P) P.maybeWarnOffTab({ id: traineeId, inTab: chosen && chosen.dataset.inTab === '1' });
                 handleAddTrainee(cellData, assignment, traineeId);
             }
         });
@@ -846,7 +893,7 @@
     // --- Fetch eligible users for a Tech molecule shift type and populate a <select> ---
     function appendDisabledOption(selectEl, text) {
         var opt = document.createElement('option');
-        opt.value = '';
+        opt.value = STATE_OPTION_VALUE; // non-empty so the searchable-select widget renders (not skips) it
         opt.disabled = true;
         opt.textContent = text;
         selectEl.appendChild(opt);
@@ -904,12 +951,17 @@
             onClick();
         });
         selectEl._fallbackBtn = btn;
-        if (selectEl.parentNode) selectEl.parentNode.insertBefore(btn, selectEl.nextSibling);
+        // After enhancement the native <select> lives INSIDE .ss-root, so selectEl.nextSibling would orphan
+        // the button inside the widget wrapper (invisible). Anchor to the .ss-root when enhanced so the
+        // escape-hatch link renders as a visible sibling right after the widget.
+        var ssRoot = selectEl.closest('.ss-root');
+        var anchor = ssRoot || selectEl;
+        if (anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor.nextSibling);
     }
 
     async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId, date, allowFallback) {
         var loadingOpt = document.createElement('option');
-        loadingOpt.value = '';
+        loadingOpt.value = STATE_OPTION_VALUE; // non-empty so the searchable-select widget renders (not skips) it
         loadingOpt.disabled = true;
         loadingOpt.textContent = loc('QuickEntry_Loading', 'Loading…');
         selectEl.appendChild(loadingOpt);

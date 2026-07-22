@@ -202,8 +202,11 @@ public class ShiftTabService : IShiftTabService
         foreach (var st in allTypes)
         {
             var set = new HashSet<int>();
-            var alwaysEverywhere = st.JobTypeId == null
-                || ShiftType.IsHomeKey(st.Key) || st.Key == ShiftType.KEY_OFFLINE; // PF7
+            // PF7: HOME/OFFLINE always show on every tab. A null-JobTypeId shift counts as "shared" ONLY on a
+            // job-typed (workforce) calendar; on a Tech calendar (jobTypeId == null) every shift is null-jobtype,
+            // so gate that clause on jobTypeId or the tab's explicit set would be swallowed (matches Shifts render).
+            var alwaysEverywhere = (jobTypeId.HasValue && st.JobTypeId == null)
+                || ShiftType.IsHomeKey(st.Key) || st.Key == ShiftType.KEY_OFFLINE;
             foreach (var t in tabs)
             {
                 var chosen = explicitByTab[t.Id];

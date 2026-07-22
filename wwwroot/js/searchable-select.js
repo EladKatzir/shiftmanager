@@ -63,8 +63,8 @@
         x.setAttribute('aria-label', loc('Remove', 'Remove') + ': ' + o.label); x.textContent = '×';
         x.addEventListener('mousedown', function (e) {
           e.preventDefault(); e.stopPropagation();
-          w.syncing = true; o.el.selected = false; fire(w); renderChips(w);
-          if (w.open) renderList(w, w.search.value); w.syncing = false;
+          moPause(w); w.syncing = true; o.el.selected = false; fire(w); renderChips(w);
+          if (w.open) renderList(w, w.search.value); w.syncing = false; moResume(w);
         });
         chip.appendChild(x); w.value.appendChild(chip);
       });
@@ -115,14 +115,14 @@
   function fire(w) { w.select.dispatchEvent(new Event('change', { bubbles: true })); }
 
   function choose(w, o) {
-    w.syncing = true;
+    moPause(w); w.syncing = true;
     if (w.multi) {
       o.el.selected = !o.el.selected; fire(w); renderChips(w);
       renderList(w, w.search.value); w.search.focus();
     } else {
       w.select.value = o.value; fire(w); renderChips(w); closePanel(w); w.control.focus();
     }
-    w.syncing = false;
+    w.syncing = false; moResume(w);
   }
 
   function openPanel(w) {
@@ -163,8 +163,8 @@
         case 'Backspace':
           if (w.multi && w.search.value === '') {
             var sel = w.options.filter(function (o) { return o.el.selected && !o.isPlaceholder; });
-            if (sel.length) { e.preventDefault(); w.syncing = true; sel[sel.length - 1].el.selected = false;
-              fire(w); renderChips(w); renderList(w, ''); w.syncing = false; }
+            if (sel.length) { e.preventDefault(); moPause(w); w.syncing = true; sel[sel.length - 1].el.selected = false;
+              fire(w); renderChips(w); renderList(w, ''); w.syncing = false; moResume(w); }
           } break;
         case 'Escape': e.preventDefault(); closePanel(w); w.control.focus(); break;
       }
@@ -172,12 +172,24 @@
   }
   function optByValue(w, v) { for (var i = 0; i < w.options.length; i++) if (w.options[i].value === v) return w.options[i]; return null; }
 
+  // Options for the per-select MutationObserver. One constant so attach + moResume re-observe with
+  // byte-identical options (childList: async populate; characterData/disabled: busy decoration).
+  var SELECT_OBSERVE_OPTS = { childList: true, subtree: true, characterData: true,
+    attributes: true, attributeFilter: ['disabled'] };
+
+  // Disconnect / reconnect the option observer around our OWN programmatic writes. The w.syncing boolean
+  // alone is ineffective: MutationObserver records deliver on a microtask AFTER the write block resets
+  // syncing to false, so the callback saw syncing===false and re-ran refresh(). disconnect() drops those
+  // queued records entirely; re-observing after restores external-mutation tracking (SEL-9).
+  function moPause(w) { if (w.mo) w.mo.disconnect(); }
+  function moResume(w) { if (w.mo) w.mo.observe(w.select, SELECT_OBSERVE_OPTS); }
+
   function attachSelectObserver(w) {
-    // Re-sync when options are appended (async populate) or mutate (busy decoration
-    // rewrites text + toggles `disabled`). w.syncing guards our own programmatic writes.
+    // Re-sync when options are appended (async populate) or mutate (busy decoration rewrites text +
+    // toggles `disabled`). Our own writes are bracketed by moPause/moResume so they don't self-trigger;
+    // w.syncing is kept as a defensive secondary guard.
     w.mo = new MutationObserver(function () { if (w.syncing) return; refresh(w.select); });
-    w.mo.observe(w.select, { childList: true, subtree: true, characterData: true,
-      attributes: true, attributeFilter: ['disabled'] });
+    moResume(w);
   }
 
   function enhance(select) {

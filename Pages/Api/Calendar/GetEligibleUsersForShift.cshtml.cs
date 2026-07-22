@@ -94,7 +94,10 @@ public class GetEligibleUsersForShiftModel : PageModel
             if (tab.HasValue && tab.Value != 0)
             {
                 var t = await _tabService.GetTabAsync(tab.Value);
-                if (t != null && t.MoleculeId == moleculeId)
+                // Only tag inTab when the tab actually opts into prioritization — mirrors the page's
+                // TabPrioritizeActive gate (Shifts.cshtml.cs). A tab with the toggle OFF must not group,
+                // else the admin's PrioritizeCompanyUsers=false is silently defeated on the live picker.
+                if (t != null && t.MoleculeId == moleculeId && t.PrioritizeCompanyUsers)
                     inTabUserIds = await _tabService.GetInTabUserIdsAsync(
                         tab.Value, result.Users.Select(u => u.Id).ToList());
             }

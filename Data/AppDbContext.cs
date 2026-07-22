@@ -1478,6 +1478,17 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShiftTab>()
             .HasIndex(t => new { t.MoleculeId, t.JobTypeId, t.NameHe })
             .IsUnique();
+        // SQLite treats NULL as DISTINCT in a UNIQUE index, so the (Molecule, JobTypeId, Name*) indexes above
+        // do NOT enforce dual-name uniqueness for Tech tabs (JobTypeId IS NULL). Filtered companion indexes
+        // close the null-jobtype hole (same NULL-distinctness split as the DraftSession single-active indexes).
+        modelBuilder.Entity<ShiftTab>()
+            .HasIndex(t => new { t.MoleculeId, t.NameEn }, "UX_ShiftTabs_MoleculeId_NameEn_NullJob")
+            .IsUnique()
+            .HasFilter("\"JobTypeId\" IS NULL");
+        modelBuilder.Entity<ShiftTab>()
+            .HasIndex(t => new { t.MoleculeId, t.NameHe }, "UX_ShiftTabs_MoleculeId_NameHe_NullJob")
+            .IsUnique()
+            .HasFilter("\"JobTypeId\" IS NULL");
 
         // ShiftTabShiftType: many-to-many shift-type membership (replaces ShiftType.TabId). Composite PK;
         // both FKs cascade so deleting a tab (or a shift type) drops the link.
@@ -1513,6 +1524,14 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<UserShiftTabPreference>()
             .HasIndex(p => new { p.UserId, p.MoleculeId, p.JobTypeId })
             .IsUnique();
+        // NULL-distinctness: the index above doesn't enforce one-pref-per-(user,molecule) for Tech
+        // (JobTypeId IS NULL) — a filtered companion closes the hole (else duplicate prefs accumulate and
+        // GetLastTabAsync's FirstOrDefault picks an arbitrary one). This was a regression from the old
+        // non-null UNIQUE(UserId, MoleculeId).
+        modelBuilder.Entity<UserShiftTabPreference>()
+            .HasIndex(p => new { p.UserId, p.MoleculeId }, "UX_UserShiftTabPreferences_UserId_MoleculeId_NullJob")
+            .IsUnique()
+            .HasFilter("\"JobTypeId\" IS NULL");
         modelBuilder.Entity<UserShiftTabPreference>()
             .HasOne(p => p.Tab)
             .WithMany()

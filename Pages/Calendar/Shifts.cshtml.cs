@@ -513,8 +513,10 @@ public class ShiftsModel : PageModel
             shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
 
         // Tab (לשונית): a real tab shows its selected shift types; empty selection = all job-type shifts.
-        // "All" (Tab == null) applies no restriction. HOME/OFFLINE presence + null-jobtype shared shift
-        // types ALWAYS render on every tab (PF7) so a tab can never hide a reachable shift.
+        // "All" (Tab == null) applies no restriction. HOME/OFFLINE presence ALWAYS renders on every tab (PF7).
+        // A null-JobTypeId shift is "shared across job types" ONLY on a job-typed (workforce) calendar; on a
+        // Tech calendar (jobTypeId == null) EVERY shift is null-jobtype, so the always-show would swallow the
+        // whole selection — there the explicit tab set governs (gate the null-jobtype clause on jobTypeId).
         // S1: IsHome/IsOffline are [NotMapped] — compare the mapped Key column against the const keys so the
         // predicate translates to SQL (a NotMapped member or IsHomeKey() call would fail EF translation).
         if (Tab.HasValue)
@@ -522,7 +524,7 @@ public class ShiftsModel : PageModel
             var tabShiftTypeIds = await _tabService.GetShiftTypeIdsForTabAsync(Tab.Value);
             if (tabShiftTypeIds.Count > 0)
                 shiftTypeQuery = shiftTypeQuery.Where(st =>
-                    tabShiftTypeIds.Contains(st.Id) || st.JobTypeId == null
+                    tabShiftTypeIds.Contains(st.Id) || (jobTypeId.HasValue && st.JobTypeId == null)
                     || st.Key == ShiftType.KEY_HOME || st.Key == ShiftType.KEY_HOME_PM
                     || st.Key == ShiftType.KEY_HOME_AM || st.Key == ShiftType.KEY_OFFLINE);
         }
@@ -650,13 +652,14 @@ public class ShiftsModel : PageModel
             shiftTypeQuery = shiftTypeQuery.Where(st => st.JobTypeId == null);
 
         // Tab (לשונית): the assign bottom-sheet's shift-type dropdown offers the tab's + shared/HOME/OFFLINE
-        // shifts (empty selection = all). Same PF7 union as by-shift; S1: compare mapped Key, not IsHome/IsOffline.
+        // shifts (empty selection = all). Same PF7 union as by-shift; the null-jobtype "shared" clause is gated
+        // on jobTypeId so a Tech calendar (all shifts null-jobtype) honors the explicit set. S1: mapped Key.
         if (Tab.HasValue)
         {
             var tabShiftTypeIds = await _tabService.GetShiftTypeIdsForTabAsync(Tab.Value);
             if (tabShiftTypeIds.Count > 0)
                 shiftTypeQuery = shiftTypeQuery.Where(st =>
-                    tabShiftTypeIds.Contains(st.Id) || st.JobTypeId == null
+                    tabShiftTypeIds.Contains(st.Id) || (jobTypeId.HasValue && st.JobTypeId == null)
                     || st.Key == ShiftType.KEY_HOME || st.Key == ShiftType.KEY_HOME_PM
                     || st.Key == ShiftType.KEY_HOME_AM || st.Key == ShiftType.KEY_OFFLINE);
         }

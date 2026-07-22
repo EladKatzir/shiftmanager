@@ -51,6 +51,28 @@ public sealed class ShiftTabServiceTests
     }
 
     [Fact]
+    public async Task Create_NullJobtype_DualName_Uniqueness_Enforced_By_Service_And_FilteredIndex()
+    {
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        var svc = new ShiftTabService(f.Db);
+
+        (await svc.CreateAsync(1, null, "Tech", "טכני")).Should().NotBeNull("first null-jobtype (Tech) tab");
+        // Service pre-check catches the dup (EF compiles JobTypeId == (int?)null to IS NULL).
+        (await svc.CreateAsync(1, null, "Tech", "אחר")).Should().BeNull("NameEn reused in (mol1, null-jobtype)");
+        (await svc.CreateAsync(1, null, "Other", "טכני")).Should().BeNull("NameHe reused in (mol1, null-jobtype)");
+        // A same-named tab under a real jobtype is still allowed — the filter only covers JobTypeId IS NULL.
+        (await svc.CreateAsync(1, 10, "Tech", "טכני")).Should().NotBeNull("same name is free under a real jobtype");
+
+        // DB BACKSTOP: a direct insert bypassing the service (the concurrency path) must be rejected by the
+        // JobTypeId-IS-NULL filtered unique index. Without it, SQLite treats the two NULL JobTypeIds as
+        // distinct and both rows persist — the regression this fix closes.
+        f.Db.ShiftTabs.Add(new ShiftTab { MoleculeId = 1, JobTypeId = null, NameEn = "Tech", NameHe = "שונה" });
+        var act = async () => await f.Db.SaveChangesAsync();
+        await act.Should().ThrowAsync<DbUpdateException>("the null-jobtype filtered unique index blocks a duplicate NameEn");
+    }
+
+    [Fact]
     public async Task GetTabsForMolecule_Is_Scoped_To_Jobtype_And_Ordered()
     {
         await using var f = await SqliteDbContextFixture.CreateAsync();
@@ -264,6 +286,34 @@ public sealed class ShiftTabServiceTests
         map[101].Should().NotContain(geo.Id);
         map[102].Should().BeEquivalentTo(new[] { geo.Id, wide.Id });   // shared null-jobtype maps to EVERY tab (PF7)
         map[103].Should().BeEquivalentTo(new[] { geo.Id, wide.Id });   // HOME maps to EVERY tab (PF7)
+    }
+
+    [Fact]
+    public async Task GetShiftTypeTabMap_TechNullJobtype_HonorsExplicitSelection_ExceptHomeOffline()
+    {
+        // Tech molecule: EVERY shift type is null-jobtype. The "shared null-jobtype = always shown" clause
+        // must be gated on the calendar jobtype context (null here) — otherwise a Tech tab's explicit shift
+        // selection is swallowed (all shifts always show). HOME/OFFLINE stay always-shown by KEY. This is the
+        // "make Tech tabs filter" fix; without it map[201] would (wrongly) contain the tab.
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        f.Db.ShiftTypes.AddRange(
+            new ShiftType { Id = 200, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = null, Key = "HANAVA" },            // Tech A
+            new ShiftType { Id = 201, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = null, Key = "DELTA" },             // Tech B
+            new ShiftType { Id = 202, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = null, Key = ShiftType.KEY_HOME },   // HOME
+            new ShiftType { Id = 203, Scope = ShiftScope.Molecule, MoleculeId = 1, JobTypeId = null, Key = ShiftType.KEY_OFFLINE });// OFFLINE
+        await f.Db.SaveChangesAsync();
+        var svc = new ShiftTabService(f.Db);
+
+        var techTab = await svc.CreateAsync(1, null, "TechTab", "טכני");
+        (await svc.SetShiftTypesForTabAsync(techTab!.Id, new[] { 200 })).Should().BeTrue();
+
+        var map = await svc.GetShiftTypeTabMapAsync(1, null);
+
+        map[200].Should().Contain(techTab.Id, "explicitly selected");
+        map[201].Should().NotContain(techTab.Id, "not selected — a Tech tab now honors its selection");
+        map[202].Should().Contain(techTab.Id, "HOME always shows by key (PF7)");
+        map[203].Should().Contain(techTab.Id, "OFFLINE always shows by key (PF7)");
     }
 
     [Fact]

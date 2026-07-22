@@ -7,10 +7,32 @@
 (function () {
     'use strict';
 
-    // Session-scoped (page lifetime): which tabs have already fired their one-time off-tab warning (UD4).
+    // Which tabs have already fired their one-time off-tab warning (UD4). Backed by sessionStorage so the
+    // "once per (tab, session)" contract survives navigations — every tab switch / week-nav is a full page
+    // load, which would otherwise reset a plain in-memory object and re-fire the warning after each nav.
+    // The in-memory map stays as a fast path; sessionStorage is the durable store. Access is guarded (it
+    // can throw in some private-mode configs) — on failure we degrade to in-memory-only.
     var warnedTabs = {};
 
     function cfg() { return window.CalendarPageConfig || {}; }
+
+    function warnKey(tabId) { return 'ss-offtabwarn-' + (tabId == null ? 'none' : tabId); }
+
+    function hasWarned(key) {
+        if (warnedTabs[key]) return true;
+        try {
+            if (window.sessionStorage && sessionStorage.getItem(key) === '1') {
+                warnedTabs[key] = true; // hydrate the in-memory fast path
+                return true;
+            }
+        } catch (e) { /* sessionStorage unavailable (private mode) — rely on in-memory only */ }
+        return false;
+    }
+
+    function markWarned(key) {
+        warnedTabs[key] = true;
+        try { if (window.sessionStorage) sessionStorage.setItem(key, '1'); } catch (e) { /* ignore */ }
+    }
 
     function isActive() {
         return !!cfg().tabPrioritize; // true only for a real tab that opts in AND has ≥1 company (server)
@@ -38,9 +60,9 @@
     // transient success toast. No-op when prioritization is inactive or the picked user is in-tab.
     function maybeWarnOffTab(user) {
         if (!isActive() || !user || user.inTab) return;
-        var key = 'tab-' + (cfg().activeTabId == null ? 'none' : cfg().activeTabId);
-        if (warnedTabs[key]) return;
-        warnedTabs[key] = true;
+        var key = warnKey(cfg().activeTabId);
+        if (hasWarned(key)) return;
+        markWarned(key);
         var msg = (window.AppLocalizer && window.AppLocalizer.CalendarTab_OffTabWarning)
                   || "This user isn't from this tab's companies.";
         if (window.FeedbackModal && typeof window.FeedbackModal.show === 'function') {

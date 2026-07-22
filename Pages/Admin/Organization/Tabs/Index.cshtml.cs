@@ -284,10 +284,16 @@ public class IndexModel : LocalizedPageModel
         return accessible.Contains(moleculeId);
     }
 
-    /// <summary>The jobtype is valid for the molecule: null (Tech) or it owns shift types in the molecule.</summary>
+    /// <summary>The jobtype is valid for the molecule: null ONLY for a Tech molecule, else it must own shift
+    /// types in the molecule. A null-jobtype tab on a workforce molecule would be invisible in the strip
+    /// (GetTabsForMoleculeAsync filters by the real jobtype) — an unreachable orphan — so reject it (IDOR/POST).</summary>
     private async Task<bool> IsJobTypeInScopeAsync(int moleculeId, int? jobTypeId)
     {
-        if (jobTypeId == null) return true; // Tech / null-jobtype calendar
+        if (jobTypeId == null)
+        {
+            var molecule = await _db.Molecules.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == moleculeId);
+            return molecule?.Type == MoleculeType.Tech;
+        }
         return await _db.ShiftTypes.IgnoreQueryFilters()
             .AnyAsync(st => st.MoleculeId == moleculeId && st.JobTypeId == jobTypeId.Value);
     }

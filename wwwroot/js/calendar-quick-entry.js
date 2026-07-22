@@ -499,13 +499,31 @@
 
     // --- Filter & group ---
 
+    // SEL-6/PF8: when a prioritizing tab is active, move in-tab USER items ahead of the rest so they
+    // survive the per-group MAX_RESULTS_PER_GROUP cap (which otherwise truncates in server/alphabetical
+    // order, starving the later partition() "This tab" split). Stable: preserves server order within the
+    // in-tab and the remaining partitions; the per-group score-sort still runs afterward. Non-user items
+    // keep their relative order. Applied to a fresh copy — never baked into allItems/eligibleCache
+    // (allItems is rebuilt per load anyway, so ordering here has no cross-load leakage).
+    function orderInTabFirst(items) {
+        var inTabUsers = [], rest = [];
+        for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            if (it.type === 'user' && it.inTab) inTabUsers.push(it); else rest.push(it);
+        }
+        return inTabUsers.concat(rest);
+    }
+
     function filterAndGroup(query) {
         var groups = { shift: [], chore: [], duty: [], user: [] };
         var overflow = { shift: 0, chore: 0, duty: 0, user: 0 };
         var mode = getCurrentMode();
 
-        for (var i = 0; i < allItems.length; i++) {
-            var item = allItems[i];
+        var source = (window.CalendarTabPrioritization && window.CalendarTabPrioritization.isActive())
+            ? orderInTabFirst(allItems) : allItems;
+
+        for (var i = 0; i < source.length; i++) {
+            var item = source[i];
 
             // Slash command filtering
             if (slashCommand) {

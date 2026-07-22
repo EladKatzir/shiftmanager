@@ -111,15 +111,21 @@ public class GetShiftsDataModel : PageModel
             // here (not an EF projection) — safe to use directly.
             if (tab.HasValue && tab.Value != 0)
             {
+                // Validate the tab belongs to THIS (molecule, jobtype) — a same-molecule/other-jobtype tab id
+                // would otherwise apply the wrong shift-type set to jobtype-scoped instances. Unknown → fall
+                // through to no filter (graceful, never match-nothing; molecule-scoped either way).
                 var tabExists = await _db.ShiftTabs.IgnoreQueryFilters()
-                    .AnyAsync(t => t.Id == tab.Value && t.MoleculeId == moleculeId);
+                    .AnyAsync(t => t.Id == tab.Value && t.MoleculeId == moleculeId && t.JobTypeId == jobTypeId);
                 if (tabExists)
                 {
                     var tabShiftTypeIds = await _tabService.GetShiftTypeIdsForTabAsync(tab.Value);
                     if (tabShiftTypeIds.Count > 0)
+                        // null-jobtype "shared" clause gated on jobTypeId so a Tech calendar (all shifts
+                        // null-jobtype) honors the explicit set instead of showing everything (matches page render).
                         instances = instances.Where(i => i.ShiftType != null &&
                             (tabShiftTypeIds.Contains(i.ShiftTypeId)
-                             || i.ShiftType.JobTypeId == null || i.ShiftType.IsHome || i.ShiftType.IsOffline))
+                             || (jobTypeId.HasValue && i.ShiftType.JobTypeId == null)
+                             || i.ShiftType.IsHome || i.ShiftType.IsOffline))
                             .ToList();
                     // empty selection → no filter (all)
                 }

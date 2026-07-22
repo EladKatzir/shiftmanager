@@ -457,9 +457,12 @@ else
     <select id="traineeSelect" data-role="trainee-select" style="display:none">
         @foreach (var trainee in Model.Trainees)
         {
+            @* data-company is intentionally omitted: the established convention (on-call selects) is the
+               company NAME, but the trainee query doesn't load Company, and this select never displays a
+               company suffix — emitting a numeric CompanyId here would be a misleading value for any
+               consumer that reads data-company as a display name. *@
             <option value="@trainee.Id"
                     data-in-tab="@(Model.InTabUserIds.Contains(trainee.Id) ? "1" : "0")"
-                    data-company="@trainee.CompanyId"
                     data-jobtype="@(trainee.JobTypeId?.ToString() ?? "")">@trainee.DisplayName</option>
         }
     </select>
@@ -587,70 +590,6 @@ else
                 }
             });
         });
-
-        // SECURITY FIX: Escape HTML entities including single quotes for safe innerHTML rendering
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML.replace(/'/g, '&#39;');
-        }
-
-        // Refresh calendar data via AJAX
-        async function refreshCalendarData() {
-            const startDate = '@Model.StartDate.ToString("yyyy-MM-dd")';
-            const endDate = '@Model.EndDate.ToString("yyyy-MM-dd")';
-            const moleculeId = @Model.MoleculeId;
-            const jobTypeId = @(Model.JobTypeId?.ToString() ?? "0");
-            const tabParam = @(Model.AvailableTabs.Any() ? (Model.Tab ?? 0).ToString() : "null");
-
-            try {
-                let url = `/Api/Calendar/GetShiftsData?moleculeId=${moleculeId}&startDate=${startDate}&endDate=${endDate}`;
-                if (jobTypeId) url += `&jobTypeId=${jobTypeId}`;
-                if (tabParam !== null) url += `&tab=${tabParam}`;
-                const response = await fetch(url, { credentials: 'same-origin' });
-
-                if (!response.ok) throw new Error('Failed to refresh');
-
-                const result = await response.json();
-                if (result.success) {
-                    updateCalendarCells(result.data);
-                }
-            } catch (error) {
-                console.error('Shadow refresh failed:', error);
-            }
-        }
-
-        // Update calendar cells with new data
-        function updateCalendarCells(data) {
-            const cellsById = new Map(data.cells.map(c => [c.shiftInstanceId, c]));
-
-            document.querySelectorAll('.excel-cell[data-shift-instance-id]').forEach(cell => {
-                const instanceId = parseInt(cell.dataset.shiftInstanceId);
-                const cellData = cellsById.get(instanceId);
-                if (cellData) {
-                    updateSingleCell(cell, cellData);
-                }
-            });
-        }
-
-        // Update a single cell's content
-        function updateSingleCell(cell, cellData) {
-            // Update assignment count badge
-            const badge = cell.querySelector('.excel-cell__count');
-            if (badge) {
-                badge.textContent = `${cellData.assignedCount}/${cellData.capacity}`;
-                badge.classList.toggle('excel-cell__count--full', cellData.assignedCount >= cellData.capacity);
-            }
-
-            // Update assignment list
-            const assignmentList = cell.querySelector('.excel-cell__assignments');
-            if (assignmentList) {
-                assignmentList.innerHTML = cellData.assignments
-                    .map(a => `<span class="excel-cell__assignee" data-user-id="${a.userId}">${escapeHtml(a.userName)}</span>`)
-                    .join('');
-            }
-        }
 
         // Handle real-time assignment change (Bug 4 / PF3): ALWAYS refresh — even when the broadcast
         // instance id isn't yet in this peer's DOM (User A filled an empty hole → a brand-new instance).

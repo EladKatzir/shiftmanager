@@ -8,7 +8,30 @@
  * which fetches fresh data via AJAX and updates the DOM in place.
  * Falls back to full page reload if CalendarRealtime is not initialized.
  */
+// Coalescing state: every assignment produces TWO overlapping refreshes — the POST-success call and the
+// SignalR self-echo (broadcasts go to Clients.Group, which includes the sender). Run concurrently, a
+// slower fetch's replaceWith() could land AFTER the newer grid and drop the newer HTML. We serialize:
+// while one refresh runs, a second call only marks a trailing run, and exactly one more fires when the
+// in-flight one settles — so the newest server state always wins, without a stampede of fetches.
+let _refreshInFlight = false;
+let _refreshPending = false;
+
 async function triggerCalendarRefresh() {
+    if (_refreshInFlight) { _refreshPending = true; return; }
+    _refreshInFlight = true;
+    try {
+        await _doCalendarRefresh();
+    } finally {
+        _refreshInFlight = false;
+        if (_refreshPending) {
+            _refreshPending = false;
+            // Trailing refresh: pick up anything that changed while this one was in flight.
+            triggerCalendarRefresh();
+        }
+    }
+}
+
+async function _doCalendarRefresh() {
     const grid = document.querySelector('.excel-calendar');
 
     // Legacy Month/Week/Day calendars render .calendar-cell (not .excel-calendar) and have no
@@ -44,7 +67,12 @@ async function triggerCalendarRefresh() {
         const fresh = doc.querySelector('.excel-calendar');
         if (!fresh) { location.reload(); return; }
 
-        grid.replaceWith(fresh);
+        // Re-query the LIVE grid at swap time rather than trusting the node captured before the await:
+        // if anything detached it meanwhile (a competing refresh, a re-render), replaceWith() on the
+        // stale node is a silent no-op that would drop this newer HTML. Fall back to the captured node
+        // only if the query finds nothing.
+        const liveGrid = document.querySelector('.excel-calendar') || grid;
+        liveGrid.replaceWith(fresh);
 
         // Restore scroll position (.excel-calendar is the overflow:auto scroll container) + window.
         fresh.scrollLeft = scrollLeft;
@@ -569,7 +597,7 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
                 }
             }
         } else if (result.errorKey === 'ALREADY_ASSIGNED'
-                   || (result.errors && result.errors.some(function (e) { return e.key === 'ALREADY_ASSIGNED'; }))) {
+                   || (Array.isArray(result.errors) && result.errors.some(function (e) { return e.key === 'ALREADY_ASSIGNED'; }))) {
             // Concurrent edit: another user already assigned this person while this grid was stale.
             // The AssignEmployee response carries the key in errors[].key (not a top-level errorKey),
             // so check both. Non-blocking + benign: refresh in place, then say so.
@@ -879,8 +907,9 @@ function openInlineTraineePicker(btn) {
     var draftCoords = draftId ? harvestTraineeDraftCoords(btn) : null;
     if (!draftCoords && isNaN(assignmentId)) return;
 
-    // NOTE: intentionally NOT searchable-enhanced in Phase B — see QE-3/PF9; enhanced in Phase E
-    // with data-company/data-jobtype + blur-dismiss guard (the 150ms blur self-remove below).
+    // Plain native <select> — intentionally NOT searchable-enhanced: no data-searchable is set on it,
+    // so the searchable-select widget never wraps it. It groups via native <optgroup> (below) and
+    // dismisses itself on Escape / blur.
     var select = document.createElement('select');
     select.className = 'excel-calendar__trainee-picker';
     var def = document.createElement('option');
@@ -932,12 +961,10 @@ function openInlineTraineePicker(btn) {
             }
         }
     });
-    // Dismiss on Escape or when focus leaves — BUT when the searchable-select widget (Phase B) has
-    // enhanced this <select>, its own listbox steals focus; do NOT self-destruct then (PF9).
+    // Dismiss on Escape or when focus leaves.
     select.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') select.remove(); });
     select.addEventListener('blur', function () {
         setTimeout(function () {
-            if (select.dataset.searchableEnhanced === '1') return; // enhanced widget owns dismissal
             if (select.parentNode) select.remove();
         }, 150);
     });
