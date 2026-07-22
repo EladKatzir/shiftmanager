@@ -125,6 +125,34 @@ public sealed class ShiftTabServiceTests
     }
 
     [Fact]
+    public async Task GetInTabUserIds_Tags_By_Primary_Company_And_Membership_Not_Membership_Only()
+    {
+        // Regression (E2E BUG #1): inTab must include users whose PRIMARY AppUser.CompanyId is a tab company,
+        // even with NO CompanyMembership row (the common case — the candidate list is keyed on primary company).
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedHierarchyAsync(f);
+        f.Db.Users.AddRange(
+            new AppUser { Id = 100, Email = "u100@t", DisplayName = "U100", CompanyId = 1, Role = UserRole.Employee }, // primary in tab, NO membership
+            new AppUser { Id = 101, Email = "u101@t", DisplayName = "U101", CompanyId = 3, Role = UserRole.Employee }, // primary not in tab
+            new AppUser { Id = 102, Email = "u102@t", DisplayName = "U102", CompanyId = 3, Role = UserRole.Employee }, // primary out, active membership in tab
+            new AppUser { Id = 103, Email = "u103@t", DisplayName = "U103", CompanyId = 3, Role = UserRole.Employee }); // primary out, soft-deleted membership in tab
+        f.Db.CompanyMemberships.AddRange(
+            new CompanyMembership { UserId = 102, CompanyId = 1, IsPrimary = false, IsDeleted = false },
+            new CompanyMembership { UserId = 103, CompanyId = 1, IsPrimary = false, IsDeleted = true });
+        await f.Db.SaveChangesAsync();
+
+        var svc = new ShiftTabService(f.Db);
+        var geo = await svc.CreateAsync(1, 10, "Geo", "גאו");
+        await svc.SetCompaniesForTabAsync(geo!.Id, new[] { 1, 2 });
+
+        var inTab = await svc.GetInTabUserIdsAsync(geo.Id, new[] { 100, 101, 102, 103 });
+        inTab.Should().Contain(100, "primary company (Co1) is a tab company — even with no membership row");
+        inTab.Should().Contain(102, "active membership sits in a tab company");
+        inTab.Should().NotContain(101, "neither primary nor membership is in the tab");
+        inTab.Should().NotContain(103, "the tab-company membership is soft-deleted");
+    }
+
+    [Fact]
     public async Task SetShiftTypes_Replaces_Membership_And_Rejects_OutOfScope()
     {
         await using var f = await SqliteDbContextFixture.CreateAsync();

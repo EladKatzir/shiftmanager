@@ -223,12 +223,19 @@ public class ShiftTabService : IShiftTabService
         var tabCompanies = await GetCompanyIdsForTabAsync(tabId.Value);
         if (tabCompanies.Count == 0) return new HashSet<int>();
         var ids = userIds.ToList();
-        var inTab = await _db.CompanyMemberships.IgnoreQueryFilters()
-            .Where(m => tabCompanies.Contains(m.CompanyId) && ids.Contains(m.UserId))
-            .Select(m => m.UserId)
-            .Distinct()
+        // A user is "in tab" if their PRIMARY company (AppUser.CompanyId — how the candidate list and its
+        // companyName are keyed) is a tab company, OR a non-deleted CompanyMembership sits in a tab company
+        // (multi-company users assignable via a secondary company). Membership-only would miss the ~common
+        // case where a user has no explicit membership row and is placed by primary CompanyId alone.
+        var byPrimary = await _db.Users.IgnoreQueryFilters()
+            .Where(u => ids.Contains(u.Id) && tabCompanies.Contains(u.CompanyId))
+            .Select(u => u.Id)
             .ToListAsync();
-        return inTab.ToHashSet();
+        var byMembership = await _db.CompanyMemberships.IgnoreQueryFilters()
+            .Where(m => !m.IsDeleted && tabCompanies.Contains(m.CompanyId) && ids.Contains(m.UserId))
+            .Select(m => m.UserId)
+            .ToListAsync();
+        return byPrimary.Concat(byMembership).ToHashSet();
     }
 
     // ---- Per-user last-tab memory ----
