@@ -568,11 +568,11 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
                     showToast(retryResult.message || retryResult.error || 'Error', 'error');
                 }
             }
-        } else if (result.errorKey === 'ALREADY_ASSIGNED') {
-            // Concurrent edit: another user already assigned this person to this shift while
-            // this grid was stale. Non-blocking, benign — show a friendly warning, not a raw error.
-            // (The real-time auto-refresh of the peer grid arrives with the Tabs calendar-integration
-            // phase; until then, guide the user to refresh so the wording stays honest.)
+        } else if (result.errorKey === 'ALREADY_ASSIGNED'
+                   || (result.errors && result.errors.some(function (e) { return e.key === 'ALREADY_ASSIGNED'; }))) {
+            // Concurrent edit: another user already assigned this person while this grid was stale.
+            // The AssignEmployee response carries the key in errors[].key (not a top-level errorKey),
+            // so check both. Non-blocking + benign: refresh in place, then say so.
             const culture = getCurrentCulture();
             const msg = culture === 'he-IL'
                 ? 'המשתמש כבר משובץ למשמרת זו. לוח השנה עודכן.'
