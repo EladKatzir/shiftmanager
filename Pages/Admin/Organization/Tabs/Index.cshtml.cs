@@ -178,6 +178,11 @@ public class IndexModel : LocalizedPageModel
         if (!await IsJobTypeInScopeAsync(MoleculeId.Value, JobTypeId)) { TempError("Tabs_Error_InvalidSelection"); return Redirect(); }
         if (string.IsNullOrWhiteSpace(NameEn) || string.IsNullOrWhiteSpace(NameHe)) { TempError("Tabs_Error_NamesRequired"); return Redirect(); }
 
+        // Atomic: name+priority+companies+shift types are one logical create. A failure at any step (name clash,
+        // out-of-scope company/shift type) must leave NO tab behind — the transaction rolls back the insert and
+        // every membership write together, so there is never a half-made tab (replaces compensating-delete).
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
         var created = await _tabService.CreateAsync(MoleculeId.Value, JobTypeId, NameEn.Trim(), NameHe.Trim(),
             ColorUtilities.SanitizeHexColor(Color), userId);
         if (created == null) { TempError("Tabs_Error_NameExists"); return Redirect(); }
@@ -188,11 +193,11 @@ public class IndexModel : LocalizedPageModel
         if (!await _tabService.SetCompaniesForTabAsync(created.Id, SelectedCompanyIds)
             || !await _tabService.SetShiftTypesForTabAsync(created.Id, SelectedShiftTypeIds))
         {
-            await _tabService.DeleteAsync(created.Id); // roll back a half-made tab
             TempError("Tabs_Error_InvalidSelection");
-            return Redirect();
+            return Redirect(); // tx disposed uncommitted → rolls back the insert + any company writes
         }
 
+        await tx.CommitAsync();
         await _auditLogService.LogAsync("ShiftTabCreated", "ShiftTab", created.Id,
             $"Created tab '{created.NameEn}' in molecule {MoleculeId.Value}, jobtype {JobTypeId?.ToString() ?? "none"}.");
         TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Tabs_Success_Created"], created.NameEn);
@@ -206,14 +211,20 @@ public class IndexModel : LocalizedPageModel
         if (tab == null || !await IsUserAuthorizedForMoleculeAsync(tab.MoleculeId)) { TempError("Tabs_Error_NotAuthorized"); return Redirect(); }
         if (string.IsNullOrWhiteSpace(NameEn) || string.IsNullOrWhiteSpace(NameHe)) { TempError("Tabs_Error_NamesRequired"); return Redirect(); }
 
+        // Atomic: rename+priority+companies+shift types are one logical update. Without this, a late failure
+        // (e.g. a shift type re-scoped out of (molecule,jobtype) between form load and submit) would persist the
+        // rename+company changes yet reject the shift-type change, leaving a visible half-updated tab.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
         var renamed = await _tabService.RenameAsync(tab.Id, NameEn.Trim(), NameHe.Trim(),
             ColorUtilities.SanitizeHexColor(Color), PrioritizeCompanyUsers);
         if (!renamed) { TempError("Tabs_Error_NameExists"); return Redirect(); }
 
         if (!await _tabService.SetCompaniesForTabAsync(tab.Id, SelectedCompanyIds)
             || !await _tabService.SetShiftTypesForTabAsync(tab.Id, SelectedShiftTypeIds))
-        { TempError("Tabs_Error_InvalidSelection"); return Redirect(); }
+        { TempError("Tabs_Error_InvalidSelection"); return Redirect(); } // tx disposed uncommitted → full rollback
 
+        await tx.CommitAsync();
         await _auditLogService.LogAsync("ShiftTabUpdated", "ShiftTab", tab.Id, $"Updated tab '{NameEn.Trim()}'.");
         TempData["SuccessMessage"] = string.Format(CultureInfo.CurrentCulture, _localizer["Tabs_Success_Updated"], NameEn.Trim());
         return Redirect();
