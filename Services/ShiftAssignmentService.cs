@@ -310,8 +310,14 @@ public class ShiftAssignmentService : IShiftAssignmentService
                 ValidationCategory.Trainee));
         }
 
-        // Verify same molecule (not same company — trainees can shadow cross-company within molecule)
-        if (cellMoleculeId is int moleculeId)
+        // Verify same molecule (not same company — trainees can shadow cross-company within molecule). For a
+        // COMPANY-scoped shift (no MoleculeId) resolve the cell's molecule from its own company so the
+        // relaxation reaches company-scoped cells too (parity with the Manage-save path); only warn if the
+        // trainee is genuinely outside that molecule (or no molecule can be resolved and companies differ).
+        var effectiveMoleculeId = cellMoleculeId
+            ?? await _db.Companies.IgnoreQueryFilters()
+                .Where(c => c.Id == cellCompanyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
+        if (effectiveMoleculeId is int moleculeId)
         {
             if (!await IsUserInMoleculeAsync(trainee.CompanyId, moleculeId))
             {
@@ -324,7 +330,7 @@ public class ShiftAssignmentService : IShiftAssignmentService
         }
         else if (cellCompanyId != trainee.CompanyId)
         {
-            // Fallback for shifts without MoleculeId — use original company check
+            // Neither the shift type nor the cell's company yields a molecule — fall back to the company check.
             warnings.Add(new ValidationIssue(
                 "TRAINEE_DIFFERENT_COMPANY",
                 _localizer["Error_TraineeDifferentCompany"],

@@ -580,7 +580,7 @@ else
             CalendarRealtime.initialize({
                 calendarType: 'shifts',
                 scope: {
-                    moleculeId: @Model.MoleculeId,
+                    moleculeId: @(Model.MoleculeId ?? 0),
                     jobTypeId: @(Model.JobTypeId?.ToString() ?? "null")
                 },
                 onRefresh: triggerCalendarRefresh,

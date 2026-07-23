@@ -535,8 +535,10 @@
                     });
                 }
 
-                // Busy decoration for chore/onduty modes (where rowId is user-N or dutytype-N)
-                if (cellData.date && calPageConfig && calPageConfig.moleculeId > 0 && availableUsers.length > 0) {
+                // Busy decoration for USER options (shift by-shift mode, chores, on-duty). SKIP by-user mode
+                // (itemType === 'shifttype'): those option ids are shift-TYPE ids, not user ids, so decorating
+                // them would query busy-status for the wrong/colliding user ids and paint bogus badges.
+                if (itemType === 'user' && cellData.date && calPageConfig && calPageConfig.moleculeId > 0 && availableUsers.length > 0) {
                     var userIdList = availableUsers
                         .map(function (u) { return parseInt(u.id, 10); })
                         .filter(function (n) { return !isNaN(n) && n > 0; });

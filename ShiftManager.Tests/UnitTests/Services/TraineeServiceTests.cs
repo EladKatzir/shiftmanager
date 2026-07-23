@@ -739,4 +739,28 @@ public class TraineeServiceTests : IDisposable
         isValid.Should().BeFalse();
         error.Should().Contain("Error_TraineeAssignment_DifferentCompany");   // reused localized key
     }
+
+    [Fact]
+    public async Task ValidateTraineeAssignment_CompanyScopedShift_CrossCompanySameMolecule_IsValid()
+    {
+        // Parity fix: a COMPANY-scoped shift type (no MoleculeId) must still allow a trainee from another
+        // company in the SAME molecule. The cell's molecule is resolved from its own company; before the fix
+        // a company-scoped shift fell to a strict company block (the calendar path only warned).
+        var (mol, cA, cB) = await SeedMoleculeTwoCompaniesAsync();
+        var shiftType = new ShiftType
+        {
+            Id = 1, Name = "CoShift", Key = ShiftType.KEY_MORNING,
+            Scope = ShiftScope.Company, CompanyId = cA, MoleculeId = null,   // company-scoped: no molecule
+            Start = new TimeOnly(7, 0), End = new TimeOnly(15, 0)
+        };
+        await SeedShiftTypeAsync(shiftType);
+        await SeedUserAsync(10, UserRole.Employee);                          // primary, company cA
+        await SeedTraineeAsync(20, cB, jobTypeId: null, "Cross Trainee");     // same molecule, other company
+
+        var (_, assignment) = await SeedShiftWithAssignmentAsync(employeeId: 10);  // instance/assignment company == cA
+
+        var (isValid, error) = await _service.ValidateTraineeAssignmentAsync(assignment.Id, 20);
+
+        isValid.Should().BeTrue(error);  // molecule resolved from cA; cB is in it → allowed
+    }
 }

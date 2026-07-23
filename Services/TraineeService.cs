@@ -239,9 +239,13 @@ public class TraineeService : ITraineeService
         {
             // PF14 (extended): trainees may shadow cross-company WITHIN a molecule (mirrors the calendar path
             // ShiftAssignmentService.ValidateTraineeCoreAsync). Only a DIFFERENT molecule blocks. The
-            // same-company case is accepted above without any probe, preserving the original fast path (this
-            // also keeps working when the cell's company has no Company row — shift type molecule only).
-            var cellMoleculeId = assignment.ShiftInstance.ShiftType?.MoleculeId;
+            // same-company case is accepted above without any probe, preserving the original fast path.
+            // For a COMPANY-scoped shift type (no MoleculeId) resolve the cell's molecule from its own company
+            // so the relaxation reaches company-scoped cells too (parity fix); only if neither yields a
+            // molecule do we fall back to the strict company block.
+            var cellMoleculeId = assignment.ShiftInstance.ShiftType?.MoleculeId
+                ?? await _db.Companies.IgnoreQueryFilters()
+                    .Where(c => c.Id == assignment.CompanyId).Select(c => c.MoleculeId).FirstOrDefaultAsync();
             if (cellMoleculeId is int moleculeId)
             {
                 // SECURITY-AUDITED: SAFE — molecule membership probe scoped by the trainee's company + the cell molecule.
@@ -252,7 +256,7 @@ public class TraineeService : ITraineeService
             }
             else
             {
-                // No molecule on the shift type ⇒ fall back to the strict company check (companies already differ here).
+                // Neither the shift type nor the cell's company yields a molecule ⇒ strict company block.
                 return (false, _localizer["Error_TraineeAssignment_DifferentCompany"].Value);
             }
         }
