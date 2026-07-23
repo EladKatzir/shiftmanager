@@ -130,7 +130,24 @@
     buildOptions(w); w.panel.hidden = false; w.open = true;
     w.control.setAttribute('aria-expanded', 'true');
     // Measure at open — works for selects inside hidden/animated modals (SEL-3).
-    w.panel.style.minWidth = w.control.getBoundingClientRect().width + 'px';
+    var rect = w.control.getBoundingClientRect();
+    w.panel.style.minWidth = rect.width + 'px';
+    // SEL-12: keep the panel inside the viewport. Open downward but cap max-height to the room below the
+    // control (the .ss-options list scrolls within, search stays pinned); if that room is cramped and there
+    // is more above, flip the panel above the control. Without this the list spills off-screen inside a
+    // constrained container — e.g. a control low in the mobile bottom sheet. Inline style overrides the CSS.
+    var margin = 8, cap = 360;
+    var spaceBelow = window.innerHeight - rect.bottom - margin;
+    var spaceAbove = rect.top - margin;
+    if (spaceBelow < 180 && spaceAbove > spaceBelow) {
+      w.panel.style.top = 'auto';
+      w.panel.style.bottom = 'calc(100% + 2px)';
+      w.panel.style.maxHeight = Math.max(140, Math.min(cap, spaceAbove)) + 'px';
+    } else {
+      w.panel.style.bottom = 'auto';
+      w.panel.style.top = 'calc(100% + 2px)';
+      w.panel.style.maxHeight = Math.max(140, Math.min(cap, spaceBelow)) + 'px';
+    }
     w.search.value = ''; renderList(w, ''); w.search.focus();
     document.addEventListener('mousedown', w._outside, true);
   }

@@ -40,15 +40,11 @@
 .ss-check { flex: 0 0 1.1em; text-align: center; color: var(--primary); }
 .ss-empty { padding: 0.625rem; color: var(--text-muted); font-size: 0.9rem; text-align: center; }
 
-/* SEL-12 (NEEDS ON-DEVICE VERIFICATION): inside the mobile bottom sheet the options panel can be clipped.
-   .ss-panel is position:absolute and opens below its control; the sheet's .bottom-sheet__content is
-   overflow:hidden and .bottom-sheet__body is overflow-y:auto, so a panel opened from a control low in the
-   sheet can be cut off. Bound it to the viewport with its own scroll (so it never needs to exceed the
-   sheet) and lift it above the sheet content (z-index:1050). Scoped to .bottom-sheet so desktop/admin
-   usage of the widget is unchanged. A truly clip-proof fix would need position:fixed anchoring — verify
-   on a real device before relying on this. */
+/* SEL-12: inside the mobile bottom sheet a panel opened from a control low in the sheet used to spill below
+   the viewport. openPanel() (searchable-select.js) now caps the panel's max-height to the room available
+   and flips it above the control when cramped, so the .ss-options list scrolls WITHIN the visible area.
+   The only thing needed from CSS is to lift the panel above the sheet's own content. Emulation-verified
+   (touch viewport) that the panel bottom stays within the viewport. */
 .bottom-sheet .ss-panel {
-  max-height: min(50vh, 320px);
-  overflow-y: auto;
   z-index: 1210;
 }
