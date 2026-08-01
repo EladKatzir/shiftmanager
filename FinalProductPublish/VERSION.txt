@@ -1,16 +1,16 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 5.2.9
+                           Version 5.3.0
 ================================================================================
 
-VERSION: 5.2.9
-RELEASE DATE: 2026-07-20
-BUILD DATE: 2026-07-20 22:52:06 UTC
-GIT COMMIT: 5a0d9c3
+VERSION: 5.3.0
+RELEASE DATE: 2026-08-02
+BUILD DATE: 2026-08-02 01:12:59 UTC
+GIT COMMIT: 6b922b8
 GIT BRANCH: dev
 
 PACKAGE INFORMATION:
-  Total Files:  537
+  Total Files:  541
   DLL Count:    361
   Package Size: 172 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-07-20 22:52:06 UTC
+Build Date:     2026-08-02 01:12:59 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v5.2.9
+  âœ“ Git tagged: v5.3.0
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -258,16 +258,16 @@ CERTIFICATION
 This package has been:
   âœ… Built successfully with no errors
   âœ… Tested automatically with comprehensive checks
-  âœ… Verified for completeness (537 files)
+  âœ… Verified for completeness (541 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v5.2.9)
+  âœ… Tagged in version control (v5.3.0)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-07-20 22:52:06 UTC
-Git Commit: 5a0d9c3
+Date: 2026-08-02 01:12:59 UTC
+Git Commit: 6b922b8
 
 ================================================================================
 LICENSE

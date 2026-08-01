@@ -116,6 +116,7 @@ public class AppDbContext : DbContext
     // Shift Tabs / לשונית (molecule-scoped sub-calendars: shift-type partition + company roster + per-user last-tab)
     public DbSet<ShiftTab> ShiftTabs => Set<ShiftTab>();
     public DbSet<ShiftTabCompany> ShiftTabCompanies => Set<ShiftTabCompany>();
+    public DbSet<ShiftTabShiftType> ShiftTabShiftTypes => Set<ShiftTabShiftType>();
     public DbSet<UserShiftTabPreference> UserShiftTabPreferences => Set<UserShiftTabPreference>();
 
     // Draft Mode (per-assigner sandbox over a scope+week of a calendar surface — shifts/chores/on-call)
@@ -1462,30 +1463,52 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(t => t.MoleculeId)
             .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ShiftTab>()
+            .HasOne(t => t.JobType)
+            .WithMany()
+            .HasForeignKey(t => t.JobTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        // Lookup index + unique tab name within a molecule
+        // Lookup index + dual-name uniqueness within a (molecule, jobtype) scope.
         modelBuilder.Entity<ShiftTab>()
-            .HasIndex(t => t.MoleculeId);
+            .HasIndex(t => new { t.MoleculeId, t.JobTypeId });
         modelBuilder.Entity<ShiftTab>()
-            .HasIndex(t => new { t.MoleculeId, t.Name })
+            .HasIndex(t => new { t.MoleculeId, t.JobTypeId, t.NameEn })
             .IsUnique();
+        modelBuilder.Entity<ShiftTab>()
+            .HasIndex(t => new { t.MoleculeId, t.JobTypeId, t.NameHe })
+            .IsUnique();
+        // SQLite treats NULL as DISTINCT in a UNIQUE index, so the (Molecule, JobTypeId, Name*) indexes above
+        // do NOT enforce dual-name uniqueness for Tech tabs (JobTypeId IS NULL). Filtered companion indexes
+        // close the null-jobtype hole (same NULL-distinctness split as the DraftSession single-active indexes).
+        modelBuilder.Entity<ShiftTab>()
+            .HasIndex(t => new { t.MoleculeId, t.NameEn }, "UX_ShiftTabs_MoleculeId_NameEn_NullJob")
+            .IsUnique()
+            .HasFilter("\"JobTypeId\" IS NULL");
+        modelBuilder.Entity<ShiftTab>()
+            .HasIndex(t => new { t.MoleculeId, t.NameHe }, "UX_ShiftTabs_MoleculeId_NameHe_NullJob")
+            .IsUnique()
+            .HasFilter("\"JobTypeId\" IS NULL");
 
-        // ShiftType → ShiftTab: a shift type belongs to at most one tab. SetNull so deleting a tab
-        // reverts its shift types to the implicit "Main" tab rather than deleting them.
-        modelBuilder.Entity<ShiftType>()
-            .HasOne(st => st.Tab)
+        // ShiftTabShiftType: many-to-many shift-type membership (replaces ShiftType.TabId). Composite PK;
+        // both FKs cascade so deleting a tab (or a shift type) drops the link.
+        modelBuilder.Entity<ShiftTabShiftType>()
+            .HasKey(x => new { x.ShiftTabId, x.ShiftTypeId });
+        modelBuilder.Entity<ShiftTabShiftType>()
+            .HasOne(x => x.ShiftTab)
             .WithMany(t => t.ShiftTypes)
-            .HasForeignKey(st => st.TabId)
-            .OnDelete(DeleteBehavior.SetNull);
-        modelBuilder.Entity<ShiftType>()
-            .HasIndex(st => st.TabId);
+            .HasForeignKey(x => x.ShiftTabId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ShiftTabShiftType>()
+            .HasOne(x => x.ShiftType)
+            .WithMany()
+            .HasForeignKey(x => x.ShiftTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        // ShiftTabCompany: a company is on AT MOST ONE tab (unique CompanyId) → disjoint rosters,
-        // Main = molecule companies with no assignment. Both FKs cascade: deleting a tab or a company
-        // drops the link.
+        // ShiftTabCompany: many-to-many company membership (a company may be on several tabs). Composite PK
+        // (no more UNIQUE(CompanyId)); both FKs cascade.
         modelBuilder.Entity<ShiftTabCompany>()
-            .HasIndex(tc => tc.CompanyId)
-            .IsUnique();
+            .HasKey(tc => new { tc.ShiftTabId, tc.CompanyId });
         modelBuilder.Entity<ShiftTabCompany>()
             .HasOne(tc => tc.ShiftTab)
             .WithMany(t => t.Companies)
@@ -1497,11 +1520,18 @@ public class AppDbContext : DbContext
             .HasForeignKey(tc => tc.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // UserShiftTabPreference: per-user remembered tab per molecule (not tenant-filtered).
-        // TabId → ShiftTab SetNull so a deleted tab's remembered preference reverts to Main.
+        // UserShiftTabPreference: per-user remembered tab per (molecule, jobtype). TabId → ShiftTab SetNull.
         modelBuilder.Entity<UserShiftTabPreference>()
-            .HasIndex(p => new { p.UserId, p.MoleculeId })
+            .HasIndex(p => new { p.UserId, p.MoleculeId, p.JobTypeId })
             .IsUnique();
+        // NULL-distinctness: the index above doesn't enforce one-pref-per-(user,molecule) for Tech
+        // (JobTypeId IS NULL) — a filtered companion closes the hole (else duplicate prefs accumulate and
+        // GetLastTabAsync's FirstOrDefault picks an arbitrary one). This was a regression from the old
+        // non-null UNIQUE(UserId, MoleculeId).
+        modelBuilder.Entity<UserShiftTabPreference>()
+            .HasIndex(p => new { p.UserId, p.MoleculeId }, "UX_UserShiftTabPreferences_UserId_MoleculeId_NullJob")
+            .IsUnique()
+            .HasFilter("\"JobTypeId\" IS NULL");
         modelBuilder.Entity<UserShiftTabPreference>()
             .HasOne(p => p.Tab)
             .WithMany()

@@ -182,7 +182,11 @@
     var eligibleInFlight = {};     // "mol:shift" -> Promise (dedupe concurrent focus)
     var qeLiveRegion = null;       // visually-hidden aria-live status region
 
-    function eligibleKey(mol, st) { return mol + ':' + st; }
+    function eligibleKey(mol, st) {
+        var t = (window.CalendarPageConfig && window.CalendarPageConfig.activeTabId != null)
+            ? window.CalendarPageConfig.activeTabId : 0;
+        return mol + ':' + st + ':' + t;
+    }
 
     function categoryEligibilityOn() {
         return !!(window.CalendarPageConfig && window.CalendarPageConfig.categoryEligibilityEnabled);
@@ -200,8 +204,10 @@
         var key = eligibleKey(mol, st);
         if (!allowFallback && eligibleCache[key]) return Promise.resolve(eligibleCache[key]);
         if (!allowFallback && eligibleInFlight[key]) return eligibleInFlight[key];
+        var t = (window.CalendarPageConfig && window.CalendarPageConfig.activeTabId != null)
+            ? window.CalendarPageConfig.activeTabId : 0;
         var url = '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + mol + '&shiftTypeId=' + st
-            + (allowFallback ? '&allowFallback=true' : '');
+            + '&tab=' + t + (allowFallback ? '&allowFallback=true' : '');
         var p = fetch(url, { credentials: 'same-origin' })
             .then(function (r) { if (!r.ok) throw new Error('status ' + r.status); return r.json(); })
             .then(function (data) {
@@ -268,6 +274,17 @@
         row.textContent = label;
         row.addEventListener('mousedown', function (e) { e.preventDefault(); onClick(); });
         dropdown.appendChild(row);
+    }
+
+    // PF8: a non-selectable group header ("This tab" / "Other in molecule") separating the eligible rows.
+    function appendEligGroupHeader(text) {
+        var h = document.createElement('div');
+        h.className = 'quick-entry-group-header';
+        h.setAttribute('aria-hidden', 'true');
+        var s = document.createElement('span');
+        s.textContent = text;
+        h.appendChild(s);
+        dropdown.appendChild(h);
     }
 
     function renderEligUserOption(item) {
@@ -389,7 +406,20 @@
             finishEligDropdown();
             return;
         }
-        for (var i = 0; i < items.length; i++) renderEligUserOption(items[i]);
+        // PF8: apply "this tab" → "other" ordering at RENDER (never baked into eligibleCache — SEL-6).
+        if (window.CalendarTabPrioritization && window.CalendarTabPrioritization.isActive()) {
+            var parts = window.CalendarTabPrioritization.partition(items);
+            if (parts.thisTab.length) {
+                appendEligGroupHeader(window.CalendarTabPrioritization.label('this'));
+                for (var ti = 0; ti < parts.thisTab.length; ti++) renderEligUserOption(parts.thisTab[ti]);
+            }
+            if (parts.other.length) {
+                appendEligGroupHeader(window.CalendarTabPrioritization.label('other'));
+                for (var oi = 0; oi < parts.other.length; oi++) renderEligUserOption(parts.other[oi]);
+            }
+        } else {
+            for (var i = 0; i < items.length; i++) renderEligUserOption(items[i]);
+        }
         if (result.overflow.user > 0) {
             var more = document.createElement('div');
             more.className = 'quick-entry-overflow';
@@ -409,7 +439,8 @@
         if (activeInput && activeInput._eligActive) {
             if (activeInput._eligState === 'ready' && activeInput._eligible && Array.isArray(activeInput._eligible.users)) {
                 activeInput._eligible.users.forEach(function (u) {
-                    allItems.push({ id: String(u.id), text: u.name, companyName: u.companyName || null, type: 'user', key: null, color: null });
+                    allItems.push({ id: String(u.id), text: u.name, companyName: u.companyName || null,
+                                    inTab: !!u.inTab, type: 'user', key: null, color: null });
                 });
             }
             // not ready -> no user items yet; updateDropdown renders the loading/empty state row.
@@ -468,13 +499,31 @@
 
     // --- Filter & group ---
 
+    // SEL-6/PF8: when a prioritizing tab is active, move in-tab USER items ahead of the rest so they
+    // survive the per-group MAX_RESULTS_PER_GROUP cap (which otherwise truncates in server/alphabetical
+    // order, starving the later partition() "This tab" split). Stable: preserves server order within the
+    // in-tab and the remaining partitions; the per-group score-sort still runs afterward. Non-user items
+    // keep their relative order. Applied to a fresh copy — never baked into allItems/eligibleCache
+    // (allItems is rebuilt per load anyway, so ordering here has no cross-load leakage).
+    function orderInTabFirst(items) {
+        var inTabUsers = [], rest = [];
+        for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            if (it.type === 'user' && it.inTab) inTabUsers.push(it); else rest.push(it);
+        }
+        return inTabUsers.concat(rest);
+    }
+
     function filterAndGroup(query) {
         var groups = { shift: [], chore: [], duty: [], user: [] };
         var overflow = { shift: 0, chore: 0, duty: 0, user: 0 };
         var mode = getCurrentMode();
 
-        for (var i = 0; i < allItems.length; i++) {
-            var item = allItems[i];
+        var source = (window.CalendarTabPrioritization && window.CalendarTabPrioritization.isActive())
+            ? orderInTabFirst(allItems) : allItems;
+
+        for (var i = 0; i < source.length; i++) {
+            var item = source[i];
 
             // Slash command filtering
             if (slashCommand) {
@@ -952,12 +1001,17 @@
             return;
         }
 
-        // Don't intercept clicks on existing assignments or buttons
+        // Don't intercept clicks on existing assignments or buttons.
+        // The trainee picker is a runtime-injected <select> inserted as a sibling of the chip,
+        // still inside .excel-calendar__cell — it matches none of the other guards, so name it
+        // explicitly (plus a defensive bare `select`) or Quick Entry swallows its clicks (Bug 2).
         if (e.target.closest('.excel-calendar__assignment') ||
             e.target.closest('.excel-calendar__add-btn') ||
+            e.target.closest('.excel-calendar__trainee-picker') ||
             e.target.closest('.fill-handle') ||
             e.target.closest('button') ||
-            e.target.closest('a')) {
+            e.target.closest('a') ||
+            e.target.closest('select')) {
             return;
         }
 
@@ -1005,7 +1059,11 @@
         input._eligState = 'idle';
         input._eligShiftTypeId = 0;
         var eligStId = shiftTypeIdForCell(cellData);
-        if (categoryEligibilityOn() && getCurrentMode() === 'shift' && !isChoresCalendar()
+        // Tab prioritization (PF8) must group "this tab"/"other" in quick-entry too — the eligible path is
+        // what carries the server inTab flags + grouping. Activate it whenever a prioritizing tab is active,
+        // not only when the category-eligibility flag is on (E2E BUG #3). No prioritizing tab → legacy path.
+        var _tabPrioActive = window.CalendarTabPrioritization && window.CalendarTabPrioritization.isActive();
+        if ((categoryEligibilityOn() || _tabPrioActive) && getCurrentMode() === 'shift' && !isChoresCalendar()
             && eligStId > 0 && window.CalendarPageConfig && window.CalendarPageConfig.moleculeId > 0) {
             input._eligActive = true;
             input._eligState = 'loading';
@@ -1352,6 +1410,7 @@
             promise = window.quickAddOnDuty(date, parseInt(item.id, 10), parseInt(qeDutyTypeValue, 10), undefined, qeConfirm);
         } else if (item.type === 'user') {
             // Shifts By-Shift: row is a ShiftType (shift-{id}), the pick is the assignee.
+            if (window.CalendarTabPrioritization) window.CalendarTabPrioritization.maybeWarnOffTab(item);
             var shiftTypeId = rowId.replace('shift-', '');
             promise = window.quickAddShift(parseInt(shiftTypeId, 10), date, parseInt(item.id, 10), qeConfirm);
         } else if (item.type === 'shift') {

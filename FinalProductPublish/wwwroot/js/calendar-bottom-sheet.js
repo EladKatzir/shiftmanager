@@ -20,6 +20,11 @@
     // --- Configuration ---
     var SWIPE_THRESHOLD = 80; // px to swipe down before dismissing
     var ANIMATION_DURATION = 300; // ms
+    // Non-empty sentinel value for "state" <option>s (Loading / no-category / no-eligible / error). The
+    // searchable-select widget treats value='' as a placeholder and SKIPS it in single mode, which would
+    // hide these status rows (user just sees the generic "No matches"); a non-empty value makes the widget
+    // render them as disabled rows instead. They stay unselectable via the option's disabled flag (SEL-4).
+    var STATE_OPTION_VALUE = '__ss_state__';
 
     // --- State ---
     var sheetElement = null;
@@ -142,6 +147,10 @@
         sheetElement.appendChild(contentElement);
 
         document.body.appendChild(sheetElement);
+
+        // Phase B: auto-enhance [data-searchable] selects rendered into the sheet (rebuilt
+        // per open). Scoped to the sheet element only — NOT document-wide (SEL-5/PF9).
+        if (window.SearchableSelect) window.SearchableSelect.observe(sheetElement);
 
         // Touch gesture events on the content area
         contentElement.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -473,6 +482,7 @@
             var userSelect = document.createElement('select');
             userSelect.className = 'bottom-sheet__select';
             userSelect.id = 'bottom-sheet-user-select';
+            userSelect.setAttribute('data-searchable', '');
 
             // Default empty option
             var defaultOpt = document.createElement('option');
@@ -508,18 +518,27 @@
             } else {
                 // Populate from available users (read from page data or cell context)
                 var availableUsers = getAvailableUsers(cellData);
-                availableUsers.forEach(function (user) {
-                    var opt = document.createElement('option');
-                    opt.value = user.id;
-                    // Disambiguate duplicate names across the area by suffixing the company (same
-                    // "name — company" convention the eligibility path uses above).
-                    opt.textContent = user.companyName ? (user.name + ' — ' + user.companyName) : user.name;
-                    opt.dataset.userName = user.name;
-                    userSelect.appendChild(opt);
-                });
+                // PF8: group "this tab" first ONLY when the options are USERS (shift-mode). In BY-USER mode
+                // the options are shift TYPES (itemType === 'shifttype', no data-in-tab), so partition would
+                // dump them ALL under an "Other in molecule" header — render those as a flat list instead.
+                if (itemType === 'user') {
+                    appendUsersGrouped(userSelect, availableUsers.map(function (u) {
+                        return { id: u.id, name: u.name, companyName: u.companyName, inTab: !!u.inTab };
+                    }));
+                } else {
+                    availableUsers.forEach(function (u) {
+                        var flatOpt = document.createElement('option');
+                        flatOpt.value = u.id;
+                        flatOpt.dataset.userName = u.name;
+                        flatOpt.textContent = u.companyName ? (u.name + ' — ' + u.companyName) : u.name;
+                        userSelect.appendChild(flatOpt);
+                    });
+                }
 
-                // Busy decoration for chore/onduty modes (where rowId is user-N or dutytype-N)
-                if (cellData.date && calPageConfig && calPageConfig.moleculeId > 0 && availableUsers.length > 0) {
+                // Busy decoration for USER options (shift by-shift mode, chores, on-duty). SKIP by-user mode
+                // (itemType === 'shifttype'): those option ids are shift-TYPE ids, not user ids, so decorating
+                // them would query busy-status for the wrong/colliding user ids and paint bogus badges.
+                if (itemType === 'user' && cellData.date && calPageConfig && calPageConfig.moleculeId > 0 && availableUsers.length > 0) {
                     var userIdList = availableUsers
                         .map(function (u) { return parseInt(u.id, 10); })
                         .filter(function (n) { return !isNaN(n) && n > 0; });
@@ -533,6 +552,10 @@
             fieldGroup.appendChild(userSelect);
             addSection.appendChild(fieldGroup);
             bodyEl.appendChild(addSection);
+
+            // Creation-time hook: enhance now; async-populated options + busy decoration
+            // re-sync via the per-select observer (SEL-3/SEL-4). Width is measured on open.
+            if (window.SearchableSelect) window.SearchableSelect.enhance(userSelect);
 
             // Action buttons
             var assignBtn = document.createElement('button');
@@ -675,15 +698,42 @@
 
         var select = document.createElement('select');
         select.className = 'bottom-sheet__select bottom-sheet__select--small';
+        select.setAttribute('data-searchable', '');
         var defOpt = document.createElement('option');
         defOpt.value = '';
         defOpt.textContent = (window.AppLocalizer?.BottomSheet_AddTrainee || 'Add trainee...');
         select.appendChild(defOpt);
-        for (var i = 0; i < traineeSelect.options.length; i++) {
-            var opt = document.createElement('option');
-            opt.value = traineeSelect.options[i].value;
-            opt.textContent = traineeSelect.options[i].textContent;
-            select.appendChild(opt);
+
+        // PF8/PF9: clone options PRESERVING data-in-tab/data-company/data-jobtype (the mobile clone used to
+        // copy only value+text, dropping them — so grouping + the off-tab warning never fired here). Split
+        // into "this tab"/"other" <optgroup>s when prioritization is active; flat otherwise. Mirrors the
+        // desktop inline picker (openInlineTraineePicker in calendar-inline-edit.js).
+        function cloneTraineeOpt(src) {
+            var o = document.createElement('option');
+            o.value = src.value;
+            o.textContent = src.textContent;
+            o.dataset.company = src.dataset.company || '';
+            o.dataset.jobtype = src.dataset.jobtype || '';
+            o.dataset.inTab = src.dataset.inTab || '0';
+            return o;
+        }
+        var srcOpts = Array.prototype.slice.call(traineeSelect.options).filter(function (o) { return o.value; });
+        var P = window.CalendarTabPrioritization;
+        if (P && P.isActive()) {
+            var norm = srcOpts.map(function (o) { return { opt: o, inTab: o.dataset.inTab === '1' }; });
+            var parts = P.partition(norm);
+            if (parts.thisTab.length) {
+                var g1 = document.createElement('optgroup'); g1.label = P.label('this');
+                parts.thisTab.forEach(function (n) { g1.appendChild(cloneTraineeOpt(n.opt)); });
+                select.appendChild(g1);
+            }
+            if (parts.other.length) {
+                var g2 = document.createElement('optgroup'); g2.label = P.label('other');
+                parts.other.forEach(function (n) { g2.appendChild(cloneTraineeOpt(n.opt)); });
+                select.appendChild(g2);
+            }
+        } else {
+            srcOpts.forEach(function (o) { select.appendChild(cloneTraineeOpt(o)); });
         }
         row.appendChild(select);
 
@@ -694,6 +744,10 @@
         addBtn.addEventListener('click', function () {
             var traineeId = parseInt(select.value, 10);
             if (select.value && !isNaN(traineeId)) {
+                // Off-tab warning (once per tab/session) when the chosen trainee isn't from the tab's
+                // companies — mirrors the desktop inline picker and the shift-assign path.
+                var chosen = select.options[select.selectedIndex];
+                if (P) P.maybeWarnOffTab({ id: traineeId, inTab: chosen && chosen.dataset.inTab === '1' });
                 handleAddTrainee(cellData, assignment, traineeId);
             }
         });
@@ -841,10 +895,39 @@
     // --- Fetch eligible users for a Tech molecule shift type and populate a <select> ---
     function appendDisabledOption(selectEl, text) {
         var opt = document.createElement('option');
-        opt.value = '';
+        opt.value = STATE_OPTION_VALUE; // non-empty so the searchable-select widget renders (not skips) it
         opt.disabled = true;
         opt.textContent = text;
         selectEl.appendChild(opt);
+    }
+
+    // Append user options, split into "this tab" / "other" native <optgroup>s when prioritization is
+    // active; otherwise a flat option list. Each option keeps data-in-tab so a later resync knows the group.
+    function appendUsersGrouped(selectEl, users) {
+        function opt(u) {
+            var o = document.createElement('option');
+            o.value = u.id;
+            o.dataset.userName = u.name;
+            o.dataset.inTab = u.inTab ? '1' : '0';
+            o.textContent = u.companyName ? (u.name + ' — ' + u.companyName) : u.name;
+            return o;
+        }
+        var P = window.CalendarTabPrioritization;
+        if (P && P.isActive()) {
+            var parts = P.partition(users);
+            if (parts.thisTab.length) {
+                var g1 = document.createElement('optgroup'); g1.label = P.label('this');
+                parts.thisTab.forEach(function (u) { g1.appendChild(opt(u)); });
+                selectEl.appendChild(g1);
+            }
+            if (parts.other.length) {
+                var g2 = document.createElement('optgroup'); g2.label = P.label('other');
+                parts.other.forEach(function (u) { g2.appendChild(opt(u)); });
+                selectEl.appendChild(g2);
+            }
+        } else {
+            users.forEach(function (u) { selectEl.appendChild(opt(u)); });
+        }
     }
 
     // Remove every option EXCEPT a leading non-disabled empty default (the "-- Select --" placeholder).
@@ -870,19 +953,26 @@
             onClick();
         });
         selectEl._fallbackBtn = btn;
-        if (selectEl.parentNode) selectEl.parentNode.insertBefore(btn, selectEl.nextSibling);
+        // After enhancement the native <select> lives INSIDE .ss-root, so selectEl.nextSibling would orphan
+        // the button inside the widget wrapper (invisible). Anchor to the .ss-root when enhanced so the
+        // escape-hatch link renders as a visible sibling right after the widget.
+        var ssRoot = selectEl.closest('.ss-root');
+        var anchor = ssRoot || selectEl;
+        if (anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor.nextSibling);
     }
 
     async function populateEligibleUsersAsync(selectEl, moleculeId, shiftTypeId, date, allowFallback) {
         var loadingOpt = document.createElement('option');
-        loadingOpt.value = '';
+        loadingOpt.value = STATE_OPTION_VALUE; // non-empty so the searchable-select widget renders (not skips) it
         loadingOpt.disabled = true;
         loadingOpt.textContent = loc('QuickEntry_Loading', 'Loading…');
         selectEl.appendChild(loadingOpt);
         selectEl.setAttribute('aria-busy', 'true');
         try {
+            var tParam = (window.CalendarPageConfig && window.CalendarPageConfig.activeTabId != null)
+                ? window.CalendarPageConfig.activeTabId : 0;
             var url = '/Api/Calendar/GetEligibleUsersForShift?moleculeId=' + moleculeId + '&shiftTypeId=' + shiftTypeId
-                + (allowFallback ? '&allowFallback=true' : '');
+                + '&tab=' + tParam + (allowFallback ? '&allowFallback=true' : '');
             var response = await fetch(url, { credentials: 'same-origin' });
             if (!response.ok) throw new Error('Server returned ' + response.status);
             var data = await response.json();
@@ -891,15 +981,7 @@
             if (!data.success) throw new Error('unsuccessful');
 
             if (Array.isArray(data.users) && data.users.length > 0) {
-                data.users.forEach(function (user) {
-                    var opt = document.createElement('option');
-                    opt.value = user.id;
-                    opt.dataset.userName = user.name;
-                    // Native <select>: append company as a " — {company}" suffix (3b disambiguation).
-                    opt.textContent = user.companyName ? (user.name + ' — ' + user.companyName) : user.name;
-                    selectEl.appendChild(opt);
-                });
-
+                appendUsersGrouped(selectEl, data.users);   // PF8 optgroup grouping (this tab / other)
                 if (date && moleculeId) {
                     // Decorate with busy badges (best-effort — failure is non-fatal)
                     decorateOptionsWithBusyAsync(selectEl, data.users.map(function (u) { return u.id; }), date, moleculeId, null)
@@ -998,7 +1080,9 @@
             for (var i = 0; i < select.options.length; i++) {
                 var option = select.options[i];
                 if (option.value) {
-                    users.push({ id: option.value, name: option.textContent, companyName: option.dataset.company || null });
+                    users.push({ id: option.value, name: option.textContent,
+                                 companyName: option.dataset.company || null,
+                                 inTab: option.dataset.inTab === '1' });
                 }
             }
         }
@@ -1111,6 +1195,14 @@
             window.quickAddOnDuty(cellData.date, userId, onDutyType);
             close();
         } else if (calendarType === 'shifts' && typeof window.quickAddShift === 'function') {
+            // PF8: off-tab warning (once per tab/session) when the chosen user isn't from the tab's companies.
+            var sheetSelect = document.getElementById('bottom-sheet-user-select');
+            var chosenOpt = sheetSelect ? sheetSelect.options[sheetSelect.selectedIndex] : null;
+            if (window.CalendarTabPrioritization && chosenOpt && cellData.rowId
+                && cellData.rowId.indexOf('shift-') === 0) {
+                window.CalendarTabPrioritization.maybeWarnOffTab(
+                    { id: userId, inTab: chosenOpt.dataset.inTab === '1' });
+            }
             // Detect mode from row ID prefix
             if (cellData.rowId && cellData.rowId.indexOf('user-') === 0) {
                 // User-mode: row is a user, dropdown value is the shift type

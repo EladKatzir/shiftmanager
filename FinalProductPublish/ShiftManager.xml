@@ -667,6 +667,13 @@
         <member name="M:ShiftManager.Data.SeedData.BulkTestUserSeed.MakeDef(System.Int32,System.String,System.Int32,ShiftManager.Models.RoleTemplate,System.Nullable{System.Int32},ShiftManager.Models.Support.MilitaryRank,System.Boolean,System.Boolean)">
             <summary>Builds one deterministic user definition from the global running index.</summary>
         </member>
+        <member name="M:ShiftManager.Data.SeedData.BulkTestUserSeed.EnsureTraineeJobTypesAsync(ShiftManager.Data.AppDbContext,System.Collections.Generic.Dictionary{System.String,ShiftManager.Models.Company},ShiftManager.Models.JobType,ShiftManager.Models.JobType,Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            Backfill: existing trainees (@test) with a null JobTypeId get their company's primary job type
+            (Alhut for workforce companies, ProjectManager for tech). The skip-if-exists seeder won't touch
+            already-seeded users, so this closes the origin-bug gap where a null-jobtype trainee is hidden.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Data.SeedData.DataMigrationHelper">
             <summary>
             Helps migrate existing data to the v3.0 organizational hierarchy.
@@ -757,6 +764,13 @@
         <member name="F:ShiftManager.Data.SeedData.RoleTemplateSeed.JobTypeSentinelMap">
             <summary>
             Maps sentinel values to JobType names for resolution in Program.cs.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Data.SeedData.ShiftTabSeed">
+            <summary>
+            Dev/Test-only example calendar tabs (לשונית) for (Oren, Alhut): "Geo" {Tzafona, City, Camps, Hir} and
+            "Tacti" {Radio}. Idempotent — skips a tab whose (molecule, jobtype, NameEn) already exists. Shift-type
+            membership is left empty (= all Alhut shift types) so the example reads cleanly.
             </summary>
         </member>
         <member name="T:ShiftManager.Data.SeedData.ShiftyOrganizationSeed">
@@ -3240,6 +3254,30 @@
             <inheritdoc />
         </member>
         <member name="M:ShiftManager.Migrations.DraftAllCalendarsFoundation.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.ReshapeShiftTabsForSelectors">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ReshapeShiftTabsForSelectors.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ReshapeShiftTabsForSelectors.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ReshapeShiftTabsForSelectors.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.AddNullJobTabUniquenessIndexes">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddNullJobTabUniquenessIndexes.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddNullJobTabUniquenessIndexes.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.AddNullJobTabUniquenessIndexes.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
         <member name="T:ShiftManager.Migrations.ChoreFoundationBackfillSql">
@@ -5909,26 +5947,45 @@
         </member>
         <member name="T:ShiftManager.Models.ShiftTab">
              <summary>
-             A molecule-scoped "tab" (Hebrew: לשונית) — a named sub-calendar within a molecule, like a separate
-             Excel sheet in the legacy system. A <see cref="T:ShiftManager.Models.ShiftType"/> belongs to at most one tab via
-             <see cref="P:ShiftManager.Models.ShiftType.TabId"/> (untagged = the implicit "Main" tab). Companies are assigned to a tab via
-             <see cref="T:ShiftManager.Models.ShiftTabCompany"/>, which drives the by-user roster base.
+             A calendar "tab" (Hebrew: לשונית) scoped to exactly one <c>(Molecule, JobType)</c> — a named
+             sub-calendar within a molecule's job-type calendar. Companies join a tab via <see cref="T:ShiftManager.Models.ShiftTabCompany"/>
+             (people-view roster base + selector prioritization) and shift types via <see cref="T:ShiftManager.Models.ShiftTabShiftType"/>
+             (by-shift view). Both memberships are many-to-many; empty = "no restriction" (all). There is no stored
+             "Main" tab — the always-present synthetic "All" view is view-only (no DB row).
             
-             A tab is purely a VIEW partition: it filters what the Shifts calendar renders but NEVER narrows
-             eligibility, overlap/rest/weekly-hours (<c>IBusyService</c>), or fairness/Justice — those always reason
-             over a user's full, cross-tab shift set.
+             A tab is purely a VIEW/relevance partition: it filters what the Shifts calendar renders and PRIORITIZES
+             pickers, but NEVER narrows eligibility, overlap/rest/weekly-hours, or fairness/Justice.
             
-             Like <see cref="T:ShiftManager.Models.ShiftCategory"/>, this entity is NOT tenant-filtered (no IBelongsToCompany);
-             visibility is molecule-scoped via MoleculeId, and isolation rests on explicit MoleculeId checks at
-             every call site.
+             NOT tenant-filtered (no IBelongsToCompany); visibility is molecule-scoped via MoleculeId, isolation rests
+             on explicit MoleculeId checks at every call site.
              </summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftTab.JobTypeId">
+            <summary>The job type this tab belongs to. Null only for Tech molecules (calendar job type is null).</summary>
+        </member>
+        <member name="P:ShiftManager.Models.ShiftTab.PrioritizeCompanyUsers">
+            <summary>Prioritize this tab's companies' users in the assignment pickers (+ off-tab warning).</summary>
         </member>
         <member name="T:ShiftManager.Models.ShiftTabCompany">
             <summary>
-            Assigns a <see cref="P:ShiftManager.Models.ShiftTabCompany.Company"/> to a <see cref="P:ShiftManager.Models.ShiftTabCompany.ShiftTab"/> — the tab's people-view roster base.
-            A company belongs to AT MOST ONE tab (unique <see cref="P:ShiftManager.Models.ShiftTabCompany.CompanyId"/>), so tabs are disjoint and the
-            implicit "Main" tab = the molecule's companies with no assignment. Both FKs cascade-delete: removing a
-            tab (or a company) drops the link automatically.
+            Assigns a <see cref="P:ShiftManager.Models.ShiftTabCompany.Company"/> to a <see cref="P:ShiftManager.Models.ShiftTabCompany.ShiftTab"/> — the tab's people-view roster base +
+            selector prioritization set. A company may now belong to MULTIPLE tabs (across job types and within a
+            job type's tab set). Composite key <c>(ShiftTabId, CompanyId)</c>; both FKs cascade-delete.
+            </summary>
+        </member>
+        <member name="T:ShiftManager.Models.ShiftTabShiftType">
+            <summary>
+            Assigns a <see cref="P:ShiftManager.Models.ShiftTabShiftType.ShiftType"/> to a <see cref="P:ShiftManager.Models.ShiftTabShiftType.ShiftTab"/> — the tab's by-shift view membership.
+            Replaces the old <c>ShiftType.TabId</c> single-tab column: a shift type may now appear in multiple tabs'
+            views, and "no rows for a tab" means "no restriction" (all job-type shift types). Composite key
+            <c>(ShiftTabId, ShiftTypeId)</c>; both FKs cascade-delete.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Models.ShiftType.IsHomeKey(System.String)">
+            <summary>
+            True when a raw shift-type Key is any HOME variant (full-day / PM / AM). Static so it can be
+            evaluated in-memory over a projected <c>Key</c> string — <see cref="P:ShiftManager.Models.ShiftType.IsHome"/> is <c>[NotMapped]</c>
+            and cannot be used inside an EF IQueryable projection.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.ShiftType.CompanyId">
@@ -6819,11 +6876,10 @@
         </member>
         <member name="T:ShiftManager.Models.UserShiftTabPreference">
             <summary>
-            A single user's remembered tab selection per molecule on the Shifts calendar. NOT IBelongsToCompany —
-            a per-user UI preference read only for its owner (like <see cref="T:ShiftManager.Models.UserCalendarRowOrder"/>), so there is
-            no cross-tenant read path. <see cref="P:ShiftManager.Models.UserShiftTabPreference.TabId"/> null = the user explicitly chose "Main". The FK
-            TabId → ShiftTab is SET NULL, so deleting a tab reverts anyone's remembered preference to Main. Unique
-            per (UserId, MoleculeId).
+            A single user's remembered tab selection per <c>(Molecule, JobType)</c> on the Shifts calendar. NOT
+            IBelongsToCompany — a per-user UI preference read only for its owner. <see cref="P:ShiftManager.Models.UserShiftTabPreference.TabId"/> null =
+            no explicit tab (falls back to the synthetic "All" view). FK TabId → ShiftTab is SET NULL, so deleting a
+            tab reverts anyone's remembered preference. Unique per <c>(UserId, MoleculeId, JobTypeId)</c>.
             </summary>
         </member>
         <member name="T:ShiftManager.Models.Validation.ChoreAssignmentValidation">
@@ -7253,6 +7309,20 @@
             <summary>
             JSON deserialization model for hours entries posted from the client.
             </summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.Tabs.IndexModel.ComputeUncovered(System.Collections.Generic.IEnumerable{System.Int32},System.Collections.Generic.List{System.Collections.Generic.HashSet{System.Int32}})">
+            <summary>Shift-type ids covered by NO tab. An empty tab means "all" → coverage complete.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.Tabs.IndexModel.OnGetCheckTabUsageAsync(System.Int32)">
+            <summary>AJAX delete-impact preview (mirrors Blueprints' OnGetCheckTabUsage pattern).</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.Tabs.IndexModel.IsUserAuthorizedForMoleculeAsync(System.Int32)">
+            <summary>The current user has ManageCalendarTabs grant access to the molecule (∪ own molecule).</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Admin.Organization.Tabs.IndexModel.IsJobTypeInScopeAsync(System.Int32,System.Nullable{System.Int32})">
+            <summary>The jobtype is valid for the molecule: null ONLY for a Tech molecule, else it must own shift
+            types in the molecule. A null-jobtype tab on a workforce molecule would be invisible in the strip
+            (GetTabsForMoleculeAsync filters by the real jobtype) — an unreachable orphan — so reject it (IDOR/POST).</summary>
         </member>
         <member name="P:ShiftManager.Pages.Admin.UsersModel.DirectorCompanyNames">
             <summary>Tooltip data: director user ID → list of managed company names</summary>
@@ -8148,9 +8218,10 @@
         </member>
         <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.Tab">
             <summary>
-            Selected calendar tab (לשונית). Bound from ?Tab=. Absent from the query = resolve the user's
-            remembered tab; <c>0</c> = explicit "Main". After OnGet resolution this holds the EFFECTIVE tab:
-            null = Main, otherwise a real tab id in the current molecule. Downstream filters key off it.
+            Selected calendar tab (לשונית). Bound from ?Tab=. After OnGet resolution this holds the EFFECTIVE
+            tab: <c>null</c> = the synthetic "All" pseudo-tab (all molecule+jobtype shift types, all companies,
+            no prioritization); otherwise a real ShiftTab id in this (molecule, jobtype). <c>?Tab=0</c> or a
+            deleted/foreign id resolves to All. Downstream view filters + prioritization key off it.
             </summary>
         </member>
         <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.SelectedDistributionListIds">
@@ -8159,9 +8230,28 @@
         <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.AvailableTabs">
             <summary>The molecule's admin-defined tabs (לשונית) for the calendar tab strip. Empty = no strip.</summary>
         </member>
+        <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.TabPrioritizeActive">
+            <summary>True when the active tab is a real tab whose PrioritizeCompanyUsers is on AND it has ≥1
+            company. Drives client picker prioritization + off-tab warnings. False for "All"/zero-company tabs.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.InTabUserIds">
+            <summary>Membership-aware set of picker-candidate user ids that belong to the active tab's companies.
+            Emitted as data-in-tab on the hidden trainee/assignee selects for client grouping. Empty unless
+            <see cref="P:ShiftManager.Pages.Calendar.ShiftsModel.TabPrioritizeActive"/>.</summary>
+        </member>
         <member name="P:ShiftManager.Pages.Calendar.ShiftsModel.CategoryEligibilityEnabled">
             <summary>3b: when true (per-company flag), the assign user-picker filters by DoesShifts + ShiftCategory.
             When false, the picker keeps its legacy behavior exactly (zero-risk default-off rollout).</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.ResolveActiveTab(System.Collections.Generic.IReadOnlyList{ShiftManager.Models.ShiftTab},System.Boolean,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <summary>
+            Resolves the effective active tab. Pure + static so it is unit-testable without the DB (PF10).
+            null = the synthetic "All" pseudo-tab. Rules:
+              • no tabs in scope            → All (no strip).
+              • ?Tab= present: real id      → that tab; 0 / deleted / foreign id → All.
+              • ?Tab= absent: remembered valid → restore; else (no pref / dangling / deleted) → All (UD2 default).
+            (LTM-2's literal "first-available" is reconciled to "All" per UD2 — All is always valid + non-empty.)
+            </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.BuildListGroupedRowsAsync(System.Collections.Generic.List{ShiftManager.Models.AppUser},System.Collections.Generic.List{System.Int32},System.Int32,System.Collections.Generic.List{ShiftManager.Models.ShiftInstance},System.Collections.Generic.List{ShiftManager.Models.ShiftAssignment},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},ShiftManager.Services.FyiOverlayData},System.Collections.Generic.Dictionary{System.Int32,System.String},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.Collections.Generic.List{System.ValueTuple{System.Int32,System.String}}},System.Collections.Generic.Dictionary{System.ValueTuple{System.Int32,System.DateOnly},System.String})">
             <summary>
@@ -8205,9 +8295,9 @@
         </member>
         <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.ShiftIsOnActiveTab(System.Int32)">
             <summary>
-            True if a shift type is on the active tab (or the molecule has no tabs). Main (Tab == null) matches
-            untagged shifts. Drives by-user "busy elsewhere" ghosting: a shift on a DIFFERENT tab is shown greyed
-            and non-interactive, but is NEVER hidden from conflict/rest/hours — those see the full shift set.
+            True if a shift type is on the active tab (or "All"/no tabs). Drives by-user "busy elsewhere"
+            ghosting: a shift NOT on the active tab shows greyed + non-interactive, but is NEVER hidden from
+            conflict/rest/hours (those see the full shift set). A shift type can be on multiple tabs (STR-3).
             </summary>
         </member>
         <member name="M:ShiftManager.Pages.Calendar.ShiftsModel.OnGetJusticeAsync(System.Threading.CancellationToken)">
@@ -8242,6 +8332,14 @@
         </member>
         <member name="P:ShiftManager.Pages.Calendar.TableModel.IsMoleculeMode">
             <summary>True when Calendar/Table is operating in molecule-scoped mode (MoleculeId + JobTypeId both set, or Tech molecule).</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.TableModel.OnPostDraftOffTabCountAsync(ShiftManager.Pages.Calendar.TableModel.DraftOffTabCountRequest)">
+            <summary>
+            PF15 disclosure (read-only): how many of a draft's staged cells sit on shift types NOT shown by the
+            active tab, so the commit UI can warn before applying off-view changes. Commit is molecule+jobtype-scoped
+            and always applies ALL staged cells — this only surfaces a count. tabId null/0 (the "All" tab) or a tab
+            with no shift-type restriction (empty = all shift types) means nothing is off-view.
+            </summary>
         </member>
         <member name="P:ShiftManager.Pages.Calendar.TableModel.AssignEmployeeRequest.DraftSessionId">
             <summary>When set, the assignment is STAGED into this draft sandbox instead of written live.</summary>
@@ -13190,57 +13288,61 @@
         </member>
         <member name="T:ShiftManager.Services.IShiftTabService">
              <summary>
-             Manages molecule-scoped <see cref="T:ShiftManager.Models.ShiftTab"/> entities (Hebrew: לשונית) — named sub-calendars within a
-             molecule. A tab has two admin-set memberships: shift types (<see cref="P:ShiftManager.Models.ShiftType.TabId"/>, drives the
-             shift-view) and companies (<see cref="T:ShiftManager.Models.ShiftTabCompany"/>, drives the by-user roster base). Untagged shift
-             types + unassigned companies form the implicit "Main" tab. Also owns per-user "last tab" memory
-             (<see cref="T:ShiftManager.Models.UserShiftTabPreference"/>).
+             Manages <c>(Molecule, JobType)</c>-scoped <see cref="T:ShiftManager.Models.ShiftTab"/> entities (Hebrew: לשונית). A tab has two
+             admin-set memberships: shift types (<see cref="T:ShiftManager.Models.ShiftTabShiftType"/>, by-shift view) and companies
+             (<see cref="T:ShiftManager.Models.ShiftTabCompany"/>, people-view roster base + prioritization). Both are many-to-many; empty =
+             no restriction (all). Also owns per-user "last tab" memory (<see cref="T:ShiftManager.Models.UserShiftTabPreference"/>).
             
-             A tab is a VIEW partition only — it never affects eligibility, overlap/rest/hours, or fairness.
+             A tab is a VIEW/relevance partition only — it never affects eligibility, overlap/rest/hours, or fairness.
              </summary>
         </member>
-        <member name="M:ShiftManager.Services.IShiftTabService.CreateAsync(System.Int32,System.String,System.String,System.String)">
-            <summary>Creates a tab. Returns null if the (molecule, name) pair already exists or name is blank.</summary>
+        <member name="M:ShiftManager.Services.IShiftTabService.CreateAsync(System.Int32,System.Nullable{System.Int32},System.String,System.String,System.String,System.Nullable{System.Int32})">
+            <summary>Creates a tab. Returns null if NameEn OR NameHe already exists in the (molecule, jobtype)
+            scope, or either name is blank. New tabs default PrioritizeCompanyUsers = true.</summary>
         </member>
-        <member name="M:ShiftManager.Services.IShiftTabService.RenameAsync(System.Int32,System.String,System.String,System.String)">
-            <summary>Renames/recolors a tab. Returns false on not-found or a (molecule, name) collision.</summary>
+        <member name="M:ShiftManager.Services.IShiftTabService.RenameAsync(System.Int32,System.String,System.String,System.String,System.Boolean)">
+            <summary>Edits name/color/prioritize. Returns false on not-found or a NameEn/NameHe collision.</summary>
         </member>
         <member name="M:ShiftManager.Services.IShiftTabService.DeleteAsync(System.Int32)">
-            <summary>
-            Hard-deletes a tab: its shift types' TabId is nulled (FK SetNull → back to Main), its company links
-            cascade away, and any remembered preference pointing at it reverts to Main (FK SetNull).
-            </summary>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftTabService.ReorderTabsAsync(System.Int32,System.Collections.Generic.IReadOnlyList{System.Int32})">
-            <summary>Rewrites tab SortOrder from the given order. Returns false if any id is not in the molecule.</summary>
+            <summary>Hard-deletes a tab: company + shift-type join rows cascade away; remembered prefs → SetNull.</summary>
         </member>
         <member name="M:ShiftManager.Services.IShiftTabService.GetUsageAsync(System.Int32)">
-            <summary>Counts the shift types tagged to, and companies assigned to, a tab (for delete-impact preview).</summary>
+            <summary>Counts the shift-type and company join rows for a tab (delete-impact preview).</summary>
         </member>
-        <member name="M:ShiftManager.Services.IShiftTabService.AssignShiftTypeToTabAsync(System.Int32,System.Nullable{System.Int32})">
+        <member name="M:ShiftManager.Services.IShiftTabService.SetCompaniesForTabAsync(System.Int32,System.Collections.Generic.IReadOnlyCollection{System.Int32})">
+            <summary>Replaces the tab's company set. Rejects (returns false, no change) if ANY company is not in the
+            tab's molecule (IDOR guard). Empty = no restriction.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.SetShiftTypesForTabAsync(System.Int32,System.Collections.Generic.IReadOnlyCollection{System.Int32})">
+            <summary>Replaces the tab's shift-type set. Rejects (returns false, no change) if ANY shift type is not
+            in the tab's molecule or its jobtype scope (jobtype match or null). Empty = no restriction.</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.GetCompanyIdsForTabAsync(System.Int32)">
+            <summary>The companies assigned to a tab (empty = no restriction).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.GetShiftTypeIdsForTabAsync(System.Int32)">
+            <summary>The shift types assigned to a tab (empty = no restriction).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.IShiftTabService.GetShiftTypeTabMapAsync(System.Int32,System.Nullable{System.Int32})">
             <summary>
-            Sets (or clears, when tabId is null) a shift type's tab. Rejects area-scoped shifts (they span
-            molecules → always Main) and any tab that isn't in the shift's molecule. Returns false on those.
+            shiftTypeId → the set of tab ids whose EFFECTIVE shift-type set contains it, for one (molecule,
+            jobtype). A tab with an explicit selection contributes those ids; a tab with NO selection expands
+            to every molecule+jobtype shift type ("empty = all"); HOME/OFFLINE + null-jobtype shared shift
+            types map to EVERY tab (PF7 — never ghosted / never hidden). Powers by-user cross-over + ghosting.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IShiftTabService.AssignCompanyToTabAsync(System.Int32,System.Nullable{System.Int32})">
+        <member name="M:ShiftManager.Services.IShiftTabService.GetInTabUserIdsAsync(System.Nullable{System.Int32},System.Collections.Generic.IReadOnlyCollection{System.Int32})">
             <summary>
-            Assigns a company to a tab (upsert — moves it off any prior tab), or clears it when tabId is null.
-            Rejects a company whose molecule differs from the tab's (cross-molecule stitching guard). A company
-            is on at most one tab (unique CompanyId).
+            The subset of <paramref name="userIds"/> that belong — via ANY CompanyMembership — to the tab's
+            company set. Multi-company aware (a user in-tab through a non-primary membership counts). null tab,
+            or a tab with no companies, → empty (no prioritization). SECURITY: caller gates molecule access.
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IShiftTabService.GetCompanyIdsForTabAsync(System.Int32,System.Nullable{System.Int32})">
-            <summary>
-            The company set that defines a tab's people-view roster base. For a specific tab: the companies
-            assigned to it. For Main (tabId null): the molecule's companies with no tab assignment.
-            </summary>
+        <member name="M:ShiftManager.Services.IShiftTabService.GetLastTabAsync(System.Int32,System.Int32,System.Nullable{System.Int32})">
+            <summary>The user's remembered tab for a (molecule, jobtype) (null = none / the "All" view).</summary>
         </member>
-        <member name="M:ShiftManager.Services.IShiftTabService.GetLastTabAsync(System.Int32,System.Int32)">
-            <summary>The user's remembered tab for a molecule (null = Main, or no preference yet).</summary>
-        </member>
-        <member name="M:ShiftManager.Services.IShiftTabService.SetLastTabAsync(System.Int32,System.Int32,System.Nullable{System.Int32})">
-            <summary>Upserts the user's remembered tab for a molecule (null = explicitly Main).</summary>
+        <member name="M:ShiftManager.Services.IShiftTabService.SetLastTabAsync(System.Int32,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <summary>Upserts the user's remembered tab for a (molecule, jobtype) (null = explicit "All").</summary>
         </member>
         <member name="T:ShiftManager.Services.IShiftTypeSeedService">
             <summary>
@@ -13322,9 +13424,10 @@
             Cancel shadowing assignments that overlap with a time off period
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.ITraineeService.GetCompanyTraineesAsync(System.Int32)">
+        <member name="M:ShiftManager.Services.ITraineeService.GetMoleculeTraineesAsync(System.Int32,System.Nullable{System.Int32})">
             <summary>
-            Get all trainees in a company
+            Get all trainees across a molecule, optionally scoped to a job type (a null JobTypeId trainee is
+            always included as a universal-relevance safety net). Pass jobTypeId = null for no job-type filter.
             </summary>
         </member>
         <member name="M:ShiftManager.Services.IUserCompanyTransferService.GetMoveImpactAsync(System.Int32,System.Int32)">

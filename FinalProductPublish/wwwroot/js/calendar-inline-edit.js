@@ -8,7 +8,30 @@
  * which fetches fresh data via AJAX and updates the DOM in place.
  * Falls back to full page reload if CalendarRealtime is not initialized.
  */
+// Coalescing state: every assignment produces TWO overlapping refreshes — the POST-success call and the
+// SignalR self-echo (broadcasts go to Clients.Group, which includes the sender). Run concurrently, a
+// slower fetch's replaceWith() could land AFTER the newer grid and drop the newer HTML. We serialize:
+// while one refresh runs, a second call only marks a trailing run, and exactly one more fires when the
+// in-flight one settles — so the newest server state always wins, without a stampede of fetches.
+let _refreshInFlight = false;
+let _refreshPending = false;
+
 async function triggerCalendarRefresh() {
+    if (_refreshInFlight) { _refreshPending = true; return; }
+    _refreshInFlight = true;
+    try {
+        await _doCalendarRefresh();
+    } finally {
+        _refreshInFlight = false;
+        if (_refreshPending) {
+            _refreshPending = false;
+            // Trailing refresh: pick up anything that changed while this one was in flight.
+            triggerCalendarRefresh();
+        }
+    }
+}
+
+async function _doCalendarRefresh() {
     const grid = document.querySelector('.excel-calendar');
 
     // Legacy Month/Week/Day calendars render .calendar-cell (not .excel-calendar) and have no
@@ -44,7 +67,12 @@ async function triggerCalendarRefresh() {
         const fresh = doc.querySelector('.excel-calendar');
         if (!fresh) { location.reload(); return; }
 
-        grid.replaceWith(fresh);
+        // Re-query the LIVE grid at swap time rather than trusting the node captured before the await:
+        // if anything detached it meanwhile (a competing refresh, a re-render), replaceWith() on the
+        // stale node is a silent no-op that would drop this newer HTML. Fall back to the captured node
+        // only if the query finds nothing.
+        const liveGrid = document.querySelector('.excel-calendar') || grid;
+        liveGrid.replaceWith(fresh);
 
         // Restore scroll position (.excel-calendar is the overflow:auto scroll container) + window.
         fresh.scrollLeft = scrollLeft;
@@ -568,6 +596,17 @@ async function quickAddShift(shiftTypeId, date, assigneeId, confirmHandler = def
                     showToast(retryResult.message || retryResult.error || 'Error', 'error');
                 }
             }
+        } else if (result.errorKey === 'ALREADY_ASSIGNED'
+                   || (Array.isArray(result.errors) && result.errors.some(function (e) { return e.key === 'ALREADY_ASSIGNED'; }))) {
+            // Concurrent edit: another user already assigned this person while this grid was stale.
+            // The AssignEmployee response carries the key in errors[].key (not a top-level errorKey),
+            // so check both. Non-blocking + benign: refresh in place, then say so.
+            const culture = getCurrentCulture();
+            const msg = culture === 'he-IL'
+                ? 'המשתמש כבר משובץ למשמרת זו. לוח השנה עודכן.'
+                : 'The user is already assigned to this shift. The calendar has been refreshed.';
+            showToast(msg, 'warning');
+            triggerCalendarRefresh();
         } else {
             showToast(result.message || result.error || 'Error', 'error');
         }
@@ -868,21 +907,51 @@ function openInlineTraineePicker(btn) {
     var draftCoords = draftId ? harvestTraineeDraftCoords(btn) : null;
     if (!draftCoords && isNaN(assignmentId)) return;
 
+    // Plain native <select> — intentionally NOT searchable-enhanced: no data-searchable is set on it,
+    // so the searchable-select widget never wraps it. It groups via native <optgroup> (below) and
+    // dismisses itself on Escape / blur.
     var select = document.createElement('select');
     select.className = 'excel-calendar__trainee-picker';
     var def = document.createElement('option');
     def.value = '';
     def.textContent = window.AppLocalizer?.BottomSheet_AddTrainee || 'Add trainee...';
     select.appendChild(def);
-    for (var i = 0; i < source.options.length; i++) {
+
+    // PF8/PF9: clone options, PRESERVING data-company/data-jobtype/data-in-tab, into two <optgroup>s
+    // ("this tab" first) when prioritization is active; otherwise a flat list.
+    function cloneOpt(src) {
         var o = document.createElement('option');
-        o.value = source.options[i].value;
-        o.textContent = source.options[i].textContent;
-        select.appendChild(o);
+        o.value = src.value;
+        o.textContent = src.textContent;
+        o.dataset.company = src.dataset.company || '';
+        o.dataset.jobtype = src.dataset.jobtype || '';
+        o.dataset.inTab = src.dataset.inTab || '0';
+        return o;
     }
+    var srcOpts = Array.prototype.slice.call(source.options).filter(function (o) { return o.value; });
+    var P = window.CalendarTabPrioritization;
+    if (P && P.isActive()) {
+        var norm = srcOpts.map(function (o) { return { opt: o, inTab: o.dataset.inTab === '1' }; });
+        var parts = P.partition(norm);
+        if (parts.thisTab.length) {
+            var g1 = document.createElement('optgroup'); g1.label = P.label('this');
+            parts.thisTab.forEach(function (n) { g1.appendChild(cloneOpt(n.opt)); });
+            select.appendChild(g1);
+        }
+        if (parts.other.length) {
+            var g2 = document.createElement('optgroup'); g2.label = P.label('other');
+            parts.other.forEach(function (n) { g2.appendChild(cloneOpt(n.opt)); });
+            select.appendChild(g2);
+        }
+    } else {
+        srcOpts.forEach(function (o) { select.appendChild(cloneOpt(o)); });
+    }
+
     select.addEventListener('change', function () {
         var traineeId = parseInt(select.value, 10);
         if (select.value && !isNaN(traineeId)) {
+            var chosen = select.options[select.selectedIndex];
+            if (P) P.maybeWarnOffTab({ id: traineeId, inTab: chosen && chosen.dataset.inTab === '1' });
             select.disabled = true;
             if (draftCoords) {
                 stageDraftAddTrainee(draftCoords.shiftTypeId, draftCoords.date, draftCoords.primaryUserId, traineeId);
@@ -894,7 +963,11 @@ function openInlineTraineePicker(btn) {
     });
     // Dismiss on Escape or when focus leaves.
     select.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') select.remove(); });
-    select.addEventListener('blur', function () { setTimeout(function () { if (select.parentNode) select.remove(); }, 150); });
+    select.addEventListener('blur', function () {
+        setTimeout(function () {
+            if (select.parentNode) select.remove();
+        }, 150);
+    });
 
     // Insert after the chip (not inside — keeps the chip layout intact).
     chip.insertAdjacentElement('afterend', select);

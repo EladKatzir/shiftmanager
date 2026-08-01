@@ -1040,6 +1040,21 @@ public static class RoleTemplateSeed
         grants.Add(G(10, 136, ETA));                  // AreaAdmin (קב"ב) — area
         grants.Add(G(11, 136, ETP, canGive: true));   // Owner — project
 
+        // ============================================
+        // ManageCalendarTabs (ID 138) — Calendar tabs admin (2026-07-21)
+        // Same Lead-and-above floor as ManageShiftCategories (136): Assigner (8) uses SAR (role scope IS
+        // Molecule); DepartmentLead (9) uses ETM to expand Department → molecule. Employee (1) + Trainee (12)
+        // intentionally excluded.
+        // ============================================
+        grants.Add(G(3, 138, ETM));                   // Lead (מפ"צ) — molecule
+        grants.Add(G(2, 138, ETM));                   // BRDirector (קב"ר) — molecule
+        grants.Add(G(5, 138, ETM));                   // Director (מ"מ) — molecule
+        grants.Add(G(7, 138, ETM));                   // MoleculeAdmin (מפק"מ) — molecule
+        grants.Add(G(8, 138, SAR));                   // Assigner (משבץ) — molecule (role scope is Molecule)
+        grants.Add(G(9, 138, ETM));                   // DepartmentLead — expand Department → molecule
+        grants.Add(G(10, 138, ETA));                  // AreaAdmin (קב"ב) — area
+        grants.Add(G(11, 138, ETP, canGive: true));   // Owner — project
+
         return grants;
     }
 }
