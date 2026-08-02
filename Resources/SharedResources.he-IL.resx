@@ -212,7 +212,7 @@
     <value>משמרות לא משויכות</value>
   </data>
   <data name="UnderstaffedDays" xml:space="preserve">
-    <value>ימים עם חסר כוח אדם</value>
+    <value>ימים בהם חסר כוח אדם</value>
   </data>
   <data name="OpenSchedulingWorkspace" xml:space="preserve">
     <value>פתח סביבת עבודה לתזמון</value>

@@ -78,7 +78,18 @@
         try {
             var result = await postForm('/Calendar/Team?handler=DeleteView', { id: id });
             if (result.success) {
-                location.reload();
+                // If we're currently VIEWING the table being deleted (?ViewId=<id>), a plain reload would
+                // re-request the now-deleted view and OnGet would surface the alarming "no longer accessible
+                // / outside your permissions" banner for what is a normal delete. Drop ViewId so we fall
+                // back cleanly to the default team view instead.
+                var params = new URLSearchParams(window.location.search);
+                if (params.get('ViewId') === String(id)) {
+                    params.delete('ViewId');
+                    var qs = params.toString();
+                    window.location.href = window.location.pathname + (qs ? '?' + qs : '');
+                } else {
+                    location.reload();
+                }
             } else {
                 showError(result.error);
             }
