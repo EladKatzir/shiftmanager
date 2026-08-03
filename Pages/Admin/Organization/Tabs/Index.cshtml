@@ -7,6 +7,9 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = Localizer["Tabs_PageTitle"].Value;
+    // Current-language name picker — mirrors Shifts.cshtml's isHeStrip so the preview + table read
+    // the same name the user sees on the real calendar strip.
+    var isHe = System.Globalization.CultureInfo.CurrentUICulture.Name.StartsWith("he");
 }
 
 @await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
@@ -66,6 +69,38 @@
 @{ var scopeReady = Model.MoleculeId.HasValue && (Model.IsTechMolecule || Model.JobTypeId.HasValue); }
 @if (scopeReady)
 {
+    @* id → localized name lookups for the chip cells (D3). Companies/shift types are already scoped
+       to this (molecule, jobtype) by the page model, so every tab member resolves here. *@
+    var companyNames = Model.MoleculeCompanies.ToDictionary(c => c.Id, c => c.Name);
+    var shiftTypeNames = Model.ScopeShiftTypes.ToDictionary(s => s.Id, s => s.Name);
+
+    @* ── D1/D2: live pill-strip preview — the page centerpiece. Reuses the real .cal-tab markup from
+       Shifts.cshtml (mirrored, not modified) so the admin previews exactly what ships on the calendar:
+       the synthetic "All" pill first, then one non-interactive pill per configured tab with its color. *@
+    <section class="feature-category tabs-preview" aria-labelledby="tabsPreviewHeading">
+        <h2 id="tabsPreviewHeading"><loc key="Tabs_PreviewTitle" /></h2>
+        <p class="text-muted tabs-preview__hint"><small><loc key="Tabs_PreviewHint" /></small></p>
+        <div class="cal-tabs cal-tabs--preview" role="list" aria-label="@Localizer["Tabs_PreviewTitle"]" id="tabsPreviewStrip">
+            <span class="cal-tab cal-tab--active" role="listitem">@Localizer["Calendar_Tab_All"]</span>
+            @foreach (var t in Model.Tabs)
+            {
+                var pillName = isHe ? t.NameHe : t.NameEn;
+                @* data-preview-tab-id/orig-name let the live preview (Scripts) update THIS pill in place when its tab is edited. *@
+                <span class="cal-tab" role="listitem" data-preview-tab-id="@t.Id" data-orig-name="@pillName">
+                    @* Admin preview always shows a dot (with a ~#888 fallback) so the color is seen even
+                       when unset — the real calendar omits the dot when no color is set. *@
+                    <span class="cal-tab__dot" style="background:@(string.IsNullOrWhiteSpace(t.Color) ? "#888" : t.Color)"></span>
+                    <bdi>@pillName</bdi>
+                </span>
+            }
+            @* Live "draft" pill — mirrors the Add form as you type a name / pick a color (create mode only). Hidden until a name is entered. *@
+            <span class="cal-tab cal-tab--draft" role="listitem" id="tabsPreviewDraft" hidden>
+                <span class="cal-tab__dot"></span>
+                <bdi></bdi>
+            </span>
+        </div>
+    </section>
+
     @if (Model.UncoveredShiftTypeNames.Any())
     {
         <div class="alert alert-warning">
@@ -74,8 +109,10 @@
         </div>
     }
 
-    @* Existing tabs *@
-    <div class="feature-category">
+    @* ── D3: configured tabs — desk + shift-type names as chips, collapsing to a compact "All" only when
+       the set is empty (empty = all). Replaces the raw counts and the whole-paragraph "empty" dump. *@
+    <section class="feature-category" aria-labelledby="tabsConfiguredHeading">
+        <h2 id="tabsConfiguredHeading"><loc key="Tabs_ConfiguredTitle" /></h2>
         @if (Model.Tabs.Any())
         {
             <table class="table table-hover">
@@ -84,7 +121,7 @@
                         <th><loc key="Tabs_NameEn" /> / <loc key="Tabs_NameHe" /></th>
                         <th><loc key="Tabs_Companies" /></th>
                         <th><loc key="Tabs_ShiftTypes" /></th>
-                        <th><loc key="Tabs_PrioritizeCompanyUsers" /></th>
+                        <th><loc key="Tabs_PrioritizeShort" /></th>
                         <th></th>
                     </tr>
                 </thead>
@@ -93,15 +130,50 @@
                     {
                         <tr>
                             <td>
-                                <span style="display:inline-block; width:12px; height:12px; border-radius:50%; margin-inline-end:6px; vertical-align:middle; background:@(string.IsNullOrWhiteSpace(t.Color) ? "#888" : t.Color);"></span>
+                                <span class="tab-color-dot" style="background:@(string.IsNullOrWhiteSpace(t.Color) ? "#888" : t.Color);"></span>
                                 <bdi>@t.NameEn</bdi> / <bdi>@t.NameHe</bdi>
                             </td>
-                            <td><small class="text-muted">@(t.CompanyCount == 0 ? Localizer["Tabs_EmptyMeansAll"].Value : t.CompanyCount.ToString())</small></td>
-                            <td><small class="text-muted">@(t.ShiftTypeCount == 0 ? Localizer["Tabs_EmptyMeansAll"].Value : t.ShiftTypeCount.ToString())</small></td>
+                            <td>
+                                @if (t.CompanyIds.Count == 0)
+                                {
+                                    <span class="tab-chip tab-chip--all">@Localizer["Calendar_Tab_All"]</span>
+                                }
+                                else
+                                {
+                                    <div class="tab-chips">
+                                        @foreach (var cid in t.CompanyIds)
+                                        {
+                                            @if (companyNames.TryGetValue(cid, out var cn))
+                                            {
+                                                <span class="tab-chip"><bdi>@cn</bdi></span>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                @if (t.ShiftTypeIds.Count == 0)
+                                {
+                                    <span class="tab-chip tab-chip--all">@Localizer["Calendar_Tab_All"]</span>
+                                }
+                                else
+                                {
+                                    <div class="tab-chips">
+                                        @foreach (var sid in t.ShiftTypeIds)
+                                        {
+                                            @if (shiftTypeNames.TryGetValue(sid, out var sn))
+                                            {
+                                                <span class="tab-chip"><bdi>@sn</bdi></span>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            </td>
                             <td>@(t.PrioritizeCompanyUsers ? "✓" : "—")</td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-secondary js-edit-tab"
                                         data-id="@t.Id" data-name-en="@t.NameEn" data-name-he="@t.NameHe"
+                                        data-name-current="@(isHe ? t.NameHe : t.NameEn)"
                                         data-color="@t.Color" data-priority="@t.PrioritizeCompanyUsers.ToString().ToLowerInvariant()"
                                         data-company-ids="@string.Join(",", t.CompanyIds)"
                                         data-shift-type-ids="@string.Join(",", t.ShiftTypeIds)">
@@ -120,14 +192,19 @@
         {
             <div class="alert alert-info"><loc key="Tabs_NoTabs" /></div>
         }
-    </div>
+    </section>
 
     @* Create / edit form (JS toggles handler + fills fields for edit) *@
     <form method="post" id="tabForm" class="feature-category" asp-page-handler="Create">
         <input type="hidden" asp-for="MoleculeId" />
         <input type="hidden" asp-for="JobTypeId" />
         <input type="hidden" asp-for="EditTabId" />
-        <h2 id="tabFormTitle"><icon name="plus" /> <loc key="Tabs_AddTab" /></h2>
+        <h2 id="tabFormTitle" class="tabform-title">
+            @* M3: swap the plus icon → pencil + a localized "Edit: {name}" heading when editing. *@
+            <span class="tabform-icon tabform-icon--add"><icon name="plus" /></span>
+            <span class="tabform-icon tabform-icon--edit" hidden><icon name="pencil" /></span>
+            <span id="tabFormText"><loc key="Tabs_AddTab" /></span>
+        </h2>
         <div class="form-row" style="display:flex; gap:16px; flex-wrap:wrap;">
             <div class="form-group"><label asp-for="NameEn"><loc key="Tabs_NameEn" /></label>
                 <input asp-for="NameEn" class="form-control" maxlength="100" autocomplete="off" /></div>
@@ -140,25 +217,42 @@
             <label class="checkbox">
                 <input asp-for="PrioritizeCompanyUsers" type="checkbox" /> <loc key="Tabs_PrioritizeCompanyUsers" />
             </label>
+            @* O2: subtle hint shown only while no desk is selected — prioritization then has no target. *@
+            <p class="tabs-hint" id="prioritizeHint" hidden><loc key="Tabs_PrioritizeNeedsDesks" /></p>
         </div>
         <p class="text-muted"><small><loc key="Tabs_EmptyMeansAll" /></small></p>
         <div class="form-row" style="display:flex; gap:32px; flex-wrap:wrap;">
             <fieldset class="form-group">
                 <legend><loc key="Tabs_Companies" /></legend>
-                @foreach (var c in Model.MoleculeCompanies)
+                @if (Model.MoleculeCompanies.Any())
                 {
-                    <label class="checkbox" style="display:block;">
-                        <input type="checkbox" name="SelectedCompanyIds" value="@c.Id" class="js-company-chk" /> @c.Name
-                    </label>
+                    @foreach (var c in Model.MoleculeCompanies)
+                    {
+                        <label class="checkbox" style="display:block;">
+                            <input type="checkbox" name="SelectedCompanyIds" value="@c.Id" class="js-company-chk" /> @c.Name
+                        </label>
+                    }
+                }
+                else
+                {
+                    @* O1: empty-state line instead of a bare bordered box. *@
+                    <p class="fieldset-empty"><loc key="Tabs_NoCompaniesAvailable" /></p>
                 }
             </fieldset>
             <fieldset class="form-group">
                 <legend><loc key="Tabs_ShiftTypes" /></legend>
-                @foreach (var st in Model.ScopeShiftTypes)
+                @if (Model.ScopeShiftTypes.Any())
                 {
-                    <label class="checkbox" style="display:block;">
-                        <input type="checkbox" name="SelectedShiftTypeIds" value="@st.Id" class="js-shifttype-chk" /> @st.Name
-                    </label>
+                    @foreach (var st in Model.ScopeShiftTypes)
+                    {
+                        <label class="checkbox" style="display:block;">
+                            <input type="checkbox" name="SelectedShiftTypeIds" value="@st.Id" class="js-shifttype-chk" /> @st.Name
+                        </label>
+                    }
+                }
+                else
+                {
+                    <p class="fieldset-empty"><loc key="Tabs_NoShiftTypesAvailable" /></p>
                 }
             </fieldset>
         </div>
@@ -173,9 +267,132 @@
     </form>
 }
 
+@section Styles {
+    <style>
+        /* ── Tab-strip preview: .cal-tab* mirrored VERBATIM from Pages/Calendar/Shifts.cshtml so the admin
+           surface previews its own output pixel-for-pixel. Design tokens come from site.css. The calendar's
+           own rendering is NOT touched — these are page-scoped copies. */
+        .cal-tabs {
+            display: flex; flex-wrap: wrap; align-items: center;
+            gap: 0.375rem; margin: 0.5rem 0 0; padding-bottom: 0.5rem; overflow-x: auto;
+        }
+        .cal-tab {
+            display: inline-flex; align-items: center;
+            padding: 0.375rem 0.85rem; border-radius: 999px;
+            background: var(--surface-soft); color: var(--text);
+            font-size: 0.85rem; font-weight: 500; text-decoration: none;
+            border: 1px solid transparent; white-space: nowrap;
+        }
+        .cal-tab--active { background: var(--primary); color: var(--primary-contrast); font-weight: 600; }
+        .cal-tab__dot {
+            width: 0.5rem; height: 0.5rem; border-radius: 50%; display: inline-block;
+            margin-inline-end: 0.375rem; border: 1px solid rgba(0, 0, 0, 0.15);
+        }
+        /* Preview pills are illustrative, not clickable. */
+        .cal-tabs--preview .cal-tab { cursor: default; }
+        /* Live-preview states: dashed "draft" pill (create) and a focus ring on the pill being edited. */
+        .cal-tab--draft { border: 1px dashed var(--primary); opacity: 0.92; }
+        .cal-tab--editing { box-shadow: 0 0 0 2px var(--primary); }
+        /* The draft pill toggles via the `hidden` attribute; `.cal-tab{display}` (0,1,0) would otherwise
+           beat the UA `[hidden]` rule (same trap as the B1 searchable-select fix), so restore it here. */
+        .cal-tab[hidden] { display: none; }
+        .tabs-preview { border-inline-start: 3px solid var(--primary); }
+        .tabs-preview__hint { margin: 0 0 0.25rem; }
+
+        /* Configured-tabs table: color dot + desk/shift-type chips (D2/D3). */
+        .tab-color-dot {
+            display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+            margin-inline-end: 6px; vertical-align: middle;
+        }
+        .tab-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+        .tab-chip {
+            display: inline-flex; align-items: center; max-width: 16rem;
+            padding: 0.125rem 0.5rem; border-radius: 9999px;
+            background: var(--surface-soft); border: 1px solid var(--border);
+            color: var(--text); font-size: 0.8125rem; line-height: 1.5;
+        }
+        .tab-chip bdi { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tab-chip--all { background: var(--primary-soft); border-color: transparent; color: var(--primary); font-weight: 600; }
+
+        /* Create/edit form polish (M3/O1/O2). */
+        .tabform-title { display: flex; align-items: center; gap: 0.4rem; }
+        .tabform-icon { display: inline-flex; }
+        .fieldset-empty { color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0; }
+        .tabs-hint { color: var(--text-muted); font-size: 0.8125rem; margin: 0.35rem 0 0; }
+    </style>
+}
+
 @section Scripts {
 <script>
+    // Server-rendered, localized labels for the JS-driven dialogs (no native alert/confirm; RTL-correct).
+    window.TabsAdminL10n = @Json.Serialize(new
+    {
+        deleteTitle = Localizer["Tabs_DeleteTitle"].Value,
+        deleteOk = Localizer["Tabs_Delete"].Value,
+        cancel = Localizer["Tabs_Cancel"].Value,
+        editHeading = Localizer["Tabs_EditHeading"].Value
+    });
+    // Which name field the preview pill mirrors — matches the calendar strip's current-language pick.
+    window.TabsAdminIsHe = @Json.Serialize(isHe);
+</script>
+<script>
 (function () {
+    var L = window.TabsAdminL10n || {};
+
+    // ── Live tab-strip preview: reflect the Add/Edit form in the preview strip as the user types the
+    //    name / picks a color. Create mode shows a dashed "draft" pill; Edit mode updates the real pill
+    //    in place (marked with a ring). Purely visual — a page reload restores the saved truth.
+    var IS_HE = window.TabsAdminIsHe === true;
+    var previewStrip = document.getElementById('tabsPreviewStrip');
+    var draftPill = document.getElementById('tabsPreviewDraft');
+    var previewForm = document.getElementById('tabForm');
+    function pFieldVal(n) { var el = previewForm && previewForm.querySelector('[name="' + n + '"]'); return el ? el.value : ''; }
+    function pCurrentName() {
+        var en = (pFieldVal('NameEn') || '').trim(), he = (pFieldVal('NameHe') || '').trim();
+        return IS_HE ? (he || en) : (en || he); // mirror the calendar strip's current-language name pick
+    }
+    function pCurrentColor() { return pFieldVal('Color') || '#3B82F6'; }
+    function pEditId() { var v = pFieldVal('EditTabId'); return (v && v !== '0') ? v : null; }
+    function pSetPill(pill, name, color) {
+        var dot = pill.querySelector('.cal-tab__dot'); if (dot) dot.style.background = color || '#888';
+        var bdi = pill.querySelector('bdi'); if (bdi) bdi.textContent = name;
+    }
+    function updateTabPreview() {
+        if (!previewStrip || !draftPill || !previewForm) return;
+        previewStrip.querySelectorAll('.cal-tab--editing').forEach(function (p) { p.classList.remove('cal-tab--editing'); });
+        var id = pEditId(), name = pCurrentName(), color = pCurrentColor();
+        if (id) {
+            // Edit mode: reflect the change on the tab's own pill; hide the draft pill.
+            draftPill.hidden = true;
+            var target = previewStrip.querySelector('[data-preview-tab-id="' + id + '"]');
+            if (target) { target.classList.add('cal-tab--editing'); pSetPill(target, name || target.dataset.origName || '', color); }
+        } else if (name) {
+            // Create mode: show the draft pill once a name is entered.
+            pSetPill(draftPill, name, color); draftPill.hidden = false;
+        } else {
+            draftPill.hidden = true;
+        }
+    }
+    ['NameEn', 'NameHe', 'Color'].forEach(function (n) {
+        var el = previewForm && previewForm.querySelector('[name="' + n + '"]');
+        if (el) { el.addEventListener('input', updateTabPreview); el.addEventListener('change', updateTabPreview); }
+    });
+    updateTabPreview();
+
+    // O2: reflect whether prioritization has any target (≥1 desk selected).
+    function updatePrioritizeHint() {
+        var hint = document.getElementById('prioritizeHint');
+        if (!hint) return;
+        var boxes = document.querySelectorAll('.js-company-chk');
+        var anyDesk = Array.prototype.some.call(boxes, function (c) { return c.checked; });
+        // Only relevant when desks exist but none are selected; the O1 empty-state covers "no desks".
+        hint.hidden = anyDesk || boxes.length === 0;
+    }
+    document.querySelectorAll('.js-company-chk').forEach(function (c) {
+        c.addEventListener('change', updatePrioritizeHint);
+    });
+    updatePrioritizeHint();
+
     // Edit → switch the form to Update and pre-fill fields + checklists.
     document.querySelectorAll('.js-edit-tab').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -191,11 +408,28 @@
             var sids = (btn.dataset.shiftTypeIds || '').split(',').filter(Boolean);
             f.querySelectorAll('.js-company-chk').forEach(function (c) { c.checked = cids.indexOf(c.value) >= 0; });
             f.querySelectorAll('.js-shifttype-chk').forEach(function (c) { c.checked = sids.indexOf(c.value) >= 0; });
-            document.getElementById('tabFormTitle').textContent = btn.dataset.nameEn;
+
+            // M3: pencil icon + localized "Edit: {name}" heading (name bidi-isolated for RTL safety).
+            var addIcon = f.querySelector('.tabform-icon--add');
+            var editIcon = f.querySelector('.tabform-icon--edit');
+            if (addIcon) addIcon.hidden = true;
+            if (editIcon) editIcon.hidden = false;
+            var textEl = document.getElementById('tabFormText');
+            var name = btn.dataset.nameCurrent || btn.dataset.nameEn || '';
+            var tmpl = L.editHeading || 'Edit: {0}';
+            var parts = tmpl.split('{0}');
+            textEl.textContent = '';
+            textEl.appendChild(document.createTextNode(parts[0] || ''));
+            var b = document.createElement('bdi'); b.textContent = name; textEl.appendChild(b);
+            if (parts[1]) textEl.appendChild(document.createTextNode(parts[1]));
+
+            updatePrioritizeHint();
+            updateTabPreview(); // reflect the edited tab live on its own pill
             f.scrollIntoView({ behavior: 'smooth' });
         });
     });
-    // Delete → fetch impact preview then confirm.
+
+    // Delete → fetch impact preview, then confirm via the app-standard FeedbackModal (M2).
     document.querySelectorAll('.js-delete-tab').forEach(function (btn) {
         btn.addEventListener('click', async function () {
             var id = btn.dataset.id;
@@ -203,7 +437,19 @@
                 var res = await fetch('?handler=CheckTabUsage&tabId=' + encodeURIComponent(id), { credentials: 'same-origin' });
                 var data = await res.json();
                 if (!data.ok) { return; }
-                if (window.confirm(data.message)) {
+                var proceed;
+                if (window.FeedbackModal && typeof window.FeedbackModal.confirm === 'function') {
+                    proceed = await window.FeedbackModal.confirm('warning', {
+                        title: L.deleteTitle,
+                        message: data.message,
+                        okLabel: L.deleteOk,
+                        cancelLabel: L.cancel,
+                        destructiveOk: true
+                    });
+                } else {
+                    proceed = window.confirm(data.message); // defensive fallback only
+                }
+                if (proceed) {
                     document.getElementById('deleteTabId').value = id;
                     document.getElementById('deleteTabForm').submit();
                 }

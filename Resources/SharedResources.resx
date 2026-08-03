@@ -16139,7 +16139,7 @@ Are you absolutely sure you want to delete this user?</value>
     <value>Edit</value>
   </data>
   <data name="Tabs_NoTabs" xml:space="preserve">
-    <value>No tabs yet for this job type. Add one above.</value>
+    <value>No tabs yet for this job type. Add one below.</value>
   </data>
   <data name="Tabs_Error_NamesRequired" xml:space="preserve">
     <value>Both an English and a Hebrew name are required.</value>
@@ -16170,6 +16170,37 @@ Are you absolutely sure you want to delete this user?</value>
   </data>
   <data name="Tabs_CoverageWarning" xml:space="preserve">
     <value>{0} shift type(s) are in no tab and will appear only on the "All" view: {1}</value>
+  </data>
+  <!-- Calendar Tabs admin redesign: live pill-strip preview, chips, hints -->
+  <data name="Tabs_PreviewTitle" xml:space="preserve">
+    <value>Tab strip preview</value>
+  </data>
+  <data name="Tabs_PreviewHint" xml:space="preserve">
+    <value>How the tabs appear on this molecule and job type's Shifts calendar. The "All" view is always present.</value>
+  </data>
+  <data name="Tabs_ConfiguredTitle" xml:space="preserve">
+    <value>Configured tabs</value>
+  </data>
+  <data name="Tabs_PrioritizeShort" xml:space="preserve">
+    <value>Prioritize</value>
+  </data>
+  <data name="Tabs_NoCompaniesAvailable" xml:space="preserve">
+    <value>No companies in this molecule.</value>
+  </data>
+  <data name="Tabs_NoShiftTypesAvailable" xml:space="preserve">
+    <value>No shift types in this job type's scope.</value>
+  </data>
+  <data name="Tabs_PrioritizeNeedsDesks" xml:space="preserve">
+    <value>Prioritization uses the companies selected below — select at least one for it to take effect.</value>
+  </data>
+  <data name="Tabs_DeleteTitle" xml:space="preserve">
+    <value>Delete tab?</value>
+  </data>
+  <data name="Tabs_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Tabs_EditHeading" xml:space="preserve">
+    <value>Edit: {0}</value>
   </data>
   <data name="DistributionLists" xml:space="preserve">
     <value>Lists</value>

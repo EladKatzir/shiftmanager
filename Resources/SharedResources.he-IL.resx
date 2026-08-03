@@ -16099,7 +16099,7 @@
     <value>עריכה</value>
   </data>
   <data name="Tabs_NoTabs" xml:space="preserve">
-    <value>אין עדיין לשוניות לסוג תפקיד זה. הוסיפו למעלה.</value>
+    <value>אין עדיין לשוניות לסוג תפקיד זה. הוסיפו למטה.</value>
   </data>
   <data name="Tabs_Error_NamesRequired" xml:space="preserve">
     <value>נדרש שם באנגלית ובעברית.</value>
@@ -16130,6 +16130,37 @@
   </data>
   <data name="Tabs_CoverageWarning" xml:space="preserve">
     <value>{0} סוגי משמרת אינם באף לשונית ויופיעו רק בתצוגת "הכול": {1}</value>
+  </data>
+  <!-- Calendar Tabs admin redesign: live pill-strip preview, chips, hints -->
+  <data name="Tabs_PreviewTitle" xml:space="preserve">
+    <value>תצוגה מקדימה של רצועת הלשוניות</value>
+  </data>
+  <data name="Tabs_PreviewHint" xml:space="preserve">
+    <value>כך הלשוניות מופיעות בלוח המשמרות של מולקולה וסוג תפקיד אלה. תצוגת "הכול" קיימת תמיד.</value>
+  </data>
+  <data name="Tabs_ConfiguredTitle" xml:space="preserve">
+    <value>לשוניות מוגדרות</value>
+  </data>
+  <data name="Tabs_PrioritizeShort" xml:space="preserve">
+    <value>תעדוף</value>
+  </data>
+  <data name="Tabs_NoCompaniesAvailable" xml:space="preserve">
+    <value>אין דסקים במולקולה זו.</value>
+  </data>
+  <data name="Tabs_NoShiftTypesAvailable" xml:space="preserve">
+    <value>אין סוגי משמרת בהיקף של סוג תפקיד זה.</value>
+  </data>
+  <data name="Tabs_PrioritizeNeedsDesks" xml:space="preserve">
+    <value>התעדוף משתמש בדסקים שנבחרו למטה — בחרו לפחות אחד כדי שייכנס לתוקף.</value>
+  </data>
+  <data name="Tabs_DeleteTitle" xml:space="preserve">
+    <value>למחוק לשונית?</value>
+  </data>
+  <data name="Tabs_Cancel" xml:space="preserve">
+    <value>ביטול</value>
+  </data>
+  <data name="Tabs_EditHeading" xml:space="preserve">
+    <value>עריכה: {0}</value>
   </data>
   <data name="DistributionLists" xml:space="preserve">
     <value>תפוצות</value>

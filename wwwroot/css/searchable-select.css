@@ -25,6 +25,11 @@
   border: 1px solid var(--border); border-radius: 8px;
   box-shadow: var(--shadow-md, 0 8px 24px rgba(0,0,0,0.18)); padding: 0.375rem;
   max-height: 320px; display: flex; flex-direction: column; }
+/* SEL-B1: the JS toggles the panel via the `hidden` property (panel.hidden = true/false). The rule above
+   sets `display: flex`, whose specificity (0,1,0) ties the UA sheet's `[hidden]{display:none}` but wins on
+   cascade order, so a hidden panel still painted as a stray empty box under every control. This attribute
+   rule (0,2,0) lets `hidden` win again — no `open` class, no JS change. App-wide + correct. */
+.ss-panel[hidden] { display: none; }
 .ss-search { width: 100%; padding: 0.5rem 0.625rem; margin-bottom: 0.375rem;
   border: 1px solid var(--border); border-radius: 6px; background: var(--surface-soft);
   color: var(--text); font-size: 0.9375rem; text-align: start; }
