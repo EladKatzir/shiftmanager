@@ -8416,11 +8416,17 @@
              docs/superpowers/specs/2026-07-14-ui-batch-and-team-page-design.md #9.3/#9.4.
             
              Visible to EVERY authenticated user ([Authorize], no policy — required for the Task #10 nav
-             leaf's null-policy parity check); the picker itself is scope-limited to the companies the
-             caller holds "ViewShifts" for (+ their own company). Real use case: an Alhut lead in Tzafona
-             sees all Alhut soldiers in Tzafona by default, and can switch Company to see Alhut in another
-             company within their ViewShifts scope (JobType is area-scoped — the same JobType id spans
+             leaf's null-policy parity check); the picker itself is scope-limited to
+             <see cref="M:ShiftManager.Services.IGrantService.GetShiftVisibleCompanyIdsAsync(System.Int32)"/> — the union of the caller's
+             "ViewShifts" AND "ViewAllShifts" scopes (+ their own company). Real use case: an Alhut lead in
+             Tzafona sees all Alhut soldiers in Tzafona by default, and can switch Company to see Alhut in
+             another company within their molecule (JobType is area-scoped — the same JobType id spans
              companies in the area, which is what makes the cross-company switch meaningful).
+            
+             NOTE (2026-08-03 audit): this previously asked for "ViewShifts" ALONE. That grant is SameAsRole
+             (company-level) for Lead/BRDirector, so the picker rendered a single option and the cross-desk
+             switch described above was unreachable for exactly the roles it was written for — while the
+             molecule-scoped "ViewAllShifts" those roles hold was read by no production code at all.
             
              v1 is READ-ONLY: BuildAsync is always called with canEditNotes:false. Overview's per-cell note
              editing is deliberately not wired here for v1 (see task-9-report.md).
@@ -8434,6 +8440,19 @@
         </member>
         <member name="P:ShiftManager.Pages.Calendar.TeamModel.ViewId">
             <summary>When set, opens a saved DeskTeamView (re-validated against current scope — #9.4).</summary>
+        </member>
+        <member name="T:ShiftManager.Pages.Calendar.TeamModel.JobTypeOption">
+            <summary>A job type as the "add table" dialog needs it (id + label), per molecule.</summary>
+        </member>
+        <member name="M:ShiftManager.Pages.Calendar.TeamModel.JobTypeOption.#ctor(System.Int32,System.String)">
+            <summary>A job type as the "add table" dialog needs it (id + label), per molecule.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Calendar.TeamModel.JobTypesByMolecule">
+            <summary>
+            moleculeId -> its job types, for every molecule represented in <see cref="P:ShiftManager.Pages.Calendar.TeamModel.AccessibleCompanies"/>.
+            Serialised into the add-table dialog so changing the Company there repopulates the JobType list
+            without a round trip. Contains only molecules the caller can already reach.
+            </summary>
         </member>
         <member name="P:ShiftManager.Pages.Calendar.TeamModel.ActiveViewId">
             <summary>Id of the saved view currently being displayed (highlights its tab), if any.</summary>
@@ -9157,6 +9176,21 @@
             <summary>
             Service for managing API keys with approval workflow
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.ApiKeyService.IsKeyOwnerAsync(System.Int32,System.Int32)">
+             <summary>
+             True when <paramref name="userId"/> is the OWNER of the key — i.e. the user whose approved
+             request generated it.
+            
+             Deliberately NOT <c>ApiKey.CreatedBy</c>: that column holds the approving REVIEWER
+             ("Reviewer creates it on behalf of requester"), so keying ownership on it would lock the real
+             owner out of their own key and leave only the approving admin able to rotate it. The owning
+             relation is <c>ApiKeyRequest.GeneratedApiKeyId == keyId</c> → <c>ApiKeyRequest.RequestedBy</c>.
+            
+             Every ApiKey is created from an approved request (the only construction site is
+             <c>ApproveRequestAsync</c>), so a key with no matching request row is an orphan and is treated
+             as owned by nobody — fail closed.
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.ApiKeyService.GenerateApiKey">
             <summary>
@@ -10290,6 +10324,18 @@
             Fixes: C-08 (no graceful shutdown handling)
             </summary>
         </member>
+        <member name="M:ShiftManager.Services.GrantService.GetShiftVisibleCompanyIdsAsync(System.Int32)">
+            <inheritdoc />
+            <remarks>
+            Deliberately a UNION of two grant keys rather than a single lookup. `ViewShifts` is
+            SameAsRole (company) for every template below MoleculeAdmin, while `ViewAllShifts` carries
+            the molecule/area/project expansion. Asking for only the former — which every caller used to
+            do — silently discards a Lead's molecule-wide visibility and collapses their desk picker to
+            their own company. Both keys resolve through GetAccessibleCompanyIdsForGrantAsync, so each
+            still honours its OWN grant's scope: a molecule grant reaches exactly its molecule and no
+            further. Unknown/absent grant keys resolve to an empty set, never null.
+            </remarks>
+        </member>
         <member name="M:ShiftManager.Services.GrantService.DetermineEffectiveScope(ShiftManager.Models.Support.GrantScopeMode,ShiftManager.Services.GrantScope)">
             <summary>
             Extracts exactly ONE scope level from the full hierarchy roleScope.
@@ -10510,10 +10556,17 @@
             Reject an API key request
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IApiKeyService.RevokeApiKeyAsync(System.Int32,System.Int32,System.String)">
+        <member name="M:ShiftManager.Services.IApiKeyService.RevokeApiKeyAsync(System.Int32,System.Int32,System.String,System.Boolean)">
             <summary>
             Revoke an active API key
             </summary>
+            <param name="callerIsAdmin">
+            Set by callers that have ALREADY verified administrative rights (the admin revoke handler).
+            Defaults to false so the check fails closed: a self-service caller must own the key.
+            "Own" means the caller is the user whose approved request generated it
+            (<see cref="P:ShiftManager.Models.Api.ApiKeyRequest.RequestedBy"/>) — NOT <see cref="P:ShiftManager.Models.Api.ApiKey.CreatedBy"/>, which holds the
+            approving reviewer.
+            </param>
         </member>
         <member name="M:ShiftManager.Services.IApiKeyService.ListUserKeysAsync(System.Int32,System.Int32)">
             <summary>
@@ -10535,10 +10588,11 @@
             Get an API key by ID
             </summary>
         </member>
-        <member name="M:ShiftManager.Services.IApiKeyService.RegenerateApiKeyAsync(System.Int32,System.Int32)">
+        <member name="M:ShiftManager.Services.IApiKeyService.RegenerateApiKeyAsync(System.Int32,System.Int32,System.Boolean)">
             <summary>
             Regenerate an existing API key (creates new key hash, invalidates old key)
             </summary>
+            <param name="callerIsAdmin">See <see cref="M:ShiftManager.Services.IApiKeyService.RevokeApiKeyAsync(System.Int32,System.Int32,System.String,System.Boolean)"/>. Defaults to false (fail closed).</param>
         </member>
         <member name="T:ShiftManager.Services.IArchiveService">
             <summary>
@@ -12032,6 +12086,23 @@
               (can extend beyond the note scope, e.g. an AreaAdmin's area-wide reach).
             Self-target (callerId == targetUserId) always allowed.
             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.IGrantService.GetShiftVisibleCompanyIdsAsync(System.Int32)">
+             <summary>
+             THE single answer to "whose shifts may this user see" — the union of the caller's
+             <c>ViewShifts</c> scope (company-level for most templates) and their <c>ViewAllShifts</c>
+             scope (ExpandToMolecule for Lead/BRDirector/Director/MoleculeAdmin, ExpandToArea for
+             AreaAdmin, ExpandToProject for Owner).
+            
+             Exists because <c>ViewAllShifts</c> was seeded, granted, and enforced NOWHERE: every caller
+             asked <see cref="M:ShiftManager.Services.IGrantService.GetAccessibleCompanyIdsForGrantAsync(System.Int32,System.String)"/> for "ViewShifts" alone, so a Lead —
+             who holds ViewAllShifts at molecule scope precisely so they can see across their molecule's
+             desks (RoleTemplateSeed:310) — resolved to their own single company. Routing every
+             shift-visibility question through one method is what stops that from silently recurring.
+            
+             Callers must still validate any client-supplied company id against this set (anti-IDOR);
+             this method answers "what may they see", not "is this request allowed".
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.IGrantService.GetAccessibleAreaIdsForGrantAsync(System.Int32,System.String)">
             <summary>

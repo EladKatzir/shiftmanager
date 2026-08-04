@@ -1,12 +1,12 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 5.3.01
+                           Version 5.3.1
 ================================================================================
 
-VERSION: 5.3.01
-RELEASE DATE: 2026-08-02
-BUILD DATE: 2026-08-02 02:44:52 UTC
-GIT COMMIT: c033177
+VERSION: 5.3.1
+RELEASE DATE: 2026-08-04
+BUILD DATE: 2026-08-04 13:46:42 UTC
+GIT COMMIT: 1c3516f
 GIT BRANCH: dev
 
 PACKAGE INFORMATION:
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-08-02 02:44:52 UTC
+Build Date:     2026-08-04 13:46:42 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v5.3.01
+  âœ“ Git tagged: v5.3.1
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -260,14 +260,14 @@ This package has been:
   âœ… Tested automatically with comprehensive checks
   âœ… Verified for completeness (541 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v5.3.01)
+  âœ… Tagged in version control (v5.3.1)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-08-02 02:44:52 UTC
-Git Commit: c033177
+Date: 2026-08-04 13:46:42 UTC
+Git Commit: 1c3516f
 
 ================================================================================
 LICENSE

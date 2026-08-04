@@ -2,8 +2,8 @@
 CRITICAL DLL CHECKSUMS
 =======================================================================
 
-Generated: 2026-08-02 02:45:10
-Version:   v5.3.01
+Generated: 2026-08-04 13:46:56
+Version:   v5.3.1
 
 Windows verify example:
   CertUtil -hashfile SomeFile.dll SHA256
@@ -13,8 +13,8 @@ SixLabors.ImageSharp.dll
   Size:  2099712 bytes
 
 ShiftManager.dll
-  SHA256: E00AAC95A5C38A391DF864012A18F098832ACAC053F4E598A7675A9DA13A0B9C
-  Size:  22825984 bytes
+  SHA256: B4DC9CC6490090116E1CAE1A388DEA57068C62B1EA0A41A2A5404628FD9CB729
+  Size:  22876672 bytes
 
 e_sqlite3.dll
   SHA256: 39923CFDAD272169C217406A60214FFE9BD6C1B3BD396A3EFF94B781BD8D3376
