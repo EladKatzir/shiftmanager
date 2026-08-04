@@ -55,7 +55,14 @@ public interface IApiKeyService
     /// <summary>
     /// Revoke an active API key
     /// </summary>
-    Task<(ApiKey? key, string? error)> RevokeApiKeyAsync(int keyId, int revokedBy, string? reason = null);
+    /// <param name="callerIsAdmin">
+    /// Set by callers that have ALREADY verified administrative rights (the admin revoke handler).
+    /// Defaults to false so the check fails closed: a self-service caller must own the key.
+    /// "Own" means the caller is the user whose approved request generated it
+    /// (<see cref="ApiKeyRequest.RequestedBy"/>) — NOT <see cref="ApiKey.CreatedBy"/>, which holds the
+    /// approving reviewer.
+    /// </param>
+    Task<(ApiKey? key, string? error)> RevokeApiKeyAsync(int keyId, int revokedBy, string? reason = null, bool callerIsAdmin = false);
 
     /// <summary>
     /// List all active API keys for a user
@@ -80,5 +87,6 @@ public interface IApiKeyService
     /// <summary>
     /// Regenerate an existing API key (creates new key hash, invalidates old key)
     /// </summary>
-    Task<(string? newApiKey, string? error)> RegenerateApiKeyAsync(int keyId, int regeneratedBy);
+    /// <param name="callerIsAdmin">See <see cref="RevokeApiKeyAsync"/>. Defaults to false (fail closed).</param>
+    Task<(string? newApiKey, string? error)> RegenerateApiKeyAsync(int keyId, int regeneratedBy, bool callerIsAdmin = false);
 }

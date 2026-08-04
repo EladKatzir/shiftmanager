@@ -47,6 +47,23 @@ public interface IGrantService
     Task<List<int>> GetAccessibleMoleculeIdsForGrantAsync(int userId, string grantKey);
 
     /// <summary>
+    /// THE single answer to "whose shifts may this user see" — the union of the caller's
+    /// <c>ViewShifts</c> scope (company-level for most templates) and their <c>ViewAllShifts</c>
+    /// scope (ExpandToMolecule for Lead/BRDirector/Director/MoleculeAdmin, ExpandToArea for
+    /// AreaAdmin, ExpandToProject for Owner).
+    ///
+    /// Exists because <c>ViewAllShifts</c> was seeded, granted, and enforced NOWHERE: every caller
+    /// asked <see cref="GetAccessibleCompanyIdsForGrantAsync"/> for "ViewShifts" alone, so a Lead —
+    /// who holds ViewAllShifts at molecule scope precisely so they can see across their molecule's
+    /// desks (RoleTemplateSeed:310) — resolved to their own single company. Routing every
+    /// shift-visibility question through one method is what stops that from silently recurring.
+    ///
+    /// Callers must still validate any client-supplied company id against this set (anti-IDOR);
+    /// this method answers "what may they see", not "is this request allowed".
+    /// </summary>
+    Task<List<int>> GetShiftVisibleCompanyIdsAsync(int userId);
+
+    /// <summary>
     /// Returns the distinct Area ids the user can access for the given grant. An area is accessible
     /// if the user can access at least one molecule in it (via the molecule cascade) OR the user
     /// holds an Area/Project-scoped grant covering it (so an area with no molecules is still

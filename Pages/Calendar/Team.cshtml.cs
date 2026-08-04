@@ -19,11 +19,17 @@ namespace ShiftManager.Pages.Calendar;
 /// docs/superpowers/specs/2026-07-14-ui-batch-and-team-page-design.md #9.3/#9.4.
 ///
 /// Visible to EVERY authenticated user ([Authorize], no policy — required for the Task #10 nav
-/// leaf's null-policy parity check); the picker itself is scope-limited to the companies the
-/// caller holds "ViewShifts" for (+ their own company). Real use case: an Alhut lead in Tzafona
-/// sees all Alhut soldiers in Tzafona by default, and can switch Company to see Alhut in another
-/// company within their ViewShifts scope (JobType is area-scoped — the same JobType id spans
+/// leaf's null-policy parity check); the picker itself is scope-limited to
+/// <see cref="IGrantService.GetShiftVisibleCompanyIdsAsync"/> — the union of the caller's
+/// "ViewShifts" AND "ViewAllShifts" scopes (+ their own company). Real use case: an Alhut lead in
+/// Tzafona sees all Alhut soldiers in Tzafona by default, and can switch Company to see Alhut in
+/// another company within their molecule (JobType is area-scoped — the same JobType id spans
 /// companies in the area, which is what makes the cross-company switch meaningful).
+///
+/// NOTE (2026-08-03 audit): this previously asked for "ViewShifts" ALONE. That grant is SameAsRole
+/// (company-level) for Lead/BRDirector, so the picker rendered a single option and the cross-desk
+/// switch described above was unreachable for exactly the roles it was written for — while the
+/// molecule-scoped "ViewAllShifts" those roles hold was read by no production code at all.
 ///
 /// v1 is READ-ONLY: BuildAsync is always called with canEditNotes:false. Overview's per-cell note
 /// editing is deliberately not wired here for v1 (see task-9-report.md).
@@ -43,8 +49,6 @@ namespace ShiftManager.Pages.Calendar;
 [Authorize]
 public class TeamModel : PageModel
 {
-    private const string ViewShiftsGrantKey = "ViewShifts";
-
     private readonly AppDbContext _db;
     private readonly IGrantService _grantService;
     private readonly IJobTypeService _jobTypeService;
@@ -101,6 +105,16 @@ public class TeamModel : PageModel
     public List<Company> AccessibleCompanies { get; set; } = new();
     public List<JobType> AvailableJobTypes { get; set; } = new();
     public List<AppUser> Users { get; set; } = new();
+
+    /// <summary>A job type as the "add table" dialog needs it (id + label), per molecule.</summary>
+    public record JobTypeOption(int Id, string DisplayName);
+
+    /// <summary>
+    /// moleculeId -> its job types, for every molecule represented in <see cref="AccessibleCompanies"/>.
+    /// Serialised into the add-table dialog so changing the Company there repopulates the JobType list
+    /// without a round trip. Contains only molecules the caller can already reach.
+    /// </summary>
+    public Dictionary<int, List<JobTypeOption>> JobTypesByMolecule { get; set; } = new();
     public ExcelCalendarTableViewModel CalendarData { get; set; } = new();
     public List<DeskTeamView> SavedViews { get; set; } = new();
 
@@ -138,8 +152,12 @@ public class TeamModel : PageModel
         }
 
         // ---- Scope resolution: the picker's own boundary. Never derived from client input. ----
+        // Uses the shift-visibility union (ViewShifts + ViewAllShifts), NOT ViewShifts alone.
+        // ViewShifts is SameAsRole (company) for Lead/BRDirector, so asking for it alone gave a lead
+        // a one-option picker and made this page's whole cross-desk premise unreachable — while the
+        // molecule-wide ViewAllShifts they actually hold (RoleTemplateSeed:310) went unread.
         var accessibleCompanyIds = new HashSet<int>(
-            await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, ViewShiftsGrantKey));
+            await _grantService.GetShiftVisibleCompanyIdsAsync(currentUserId));
         accessibleCompanyIds.Add(ownCompanyId); // caller can always see their own company
 
         // Capture what the CALLER directly asked for, before ViewId resolution (below) may
@@ -207,6 +225,23 @@ public class TeamModel : PageModel
         if (selectedCompany?.MoleculeId != null)
         {
             AvailableJobTypes = await _jobTypeService.GetJobTypesForMoleculeAsync(selectedCompany.MoleculeId.Value);
+        }
+
+        // ---- Job types for EVERY accessible company's molecule ----
+        // The "add table" dialog lets the lead pick a company OTHER than the one currently shown, and
+        // job types are molecule-scoped — so the dialog needs the job-type list for each molecule it
+        // might switch to, not just the current one. Bounded by the caller's accessible companies
+        // (<= a few dozen, and molecules are deduplicated), so this is a handful of queries.
+        foreach (var moleculeId in AccessibleCompanies
+                     .Where(c => c.MoleculeId.HasValue)
+                     .Select(c => c.MoleculeId!.Value)
+                     .Distinct())
+        {
+            if (JobTypesByMolecule.ContainsKey(moleculeId)) continue;
+            var types = await _jobTypeService.GetJobTypesForMoleculeAsync(moleculeId);
+            JobTypesByMolecule[moleculeId] = types
+                .Select(jt => new JobTypeOption(jt.Id, jt.DisplayName))
+                .ToList();
         }
 
         if (!SelectedJobTypeId.HasValue || !AvailableJobTypes.Any(jt => jt.Id == SelectedJobTypeId.Value))
@@ -332,8 +367,10 @@ public class TeamModel : PageModel
         // SECURITY: re-check scope for THIS write — SelectedCompanyId is bound from the request
         // and a POST handler is a separate authorization context from the GET that rendered the form.
         var ownCompanyId = _tenantResolver.GetCurrentTenantId();
+        // MUST use the same scope source as OnGetAsync — if the GET offers a desk the POST rejects,
+        // saving a view for a legitimately-visible sibling desk 403s.
         var accessibleCompanyIds = new HashSet<int>(
-            await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, ViewShiftsGrantKey));
+            await _grantService.GetShiftVisibleCompanyIdsAsync(currentUserId));
         accessibleCompanyIds.Add(ownCompanyId);
         if (!accessibleCompanyIds.Contains(SelectedCompanyId.Value))
         {
@@ -343,8 +380,32 @@ public class TeamModel : PageModel
             return new JsonResult(new { success = false, error = _localizer["Calendar_Error_InsufficientPermissions"].Value }) { StatusCode = 403 };
         }
 
+        // The job type must belong to the CHOSEN company's molecule. Previously unvalidated: the
+        // company came from a picker so it was implicitly trusted, but now that the add-table dialog
+        // lets the caller choose company and job type independently, a mismatched pair would save a
+        // view that renders an empty roster forever (the row query filters on both).
+        var targetCompany = await _db.Companies.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == SelectedCompanyId.Value);
+        if (targetCompany?.MoleculeId == null)
+            return new JsonResult(new { success = false, error = _localizer["Team_MissingSelection"].Value }) { StatusCode = 400 };
+
+        var validJobTypes = await _jobTypeService.GetJobTypesForMoleculeAsync(targetCompany.MoleculeId.Value);
+        if (!validJobTypes.Any(jt => jt.Id == SelectedJobTypeId.Value))
+        {
+            _logger.LogWarning(
+                "User {UserId} attempted to save a Team view pairing company {CompanyId} with job type {JobTypeId} from another molecule",
+                currentUserId, SelectedCompanyId.Value, SelectedJobTypeId.Value);
+            return new JsonResult(new { success = false, error = _localizer["Team_InvalidJobTypeForCompany"].Value }) { StatusCode = 400 };
+        }
+
         // Pre-check the DB's unique (CompanyId,OwnerId,Name) constraint so a duplicate name is
         // always a clean validation error, never a raw DbUpdateException/500.
+        // Pre-check mirrors the DB index EXACTLY: (CompanyId, OwnerId, Name) filtered on IsDeleted=0,
+        // where CompanyId is the OWNER'S OWN tenant (DeskTeamViewService sets it from the tenant
+        // resolver) — NOT TargetCompanyId. So a name is unique per owner across all their views
+        // regardless of which desk each one targets, and ListForOwnerAsync is already owner+tenant
+        // scoped. Do not narrow this to TargetCompanyId: that makes the pre-check looser than the
+        // constraint and turns a clean 400 back into a DbUpdateException round-trip.
         var existingViews = await _deskTeamViewService.ListForOwnerAsync();
         if (existingViews.Any(v => string.Equals(v.Name, trimmedName, StringComparison.OrdinalIgnoreCase)))
             return new JsonResult(new { success = false, error = _localizer["Team_DuplicateName"].Value }) { StatusCode = 400 };

@@ -16979,4 +16979,22 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Blueprints_TabInUsePrefix" xml:space="preserve"><value>This tab is used by</value></data>
   <data name="Blueprints_CompaniesWord" xml:space="preserve"><value>companies</value></data>
   <data name="Blueprints_AutoSuggestConfirm" xml:space="preserve"><value>Also assign this company's {0} untagged shift type(s) to this tab?</value></data>
+  <data name="Team_AddTableDialogTitle" xml:space="preserve">
+    <value>New team table</value>
+  </data>
+  <data name="Team_AddTableDialogHint" xml:space="preserve">
+    <value>Choose which desk and job type this table shows. It defaults to what you are viewing now.</value>
+  </data>
+  <data name="Team_TableNameLabel" xml:space="preserve">
+    <value>Table name</value>
+  </data>
+  <data name="Team_InvalidJobTypeForCompany" xml:space="preserve">
+    <value>That job type does not belong to the selected desk.</value>
+  </data>
+  <data name="Team_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Team_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
 </root>

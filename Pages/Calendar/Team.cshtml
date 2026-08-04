@@ -123,13 +123,52 @@
                 </span>
             }
 
+            @* The add button opens an explicit dialog. It used to be a bare name box that silently
+               snapshotted whatever the toolbar happened to show, so a lead could not create a table
+               for any desk other than the one already on screen. *@
             <span class="team-view-add">
-                <input type="text" id="newTableName" class="form-control team-view-add__input"
-                       maxlength="60" placeholder="@Localizer["Team_NewTableNamePlaceholder"]" />
-                <button type="button" class="btn btn-ghost btn-sm" onclick="addTeamTable()">@Localizer["Team_AddTable"]</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="openAddTableDialog()">@Localizer["Team_AddTable"]</button>
             </span>
         </div>
     </div>
+
+    @* ── "New team table" dialog ───────────────────────────────────────────────────────────────
+       Uses the .modal--fullscreen-wrapper + .is-open pattern (same as Overview's note modal) — NOT
+       the bare .modal box and NOT the [hidden] attribute; the component is opacity:0/visibility:hidden
+       until .is-open is added.
+
+       The job-type list is molecule-scoped, so changing Desk repopulates Job type from the map below
+       rather than round-tripping. The map only ever contains molecules the caller can already reach. *@
+    <div id="addTableModal" class="modal--fullscreen-wrapper" role="dialog"
+         aria-labelledby="addTableModalTitle" aria-modal="true">
+        <div class="modal-content team-add-dialog">
+            <h3 id="addTableModalTitle">@Localizer["Team_AddTableDialogTitle"]</h3>
+            <p class="team-add-dialog__hint">@Localizer["Team_AddTableDialogHint"]</p>
+
+            <label for="addTableCompany">@Localizer["Company"]</label>
+            <select id="addTableCompany" class="form-select" onchange="onAddTableCompanyChanged()">
+                @foreach (var company in Model.AccessibleCompanies)
+                {
+                    <option value="@company.Id" data-molecule="@(company.MoleculeId?.ToString() ?? "")">@company.LocalizedName</option>
+                }
+            </select>
+
+            <label for="addTableJobType">@Localizer["JobType"]</label>
+            <select id="addTableJobType" class="form-select"></select>
+
+            <label for="addTableName">@Localizer["Team_TableNameLabel"]</label>
+            <input type="text" id="addTableName" class="form-control" maxlength="60"
+                   placeholder="@Localizer["Team_NewTableNamePlaceholder"]" />
+
+            <div class="team-add-dialog__actions">
+                <button type="button" class="btn btn-ghost" onclick="closeAddTableDialog()">@Localizer["Team_Cancel"]</button>
+                <button type="button" class="btn btn-primary" onclick="submitAddTable()">@Localizer["Team_Save"]</button>
+            </div>
+        </div>
+    </div>
+
+    @* moleculeId -> job types, for every desk the caller can pick above. *@
+    <script type="application/json" id="jobTypesByMolecule">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.JobTypesByMolecule))</script>
 
     @* Sticky readonly banner — Team v1 is read-only (no per-cell note editing yet). *@
     <partial name="_CalendarReadonlyBanner" model="@(new CalendarReadonlyBannerModel
@@ -307,6 +346,36 @@
             border: 1px solid var(--border);
             background: var(--bg);
             font-size: 0.85rem;
+        }
+
+        /* Dialog body. The .modal--fullscreen-wrapper backdrop and .is-open visibility come from the
+           shared component; only the inner layout is page-specific. */
+        .team-add-dialog {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: min(420px, 92vw);
+            padding: 1.25rem;
+        }
+
+        .team-add-dialog label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-top: 0.375rem;
+        }
+
+        .team-add-dialog__hint {
+            margin: 0 0 0.25rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .team-add-dialog__actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1rem;
         }
 
         .team-page__inaccessible-banner {

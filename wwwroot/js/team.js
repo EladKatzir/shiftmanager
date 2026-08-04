@@ -41,16 +41,82 @@
         return response.json();
     }
 
-    async function addTeamTable() {
-        var input = document.getElementById('newTableName');
-        var name = (input && input.value ? input.value : '').trim();
+    // ── "New team table" dialog ──────────────────────────────────────────────────────────────
+    // Previously this was a bare name box that read #companySelect/#jobTypeSelect straight off the
+    // toolbar, so the saved table silently inherited whatever was on screen and a lead had no way to
+    // create a table for a different desk. The dialog makes the choice explicit; the toolbar values
+    // are only the DEFAULT.
+
+    function jobTypeMap() {
+        var el = document.getElementById('jobTypesByMolecule');
+        if (!el) return {};
+        try { return JSON.parse(el.textContent || '{}'); } catch (e) { return {}; }
+    }
+
+    /** Repopulates the dialog's job-type list for the desk currently chosen IN THE DIALOG. */
+    function onAddTableCompanyChanged(preferredJobTypeId) {
+        var companySel = document.getElementById('addTableCompany');
+        var jobSel = document.getElementById('addTableJobType');
+        if (!companySel || !jobSel) return;
+
+        var opt = companySel.options[companySel.selectedIndex];
+        var moleculeId = opt ? opt.getAttribute('data-molecule') : '';
+        var types = (jobTypeMap() || {})[moleculeId] || [];
+
+        jobSel.innerHTML = '';
+        types.forEach(function (t) {
+            var o = document.createElement('option');
+            // The server serialises the record as {Id, DisplayName}; System.Text.Json camel-cases by
+            // default, so accept either shape rather than depending on the casing policy.
+            o.value = (t.id !== undefined ? t.id : t.Id);
+            o.textContent = (t.displayName !== undefined ? t.displayName : t.DisplayName);
+            jobSel.appendChild(o);
+        });
+
+        if (preferredJobTypeId) jobSel.value = String(preferredJobTypeId);
+        // If the preferred type doesn't exist in this desk's molecule the assignment above is a no-op
+        // and the browser keeps the first option — which is a valid pairing, unlike the old behaviour.
+    }
+
+    function openAddTableDialog() {
+        var modal = document.getElementById('addTableModal');
+        if (!modal) return;
+
+        // Default to what the user is looking at right now.
+        var toolbarCompany = document.getElementById('companySelect');
+        var toolbarJobType = document.getElementById('jobTypeSelect');
+        var companySel = document.getElementById('addTableCompany');
+        if (companySel && toolbarCompany) companySel.value = toolbarCompany.value;
+        onAddTableCompanyChanged(toolbarJobType ? toolbarJobType.value : null);
+
+        var nameInput = document.getElementById('addTableName');
+        if (nameInput) nameInput.value = '';
+
+        modal.classList.add('is-open');
+        if (nameInput) nameInput.focus();
+    }
+
+    function closeAddTableDialog() {
+        var modal = document.getElementById('addTableModal');
+        if (modal) modal.classList.remove('is-open');
+    }
+
+    async function submitAddTable() {
+        var nameInput = document.getElementById('addTableName');
+        var name = (nameInput && nameInput.value ? nameInput.value : '').trim();
         if (!name) {
             showError((window.AppLocalizer && window.AppLocalizer.Team_NameRequired) || 'Please enter a name for the table.');
             return;
         }
 
-        var companyId = document.getElementById('companySelect') ? document.getElementById('companySelect').value : '';
-        var jobTypeId = document.getElementById('jobTypeSelect') ? document.getElementById('jobTypeSelect').value : '';
+        var companySel = document.getElementById('addTableCompany');
+        var jobSel = document.getElementById('addTableJobType');
+        var companyId = companySel ? companySel.value : '';
+        var jobTypeId = jobSel ? jobSel.value : '';
+        if (!companyId || !jobTypeId) {
+            showError((window.AppLocalizer && window.AppLocalizer.Team_MissingSelection) || 'Choose a desk and a job type.');
+            return;
+        }
 
         try {
             var result = await postForm('/Calendar/Team?handler=AddView', {
@@ -59,6 +125,7 @@
                 SelectedJobTypeId: jobTypeId
             });
             if (result.success) {
+                closeAddTableDialog();
                 location.reload();
             } else {
                 showError(result.error);
@@ -100,18 +167,32 @@
 
     // Exposed as globals — mirrors the existing calendar-page convention (Overview's
     // saveNote()/deleteNote() etc.) of plain global functions wired via inline onclick=.
-    window.addTeamTable = addTeamTable;
+    // This file is inside an IIFE, so EVERY function referenced by an inline handler in
+    // Team.cshtml must be assigned here or the button silently does nothing:
+    //   openAddTableDialog / closeAddTableDialog / submitAddTable / onAddTableCompanyChanged / deleteTeamTable
+    window.openAddTableDialog = openAddTableDialog;
+    window.closeAddTableDialog = closeAddTableDialog;
+    window.submitAddTable = submitAddTable;
+    window.onAddTableCompanyChanged = onAddTableCompanyChanged;
     window.deleteTeamTable = deleteTeamTable;
 
-    // Enter key in the "new table name" field submits, matching form-like expectations.
     document.addEventListener('DOMContentLoaded', function () {
-        var input = document.getElementById('newTableName');
+        // Enter in the name field saves; Escape closes. Matches form-like expectations now that the
+        // add flow is a dialog rather than an inline box.
+        var input = document.getElementById('addTableName');
         if (input) {
             input.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addTeamTable();
-                }
+                if (e.key === 'Enter') { e.preventDefault(); submitAddTable(); }
+            });
+        }
+        var modal = document.getElementById('addTableModal');
+        if (modal) {
+            modal.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') { e.preventDefault(); closeAddTableDialog(); }
+            });
+            // Clicking the backdrop (the wrapper itself, not the content) dismisses.
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) closeAddTableDialog();
             });
         }
     });

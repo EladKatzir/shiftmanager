@@ -232,7 +232,24 @@ public class ApiKeyService : IApiKeyService
         return (request, null);
     }
 
-    public async Task<(ApiKey? key, string? error)> RevokeApiKeyAsync(int keyId, int revokedBy, string? reason = null)
+    /// <summary>
+    /// True when <paramref name="userId"/> is the OWNER of the key — i.e. the user whose approved
+    /// request generated it.
+    ///
+    /// Deliberately NOT <c>ApiKey.CreatedBy</c>: that column holds the approving REVIEWER
+    /// ("Reviewer creates it on behalf of requester"), so keying ownership on it would lock the real
+    /// owner out of their own key and leave only the approving admin able to rotate it. The owning
+    /// relation is <c>ApiKeyRequest.GeneratedApiKeyId == keyId</c> → <c>ApiKeyRequest.RequestedBy</c>.
+    ///
+    /// Every ApiKey is created from an approved request (the only construction site is
+    /// <c>ApproveRequestAsync</c>), so a key with no matching request row is an orphan and is treated
+    /// as owned by nobody — fail closed.
+    /// </summary>
+    private async Task<bool> IsKeyOwnerAsync(int keyId, int userId)
+        => await _context.ApiKeyRequests
+            .AnyAsync(r => r.GeneratedApiKeyId == keyId && r.RequestedBy == userId);
+
+    public async Task<(ApiKey? key, string? error)> RevokeApiKeyAsync(int keyId, int revokedBy, string? reason = null, bool callerIsAdmin = false)
     {
         var companyId = _tenantResolver.GetCurrentTenantId();
         var apiKey = await _context.ApiKeys
@@ -240,6 +257,9 @@ public class ApiKeyService : IApiKeyService
 
         if (apiKey == null)
             return (null, "API key not found");
+
+        if (!callerIsAdmin && !await IsKeyOwnerAsync(keyId, revokedBy))
+            return (null, "You can only manage API keys you requested.");
 
         if (!apiKey.IsActive)
             return (null, "API key is already inactive");
@@ -311,13 +331,19 @@ public class ApiKeyService : IApiKeyService
             .FirstOrDefaultAsync(k => k.Id == keyId && k.CompanyId == companyId);
     }
 
-    public async Task<(string? newApiKey, string? error)> RegenerateApiKeyAsync(int keyId, int regeneratedBy)
+    public async Task<(string? newApiKey, string? error)> RegenerateApiKeyAsync(int keyId, int regeneratedBy, bool callerIsAdmin = false)
     {
         var companyId = _tenantResolver.GetCurrentTenantId();
         var apiKey = await _context.ApiKeys.FirstOrDefaultAsync(k => k.Id == keyId && k.CompanyId == companyId);
 
         if (apiKey == null)
             return (null, "API key not found");
+
+        // Regenerating RETURNS THE NEW PLAINTEXT to the caller, so a non-owner reaching this point
+        // is credential theft, not just tampering. The company filter above is NOT sufficient:
+        // /My/ApiKeys lists every key in the company to every authenticated user.
+        if (!callerIsAdmin && !await IsKeyOwnerAsync(keyId, regeneratedBy))
+            return (null, "You can only manage API keys you requested.");
 
         if (!apiKey.IsActive)
             return (null, "Cannot regenerate inactive API key");

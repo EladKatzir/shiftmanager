@@ -332,6 +332,28 @@ public class GrantService : IGrantService
     }
 
     // Scope resolution
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Deliberately a UNION of two grant keys rather than a single lookup. `ViewShifts` is
+    /// SameAsRole (company) for every template below MoleculeAdmin, while `ViewAllShifts` carries
+    /// the molecule/area/project expansion. Asking for only the former — which every caller used to
+    /// do — silently discards a Lead's molecule-wide visibility and collapses their desk picker to
+    /// their own company. Both keys resolve through GetAccessibleCompanyIdsForGrantAsync, so each
+    /// still honours its OWN grant's scope: a molecule grant reaches exactly its molecule and no
+    /// further. Unknown/absent grant keys resolve to an empty set, never null.
+    /// </remarks>
+    public async Task<List<int>> GetShiftVisibleCompanyIdsAsync(int userId)
+    {
+        var companyIds = new HashSet<int>(
+            await GetAccessibleCompanyIdsForGrantAsync(userId, "ViewShifts"));
+
+        foreach (var id in await GetAccessibleCompanyIdsForGrantAsync(userId, "ViewAllShifts"))
+            companyIds.Add(id);
+
+        return companyIds.ToList();
+    }
+
     public async Task<List<int>> GetAccessibleCompanyIdsForGrantAsync(int userId, string grantKey)
     {
         var grantType = await GetGrantTypeByKeyAsync(grantKey);

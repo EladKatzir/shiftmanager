@@ -253,7 +253,10 @@ public class ApiKeysModel : LocalizedPageModel
             return RedirectToPage();
         }
 
-        var (key, error) = await _apiKeyService.RevokeApiKeyAsync(keyId, reviewerId, reason ?? "Revoked by administrator");
+        // callerIsAdmin: CheckIsAdminAsync(reviewerId) already ran above, so the ownership gate in
+        // the service is deliberately bypassed here — an administrator must be able to revoke any
+        // key. The self-service handler (OnPostRevokeAsync) leaves it at its fail-closed default.
+        var (key, error) = await _apiKeyService.RevokeApiKeyAsync(keyId, reviewerId, reason ?? "Revoked by administrator", callerIsAdmin: true);
 
         if (error != null)
         {

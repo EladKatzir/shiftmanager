@@ -16939,4 +16939,22 @@
   <data name="Blueprints_TabInUsePrefix" xml:space="preserve"><value>לשונית זו בשימוש על ידי</value></data>
   <data name="Blueprints_CompaniesWord" xml:space="preserve"><value>דסקים</value></data>
   <data name="Blueprints_AutoSuggestConfirm" xml:space="preserve"><value>לשייך גם את {0} סוגי המשמרות הלא-משויכים של דסק זה ללשונית זו?</value></data>
+  <data name="Team_AddTableDialogTitle" xml:space="preserve">
+    <value>טבלת צוות חדשה</value>
+  </data>
+  <data name="Team_AddTableDialogHint" xml:space="preserve">
+    <value>בחר איזה דסק וסוג תפקיד הטבלה מציגה. ברירת המחדל היא מה שמוצג כעת.</value>
+  </data>
+  <data name="Team_TableNameLabel" xml:space="preserve">
+    <value>שם הטבלה</value>
+  </data>
+  <data name="Team_InvalidJobTypeForCompany" xml:space="preserve">
+    <value>סוג התפקיד אינו שייך לדסק שנבחר.</value>
+  </data>
+  <data name="Team_Save" xml:space="preserve">
+    <value>שמירה</value>
+  </data>
+  <data name="Team_Cancel" xml:space="preserve">
+    <value>ביטול</value>
+  </data>
 </root>

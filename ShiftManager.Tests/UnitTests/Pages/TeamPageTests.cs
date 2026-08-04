@@ -81,7 +81,12 @@ public sealed class TeamPageTests : IAsyncLifetime
         int callerId, int ownCompanyId, List<int> accessibleCompanyIds)
     {
         var grantMock = new Mock<IGrantService>();
-        grantMock.Setup(g => g.GetAccessibleCompanyIdsForGrantAsync(callerId, "ViewShifts"))
+        // TeamModel resolves its picker boundary via GetShiftVisibleCompanyIdsAsync — the union of
+        // ViewShifts + ViewAllShifts. (It used to ask GetAccessibleCompanyIdsForGrantAsync for
+        // "ViewShifts" alone, which ignored the molecule-wide ViewAllShifts that Leads actually
+        // hold and collapsed the picker to one desk.) Pinning the union here keeps these tests
+        // focused on TeamModel's OWN scope-check logic, exactly as before.
+        grantMock.Setup(g => g.GetShiftVisibleCompanyIdsAsync(callerId))
             .ReturnsAsync(accessibleCompanyIds);
 
         var jobTypeMock = new Mock<IJobTypeService>();
@@ -345,7 +350,12 @@ public sealed class TeamPageTests : IAsyncLifetime
         await SeedUserAsync(CallerId, CompanyId, JobTypeId, "Caller");
         await SeedViewAsync(CallerId, CompanyId, CompanyId, JobTypeId, "Alhut Tzafona");
 
-        var (model, _, _) = BuildModel(CallerId, CompanyId, accessibleCompanyIds: new List<int> { CompanyId });
+        var (model, _, jobTypeMock) = BuildModel(CallerId, CompanyId, accessibleCompanyIds: new List<int> { CompanyId });
+        // Must stub the job types for this company's molecule, otherwise the handler rejects on the
+        // job-type-belongs-to-company check and this test would report 400 for the WRONG reason —
+        // silently no longer testing duplicate names at all.
+        jobTypeMock.Setup(j => j.GetJobTypesForMoleculeAsync(1))
+            .ReturnsAsync(new List<JobType> { new() { Id = JobTypeId, Name = "Alhut", AreaId = 1 } });
         model.SelectedCompanyId = CompanyId;
         model.SelectedJobTypeId = JobTypeId;
 
@@ -356,6 +366,71 @@ public sealed class TeamPageTests : IAsyncLifetime
         json.StatusCode.Should().Be(400);
         (await _db.DeskTeamViews.CountAsync(v => v.Name == "Alhut Tzafona" && !v.IsDeleted)).Should().Be(1,
             "the duplicate must be rejected before ever reaching the DB — no second row created");
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // Add-table dialog (2026-08-04): the lead now chooses Company + JobType explicitly instead of
+    // the handler silently snapshotting the toolbar. That makes two new contracts testable.
+    // ---------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// The dialog lets Company and JobType be chosen independently, so a mismatched pair is now
+    /// reachable. It must be rejected at the server: a view pairing a desk with a job type from
+    /// another molecule would render an empty roster forever (LoadUsersAsync filters on both).
+    /// </summary>
+    [Fact]
+    public async Task AddView_WithJobTypeFromAnotherMolecule_IsRejected()
+    {
+        const int CallerId = 620, CompanyId = 5, ForeignJobTypeId = 77;
+        await SeedCompanyAsync(CompanyId, moleculeId: 1, "Tzafona");
+        await SeedUserAsync(CallerId, CompanyId, 2, "Caller");
+
+        var (model, _, jobTypeMock) = BuildModel(CallerId, CompanyId, accessibleCompanyIds: new List<int> { CompanyId });
+        // Molecule 1 offers job type 2 only — 77 belongs to some other molecule.
+        jobTypeMock.Setup(j => j.GetJobTypesForMoleculeAsync(1))
+            .ReturnsAsync(new List<JobType> { new() { Id = 2, Name = "Alhut", AreaId = 1 } });
+        model.SelectedCompanyId = CompanyId;
+        model.SelectedJobTypeId = ForeignJobTypeId;
+
+        var result = await model.OnPostAddViewAsync("Mismatched");
+
+        ((JsonResult)result).StatusCode.Should().Be(400);
+        (await _db.DeskTeamViews.CountAsync(v => v.Name == "Mismatched" && !v.IsDeleted)).Should().Be(0);
+    }
+
+    /// <summary>
+    /// AVAILABILITY contract for the new dialog: a lead can save a table for a desk OTHER than the one
+    /// currently displayed. Before the dialog existed this was impossible — the handler snapshotted
+    /// the toolbar, so every saved view targeted the desk already on screen.
+    ///
+    /// (Note on naming: the unique index is (CompanyId, OwnerId, Name) where CompanyId is the OWNER'S
+    /// TENANT, not TargetCompanyId — so names are unique per owner across all their views regardless
+    /// of target desk. A distinct name is therefore required here, and that is by design.)
+    /// </summary>
+    [Fact]
+    public async Task AddView_ForADeskOtherThanTheOneOnScreen_IsSavedAgainstTheChosenDesk()
+    {
+        const int CallerId = 621, HomeCompanyId = 5, SiblingCompanyId = 6, JobTypeId = 2;
+        await SeedCompanyAsync(HomeCompanyId, moleculeId: 1, "Hir");
+        await SeedCompanyAsync(SiblingCompanyId, moleculeId: 1, "City");
+        await SeedUserAsync(CallerId, HomeCompanyId, JobTypeId, "Caller");
+
+        var (model, _, jobTypeMock) = BuildModel(
+            CallerId, HomeCompanyId, accessibleCompanyIds: new List<int> { HomeCompanyId, SiblingCompanyId });
+        jobTypeMock.Setup(j => j.GetJobTypesForMoleculeAsync(1))
+            .ReturnsAsync(new List<JobType> { new() { Id = JobTypeId, Name = "Alhut", AreaId = 1 } });
+        model.SelectedCompanyId = SiblingCompanyId;   // a desk that is NOT the caller's own
+        model.SelectedJobTypeId = JobTypeId;
+
+        var result = await model.OnPostAddViewAsync("City Alhut");
+
+        var status = ((JsonResult)result).StatusCode;
+        (status is null or 200).Should().BeTrue("a lead must be able to save a table for another desk in their scope");
+
+        var saved = await _db.DeskTeamViews.SingleAsync(v => v.Name == "City Alhut" && !v.IsDeleted);
+        saved.TargetCompanyId.Should().Be(SiblingCompanyId,
+            "the table must target the desk CHOSEN in the dialog, not the one that happened to be on screen");
+        saved.JobTypeId.Should().Be(JobTypeId);
     }
 
     // ---------------------------------------------------------------------------------------

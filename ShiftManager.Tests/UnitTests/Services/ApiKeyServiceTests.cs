@@ -294,7 +294,7 @@ public class ApiKeyServiceTests : IDisposable
         var (req, _) = await _service.RequestApiKeyAsync(CompanyId, UserId, "TestKey", "Desc", "user:read");
         var (_, request, _) = await _service.ApproveRequestAsync(req!.Id, ReviewerId);
 
-        var (revokedKey, error) = await _service.RevokeApiKeyAsync(request!.GeneratedApiKeyId!.Value, ReviewerId, "No longer needed");
+        var (revokedKey, error) = await _service.RevokeApiKeyAsync(request!.GeneratedApiKeyId!.Value, ReviewerId, "No longer needed", callerIsAdmin: true);
 
         error.Should().BeNull();
         revokedKey.Should().NotBeNull();
@@ -308,8 +308,8 @@ public class ApiKeyServiceTests : IDisposable
         var (_, request, _) = await _service.ApproveRequestAsync(req!.Id, ReviewerId);
         var keyId = request!.GeneratedApiKeyId!.Value;
 
-        await _service.RevokeApiKeyAsync(keyId, ReviewerId);
-        var (_, error) = await _service.RevokeApiKeyAsync(keyId, ReviewerId);
+        await _service.RevokeApiKeyAsync(keyId, ReviewerId, callerIsAdmin: true);
+        var (_, error) = await _service.RevokeApiKeyAsync(keyId, ReviewerId, callerIsAdmin: true);
 
         error.Should().Contain("already inactive");
     }
@@ -317,7 +317,7 @@ public class ApiKeyServiceTests : IDisposable
     [Fact]
     public async Task RevokeApiKeyAsync_NotFound_ReturnsError()
     {
-        var (_, error) = await _service.RevokeApiKeyAsync(999, ReviewerId);
+        var (_, error) = await _service.RevokeApiKeyAsync(999, ReviewerId, callerIsAdmin: true);
 
         error.Should().Contain("not found");
     }
@@ -333,7 +333,7 @@ public class ApiKeyServiceTests : IDisposable
         var (_, request2, _) = await _service.ApproveRequestAsync(req2!.Id, ReviewerId);
 
         // Revoke one
-        await _service.RevokeApiKeyAsync(request1!.GeneratedApiKeyId!.Value, ReviewerId);
+        await _service.RevokeApiKeyAsync(request1!.GeneratedApiKeyId!.Value, ReviewerId, callerIsAdmin: true);
 
         var activeKeys = await _service.ListAllKeysAsync(CompanyId);
 
@@ -349,7 +349,7 @@ public class ApiKeyServiceTests : IDisposable
         var (_, request1, _) = await _service.ApproveRequestAsync(req1!.Id, ReviewerId);
         await _service.ApproveRequestAsync(req2!.Id, ReviewerId);
 
-        await _service.RevokeApiKeyAsync(request1!.GeneratedApiKeyId!.Value, ReviewerId);
+        await _service.RevokeApiKeyAsync(request1!.GeneratedApiKeyId!.Value, ReviewerId, callerIsAdmin: true);
 
         var allKeys = await _service.ListAllKeysAsync(CompanyId, includeInactive: true);
 
@@ -426,7 +426,7 @@ public class ApiKeyServiceTests : IDisposable
         var (originalKey, request, _) = await _service.ApproveRequestAsync(req!.Id, ReviewerId);
         var keyId = request!.GeneratedApiKeyId!.Value;
 
-        var (newKey, error) = await _service.RegenerateApiKeyAsync(keyId, ReviewerId);
+        var (newKey, error) = await _service.RegenerateApiKeyAsync(keyId, ReviewerId, callerIsAdmin: true);
 
         error.Should().BeNull();
         newKey.Should().NotBeNull();
@@ -441,9 +441,9 @@ public class ApiKeyServiceTests : IDisposable
         var (_, request, _) = await _service.ApproveRequestAsync(req!.Id, ReviewerId);
         var keyId = request!.GeneratedApiKeyId!.Value;
 
-        await _service.RevokeApiKeyAsync(keyId, ReviewerId);
+        await _service.RevokeApiKeyAsync(keyId, ReviewerId, callerIsAdmin: true);
 
-        var (_, error) = await _service.RegenerateApiKeyAsync(keyId, ReviewerId);
+        var (_, error) = await _service.RegenerateApiKeyAsync(keyId, ReviewerId, callerIsAdmin: true);
 
         error.Should().Contain("inactive");
     }
@@ -451,7 +451,7 @@ public class ApiKeyServiceTests : IDisposable
     [Fact]
     public async Task RegenerateApiKeyAsync_NotFound_ReturnsError()
     {
-        var (_, error) = await _service.RegenerateApiKeyAsync(999, ReviewerId);
+        var (_, error) = await _service.RegenerateApiKeyAsync(999, ReviewerId, callerIsAdmin: true);
 
         error.Should().Contain("not found");
     }
@@ -468,7 +468,7 @@ public class ApiKeyServiceTests : IDisposable
         key!.LastUsedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
-        await _service.RegenerateApiKeyAsync(keyId, ReviewerId);
+        await _service.RegenerateApiKeyAsync(keyId, ReviewerId, callerIsAdmin: true);
 
         var refreshed = await _db.ApiKeys.FindAsync(keyId);
         refreshed!.LastUsedAt.Should().BeNull();
