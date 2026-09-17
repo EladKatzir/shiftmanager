@@ -221,7 +221,13 @@ public sealed class ServerBootSmokeTests : IClassFixture<ServerBootSmokeTests.Sm
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    ["ConnectionStrings:Default"] = _connectionString
+                    ["ConnectionStrings:Default"] = _connectionString,
+                    // MemoryHealthCheck measures Process.GetCurrentProcess(), which here is the
+                    // xUnit TEST HOST carrying every previously-executed test's retained memory —
+                    // not an isolated app. Without this, /health returns 503 once the suite is
+                    // large enough, turning a boot smoke test into a function of test-suite size.
+                    ["HealthChecks:MemoryWarnMB"] = "1000000",
+                    ["HealthChecks:MemoryMaxMB"] = "1000000"
                 });
             });
 

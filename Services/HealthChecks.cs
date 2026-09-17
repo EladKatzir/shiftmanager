@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ShiftManager.Services;
@@ -81,13 +82,33 @@ public class DiskSpaceHealthCheck : IHealthCheck
 
 /// <summary>
 /// Checks application memory usage.
-/// Reports Degraded if working set exceeds 600MB (early warning).
-/// Reports Unhealthy if working set exceeds 800MB (hard limit).
+/// Reports Degraded above <see cref="WarnMemoryMB"/> (early warning) and Unhealthy above
+/// <see cref="MaxMemoryMB"/> (hard limit); the defaults are tuned for the air-gapped IIS deployment.
+///
+/// The thresholds are configurable (<c>HealthChecks:MemoryWarnMB</c> / <c>HealthChecks:MemoryMaxMB</c>)
+/// because this measures <c>Process.GetCurrentProcess()</c> — i.e. WHATEVER PROCESS hosts the app.
+/// That is the app itself in production, but under WebApplicationFactory it is the test runner,
+/// whose working set grows with every test that has already executed. A hardcoded absolute ceiling
+/// therefore judged the wrong process and made /health flip to 503 purely as a function of how many
+/// tests ran before it.
 /// </summary>
 public class MemoryHealthCheck : IHealthCheck
 {
-    private const long WarnMemoryMB = 600;
-    private const long MaxMemoryMB = 800;
+    public const long DefaultWarnMemoryMB = 600;
+    public const long DefaultMaxMemoryMB = 800;
+
+    /// <summary>Working set above which the app reports Degraded.</summary>
+    public long WarnMemoryMB { get; }
+
+    /// <summary>Working set above which the app reports Unhealthy.</summary>
+    public long MaxMemoryMB { get; }
+
+    public MemoryHealthCheck(IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        WarnMemoryMB = configuration.GetValue("HealthChecks:MemoryWarnMB", DefaultWarnMemoryMB);
+        MaxMemoryMB = configuration.GetValue("HealthChecks:MemoryMaxMB", DefaultMaxMemoryMB);
+    }
 
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
