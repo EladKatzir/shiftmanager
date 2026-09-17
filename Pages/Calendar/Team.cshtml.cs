@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -265,6 +265,7 @@ public class TeamModel : PageModel
             // independent from Overview's, or dragging rows on one page would silently reorder
             // the other.
             CalendarData.RowOrderContextKey = $"team:{SelectedCompanyId}:{SelectedJobTypeId}";
+            CalendarData.ColumnWidthContextKey = $"team:{SelectedCompanyId}:{SelectedJobTypeId}";
         }
 
         SavedViews = await _deskTeamViewService.ListForOwnerAsync();

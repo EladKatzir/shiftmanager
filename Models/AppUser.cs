@@ -99,8 +99,14 @@ public class AppUser : IBelongsToCompany
     /// Whether this user participates in shift scheduling. TRUE → the user is grouped under their
     /// shift category accordion(s) in the by-user calendar; FALSE → under their company header.
     /// Replaces the retired PrimaryShiftTypeId overload (see DoesShifts + ShiftCategories).
+    ///
+    /// Defaults to TRUE so a new account participates without an admin toggling it by hand. The
+    /// default MUST live here rather than as a database defaultValue: EF sends the CLR value
+    /// explicitly for a non-nullable bool, so a column default never applies to an EF insert.
+    /// A participant with no category is not lost — they render under their company header
+    /// (ShiftsCategoryFallbackTests).
     /// </summary>
-    public bool DoesShifts { get; set; }
+    public bool DoesShifts { get; set; } = true;
 
     /// <summary>
     /// Account archetype (Standard/Mil/GroupUser). Orthogonal to JobType + Role.
@@ -129,8 +135,9 @@ public class AppUser : IBelongsToCompany
     /// <summary>Sensitive: gender-segregated chore eligibility only. Default Unspecified. Editable by any user-editor (no dedicated grant).</summary>
     public Gender Gender { get; set; } = Gender.Unspecified;
 
-    /// <summary>Whether this user participates in chore scheduling. Mirrors <see cref="DoesShifts"/>.</summary>
-    public bool DoesChores { get; set; }
+    /// <summary>Whether this user participates in chore scheduling. Mirrors <see cref="DoesShifts"/>,
+    /// including the default-true rationale.</summary>
+    public bool DoesChores { get; set; } = true;
 
     /// <summary>Chore categories this user participates in (N:N). Meaningful only when DoesChores is true.</summary>
     public List<UserChoreCategory> ChoreCategories { get; set; } = new();

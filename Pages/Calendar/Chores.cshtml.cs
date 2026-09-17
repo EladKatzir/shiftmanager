@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -360,6 +360,7 @@ public class ChoresModel : PageModel
         // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
         CalendarData.RowOrderContextKey = $"chores:{moleculeId}";
+        CalendarData.ColumnWidthContextKey = $"chores:{moleculeId}";
     }
 
     /// <summary>

@@ -134,10 +134,14 @@ public class UsersDoesChoresHandlerTests : IDisposable
         _grants.Setup(g => g.HasGrantForCompanyAsync(caller, "EditCompanyUsers", companyId)).ReturnsAsync(false);
 
         var model = BuildModel(caller);
-        await model.OnPostDoesChoresAsync(userId, doesChores: true);
+        // Attempt the OPPOSITE of the seeded value (participation now defaults to true), so an
+        // unauthorized write would actually be observable. Asking for the value it already holds
+        // would make this assertion pass even if the handler wrote it.
+        await model.OnPostDoesChoresAsync(userId, doesChores: false);
 
         model.TempData["ErrorMessage"].Should().Be("Error_NoPermissionForCompany");
-        (await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId)).DoesChores.Should().BeFalse();
+        (await _db.Users.IgnoreQueryFilters().FirstAsync(u => u.Id == userId)).DoesChores.Should()
+            .BeTrue("the rejected write must not have changed the flag");
     }
 
     [Fact]

@@ -25,8 +25,10 @@ public class CompanyMembership
     public int? JobTypeId { get; set; }
     public int? DepartmentId { get; set; }
 
-    /// <summary>Whether the user participates in shifts in THIS company.</summary>
-    public bool DoesShifts { get; set; }
+    /// <summary>Whether the user participates in shifts in THIS company. Defaults to true to match
+    /// <see cref="AppUser.DoesShifts"/> — otherwise a user is a shift participant globally while
+    /// being excluded in the very company they were just added to.</summary>
+    public bool DoesShifts { get; set; } = true;
 
     /// <summary>Rotation type in THIS company.</summary>
     public int? HomeTypeId { get; set; }

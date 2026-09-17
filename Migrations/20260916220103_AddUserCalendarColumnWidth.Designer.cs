@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShiftManager.Data;
 
@@ -10,9 +11,11 @@ using ShiftManager.Data;
 namespace ShiftManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916220103_AddUserCalendarColumnWidth")]
+    partial class AddUserCalendarColumnWidth
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -612,9 +615,6 @@ namespace ShiftManager.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("MoleculeId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -623,20 +623,12 @@ namespace ShiftManager.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("UpdatedByUserId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("UpdatedByUserId");
-
-                    b.HasIndex("MoleculeId", "Date")
-                        .IsUnique()
-                        .HasFilter("MoleculeId IS NOT NULL");
+                    b.HasIndex("CompanyId", "Date")
+                        .IsUnique();
 
                     b.ToTable("CalendarDayNotes");
                 });
@@ -4675,21 +4667,9 @@ namespace ShiftManager.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ShiftManager.Models.Molecule", null)
-                        .WithMany()
-                        .HasForeignKey("MoleculeId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("ShiftManager.Models.AppUser", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Company");
 
                     b.Navigation("CreatedByUser");
-
-                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("ShiftManager.Models.CalendarFeedToken", b =>

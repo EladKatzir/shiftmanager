@@ -10732,6 +10732,12 @@
   <data name="Calendar_RowLabel_ColumnHeader" xml:space="preserve">
     <value>שם</value>
   </data>
+  <data name="Calendar_ResizeColumn" xml:space="preserve">
+    <value>גרור לשינוי רוחב העמודה (לחיצה כפולה לאיפוס)</value>
+  </data>
+  <data name="Calendar_ResizeSaveFailed" xml:space="preserve">
+    <value>לא ניתן היה לשמור את רוחב העמודה</value>
+  </data>
   <data name="Calendar_AddTrainee" xml:space="preserve">
     <value>הוסף חניך</value>
   </data>
@@ -14536,6 +14542,12 @@
   </data>
   <data name="QuickEntry_DeleteDayNote" xml:space="preserve">
     <value>מחק הערת יום</value>
+  </data>
+  <data name="Calendar_DayNote_WrittenBy" xml:space="preserve">
+    <value>נכתב על ידי {0}</value>
+  </data>
+  <data name="Calendar_DayNote_LastEditedBy" xml:space="preserve">
+    <value>נערך לאחרונה על ידי {0}</value>
   </data>
   <data name="QuickEntry_DayNoteDeleted" xml:space="preserve">
     <value>הערת היום נמחקה</value>

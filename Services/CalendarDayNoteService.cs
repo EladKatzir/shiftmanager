@@ -4,10 +4,10 @@ using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
-// SECURITY-AUDITED: Mirrors CalendarTextEntryService. Methods take an explicit companyId and use
-// IgnoreQueryFilters() so they never invoke the ambient tenant query filter (which dereferences a
-// possibly-null ITenantResolver). The companyId passed in is the caller's resolved tenant; the API
-// endpoint (QuickAddDayNote) enforces the note-write grant before calling these methods.
+// SECURITY-AUDITED: Methods take an explicit moleculeId and use IgnoreQueryFilters(). That is required,
+// not incidental: a day note is keyed to a molecule and must be visible to viewers from every desk in
+// it, while the entity's inherited query filter would restrict it to the writer's desk. Callers
+// (Shifts page, QuickAddDayNote endpoint) authorise the molecule via ShiftCalendarAccess first.
 public class CalendarDayNoteService : ICalendarDayNoteService
 {
     private readonly AppDbContext _db;
@@ -17,18 +17,18 @@ public class CalendarDayNoteService : ICalendarDayNoteService
         _db = db;
     }
 
-    public async Task<CalendarDayNote> SetDayNoteAsync(DateOnly date, int companyId, string text, int createdByUserId)
+    public async Task<CalendarDayNote> SetDayNoteAsync(DateOnly date, int moleculeId, int authorCompanyId, string text, int userId)
     {
-        // Upsert: one note per (date, companyId). Explicit companyId set so CompanyIdInterceptor
-        // (which only fires when CompanyId == 0) does not overwrite it.
         var existing = await _db.CalendarDayNotes
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(n => n.Date == date && n.CompanyId == companyId);
+            .FirstOrDefaultAsync(n => n.MoleculeId == moleculeId && n.Date == date);
 
         if (existing != null)
         {
+            // An edit keeps the original author and origin desk; only the text and the editor change.
             existing.Text = text;
             existing.UpdatedAt = DateTime.UtcNow;
+            existing.UpdatedByUserId = userId;
         }
         else
         {
@@ -36,8 +36,10 @@ public class CalendarDayNoteService : ICalendarDayNoteService
             {
                 Date = date,
                 Text = text,
-                CompanyId = companyId,
-                CreatedByUserId = createdByUserId
+                MoleculeId = moleculeId,
+                // Explicit so CompanyIdInterceptor (which only fires when CompanyId == 0) leaves it alone.
+                CompanyId = authorCompanyId,
+                CreatedByUserId = userId
             };
             _db.CalendarDayNotes.Add(existing);
         }
@@ -46,11 +48,11 @@ public class CalendarDayNoteService : ICalendarDayNoteService
         return existing;
     }
 
-    public async Task<bool> DeleteDayNoteAsync(DateOnly date, int companyId)
+    public async Task<bool> DeleteDayNoteAsync(DateOnly date, int moleculeId)
     {
         var note = await _db.CalendarDayNotes
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(n => n.Date == date && n.CompanyId == companyId);
+            .FirstOrDefaultAsync(n => n.MoleculeId == moleculeId && n.Date == date);
 
         if (note == null)
             return false;
@@ -60,17 +62,30 @@ public class CalendarDayNoteService : ICalendarDayNoteService
         return true;
     }
 
-    public async Task<Dictionary<DateOnly, string>> GetDayNotesForCompanyAsync(int companyId, DateOnly start, DateOnly end)
+    public async Task<Dictionary<DateOnly, DayNoteView>> GetDayNotesForMoleculeAsync(int moleculeId, DateOnly start, DateOnly end)
     {
+        // The filtered unique index on (MoleculeId, Date) guarantees at most one row per day here, and
+        // legacy un-keyed rows (MoleculeId NULL) can never match a concrete moleculeId.
         var notes = await _db.CalendarDayNotes
             .IgnoreQueryFilters()
-            .Where(n => n.CompanyId == companyId && n.Date >= start && n.Date <= end)
-            .Select(n => new { n.Date, n.Text })
+            .Where(n => n.MoleculeId == moleculeId && n.Date >= start && n.Date <= end)
+            .Select(n => new
+            {
+                n.Date,
+                n.Text,
+                n.CreatedByUserId,
+                n.UpdatedByUserId,
+                AuthorName = n.CreatedByUser.DisplayName,
+                EditorName = n.UpdatedByUser != null ? n.UpdatedByUser.DisplayName : null
+            })
             .ToListAsync();
 
-        // GroupBy is defensive — the DB unique index on (CompanyId, Date) already guarantees one per day.
-        return notes
-            .GroupBy(n => n.Date)
-            .ToDictionary(g => g.Key, g => g.First().Text);
+        return notes.ToDictionary(
+            n => n.Date,
+            n => new DayNoteView(
+                n.Text,
+                n.AuthorName,
+                // The author editing their own note is not a second contributor.
+                n.UpdatedByUserId.HasValue && n.UpdatedByUserId != n.CreatedByUserId ? n.EditorName : null));
     }
 }

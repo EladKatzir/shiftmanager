@@ -36,11 +36,16 @@ public sealed class ChoreFoundationBackfillTests : IAsyncLifetime
             new Molecule { Id = 1, AreaId = 1, Name = "M1", DisplayName = "M1" },
             new Molecule { Id = 2, AreaId = 1, Name = "M2", DisplayName = "M2" });
         _db.Companies.Add(new Company { Id = 1, Name = "Co", Slug = "co", MoleculeId = 1 });
+        // DoesChores = false is the PRE-MIGRATION state this backfill runs against: the real
+        // migration (20260615123359_BackfillChoreFoundation) zeroes the column before running
+        // ChoreFoundationBackfillSql.Forward, which only ever sets rows to 1. Stated explicitly
+        // rather than inherited from AppUser's CLR default, which now defaults participation to
+        // true — the subject under test is the SQL, not the model default.
         _db.Users.AddRange(
-            new AppUser { Id = 1, CompanyId = 1, Email = "s@x.mil", DisplayName = "Std",    IsActive = true,  AccountType = AccountType.Standard },
-            new AppUser { Id = 2, CompanyId = 1, Email = "m@x.mil", DisplayName = "Mil",    IsActive = true,  AccountType = AccountType.Mil },
-            new AppUser { Id = 3, CompanyId = 1, Email = "g@x.mil", DisplayName = "Grp",    IsActive = true,  AccountType = AccountType.GroupUser },
-            new AppUser { Id = 4, CompanyId = 1, Email = "i@x.mil", DisplayName = "StdOff", IsActive = false, AccountType = AccountType.Standard });
+            new AppUser { Id = 1, CompanyId = 1, Email = "s@x.mil", DisplayName = "Std",    IsActive = true,  AccountType = AccountType.Standard, DoesChores = false },
+            new AppUser { Id = 2, CompanyId = 1, Email = "m@x.mil", DisplayName = "Mil",    IsActive = true,  AccountType = AccountType.Mil,      DoesChores = false },
+            new AppUser { Id = 3, CompanyId = 1, Email = "g@x.mil", DisplayName = "Grp",    IsActive = true,  AccountType = AccountType.GroupUser, DoesChores = false },
+            new AppUser { Id = 4, CompanyId = 1, Email = "i@x.mil", DisplayName = "StdOff", IsActive = false, AccountType = AccountType.Standard, DoesChores = false });
         await _db.SaveChangesAsync();
 
         // Phase 2 — two chore types in molecule 1, both uncategorized; molecule 2 has none.

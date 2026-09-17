@@ -1436,7 +1436,10 @@
         </select>
 
         <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; cursor:pointer;">
-            <input type="checkbox" name="doesShifts" value="true" id="addMembershipDoesShifts" />
+            @* Checked by default to match AppUser.DoesShifts — adding someone to a company should
+               make them a participant there, not silently exclude them. (The EDIT dialog below is
+               deliberately left unchecked here: JS pre-fills it from the existing membership.) *@
+            <input type="checkbox" name="doesShifts" value="true" id="addMembershipDoesShifts" checked />
             <span>@Localizer["Users_Membership_DoesShifts"]</span>
         </label>
 

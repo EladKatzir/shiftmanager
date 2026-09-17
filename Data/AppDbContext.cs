@@ -181,6 +181,9 @@ public class AppDbContext : DbContext
     // Per-user calendar row/category ordering preferences (NOT tenant-scoped — personal UI preference)
     public DbSet<UserCalendarRowOrder> UserCalendarRowOrders => Set<UserCalendarRowOrder>();
 
+    // Per-user calendar column widths (NOT tenant-scoped — personal UI preference)
+    public DbSet<UserCalendarColumnWidth> UserCalendarColumnWidths => Set<UserCalendarColumnWidth>();
+
     // Per-user "Who is on Shift" dashboard monitored shift selections (NOT tenant-scoped — personal UI preference)
     public DbSet<UserMonitoredShift> UserMonitoredShifts => Set<UserMonitoredShift>();
 
@@ -739,14 +742,25 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Configure CalendarDayNote (day-scoped free-text notes — one per (Date, CompanyId), upsert at service level)
+        // Configure CalendarDayNote (day-scoped free-text notes — one per (MoleculeId, Date), upsert at service level)
         modelBuilder.Entity<CalendarDayNote>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.CompanyId, e.Date }).IsUnique(); // one note per company per day
+            // One note per molecule per day. Filtered so legacy un-keyed rows (MoleculeId NULL — see the
+            // entity docs) are preserved without competing for a slot.
+            entity.HasIndex(e => new { e.MoleculeId, e.Date })
+                  .IsUnique()
+                  .HasFilter("MoleculeId IS NOT NULL");
+            entity.HasIndex(e => e.CompanyId);
             entity.Property(e => e.Text).HasMaxLength(500);
             entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Restrict);
+            // Cascade: a molecule can only be deleted once it has no desks, and a note belongs to that
+            // molecule's calendar — which no longer exists. Restrict would make that delete throw.
+            entity.HasOne<Molecule>().WithMany().HasForeignKey(e => e.MoleculeId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            // SetNull: deleting the last editor just drops the "edited by" attribution; it must not add
+            // a new reason for a user delete to fail.
+            entity.HasOne(e => e.UpdatedByUser).WithMany().HasForeignKey(e => e.UpdatedByUserId).OnDelete(DeleteBehavior.SetNull);
         });
         // Defense-in-depth tenant filter (production). Service methods use IgnoreQueryFilters + explicit
         // companyId, so this is never invoked in unit tests where _tenantResolver is null.
@@ -1242,6 +1256,13 @@ public class AppDbContext : DbContext
             .IsUnique();
         modelBuilder.Entity<UserCalendarRowOrder>()
             .HasIndex(o => new { o.UserId, o.ContextKey });
+
+        // Per-user calendar column widths. NOT company-scoped — no global query filter.
+        modelBuilder.Entity<UserCalendarColumnWidth>()
+            .HasIndex(w => new { w.UserId, w.ContextKey, w.ColumnKey })
+            .IsUnique();
+        modelBuilder.Entity<UserCalendarColumnWidth>()
+            .HasIndex(w => new { w.UserId, w.ContextKey });
 
         // Per-user "Who is on Shift" monitored shift selections. NOT company-scoped — no global query filter.
         modelBuilder.Entity<UserMonitoredShift>()

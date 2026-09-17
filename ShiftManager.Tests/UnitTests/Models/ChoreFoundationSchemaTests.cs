@@ -126,6 +126,7 @@ public sealed class ChoreFoundationSchemaTests : IAsyncLifetime
     {
         var reloaded = await _db.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == 1);
         reloaded.Gender.Should().Be(Gender.Unspecified);
-        reloaded.DoesChores.Should().BeFalse();
+        reloaded.DoesChores.Should().BeTrue(
+            "a new account participates in chores out of the box — see UserParticipationDefaultsTests");
     }
 }

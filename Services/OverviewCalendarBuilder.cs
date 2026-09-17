@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -109,6 +109,7 @@ public class OverviewCalendarBuilder : IOverviewCalendarBuilder
         // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
         calendarData.TotalRows = calendarData.Rows.Count + (calendarData.Groups?.Count ?? 0) + 1;
         calendarData.RowOrderContextKey = $"overview:{companyId}";
+        calendarData.ColumnWidthContextKey = $"overview:{companyId}";
 
         return calendarData;
     }

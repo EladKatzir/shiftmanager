@@ -341,12 +341,13 @@ public class ShiftsModel : PageModel
             }
         }
 
-        // Day-scoped notes for the date-column headers. Company-wide (visible in BOTH shift-mode and
-        // user-mode), so loaded once here regardless of which build path ran above.
-        var dayNoteCompanyId = _tenantResolver.GetCurrentTenantId();
-        if (dayNoteCompanyId > 0)
+        // Day-scoped notes for the date-column headers, keyed to the MOLECULE this calendar shows — so
+        // every viewer sees them whichever desk they sit in, in both shift-mode and user-mode. MoleculeId
+        // was validated against AvailableMolecules above, which is the same ShiftCalendarAccess rule the
+        // note-write endpoint enforces.
+        if (MoleculeId.HasValue)
         {
-            CalendarData.DayNotes = await _dayNoteService.GetDayNotesForCompanyAsync(dayNoteCompanyId, StartDate, EndDate);
+            CalendarData.DayNotes = await _dayNoteService.GetDayNotesForMoleculeAsync(MoleculeId.Value, StartDate, EndDate);
         }
 
         // Expose users for bottom-sheet dropdown (same query as BuildUserBasedCalendarAsync)
@@ -466,16 +467,14 @@ public class ShiftsModel : PageModel
 
     private async Task LoadAvailableMoleculesAsync(int userId, int userMoleculeId)
     {
-        // Use grant-based scope resolution that handles all scope levels
-        // (Project → Area → Molecule → Company → Self)
-        var moleculeIds = new HashSet<int>(
-            await _grantService.GetAccessibleMoleculeIdsForGrantAsync(userId, "ViewShifts"));
-
-        // Always include user's own molecule as fallback
-        moleculeIds.Add(userMoleculeId);
+        // Grant-based scope resolution (Project → Area → Molecule → Company → Self) plus the user's own
+        // molecule, active only. Shared with the day-note write endpoint so the calendars a user can
+        // see and the calendars they can annotate are decided by one rule.
+        var moleculeIds = await ShiftCalendarAccess.GetViewableMoleculeIdsAsync(
+            _db, _grantService, userId, userMoleculeId);
 
         AvailableMolecules = await _db.Molecules
-            .Where(m => moleculeIds.Contains(m.Id) && m.IsActive)
+            .Where(m => moleculeIds.Contains(m.Id))
             .OrderBy(m => m.DisplayName)
             .ToListAsync();
     }
@@ -630,6 +629,9 @@ public class ShiftsModel : PageModel
         // (rowcount includes ALL <tr> elements, not just <tbody> rows).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
         CalendarData.RowOrderContextKey = $"shifts:{moleculeId}:{jobTypeId}:shift";
+        // Deliberately WITHOUT the row-mode suffix: the date columns are the same columns in both
+        // modes, so a width the user set in shift mode should still apply in user mode.
+        CalendarData.ColumnWidthContextKey = $"shifts:{moleculeId}:{jobTypeId}";
     }
 
     private async Task BuildUserBasedCalendarAsync(int moleculeId, int? jobTypeId)
@@ -779,6 +781,7 @@ public class ShiftsModel : PageModel
         // +1 for the <thead> column-header row (ARIA 1.2 §6.6.4).
         CalendarData.TotalRows = CalendarData.Rows.Count + (CalendarData.Groups?.Count ?? 0) + 1;
         CalendarData.RowOrderContextKey = $"shifts:{moleculeId}:{jobTypeId}:user";
+        CalendarData.ColumnWidthContextKey = $"shifts:{moleculeId}:{jobTypeId}";
     }
 
     /// <summary>
@@ -970,7 +973,9 @@ public class ShiftsModel : PageModel
     /// resolves interactions from the cell's data-row-id attribute, not a DOM id). Everyone else — and
     /// any participant who is not mapped to a category — falls under their Company header.
     /// </summary>
-    private async Task<(List<ExcelCalendarRow> rows, List<ExcelCalendarGroup> groups)> BuildCategoryGroupedRowsAsync(
+    // internal (not private) so ShiftsCategoryFallbackTests can pin the company-header fallback,
+    // mirroring the chores twin BuildChoreCategoryGroupedRowsAsync.
+    internal async Task<(List<ExcelCalendarRow> rows, List<ExcelCalendarGroup> groups)> BuildCategoryGroupedRowsAsync(
         List<AppUser> users,
         int moleculeId,
         List<ShiftInstance> instances,

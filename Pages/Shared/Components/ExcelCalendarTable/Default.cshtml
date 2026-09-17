@@ -1,4 +1,4 @@
-@model ShiftManager.ViewComponents.ExcelCalendarTableViewModel
+﻿@model ShiftManager.ViewComponents.ExcelCalendarTableViewModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
 @inject IStringLocalizer<SharedResources> Localizer
@@ -18,16 +18,34 @@
     // longer drive the column or its colspan.
     var hasShiftCount = Model.Rows.Any(r => r.ShiftCount.HasValue);
     var totalColCount = days.Count + 1 + (hasShiftCount ? 1 : 0);
+    // Column plan behind the <colgroup>. CalendarColumnPlanner guarantees Count == totalColCount,
+    // which `table-layout: fixed` depends on — a mismatch silently misaligns every column.
+    var isResizable = !string.IsNullOrEmpty(Model.ColumnWidthContextKey);
+    var columnPlan = ShiftManager.ViewComponents.CalendarColumnPlanner.Build(
+        days, hasShiftCount, isCompact, Model.ColumnWidths);
 }
 
-<div class="excel-calendar @(isCompact ? "excel-calendar--compact" : "")"
+<div class="excel-calendar @(isCompact ? "excel-calendar--compact" : "") @(isResizable ? "excel-calendar--resizable" : "")"
      data-calendar-type="@Model.CalendarType"
      data-start-date="@Model.StartDate.ToString("yyyy-MM-dd")"
      data-end-date="@Model.EndDate.ToString("yyyy-MM-dd")"
      data-readonly="@Model.IsReadOnly.ToString().ToLower()"
-     data-reorder-context="@(Model.RowOrderContextKey ?? "")">
+     data-reorder-context="@(Model.RowOrderContextKey ?? "")"
+     data-width-context="@(Model.ColumnWidthContextKey ?? "")"
+     data-min-col-width="@ShiftManager.ViewComponents.CalendarColumnPlanner.MinWidth"
+     data-max-col-width="@ShiftManager.ViewComponents.CalendarColumnPlanner.MaxWidth">
 
     <table class="excel-calendar__table" role="grid" aria-rowcount="@Model.TotalRows">
+        <colgroup>
+            @foreach (var col in columnPlan)
+            {
+                @* Width is emitted only when resizing is enabled; otherwise the <col> carries no
+                   width and the table keeps its original auto layout. *@
+                <col class="@col.CssClass" data-col-key="@col.Key"
+                     data-default-width="@col.DefaultWidth"
+                     style="@(isResizable ? $"width:{col.Width}px" : null)" />
+            }
+        </colgroup>
         <thead class="excel-calendar__header">
             <tr aria-rowindex="1">
                 @* data-mode is a future CSS/JS hook for mode-specific column styles
@@ -39,6 +57,12 @@
                         <loc key="@Model.RowModeLabelKey" />
                         <span class="excel-calendar__mode-chevron">▾</span>
                     </span>
+                    @if (isResizable)
+                    {
+                        <span class="excel-calendar__col-resizer" data-col-key="label"
+                              aria-hidden="true"
+                              title="@Localizer["Calendar_ResizeColumn"]"></span>
+                    }
                 </th>
                 @foreach (var day in days)
                 {
@@ -54,11 +78,22 @@
                         data-date="@day.ToString("yyyy-MM-dd")">
                         <span class="excel-calendar__day-name">@dayName</span>
                         <span class="excel-calendar__day-date">@day.ToString("dd/MM")</span>
-                        @if (Model.DayNotes.TryGetValue(day, out var dayNoteText) && !string.IsNullOrWhiteSpace(dayNoteText))
+                        @if (Model.DayNotes.TryGetValue(day, out var dayNote) && !string.IsNullOrWhiteSpace(dayNote.Text))
                         {
-                            <span class="excel-calendar__day-note" title="@dayNoteText">
+                            // Attribution: who originally wrote the note, plus the last editor when that is
+                            // someone else. The note text stays first in the tooltip because the visible
+                            // text is truncated with an ellipsis.
+                            const string tooltipLineBreak = "\n"; // rendered as &#xA; — a line break in the native tooltip
+                            var dayNoteAttribution = string.Format(culture, Localizer["Calendar_DayNote_WrittenBy"].Value, dayNote.AuthorName)
+                                + (dayNote.LastEditorName != null
+                                    ? tooltipLineBreak + string.Format(culture, Localizer["Calendar_DayNote_LastEditedBy"].Value, dayNote.LastEditorName)
+                                    : "");
+                            <span class="excel-calendar__day-note" title="@(dayNote.Text + tooltipLineBreak + dayNoteAttribution)">
                                 <span class="excel-calendar__day-note-icon" aria-hidden="true">📝</span>
-                                <span class="excel-calendar__day-note-text">@dayNoteText</span>
+                                <span class="excel-calendar__day-note-text">@dayNote.Text</span>
+                                @* A title tooltip is unreachable by keyboard and screen readers (this span is not
+                                   focusable), so the attribution is also carried as visually-hidden text. *@
+                                <span class="visually-hidden">@dayNoteAttribution</span>
                                 @if (!Model.IsReadOnly)
                                 {
                                     <button type="button"
@@ -69,12 +104,26 @@
                                 }
                             </span>
                         }
+                        @if (isResizable)
+                        {
+                            @* All day columns share one key, so dragging any day header sizes them
+                               together and the width survives navigation to another week. *@
+                            <span class="excel-calendar__col-resizer" data-col-key="day"
+                                  aria-hidden="true"
+                                  title="@Localizer["Calendar_ResizeColumn"]"></span>
+                        }
                     </th>
                 }
                 @if (hasShiftCount)
                 {
                     <th class="excel-calendar__header-total" scope="col">
                         <span class="excel-calendar__day-name">@Localizer["TotalShifts"]</span>
+                        @if (isResizable)
+                        {
+                            <span class="excel-calendar__col-resizer" data-col-key="total"
+                                  aria-hidden="true"
+                                  title="@Localizer["Calendar_ResizeColumn"]"></span>
+                        }
                     </th>
                 }
             </tr>

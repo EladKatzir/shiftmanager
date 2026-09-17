@@ -1,7 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
+using ShiftManager.Data;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
@@ -9,14 +11,18 @@ using System.Text.Json;
 
 namespace ShiftManager.Pages.Api.Calendar;
 
-// Day-scoped free-text note from Quick Entry, available in any calendar view (shift-mode or user-mode).
+// Day-scoped free-text note from Quick Entry on the Shifts calendar (shift-mode or user-mode).
 // Sibling of QuickAddTextEntry, but the note attaches to a DAY (not a user): a shift-type cell has no
-// single user, so day notes are keyed by (Date, CompanyId). Covered by ApiAuthenticationMiddleware's
-// "/Api/Calendar" internal-web-UI prefix — no separate middleware registration needed.
+// single user. Keyed by (MoleculeId, Date) — the molecule the calendar is showing, named by the client —
+// so every viewer of that calendar sees it whichever desk they sit in. Because the request names the
+// molecule, the caller must be able to VIEW that molecule's calendar (ShiftCalendarAccess), not merely
+// hold the broad note-writing grant. Covered by ApiAuthenticationMiddleware's "/Api/Calendar"
+// internal-web-UI prefix — no separate middleware registration needed.
 [Authorize]
 [IgnoreAntiforgeryToken]
 public class QuickAddDayNoteModel : PageModel
 {
+    private readonly AppDbContext _db;
     private readonly ICalendarDayNoteService _dayNoteService;
     private readonly IAuditLogService _auditLogService;
     private readonly IGrantService _grantService;
@@ -25,6 +31,7 @@ public class QuickAddDayNoteModel : PageModel
     private readonly IStringLocalizer<SharedResources> _localizer;
 
     public QuickAddDayNoteModel(
+        AppDbContext db,
         ICalendarDayNoteService dayNoteService,
         IAuditLogService auditLogService,
         IGrantService grantService,
@@ -32,6 +39,7 @@ public class QuickAddDayNoteModel : PageModel
         ILogger<QuickAddDayNoteModel> logger,
         IStringLocalizer<SharedResources> localizer)
     {
+        _db = db;
         _dayNoteService = dayNoteService;
         _auditLogService = auditLogService;
         _grantService = grantService;
@@ -71,6 +79,13 @@ public class QuickAddDayNoteModel : PageModel
                     { StatusCode = 400 };
             }
 
+            if (data.MoleculeId is not > 0)
+            {
+                return new JsonResult(new { success = false, message = "A molecule is required" })
+                    { StatusCode = 400 };
+            }
+            var moleculeId = data.MoleculeId.Value;
+
             var text = (data.Text ?? string.Empty).Trim();
             if (text.Length > 500)
             {
@@ -100,28 +115,45 @@ public class QuickAddDayNoteModel : PageModel
                     { StatusCode = 400 };
             }
 
+            // SECURITY: the request names the molecule, so prove the caller can view that molecule's
+            // calendar — the exact rule the Shifts page uses to decide what it shows.
+            // SECURITY-AUDITED: SAFE — reads only the caller's own active desk's MoleculeId.
+            var ownMoleculeId = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => c.Id == companyId)
+                .Select(c => c.MoleculeId)
+                .FirstOrDefaultAsync();
+            var viewable = await ShiftCalendarAccess.GetViewableMoleculeIdsAsync(_db, _grantService, currentUserId, ownMoleculeId);
+            if (!viewable.Contains(moleculeId))
+            {
+                _logger.LogWarning("SECURITY: User {UserId} attempted to write a day note on molecule {MoleculeId} they cannot view",
+                    currentUserId, moleculeId);
+                return new JsonResult(new { success = false, message = "You do not have access to this calendar" })
+                    { StatusCode = 403 };
+            }
+
             // Empty text clears the day note; non-empty upserts it.
             if (text.Length == 0)
             {
-                var removed = await _dayNoteService.DeleteDayNoteAsync(noteDate, companyId);
+                var removed = await _dayNoteService.DeleteDayNoteAsync(noteDate, moleculeId);
                 if (removed)
                 {
                     await _auditLogService.LogAsync(
                         action: "DayNoteDeleted",
                         entityType: "CalendarDayNote",
                         entityId: 0,
-                        description: $"Cleared day note on {noteDate:yyyy-MM-dd} via Quick Entry");
+                        description: $"Cleared day note on {noteDate:yyyy-MM-dd} (molecule {moleculeId}) via Quick Entry");
                 }
                 return new JsonResult(new { success = true, deleted = true, message = "Day note cleared" });
             }
 
-            var note = await _dayNoteService.SetDayNoteAsync(noteDate, companyId, text, currentUserId);
+            var note = await _dayNoteService.SetDayNoteAsync(noteDate, moleculeId, companyId, text, currentUserId);
 
             await _auditLogService.LogAsync(
                 action: "DayNoteSaved",
                 entityType: "CalendarDayNote",
                 entityId: note.Id,
-                description: $"Saved day note '{text}' on {noteDate:yyyy-MM-dd} via Quick Entry");
+                description: $"Saved day note '{text}' on {noteDate:yyyy-MM-dd} (molecule {moleculeId}) via Quick Entry");
 
             return new JsonResult(new
             {
@@ -146,5 +178,6 @@ public class QuickAddDayNoteModel : PageModel
     {
         public string Date { get; set; } = string.Empty;
         public string Text { get; set; } = string.Empty;
+        public int? MoleculeId { get; set; }
     }
 }

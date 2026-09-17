@@ -56,11 +56,25 @@ public class ExcelCalendarTableViewModel
     public string? RowOrderContextKey { get; set; }
 
     /// <summary>
-    /// Day-scoped free-text notes (<see cref="ShiftManager.Models.CalendarDayNote"/>) keyed by date,
-    /// rendered in the date-column headers. Company-wide and view-independent, so they show in both
-    /// shift-mode and user-mode. Populated only by calendars that support day notes (Shifts); empty elsewhere.
+    /// Per-user column-width context key, e.g. "shifts:9:2:user". Null disables drag-to-resize for
+    /// this render, and the table keeps `table-layout: auto` — which is why a calendar that has not
+    /// opted in renders exactly as it did before the feature existed.
+    /// Deliberately separate from <see cref="RowOrderContextKey"/> so resizing can be enabled one
+    /// calendar at a time even though both features share the same context-key shapes.
     /// </summary>
-    public Dictionary<DateOnly, string> DayNotes { get; set; } = new();
+    public string? ColumnWidthContextKey { get; set; }
+
+    /// <summary>Saved widths for <see cref="ColumnWidthContextKey"/> as ColumnKey → px.
+    /// Populated by the view component; empty when resizing is not enabled.</summary>
+    public Dictionary<string, int> ColumnWidths { get; set; } = new();
+
+    /// <summary>
+    /// Day-scoped free-text notes (<see cref="ShiftManager.Models.CalendarDayNote"/>) keyed by date,
+    /// rendered in the date-column headers with the author's name on hover. Molecule-wide and
+    /// view-independent, so they show in both shift-mode and user-mode. Populated only by calendars that
+    /// support day notes (Shifts); empty elsewhere.
+    /// </summary>
+    public Dictionary<DateOnly, ShiftManager.Services.DayNoteView> DayNotes { get; set; } = new();
 }
 
 public class ExcelCalendarRow
@@ -199,20 +213,32 @@ public static class CalendarOrderApplier
 public class ExcelCalendarTableViewComponent : ViewComponent
 {
     private readonly ShiftManager.Services.ICalendarRowOrderService _rowOrder;
-    public ExcelCalendarTableViewComponent(ShiftManager.Services.ICalendarRowOrderService rowOrder)
-        => _rowOrder = rowOrder;
+    private readonly ShiftManager.Services.ICalendarColumnWidthService _columnWidths;
+
+    public ExcelCalendarTableViewComponent(
+        ShiftManager.Services.ICalendarRowOrderService rowOrder,
+        ShiftManager.Services.ICalendarColumnWidthService columnWidths)
+    {
+        _rowOrder = rowOrder;
+        _columnWidths = columnWidths;
+    }
 
     public async Task<IViewComponentResult> InvokeAsync(ExcelCalendarTableViewModel model)
     {
-        if (!string.IsNullOrEmpty(model.RowOrderContextKey))
+        var idClaim = UserClaimsPrincipal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var hasUserId = int.TryParse(idClaim, out var userId);
+
+        if (!string.IsNullOrEmpty(model.RowOrderContextKey) && hasUserId)
         {
-            var idClaim = UserClaimsPrincipal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(idClaim, out var userId))
-            {
-                var map = await _rowOrder.GetOrderMapAsync(userId, model.RowOrderContextKey);
-                CalendarOrderApplier.Apply(model.Rows, model.Groups, map);
-            }
+            var map = await _rowOrder.GetOrderMapAsync(userId, model.RowOrderContextKey);
+            CalendarOrderApplier.Apply(model.Rows, model.Groups, map);
         }
+
+        if (!string.IsNullOrEmpty(model.ColumnWidthContextKey) && hasUserId)
+        {
+            model.ColumnWidths = await _columnWidths.GetWidthMapAsync(userId, model.ColumnWidthContextKey);
+        }
+
         return View(model);
     }
 }
