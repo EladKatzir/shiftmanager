@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +22,7 @@ public class AssignModel : LocalizedPageModel
     private readonly IRoleService _roleService;
     private readonly IJobTypeService _jobTypeService;
     private readonly IAuditLogService _auditLogService;
+    private readonly IGrantService _grantService;
 
     public AssignModel(
         IStringLocalizer<SharedResources> localizer,
@@ -29,13 +30,15 @@ public class AssignModel : LocalizedPageModel
         ILogger<AssignModel> logger,
         IRoleService roleService,
         IJobTypeService jobTypeService,
-        IAuditLogService auditLogService) : base(localizer)
+        IAuditLogService auditLogService,
+        IGrantService grantService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _roleService = roleService;
         _jobTypeService = jobTypeService;
         _auditLogService = auditLogService;
+        _grantService = grantService;
     }
 
     public record UserOption(int Id, string DisplayName, string Email);
@@ -139,6 +142,22 @@ public class AssignModel : LocalizedPageModel
         // Get current user ID for audit
         var currentUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int.TryParse(currentUserIdClaim, out var currentUserId);
+
+        // RANK RULE (RoleRankGuard): you may assign your own role or a less senior one, never a more
+        // senior one, and you may not re-role someone more senior than yourself. Holding AssignRoles
+        // used to be enough to make anyone an Owner. Scope/reach rules are unchanged.
+        if (!await RoleRankGuard.CanAssignTemplateAsync(_db, _grantService, currentUserId, roleTemplate.Id))
+        {
+            Error = _localizer["Error_CannotActOnHigherRankedUser"];
+            await LoadDropdownOptionsAsync();
+            return Page();
+        }
+        if (!await RoleRankGuard.CanActOnUserAsync(_db, _grantService, currentUserId, SelectedUserId))
+        {
+            Error = _localizer["Error_CannotActOnHigherRankedUser"];
+            await LoadDropdownOptionsAsync();
+            return Page();
+        }
 
         // Assign role via service (handles duplicate checks and auto-grants internally)
         var scope = new GrantScope(

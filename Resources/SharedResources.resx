@@ -14579,6 +14579,12 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="QuickEntry_DeleteDayNote" xml:space="preserve">
     <value>Delete day note</value>
   </data>
+  <data name="Error_CannotGrantWhatYouDoNotHold" xml:space="preserve">
+    <value>You can only give a permission that you hold yourself.</value>
+  </data>
+  <data name="Error_CannotActOnHigherRankedUser" xml:space="preserve">
+    <value>You cannot perform this action on a user whose role is more senior than your own.</value>
+  </data>
   <data name="Calendar_DayNote_WrittenBy" xml:space="preserve">
     <value>Written by {0}</value>
   </data>

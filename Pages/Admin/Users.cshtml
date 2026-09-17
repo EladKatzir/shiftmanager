@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model ShiftManager.Pages.Admin.UsersModel
 @using Microsoft.Extensions.Localization
 @using ShiftManager.Resources
@@ -788,16 +788,16 @@
                         }
                     </select>
                 </div>
-                @if (Model.Companies.Count > 0)
+                @if (Model.CreateUserCompanies.Count > 0)
                 {
                     <div class="filter-group" id="addUserCompanyField">
                         <label>@Localizer["Company"]</label>
                         <select asp-for="NewUserCompanyId" class="form-input" data-searchable required>
-                            @if (Model.Companies.Count > 1)
+                            @if (Model.CreateUserCompanies.Count > 1)
                             {
                                 <option value="">-- @Localizer["SelectCompany"] --</option>
                             }
-                            @foreach (var company in Model.Companies)
+                            @foreach (var company in Model.CreateUserCompanies)
                             {
                                 <option value="@company.Id">@company.LocalizedName</option>
                             }

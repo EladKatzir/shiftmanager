@@ -14543,6 +14543,12 @@
   <data name="QuickEntry_DeleteDayNote" xml:space="preserve">
     <value>מחק הערת יום</value>
   </data>
+  <data name="Error_CannotGrantWhatYouDoNotHold" xml:space="preserve">
+    <value>ניתן להעניק רק הרשאה שקיימת ברשותך.</value>
+  </data>
+  <data name="Error_CannotActOnHigherRankedUser" xml:space="preserve">
+    <value>לא ניתן לבצע פעולה זו על משתמש בעל תפקיד בכיר משלך.</value>
+  </data>
   <data name="Calendar_DayNote_WrittenBy" xml:space="preserve">
     <value>נכתב על ידי {0}</value>
   </data>

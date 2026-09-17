@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +22,7 @@ public class AssignModel : LocalizedPageModel
     private readonly IJobTypeService _jobTypeService;
     private readonly IAuditLogService _auditLogService;
     private readonly INotificationService _notificationService;
+    private readonly IGrantService _grantService;
 
     public AssignModel(
         IStringLocalizer<SharedResources> localizer,
@@ -29,13 +30,15 @@ public class AssignModel : LocalizedPageModel
         ILogger<AssignModel> logger,
         IJobTypeService jobTypeService,
         IAuditLogService auditLogService,
-        INotificationService notificationService) : base(localizer)
+        INotificationService notificationService,
+        IGrantService grantService) : base(localizer)
     {
         _db = db;
         _logger = logger;
         _jobTypeService = jobTypeService;
         _auditLogService = auditLogService;
         _notificationService = notificationService;
+        _grantService = grantService;
     }
 
     public record UserOption(int Id, string DisplayName, string Email);
@@ -135,6 +138,20 @@ public class AssignModel : LocalizedPageModel
         if (grantType == null)
         {
             Error = _localizer["Error_GrantTypeNotFound"];
+            await LoadDropdownOptionsAsync();
+            return Page();
+        }
+
+        // "You cannot give away more than you hold." AdminAccess stays unrestricted; anyone else must
+        // hold this grant type themselves. Holding AssignGrants used to be enough to grant yourself
+        // AdminAccess. Scope/reach rules are unchanged, so in-scope assignments still work.
+        var actorIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int.TryParse(actorIdClaim, out var actorUserId);
+        if (!await _grantService.HasGrantAsync(actorUserId, "AdminAccess")
+            && !await _grantService.HasGrantAsync(actorUserId, grantType.Key))
+        {
+            _logger.LogWarning("SECURITY: User {ActorId} attempted to grant '{GrantKey}' which they do not hold", actorUserId, grantType.Key);
+            Error = _localizer["Error_CannotGrantWhatYouDoNotHold"];
             await LoadDropdownOptionsAsync();
             return Page();
         }

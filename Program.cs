@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -1643,6 +1643,10 @@ using (var scope = app.Services.CreateScope())
             (2, 122, g => !g.MoleculeId.HasValue && !g.AreaId.HasValue && !g.ProjectId.HasValue),
             (3,  17, g => !g.MoleculeId.HasValue && !g.AreaId.HasValue && !g.ProjectId.HasValue),
             (3,   2, g => !g.MoleculeId.HasValue && !g.AreaId.HasValue && !g.ProjectId.HasValue),
+            // EditCompanyUsers (118) SAR → ETM for Lead (3) and BRDirector (2): they now manage users
+            // across their whole molecule. Old-shape = anything narrower than Molecule.
+            (2, 118, g => !g.MoleculeId.HasValue && !g.AreaId.HasValue && !g.ProjectId.HasValue),
+            (3, 118, g => !g.MoleculeId.HasValue && !g.AreaId.HasValue && !g.ProjectId.HasValue),
             // Target = ETA (Area). Old-shape: anything narrower than Area
             // (covers ETM/Molecule, SAR/Company, AND all-null self-scoped).
             (8,  17, g => !g.AreaId.HasValue && !g.ProjectId.HasValue),

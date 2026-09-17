@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -187,6 +187,14 @@ public partial class UsersModel : LocalizedPageModel
 
     public List<Company> Companies { get; set; } = new();
 
+    /// <summary>
+    /// Companies offered in the ADD-USER form. Separate from <see cref="Companies"/> on purpose:
+    /// creation is authorised by EditCompanyUsers (molecule-wide for Lead/Kabar), while
+    /// <see cref="Companies"/> also drives the category pickers for EXISTING users and must not widen.
+    /// Always a superset of <see cref="Companies"/>, so nothing that used to be offered disappears.
+    /// </summary>
+    public List<Company> CreateUserCompanies { get; set; } = new();
+
     public bool IsOwner { get; set; }
 
     /// <summary>
@@ -298,6 +306,28 @@ public partial class UsersModel : LocalizedPageModel
             Companies = await _db.Companies
                 .IgnoreQueryFilters()
                 .Where(c => accessibleCompanyIds.Contains(c.Id) && !c.IsHeadquarters)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
+
+        // Add-user dropdown: every company where creation will actually SUCCEED. The create POST
+        // authorises the target company with EditCompanyUsers, so resolving the same grant here makes
+        // the form agree with the gate — previously it was built from ManageJoinRequests scope, which
+        // is why a Lead saw only their own desk even with a molecule-wide grant.
+        // Unioned with the existing list so no previously-offered company is lost.
+        if (IsOwner)
+        {
+            CreateUserCompanies = Companies;
+        }
+        else
+        {
+            var createReachIds = await _grantService.GetAccessibleCompanyIdsForGrantAsync(currentUserId, "EditCompanyUsers");
+            var alreadyOffered = Companies.Select(c => c.Id).ToList();
+            // SECURITY-AUDITED: SAFE — restricted to the caller's EditCompanyUsers reach plus the
+            // companies already offered by the grant-resolved list above; HQ stays excluded.
+            CreateUserCompanies = await _db.Companies
+                .IgnoreQueryFilters()
+                .Where(c => !c.IsHeadquarters && (createReachIds.Contains(c.Id) || alreadyOffered.Contains(c.Id)))
                 .OrderBy(c => c.Name)
                 .ToListAsync();
         }
@@ -417,9 +447,9 @@ public partial class UsersModel : LocalizedPageModel
 
         // Build companyId→validJobTypeIds mapping for add-user form dynamic filtering.
         // Uses same logic as JobTypeService.GetJobTypesForMoleculeAsync but computed in bulk.
-        if (Companies.Any())
+        if (CreateUserCompanies.Any())
         {
-            var moleculeIds = Companies.Where(c => c.MoleculeId.HasValue).Select(c => c.MoleculeId!.Value).Distinct().ToList();
+            var moleculeIds = CreateUserCompanies.Where(c => c.MoleculeId.HasValue).Select(c => c.MoleculeId!.Value).Distinct().ToList();
             var molecules = await _db.Molecules
                 .IgnoreQueryFilters()
                 .Where(m => moleculeIds.Contains(m.Id))
@@ -429,7 +459,7 @@ public partial class UsersModel : LocalizedPageModel
             MoleculeNames = molecules.ToDictionary(m => m.Id, m => m.DisplayName);
             var activeJobTypes = allJobTypesWithArea.Where(jt => jt.IsActive).ToList();
 
-            foreach (var company in Companies)
+            foreach (var company in CreateUserCompanies)
             {
                 if (!company.MoleculeId.HasValue || !moleculeLookup.TryGetValue(company.MoleculeId.Value, out var mol))
                 {
@@ -1116,6 +1146,16 @@ public partial class UsersModel : LocalizedPageModel
                 return RedirectToPage();
             }
 
+            // RANK RULE (RoleRankGuard): never act on a user more senior than yourself.
+            // EditCompanyUsers is molecule-wide for Lead/Kabar, so without this a Lead could reset
+            // their MoleculeAdmin's password in another desk and log in as them.
+            if (!await RoleRankGuard.CanActOnUserAsync(_db, _grantService, toggleCurrentUserId, u.Id))
+            {
+                LogUnauthorizedUserActionWithGrant(_logger, toggleCurrentUserId, "to toggle (rank)", id, u.CompanyId);
+                TempData["ErrorMessage"] = _localizer["Error_CannotActOnHigherRankedUser"].Value;
+                return RedirectToPage();
+            }
+
             var wasActive = u.IsActive;
             u.IsActive = !u.IsActive;
 
@@ -1276,6 +1316,25 @@ public partial class UsersModel : LocalizedPageModel
             {
                 LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "role change on", id, u.CompanyId);
                 TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
+                return RedirectToPage();
+            }
+
+            // RANK RULE (RoleRankGuard): never act on a user more senior than yourself.
+            // EditCompanyUsers is molecule-wide for Lead/Kabar, so without this a Lead could reset
+            // their MoleculeAdmin's password in another desk and log in as them.
+            if (!await RoleRankGuard.CanActOnUserAsync(_db, _grantService, currentUserId, u.Id))
+            {
+                LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "role change (rank) on", id, u.CompanyId);
+                TempData["ErrorMessage"] = _localizer["Error_CannotActOnHigherRankedUser"].Value;
+                return RedirectToPage();
+            }
+
+            // …and never hand out a role more senior than your own.
+            if (selectedTemplate != null
+                && !await RoleRankGuard.CanAssignTemplateAsync(_db, _grantService, currentUserId, selectedTemplate.Id))
+            {
+                LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "role change (senior role) on", id, u.CompanyId);
+                TempData["ErrorMessage"] = _localizer["Error_CannotActOnHigherRankedUser"].Value;
                 return RedirectToPage();
             }
 
@@ -1991,6 +2050,16 @@ public partial class UsersModel : LocalizedPageModel
                 return RedirectToPage();
             }
 
+            // RANK RULE (RoleRankGuard): never act on a user more senior than yourself.
+            // EditCompanyUsers is molecule-wide for Lead/Kabar, so without this a Lead could reset
+            // their MoleculeAdmin's password in another desk and log in as them.
+            if (!await RoleRankGuard.CanActOnUserAsync(_db, _grantService, resetCurrentUserId, u.Id))
+            {
+                LogUnauthorizedUserActionWithGrant(_logger, resetCurrentUserId, "password reset (rank) on", id, u.CompanyId);
+                TempData["ErrorMessage"] = _localizer["Error_CannotActOnHigherRankedUser"].Value;
+                return RedirectToPage();
+            }
+
             var (h, s) = PasswordHasher.CreateHash(newPassword);
             u.PasswordHash = h; u.PasswordSalt = s;
             {
@@ -2062,6 +2131,14 @@ public partial class UsersModel : LocalizedPageModel
         {
             LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "to unlock", id, targetUser.CompanyId);
             TempData["ErrorMessage"] = _localizer["Error_NoPermissionForCompany"].Value;
+            return RedirectToPage();
+        }
+
+        // RANK RULE (RoleRankGuard): never act on a user more senior than yourself.
+        if (!await RoleRankGuard.CanActOnUserAsync(_db, _grantService, currentUserId, targetUser.Id))
+        {
+            LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "to unlock (rank)", id, targetUser.CompanyId);
+            TempData["ErrorMessage"] = _localizer["Error_CannotActOnHigherRankedUser"].Value;
             return RedirectToPage();
         }
 
@@ -2140,6 +2217,17 @@ public partial class UsersModel : LocalizedPageModel
             {
                 LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "to delete", id, user.CompanyId);
                 Error = _localizer["Error_CanOnlyDeleteOwnCompanyUsers"];
+                await OnGetAsync();
+                return Page();
+            }
+
+            // RANK RULE (RoleRankGuard): never act on a user more senior than yourself.
+            // EditCompanyUsers is molecule-wide for Lead/Kabar, so without this a Lead could reset
+            // their MoleculeAdmin's password in another desk and log in as them.
+            if (!await RoleRankGuard.CanActOnUserAsync(_db, _grantService, currentUserId, user.Id))
+            {
+                LogUnauthorizedUserActionWithGrant(_logger, currentUserId, "to delete (rank)", id, user.CompanyId);
+                Error = _localizer["Error_CannotActOnHigherRankedUser"];
                 await OnGetAsync();
                 return Page();
             }
