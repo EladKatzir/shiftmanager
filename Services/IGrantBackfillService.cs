@@ -1,4 +1,4 @@
-using ShiftManager.Models.Support;
+﻿using ShiftManager.Models.Support;
 
 namespace ShiftManager.Services;
 
@@ -46,6 +46,13 @@ public sealed class BackfillReport
     public int UsersScanned { get; set; }
     public int UsersWithMissingGrants { get; set; }
     public int TotalMissingGrantRows { get; set; }
+
+    /// <summary>Users who HOLD the right grant types but at a scope other than the one their template
+    /// now declares — e.g. company-scoped rows after the template moved to molecule scope. Counting
+    /// grant types alone reported these as "nothing to do", which made a real configuration change
+    /// look like it had failed.</summary>
+    public int UsersWithScopeMismatch { get; set; }
+    public int TotalScopeMismatchRows { get; set; }
     public List<BackfillReportEntry> Entries { get; set; } = new();
 }
 
@@ -61,6 +68,10 @@ public sealed class BackfillReportEntry
 
     /// <summary>The actual grant keys that would be inserted on Execute. Populated by PreviewAsync (2026-04-16).</summary>
     public List<string> MissingGrantKeys { get; set; } = new();
+
+    /// <summary>Grant keys the user holds at the wrong scope; Execute will re-scope these.</summary>
+    public int ScopeMismatchCount { get; set; }
+    public List<string> ScopeMismatchGrantKeys { get; set; } = new();
 }
 
 /// <summary>Per-user surplus entry — auto-grants no longer in their template.</summary>
@@ -92,6 +103,11 @@ public sealed class BackfillResult
     public int UsersProcessed { get; set; }
     public int UsersUpdated { get; set; }
     public int TotalGrantsInserted { get; set; }
+
+    /// <summary>Superseded rows removed. Reported separately because a RE-SCOPE removes one row and
+    /// adds another: netting them (rows-after minus rows-before) reported a real change as zero.</summary>
+    public int TotalGrantsRemoved { get; set; }
+
     public int UsersFailed { get; set; }
     public List<string> Errors { get; set; } = new();
 }

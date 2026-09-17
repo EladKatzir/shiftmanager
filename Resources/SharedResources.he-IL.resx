@@ -14543,6 +14543,12 @@
   <data name="QuickEntry_DeleteDayNote" xml:space="preserve">
     <value>מחק הערת יום</value>
   </data>
+  <data name="Grants_BackfillReportRescope" xml:space="preserve">
+    <value>ישונה טווח ההרשאה:</value>
+  </data>
+  <data name="ScopeMode_ExpandToProject" xml:space="preserve">
+    <value>הרחבה לפרויקט</value>
+  </data>
   <data name="Error_CannotGrantWhatYouDoNotHold" xml:space="preserve">
     <value>ניתן להעניק רק הרשאה שקיימת ברשותך.</value>
   </data>

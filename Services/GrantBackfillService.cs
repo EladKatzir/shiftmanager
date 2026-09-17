@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ShiftManager.Data;
 using ShiftManager.Models.Support;
 
@@ -54,34 +54,66 @@ public sealed class GrantBackfillService : IGrantBackfillService
         foreach (var u in users)
         {
             var tId = u.RoleTemplateId!.Value;
-            if (!templateGrants.TryGetValue(tId, out var expected)) continue;
+            if (!templateGrants.TryGetValue(tId, out var expectedTypeIds)) continue;
 
-            var userGrantTypeIds = await _db.Grants
+            var userGrants = await _db.Grants
                 .IgnoreQueryFilters()
                 .Where(g => g.UserId == u.Id)
-                .Select(g => g.GrantTypeId)
-                .Distinct()
+                .Select(g => new { g.GrantTypeId, g.ProjectId, g.AreaId, g.MoleculeId, g.DepartmentId, g.CompanyId, g.JobTypeId })
                 .ToListAsync();
 
-            var missingIds = expected.Except(userGrantTypeIds).ToList();
+            var userGrantTypeIds = userGrants.Select(g => g.GrantTypeId).Distinct().ToList();
+            var missingIds = expectedTypeIds.Except(userGrantTypeIds).ToList();
+
+            // Grants the user HOLDS but not at the scope their template now declares. Comparing grant
+            // types alone hid these, so a scope-mode change reported "0 users missing" and looked like
+            // it had not applied. Resolved through the same calculation Execute writes from.
+            var expectedGrants = await _grantService.GetExpectedAutoGrantsAsync(tId, await BuildRoleScopeAsync(u));
+            var mismatchedIds = expectedGrants
+                .Where(e => userGrantTypeIds.Contains(e.GrantTypeId))
+                .Where(e => !userGrants.Any(g =>
+                    g.GrantTypeId == e.GrantTypeId &&
+                    g.ProjectId == e.EffectiveScope.ProjectId &&
+                    g.AreaId == e.EffectiveScope.AreaId &&
+                    g.MoleculeId == e.EffectiveScope.MoleculeId &&
+                    g.DepartmentId == e.EffectiveScope.DepartmentId &&
+                    g.CompanyId == e.EffectiveScope.CompanyId &&
+                    g.JobTypeId == e.EffectiveScope.JobTypeId))
+                .Select(e => e.GrantTypeId)
+                .Distinct()
+                .ToList();
+
+            if (missingIds.Count == 0 && mismatchedIds.Count == 0) continue;
+
             if (missingIds.Count > 0)
             {
                 report.UsersWithMissingGrants++;
                 report.TotalMissingGrantRows += missingIds.Count;
-                report.Entries.Add(new BackfillReportEntry
-                {
-                    UserId = u.Id,
-                    Email = u.Email,
-                    DisplayName = u.DisplayName ?? string.Empty,
-                    RoleTemplateId = tId,
-                    RoleTemplateKey = templateKeys.GetValueOrDefault(tId, string.Empty),
-                    MissingGrantCount = missingIds.Count,
-                    MissingGrantKeys = missingIds
-                        .Select(id => grantKeyMap.GetValueOrDefault(id, $"#{id}"))
-                        .OrderBy(k => k)
-                        .ToList(),
-                });
             }
+            if (mismatchedIds.Count > 0)
+            {
+                report.UsersWithScopeMismatch++;
+                report.TotalScopeMismatchRows += mismatchedIds.Count;
+            }
+
+            report.Entries.Add(new BackfillReportEntry
+            {
+                UserId = u.Id,
+                Email = u.Email,
+                DisplayName = u.DisplayName ?? string.Empty,
+                RoleTemplateId = tId,
+                RoleTemplateKey = templateKeys.GetValueOrDefault(tId, string.Empty),
+                MissingGrantCount = missingIds.Count,
+                MissingGrantKeys = missingIds
+                    .Select(id => grantKeyMap.GetValueOrDefault(id, $"#{id}"))
+                    .OrderBy(k => k)
+                    .ToList(),
+                ScopeMismatchCount = mismatchedIds.Count,
+                ScopeMismatchGrantKeys = mismatchedIds
+                    .Select(id => grantKeyMap.GetValueOrDefault(id, $"#{id}"))
+                    .OrderBy(k => k)
+                    .ToList(),
+            });
         }
 
         return report;
@@ -162,29 +194,25 @@ public sealed class GrantBackfillService : IGrantBackfillService
         {
             try
             {
-                var beforeCount = await _db.Grants.IgnoreQueryFilters()
-                    .CountAsync(g => g.UserId == u.Id);
+                // Identity-based diff, not a row COUNT. A re-scope removes one row and adds another,
+                // so "rows after minus rows before" reported a real change as zero.
+                var beforeIds = await _db.Grants.IgnoreQueryFilters()
+                    .Where(g => g.UserId == u.Id).Select(g => g.Id).ToListAsync();
 
-                var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(u.Id);
-                var roleScope = new GrantScope(
-                    ProjectId: hierarchyContext?.Path.Project?.Id,
-                    AreaId: hierarchyContext?.Path.Area?.Id,
-                    MoleculeId: hierarchyContext?.Path.Molecule?.Id,
-                    DepartmentId: u.DepartmentId,
-                    CompanyId: u.CompanyId,
-                    JobTypeId: hierarchyContext?.JobType?.Id
-                );
+                var roleScope = await BuildRoleScopeAsync(u);
 
                 await _grantService.ApplyAutoGrantsAsync(u.Id, u.RoleTemplateId!.Value, roleScope);
 
-                var afterCount = await _db.Grants.IgnoreQueryFilters()
-                    .CountAsync(g => g.UserId == u.Id);
+                var afterIds = await _db.Grants.IgnoreQueryFilters()
+                    .Where(g => g.UserId == u.Id).Select(g => g.Id).ToListAsync();
 
-                var added = afterCount - beforeCount;
-                if (added > 0)
+                var inserted = afterIds.Except(beforeIds).Count();
+                var removed = beforeIds.Except(afterIds).Count();
+                if (inserted > 0 || removed > 0)
                 {
                     result.UsersUpdated++;
-                    result.TotalGrantsInserted += added;
+                    result.TotalGrantsInserted += inserted;
+                    result.TotalGrantsRemoved += removed;
                 }
             }
             catch (Exception ex)
@@ -196,10 +224,25 @@ public sealed class GrantBackfillService : IGrantBackfillService
         }
 
         _logger.LogInformation(
-            "AUDIT: Grant back-fill finished. Processed={Processed}, Updated={Updated}, GrantsInserted={Grants}, Failed={Failed}",
-            result.UsersProcessed, result.UsersUpdated, result.TotalGrantsInserted, result.UsersFailed);
+            "AUDIT: Grant back-fill finished. Processed={Processed}, Updated={Updated}, GrantsInserted={Grants}, GrantsRemoved={Removed}, Failed={Failed}",
+            result.UsersProcessed, result.UsersUpdated, result.TotalGrantsInserted, result.TotalGrantsRemoved, result.UsersFailed);
 
         return result;
+    }
+
+    /// <summary>The user's full hierarchy scope — the raw material a template's ScopeMode is applied
+    /// to. Shared by Execute and Preview so the dry run judges the same scope Execute would write.</summary>
+    private async Task<GrantScope> BuildRoleScopeAsync(Models.AppUser u)
+    {
+        var hierarchyContext = await _hierarchyService.GetUserHierarchyContextAsync(u.Id);
+        return new GrantScope(
+            ProjectId: hierarchyContext?.Path.Project?.Id,
+            AreaId: hierarchyContext?.Path.Area?.Id,
+            MoleculeId: hierarchyContext?.Path.Molecule?.Id,
+            DepartmentId: u.DepartmentId,
+            CompanyId: u.CompanyId,
+            JobTypeId: hierarchyContext?.JobType?.Id
+        );
     }
 
     private async Task<List<Models.AppUser>> LoadEligibleUsersAsync(int? roleTemplateId)

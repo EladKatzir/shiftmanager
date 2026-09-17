@@ -1,4 +1,4 @@
-using ShiftManager.Models;
+﻿using ShiftManager.Models;
 
 namespace ShiftManager.Services;
 
@@ -45,6 +45,10 @@ public interface IGrantService
     // Scope resolution - determines which entities a user can access based on their grants
     Task<List<int>> GetAccessibleCompanyIdsForGrantAsync(int userId, string grantKey);
     Task<List<int>> GetAccessibleMoleculeIdsForGrantAsync(int userId, string grantKey);
+
+    /// <summary>The grants a role template says a user should hold, at their resolved scope.
+    /// Shared by auto-grant application and the back-fill preview so they cannot disagree.</summary>
+    Task<List<ExpectedAutoGrant>> GetExpectedAutoGrantsAsync(int roleTemplateId, GrantScope roleScope);
 
     /// <summary>
     /// THE single answer to "whose shifts may this user see" — the union of the caller's
@@ -122,6 +126,9 @@ public class GrantVerificationResult
 /// <summary>
 /// Scope for a grant - defines at what level the grant applies.
 /// </summary>
+/// <summary>One grant a role template expects a user to hold, already resolved to a concrete scope.</summary>
+public sealed record ExpectedAutoGrant(int GrantTypeId, GrantScope EffectiveScope, bool CanOwn, bool CanGive);
+
 public record GrantScope(
     int? ProjectId = null,
     int? AreaId = null,

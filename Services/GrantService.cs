@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShiftManager.Data;
 using ShiftManager.Models;
@@ -716,27 +716,9 @@ public class GrantService : IGrantService
             return;
         }
 
-        // Phase 1: Resolve all expected grants from template
-        var expectedGrants = new List<(int GrantTypeId, GrantScope EffectiveScope, bool CanOwn, bool CanGive)>();
-
-        foreach (var autoGrant in roleTemplate.AutoGrants)
-        {
-            // Step 1: Resolve JobTypeId from TargetJobTypeId / UseOwnJobType
-            int? resolvedJobTypeId = null;
-            if (autoGrant.TargetJobTypeId != null)
-                resolvedJobTypeId = autoGrant.TargetJobTypeId;
-            else if (autoGrant.UseOwnJobType)
-                resolvedJobTypeId = roleScope.JobTypeId;
-            // else: null = all jobtypes
-
-            // Step 2: Determine effective scope (extracts ONE level from roleScope)
-            var effectiveScope = DetermineEffectiveScope(autoGrant.ScopeMode, roleScope);
-
-            // Step 3: Overlay resolved JobTypeId
-            effectiveScope = effectiveScope with { JobTypeId = resolvedJobTypeId };
-
-            expectedGrants.Add((autoGrant.GrantTypeId, effectiveScope, autoGrant.CanOwn, autoGrant.CanGive));
-        }
+        // Phase 1: Resolve all expected grants from template (shared with the back-fill preview so a
+        // dry run can never disagree with what Execute would actually write).
+        var expectedGrants = ResolveExpectedAutoGrants(roleTemplate, roleScope);
 
         // Phase 2: Clean up stale auto-grants (JobType changed, template modified, etc.)
         var existingAutoGrants = await _db.Grants
@@ -1064,6 +1046,53 @@ public class GrantService : IGrantService
 
         await _db.SaveChangesAsync();
         return grantsAssigned;
+    }
+
+    /// <summary>
+    /// The grants a role template says a user should hold, at their resolved scope. Single source of
+    /// truth for both <see cref="ApplyAutoGrantsAsync"/> (which writes them) and the back-fill preview
+    /// (which reports on them) — they previously answered this question differently, which is why a
+    /// dry run could report "nothing to do" for a change Execute would in fact apply.
+    /// </summary>
+    public async Task<List<ExpectedAutoGrant>> GetExpectedAutoGrantsAsync(int roleTemplateId, GrantScope roleScope)
+    {
+        var roleTemplate = await _db.RoleTemplates
+            .Include(rt => rt.AutoGrants)
+            .FirstOrDefaultAsync(rt => rt.Id == roleTemplateId);
+
+        if (roleTemplate == null)
+            return new List<ExpectedAutoGrant>();
+
+        return ResolveExpectedAutoGrants(roleTemplate, roleScope)
+            .Select(e => new ExpectedAutoGrant(e.GrantTypeId, e.EffectiveScope, e.CanOwn, e.CanGive))
+            .ToList();
+    }
+
+    private List<(int GrantTypeId, GrantScope EffectiveScope, bool CanOwn, bool CanGive)> ResolveExpectedAutoGrants(
+        RoleTemplate roleTemplate, GrantScope roleScope)
+    {
+        var expectedGrants = new List<(int GrantTypeId, GrantScope EffectiveScope, bool CanOwn, bool CanGive)>();
+
+        foreach (var autoGrant in roleTemplate.AutoGrants)
+        {
+            // Step 1: Resolve JobTypeId from TargetJobTypeId / UseOwnJobType
+            int? resolvedJobTypeId = null;
+            if (autoGrant.TargetJobTypeId != null)
+                resolvedJobTypeId = autoGrant.TargetJobTypeId;
+            else if (autoGrant.UseOwnJobType)
+                resolvedJobTypeId = roleScope.JobTypeId;
+            // else: null = all jobtypes
+
+            // Step 2: Determine effective scope (extracts ONE level from roleScope)
+            var effectiveScope = DetermineEffectiveScope(autoGrant.ScopeMode, roleScope);
+
+            // Step 3: Overlay resolved JobTypeId
+            effectiveScope = effectiveScope with { JobTypeId = resolvedJobTypeId };
+
+            expectedGrants.Add((autoGrant.GrantTypeId, effectiveScope, autoGrant.CanOwn, autoGrant.CanGive));
+        }
+
+        return expectedGrants;
     }
 
     public async Task<GrantScope> BuildRoleTemplateScopeAsync(string roleTemplateKey, int companyId, int? jobTypeId)
