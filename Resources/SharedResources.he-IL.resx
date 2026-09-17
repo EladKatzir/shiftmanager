@@ -14549,6 +14549,63 @@
   <data name="ScopeMode_ExpandToProject" xml:space="preserve">
     <value>הרחבה לפרויקט</value>
   </data>
+  <data name="Access_Permissions" xml:space="preserve">
+    <value>הרשאות</value>
+  </data>
+  <data name="Access_PermissionsSubtitle" xml:space="preserve">
+    <value>מצא אדם וראה כל מה שהוא יכול לעשות, והיכן.</value>
+  </data>
+  <data name="Access_FindPerson" xml:space="preserve">
+    <value>חיפוש אדם</value>
+  </data>
+  <data name="Access_FindPersonPlaceholder" xml:space="preserve">
+    <value>שם או דוא"ל</value>
+  </data>
+  <data name="Access_View" xml:space="preserve">
+    <value>הצג</value>
+  </data>
+  <data name="Access_NoRole" xml:space="preserve">
+    <value>ללא תפקיד</value>
+  </data>
+  <data name="Access_ChangeRoleOnRoster" xml:space="preserve">
+    <value>שינוי בעמוד המשתמשים</value>
+  </data>
+  <data name="Access_NoGrants" xml:space="preserve">
+    <value>למשתמש זה אין הרשאות.</value>
+  </data>
+  <data name="Access_Source" xml:space="preserve">
+    <value>מקור</value>
+  </data>
+  <data name="Access_CanDelegate" xml:space="preserve">
+    <value>רשאי להעניק</value>
+  </data>
+  <data name="Access_FromRole" xml:space="preserve">
+    <value>מהתפקיד</value>
+  </data>
+  <data name="Access_Manual" xml:space="preserve">
+    <value>ידני</value>
+  </data>
+  <data name="Access_AddPermission" xml:space="preserve">
+    <value>הוספת הרשאה</value>
+  </data>
+  <data name="Access_AssignHint" xml:space="preserve">
+    <value>ניתן להעניק רק הרשאה שקיימת ברשותך, ורק למשתמשים בדרג שלך או נמוך ממנו.</value>
+  </data>
+  <data name="Access_AdvancedTools" xml:space="preserve">
+    <value>כלים מתקדמים</value>
+  </data>
+  <data name="Access_GrantCatalogue" xml:space="preserve">
+    <value>קטלוג הרשאות, הרשאות תבניות תפקיד ומילוי רטרואקטיבי</value>
+  </data>
+  <data name="Access_ScopeSelfOnly" xml:space="preserve">
+    <value>עצמו בלבד</value>
+  </data>
+  <data name="Access_GrantAdded" xml:space="preserve">
+    <value>ההרשאה נוספה.</value>
+  </data>
+  <data name="Access_GrantRevoked" xml:space="preserve">
+    <value>ההרשאה בוטלה.</value>
+  </data>
   <data name="Error_CannotGrantWhatYouDoNotHold" xml:space="preserve">
     <value>ניתן להעניק רק הרשאה שקיימת ברשותך.</value>
   </data>

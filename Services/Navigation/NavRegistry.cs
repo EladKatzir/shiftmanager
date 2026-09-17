@@ -1,4 +1,4 @@
-using ShiftManager.Data.SeedData;
+﻿using ShiftManager.Data.SeedData;
 using ShiftManager.Models.Navigation;
 
 namespace ShiftManager.Services.Navigation;
@@ -81,7 +81,11 @@ public static class NavRegistry
             Link("JoinRequests", "/Admin/Users?view=joinrequests", policy: G("ManagerHomeAccess"), icon: "user-plus"),
             Link("Companies", "/Admin/Companies", policy: G("EditCompany"), icon: "building-2"),
             Link("Announcements", "/Admin/Announcements", policy: G("ManageAnnouncements"), icon: "megaphone"),
-            Link("Nav2_HomeTypes", "/Admin/HomeTypes", policy: G("ManageHomeTypes"), icon: "house")),
+            Link("Nav2_HomeTypes", "/Admin/HomeTypes", policy: G("ManageHomeTypes"), icon: "house"),
+            // Moved out of Access: neither is a permissions concept. Directors is a parallel
+            // assignment mechanism and Locked users is account security.
+            Link("Nav2_Directors", "/Admin/Directors", policy: G("AssignRoles"), icon: "user-star"),
+            Link("Nav2_LockedUsers", "/Owner/LockedUsers", policy: G("AdminAccess"), icon: "lock")),
 
         // ── Organization (structure) ──────────────────────────────────────────────
         Hub("Organization", "git-branch",
@@ -91,13 +95,13 @@ public static class NavRegistry
             Link("Nav2_AreaPalette", "/Admin/Organization/AreaPalette", policy: G("EditAreaCalendarPalette"), icon: "palette")),
 
         // ── Access (permissions) ──────────────────────────────────────────────────
+        // Two surfaces: WHO has access (person-first) and WHAT ROLES MEAN. The older
+        // table-shaped pages (Roles, Grants, Simulator, the Owner-Hub grant page) still work and are
+        // linked from "Advanced tools" on the Permissions page; they leave the menu first so the
+        // replacements can be used in anger before anything is redirected or deleted.
         Hub("Nav2_Access", "key-round",
-            Link("Nav2_Roles", "/Admin/Organization/Roles", policy: G("AssignRoles"), icon: "user-cog"),
-            Link("Nav2_Grants", "/Admin/Organization/Grants", policy: G("ViewGrants"), icon: "key"),
-            Link("Nav2_RoleTemplates", "/Owner/Hub/RoleTemplates", policy: G("AdminAccess"), icon: "copy"),
-            Link("Nav2_Simulator", "/Owner/Hub/PermissionSimulator", policy: G("AdminAccess"), icon: "flask-conical"),
-            Link("Nav2_Directors", "/Admin/Directors", policy: G("AssignRoles"), icon: "user-star"),
-            Link("Nav2_LockedUsers", "/Owner/LockedUsers", policy: G("AdminAccess"), icon: "lock")),
+            Link("Access_Permissions", "/Access/Permissions", policy: G("ViewGrants"), icon: "key"),
+            Link("Nav2_RoleTemplates", "/Owner/Hub/RoleTemplates", policy: G("AdminAccess"), icon: "copy")),
 
         // ── Insights (observation) ────────────────────────────────────────────────
         Hub("Nav2_Insights", "line-chart",

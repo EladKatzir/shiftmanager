@@ -1,0 +1,262 @@
+﻿@page
+@model ShiftManager.Pages.Access.PermissionsModel
+@using Microsoft.Extensions.Localization
+@using ShiftManager.Resources
+@using ShiftManager.ViewComponents
+@inject IStringLocalizer<SharedResources> Localizer
+@{
+    ViewData["Title"] = Localizer["Access_Permissions"].Value;
+    Layout = "_Layout";
+
+    // Many grant types have no Grant_<Key> resource (the audit counted dozens). Falling back to the
+    // key beats rendering "Grant_ViewAuditLog (ViewAuditLog)" at the user.
+    Func<string, string, string> grantLabel = (nameKey, key) =>
+    {
+        var s = Localizer[nameKey];
+        return s.ResourceNotFound ? key : s.Value;
+    };
+}
+
+@await Component.InvokeAsync("Breadcrumb", new List<BreadcrumbItem>
+{
+    new() { Label = Localizer["Nav2_Access"].Value, Url = null },
+    new() { Label = Localizer["Access_Permissions"].Value, Url = null }
+})
+
+<div class="page-header">
+    <h1 class="page-title"><loc key="Access_Permissions">Permissions</loc></h1>
+    <p class="page-subtitle"><loc key="Access_PermissionsSubtitle">Find a person and see everything they can do, and where.</loc></p>
+</div>
+
+@if (TempData["SuccessMessage"] is string ok)
+{
+    <div class="alert alert-success" role="status">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string err)
+{
+    <div class="alert alert-danger" role="alert">@err</div>
+}
+
+<div class="section-card">
+    <form method="get" class="filter-bar" style="display:flex;gap:0.5rem;align-items:flex-end;flex-wrap:wrap;">
+        <div class="filter-group" style="flex:1 1 320px;">
+            <label for="q"><loc key="Access_FindPerson">Find a person</loc></label>
+            <input id="q" name="q" value="@Model.Query" class="form-input"
+                   placeholder="@Localizer["Access_FindPersonPlaceholder"]" autocomplete="off" />
+        </div>
+        <button type="submit" class="btn btn-primary"><loc key="Search">Search</loc></button>
+    </form>
+
+    @if (Model.SearchResults.Count > 1)
+    {
+        <table class="data-table" style="margin-top:1rem;">
+            <thead>
+                <tr>
+                    <th><loc key="User">User</loc></th>
+                    <th><loc key="Company">Company</loc></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.SearchResults)
+                {
+                    <tr>
+                        <td>@p.DisplayName <span style="color:var(--text-muted);">@p.Email</span></td>
+                        <td>@p.CompanyName</td>
+                        <td class="table-actions">
+                            <a class="btn btn-ghost" asp-route-q="@Model.Query" asp-route-userId="@p.Id"><loc key="Access_View">View</loc></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else if (!string.IsNullOrWhiteSpace(Model.Query) && Model.SearchResults.Count == 0)
+    {
+        <p class="empty-state"><loc key="NoResultsFound">No results found</loc></p>
+    }
+</div>
+
+@if (Model.Person != null)
+{
+    <div class="section-card">
+        <div class="section-header">
+            <h2>@Model.Person.DisplayName</h2>
+            <span style="color:var(--text-muted);">@Model.Person.Email</span>
+        </div>
+
+        <dl style="display:grid;grid-template-columns:auto 1fr;gap:0.35rem 1rem;margin-bottom:1rem;">
+            <dt><loc key="Company">Company</loc></dt><dd>@Model.PersonCompanyName</dd>
+            <dt><loc key="Molecule">Molecule</loc></dt><dd>@Model.PersonMoleculeName</dd>
+            <dt><loc key="Role">Role</loc></dt>
+            <dd>
+                @(string.IsNullOrEmpty(Model.PersonRoleKey) ? Localizer["Access_NoRole"].Value : Model.PersonRoleKey)
+                @* Role changes live on the roster. Re-implementing them here would be a third copy
+                   of the same 180-line handler to keep in step. *@
+                <a class="btn btn-ghost" href="/Admin/Users?FilterUserId=@Model.Person.Id"><loc key="Access_ChangeRoleOnRoster">Change on the People roster</loc></a>
+            </dd>
+        </dl>
+
+        <h3><loc key="Grants">Grants</loc></h3>
+        @if (Model.PersonGrants.Count == 0)
+        {
+            <p class="empty-state"><loc key="Access_NoGrants">This person holds no permissions.</loc></p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><loc key="Grants">Grants</loc></th>
+                        <th><loc key="Scope">Scope</loc></th>
+                        <th><loc key="Access_Source">Source</loc></th>
+                        <th><loc key="Actions">Actions</loc></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var g in Model.PersonGrants)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@grantLabel(g.NameKey, g.Key)</strong>
+                                <div style="font-family:ui-monospace,monospace;font-size:0.75rem;color:var(--text-muted);">@g.Key</div>
+                                @if (g.CanGive)
+                                {
+                                    <span class="badge badge-info"><loc key="Access_CanDelegate">can delegate</loc></span>
+                                }
+                            </td>
+                            <td>@g.ScopeLabel</td>
+                            <td>
+                                @if (g.IsAutoGrant)
+                                {
+                                    <span class="badge"><loc key="Access_FromRole">from role</loc></span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-info"><loc key="Access_Manual">manual</loc></span>
+                                }
+                                @if (!string.IsNullOrEmpty(g.GrantedByName))
+                                {
+                                    <div style="font-size:0.75rem;color:var(--text-muted);">@g.GrantedByName</div>
+                                }
+                            </td>
+                            <td class="table-actions">
+                                @if (Model.CanRevoke)
+                                {
+                                    <form method="post" asp-page-handler="Revoke" style="display:inline;">
+                                        <input type="hidden" name="grantId" value="@g.Id" />
+                                        <input type="hidden" name="userId" value="@Model.Person.Id" />
+                                        <button type="submit" class="btn btn-danger"><loc key="Revoke">Revoke</loc></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (Model.CanAssign)
+        {
+            <h3 style="margin-top:1.5rem;"><loc key="Access_AddPermission">Add a permission</loc></h3>
+            <form method="post" asp-page-handler="Assign" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;">
+                <input type="hidden" name="userId" value="@Model.Person.Id" />
+                <div class="filter-group" style="flex:1 1 260px;">
+                    <label for="grantTypeId"><loc key="Grants">Grants</loc></label>
+                    <select id="grantTypeId" name="grantTypeId" class="form-input" data-searchable required>
+                        @foreach (var gt in Model.AssignableGrantTypes)
+                        {
+                            <option value="@gt.Id">@grantLabel(gt.NameKey, gt.Key)@(grantLabel(gt.NameKey, gt.Key) == gt.Key ? "" : $" ({gt.Key})")</option>
+                        }
+                    </select>
+                </div>
+
+                @* Pick exactly ONE scope. Leaving them all empty means "self only". *@
+                <div class="filter-group">
+                    <label for="areaId"><loc key="Area">Area</loc></label>
+                    <select id="areaId" name="areaId" class="form-input" data-searchable>
+                        <option value="">—</option>
+                        @foreach (var o in Model.Areas) { <option value="@o.Id">@o.Name</option> }
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="moleculeId"><loc key="Molecule">Molecule</loc></label>
+                    <select id="moleculeId" name="moleculeId" class="form-input" data-searchable>
+                        <option value="">—</option>
+                        @foreach (var o in Model.Molecules) { <option value="@o.Id">@o.Name</option> }
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="companyId"><loc key="Company">Company</loc></label>
+                    <select id="companyId" name="companyId" class="form-input" data-searchable>
+                        <option value="">—</option>
+                        @foreach (var o in Model.Companies) { <option value="@o.Id">@o.Name</option> }
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="jobTypeId"><loc key="JobType">Job type</loc></label>
+                    <select id="jobTypeId" name="jobTypeId" class="form-input" data-searchable>
+                        <option value="">—</option>
+                        @foreach (var o in Model.JobTypes) { <option value="@o.Id">@o.Name</option> }
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="notes"><loc key="Notes">Notes</loc></label>
+                    <input id="notes" name="notes" class="form-input" />
+                </div>
+                <label style="display:flex;align-items:center;gap:0.4rem;">
+                    <input type="checkbox" name="canGive" value="true" />
+                    <span><loc key="Access_CanDelegate">can delegate</loc></span>
+                </label>
+                <button type="submit" class="btn btn-primary"><loc key="Assign">Assign</loc></button>
+            </form>
+            <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:0.5rem;">
+                <loc key="Access_AssignHint">You can only give a permission you hold yourself, and only to people at your own role level or below.</loc>
+            </p>
+        }
+    </div>
+}
+
+<div class="section-card">
+    <details>
+        <summary style="cursor:pointer;"><loc key="Access_AdvancedTools">Advanced tools</loc></summary>
+        <ul style="margin:0.75rem 0 0 1.25rem;">
+            <li><a href="/Owner/Hub/RoleTemplates"><loc key="Nav2_RoleTemplates">Role Templates</loc></a></li>
+            <li><a href="/Owner/Hub/Grants"><loc key="Access_GrantCatalogue">Grant catalogue, role-template grants and back-fill</loc></a></li>
+            <li><a href="/Owner/Hub/PermissionSimulator"><loc key="Nav2_Simulator">Permission Simulator</loc></a></li>
+            <li><a href="/Admin/Organization/Roles"><loc key="Nav2_Roles">Roles</loc></a></li>
+            <li><a href="/Admin/Organization/Grants"><loc key="Nav2_Grants">Grants</loc></a></li>
+        </ul>
+    </details>
+</div>
+
+@section Styles {
+    <style>
+        /* Page-scoped, matching the other admin pages. `.section-card`, `.filter-group` and
+           `.table-actions` have no global definition in this codebase — each admin page declares its
+           own copy — so these are defined here rather than added globally, where they would land on
+           every page that already styles them itself. All colours come from tokens.css, so light and
+           dark mode both follow the theme. */
+        .access-page-wrap { display: block; }
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+        .section-card .section-header {
+            display: flex;
+            align-items: baseline;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+            margin-bottom: var(--space-3);
+        }
+        .section-card .section-header h2 { margin: 0; }
+        .filter-group { display: flex; flex-direction: column; gap: 0.25rem; }
+        .filter-group > label { font-size: var(--text-small); color: var(--text-muted); }
+        .table-actions { white-space: nowrap; }
+        .access-page-wrap dt { color: var(--text-muted); }
+    </style>
+}
