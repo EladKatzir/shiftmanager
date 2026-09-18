@@ -1,4 +1,4 @@
-// ✅ PHASE 20: Calendar inline editing and quick-add utilities
+﻿// ✅ PHASE 20: Calendar inline editing and quick-add utilities
 // This file provides client-side functionality for creating and deleting chores and on-duty assignments
 // directly from the calendar views (Month, Week, Day)
 
@@ -723,9 +723,13 @@ async function quickAddDayNote(date, text) {
                 'X-Requested-With': 'XMLHttpRequest'
             },
             credentials: 'same-origin',
+            // Day notes are keyed to the molecule whose calendar is on screen. CalendarPageConfig is the
+            // page-level global the Shifts page sets inline (Shifts.cshtml) — the only calendar that
+            // offers day notes — and the server verifies the caller can view that molecule.
             body: JSON.stringify({
                 date: date,
-                text: (text || '').trim()
+                text: (text || '').trim(),
+                moleculeId: (window.CalendarPageConfig && window.CalendarPageConfig.moleculeId) || 0
             })
         });
 

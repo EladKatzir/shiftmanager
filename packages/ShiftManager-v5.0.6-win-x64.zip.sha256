@@ -1,0 +1,17 @@
+﻿2F042B781787D87F4FD44D371A1A393CF1B79BAD677022A8BD364A806620ABAA *ShiftManager-v5.0.6-win-x64.zip
+
+ShiftManager v5.0.6
+Build Date: 2026-09-18 03:46:19 UTC
+Git Commit: baec275
+
+Package Contents:
+  Files:       545
+  DLLs:        361
+  Total Size:  172.6 MB
+  ZIP Size:    67.2 MB
+  Compression: 61%
+
+Verification:
+  Windows: CertUtil -hashfile "ShiftManager-v5.0.6-win-x64.zip" SHA256
+  Linux/Mac: sha256sum -c "ShiftManager-v5.0.6-win-x64.zip.sha256"
+

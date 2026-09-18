@@ -4568,3 +4568,98 @@ tr[data-row-id]:hover .excel-calendar__row-grip,
 .excel-calendar__group-grip:focus,
 .excel-calendar__row-grip:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 @media (prefers-reduced-motion: reduce) { .excel-calendar__row-grip { transition: none; } }
+
+/* ========================================
+   EXCEL-STYLE COLUMN RESIZING
+   Scoped to .excel-calendar--resizable, which the view sets only when the calendar passed a
+   ColumnWidthContextKey. A calendar that has not opted in keeps table-layout: auto and renders
+   byte-for-byte as it did before this feature existed.
+   ======================================== */
+
+.excel-calendar--resizable .excel-calendar__table {
+    /* Fixed layout is what makes a <col> width authoritative. Under auto layout the browser
+       re-derives every column from content, so a dragged width is simply ignored.
+       CalendarColumnPlanner emits an explicit width for EVERY column, so the fixed algorithm
+       never has to guess. */
+    table-layout: fixed;
+}
+
+/* The colgroup is the single width authority in resizable mode — min/max-width on the cells
+   would otherwise fight it (notably .excel-calendar__header-total's max-width: 50px). */
+.excel-calendar--resizable .excel-calendar__header-day,
+.excel-calendar--resizable .excel-calendar__header-total,
+.excel-calendar--resizable .excel-calendar__row-label {
+    min-width: 0;
+    max-width: none;
+}
+
+/* Under fixed layout a column no longer grows to fit `white-space: nowrap` content, so the
+   sticky label column must clip rather than spill into the first day column. */
+.excel-calendar--resizable .excel-calendar__row-label {
+    overflow: hidden;
+}
+
+.excel-calendar--resizable .excel-calendar__row-label-name,
+.excel-calendar--resizable .excel-calendar__row-sublabel {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Header cells host the absolutely-positioned handle. .excel-calendar__corner is already
+   position:sticky (a containing block), so only these two need promoting — and the sticky
+   header lives on <thead> (.excel-calendar__header), never on the th, so this cannot
+   disturb it. */
+.excel-calendar--resizable .excel-calendar__header-day,
+.excel-calendar--resizable .excel-calendar__header-total {
+    position: relative;
+}
+
+/* The drag handle: a hit area straddling the column's inline-end edge. Logical properties
+   keep it on the correct edge in Hebrew RTL. */
+.excel-calendar__col-resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    inset-inline-end: -4px;
+    width: 8px;
+    cursor: col-resize;
+    /* The corner cell's contents are click-through for its mode dropdown; the handle must not be. */
+    pointer-events: auto;
+    touch-action: none;
+    z-index: 2;
+}
+
+.excel-calendar__col-resizer::after {
+    content: "";
+    position: absolute;
+    top: 15%;
+    bottom: 15%;
+    inset-inline-end: 3px;
+    width: 2px;
+    border-radius: 1px;
+    background: transparent;
+    transition: background-color 120ms ease;
+}
+
+@media (pointer: fine) {
+    .excel-calendar__col-resizer:hover::after {
+        background: var(--primary-contrast);
+    }
+}
+
+.excel-calendar__col-resizer.is-dragging::after {
+    background: var(--primary-contrast);
+}
+
+/* Applied to <html> for the duration of a drag: without it the pointer picks up text-selection
+   and the cursor flickers as it crosses cell boundaries. */
+.excel-calendar-resizing,
+.excel-calendar-resizing * {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .excel-calendar__col-resizer::after { transition: none; }
+}

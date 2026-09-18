@@ -1,18 +1,18 @@
 ﻿================================================================================
                     PRODUCTION DEPLOYMENT CERTIFICATION
-                    ShiftManager Version 5.3.15
+                    ShiftManager Version 5.0.6
 ================================================================================
 
-CERTIFICATION DATE: 2026-08-04 13:48:19 UTC
-PACKAGE VERSION:    v5.3.15
-GIT COMMIT:         8226d7b
+CERTIFICATION DATE: 2026-09-18 03:39:48 UTC
+PACKAGE VERSION:    v5.0.6
+GIT COMMIT:         baec275
 BUILD SYSTEM:       Automated Release Builder v1.0.0
 
 ================================================================================
 CERTIFICATION STATEMENT
 ================================================================================
 
-This document certifies that ShiftManager version 5.3.15 has successfully
+This document certifies that ShiftManager version 5.0.6 has successfully
 completed all required quality assurance processes and is APPROVED for
 production deployment in air-gapped Windows Server 2022 environments.
 
@@ -43,7 +43,7 @@ The following criteria have been met for production certification:
    âœ… API endpoints tested
 
 3. PACKAGE INTEGRITY
-   âœ… File count verified (541 files)
+   âœ… File count verified (542 files)
    âœ… DLL count verified (361 DLLs)
    âœ… Package size verified (172 MB)
    âœ… All critical files present
@@ -72,8 +72,8 @@ The following criteria have been met for production certification:
 
 6. VERSION CONTROL
    âœ… Git working tree clean at build time
-   âœ… Version tagged: v5.3.15
-   âœ… Commit documented: 8226d7b
+   âœ… Version tagged: v5.0.6
+   âœ… Commit documented: baec275
    âœ… Build reproducible from tag
 
 ================================================================================
@@ -82,7 +82,7 @@ DEPLOYMENT PACKAGE SPECIFICATION
 
 Package Type:       Self-Contained Deployment
 Package Size:       172 MB
-File Count:         541 files
+File Count:         542 files
 DLL Count:          361 DLLs
 Target Platform:    Windows x64 (Server 2022 / Windows 10+)
 .NET Version:       8.0 (included, no installation required)
@@ -91,7 +91,7 @@ Air-Gapped Ready:   Yes - no internet connection required
 
 Distribution Files:
   ðŸ“¦ ProjectPublish/ folder (complete deployment)
-  ðŸ“¦ ShiftManager-v5.3.15-win-x64.zip (compressed package)
+  ðŸ“¦ ShiftManager-v5.0.6-win-x64.zip (compressed package)
   ðŸ”’ SHA256 checksum file (integrity verification)
   ðŸ“„ Release report (comprehensive documentation)
 
@@ -251,7 +251,7 @@ Approval Criteria:
 Deployment Authorization: âœ… GRANTED
 
 Authorization Level:  FULL PRODUCTION DEPLOYMENT
-Effective Date:       2026-08-04
+Effective Date:       2026-09-18
 Expiration:           None (valid until superseded)
 
 ================================================================================
@@ -297,14 +297,14 @@ BUILD INFORMATION
 ================================================================================
 
 Build System:       Automated Release Builder v1.0.0
-Build Date:         2026-08-04 13:48:19 UTC
+Build Date:         2026-09-18 03:39:48 UTC
 Build Host:         Automated
 Build Type:         Release (optimized)
 Build Config:       Self-Contained
 Git Repository:     ShiftManager
 Git Branch:         dev
-Git Commit:         8226d7b
-Git Tag:            v5.3.15
+Git Commit:         baec275
+Git Tag:            v5.0.6
 
 Pipeline Stages:    10 (all passed)
 Scripts Executed:   11 (all successful)
@@ -321,13 +321,13 @@ by the ShiftManager Automated Release Builder system.
 Certification Authority:
   System:    ShiftManager Automated Release Builder
   Version:   1.0.0
-  Date:      2026-08-04 13:48:19 UTC
-  Signature: Git Tag v5.3.15 (8226d7b)
+  Date:      2026-09-18 03:39:48 UTC
+  Signature: Git Tag v5.0.6 (baec275)
 
 Digital Verification:
   Package Checksum:  See SHA256 checksum file
-  Git Tag:          v5.3.15
-  Git Commit:       8226d7b
+  Git Tag:          v5.0.6
+  Git Commit:       baec275
 
 This certification is valid and the package is approved for production
 deployment in air-gapped Windows Server 2022 environments.
@@ -338,11 +338,11 @@ FINAL APPROVAL
 
                        âœ… CERTIFIED FOR PRODUCTION USE
 
-ShiftManager v5.3.15 is hereby certified as production-ready and
+ShiftManager v5.0.6 is hereby certified as production-ready and
 approved for deployment.
 
-Date:               2026-08-04
-Version:            v5.3.15
+Date:               2026-09-18
+Version:            v5.0.6
 Status:             PRODUCTION READY
 Deployment:         APPROVED
 

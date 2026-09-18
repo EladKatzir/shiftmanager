@@ -1,16 +1,16 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 5.3.15
+                           Version 5.0.6
 ================================================================================
 
-VERSION: 5.3.15
-RELEASE DATE: 2026-08-04
-BUILD DATE: 2026-08-04 13:48:19 UTC
-GIT COMMIT: 8226d7b
+VERSION: 5.0.6
+RELEASE DATE: 2026-09-18
+BUILD DATE: 2026-09-18 03:39:48 UTC
+GIT COMMIT: baec275
 GIT BRANCH: dev
 
 PACKAGE INFORMATION:
-  Total Files:  541
+  Total Files:  542
   DLL Count:    361
   Package Size: 172 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-08-04 13:48:19 UTC
+Build Date:     2026-09-18 03:39:48 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v5.3.15
+  âœ“ Git tagged: v5.0.6
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -258,16 +258,16 @@ CERTIFICATION
 This package has been:
   âœ… Built successfully with no errors
   âœ… Tested automatically with comprehensive checks
-  âœ… Verified for completeness (541 files)
+  âœ… Verified for completeness (542 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v5.3.15)
+  âœ… Tagged in version control (v5.0.6)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-08-04 13:48:19 UTC
-Git Commit: 8226d7b
+Date: 2026-09-18 03:39:48 UTC
+Git Commit: baec275
 
 ================================================================================
 LICENSE

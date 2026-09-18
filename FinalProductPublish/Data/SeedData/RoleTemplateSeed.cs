@@ -1,4 +1,4 @@
-using ShiftManager.Models;
+﻿using ShiftManager.Models;
 using ShiftManager.Models.Support;
 
 namespace ShiftManager.Data.SeedData;
@@ -329,7 +329,9 @@ public static class RoleTemplateSeed
         grants.Add(G(3, 116, SAR, useOwnJobType: true));  // ManageJoinRequests (OWN)
         grants.Add(G(3, 38, SAR, useOwnJobType: true));   // AssignRoles (OWN — BUG 4 fix)
         grants.Add(G(3, 120, SAR));  // ViewSystemAlerts
-        grants.Add(G(3, 118, SAR));  // EditCompanyUsers (GAP fix: Lead/מפ״צ must create soldiers in own company — Pages/Admin/Users.cshtml.cs:754)
+        grants.Add(G(3, 118, ETM));  // EditCompanyUsers — MOLECULE-wide: Lead/מפ״צ adds users to any desk in their molecule.
+                                     // Also covers edit/deactivate/delete/reset-password there, bounded by RoleRankGuard
+                                     // (never act on a more senior user). Was SAR (own company only).
         // Sidebar redesign: monitoring grants (molecule-scoped, own jobtype)
         grants.Add(G(3, 52, ETM, useOwnJobType: true));   // ViewAnalytics
         grants.Add(G(3, 53, ETM, useOwnJobType: true));   // ViewReports
@@ -388,7 +390,7 @@ public static class RoleTemplateSeed
         grants.Add(G(2, 40, SAR));   // EditCompany (S-01)
         grants.Add(G(2, 116, SAR));  // ManageJoinRequests
         grants.Add(G(2, 38, SAR));   // AssignRoles
-        grants.Add(G(2, 118, SAR));  // EditCompanyUsers
+        grants.Add(G(2, 118, ETM));  // EditCompanyUsers — MOLECULE-wide, same as Lead (see template 3). Was SAR.
         grants.Add(G(2, 32, SAR));    // ResetPasswords (BUG 1 fix)
         grants.Add(G(2, 33, SAR));    // AssignJobTypes (BUG 2 fix)
         grants.Add(G(2, 24, SAR, targetJobTypeId: JT_SENTINEL_BR));   // ApproveExtendedLeave (BR — BUG 3 fix)
