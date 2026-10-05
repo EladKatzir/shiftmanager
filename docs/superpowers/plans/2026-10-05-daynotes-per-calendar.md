@@ -18,7 +18,22 @@
 - Every user-visible string needs a key in **both** `Resources/SharedResources.resx` and `Resources/SharedResources.he-IL.resx`. **Always `grep -c 'name="KEY"'` both files before adding** — a duplicate key has broken localization tests before.
 - No native `alert()`; use `window.FeedbackModal.show()` / `Toast.*()`.
 - CSS under the `.excel-calendar`, `.cal-toolbar`, `.cal-page` prefixes must use logical properties (`inset-inline-start`, never `left`). Enforced by `ShiftManager.Tests/UnitTests/Css/CalendarStickyRtlSweepTests.cs:26-31`.
-- Test command: `dotnet test -- xUnit.ParallelizeTestCollections=false`. **A PASS can come from a STALE assembly — always check the reported test COUNT.** Record the baseline count in Task 0 and compare after every task.
+- Test command: `dotnet test -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`.
+  **BOTH flags are required.** `ShiftManager.Tests` has no `xunit.runner.json`, no `.runsettings`
+  and no assembly-level `CollectionBehavior` attribute, so xUnit defaults to parallel collections
+  across all cores. Measured on a clean tree at `0d90dab`:
+  - `ParallelizeTestCollections=false` alone → **Failed: 287, Passed: 1775, Total: 2062** (4m13s),
+    all `NullReferenceException` inside EF's query compiler — shared contexts disposed mid-query.
+  - both flags → **Failed: 0, Passed: 2062** (4m17s).
+
+  Sequential costs **4 seconds**, so there is no speed argument for the parallel default. A
+  committed `xunit.runner.json` would make `dotnet test` correct without the flags; not done here
+  because it is outside this feature's scope.
+- **BASELINE: 2062 tests, all green.** Compare the reported COUNT after every task, not just the
+  pass/fail — a PASS can come from a STALE assembly, and a 287-failure run looks nothing like a
+  regression but reads as one.
+- Write test output to a file (`> log.txt 2>&1`), not through `| tail -N`. Piping discards the
+  failure list you will want the moment something goes red.
 - CSS/JS are minified at build time with a `?v=` hash, and the dev app serves `bin/Debug` assets — source edits are not served until a rebuild. `curl` the served file for your marker before browser-testing a frontend change.
 - **Never rebuild while the app is running** — a locked executable produces a stale binary that reports false success. Stop the app (`TaskStop`, then verify the port is free and no `ShiftManager` process remains) before any build.
 - `FinalProductPublish/` is generated. Never hand-edit it; regenerate with `scripts/Update-FinalProductPublish.ps1 -Version`.
@@ -85,7 +100,7 @@ If either is dirty, resolve before continuing. `.serena/project.yml` and `packag
 
 - [ ] **Step 2: Record the baseline test count**
 
-Run: `dotnet test -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet test -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: all green. **Write the exact total down** (memory says ~2062; trust the number you see, not the memory). Every later task compares against this.
 
 - [ ] **Step 3: Back up the dev database for backfill verification**
@@ -301,7 +316,7 @@ public async Task Delete_WhenNoteDoesNotExist_ReturnsFalse()
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `dotnet test --filter FullyQualifiedName~CalendarDayNoteServiceTests -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet test --filter FullyQualifiedName~CalendarDayNoteServiceTests -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: **compile errors** — `CalendarScope`, `AddDayNoteAsync`, `JobTypeId` etc. do not exist.
 
 - [ ] **Step 3: Update the entity**
@@ -415,7 +430,7 @@ Rewrite the stale comment at the old `:67` ("the filtered unique index guarantee
 
 - [ ] **Step 7: Run the service tests**
 
-Run: `dotnet test --filter FullyQualifiedName~CalendarDayNoteServiceTests -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet test --filter FullyQualifiedName~CalendarDayNoteServiceTests -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: PASS, 11 tests.
 
 - [ ] **Step 8: Write the fan-out SQL and its tests**
@@ -489,7 +504,7 @@ public void MoleculeTypeEnumLiterals_AreFrozen()
 
 - [ ] **Step 9: Run the fan-out tests to verify they fail**
 
-Run: `dotnet test --filter FullyQualifiedName~CalendarDayNoteJobTypeFanOut -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet test --filter FullyQualifiedName~CalendarDayNoteJobTypeFanOut -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: FAIL — `CalendarDayNoteJobTypeFanOutSql` does not exist yet, or the SQL is wrong.
 
 - [ ] **Step 10: Create both migrations**
@@ -575,7 +590,7 @@ var canDeleteThisNote = Model.CanWriteNote
 Get-Process -Name ShiftManager -ErrorAction SilentlyContinue
 ```
 
-Run: `dotnet build` then `dotnet test -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet build` then `dotnet test -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: green, and the **count** = Task 0 baseline − 3 (deleted tests) + 11 (new service) + 5 (fan-out). Compute the expected number and check it.
 
 Then start the app (`ASPNETCORE_ENVIRONMENT=Development`, `--urls http://127.0.0.1:5123`), log in as `owner2@test` / `Test1234!`, open `/Calendar/Shifts?MoleculeId=1&JobTypeId=1`, add two notes to one day via Quick Entry, and confirm both render. Stop the app afterwards and verify the port is free.
@@ -657,7 +672,7 @@ grantService.Verify(g => g.HasGrantWithScopeAsync(
 
 - [ ] **Step 2: Run them to verify they fail**
 
-Run: `dotnet test --filter "FullyQualifiedName~QuickAddDayNoteTests|FullyQualifiedName~DeleteDayNoteTests" -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet test --filter "FullyQualifiedName~QuickAddDayNoteTests|FullyQualifiedName~DeleteDayNoteTests" -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: FAIL / compile error — `DeleteDayNoteModel` does not exist.
 
 - [ ] **Step 3: Update the add endpoint**
@@ -752,7 +767,22 @@ await _dayNoteService.DeleteDayNoteAsync(note.Id);
 
 - [ ] **Step 5: Verify endpoint registration**
 
-The `/Api/Calendar` prefix in `Middleware/ApiAuthenticationMiddleware.cs:306` covers the new page, and no `Program.cs` `AllowAnonymousToPage` entry is needed because it is `[Authorize]`. **Check both anyway** — this project has been bitten by `/Api/` endpoints needing registration in both places.
+Run `docs/CLAUDE.md`'s three-point 401 checklist — these are the documented causes of 401s on
+browser-called endpoints in this project, and all three are already satisfied by the plan. **Verify,
+don't assume:**
+
+1. **Middleware whitelist** — `IsInternalWebUiEndpoint` (`ApiAuthenticationMiddleware.cs:291`)
+   intercepts every `/api` route and demands an `X-API-Key` unless whitelisted.
+   `path.StartsWithSegments("/Api/Calendar")` returns true at `:306`, so
+   `/Api/Calendar/DeleteDayNote` is covered with **no new entry needed** (verified by reading it).
+2. **`[IgnoreAntiforgeryToken]`** on the new PageModel — required to accept JSON from `fetch`.
+   Already specified in Step 4.
+3. **`credentials: 'same-origin'`** in the `fetch` call — required to send the auth cookie. The
+   existing `quickAddDayNote` already does this (`calendar-inline-edit.js:724`); copy it into the
+   new delete call.
+
+No `Program.cs` `AllowAnonymousToPage` entry is needed — the page is `[Authorize]`, and that list is
+for anonymous endpoints only.
 
 - [ ] **Step 6: Rewire the JS**
 
@@ -766,12 +796,12 @@ The `/Api/Calendar` prefix in `Middleware/ApiAuthenticationMiddleware.cs:306` co
 
 - [ ] **Step 7: Run the endpoint tests**
 
-Run: `dotnet test --filter "FullyQualifiedName~QuickAddDayNoteTests|FullyQualifiedName~DeleteDayNoteTests" -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet test --filter "FullyQualifiedName~QuickAddDayNoteTests|FullyQualifiedName~DeleteDayNoteTests" -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: PASS.
 
 - [ ] **Step 8: Full suite, then commit**
 
-Run: `dotnet test -- xUnit.ParallelizeTestCollections=false` — green, count increased by the new tests.
+Run: `dotnet test -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1` — green, count increased by the new tests.
 
 ```bash
 git commit -m "feat(calendar): validated day-note add, and delete by note id
@@ -803,7 +833,7 @@ Grep both files first (`grep -c 'name="KEY"'` must return 0 for each), then add 
 
 - [ ] **Step 2: Run the localization parity tests**
 
-Run: `dotnet test --filter FullyQualifiedName~Localization -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet test --filter FullyQualifiedName~Localization -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: PASS. A failure here almost always means a duplicate key.
 
 - [ ] **Step 3: Compute the chip cap server-side and render**
@@ -815,6 +845,20 @@ In `Default.cshtml`'s `@{ }` block, derive the cap from `columnPlan` — CSS can
 | `< 90` | 0 | `📝` + count |
 | `< 140` | 1 | `+N` |
 | `>= 140` | 2 | `+N` |
+
+> `col.Width` is the correct source in **both** modes, and no `isResizable` branch is needed:
+> `ColumnWidths` is documented as "empty when resizing is not enabled"
+> (`ExcelCalendarTableViewComponent.cs:67-69`), so `CalendarColumnPlanner.Build`'s `Resolve` falls
+> through to the default and `Width == DefaultWidth` there. The `<col>` width is only *emitted* when
+> resizing is on (`Default.cshtml:41-45`), but the planned value matches what CSS renders either way.
+> ```csharp
+> var dayWidth = columnPlan.FirstOrDefault(c => c.Key == "day")?.Width
+>     ?? (isCompact ? ShiftManager.ViewComponents.CalendarColumnPlanner.DefaultCompactDayWidth
+>                   : ShiftManager.ViewComponents.CalendarColumnPlanner.DefaultDayWidth);
+> var inlineNoteCap = dayWidth < 90 ? 0 : (dayWidth < 140 ? 1 : 2);
+> ```
+> The null-coalesce is defence only — `Build` always emits one `"day"` column per day in `days`, and
+> `days` is non-empty whenever the table renders at all.
 
 Then replace `:81-106` with the chip stack, the trigger, and an inert `<template>` per day carrying the full list (Razor-localized, cloned by JS — `<template>` content is not rendered, not focusable and not in the accessibility tree).
 
@@ -920,7 +964,7 @@ In `calendar.css`, next to the existing day-note block (`:2852-2922`):
 
 - [ ] **Step 5: Run the CSS guard tests**
 
-Run: `dotnet test --filter FullyQualifiedName~Css -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet test --filter FullyQualifiedName~Css -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: PASS. `CalendarStickyRtlSweepTests` fails on any `left:`/`right:` you introduced.
 
 - [ ] **Step 6: Full suite, then commit**
@@ -1118,7 +1162,7 @@ Two browsers on the same calendar; a note added in one appears in the other with
 
 - [ ] **Step 1: Full sequential suite, with the count checked**
 
-Run: `dotnet test -- xUnit.ParallelizeTestCollections=false`
+Run: `dotnet test -- xUnit.ParallelizeTestCollections=false xUnit.MaxParallelThreads=1`
 Expected: green, and the total equals Task 0's baseline plus the net new tests. **A PASS from a stale assembly is a known failure mode — verify the count.**
 
 - [ ] **Step 2: Re-verify the backfill against real data**
