@@ -341,13 +341,22 @@ public class ShiftsModel : PageModel
             }
         }
 
-        // Day-scoped notes for the date-column headers, keyed to the MOLECULE this calendar shows — so
-        // every viewer sees them whichever desk they sit in, in both shift-mode and user-mode. MoleculeId
-        // was validated against AvailableMolecules above, which is the same ShiftCalendarAccess rule the
-        // note-write endpoint enforces.
+        // Day-scoped notes for the date-column headers, keyed to the CALENDAR this page is showing —
+        // molecule + job type + tab — so every viewer sees the same notes whichever desk or molecule
+        // they sit in, in both shift-mode and user-mode. MoleculeId was validated against
+        // AvailableMolecules above, which is the same ShiftCalendarAccess rule both note endpoints
+        // enforce; JobTypeId was validated against AvailableJobTypes, and Tab against AvailableTabs.
+        //
+        // Tab is already the EFFECTIVE tab after the block above (null = the synthetic "All" view), and
+        // a null tab makes the read union every note of this (molecule, job type) calendar.
         if (MoleculeId.HasValue)
         {
-            CalendarData.DayNotes = await _dayNoteService.GetDayNotesForMoleculeAsync(MoleculeId.Value, StartDate, EndDate);
+            CalendarData.DayNotes = await _dayNoteService.GetDayNotesForCalendarAsync(
+                new CalendarScope(MoleculeId.Value, JobTypeId, Tab), StartDate, EndDate);
+            CalendarData.DayNotesScopeIsAllTab = !Tab.HasValue;
+            // Adding a note needs CanWriteNote, not CanEdit — see the view model's remarks.
+            CalendarData.CanWriteNote = CanWriteNote;
+            CalendarData.CurrentUserId = currentUserId;
         }
 
         // Expose users for bottom-sheet dropdown (same query as BuildUserBasedCalendarAsync)

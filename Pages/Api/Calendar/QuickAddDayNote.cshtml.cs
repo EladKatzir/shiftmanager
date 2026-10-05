@@ -13,11 +13,21 @@ namespace ShiftManager.Pages.Api.Calendar;
 
 // Day-scoped free-text note from Quick Entry on the Shifts calendar (shift-mode or user-mode).
 // Sibling of QuickAddTextEntry, but the note attaches to a DAY (not a user): a shift-type cell has no
-// single user. Keyed by (MoleculeId, Date) — the molecule the calendar is showing, named by the client —
-// so every viewer of that calendar sees it whichever desk they sit in. Because the request names the
-// molecule, the caller must be able to VIEW that molecule's calendar (ShiftCalendarAccess), not merely
-// hold the broad note-writing grant. Covered by ApiAuthenticationMiddleware's "/Api/Calendar"
-// internal-web-UI prefix — no separate middleware registration needed.
+// single user.
+//
+// Keyed to the CALENDAR — (MoleculeId, JobTypeId, TabId), all three named by the client from
+// CalendarPageConfig — so every viewer of that calendar sees it whichever desk or molecule they sit
+// in. Because the request names all three, each is validated here: the molecule against
+// ShiftCalendarAccess (can the caller even view it), the job type against the set that molecule can
+// resolve, and the tab against the (molecule, job type) pair that owns it. Holding the broad
+// note-writing grant is not sufficient on its own.
+//
+// This endpoint ALWAYS INSERTS. It used to upsert, and to treat empty text as a delete, which let any
+// holder of WriteOverviewNotes silently overwrite or clear a colleague's note. Deletion now lives in
+// DeleteDayNote, keyed by note id and gated on authorship or the assignment grant.
+//
+// Covered by ApiAuthenticationMiddleware's "/Api/Calendar" internal-web-UI prefix
+// (IsInternalWebUiEndpoint) — no separate middleware registration needed.
 [Authorize]
 [IgnoreAntiforgeryToken]
 public class QuickAddDayNoteModel : PageModel
@@ -26,6 +36,7 @@ public class QuickAddDayNoteModel : PageModel
     private readonly ICalendarDayNoteService _dayNoteService;
     private readonly IAuditLogService _auditLogService;
     private readonly IGrantService _grantService;
+    private readonly IJobTypeService _jobTypeService;
     private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<QuickAddDayNoteModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -35,6 +46,7 @@ public class QuickAddDayNoteModel : PageModel
         ICalendarDayNoteService dayNoteService,
         IAuditLogService auditLogService,
         IGrantService grantService,
+        IJobTypeService jobTypeService,
         ITenantResolver tenantResolver,
         ILogger<QuickAddDayNoteModel> logger,
         IStringLocalizer<SharedResources> localizer)
@@ -43,6 +55,7 @@ public class QuickAddDayNoteModel : PageModel
         _dayNoteService = dayNoteService;
         _auditLogService = auditLogService;
         _grantService = grantService;
+        _jobTypeService = jobTypeService;
         _tenantResolver = tenantResolver;
         _logger = logger;
         _localizer = localizer;
@@ -132,28 +145,83 @@ public class QuickAddDayNoteModel : PageModel
                     { StatusCode = 403 };
             }
 
-            // Empty text clears the day note; non-empty upserts it.
-            if (text.Length == 0)
+            // SECURITY-AUDITED: SAFE — Molecule has no tenant filter, and moleculeId was just proven
+            // viewable above. Only Type is read, to decide whether a null job type is legitimate.
+            var moleculeType = await _db.Molecules
+                .Where(m => m.Id == moleculeId)
+                .Select(m => (ShiftManager.Models.Support.MoleculeType?)m.Type)
+                .FirstOrDefaultAsync();
+            if (moleculeType == null)
             {
-                var removed = await _dayNoteService.DeleteDayNoteAsync(noteDate, moleculeId);
-                if (removed)
-                {
-                    await _auditLogService.LogAsync(
-                        action: "DayNoteDeleted",
-                        entityType: "CalendarDayNote",
-                        entityId: 0,
-                        description: $"Cleared day note on {noteDate:yyyy-MM-dd} (molecule {moleculeId}) via Quick Entry");
-                }
-                return new JsonResult(new { success = true, deleted = true, message = "Day note cleared" });
+                return new JsonResult(new { success = false, message = "A molecule is required" })
+                    { StatusCode = 400 };
             }
 
-            var note = await _dayNoteService.SetDayNoteAsync(noteDate, moleculeId, companyId, text, currentUserId);
+            // SECURITY: the request names a job type, so prove it is one THIS molecule's calendar can
+            // actually show. GetJobTypesForMoleculeAsync pins jt.AreaId == molecule.AreaId and
+            // (jt.MoleculeId == null || == moleculeId), so a job type from another area is unreachable
+            // — which is what stops a note being keyed to a calendar that does not exist.
+            if (data.JobTypeId.HasValue)
+            {
+                var available = await _jobTypeService.GetJobTypesForMoleculeAsync(moleculeId);
+                if (available.All(jt => jt.Id != data.JobTypeId.Value))
+                {
+                    _logger.LogWarning("SECURITY: User {UserId} attempted to write a day note on molecule {MoleculeId} with job type {JobTypeId}, which that molecule cannot resolve",
+                        currentUserId, moleculeId, data.JobTypeId.Value);
+                    return new JsonResult(new { success = false, message = "You do not have access to this calendar" })
+                        { StatusCode = 403 };
+                }
+            }
+            else if (moleculeType != ShiftManager.Models.Support.MoleculeType.Tech)
+            {
+                // A null job type is legitimate ONLY for a Tech molecule, whose calendar has no job
+                // type at all. For any other molecule it means the degenerate "no resolvable job
+                // types" state, and a note written there is encoded identically to a Tech note —
+                // (molecule, NULL, NULL) — whose meaning then depends on the molecule's Type rather
+                // than on the row. Refusing keeps that ambiguous triple out of the data entirely.
+                return new JsonResult(new { success = false, message = "A job type is required for this calendar" })
+                    { StatusCode = 400 };
+            }
+
+            // SECURITY: a tab belongs to exactly one (molecule, job type) pair, so a tab id from
+            // another calendar must not be accepted. Closes the cross-molecule tab vector.
+            if (data.TabId.HasValue)
+            {
+                var tabBelongsHere = await _db.ShiftTabs.AnyAsync(t =>
+                    t.Id == data.TabId.Value
+                    && t.MoleculeId == moleculeId
+                    && t.JobTypeId == data.JobTypeId);
+                if (!tabBelongsHere)
+                {
+                    _logger.LogWarning("SECURITY: User {UserId} attempted to write a day note on tab {TabId}, which does not belong to molecule {MoleculeId} / job type {JobTypeId}",
+                        currentUserId, data.TabId.Value, moleculeId, data.JobTypeId);
+                    return new JsonResult(new { success = false, message = "You do not have access to this calendar" })
+                        { StatusCode = 403 };
+                }
+            }
+
+            // Empty text is REJECTED, not treated as a delete. Treating it as a delete let anyone
+            // silently clear a colleague's note with no ownership check and no visible trace (the
+            // audit row it wrote carried entityId: 0, so deletions were unattributable). Deleting is
+            // now an explicit action against a specific note id — see DeleteDayNote.
+            if (text.Length == 0)
+            {
+                return new JsonResult(new { success = false, message = "Note text is required" })
+                    { StatusCode = 400 };
+            }
+
+            var note = await _dayNoteService.AddDayNoteAsync(
+                noteDate,
+                new CalendarScope(moleculeId, data.JobTypeId, data.TabId),
+                companyId, text, currentUserId);
 
             await _auditLogService.LogAsync(
                 action: "DayNoteSaved",
                 entityType: "CalendarDayNote",
                 entityId: note.Id,
-                description: $"Saved day note '{text}' on {noteDate:yyyy-MM-dd} (molecule {moleculeId}) via Quick Entry");
+                description: $"Saved day note '{text}' on {noteDate:yyyy-MM-dd} "
+                           + $"(molecule {moleculeId}, job type {data.JobTypeId?.ToString() ?? "none"}, "
+                           + $"tab {data.TabId?.ToString() ?? "all"}) via Quick Entry");
 
             return new JsonResult(new
             {
@@ -179,5 +247,11 @@ public class QuickAddDayNoteModel : PageModel
         public string Date { get; set; } = string.Empty;
         public string Text { get; set; } = string.Empty;
         public int? MoleculeId { get; set; }
+
+        /// <summary>The calendar's job type. Null is legitimate ONLY for a Tech molecule.</summary>
+        public int? JobTypeId { get; set; }
+
+        /// <summary>The active tab, or null for the synthetic "All" view.</summary>
+        public int? TabId { get; set; }
     }
 }

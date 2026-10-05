@@ -14612,6 +14612,33 @@
   <data name="Error_CannotActOnHigherRankedUser" xml:space="preserve">
     <value>לא ניתן לבצע פעולה זו על משתמש בעל תפקיד בכיר משלך.</value>
   </data>
+  <data name="Calendar_DayNotes_PanelTitle" xml:space="preserve">
+    <value>הערות יום</value>
+  </data>
+  <data name="Calendar_DayNotes_TriggerAriaLabel" xml:space="preserve">
+    <value>הערות יום ל־{0} ({1})</value>
+  </data>
+  <data name="Calendar_DayNotes_Empty" xml:space="preserve">
+    <value>אין הערות ליום זה.</value>
+  </data>
+  <data name="Calendar_DayNote_TabLabel" xml:space="preserve">
+    <value>לשונית: {0}</value>
+  </data>
+  <data name="Calendar_DayNote_DeleteAriaLabel" xml:space="preserve">
+    <value>מחק את ההערה שנכתבה על ידי {0}</value>
+  </data>
+  <data name="Calendar_DayNote_UnknownAuthor" xml:space="preserve">
+    <value>משתמש שנמחק</value>
+  </data>
+  <data name="Calendar_DayNote_TabInactive" xml:space="preserve">
+    <value>לא פעילה</value>
+  </data>
+  <data name="Error_CannotDeleteJobTypeWithTabs" xml:space="preserve">
+    <value>לא ניתן למחוק סוג עבודה זה — {0} לשוניות לוח עדיין משתמשות בו.</value>
+  </data>
+  <data name="Error_CannotDeleteJobTypeWithDayNotes" xml:space="preserve">
+    <value>לא ניתן למחוק סוג עבודה זה — {0} הערות יום משוייכות ללוחות שלו.</value>
+  </data>
   <data name="Calendar_DayNote_WrittenBy" xml:space="preserve">
     <value>נכתב על ידי {0}</value>
   </data>

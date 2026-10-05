@@ -547,6 +547,9 @@ else
             isTechMolecule: @(Model.IsTechMolecule ? "true" : "false"),
             categoryEligibilityEnabled: @(Model.CategoryEligibilityEnabled ? "true" : "false"),
             moleculeId: @(Model.MoleculeId ?? 0),
+            // null for a Tech molecule, whose calendar has no job type. Day notes are keyed to the
+            // calendar triple (molecule, jobType, tab), so the writer needs all three.
+            jobTypeId: @(Model.JobTypeId?.ToString() ?? "null"),
             activeTabId: @(Model.Tab?.ToString() ?? "null"),
             tabPrioritize: @(Model.TabPrioritizeActive ? "true" : "false")
         };

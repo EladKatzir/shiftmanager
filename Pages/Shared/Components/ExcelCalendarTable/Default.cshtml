@@ -78,31 +78,43 @@
                         data-date="@day.ToString("yyyy-MM-dd")">
                         <span class="excel-calendar__day-name">@dayName</span>
                         <span class="excel-calendar__day-date">@day.ToString("dd/MM")</span>
-                        @if (Model.DayNotes.TryGetValue(day, out var dayNote) && !string.IsNullOrWhiteSpace(dayNote.Text))
+                        @if (Model.DayNotes.TryGetValue(day, out var dayNotes) && dayNotes.Count > 0)
                         {
-                            // Attribution: who originally wrote the note, plus the last editor when that is
-                            // someone else. The note text stays first in the tooltip because the visible
-                            // text is truncated with an ellipsis.
+                            @* A day holds MANY notes now, each one a separate person's contribution that is
+                               created and deleted as a unit — notes are never edited in place, so there is no
+                               "last edited by" any more. *@
                             const string tooltipLineBreak = "\n"; // rendered as &#xA; — a line break in the native tooltip
-                            var dayNoteAttribution = string.Format(culture, Localizer["Calendar_DayNote_WrittenBy"].Value, dayNote.AuthorName)
-                                + (dayNote.LastEditorName != null
-                                    ? tooltipLineBreak + string.Format(culture, Localizer["Calendar_DayNote_LastEditedBy"].Value, dayNote.LastEditorName)
-                                    : "");
-                            <span class="excel-calendar__day-note" title="@(dayNote.Text + tooltipLineBreak + dayNoteAttribution)">
-                                <span class="excel-calendar__day-note-icon" aria-hidden="true">📝</span>
-                                <span class="excel-calendar__day-note-text">@dayNote.Text</span>
-                                @* A title tooltip is unreachable by keyboard and screen readers (this span is not
-                                   focusable), so the attribution is also carried as visually-hidden text. *@
-                                <span class="visually-hidden">@dayNoteAttribution</span>
-                                @if (!Model.IsReadOnly)
-                                {
-                                    <button type="button"
-                                            class="excel-calendar__day-note-delete"
-                                            data-date="@day.ToString("yyyy-MM-dd")"
-                                            aria-label="@Localizer["QuickEntry_DeleteDayNote"]"
-                                            title="@Localizer["QuickEntry_DeleteDayNote"]">×</button>
-                                }
-                            </span>
+                            foreach (var dayNote in dayNotes)
+                            {
+                                // AuthorName carries the resx KEY when the author has been deleted, so the
+                                // service never has to return null and no view has to branch on it.
+                                var authorDisplay = dayNote.AuthorName == "Calendar_DayNote_UnknownAuthor"
+                                    ? Localizer["Calendar_DayNote_UnknownAuthor"].Value
+                                    : dayNote.AuthorName;
+                                var dayNoteAttribution = string.Format(culture,
+                                    Localizer["Calendar_DayNote_WrittenBy"].Value, authorDisplay);
+                                // Deletable by its author, or by a holder of the assignment grant for this
+                                // calendar (IsReadOnly is !CanEdit, i.e. that grant). Adding needs only
+                                // CanWriteNote, so gating the × on IsReadOnly alone hid it from note writers.
+                                var canDeleteThisNote = Model.CanWriteNote
+                                    && (dayNote.CreatedByUserId == Model.CurrentUserId || !Model.IsReadOnly);
+
+                                <span class="excel-calendar__day-note" title="@(dayNote.Text + tooltipLineBreak + dayNoteAttribution)">
+                                    <span class="excel-calendar__day-note-icon" aria-hidden="true">📝</span>
+                                    <span class="excel-calendar__day-note-text">@dayNote.Text</span>
+                                    @* A title tooltip is unreachable by keyboard and screen readers (this span is not
+                                       focusable), so the attribution is also carried as visually-hidden text. *@
+                                    <span class="visually-hidden">@dayNoteAttribution</span>
+                                    @if (canDeleteThisNote)
+                                    {
+                                        <button type="button"
+                                                class="excel-calendar__day-note-delete"
+                                                data-note-id="@dayNote.Id"
+                                                aria-label="@Localizer["QuickEntry_DeleteDayNote"]"
+                                                title="@Localizer["QuickEntry_DeleteDayNote"]">×</button>
+                                    }
+                                </span>
+                            }
                         }
                         @if (isResizable)
                         {

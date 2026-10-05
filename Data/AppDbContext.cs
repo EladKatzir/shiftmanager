@@ -746,21 +746,47 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<CalendarDayNote>(entity =>
         {
             entity.HasKey(e => e.Id);
-            // One note per molecule per day. Filtered so legacy un-keyed rows (MoleculeId NULL — see the
-            // entity docs) are preserved without competing for a slot.
-            entity.HasIndex(e => new { e.MoleculeId, e.Date })
-                  .IsUnique()
-                  .HasFilter("MoleculeId IS NOT NULL");
+            // MANY notes per day per calendar, so deliberately NOT unique — a note is one person's
+            // contribution, never silently overwritten by the next writer.
+            //
+            // Column order is measured, not guessed. The read has two shapes: a real tab filters on
+            // TabId, the "All" view does not — and All is the DEFAULT view, so it is the hot path.
+            // With TabId third, EXPLAIN QUERY PLAN shows the All query seeking only on the two
+            // equality columns and then scanning every tab/date entry in the (molecule, jobType)
+            // group, because the Date range becomes unusable. TabId is both the least selective
+            // column AND the one the hot branch never filters on, so it goes last; the tab branch
+            // loses nothing because TabId stays index-resident.
+            entity.HasIndex(e => new { e.MoleculeId, e.JobTypeId, e.Date, e.TabId });
             entity.HasIndex(e => e.CompanyId);
             entity.Property(e => e.Text).HasMaxLength(500);
             entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Restrict);
             // Cascade: a molecule can only be deleted once it has no desks, and a note belongs to that
             // molecule's calendar — which no longer exists. Restrict would make that delete throw.
             entity.HasOne<Molecule>().WithMany().HasForeignKey(e => e.MoleculeId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            // SetNull, mirroring UpdatedByUser below. This was Restrict, and because CalendarDayNotes
+            // is cleaned up nowhere in Admin/Users — not even in its exhaustive force-delete block —
+            // deleting any user who had ever written a day note failed outright with a FOREIGN KEY
+            // error. Reassigning authorship to the deleting admin (the UserDayNotes pattern) would be
+            // wrong here: authorship is also a DELETE PERMISSION, so reassignment would hand rights
+            // over a departed colleague's note to whoever ran the deletion, and the hover attribution
+            // would start naming the admin as the author. A null author instead fails the ownership
+            // check and falls through to the assignment grant, which is the correct outcome: nobody
+            // owns an orphaned note.
+            entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.SetNull);
             // SetNull: deleting the last editor just drops the "edited by" attribution; it must not add
             // a new reason for a user delete to fail.
             entity.HasOne(e => e.UpdatedByUser).WithMany().HasForeignKey(e => e.UpdatedByUserId).OnDelete(DeleteBehavior.SetNull);
+            // Restrict, NOT SetNull — and the difference matters. JobTypeId == null already MEANS
+            // "Tech calendar", so nulling a note would not hide it; it would RELOCATE the note onto a
+            // calendar it was never written for. Cascade would silently delete user-typed text when an
+            // admin removes a job type. Restrict matches every other JobType FK in this model; the
+            // companion pre-check lives in Pages/Admin/Organization/JobTypes.
+            entity.HasOne(e => e.JobType).WithMany().HasForeignKey(e => e.JobTypeId).OnDelete(DeleteBehavior.Restrict);
+            // SetNull: tab deletion is a HARD delete (ShiftTabService removes the row), so Cascade
+            // would destroy user text. SetNull drops the note into the All bucket — safe now that
+            // uniqueness is gone, and it strictly NARROWS visibility (before: All + tab T; after: All
+            // only), so no audience is gained. Mirrors UserShiftTabPreference.TabId.
+            entity.HasOne(e => e.Tab).WithMany().HasForeignKey(e => e.TabId).OnDelete(DeleteBehavior.SetNull);
         });
         // Defense-in-depth tenant filter (production). Service methods use IgnoreQueryFilters + explicit
         // companyId, so this is never invoked in unit tests where _tenantResolver is null.

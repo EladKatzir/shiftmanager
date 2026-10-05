@@ -14648,6 +14648,33 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Error_CannotActOnHigherRankedUser" xml:space="preserve">
     <value>You cannot perform this action on a user whose role is more senior than your own.</value>
   </data>
+  <data name="Calendar_DayNotes_PanelTitle" xml:space="preserve">
+    <value>Day notes</value>
+  </data>
+  <data name="Calendar_DayNotes_TriggerAriaLabel" xml:space="preserve">
+    <value>Day notes for {0} ({1})</value>
+  </data>
+  <data name="Calendar_DayNotes_Empty" xml:space="preserve">
+    <value>No notes for this day.</value>
+  </data>
+  <data name="Calendar_DayNote_TabLabel" xml:space="preserve">
+    <value>Tab: {0}</value>
+  </data>
+  <data name="Calendar_DayNote_DeleteAriaLabel" xml:space="preserve">
+    <value>Delete the note written by {0}</value>
+  </data>
+  <data name="Calendar_DayNote_UnknownAuthor" xml:space="preserve">
+    <value>a deleted user</value>
+  </data>
+  <data name="Calendar_DayNote_TabInactive" xml:space="preserve">
+    <value>inactive</value>
+  </data>
+  <data name="Error_CannotDeleteJobTypeWithTabs" xml:space="preserve">
+    <value>Cannot delete this job type — {0} calendar tab(s) still use it.</value>
+  </data>
+  <data name="Error_CannotDeleteJobTypeWithDayNotes" xml:space="preserve">
+    <value>Cannot delete this job type — {0} day note(s) are attached to its calendars.</value>
+  </data>
   <data name="Calendar_DayNote_WrittenBy" xml:space="preserve">
     <value>Written by {0}</value>
   </data>

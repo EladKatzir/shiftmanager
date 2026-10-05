@@ -69,12 +69,32 @@ public class ExcelCalendarTableViewModel
     public Dictionary<string, int> ColumnWidths { get; set; } = new();
 
     /// <summary>
-    /// Day-scoped free-text notes (<see cref="ShiftManager.Models.CalendarDayNote"/>) keyed by date,
-    /// rendered in the date-column headers with the author's name on hover. Molecule-wide and
-    /// view-independent, so they show in both shift-mode and user-mode. Populated only by calendars that
-    /// support day notes (Shifts); empty elsewhere.
+    /// Day-scoped free-text notes (<see cref="ShiftManager.Models.CalendarDayNote"/>) keyed by date —
+    /// MANY per day — rendered in the date-column headers with the author's name on hover. Scoped to
+    /// the calendar (molecule + job type + tab) and view-independent, so they show in both shift-mode
+    /// and user-mode. Populated only by calendars that support day notes (Shifts); empty elsewhere.
     /// </summary>
-    public Dictionary<DateOnly, ShiftManager.Services.DayNoteView> DayNotes { get; set; } = new();
+    public Dictionary<DateOnly, List<ShiftManager.Services.DayNoteView>> DayNotes { get; set; } = new();
+
+    /// <summary>
+    /// Whether the viewer may write day notes at all (WriteOverviewNotes OR any calendar-edit grant).
+    /// Deliberately NOT <see cref="IsReadOnly"/>: that is <c>!CanEdit</c>, i.e. the assignment grant,
+    /// so gating the note controls on it hid the delete × from the very people allowed to add notes.
+    /// </summary>
+    public bool CanWriteNote { get; set; }
+
+    /// <summary>
+    /// True when the viewer is on the synthetic "All" tab, which shows notes from every tab of this
+    /// calendar — so each note needs a badge naming the tab it belongs to. On a real tab every note
+    /// shown belongs to that tab, and a badge would be noise.
+    /// </summary>
+    public bool DayNotesScopeIsAllTab { get; set; }
+
+    /// <summary>
+    /// The viewer's own user id, needed to decide per note whether to render its delete ×: a note is
+    /// deletable by its author, or by a holder of the assignment grant for this calendar.
+    /// </summary>
+    public int CurrentUserId { get; set; }
 }
 
 public class ExcelCalendarRow
