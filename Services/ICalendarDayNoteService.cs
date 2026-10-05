@@ -28,6 +28,8 @@ public sealed record CalendarScope(int MoleculeId, int? JobTypeId, int? TabId);
 /// English badges.</param>
 /// <param name="TabIsActive">False when the note's tab has been deactivated. Such a tab drops out of
 /// the strip, so its notes are reachable only from All; the badge says so rather than hiding them.</param>
+/// <param name="TabColor">The tab's optional hex colour, so the inline dot matches that tab's pill in
+/// the strip and the two read as the same object. Null when the tab has no colour, or is absent.</param>
 public sealed record DayNoteView(
     int Id,
     string Text,
@@ -36,7 +38,8 @@ public sealed record DayNoteView(
     int? TabId,
     string? TabNameEn,
     string? TabNameHe,
-    bool TabIsActive);
+    bool TabIsActive,
+    string? TabColor);
 
 /// <summary>
 /// Manages day-scoped free-text notes (<see cref="CalendarDayNote"/>). A note belongs to one

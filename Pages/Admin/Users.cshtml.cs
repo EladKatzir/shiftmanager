@@ -2317,6 +2317,15 @@ public partial class UsersModel : LocalizedPageModel
             await _db.CalendarTextEntries.IgnoreQueryFilters()
                 .Where(e => e.CreatedByUserId == id && e.UserId != id)
                 .ExecuteUpdateAsync(e => e.SetProperty(x => x.CreatedByUserId, currentUserId));
+            // CalendarDayNotes is deliberately ABSENT here. Its CreatedByUser FK is SetNull, so the
+            // database nulls the author by itself and the note survives — pinned by
+            // CalendarDayNoteServiceTests.DeletingTheAuthor_LeavesTheNoteWithANullAuthor_RatherThanFailing.
+            //
+            // Do NOT "fix" this by copying the CalendarTextEntries reassign-authorship pattern above.
+            // A day note's author is also a DELETE PERMISSION (see DeleteDayNote), so reassigning
+            // authorship would silently grant rights over a departed colleague's note to whichever
+            // admin happened to run the deletion, and the note's visible attribution would start
+            // naming that admin as the person who wrote it.
             await _db.UserFriendships.IgnoreQueryFilters().Where(f => f.UserId == id || f.FriendId == id).ExecuteDeleteAsync();
             await _db.GameScores.IgnoreQueryFilters().Where(g => g.UserId == id).ExecuteDeleteAsync();
             await _db.OnDutyRoleSubscriptions.IgnoreQueryFilters().Where(s => s.UserId == id).ExecuteDeleteAsync();

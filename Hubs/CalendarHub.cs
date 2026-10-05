@@ -284,6 +284,20 @@ public record CalendarTextEntryChangedEvent(
     string ChangeType // "created" | "deleted"
 );
 
+/// <summary>
+/// A day note was added or removed on a Shifts calendar. Carries TabId so a viewer standing on a
+/// different tab of the same (molecule, jobType) calendar can ignore an event that does not affect
+/// what they are looking at — the hub group is keyed to (molecule, jobType) only.
+/// </summary>
+public record CalendarDayNoteChangedEvent(
+    int DayNoteId,
+    int MoleculeId,
+    int? JobTypeId,
+    int? TabId,
+    DateOnly Date,
+    string ChangeType // "created" | "deleted"
+);
+
 public record CalendarChoreChangedEvent(
     int ChoreId,
     int? UserId,
@@ -313,6 +327,7 @@ public interface ICalendarNotificationService
     Task NotifyCapacityChangedAsync(string groupName, CalendarCapacityChangedEvent evt);
     Task NotifyNoteChangedAsync(string groupName, CalendarNoteChangedEvent evt);
     Task NotifyTextEntryChangedAsync(string groupName, CalendarTextEntryChangedEvent evt);
+    Task NotifyDayNoteChangedAsync(string groupName, CalendarDayNoteChangedEvent evt);
     Task NotifyChoreChangedAsync(string groupName, CalendarChoreChangedEvent evt);
     Task NotifyOnCallChangedAsync(string groupName, CalendarOnCallChangedEvent evt);
 }
@@ -352,6 +367,12 @@ public class CalendarNotificationService : ICalendarNotificationService
     {
         _logger.LogDebug("Notifying group {GroupName} of text entry change: {Event}", groupName, evt);
         await _hubContext.Clients.Group(groupName).SendAsync("TextEntryChanged", evt);
+    }
+
+    public async Task NotifyDayNoteChangedAsync(string groupName, CalendarDayNoteChangedEvent evt)
+    {
+        _logger.LogDebug("Notifying group {GroupName} of day note change: {Event}", groupName, evt);
+        await _hubContext.Clients.Group(groupName).SendAsync("DayNoteChanged", evt);
     }
 
     public async Task NotifyChoreChangedAsync(string groupName, CalendarChoreChangedEvent evt)

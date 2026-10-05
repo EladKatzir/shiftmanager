@@ -26,7 +26,10 @@ public interface IShiftTabService
     /// <summary>Hard-deletes a tab: company + shift-type join rows cascade away; remembered prefs → SetNull.</summary>
     Task<bool> DeleteAsync(int tabId);
     /// <summary>Counts the shift-type and company join rows for a tab (delete-impact preview).</summary>
-    Task<(int ShiftTypeCount, int CompanyCount)> GetUsageAsync(int tabId);
+    /// <summary>Delete-impact counts for a tab. DayNoteCount matters because the CalendarDayNote.Tab
+    /// FK is SetNull: deleting a tab silently MOVES its day notes to the calendar's "All" view rather
+    /// than removing them, so the confirmation has to say so.</summary>
+    Task<(int ShiftTypeCount, int CompanyCount, int DayNoteCount)> GetUsageAsync(int tabId);
 
     // ---- Membership (many-to-many, replace-set) ----
     /// <summary>Replaces the tab's company set. Rejects (returns false, no change) if ANY company is not in the

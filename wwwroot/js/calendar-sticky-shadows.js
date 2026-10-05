@@ -30,6 +30,43 @@
     const TOOLBAR_CONDENSE_CLASS = 'is-condensed';
     const CONDENSE_THRESHOLD = 200; // px of vertical scroll on .excel-calendar
 
+    // Keeps --excel-calendar-header-height equal to the header's MEASURED height.
+    //
+    // Watched rather than set once, because the header's height genuinely varies now: a date column
+    // stacks day-note chips plus an overflow trigger, and dragging a column narrower makes the
+    // header taller as content wraps. A ResizeObserver covers every cause without having to know
+    // what they are.
+    //
+    // Deliberately independent of init(). init() binds only on DOMContentLoaded, and nothing in this
+    // module re-binds on calendar:grid-refreshed — so after a refresh its observers are still
+    // watching the detached old grid. That is a PRE-EXISTING defect (compare
+    // calendar-column-resize.js, which does re-bind) and fixing it properly means re-initialising
+    // this whole module, which is out of scope here. Keeping the header-height publisher separate
+    // means it stays correct across refreshes regardless.
+    let headerRo = null;
+
+    function publishHeaderHeight() {
+        const calendar = document.querySelector('.excel-calendar');
+        if (!calendar) return;
+        const thead = calendar.querySelector('.excel-calendar__header');
+        if (!thead) return;
+
+        const apply = () => {
+            if (thead.offsetHeight > 0) {
+                calendar.style.setProperty('--excel-calendar-header-height', thead.offsetHeight + 'px');
+            }
+        };
+        apply();
+
+        if (typeof ResizeObserver === 'function') {
+            if (headerRo) headerRo.disconnect();   // the previous thead is detached after a refresh
+            headerRo = new ResizeObserver(apply);
+            headerRo.observe(thead);
+        }
+    }
+
+    document.addEventListener('calendar:grid-refreshed', publishHeaderHeight);
+
     function init() {
         document.querySelectorAll('.excel-calendar').forEach(wireCalendar);
         document.querySelectorAll('.cal-toolbar').forEach(wireToolbar);
@@ -67,9 +104,20 @@
         // scrolls behind the sticky thead. Consumed by:
         //   .excel-calendar.is-group-pinned .excel-calendar__group-header.is-pinned td
         //     { box-shadow: var(--shadow-sticky-block) } in calendar.css
-        // Read --excel-calendar-header-height once — it's a CSS custom property on
-        // the calendar element, identical for every band. Was previously computed
-        // inside the loop, costing one getComputedStyle call per group.
+        //
+        // Publish the MEASURED header height before reading the property. The 44px default in
+        // calendar.css is a stale measurement: a bare header renders at ~64px, so pinned bands
+        // already overlapped the thead by ~20px, and day notes make the header taller still
+        // (a date column can now stack note chips plus an overflow trigger). The property is also
+        // consumed by .excel-calendar__group-header's `top` in calendar.css and by
+        // calendar-keyboard-nav.js, so correcting it here fixes all three consumers at once.
+        //
+        // It is set on the CALENDAR element, not :root, because each calendar on the page has its
+        // own header height — which is exactly why the read below was already element-scoped.
+        publishHeaderHeight();
+
+        // Read it once — identical for every band. Was previously computed inside the loop,
+        // costing one getComputedStyle call per group.
         const headerHeight = parseInt(
             getComputedStyle(calendar).getPropertyValue('--excel-calendar-header-height') || '44',
             10

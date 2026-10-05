@@ -9,6 +9,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ShiftManager.Data;
+using ShiftManager.Hubs;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
@@ -70,7 +71,15 @@ public sealed class QuickAddDayNoteTests
         await db.SaveChangesAsync();
     }
 
+    /// <summary>The model plus the collaborators a test may want to assert against.</summary>
+    private sealed record Harness(QuickAddDayNoteModel Model, Mock<ICalendarNotificationService> Notifications);
+
     private static QuickAddDayNoteModel MakeModel(
+        AppDbContext db, string body, int tenantCompanyId,
+        IEnumerable<int> viewShiftsMolecules, bool canWriteNotes = true)
+        => MakeHarness(db, body, tenantCompanyId, viewShiftsMolecules, canWriteNotes).Model;
+
+    private static Harness MakeHarness(
         AppDbContext db, string body, int tenantCompanyId,
         IEnumerable<int> viewShiftsMolecules, bool canWriteNotes = true)
     {
@@ -97,18 +106,22 @@ public sealed class QuickAddDayNoteTests
         };
         http.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
 
-        return new QuickAddDayNoteModel(
+        var notifications = new Mock<ICalendarNotificationService>();
+
+        var model = new QuickAddDayNoteModel(
             db,
             new CalendarDayNoteService(db),
             Mock.Of<IAuditLogService>(),
             grants.Object,
             jobTypes,
+            notifications.Object,
             tenant.Object,
             NullLogger<QuickAddDayNoteModel>.Instance,
             loc.Object)
         {
             PageContext = new PageContext { HttpContext = http }
         };
+        return new Harness(model, notifications);
     }
 
     private static int StatusOf(IActionResult r) => ((JsonResult)r).StatusCode ?? 200;
@@ -265,6 +278,36 @@ public sealed class QuickAddDayNoteTests
 
         StatusOf(await model.OnPostAsync()).Should().Be(400);
         (await NoteCountAsync(f.Db)).Should().Be(1, "the existing note must survive an empty-text post");
+    }
+
+    [Fact]
+    public async Task AddingANote_BroadcastsToTheShiftsGroupForThatMoleculeAndJobType()
+    {
+        await using var f = await SeedThenAsync();
+        var h = MakeHarness(f.Db, """{"date":"2026-09-18","text":"x","moleculeId":1,"jobTypeId":1,"tabId":1}""", 1, new[] { 1 });
+
+        StatusOf(await h.Model.OnPostAsync()).Should().Be(200);
+
+        // The hub group is keyed to (molecule, jobType) only, so TabId has to travel in the payload
+        // for a viewer on another tab of the same calendar to ignore the event.
+        h.Notifications.Verify(n => n.NotifyDayNoteChangedAsync(
+            "shifts-1-1",
+            It.Is<CalendarDayNoteChangedEvent>(e =>
+                e.MoleculeId == 1 && e.JobTypeId == 1 && e.TabId == 1 && e.ChangeType == "created")),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ARealtimeFailure_DoesNotFailTheWriteTheUserJustMade()
+    {
+        await using var f = await SeedThenAsync();
+        var h = MakeHarness(f.Db, """{"date":"2026-09-18","text":"x","moleculeId":1,"jobTypeId":1}""", 1, new[] { 1 });
+        h.Notifications
+            .Setup(n => n.NotifyDayNoteChangedAsync(It.IsAny<string>(), It.IsAny<CalendarDayNoteChangedEvent>()))
+            .ThrowsAsync(new InvalidOperationException("hub down"));
+
+        StatusOf(await h.Model.OnPostAsync()).Should().Be(200, "the note is already saved; realtime is best-effort");
+        (await NoteCountAsync(f.Db)).Should().Be(1);
     }
 
     [Fact]

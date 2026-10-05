@@ -641,7 +641,17 @@ TRUE: DeskTeamView is tenant-filtered (AppDbContext.cs:900-901) and DeskTeamView
   **Failure:** A user with ManagerHomeAccess but no AssignShifts grant POSTs {MoleculeId: <any molecule id>, JobTypeId: <any>, WeekStart, WeekEnd} and receives a valid draftSessionId scoped to a molecule they cannot see. They then stage cells freely (DraftClear/DraftAddTrainee/DraftRemoveTrainee at :1896-1925 check only OwnsActiveDraftAsync) and probe the organisation's structure through OnPostDraftOffTabCountAsync (:1955-1979), which resolves the foreign molecule's tab configuration via GetShiftTypeTabMapAsync. Combined with the commit-authorization defect in DraftModeService.AuthorizeCellAsync, the staged cells then actually apply.  
   **Proposed fix:** Before EnterAsync, require `await IsCallerInMoleculeAsync(request.MoleculeId)` OR `await CanAssignForShiftScopeAsync(userId, companyId: null, moleculeId: request.MoleculeId, jobTypeId: request.JobTypeId)`, returning 403 otherwise — matching the Chores draft-entry gate.
 
-- `[ ]` **/Api/Calendar/QuickAddDayNote lets any employee silently overwrite or delete the desk-wide day note**  
+- `[x]` **/Api/Calendar/QuickAddDayNote lets any employee silently overwrite or delete the desk-wide day note**
+  **FIXED 2026-10-05** — see `docs/superpowers/specs/2026-10-05-daynotes-per-calendar-design.md`.
+  All three clauses of the proposed fix below are satisfied: empty text is no longer a delete (it is
+  now a 400, and deletion moved to a dedicated `/Api/Calendar/DeleteDayNote` keyed by note id); the
+  author is displayed on every note, in the chip tooltip and in the notes panel; and deleting
+  requires being that note's author OR holding `AssignShifts` scoped to its calendar, instead of the
+  universal note grant. The overwrite half is gone by construction — the endpoint always INSERTS, so
+  a day holds many notes and one writer can no longer replace another's. The audit row also carries
+  the real note id now; the old path logged `entityId: 0`, which made every deletion unattributable.
+  Pinned by `DeleteDayNoteTests` (11 cases, incl. a legacy null-molecule note being rejected before
+  any grant call) and `QuickAddDayNoteTests`.  
   `Pages/Api/Calendar/QuickAddDayNote.cshtml.cs:104` — kind=*design-flaw* — dimension=*security-idor* — persona: Plain employee or trainee (WriteOverviewNotes is seeded to the Employee template)  
   **Failure:** A lead writes the day note "מסדר מפקד 08:00 — חובה" on the desk's Thursday column. A trainee opens the same cell in quick-entry, clears the text and saves; the note is deleted for the entire desk with no warning, no ownership check, and no visible trace (only an audit row at :109-113 that no calendar surface shows). The lead's instruction disappears from every calendar in the company and nobody is notified. The same request with new text silently overwrites it.  
   **Proposed fix:** Gate the day note behind an assign-tier grant for the viewed company — `HasCalendarAssignPermissionForCompanyAsync(currentUserId, companyId)` (GrantService.cs:65-75) is the existing company-scoped helper — rather than the universal note grant. If shared editing is intended, at minimum require an explicit delete flag rather than treating empty text as delete, and record/display the last author so o

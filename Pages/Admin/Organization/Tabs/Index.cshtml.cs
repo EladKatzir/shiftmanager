@@ -144,7 +144,8 @@ public class IndexModel : LocalizedPageModel
         {
             var companyIds = await _tabService.GetCompanyIdsForTabAsync(t.Id);
             var shiftTypeIds = await _tabService.GetShiftTypeIdsForTabAsync(t.Id);
-            var (stCount, coCount) = await _tabService.GetUsageAsync(t.Id);
+            // The day-note count is only needed by the delete-impact preview, not by the row listing.
+            var (stCount, coCount, _) = await _tabService.GetUsageAsync(t.Id);
             var remembered = await _db.UserShiftTabPreferences.CountAsync(p => p.TabId == t.Id);
             tabVms.Add(new TabVM(t.Id, t.NameEn, t.NameHe, t.Color, t.PrioritizeCompanyUsers,
                 companyIds, shiftTypeIds, stCount, coCount, remembered));
@@ -250,13 +251,13 @@ public class IndexModel : LocalizedPageModel
         var tab = await _tabService.GetTabAsync(tabId);
         if (tab == null || !await IsUserAuthorizedForMoleculeAsync(tab.MoleculeId))
             return new JsonResult(new { ok = false }) { StatusCode = 403 };
-        var (shiftTypeCount, companyCount) = await _tabService.GetUsageAsync(tabId);
+        var (shiftTypeCount, companyCount, dayNoteCount) = await _tabService.GetUsageAsync(tabId);
         var rememberedBy = await _db.UserShiftTabPreferences.CountAsync(p => p.TabId == tabId);
         return new JsonResult(new
         {
             ok = true,
             message = string.Format(CultureInfo.CurrentCulture, _localizer["Tabs_DeleteConfirm"],
-                tab.NameEn, shiftTypeCount, companyCount, rememberedBy)
+                tab.NameEn, shiftTypeCount, companyCount, rememberedBy, dayNoteCount)
         });
     }
 

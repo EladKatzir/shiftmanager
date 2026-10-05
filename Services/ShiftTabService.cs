@@ -102,11 +102,18 @@ public class ShiftTabService : IShiftTabService
         return true;
     }
 
-    public async Task<(int ShiftTypeCount, int CompanyCount)> GetUsageAsync(int tabId)
+    public async Task<(int ShiftTypeCount, int CompanyCount, int DayNoteCount)> GetUsageAsync(int tabId)
     {
         var shiftTypeCount = await _db.ShiftTabShiftTypes.CountAsync(x => x.ShiftTabId == tabId);
         var companyCount = await _db.ShiftTabCompanies.CountAsync(tc => tc.ShiftTabId == tabId);
-        return (shiftTypeCount, companyCount);
+        // Deleting a tab does not delete its day notes — the FK is SetNull, so they reappear on the
+        // calendar's "All" view. Counting them lets the confirmation say that out loud instead of
+        // moving user-written text without warning.
+        // SECURITY-AUDITED: SAFE — CalendarDayNote carries an inherited company filter, but a tab's
+        // notes legitimately span every desk in the molecule; the caller has already authorised the
+        // tab's molecule.
+        var dayNoteCount = await _db.CalendarDayNotes.IgnoreQueryFilters().CountAsync(n => n.TabId == tabId);
+        return (shiftTypeCount, companyCount, dayNoteCount);
     }
 
     // ---- Membership (replace-set) ----

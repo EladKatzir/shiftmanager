@@ -558,6 +558,9 @@ else
     <script src="~/js/calendar-sticky-shadows.js" asp-append-version="true"></script>
     <script src="~/js/calendar-tab-prioritization.js" asp-append-version="true"></script>
     <script src="~/js/calendar-inline-edit.js" asp-append-version="true"></script>
+    @* After calendar-inline-edit.js: the panel's per-note × relies on that file's delegated
+       data-note-id handler, and on its triggerCalendarRefresh / calendar:grid-refreshed contract. *@
+    <script src="~/js/calendar-day-notes-panel.js" asp-append-version="true"></script>
     <script src="~/js/calendar-bottom-sheet.js" asp-append-version="true"></script>
     <script src="~/js/calendar-keyboard-nav.js" asp-append-version="true"></script>
     <script src="~/js/calendar-tools-overflow.js" asp-append-version="true"></script>

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ShiftManager.Data;
+using ShiftManager.Hubs;
 using ShiftManager.Models;
 using ShiftManager.Models.Support;
 using ShiftManager.Resources;
@@ -79,7 +80,7 @@ public sealed class DeleteDayNoteTests
         return note.Id;
     }
 
-    private sealed record Harness(DeleteDayNoteModel Model, Mock<IGrantService> Grants);
+    private sealed record Harness(DeleteDayNoteModel Model, Mock<IGrantService> Grants, Mock<ICalendarNotificationService> Notifications);
 
     private static Harness MakeModel(
         AppDbContext db, int noteId, int callerId,
@@ -111,18 +112,21 @@ public sealed class DeleteDayNoteTests
         };
         http.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes($"{{\"noteId\":{noteId}}}"));
 
+        var notifications = new Mock<ICalendarNotificationService>();
+
         var model = new DeleteDayNoteModel(
             db,
             new CalendarDayNoteService(db),
             Mock.Of<IAuditLogService>(),
             grants.Object,
+            notifications.Object,
             tenant.Object,
             NullLogger<DeleteDayNoteModel>.Instance,
             loc.Object)
         {
             PageContext = new PageContext { HttpContext = http }
         };
-        return new Harness(model, grants);
+        return new Harness(model, grants, notifications);
     }
 
     private static int StatusOf(IActionResult r) => ((JsonResult)r).StatusCode ?? 200;
@@ -272,6 +276,23 @@ public sealed class DeleteDayNoteTests
 
         StatusOf(await h.Model.OnPostAsync()).Should().Be(403);
         (await NoteCountAsync(f.Db)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task DeletingANote_BroadcastsToTheShiftsGroupForItsCalendar()
+    {
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedAsync(f.Db);
+        var id = await SeedNoteAsync(f.Db, createdBy: Author);
+        var h = MakeModel(f.Db, id, Author);
+
+        StatusOf(await h.Model.OnPostAsync()).Should().Be(200);
+
+        h.Notifications.Verify(n => n.NotifyDayNoteChangedAsync(
+            "shifts-1-1",
+            It.Is<CalendarDayNoteChangedEvent>(e =>
+                e.DayNoteId == id && e.MoleculeId == Mol1 && e.ChangeType == "deleted")),
+            Times.Once);
     }
 
     [Fact]

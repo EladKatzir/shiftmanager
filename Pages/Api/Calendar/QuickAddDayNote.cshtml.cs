@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Hubs;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
@@ -37,6 +38,7 @@ public class QuickAddDayNoteModel : PageModel
     private readonly IAuditLogService _auditLogService;
     private readonly IGrantService _grantService;
     private readonly IJobTypeService _jobTypeService;
+    private readonly ICalendarNotificationService _notificationService;
     private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<QuickAddDayNoteModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -47,6 +49,7 @@ public class QuickAddDayNoteModel : PageModel
         IAuditLogService auditLogService,
         IGrantService grantService,
         IJobTypeService jobTypeService,
+        ICalendarNotificationService notificationService,
         ITenantResolver tenantResolver,
         ILogger<QuickAddDayNoteModel> logger,
         IStringLocalizer<SharedResources> localizer)
@@ -56,6 +59,7 @@ public class QuickAddDayNoteModel : PageModel
         _auditLogService = auditLogService;
         _grantService = grantService;
         _jobTypeService = jobTypeService;
+        _notificationService = notificationService;
         _tenantResolver = tenantResolver;
         _logger = logger;
         _localizer = localizer;
@@ -223,6 +227,21 @@ public class QuickAddDayNoteModel : PageModel
                            + $"(molecule {moleculeId}, job type {data.JobTypeId?.ToString() ?? "none"}, "
                            + $"tab {data.TabId?.ToString() ?? "all"}) via Quick Entry");
 
+
+            // Tell other viewers of this calendar. The group is keyed to (molecule, jobType), which
+            // is exactly the note's scope; TabId travels in the payload so a client on a different
+            // tab can ignore it. Best-effort: a realtime failure must not fail the write the user
+            // just made — same posture as QuickAddTextEntry.
+            try
+            {
+                await _notificationService.NotifyDayNoteChangedAsync(
+                    CalendarGroups.Shifts(moleculeId, data.JobTypeId),
+                    new CalendarDayNoteChangedEvent(note.Id, moleculeId, data.JobTypeId, data.TabId, noteDate, "created"));
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Day note {NoteId} saved but the realtime notification failed", note.Id);
+            }
             return new JsonResult(new
             {
                 success = true,

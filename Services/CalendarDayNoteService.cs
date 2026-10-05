@@ -31,6 +31,25 @@ public class CalendarDayNoteService : ICalendarDayNoteService
     /// </summary>
     private static readonly TimeSpan DuplicateSubmitWindow = TimeSpan.FromSeconds(10);
 
+    /// <summary>
+    /// A tab colour is only passed on when it is a strict #RRGGBB literal; anything else becomes null.
+    ///
+    /// <para>This matters because the value ends up inside a CSS declaration in a <c>style</c>
+    /// attribute, and <see cref="Models.ShiftTab.Color"/> is NOT validated on write —
+    /// ShiftTabService only trims it. Razor HTML-encodes the attribute, so a value cannot break OUT of
+    /// it, but it could still inject further CSS declarations within it. Sanitising here rather than in
+    /// the view means every consumer of <see cref="DayNoteView.TabColor"/> is safe by construction.</para>
+    ///
+    /// <para>Note the pre-existing sibling: Shifts.cshtml's tab strip inlines the same unvalidated
+    /// value directly. The root fix is to validate on write in ShiftTabService and its admin page,
+    /// the way ChoreTypes and DutyTypes already do with their #RRGGBB regex — deliberately left
+    /// out of scope here rather than silently propagated.</para>
+    /// </summary>
+    private static string? SafeTabColor(string? color) =>
+        color != null && System.Text.RegularExpressions.Regex.IsMatch(color, "^#[0-9A-Fa-f]{6}$")
+            ? color
+            : null;
+
     private readonly AppDbContext _db;
 
     public CalendarDayNoteService(AppDbContext db)
@@ -144,7 +163,8 @@ public class CalendarDayNoteService : ICalendarDayNoteService
                 AuthorName = n.CreatedByUser != null ? n.CreatedByUser.DisplayName : null,
                 TabNameEn = n.Tab != null ? n.Tab.NameEn : null,
                 TabNameHe = n.Tab != null ? n.Tab.NameHe : null,
-                TabIsActive = n.Tab == null || n.Tab.IsActive
+                TabIsActive = n.Tab == null || n.Tab.IsActive,
+                TabColor = n.Tab != null ? n.Tab.Color : null
             })
             .ToListAsync();
 
@@ -162,6 +182,7 @@ public class CalendarDayNoteService : ICalendarDayNoteService
                     r.TabId,
                     r.TabNameEn,
                     r.TabNameHe,
-                    r.TabIsActive)).ToList());
+                    r.TabIsActive,
+                    SafeTabColor(r.TabColor))).ToList());
     }
 }

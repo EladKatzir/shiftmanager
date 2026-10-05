@@ -284,6 +284,34 @@ public class IndexModel : LocalizedPageModel
             return RedirectToPage();
         }
 
+        // Users were the ONLY thing checked here, while DeleteJobTypeAsync is a plain Remove with no
+        // try/catch — so a Restrict FK from anywhere else surfaced as an unhandled DbUpdateException
+        // rather than a message. ShiftTab.JobType has been Restrict all along, so deleting a job type
+        // that had calendar tabs already crashed; CalendarDayNote.JobType is now Restrict too, for the
+        // reason in AppDbContext (nulling a note would RELOCATE it onto a Tech calendar rather than
+        // hide it). Both get counted, so the admin is told what is in the way instead of seeing a 500.
+        var tabCount = await _db.ShiftTabs
+            .IgnoreQueryFilters()
+            .CountAsync(t => t.JobTypeId == id);
+
+        if (tabCount > 0)
+        {
+            TempData["ErrorMessage"] = string.Format(
+                CultureInfo.CurrentCulture, _localizer["Error_CannotDeleteJobTypeWithTabs"].Value, tabCount);
+            return RedirectToPage();
+        }
+
+        var dayNoteCount = await _db.CalendarDayNotes
+            .IgnoreQueryFilters()
+            .CountAsync(n => n.JobTypeId == id);
+
+        if (dayNoteCount > 0)
+        {
+            TempData["ErrorMessage"] = string.Format(
+                CultureInfo.CurrentCulture, _localizer["Error_CannotDeleteJobTypeWithDayNotes"].Value, dayNoteCount);
+            return RedirectToPage();
+        }
+
         // Get info for logging before deletion
         var allJobTypes = await _jobTypeService.GetAllJobTypesWithAreaAsync();
         var jobTypeInfo = allJobTypes.FirstOrDefault(jt => jt.Id == id);

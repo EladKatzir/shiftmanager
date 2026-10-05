@@ -208,7 +208,7 @@ public sealed class ShiftTabServiceTests
         await svc.SetCompaniesForTabAsync(geo!.Id, new[] { 1, 2 });
         await svc.SetShiftTypesForTabAsync(geo.Id, new[] { 100 });
 
-        var (shiftTypeCount, companyCount) = await svc.GetUsageAsync(geo.Id);
+        var (shiftTypeCount, companyCount, dayNoteCount) = await svc.GetUsageAsync(geo.Id);
         shiftTypeCount.Should().Be(1);
         companyCount.Should().Be(2);
     }

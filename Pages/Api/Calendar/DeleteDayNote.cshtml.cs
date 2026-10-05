@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using ShiftManager.Data;
+using ShiftManager.Hubs;
 using ShiftManager.Resources;
 using ShiftManager.Services;
 using System.Security.Claims;
@@ -30,6 +31,7 @@ public class DeleteDayNoteModel : PageModel
     private readonly ICalendarDayNoteService _dayNoteService;
     private readonly IAuditLogService _auditLogService;
     private readonly IGrantService _grantService;
+    private readonly ICalendarNotificationService _notificationService;
     private readonly ITenantResolver _tenantResolver;
     private readonly ILogger<DeleteDayNoteModel> _logger;
     private readonly IStringLocalizer<SharedResources> _localizer;
@@ -39,6 +41,7 @@ public class DeleteDayNoteModel : PageModel
         ICalendarDayNoteService dayNoteService,
         IAuditLogService auditLogService,
         IGrantService grantService,
+        ICalendarNotificationService notificationService,
         ITenantResolver tenantResolver,
         ILogger<DeleteDayNoteModel> logger,
         IStringLocalizer<SharedResources> localizer)
@@ -47,6 +50,7 @@ public class DeleteDayNoteModel : PageModel
         _dayNoteService = dayNoteService;
         _auditLogService = auditLogService;
         _grantService = grantService;
+        _notificationService = notificationService;
         _tenantResolver = tenantResolver;
         _logger = logger;
         _localizer = localizer;
@@ -172,6 +176,18 @@ public class DeleteDayNoteModel : PageModel
                            + $"(molecule {note.MoleculeId}, job type {note.JobTypeId?.ToString() ?? "none"}, "
                            + $"tab {note.TabId?.ToString() ?? "all"}), author {note.CreatedByUserId?.ToString() ?? "deleted user"}");
 
+
+            // See QuickAddDayNote: best-effort, and the delete has already happened.
+            try
+            {
+                await _notificationService.NotifyDayNoteChangedAsync(
+                    CalendarGroups.Shifts(note.MoleculeId.Value, note.JobTypeId),
+                    new CalendarDayNoteChangedEvent(note.Id, note.MoleculeId.Value, note.JobTypeId, note.TabId, note.Date, "deleted"));
+            }
+            catch (Exception notifyEx)
+            {
+                _logger.LogWarning(notifyEx, "Day note {NoteId} deleted but the realtime notification failed", note.Id);
+            }
             return new JsonResult(new { success = true, deleted = true, message = "Day note deleted" });
         }
         catch (Exception ex)

@@ -299,6 +299,70 @@ public class CalendarDayNoteServiceTests
         (await svc.GetByIdAsync(424242)).Should().BeNull();
     }
 
+    // --- A1: deleting the author must not be blocked, and must not rewrite provenance ---
+
+    [Fact]
+    public async Task DeletingTheAuthor_LeavesTheNoteWithANullAuthor_RatherThanFailing()
+    {
+        await using var f = await SeededAsync();
+        var svc = new CalendarDayNoteService(f.Db);
+
+        var note = await svc.AddDayNoteAsync(D, All(), DeskA, "written by Avi", Avi);
+        f.Db.ChangeTracker.Clear();
+
+        // Before this change the CreatedByUser FK was Restrict and CalendarDayNotes was cleaned up
+        // NOWHERE in Admin/Users — not even in its exhaustive force-delete block — so deleting any
+        // user who had ever written a day note failed outright with a FOREIGN KEY error.
+        //
+        // This exercises the real SQLite FK action, not just a nullable column: if ON DELETE SET NULL
+        // were not actually enforced, this would throw instead.
+        var author = await f.Db.Users.SingleAsync(u => u.Id == Avi);
+        f.Db.Users.Remove(author);
+        await f.Db.SaveChangesAsync();
+        f.Db.ChangeTracker.Clear();
+
+        var survived = await svc.GetByIdAsync(note.Id);
+        survived.Should().NotBeNull("the note is not collateral damage of deleting its author");
+        survived!.CreatedByUserId.Should().BeNull();
+        survived.Text.Should().Be("written by Avi");
+
+        // Deliberately NOT reassigned to the deleting admin (the pattern CalendarTextEntries uses at
+        // Users.cshtml.cs:2316-2318). Authorship is now also a DELETE PERMISSION, so reassigning it
+        // would hand rights over a departed colleague's note to whoever ran the deletion — and the
+        // hover attribution would start naming that admin as the author.
+        var view = await svc.GetDayNotesForCalendarAsync(All(), D, D);
+        view[D].Single().AuthorName.Should().Be("Calendar_DayNote_UnknownAuthor");
+        view[D].Single().CreatedByUserId.Should().BeNull();
+    }
+
+    // --- tab colour is CSS-injection-safe ---
+
+    [Theory]
+    [InlineData("#F0C14B", "#F0C14B")]   // a well-formed colour passes through
+    [InlineData("#f0c14b", "#f0c14b")]   // lower-case hex is fine
+    [InlineData("red", null)]            // a keyword is not #RRGGBB
+    [InlineData("#FFF", null)]           // short form is not accepted
+    [InlineData("#F0C14B;background-image:url(//evil)", null)]  // the injection attempt
+    [InlineData("", null)]
+    public async Task TabColour_IsOnlyPassedOnWhenItIsAStrictHexLiteral(string stored, string? expected)
+    {
+        await using var f = await SeededAsync();
+        var svc = new CalendarDayNoteService(f.Db);
+
+        // ShiftTab.Color is NOT validated on write (ShiftTabService only trims it), and this value
+        // lands inside a CSS declaration in a style attribute. Razor stops it breaking OUT of the
+        // attribute, but not from adding further declarations inside it.
+        var tab = await f.Db.ShiftTabs.FirstAsync(t => t.Id == TabGeo);
+        tab.Color = stored;
+        await f.Db.SaveChangesAsync();
+        f.Db.ChangeTracker.Clear();
+
+        await svc.AddDayNoteAsync(D, Tab(TabGeo), DeskA, "note", Avi);
+
+        var got = await svc.GetDayNotesForCalendarAsync(All(), D, D);
+        got[D].Single().TabColor.Should().Be(expected);
+    }
+
     // --- double-submit guard ---
 
     [Fact]

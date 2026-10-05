@@ -188,6 +188,28 @@
             }
         });
 
+        connection.on('DayNoteChanged', (evt) => {
+            Logger.log('CalendarRT', 'DayNoteChanged:', evt);
+
+            // The hub group is keyed to (molecule, jobType), but a day note belongs to one TAB of
+            // that calendar — so an event can arrive for a tab this viewer is not looking at.
+            // Mirror the read rule: the "All" view (no active tab) unions every note of the
+            // calendar and is always interested; a real tab only cares about its own notes.
+            const activeTabId = (window.CalendarPageConfig && window.CalendarPageConfig.activeTabId);
+            const isAllView = (activeTabId === null || activeTabId === undefined);
+            const eventTabId = (evt && evt.tabId !== undefined) ? evt.tabId : null;
+            if (!isAllView && eventTabId !== activeTabId) {
+                Logger.log('CalendarRT', 'DayNoteChanged ignored — different tab', eventTabId, activeTabId);
+                return;
+            }
+
+            if (eventHandlers.onDayNoteChanged) {
+                eventHandlers.onDayNoteChanged(evt);
+            } else {
+                triggerShadowRefresh();
+            }
+        });
+
         connection.on('ChoreChanged', (evt) => {
             Logger.log('CalendarRT', 'ChoreChanged:', evt);
             if (eventHandlers.onChoreChanged) {
