@@ -751,6 +751,15 @@ async function quickAddDayNote(date, text) {
                 handleApiError(response);
                 return;
             }
+            // A 400 from this endpoint always explains itself ("a job type is required for this
+            // calendar", "this calendar does not use job types", text too long, date out of range).
+            // Collapsing that into a generic "server error" tells the user nothing actionable.
+            if (response.status === 400) {
+                var bad = null;
+                try { bad = await response.json(); } catch (e) { /* fall through to the generic text */ }
+                showToast((bad && bad.message) || getErrorMessage('serverError'), 'error');
+                return;
+            }
             showToast(getErrorMessage('serverError'), 'error');
             return;
         }

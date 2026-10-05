@@ -251,6 +251,31 @@ public sealed class DeleteDayNoteTests
     }
 
     [Fact]
+    public async Task TheAssignGrantIsScopedToTheNotesOwnCalendar_NotWildcarded()
+    {
+        await using var f = await SqliteDbContextFixture.CreateAsync();
+        await SeedAsync(f.Db);
+        var id = await SeedNoteAsync(f.Db, moleculeId: Mol1, jobTypeId: JtAlhut, createdBy: Author);
+        var h = MakeModel(f.Db, id, Other, hasAssignShifts: true);
+
+        StatusOf(await h.Model.OnPostAsync()).Should().Be(200);
+
+        // Pinned POSITIONALLY. The other tests wildcard every scope argument, which means passing
+        // `jobTypeId: null` instead of the note's own job type — the widening the spec warns about —
+        // would leave them all green. This asserts the molecule and job type actually travel.
+        h.Grants.Verify(g => g.HasGrantWithScopeAsync(
+            Other, "AssignShifts",
+            null,        // projectId
+            null,        // areaId
+            Mol1,        // moleculeId   <- the NOTE's molecule
+            null,        // departmentId
+            null,        // companyId
+            JtAlhut,     // jobTypeId    <- the NOTE's job type
+            null),       // targetUserId
+            Times.Once);
+    }
+
+    [Fact]
     public async Task NonAuthorWithAssignShiftsOnThatCalendar_CanDelete()
     {
         await using var f = await SqliteDbContextFixture.CreateAsync();

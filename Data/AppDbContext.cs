@@ -742,7 +742,8 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Configure CalendarDayNote (day-scoped free-text notes — one per (MoleculeId, Date), upsert at service level)
+        // Configure CalendarDayNote (day-scoped free-text notes — keyed to the CALENDAR triple
+        // (MoleculeId, JobTypeId, TabId), MANY per day, always inserted and deleted by id)
         modelBuilder.Entity<CalendarDayNote>(entity =>
         {
             entity.HasKey(e => e.Id);

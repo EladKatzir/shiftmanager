@@ -28,6 +28,9 @@ public class CalendarStickyRtlSweepTests
         ".excel-calendar",
         ".cal-toolbar",
         ".cal-page",
+        // The day-notes panel ships with the calendar and is bilingual, so it belongs under the same
+        // logical-properties rule. It passes today; guarding it stops a future edit regressing it.
+        ".cal-day-notes",
     };
 
     private static readonly Regex RuleRegex =

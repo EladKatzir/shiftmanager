@@ -224,6 +224,22 @@ public sealed class QuickAddDayNoteTests
     }
 
     [Fact]
+    public async Task TechMoleculeWithAJobType_IsRejected()
+    {
+        await using var f = await SeedThenAsync();
+        // The rule has to be TWO-SIDED. "null job type ⟹ Tech" alone is not enough, because a Tech
+        // molecule still RESOLVES job types — GetJobTypesForMoleculeAsync only drops IsWorkforceOnly
+        // ones, so molecule 6 resolves job type 1 here (and BR/Hakam/ProjectManager/Techno in the real
+        // database). Meanwhile Shifts.cshtml.cs forces JobTypeId = null for every Tech calendar, so a
+        // row at (6, 1, *) is read by NO calendar: invisible, with no × and therefore no delete path,
+        // and — because the JobType FK is Restrict — it blocks deleting that job type forever.
+        var model = MakeModel(f.Db, """{"date":"2026-09-18","text":"x","moleculeId":6,"jobTypeId":1}""", tenantCompanyId: 4, viewShiftsMolecules: Array.Empty<int>());
+
+        StatusOf(await model.OnPostAsync()).Should().Be(400);
+        (await NoteCountAsync(f.Db)).Should().Be(0);
+    }
+
+    [Fact]
     public async Task TechMolecule_AcceptsANullJobType()
     {
         await using var f = await SeedThenAsync();
@@ -308,6 +324,26 @@ public sealed class QuickAddDayNoteTests
 
         StatusOf(await h.Model.OnPostAsync()).Should().Be(200, "the note is already saved; realtime is best-effort");
         (await NoteCountAsync(f.Db)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ADoubleSubmit_BroadcastsNothing_AndWritesNoSecondAuditRow()
+    {
+        await using var f = await SeedThenAsync();
+        const string body = """{"date":"2026-09-18","text":"same text","moleculeId":1,"jobTypeId":1}""";
+
+        var first = MakeHarness(f.Db, body, 1, new[] { 1 });
+        StatusOf(await first.Model.OnPostAsync()).Should().Be(200);
+
+        // Identical text from the same author moments later is a double-submit: the service returns
+        // the EXISTING note and writes nothing. Reporting it as "created" would put a phantom event
+        // in the audit trail and make every other viewer of the calendar re-render for nothing.
+        var second = MakeHarness(f.Db, body, 1, new[] { 1 });
+        StatusOf(await second.Model.OnPostAsync()).Should().Be(200, "the user's note IS on the calendar");
+
+        (await NoteCountAsync(f.Db)).Should().Be(1);
+        second.Notifications.Verify(n => n.NotifyDayNoteChangedAsync(
+            It.IsAny<string>(), It.IsAny<CalendarDayNoteChangedEvent>()), Times.Never);
     }
 
     [Fact]

@@ -242,7 +242,7 @@ public class CalendarDayNoteServiceTests
         await using var f = await SeededAsync();
         var svc = new CalendarDayNoteService(f.Db);
 
-        var note = await svc.AddDayNoteAsync(D, All(), DeskA, "orphan", Avi);
+        var (note, _) = await svc.AddDayNoteAsync(D, All(), DeskA, "orphan", Avi);
         note.CreatedByUserId = null;   // what the SetNull FK does when the author is deleted
         await f.Db.SaveChangesAsync();
 
@@ -261,8 +261,8 @@ public class CalendarDayNoteServiceTests
         await using var f = await SeededAsync();
         var svc = new CalendarDayNoteService(f.Db);
 
-        var keep = await svc.AddDayNoteAsync(D, All(), DeskA, "keep", Avi);
-        var drop = await svc.AddDayNoteAsync(D, All(), DeskB, "drop", Bat);
+        var (keep, _) = await svc.AddDayNoteAsync(D, All(), DeskA, "keep", Avi);
+        var (drop, _) = await svc.AddDayNoteAsync(D, All(), DeskB, "drop", Bat);
 
         (await svc.DeleteDayNoteAsync(drop.Id)).Should().BeTrue();
 
@@ -287,7 +287,7 @@ public class CalendarDayNoteServiceTests
         await using var f = await SeededAsync();
         var svc = new CalendarDayNoteService(f.Db);
 
-        var note = await svc.AddDayNoteAsync(D, Tab(TabGeo), DeskA, "note", Avi);
+        var (note, _) = await svc.AddDayNoteAsync(D, Tab(TabGeo), DeskA, "note", Avi);
 
         var loaded = await svc.GetByIdAsync(note.Id);
         loaded.Should().NotBeNull();
@@ -299,6 +299,57 @@ public class CalendarDayNoteServiceTests
         (await svc.GetByIdAsync(424242)).Should().BeNull();
     }
 
+    // --- ordering decides which notes are the inline chips ---
+
+    [Fact]
+    public async Task NotesWithinADay_AreOrderedOldestFirst_SoTheChipAndOverflowSplitIsStable()
+    {
+        await using var f = await SeededAsync();
+        var svc = new CalendarDayNoteService(f.Db);
+
+        // The view shows the FIRST N of these inline and pushes the rest behind the "+N" trigger, so
+        // an unstable order would silently reshuffle which notes are visible between renders.
+        // CreatedAt is seeded explicitly here because several inserts in the same test can land on the
+        // same timestamp, which is exactly why the service also breaks ties on Id.
+        var texts = new[] { "oldest", "middle", "newest" };
+        var baseTime = new DateTime(2026, 9, 18, 8, 0, 0, DateTimeKind.Utc);
+        for (var i = 0; i < texts.Length; i++)
+        {
+            f.Db.CalendarDayNotes.Add(new CalendarDayNote
+            {
+                Date = D, Text = texts[i], CompanyId = DeskA, MoleculeId = Mol1, JobTypeId = JtAlhut,
+                CreatedByUserId = Avi, CreatedAt = baseTime.AddMinutes(i)
+            });
+        }
+        await f.Db.SaveChangesAsync();
+        f.Db.ChangeTracker.Clear();
+
+        var got = await svc.GetDayNotesForCalendarAsync(All(), D, D);
+        got[D].Select(n => n.Text).Should().Equal("oldest", "middle", "newest");
+    }
+
+    [Fact]
+    public async Task NotesSharingACreatedAt_FallBackToIdOrder()
+    {
+        await using var f = await SeededAsync();
+        var svc = new CalendarDayNoteService(f.Db);
+
+        var sameInstant = new DateTime(2026, 9, 18, 8, 0, 0, DateTimeKind.Utc);
+        foreach (var t in new[] { "first", "second", "third" })
+        {
+            f.Db.CalendarDayNotes.Add(new CalendarDayNote
+            {
+                Date = D, Text = t, CompanyId = DeskA, MoleculeId = Mol1, JobTypeId = JtAlhut,
+                CreatedByUserId = Avi, CreatedAt = sameInstant
+            });
+        }
+        await f.Db.SaveChangesAsync();
+        f.Db.ChangeTracker.Clear();
+
+        var got = await svc.GetDayNotesForCalendarAsync(All(), D, D);
+        got[D].Select(n => n.Text).Should().Equal("first", "second", "third");
+    }
+
     // --- A1: deleting the author must not be blocked, and must not rewrite provenance ---
 
     [Fact]
@@ -307,7 +358,7 @@ public class CalendarDayNoteServiceTests
         await using var f = await SeededAsync();
         var svc = new CalendarDayNoteService(f.Db);
 
-        var note = await svc.AddDayNoteAsync(D, All(), DeskA, "written by Avi", Avi);
+        var (note, _) = await svc.AddDayNoteAsync(D, All(), DeskA, "written by Avi", Avi);
         f.Db.ChangeTracker.Clear();
 
         // Before this change the CreatedByUser FK was Restrict and CalendarDayNotes was cleaned up
@@ -375,9 +426,13 @@ public class CalendarDayNoteServiceTests
         // promise's .then), so two Enters send two POSTs. Under the old upsert that was harmless —
         // the second overwrote the same row. Now it would create a visible twin and could push a day
         // into "+1", which reads as a bug.
-        var first = await svc.AddDayNoteAsync(D, All(), DeskA, "same text", Avi);
-        var second = await svc.AddDayNoteAsync(D, All(), DeskA, "same text", Avi);
+        var (first, firstCreated) = await svc.AddDayNoteAsync(D, All(), DeskA, "same text", Avi);
+        var (second, secondCreated) = await svc.AddDayNoteAsync(D, All(), DeskA, "same text", Avi);
 
+        firstCreated.Should().BeTrue();
+        // The flag is what stops the endpoint writing an audit row and broadcasting a "created"
+        // event for a note it did not create.
+        secondCreated.Should().BeFalse("the second call is a double-submit and wrote nothing");
         second.Id.Should().Be(first.Id, "the duplicate submit returns the existing note rather than inserting");
         (await svc.GetDayNotesForCalendarAsync(All(), D, D))[D].Should().HaveCount(1);
     }
@@ -441,7 +496,7 @@ public class CalendarDayNoteServiceTests
 
         // CompanyId is set explicitly so CompanyIdInterceptor (which only fires at CompanyId == 0)
         // leaves it alone. It records WHERE the note was written, and no longer scopes who sees it.
-        var note = await svc.AddDayNoteAsync(D, All(), authorCompanyId: DeskB, "from desk B", userId: Bat);
+        var (note, _) = await svc.AddDayNoteAsync(D, All(), authorCompanyId: DeskB, "from desk B", userId: Bat);
 
         note.CompanyId.Should().Be(DeskB);
         (await svc.GetDayNotesForCalendarAsync(All(), D, D))[D].Single().Text.Should().Be("from desk B");

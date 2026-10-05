@@ -57,7 +57,7 @@ public class CalendarDayNoteService : ICalendarDayNoteService
         _db = db;
     }
 
-    public async Task<CalendarDayNote> AddDayNoteAsync(
+    public async Task<(CalendarDayNote Note, bool Created)> AddDayNoteAsync(
         DateOnly date, CalendarScope scope, int authorCompanyId, string text, int userId)
     {
         ArgumentNullException.ThrowIfNull(scope);
@@ -78,7 +78,7 @@ public class CalendarDayNoteService : ICalendarDayNoteService
                                    && n.CreatedByUserId == userId
                                    && n.CreatedAt >= cutoff);
         if (duplicate != null)
-            return duplicate;
+            return (duplicate, false);
 
         // Otherwise always INSERT. The previous design upserted by (molecule, date), which meant the
         // second writer on a day silently replaced the first author's note with no warning and no trace.
@@ -97,7 +97,7 @@ public class CalendarDayNoteService : ICalendarDayNoteService
 
         _db.CalendarDayNotes.Add(note);
         await _db.SaveChangesAsync();
-        return note;
+        return (note, true);
     }
 
     public async Task<CalendarDayNote?> GetByIdAsync(int noteId)

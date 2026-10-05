@@ -96,7 +96,12 @@ public class ShiftTabService : IShiftTabService
             return false;
 
         // FK behavior handles the rest: ShiftTabCompany + ShiftTabShiftType → Cascade,
-        // UserShiftTabPreference.TabId → SetNull. Shift instances/assignments are untouched.
+        // UserShiftTabPreference.TabId → SetNull, CalendarDayNote.TabId → SetNull. Shift
+        // instances/assignments are untouched.
+        //
+        // The day-note SetNull is user-visible: those notes are not deleted, they REAPPEAR on the
+        // calendar's "All" view. GetUsageAsync counts them so the delete confirmation can say so
+        // rather than moving user-written text silently.
         _db.ShiftTabs.Remove(tab);
         await _db.SaveChangesAsync();
         return true;

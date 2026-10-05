@@ -383,8 +383,10 @@
             </div>
             <div class="modal__body">
                 <p class="cal-day-notes__date" id="calDayNotesDate"></p>
+                @* No empty state: the panel only opens for a day that HAS notes, and it closes
+                   itself the moment a delete empties the day. A hidden element for a state that
+                   cannot occur is just a string nobody will ever translate correctly. *@
                 <ul class="cal-day-notes__list" id="calDayNotesList"></ul>
-                <p class="cal-day-notes__empty" id="calDayNotesEmpty" hidden>@Localizer["Calendar_DayNotes_Empty"]</p>
             </div>
         </div>
         <div class="modal-backdrop" id="calDayNotesBackdrop" hidden></div>

@@ -14618,9 +14618,6 @@
   <data name="Calendar_DayNotes_TriggerAriaLabel" xml:space="preserve">
     <value>הערות יום ל־{0} ({1})</value>
   </data>
-  <data name="Calendar_DayNotes_Empty" xml:space="preserve">
-    <value>אין הערות ליום זה.</value>
-  </data>
   <data name="Calendar_DayNote_TabLabel" xml:space="preserve">
     <value>לשונית: {0}</value>
   </data>

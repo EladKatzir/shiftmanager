@@ -56,8 +56,14 @@ public interface ICalendarDayNoteService
     /// <summary>
     /// Insert a new note on <paramref name="scope"/>'s calendar. Always inserts — never upserts, so
     /// one writer can never silently replace another's note.
+    ///
+    /// <para><paramref name="Created"/> is false when an identical note from the same author on the
+    /// same calendar and date arrived moments ago and this call was therefore treated as a
+    /// double-submit: the EXISTING note comes back and nothing was written. Callers must honour it —
+    /// writing an audit row or broadcasting a "created" event for a note you did not create is a
+    /// lie about history.</para>
     /// </summary>
-    Task<CalendarDayNote> AddDayNoteAsync(DateOnly date, CalendarScope scope, int authorCompanyId, string text, int userId);
+    Task<(CalendarDayNote Note, bool Created)> AddDayNoteAsync(DateOnly date, CalendarScope scope, int authorCompanyId, string text, int userId);
 
     /// <summary>
     /// Load one note by id, so a caller can authorize against its own scope and author before

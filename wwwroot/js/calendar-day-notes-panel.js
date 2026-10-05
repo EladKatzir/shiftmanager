@@ -110,7 +110,6 @@
 
         var tpl = templateFor(date);
         var list = panel.querySelector('#calDayNotesList');
-        var empty = panel.querySelector('#calDayNotesEmpty');
         var dateLabel = panel.querySelector('#calDayNotesDate');
         if (!list) return false;
 
@@ -132,7 +131,8 @@
             dateLabel.textContent = (n && d) ? (n.textContent.trim() + ' ' + d.textContent.trim()) : '';
         }
 
-        if (empty) empty.hidden = count > 0;
+        // Returning false is what keeps the panel from ever showing an empty state: open() bails and
+        // the refresh path closes instead. That is why there is no empty-state element to toggle.
         return count > 0;
     }
 

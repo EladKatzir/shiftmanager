@@ -14654,9 +14654,6 @@ Are you absolutely sure you want to delete this user?</value>
   <data name="Calendar_DayNotes_TriggerAriaLabel" xml:space="preserve">
     <value>Day notes for {0} ({1})</value>
   </data>
-  <data name="Calendar_DayNotes_Empty" xml:space="preserve">
-    <value>No notes for this day.</value>
-  </data>
   <data name="Calendar_DayNote_TabLabel" xml:space="preserve">
     <value>Tab: {0}</value>
   </data>

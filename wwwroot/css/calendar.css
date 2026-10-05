@@ -2853,7 +2853,8 @@
     display: flex;
     align-items: center;
     gap: 0.2rem;
-    margin-top: 0.25rem;
+    /* No margin-top: .excel-calendar__day-notes (the flex stack that now wraps these) owns the gap
+       above the first chip and the spacing between them. Keeping it here double-counted it. */
     max-width: 100%;
     overflow: hidden;
     padding: 0.1rem 0.3rem;
@@ -3047,6 +3048,11 @@
 /* Badge FIRST in DOM order inside a flex/grid row: logical order means Hebrew places it on the
    trailing side with no row-reverse and no [dir="rtl"] override for the RTL sweep to object to. */
 .cal-day-notes__tab {
+    /* Explicit columns, NOT auto-placement. The badge renders only on the All view and only for a
+       tab-scoped note, so without it auto-placement slid text into column 1 and the DELETE button
+       into the 1fr column — where a <button> stretches and centres its glyph, leaving the × floating
+       mid-row on every real tab and on every All-typed note. */
+    grid-column: 1;
     grid-row: 1;
     align-self: center;
     padding: 0.05rem 0.35rem;
@@ -3063,6 +3069,7 @@
 }
 
 .cal-day-notes__text {
+    grid-column: 2;
     grid-row: 1;
     min-width: 0;
     overflow-wrap: anywhere;
@@ -3076,7 +3083,9 @@
 }
 
 .cal-day-notes__delete {
+    grid-column: 3;
     grid-row: 1;
+    justify-self: end;
     appearance: none;
     border: none;
     background: transparent;

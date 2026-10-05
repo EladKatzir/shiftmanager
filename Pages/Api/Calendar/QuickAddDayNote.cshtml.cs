@@ -161,6 +161,40 @@ public class QuickAddDayNoteModel : PageModel
                     { StatusCode = 400 };
             }
 
+            var isTechMolecule = moleculeType == ShiftManager.Models.Support.MoleculeType.Tech;
+
+            // The job-type rule is TWO-SIDED, and BOTH directions have to be enforced.
+            //
+            // Direction 1 — a Tech calendar must NOT name a job type. Shifts.cshtml.cs forces
+            // JobTypeId = null for every Tech molecule, so a Tech calendar only ever READS
+            // (molecule, NULL, tab). But GetJobTypesForMoleculeAsync still returns a non-empty list
+            // for a Tech molecule — it only drops IsWorkforceOnly types — so the membership check
+            // below would happily accept (techMolecule, someResolvableJobType). Against the real
+            // database molecule 6 (Shikma, Tech) resolves BR, Hakam, ProjectManager and Techno, so
+            // such a row is read by NO calendar: invisible, no × and therefore no delete path, and —
+            // because the JobType FK is Restrict — it blocks deleting that job type permanently,
+            // with an error naming a note nobody can see.
+            //
+            // This is reachable without a crafted request: flip a molecule to Tech while someone has
+            // the calendar open and their CalendarPageConfig.jobTypeId is a stale non-null value.
+            if (isTechMolecule && data.JobTypeId.HasValue)
+            {
+                _logger.LogWarning("SECURITY: User {UserId} attempted to write a day note on Tech molecule {MoleculeId} with job type {JobTypeId}; a Tech calendar resolves no job type",
+                    currentUserId, moleculeId, data.JobTypeId.Value);
+                return new JsonResult(new { success = false, message = "This calendar does not use job types" })
+                    { StatusCode = 400 };
+            }
+
+            // Direction 2 — a non-Tech calendar MUST name one. A null job type there means the
+            // degenerate "no resolvable job types" state, and the row would be encoded identically
+            // to a Tech note, (molecule, NULL, NULL), whose meaning then depends on the molecule's
+            // Type rather than on the row itself.
+            if (!isTechMolecule && !data.JobTypeId.HasValue)
+            {
+                return new JsonResult(new { success = false, message = "A job type is required for this calendar" })
+                    { StatusCode = 400 };
+            }
+
             // SECURITY: the request names a job type, so prove it is one THIS molecule's calendar can
             // actually show. GetJobTypesForMoleculeAsync pins jt.AreaId == molecule.AreaId and
             // (jt.MoleculeId == null || == moleculeId), so a job type from another area is unreachable
@@ -175,16 +209,6 @@ public class QuickAddDayNoteModel : PageModel
                     return new JsonResult(new { success = false, message = "You do not have access to this calendar" })
                         { StatusCode = 403 };
                 }
-            }
-            else if (moleculeType != ShiftManager.Models.Support.MoleculeType.Tech)
-            {
-                // A null job type is legitimate ONLY for a Tech molecule, whose calendar has no job
-                // type at all. For any other molecule it means the degenerate "no resolvable job
-                // types" state, and a note written there is encoded identically to a Tech note —
-                // (molecule, NULL, NULL) — whose meaning then depends on the molecule's Type rather
-                // than on the row. Refusing keeps that ambiguous triple out of the data entirely.
-                return new JsonResult(new { success = false, message = "A job type is required for this calendar" })
-                    { StatusCode = 400 };
             }
 
             // SECURITY: a tab belongs to exactly one (molecule, job type) pair, so a tab id from
@@ -214,10 +238,25 @@ public class QuickAddDayNoteModel : PageModel
                     { StatusCode = 400 };
             }
 
-            var note = await _dayNoteService.AddDayNoteAsync(
+            var (note, created) = await _dayNoteService.AddDayNoteAsync(
                 noteDate,
                 new CalendarScope(moleculeId, data.JobTypeId, data.TabId),
                 companyId, text, currentUserId);
+
+            // A double-submit returns the EXISTING note and wrote nothing, so neither the audit row
+            // nor the "created" broadcast below may fire — both would claim a note was created that
+            // was not, putting a phantom event in the audit trail and making every other viewer
+            // re-render for nothing. The response still reports success, because from the user's
+            // point of view their note is on the calendar.
+            if (!created)
+            {
+                return new JsonResult(new
+                {
+                    success = true,
+                    dayNoteId = note.Id,
+                    message = "Day note already saved"
+                });
+            }
 
             await _auditLogService.LogAsync(
                 action: "DayNoteSaved",
