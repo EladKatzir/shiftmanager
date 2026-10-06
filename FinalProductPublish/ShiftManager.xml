@@ -1483,6 +1483,20 @@
             DTOs for calendar events sent via SignalR.
             </summary>
         </member>
+        <member name="T:ShiftManager.Hubs.CalendarDayNoteChangedEvent">
+            <summary>
+            A day note was added or removed on a Shifts calendar. Carries TabId so a viewer standing on a
+            different tab of the same (molecule, jobType) calendar can ignore an event that does not affect
+            what they are looking at — the hub group is keyed to (molecule, jobType) only.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.Hubs.CalendarDayNoteChangedEvent.#ctor(System.Int32,System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32},System.DateOnly,System.String)">
+            <summary>
+            A day note was added or removed on a Shifts calendar. Carries TabId so a viewer standing on a
+            different tab of the same (molecule, jobType) calendar can ignore an event that does not affect
+            what they are looking at — the hub group is keyed to (molecule, jobType) only.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Hubs.ICalendarNotificationService">
             <summary>
             Service for sending calendar updates to connected clients.
@@ -3316,6 +3330,119 @@
         <member name="M:ShiftManager.Migrations.BackfillCalendarDayNoteMolecule.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:ShiftManager.Migrations.ScopeCalendarDayNotesToCalendar">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ScopeCalendarDayNotesToCalendar.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ScopeCalendarDayNotesToCalendar.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.ScopeCalendarDayNotesToCalendar.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.FanOutCalendarDayNotesByJobType">
+             <summary>
+             Data half of the move from one-per-(molecule, day) day notes to one-per-CALENDAR. The SQL lives
+             in <see cref="T:ShiftManager.Migrations.CalendarDayNoteJobTypeFanOutSql"/> so CalendarDayNoteJobTypeFanOutTests can run
+             the exact statements this migration applies.
+            
+             <para><b>Why this is a separate migration from ScopeCalendarDayNotesToCalendar.</b> Not for the
+             reason previously recorded in this repo — EF Core's SQLite generator hoists rebuild-triggering
+             operations (AddForeignKey/AlterColumn/DropColumn) to the END of a migration wherever they are
+             written, while ALTER TABLE ADD COLUMN and DROP INDEX are native and run first. Raw SQL in the
+             same migration therefore DOES see the new columns.
+            
+             The real reason is that in one migration the correctness would rest on an invisible intra-body
+             ordering rule: the Sql() calls must sit after the DropIndex() call. Written before it, the
+             fan-out fails at runtime with
+             "UNIQUE constraint failed: CalendarDayNotes.MoleculeId, CalendarDayNotes.Date", because the old
+             unique index is still live and the copies share (MoleculeId, Date) by construction. Splitting
+             makes the order a property of the migration SEQUENCE, which EF enforces, rather than of
+             statement order inside one method, which nothing enforces and no test would catch.</para>
+            
+             <para><b>ONE-WAY.</b> Down() is deliberately empty. After the fan-out, a molecule/day can hold
+             several notes, so the unique index IX_CalendarDayNotes_MoleculeId_Date that
+             ScopeCalendarDayNotesToCalendar.Down() recreates cannot be restored without deleting rows a
+             user typed. The preceding ScopeCalendarDayNotesToMolecule migration already carries the same
+             caveat; here it is a guarantee rather than a risk. To roll back, restore the pre-migration
+             database backup that Program.cs writes at startup.</para>
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Migrations.FanOutCalendarDayNotesByJobType.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.FanOutCalendarDayNotesByJobType.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:ShiftManager.Migrations.FanOutCalendarDayNotesByJobType.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:ShiftManager.Migrations.CalendarDayNoteJobTypeFanOutSql">
+             <summary>
+             Data backfill for moving day notes from one-per-(molecule, day) to one-per-CALENDAR, where a
+             calendar is (MoleculeId, JobTypeId, TabId). Applied by the FanOutCalendarDayNotesByJobType
+             migration, after ScopeCalendarDayNotesToCalendar has added the columns and dropped the old unique
+             index; pinned by CalendarDayNoteJobTypeFanOutTests.
+            
+             <para><b>Why fan out at all.</b> Before this change the read ignored job type entirely, so a
+             molecule note appeared on EVERY job-type calendar in that molecule. Keying each existing note to
+             a single job type would therefore make it vanish from the others. Copying it to each job type
+             preserves exactly where it is visible today, and it is the only option available: NULL cannot be
+             used as an "applies to every job type" sentinel, because a Tech molecule's calendar legitimately
+             runs with JobTypeId = NULL and already owns that value.</para>
+            
+             <para><b>Why Tech molecules are excluded (m.Type &lt;&gt; 1).</b> This is a correctness
+             requirement, not a nicety. For a Tech molecule, JobTypeId IS NULL is the permanent, correct
+             steady state — not an "unkeyed" marker. Fanning those notes out to the area's job types makes
+             every copy unreachable, because a Tech calendar only ever asks for JobTypeId = NULL. The note
+             disappears with no error and no audit row. The same ambiguity would also break idempotency: a
+             Tech note written after the migration would be fanned out again on any re-run.</para>
+            
+             <para><b>Order matters: INSERT then UPDATE.</b> Both statements select on
+             <c>JobTypeId IS NULL</c>. Running the UPDATE first consumes that marker, so the INSERT then
+             matches nothing, no copies are made, and the migration still reports success — a silent no-op.</para>
+            
+             <para><b>The anchor.</b> The original row keeps its Id and takes the job type the calendar
+             DEFAULTS to, so the calendar the user opens shows the row they have been looking at rather than a
+             copy. That default is <c>ORDER BY SortOrder, Name LIMIT 1</c>, which must stay in step with
+             JobTypeService.GetJobTypesForMoleculeAsync's ordering and the Shifts page's
+             <c>AvailableJobTypes.FirstOrDefault()</c>.</para>
+            
+             <para><b>Columns carried forward explicitly.</b> Raw SQL bypasses CompanyIdInterceptor, and
+             CompanyId is NOT NULL with no default — omitting it fails with a NOT NULL constraint error.
+             Carrying CompanyId and CreatedByUserId forward is also what keeps the copies valid under the
+             Company (Restrict) and CreatedByUser FKs: they point at rows that already exist.</para>
+            
+             <para><b>The 0/1/2 literals are frozen enum values</b> (MoleculeType.Workforce / Tech / Helper).
+             Migration SQL cannot be re-derived if the enum is reordered, so
+             CalendarDayNoteJobTypeFanOutTests asserts those numeric values directly.</para>
+            
+             <para>Rows that cannot be keyed — a molecule with no resolvable job types, or MoleculeId NULL —
+             are left exactly as they are. They do not show on a calendar, but nothing a user typed is
+             destroyed, matching the molecule backfill that preceded this one.</para>
+             </summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.CalendarDayNoteJobTypeFanOutSql.InsertCopiesPerJobType">
+            <summary>
+            One copy per resolvable job type EXCEPT the anchor's, which the original row keeps.
+            The JOIN predicate reproduces JobTypeService.GetJobTypesForMoleculeAsync: active, same area,
+            molecule-generic or this molecule, and workforce-only types only for Workforce/Helper molecules.
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.CalendarDayNoteJobTypeFanOutSql.KeyOriginalToAnchorJobType">
+            <summary>
+            The original row becomes the anchor copy, keeping its Id so any external reference still
+            resolves and the default calendar shows the row the user already knows.
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Migrations.CalendarDayNoteJobTypeFanOutSql.Forward">
+            <summary>
+            Forward statements in the ONLY order that works. See the class remarks: reversing them turns
+            the whole backfill into a silent no-op that still reports success.
+            </summary>
+        </member>
         <member name="T:ShiftManager.Migrations.CalendarDayNoteMoleculeBackfillSql">
              <summary>
              Data backfill for moving day notes from one-per-(desk, day) to one-per-(molecule, day).
@@ -4258,38 +4385,86 @@
         </member>
         <member name="T:ShiftManager.Models.CalendarDayNote">
              <summary>
-             A free-text note attached to a whole calendar DAY (not a specific user) on a molecule's Shifts
-             calendar. Created via Quick Entry's "Add note to this day" option (shift-mode or user-mode).
+             A free-text note attached to a whole calendar DAY (not a specific user) on the Shifts calendar.
+             Created via Quick Entry's "Add note to this day" option (shift-mode or user-mode).
             
-             Keyed to the MOLECULE, because that is what the Shifts calendar spans: its rows come from every
-             desk in the molecule, so every viewer of that calendar must see the same notes. (It was once keyed
-             to the writer's active desk, which hid a note from colleagues in other desks looking at the very
-             same calendar.) One editable note per (MoleculeId, Date), enforced by a filtered unique index and
-             by upsert semantics in CalendarDayNoteService.
+             <para><b>Keyed to a CALENDAR</b>, by the triple (<see cref="P:ShiftManager.Models.CalendarDayNote.MoleculeId"/>,
+             <see cref="P:ShiftManager.Models.CalendarDayNote.JobTypeId"/>, <see cref="P:ShiftManager.Models.CalendarDayNote.TabId"/>) — exactly the identity
+             <c>Pages/Calendar/Shifts.cshtml.cs</c> resolves for each request. Everyone who can open that
+             calendar sees its notes, whichever desk or molecule they themselves sit in; the only gate is
+             being able to open the calendar at all (<see cref="T:ShiftManager.Services.ShiftCalendarAccess"/>).</para>
             
-             Intentionally distinct from <see cref="T:ShiftManager.Models.CalendarTextEntry"/>, whose notes attach to a UserId; a
-             shift-type cell has no single user, so day notes need a user-agnostic home.
+             <para>The scope has widened twice, each time to fix a real invisibility bug: it was once keyed
+             to the writer's desk (<see cref="P:ShiftManager.Models.CalendarDayNote.CompanyId"/>), which hid a note from colleagues in other desks
+             looking at the very same calendar; then to the molecule alone, which showed one note on every
+             job-type calendar in that molecule.</para>
             
-             READ ONLY THROUGH CalendarDayNoteService. The inherited company query filter below is defence in
-             depth for the writer's desk, not the visibility boundary — a molecule note is legitimately
-             visible to viewers from other desks, which is exactly why the service bypasses that filter.
+             <para><b>MANY notes per day are allowed.</b> There is deliberately no unique index: a note is one
+             person's contribution, created and deleted as a unit, never silently overwritten by the next
+             writer. <see cref="P:ShiftManager.Models.CalendarDayNote.UpdatedAt"/> and <see cref="P:ShiftManager.Models.CalendarDayNote.UpdatedByUserId"/> are therefore vestigial — kept
+             because a historical migration's SQL reads <c>COALESCE(UpdatedAt, CreatedAt)</c> and its
+             regression test builds the schema from this model, so dropping the column would break a test
+             whose whole purpose is pinning frozen migration behaviour.</para>
+            
+             <para><b>Both scope parts are legitimately nullable, and neither NULL means "unset".</b>
+             <see cref="P:ShiftManager.Models.CalendarDayNote.JobTypeId"/> is NULL for a <see cref="F:ShiftManager.Models.Support.MoleculeType.Tech"/> molecule, whose
+             calendar runs with no job type at all — so NULL is <i>unavailable</i> as an "applies to every job
+             type" sentinel, which is why the job-type fan-out migration keys on the molecule's Type rather
+             than on this column. <see cref="P:ShiftManager.Models.CalendarDayNote.TabId"/> is NULL for the synthetic "All" view, which has no
+             <see cref="T:ShiftManager.Models.ShiftTab"/> row; reading the All view unions every note of the (molecule, jobType)
+             calendar, while a real tab shows only its own.</para>
+            
+             <para><b>Do not "fix" the ambiguous triple.</b> (M, NULL, NULL) means "M's calendar as rendered
+             when it has no job type". That is true both for a Tech molecule and for a non-Tech molecule whose
+             area has no resolvable job types. The encoding is self-consistent and both read back correctly;
+             the write endpoint refuses the second case so it cannot enter the system. Its meaning does depend
+             on mutable data outside the row — flipping a molecule's Type, or adding the first job type to a
+             previously job-type-less area, changes which notes are reachable.</para>
+            
+             <para>Intentionally distinct from <see cref="T:ShiftManager.Models.CalendarTextEntry"/>, whose notes attach to a
+             UserId; a shift-type cell has no single user, so day notes need a user-agnostic home.</para>
+            
+             <para>READ ONLY THROUGH <see cref="T:ShiftManager.Services.ICalendarDayNoteService"/>. The inherited company
+             query filter is defence in depth for the writer's desk, not the visibility boundary — a calendar
+             note is legitimately visible to viewers from other desks, which is exactly why the service
+             bypasses that filter.</para>
              </summary>
         </member>
         <member name="P:ShiftManager.Models.CalendarDayNote.CompanyId">
-            <summary>The desk the note was first written from — provenance only; it no longer scopes visibility.</summary>
+            <summary>The desk the note was written from — provenance only; it does not scope visibility.</summary>
         </member>
         <member name="P:ShiftManager.Models.CalendarDayNote.MoleculeId">
             <summary>
             The molecule whose Shifts calendar this note annotates. NULL only for legacy rows the molecule
             backfill could not key — their desk had no molecule, or a newer note from another desk claimed
-            the same day. Those rows are kept (never deleted) but are not shown on any calendar.
+            the same day. Those rows are kept (never deleted) but belong to no calendar, so none shows them.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.CalendarDayNote.JobTypeId">
+            <summary>
+            The job type of the calendar this note annotates. NULL is a real value, not a missing one: a
+            Tech molecule's calendar has no job type. See the class remarks before treating NULL as
+            "every job type" — it is not, and doing so destroys Tech molecules' notes.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.CalendarDayNote.TabId">
+            <summary>
+            The calendar tab (לשונית) this note annotates, or NULL for the synthetic "All" view. A note on
+            a real tab shows only on that tab; a NULL-tab note shows only on All. Reading All returns both.
             </summary>
         </member>
         <member name="P:ShiftManager.Models.CalendarDayNote.CreatedByUserId">
-            <summary>The user who ORIGINALLY wrote the note. Never changes on edit.</summary>
+            <summary>
+            The user who wrote the note. NULL once that user is deleted (the FK is SetNull), which keeps
+            the note readable and, because authorship is also a delete permission, correctly leaves an
+            orphaned note deletable only by someone holding the assignment grant for its calendar.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.Models.CalendarDayNote.UpdatedAt">
+            <summary>Vestigial — notes are no longer edited in place. See the class remarks.</summary>
         </member>
         <member name="P:ShiftManager.Models.CalendarDayNote.UpdatedByUserId">
-            <summary>The user who last changed the text; NULL if never edited or if that user was deleted.</summary>
+            <summary>Vestigial — notes are no longer edited in place. See the class remarks.</summary>
         </member>
         <member name="T:ShiftManager.Models.CalendarFeedToken">
              <summary>
@@ -7668,6 +7843,12 @@
             ✅ PHASE 20: API endpoint to quickly create chores from calendar views
             </summary>
         </member>
+        <member name="P:ShiftManager.Pages.Api.Calendar.QuickAddDayNoteModel.DayNoteRequest.JobTypeId">
+            <summary>The calendar's job type. Null is legitimate ONLY for a Tech molecule.</summary>
+        </member>
+        <member name="P:ShiftManager.Pages.Api.Calendar.QuickAddDayNoteModel.DayNoteRequest.TabId">
+            <summary>The active tab, or null for the synthetic "All" view.</summary>
+        </member>
         <member name="T:ShiftManager.Pages.Api.Calendar.QuickAddOnDutyModel">
             <summary>
             ✅ PHASE 20: API endpoint to quickly create on-duty assignments from calendar views
@@ -9777,6 +9958,41 @@
             User-friendly display text like "Busy: vacation" or "Busy: shift and chore".
             </summary>
         </member>
+        <member name="F:ShiftManager.Services.CalendarDayNoteService.UnknownAuthorKey">
+            <summary>
+            Resx key the view localizes when a note's author has been deleted. Returned instead of null so
+            <see cref="P:ShiftManager.Services.DayNoteView.AuthorName"/> stays non-null and no view has to branch.
+            </summary>
+        </member>
+        <member name="F:ShiftManager.Services.CalendarDayNoteService.DuplicateSubmitWindow">
+             <summary>
+             How recently an identical note from the same author on the same calendar counts as a
+             double-submit rather than a deliberate repeat. Quick Entry leaves its input open and focused
+             for the whole round-trip, so two Enters genuinely do send two POSTs.
+            
+             Deliberately NOT solved with a unique index: both JobTypeId and TabId are nullable, and SQLite
+             treats NULLs as distinct in unique indexes, so it would take four filtered index variants to
+             cover the null combinations — far too much permanent schema for a double-click. It is also not
+             a uniqueness RULE: re-stating the same text on a later day, or on another tab, or by another
+             person, is all legitimate.
+             </summary>
+        </member>
+        <member name="M:ShiftManager.Services.CalendarDayNoteService.SafeTabColor(System.String)">
+             <summary>
+             A tab colour is only passed on when it is a strict #RRGGBB literal; anything else becomes null.
+            
+             <para>This matters because the value ends up inside a CSS declaration in a <c>style</c>
+             attribute, and <see cref="P:ShiftManager.Models.ShiftTab.Color"/> is NOT validated on write —
+             ShiftTabService only trims it. Razor HTML-encodes the attribute, so a value cannot break OUT of
+             it, but it could still inject further CSS declarations within it. Sanitising here rather than in
+             the view means every consumer of <see cref="P:ShiftManager.Services.DayNoteView.TabColor"/> is safe by construction.</para>
+            
+             <para>Note the pre-existing sibling: Shifts.cshtml's tab strip inlines the same unvalidated
+             value directly. The root fix is to validate on write in ShiftTabService and its admin page,
+             the way ChoreTypes and DutyTypes already do with their #RRGGBB regex — deliberately left
+             out of scope here rather than silently propagated.</para>
+             </summary>
+        </member>
         <member name="M:ShiftManager.Services.CalendarTextEntryService.GetByIdAsync(System.Int32)">
             <summary>
             Loads a single text entry by ID. Uses IgnoreQueryFilters because the entry's
@@ -10964,50 +11180,153 @@
             <paramref name="widths"/> are cleared (i.e. reset to their CSS default); an empty map
             clears the whole context.</summary>
         </member>
+        <member name="T:ShiftManager.Services.CalendarScope">
+            <summary>
+            The identity of one Shifts calendar — exactly the triple
+            <c>Pages/Calendar/Shifts.cshtml.cs</c> resolves for each request.
+            </summary>
+            <param name="MoleculeId">The molecule whose calendar is on screen.</param>
+            <param name="JobTypeId">The calendar's job type, or null for a Tech molecule (whose calendar has
+            none). Null is a real value here, never "unset".</param>
+            <param name="TabId">The active tab, or null for the synthetic "All" view. Null is a real value
+            here too: All has no <see cref="T:ShiftManager.Models.ShiftTab"/> row.</param>
+        </member>
+        <member name="M:ShiftManager.Services.CalendarScope.#ctor(System.Int32,System.Nullable{System.Int32},System.Nullable{System.Int32})">
+            <summary>
+            The identity of one Shifts calendar — exactly the triple
+            <c>Pages/Calendar/Shifts.cshtml.cs</c> resolves for each request.
+            </summary>
+            <param name="MoleculeId">The molecule whose calendar is on screen.</param>
+            <param name="JobTypeId">The calendar's job type, or null for a Tech molecule (whose calendar has
+            none). Null is a real value here, never "unset".</param>
+            <param name="TabId">The active tab, or null for the synthetic "All" view. Null is a real value
+            here too: All has no <see cref="T:ShiftManager.Models.ShiftTab"/> row.</param>
+        </member>
+        <member name="P:ShiftManager.Services.CalendarScope.MoleculeId">
+            <summary>The molecule whose calendar is on screen.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.CalendarScope.JobTypeId">
+            <summary>The calendar's job type, or null for a Tech molecule (whose calendar has
+            none). Null is a real value here, never "unset".</summary>
+        </member>
+        <member name="P:ShiftManager.Services.CalendarScope.TabId">
+            <summary>The active tab, or null for the synthetic "All" view. Null is a real value
+            here too: All has no <see cref="T:ShiftManager.Models.ShiftTab"/> row.</summary>
+        </member>
         <member name="T:ShiftManager.Services.DayNoteView">
             <summary>A day note as a calendar renders it.</summary>
+            <param name="Id">Needed by the delete affordance, which deletes one note by id.</param>
             <param name="Text">The note text.</param>
-            <param name="AuthorName">Display name of the user who originally wrote the note.</param>
-            <param name="LastEditorName">Display name of the last user to change the text, when that is
-            someone other than the author; otherwise null.</param>
+            <param name="AuthorName">Display name of the user who wrote it. **Never null** — when the author
+            has been deleted this carries the resx KEY <c>Calendar_DayNote_UnknownAuthor</c> for the view to
+            localize, so no view has to branch on a missing author.</param>
+            <param name="CreatedByUserId">Null once the author is deleted. Exposed because authorship is also
+            a delete permission, so the view needs it to decide whether to render the × at all.</param>
+            <param name="TabId">Null for a note that belongs to the "All" view rather than a real tab.</param>
+            <param name="TabNameEn">English tab name, or null when the note is All-scoped.</param>
+            <param name="TabNameHe">Hebrew tab name, or null when the note is All-scoped. Both names travel
+            because this service has no localizer — resolving to one string here would give the Hebrew UI
+            English badges.</param>
+            <param name="TabIsActive">False when the note's tab has been deactivated. Such a tab drops out of
+            the strip, so its notes are reachable only from All; the badge says so rather than hiding them.</param>
+            <param name="TabColor">The tab's optional hex colour, so the inline dot matches that tab's pill in
+            the strip and the two read as the same object. Null when the tab has no colour, or is absent.</param>
         </member>
-        <member name="M:ShiftManager.Services.DayNoteView.#ctor(System.String,System.String,System.String)">
+        <member name="M:ShiftManager.Services.DayNoteView.#ctor(System.Int32,System.String,System.String,System.Nullable{System.Int32},System.Nullable{System.Int32},System.String,System.String,System.Boolean,System.String)">
             <summary>A day note as a calendar renders it.</summary>
+            <param name="Id">Needed by the delete affordance, which deletes one note by id.</param>
             <param name="Text">The note text.</param>
-            <param name="AuthorName">Display name of the user who originally wrote the note.</param>
-            <param name="LastEditorName">Display name of the last user to change the text, when that is
-            someone other than the author; otherwise null.</param>
+            <param name="AuthorName">Display name of the user who wrote it. **Never null** — when the author
+            has been deleted this carries the resx KEY <c>Calendar_DayNote_UnknownAuthor</c> for the view to
+            localize, so no view has to branch on a missing author.</param>
+            <param name="CreatedByUserId">Null once the author is deleted. Exposed because authorship is also
+            a delete permission, so the view needs it to decide whether to render the × at all.</param>
+            <param name="TabId">Null for a note that belongs to the "All" view rather than a real tab.</param>
+            <param name="TabNameEn">English tab name, or null when the note is All-scoped.</param>
+            <param name="TabNameHe">Hebrew tab name, or null when the note is All-scoped. Both names travel
+            because this service has no localizer — resolving to one string here would give the Hebrew UI
+            English badges.</param>
+            <param name="TabIsActive">False when the note's tab has been deactivated. Such a tab drops out of
+            the strip, so its notes are reachable only from All; the badge says so rather than hiding them.</param>
+            <param name="TabColor">The tab's optional hex colour, so the inline dot matches that tab's pill in
+            the strip and the two read as the same object. Null when the tab has no colour, or is absent.</param>
+        </member>
+        <member name="P:ShiftManager.Services.DayNoteView.Id">
+            <summary>Needed by the delete affordance, which deletes one note by id.</summary>
         </member>
         <member name="P:ShiftManager.Services.DayNoteView.Text">
             <summary>The note text.</summary>
         </member>
         <member name="P:ShiftManager.Services.DayNoteView.AuthorName">
-            <summary>Display name of the user who originally wrote the note.</summary>
+            <summary>Display name of the user who wrote it. **Never null** — when the author
+            has been deleted this carries the resx KEY <c>Calendar_DayNote_UnknownAuthor</c> for the view to
+            localize, so no view has to branch on a missing author.</summary>
         </member>
-        <member name="P:ShiftManager.Services.DayNoteView.LastEditorName">
-            <summary>Display name of the last user to change the text, when that is
-            someone other than the author; otherwise null.</summary>
+        <member name="P:ShiftManager.Services.DayNoteView.CreatedByUserId">
+            <summary>Null once the author is deleted. Exposed because authorship is also
+            a delete permission, so the view needs it to decide whether to render the × at all.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.DayNoteView.TabId">
+            <summary>Null for a note that belongs to the "All" view rather than a real tab.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.DayNoteView.TabNameEn">
+            <summary>English tab name, or null when the note is All-scoped.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.DayNoteView.TabNameHe">
+            <summary>Hebrew tab name, or null when the note is All-scoped. Both names travel
+            because this service has no localizer — resolving to one string here would give the Hebrew UI
+            English badges.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.DayNoteView.TabIsActive">
+            <summary>False when the note's tab has been deactivated. Such a tab drops out of
+            the strip, so its notes are reachable only from All; the badge says so rather than hiding them.</summary>
+        </member>
+        <member name="P:ShiftManager.Services.DayNoteView.TabColor">
+            <summary>The tab's optional hex colour, so the inline dot matches that tab's pill in
+            the strip and the two read as the same object. Null when the tab has no colour, or is absent.</summary>
         </member>
         <member name="T:ShiftManager.Services.ICalendarDayNoteService">
              <summary>
-             Manages day-scoped free-text notes (<see cref="T:ShiftManager.Models.CalendarDayNote"/>) — one editable note per
-             (MoleculeId, Date), shown to everyone viewing that molecule's Shifts calendar.
+             Manages day-scoped free-text notes (<see cref="T:ShiftManager.Models.CalendarDayNote"/>). A note belongs to one
+             CALENDAR — see <see cref="T:ShiftManager.Services.CalendarScope"/> — and a day may hold many of them.
             
-             All methods take an explicit moleculeId and bypass the ambient company query filter (a molecule
-             note is legitimately visible to viewers from other desks). Authorization — whether the caller may
-             view the molecule, and may write notes at all — is enforced by the callers: the Shifts page and
-             the QuickAddDayNote endpoint, both through <see cref="T:ShiftManager.Services.ShiftCalendarAccess"/>.
+             All methods take the scope explicitly and bypass the ambient company query filter, because a
+             calendar note is legitimately visible to viewers from every desk in the molecule. Authorization —
+             whether the caller may view the calendar at all, and whether they may write or delete — is
+             enforced by the callers: the Shifts page, <c>QuickAddDayNote</c> and <c>DeleteDayNote</c>, all
+             through <see cref="T:ShiftManager.Services.ShiftCalendarAccess"/>.
              </summary>
         </member>
-        <member name="M:ShiftManager.Services.ICalendarDayNoteService.SetDayNoteAsync(System.DateOnly,System.Int32,System.Int32,System.String,System.Int32)">
-            <summary>Upsert the note for (date, moleculeId). A new note records <paramref name="authorCompanyId"/>
-            and <paramref name="userId"/> as its origin; an edit keeps them and records the editor.</summary>
+        <member name="M:ShiftManager.Services.ICalendarDayNoteService.AddDayNoteAsync(System.DateOnly,ShiftManager.Services.CalendarScope,System.Int32,System.String,System.Int32)">
+             <summary>
+             Insert a new note on <paramref name="scope"/>'s calendar. Always inserts — never upserts, so
+             one writer can never silently replace another's note.
+            
+             <para><paramref name="Created"/> is false when an identical note from the same author on the
+             same calendar and date arrived moments ago and this call was therefore treated as a
+             double-submit: the EXISTING note comes back and nothing was written. Callers must honour it —
+             writing an audit row or broadcasting a "created" event for a note you did not create is a
+             lie about history.</para>
+             </summary>
         </member>
-        <member name="M:ShiftManager.Services.ICalendarDayNoteService.DeleteDayNoteAsync(System.DateOnly,System.Int32)">
-            <summary>Delete the note for (date, moleculeId). Returns true if a note existed and was removed.</summary>
+        <member name="M:ShiftManager.Services.ICalendarDayNoteService.GetByIdAsync(System.Int32)">
+            <summary>
+            Load one note by id, so a caller can authorize against its own scope and author before
+            deleting it. Returns null when no such note exists.
+            </summary>
         </member>
-        <member name="M:ShiftManager.Services.ICalendarDayNoteService.GetDayNotesForMoleculeAsync(System.Int32,System.DateOnly,System.DateOnly)">
-            <summary>Bulk-load a molecule's day notes within an inclusive date range, keyed by date.</summary>
+        <member name="M:ShiftManager.Services.ICalendarDayNoteService.DeleteDayNoteAsync(System.Int32)">
+            <summary>Delete one note by id. Returns false when it did not exist (a double-click, say).</summary>
+        </member>
+        <member name="M:ShiftManager.Services.ICalendarDayNoteService.GetDayNotesForCalendarAsync(ShiftManager.Services.CalendarScope,System.DateOnly,System.DateOnly)">
+             <summary>
+             Bulk-load a calendar's notes in an inclusive date range, keyed by date.
+            
+             <para><b><see cref="P:ShiftManager.Services.CalendarScope.TabId"/> null means the "All" union, not "notes with no
+             tab".</b> Viewing All returns every note of that (molecule, jobType) calendar — including
+             tab-scoped ones, badged — while a real tab returns only its own. A note written on All does
+             not appear on a real tab.</para>
+             </summary>
         </member>
         <member name="M:ShiftManager.Services.ICalendarRowOrderService.GetOrderMapAsync(System.Int32,System.String)">
             <summary>All saved positions for a user+context as (GroupId, RowId) → SortOrder.</summary>
@@ -13613,6 +13932,9 @@
         </member>
         <member name="M:ShiftManager.Services.IShiftTabService.GetUsageAsync(System.Int32)">
             <summary>Counts the shift-type and company join rows for a tab (delete-impact preview).</summary>
+            <summary>Delete-impact counts for a tab. DayNoteCount matters because the CalendarDayNote.Tab
+            FK is SetNull: deleting a tab silently MOVES its day notes to the calendar's "All" view rather
+            than removing them, so the confirmation has to say so.</summary>
         </member>
         <member name="M:ShiftManager.Services.IShiftTabService.SetCompaniesForTabAsync(System.Int32,System.Collections.Generic.IReadOnlyCollection{System.Int32})">
             <summary>Replaces the tab's company set. Rejects (returns false, no change) if ANY company is not in the
@@ -16338,11 +16660,54 @@
         </member>
         <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.DayNotes">
             <summary>
-            Day-scoped free-text notes (<see cref="T:ShiftManager.Models.CalendarDayNote"/>) keyed by date,
-            rendered in the date-column headers with the author's name on hover. Molecule-wide and
-            view-independent, so they show in both shift-mode and user-mode. Populated only by calendars that
-            support day notes (Shifts); empty elsewhere.
+            Day-scoped free-text notes (<see cref="T:ShiftManager.Models.CalendarDayNote"/>) keyed by date —
+            MANY per day — rendered in the date-column headers with the author's name on hover. Scoped to
+            the calendar (molecule + job type + tab) and view-independent, so they show in both shift-mode
+            and user-mode. Populated only by calendars that support day notes (Shifts); empty elsewhere.
             </summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.CanWriteNote">
+            <summary>
+            Whether the viewer may write day notes at all (WriteOverviewNotes OR any calendar-edit grant).
+            Deliberately NOT <see cref="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.IsReadOnly"/>: that is <c>!CanEdit</c>, i.e. the assignment grant,
+            so gating the note controls on it hid the delete × from the very people allowed to add notes.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.DayNotesScopeIsAllTab">
+            <summary>
+            True when the viewer is on the synthetic "All" tab, which shows notes from every tab of this
+            calendar — so each note needs a badge naming the tab it belongs to. On a real tab every note
+            shown belongs to that tab, and a badge would be noise.
+            </summary>
+        </member>
+        <member name="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.CurrentUserId">
+            <summary>
+            The viewer's own user id, needed to decide per note whether to render its delete ×: a note is
+            deletable by its author, or by a holder of the assignment grant for this calendar.
+            </summary>
+        </member>
+        <member name="M:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.CanDeleteDayNote(System.Boolean,System.Boolean,System.Int32,System.Nullable{System.Int32})">
+             <summary>
+             Whether this viewer may delete a given day note — i.e. whether its × renders.
+            
+             <para><b>This MUST stay equivalent to DeleteDayNote's 403.</b> A × that 403s is a broken
+             button; a hidden × where the server would allow is a lie about what the user can do. The rule
+             is: you may delete a note you WROTE, or any note on a calendar you can assign shifts for.</para>
+            
+             <para><see cref="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.IsReadOnly"/> is <c>!CanEdit</c>, i.e. the scoped AssignShifts grant — the same
+             question the endpoint asks. <see cref="P:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.CanWriteNote"/> gates note-writing at all and is the
+             broader grant; gating the × on IsReadOnly alone hid it from the very people allowed to add
+             notes, so they could create a note they had no way to remove.</para>
+            
+             <para>Lives here rather than inline in the .cshtml so it can be unit-tested across every
+             persona — a rule embedded in a Razor expression can only be checked by eye.</para>
+             </summary>
+             <param name="noteAuthorId">The note's author, or null once that user has been deleted. A null
+             author satisfies nobody's ownership claim, so an orphaned note is removable only by an
+             assigner — which is the intended outcome.</param>
+        </member>
+        <member name="M:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.CanDeleteDayNote(ShiftManager.Services.DayNoteView)">
+            <summary>Instance convenience over <see cref="M:ShiftManager.ViewComponents.ExcelCalendarTableViewModel.CanDeleteDayNote(System.Boolean,System.Boolean,System.Int32,System.Nullable{System.Int32})"/>.</summary>
         </member>
         <member name="P:ShiftManager.ViewComponents.ExcelCalendarRow.ShiftCount">
             <summary>Count of real (non-home/non-offline) shifts assigned to this row's user within the

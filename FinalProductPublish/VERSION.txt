@@ -1,18 +1,18 @@
 ﻿================================================================================
                     SHIFTMANAGER VERSION INFORMATION
-                           Version 5.0.6
+                           Version 6.1.0
 ================================================================================
 
-VERSION: 5.0.6
-RELEASE DATE: 2026-09-18
-BUILD DATE: 2026-09-18 03:39:48 UTC
-GIT COMMIT: baec275
+VERSION: 6.1.0
+RELEASE DATE: 2026-10-06
+BUILD DATE: 2026-10-06 13:06:47 UTC
+GIT COMMIT: 6330495
 GIT BRANCH: dev
 
 PACKAGE INFORMATION:
-  Total Files:  542
+  Total Files:  543
   DLL Count:    361
-  Package Size: 172 MB
+  Package Size: 173 MB
   Deployment:   Self-Contained (includes .NET 8.0 runtime)
   Platform:     Windows x64 (Server 2022 / Windows 10+)
 
@@ -130,7 +130,7 @@ INSTALLATION SUMMARY
 ================================================================================
 
 Installation Type: Self-Contained
-Installation Size: 172 MB
+Installation Size: 173 MB
 Installation Time: 1 minute (extract + configure)
 First Run Time:    5-10 seconds (database creation)
 
@@ -231,7 +231,7 @@ BUILD INFORMATION
 ================================================================================
 
 Built By:       ShiftManager Automated Release Builder v1.0.0
-Build Date:     2026-09-18 03:39:48 UTC
+Build Date:     2026-10-06 13:06:47 UTC
 Build Type:     Release (optimized)
 Build Config:   Self-Contained
 Target Runtime: win-x64
@@ -247,7 +247,7 @@ Quality Assurance:
   âœ“ OFFLINE shift type confirmed
   âœ“ Package integrity verified
   âœ“ Documentation generated
-  âœ“ Git tagged: v5.0.6
+  âœ“ Git tagged: v6.1.0
 
 This package is READY FOR PRODUCTION DEPLOYMENT.
 
@@ -258,16 +258,16 @@ CERTIFICATION
 This package has been:
   âœ… Built successfully with no errors
   âœ… Tested automatically with comprehensive checks
-  âœ… Verified for completeness (542 files)
+  âœ… Verified for completeness (543 files)
   âœ… Documented comprehensively (8 documentation files)
-  âœ… Tagged in version control (v5.0.6)
+  âœ… Tagged in version control (v6.1.0)
   âœ… Certified for air-gapped deployment
 
 Package Status: âœ… PRODUCTION READY
 
 Verified by: ShiftManager Automated Release Builder
-Date: 2026-09-18 03:39:48 UTC
-Git Commit: baec275
+Date: 2026-10-06 13:06:47 UTC
+Git Commit: 6330495
 
 ================================================================================
 LICENSE

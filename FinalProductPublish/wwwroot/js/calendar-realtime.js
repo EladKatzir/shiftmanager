@@ -188,6 +188,35 @@
             }
         });
 
+        connection.on('DayNoteChanged', (evt) => {
+            Logger.log('CalendarRT', 'DayNoteChanged:', evt);
+
+            // The hub group is keyed to (molecule, jobType), but a day note belongs to one TAB of
+            // that calendar — so an event can arrive for a tab this viewer is not looking at.
+            // Mirror the read rule: the "All" view (no active tab) unions every note of the
+            // calendar and is always interested; a real tab only cares about its own notes.
+            const activeTabId = (window.CalendarPageConfig && window.CalendarPageConfig.activeTabId);
+            const isAllView = (activeTabId === null || activeTabId === undefined);
+            // Read BOTH casings. SignalR's default JSON protocol serializes camelCase, but nothing in
+            // this repo pins that — no other client handler reads a payload field at all, they just
+            // refresh. If the serializer were ever configured Pascal, a single-casing read would make
+            // real-tab viewers silently stop updating while the All view kept working, because the
+            // branch below short-circuits before this value is used.
+            const eventTabId = (evt && evt.tabId !== undefined) ? evt.tabId
+                             : (evt && evt.TabId !== undefined) ? evt.TabId
+                             : null;
+            if (!isAllView && eventTabId !== activeTabId) {
+                Logger.log('CalendarRT', 'DayNoteChanged ignored — different tab', eventTabId, activeTabId);
+                return;
+            }
+
+            if (eventHandlers.onDayNoteChanged) {
+                eventHandlers.onDayNoteChanged(evt);
+            } else {
+                triggerShadowRefresh();
+            }
+        });
+
         connection.on('ChoreChanged', (evt) => {
             Logger.log('CalendarRT', 'ChoreChanged:', evt);
             if (eventHandlers.onChoreChanged) {

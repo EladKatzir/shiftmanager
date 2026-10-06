@@ -708,14 +708,22 @@ async function quickAddTextEntry(date, userId, text) {
 window.quickAddTextEntry = quickAddTextEntry;
 
 /**
- * Save (or clear, when text is empty) a day-scoped note via Quick Entry.
- * Unlike quickAddTextEntry, this attaches to the DATE (company-wide), not a specific user,
- * so it works in any calendar view (shift-mode or user-mode).
+ * Add a day-scoped note via Quick Entry. ALWAYS ADDS — a day holds many notes, and one writer never
+ * overwrites another's. Unlike quickAddTextEntry this attaches to the DATE, not a specific user, so
+ * it works in any calendar view (shift-mode or user-mode).
  * @param {string} date - ISO date (YYYY-MM-DD)
- * @param {string} text - Free-text content; empty clears the day note
+ * @param {string} text - Free-text content; empty is rejected by the server (use deleteDayNote)
  */
+let _dayNoteInFlight = false;
 async function quickAddDayNote(date, text) {
+    // Quick Entry's closeInput() runs inside the promise's .then(), so the input stays open AND
+    // focused for the whole round-trip — two Enters really do send two POSTs. The server also
+    // de-duplicates an identical same-author submit, but guarding here avoids the needless request
+    // and the double toast.
+    if (_dayNoteInFlight) return;
+    _dayNoteInFlight = true;
     try {
+        const cfg = window.CalendarPageConfig || {};
         const response = await fetch('/Api/Calendar/QuickAddDayNote', {
             method: 'POST',
             headers: {
@@ -723,15 +731,88 @@ async function quickAddDayNote(date, text) {
                 'X-Requested-With': 'XMLHttpRequest'
             },
             credentials: 'same-origin',
-            // Day notes are keyed to the molecule whose calendar is on screen. CalendarPageConfig is the
-            // page-level global the Shifts page sets inline (Shifts.cshtml) — the only calendar that
-            // offers day notes — and the server verifies the caller can view that molecule.
+            // A day note is keyed to the CALENDAR on screen: molecule + job type + tab.
+            // CalendarPageConfig is the page-level global the Shifts page sets inline
+            // (Shifts.cshtml) — the only calendar that offers day notes — and the server validates
+            // all three: the molecule against ShiftCalendarAccess, the job type against what that
+            // molecule can resolve, and the tab against the pair that owns it.
+            // jobTypeId is null on a Tech molecule; activeTabId is null on the synthetic "All" view.
             body: JSON.stringify({
                 date: date,
                 text: (text || '').trim(),
-                moleculeId: (window.CalendarPageConfig && window.CalendarPageConfig.moleculeId) || 0
+                moleculeId: cfg.moleculeId || 0,
+                jobTypeId: (cfg.jobTypeId != null ? cfg.jobTypeId : null),
+                tabId: (cfg.activeTabId != null ? cfg.activeTabId : null)
             })
         });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                handleApiError(response);
+                return;
+            }
+            // A 400 from this endpoint always explains itself ("a job type is required for this
+            // calendar", "this calendar does not use job types", text too long, date out of range).
+            // Collapsing that into a generic "server error" tells the user nothing actionable.
+            if (response.status === 400) {
+                var bad = null;
+                try { bad = await response.json(); } catch (e) { /* fall through to the generic text */ }
+                showToast((bad && bad.message) || getErrorMessage('serverError'), 'error');
+                return;
+            }
+            showToast(getErrorMessage('serverError'), 'error');
+            return;
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            showToast(window.AppLocalizer?.QuickEntry_DayNoteSaved || 'Note saved', 'success');
+            triggerCalendarRefresh();
+        } else {
+            showToast(result.message || 'Error', 'error');
+        }
+    } catch (error) {
+        handleApiError(null, error);
+    } finally {
+        _dayNoteInFlight = false;
+    }
+}
+
+window.quickAddDayNote = quickAddDayNote;
+
+/**
+ * Delete ONE day note by its id.
+ *
+ * Previously this posted empty text to the add endpoint, which deleted whatever single note the day
+ * held — with no ownership check and an audit row carrying entityId: 0, so deletions were
+ * unattributable. Deletion is now its own endpoint, gated on being the note's author or holding the
+ * assignment grant for its calendar.
+ * @param {number} noteId - the note to remove
+ */
+let _dayNoteDeleteInFlight = false;
+async function deleteDayNote(noteId) {
+    var id = parseInt(noteId, 10);
+    if (!id) return;
+    if (_dayNoteDeleteInFlight) return;
+    _dayNoteDeleteInFlight = true;
+    try {
+        const response = await fetch('/Api/Calendar/DeleteDayNote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ noteId: id })
+        });
+
+        // 404 means the note is already gone — the second half of a double-click, or another viewer
+        // removed it first. The user's intent is satisfied either way, so treat it as success rather
+        // than showing them an error for something that is no longer a problem.
+        if (response.status === 404) {
+            triggerCalendarRefresh();
+            return;
+        }
 
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
@@ -744,29 +825,16 @@ async function quickAddDayNote(date, text) {
 
         const result = await response.json();
         if (result.success) {
-            var isDelete = !(text || '').trim();
-            var msg = isDelete
-                ? (window.AppLocalizer?.QuickEntry_DayNoteDeleted || 'Note deleted')
-                : (window.AppLocalizer?.QuickEntry_DayNoteSaved || 'Note saved');
-            showToast(msg, 'success');
+            showToast(window.AppLocalizer?.QuickEntry_DayNoteDeleted || 'Note deleted', 'success');
             triggerCalendarRefresh();
         } else {
             showToast(result.message || 'Error', 'error');
         }
     } catch (error) {
         handleApiError(null, error);
+    } finally {
+        _dayNoteDeleteInFlight = false;
     }
-}
-
-window.quickAddDayNote = quickAddDayNote;
-
-/**
- * Delete a day-scoped note by upserting empty text (the endpoint treats empty text as a delete).
- * @param {string} date - ISO date (YYYY-MM-DD)
- */
-async function deleteDayNote(date) {
-    if (!date) return;
-    await quickAddDayNote(date, '');
 }
 
 window.deleteDayNote = deleteDayNote;
@@ -823,13 +891,17 @@ async function quickAddTimeOff(date, userId, type, label) {
 
 window.quickAddTimeOff = quickAddTimeOff;
 
-// Delegated so it survives calendar re-renders: the header day-note × removes the note.
+// Delegated so it survives calendar re-renders: a header day-note × removes THAT note. Bound on
+// document rather than on the buttons because _doCalendarRefresh replaces the whole .excel-calendar
+// subtree, so any handler attached to a button would be discarded with it.
+//
+// Matches both the inline chip's × and the panel's per-row ×, since both carry data-note-id.
 document.addEventListener('click', function (e) {
-    var btn = e.target.closest('.excel-calendar__day-note-delete');
+    var btn = e.target.closest('.excel-calendar__day-note-delete, .cal-day-notes__delete');
     if (!btn) return;
     e.preventDefault();
     e.stopPropagation();
-    deleteDayNote(btn.dataset.date);
+    deleteDayNote(btn.dataset.noteId);
 });
 
 /**
