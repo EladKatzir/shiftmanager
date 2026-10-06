@@ -95,6 +95,31 @@ public class ExcelCalendarTableViewModel
     /// deletable by its author, or by a holder of the assignment grant for this calendar.
     /// </summary>
     public int CurrentUserId { get; set; }
+
+    /// <summary>
+    /// Whether this viewer may delete a given day note — i.e. whether its × renders.
+    ///
+    /// <para><b>This MUST stay equivalent to DeleteDayNote's 403.</b> A × that 403s is a broken
+    /// button; a hidden × where the server would allow is a lie about what the user can do. The rule
+    /// is: you may delete a note you WROTE, or any note on a calendar you can assign shifts for.</para>
+    ///
+    /// <para><see cref="IsReadOnly"/> is <c>!CanEdit</c>, i.e. the scoped AssignShifts grant — the same
+    /// question the endpoint asks. <see cref="CanWriteNote"/> gates note-writing at all and is the
+    /// broader grant; gating the × on IsReadOnly alone hid it from the very people allowed to add
+    /// notes, so they could create a note they had no way to remove.</para>
+    ///
+    /// <para>Lives here rather than inline in the .cshtml so it can be unit-tested across every
+    /// persona — a rule embedded in a Razor expression can only be checked by eye.</para>
+    /// </summary>
+    /// <param name="noteAuthorId">The note's author, or null once that user has been deleted. A null
+    /// author satisfies nobody's ownership claim, so an orphaned note is removable only by an
+    /// assigner — which is the intended outcome.</param>
+    public static bool CanDeleteDayNote(bool canWriteNote, bool isReadOnly, int currentUserId, int? noteAuthorId)
+        => canWriteNote && (noteAuthorId == currentUserId || !isReadOnly);
+
+    /// <summary>Instance convenience over <see cref="CanDeleteDayNote(bool, bool, int, int?)"/>.</summary>
+    public bool CanDeleteDayNote(ShiftManager.Services.DayNoteView note)
+        => CanDeleteDayNote(CanWriteNote, IsReadOnly, CurrentUserId, note?.CreatedByUserId);
 }
 
 public class ExcelCalendarRow

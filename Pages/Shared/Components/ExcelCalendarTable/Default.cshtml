@@ -60,11 +60,10 @@
             : name + " · " + Localizer["Calendar_DayNote_TabInactive"].Value;
     }
 
-    // Deletable by its author, or by a holder of the assignment grant for this calendar (IsReadOnly is
-    // !CanEdit, i.e. that grant). ADDING needs only CanWriteNote, which is why gating the × on
-    // IsReadOnly alone hid it from the very people allowed to write notes. Mirrors DeleteDayNote's 403.
-    bool CanDeleteDayNote(ShiftManager.Services.DayNoteView n) =>
-        Model.CanWriteNote && (n.CreatedByUserId == Model.CurrentUserId || !Model.IsReadOnly);
+    // The delete rule lives on the view model (ExcelCalendarTableViewModel.CanDeleteDayNote) so it can
+    // be unit-tested across every persona and kept provably equivalent to DeleteDayNote's 403. A rule
+    // written inline here could only ever be checked by eye.
+    bool CanDeleteDayNote(ShiftManager.Services.DayNoteView n) => Model.CanDeleteDayNote(n);
 
     string DayNoteDeleteLabel(ShiftManager.Services.DayNoteView n) =>
         string.Format(culture, Localizer["Calendar_DayNote_DeleteAriaLabel"].Value, DayNoteAuthor(n));
